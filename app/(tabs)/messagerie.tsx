@@ -18,13 +18,13 @@ function formatHeure(iso: string) {
   return d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 }
 
-function formatDateMsg(iso: string) {
+function formatDateMsg(iso: string, today_label = "Aujourd'hui", yesterday_label = "Hier") {
   const d = new Date(iso);
   const today = new Date();
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
-  if (d.toDateString() === today.toDateString()) return "Aujourd'hui";
-  if (d.toDateString() === yesterday.toDateString()) return 'Hier';
+  if (d.toDateString() === today.toDateString()) return today_label;
+  if (d.toDateString() === yesterday.toDateString()) return yesterday_label;
   return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 }
 
@@ -67,7 +67,7 @@ export default function MessagerieScreen() {
       return [{
         id: convId,
         type: isEmploye ? 'employe' : 'soustraitant' as 'employe' | 'soustraitant',
-        nom: 'Administration',
+        nom: t.messagerie.administration,
         dernierMessage: last?.contenu,
         dernierMessageAt: last?.createdAt,
         nbNonLus,
@@ -140,10 +140,10 @@ export default function MessagerieScreen() {
     let expediteurNom = 'Admin';
     if (isEmploye) {
       const emp = data.employes.find(e => e.id === currentUser?.employeId);
-      expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : 'Employé';
+      expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : t.messagerie.employee;
     } else if (isST) {
       const st = data.sousTraitants.find(s => s.id === currentUser?.soustraitantId);
-      expediteurNom = st ? (st.societe || `${st.prenom} ${st.nom}`) : 'Sous-traitant';
+      expediteurNom = st ? (st.societe || `${st.prenom} ${st.nom}`) : t.messagerie.subcontractor;
     }
 
     const msg: MessagePrive = {
@@ -178,10 +178,10 @@ export default function MessagerieScreen() {
         let expediteurNom = 'Admin';
         if (isEmploye) {
           const emp = data.employes.find(e => e.id === currentUser?.employeId);
-          expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : 'Employé';
+          expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : t.messagerie.employee;
         } else if (isST) {
           const st = data.sousTraitants.find(s => s.id === currentUser?.soustraitantId);
-          expediteurNom = st ? (st.societe || `${st.prenom} ${st.nom}`) : 'Sous-traitant';
+          expediteurNom = st ? (st.societe || `${st.prenom} ${st.nom}`) : t.messagerie.subcontractor;
         }
         const msg: MessagePrive = {
           id: genId(),
@@ -212,11 +212,11 @@ export default function MessagerieScreen() {
   const handleDelete = (msg: MessagePrive) => {
     const doDelete = () => deleteMessagePrive(msg.id);
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm('Supprimer ce message ?') : true)) doDelete();
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(t.messagerie.deleteMsg) : true)) doDelete();
     } else {
-      Alert.alert('Supprimer ?', '', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+      Alert.alert(t.common.delete, '', [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: doDelete },
       ]);
     }
   };
@@ -225,7 +225,7 @@ export default function MessagerieScreen() {
   const messagesGroupes = useMemo(() => {
     const groups: Array<{ date: string; msgs: MessagePrive[] }> = [];
     messages.forEach(m => {
-      const dateLabel = formatDateMsg(m.createdAt);
+      const dateLabel = formatDateMsg(m.createdAt, t.common.today, t.common.yesterday ?? 'Hier');
       const last = groups[groups.length - 1];
       if (last && last.date === dateLabel) {
         last.msgs.push(m);
@@ -250,7 +250,7 @@ export default function MessagerieScreen() {
           <Text style={styles.headerTitle}>💬 {t.messagerie.title}</Text>
           {totalNonLus > 0 && (
             <View style={styles.headerBadge}>
-              <Text style={styles.headerBadgeText}>{totalNonLus} non lu{totalNonLus > 1 ? 's' : ''}</Text>
+              <Text style={styles.headerBadgeText}>{totalNonLus} {t.messagerie.unread}</Text>
             </View>
           )}
         </View>
@@ -273,7 +273,7 @@ export default function MessagerieScreen() {
                 </View>
                 <View style={styles.convRow}>
                   <Text style={styles.convDernier} numberOfLines={1}>
-                    {conv.dernierMessage || 'Aucun message'}
+                    {conv.dernierMessage || t.messagerie.noMessage}
                   </Text>
                   {conv.nbNonLus > 0 && (
                     <View style={styles.unreadBadge}>
@@ -281,12 +281,12 @@ export default function MessagerieScreen() {
                     </View>
                   )}
                 </View>
-                <Text style={styles.convType}>{conv.type === 'employe' ? '👷 Employé' : '🏗 Sous-traitant'}</Text>
+                <Text style={styles.convType}>{conv.type === 'employe' ? `👷 ${t.messagerie.employee}` : `🏗 ${t.messagerie.subcontractor}`}</Text>
               </View>
             </Pressable>
           ))}
           {conversations.length === 0 && (
-            <Text style={styles.emptyText}>Aucune conversation disponible</Text>
+            <Text style={styles.emptyText}>{t.messagerie.noConversation}</Text>
           )}
         </ScrollView>
       </ScreenContainer>
@@ -295,8 +295,8 @@ export default function MessagerieScreen() {
 
   // ─── Vue conversation ──────────────────────────────────────────────────────
   const convNom = isAdmin
-    ? conversations.find(c => c.id === selectedConvId)?.nom || 'Conversation'
-    : 'Administration';
+    ? conversations.find(c => c.id === selectedConvId)?.nom || t.messagerie.conversation
+    : t.messagerie.administration;
 
   return (
     <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
@@ -304,7 +304,7 @@ export default function MessagerieScreen() {
       <View style={styles.header}>
         {isAdmin && (
           <Pressable onPress={() => setSelectedConvId(null)} style={styles.backBtn}>
-            <Text style={styles.backBtnText}>← Retour</Text>
+            <Text style={styles.backBtnText}>← {t.common.back}</Text>
           </Pressable>
         )}
         <Text style={styles.headerTitle} numberOfLines={1}>💬 {convNom}</Text>
@@ -313,7 +313,7 @@ export default function MessagerieScreen() {
           onPress={() => setShowArchive(v => !v)}
         >
           <Text style={[styles.archiveToggleText, showArchive && styles.archiveToggleTextActive]}>
-            {showArchive ? '📂 Archivés' : '📁 Archives'}
+            {showArchive ? `📂 ${t.messagerie.archived}` : `📁 ${t.messagerie.archives}`}
           </Text>
         </Pressable>
       </View>
@@ -328,7 +328,7 @@ export default function MessagerieScreen() {
         >
           {messagesGroupes.length === 0 && (
             <Text style={styles.emptyText}>
-              {showArchive ? 'Aucun message archivé' : 'Aucun message. Commencez la conversation !'}
+              {showArchive ? t.messagerie.noArchived : t.messagerie.startConversation}
             </Text>
           )}
           {messagesGroupes.map(group => (
@@ -347,15 +347,15 @@ export default function MessagerieScreen() {
                     onLongPress={() => {
                       if (Platform.OS === 'web') {
                         const action = (typeof window !== 'undefined' && window.confirm ? window.confirm(
-                          `${msg.archive ? 'Désarchiver' : 'Archiver'} ce message ?\n\nOK = ${msg.archive ? 'Désarchiver' : 'Archiver'}\nAnnuler = Supprimer`
+                          `${msg.archive ? t.messagerie.unarchive : t.messagerie.archive} ?\n\nOK = ${msg.archive ? t.messagerie.unarchive : t.messagerie.archive}\n${t.common.cancel} = ${t.common.delete}`
                         ) : true);
                         if (action) handleArchive(msg);
                         else if (!action) handleDelete(msg);
                       } else {
-                        Alert.alert('Message', '', [
-                          { text: 'Annuler', style: 'cancel' },
-                          { text: msg.archive ? 'Désarchiver' : 'Archiver', onPress: () => handleArchive(msg) },
-                          { text: 'Supprimer', style: 'destructive', onPress: () => handleDelete(msg) },
+                        Alert.alert(t.messagerie.message, '', [
+                          { text: t.common.cancel, style: 'cancel' },
+                          { text: msg.archive ? t.messagerie.unarchive : t.messagerie.archive, onPress: () => handleArchive(msg) },
+                          { text: t.common.delete, style: 'destructive', onPress: () => handleDelete(msg) },
                         ]);
                       }
                     }}
@@ -373,7 +373,7 @@ export default function MessagerieScreen() {
                         }}>
                           <View style={styles.msgMedia}>
                             <Text style={styles.msgMediaText}>{msg.contenu}</Text>
-                            <Text style={styles.msgMediaHint}>Appuyer pour voir</Text>
+                            <Text style={styles.msgMediaHint}>{t.messagerie.tapToView}</Text>
                           </View>
                         </Pressable>
                       )}
@@ -403,7 +403,7 @@ export default function MessagerieScreen() {
             </Pressable>
             <TextInput
               style={styles.msgInput}
-              placeholder="Votre message..."
+              placeholder={t.messagerie.messagePlaceholder}
               value={messageText}
               onChangeText={setMessageText}
               multiline

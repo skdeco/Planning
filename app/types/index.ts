@@ -537,6 +537,14 @@ export interface NoteChantier {
   destinataires: 'tous' | string[];
   // IDs des personnes ayant archivé cette note
   archivedBy: string[];      // 'admin' ou id employé/ST
+  // Pièces jointes (photos base64 ou PDF base64)
+  pieceJointe?: string;      // base64 URI (image ou PDF)
+  pieceJointeNom?: string;   // nom du fichier
+  pieceJointeType?: 'image' | 'pdf'; // type de fichier
+  // Historique suppression (admin uniquement)
+  deletedBy?: string;        // 'admin' ou id de celui qui a supprimé
+  deletedAt?: string;        // ISO datetime de suppression
+  deletedNom?: string;       // nom de l'auteur de la suppression
 }
 
 /** Note de suivi divers (texte libre + photos) */
@@ -584,6 +592,8 @@ export interface AppData {
   documentsRH?: DocumentRHEmploye[];
   // Notes chantier (rappels/notifications)
   notesChantier?: NoteChantier[];
+  // Historique des notes supprimées (admin uniquement)
+  notesChantierSupprimees?: NoteChantier[];
   // Messagerie privée
   messagesPrive?: import('./messages').MessagePrive[];
   // Fiches chantier (données structurées par chantier)

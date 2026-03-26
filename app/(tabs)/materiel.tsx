@@ -197,14 +197,14 @@ export default function MaterielScreen() {
     if (!listeActuelle) return;
     const canDelete = isAdmin || isAcheteur || listeActuelle.employeId === currentUser?.employeId;
     if (!canDelete) return;
-    if (await confirm('Supprimer cet article de la liste ?')) {
+    if (await confirm(t.materiel.deleteItem)) {
       deleteMateriauItem(listeId, itemId);
     }
   };
 
   // ── Supprimer une liste entière (admin uniquement) ──
   const handleDeleteListe = async (listeId: string) => {
-    if (await confirm('Supprimer toute cette liste ? Cette action est irréversible.')) {
+    if (await confirm(t.materiel.deleteList)) {
       deleteListeMateriau(listeId);
     }
   };
@@ -232,14 +232,14 @@ export default function MaterielScreen() {
           ) : <View />}
           {isAdmin && (
             <Pressable onPress={() => handleDeleteListe(liste.id)} style={styles.deleteListeBtn}>
-              <Text style={styles.deleteListeBtnText}>🗑 Supprimer liste</Text>
+              <Text style={styles.deleteListeBtnText}>🗑 {t.materiel.deleteListBtn}</Text>
             </Pressable>
           )}
         </View>
 
         {/* Articles actifs */}
         {itemsActifs.length === 0 && itemsAchetes.length === 0 && (
-          <Text style={styles.emptyText}>Aucun article dans cette liste</Text>
+          <Text style={styles.emptyText}>{t.materiel.noItems}</Text>
         )}
         {itemsActifs.map(item => (
           <View key={item.id} style={styles.itemRow}>
@@ -279,7 +279,7 @@ export default function MaterielScreen() {
                   {openArchives[liste.id] ? '▾' : '▸'}
                 </Text>
                 <Text style={styles.archiveToggleText}>
-                  Archivé ({itemsAchetes.length})
+                  {t.materiel.archived} ({itemsAchetes.length})
                 </Text>
               </View>
               <View style={styles.archiveBadge}>
@@ -307,7 +307,7 @@ export default function MaterielScreen() {
                         <Text style={[styles.itemCommentaire, styles.itemTexteBarre]}>💬 {item.commentaire}</Text>
                       ) : null}
                       {item.achetePar && (
-                        <Text style={styles.achetePar}>✓ Acheté par {item.achetePar}</Text>
+                        <Text style={styles.achetePar}>✓ {t.materiel.boughtBy} {item.achetePar}</Text>
                       )}
                     </View>
                     {canEdit && (
@@ -331,7 +331,7 @@ export default function MaterielScreen() {
               openAddModal(liste.chantierId, chantier?.nom || '');
             }}
           >
-            <Text style={styles.addItemBtnText}>+ Ajouter un article</Text>
+            <Text style={styles.addItemBtnText}>+ {t.materiel.addItem}</Text>
           </Pressable>
         )}
       </View>
@@ -343,7 +343,7 @@ export default function MaterielScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
       {chantiersVisibles.length === 0 && (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>Aucun chantier actif</Text>
+          <Text style={styles.emptyStateText}>{t.materiel.noActiveProject}</Text>
         </View>
       )}
       {chantiersVisibles.map(chantier => {
@@ -361,12 +361,12 @@ export default function MaterielScreen() {
               renderListe(liste, false)
             ) : (
               <View style={styles.listeCard}>
-                <Text style={styles.emptyText}>Aucun article pour ce chantier</Text>
+                <Text style={styles.emptyText}>{t.materiel.noItemsForProject}</Text>
                 <Pressable
                   style={styles.addItemBtn}
                   onPress={() => openAddModal(chantier.id, chantier.nom)}
                 >
-                  <Text style={styles.addItemBtnText}>+ Créer ma liste</Text>
+                  <Text style={styles.addItemBtnText}>+ {t.materiel.createList}</Text>
                 </Pressable>
               </View>
             )}
@@ -381,7 +381,7 @@ export default function MaterielScreen() {
     <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
       {listesParChantier.length === 0 && (
         <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>Aucune liste matériel en cours</Text>
+          <Text style={styles.emptyStateText}>{t.materiel.noLists}</Text>
         </View>
       )}
       {listesParChantier.map(({ chantier, listes }) => {
@@ -396,12 +396,12 @@ export default function MaterielScreen() {
               <View style={styles.chantierStats}>
                 {itemsNonAchetes.length > 0 && (
                   <View style={styles.statsBadgeRed}>
-                    <Text style={styles.statsBadgeRedText}>{itemsNonAchetes.length} à acheter</Text>
+                    <Text style={styles.statsBadgeRedText}>{itemsNonAchetes.length} {t.materiel.toBuy}</Text>
                   </View>
                 )}
                 {itemsAchetes.length > 0 && (
                   <View style={styles.statsBadgeGreen}>
-                    <Text style={styles.statsBadgeGreenText}>{itemsAchetes.length} acheté(s)</Text>
+                    <Text style={styles.statsBadgeGreenText}>{itemsAchetes.length} {t.materiel.bought}</Text>
                   </View>
                 )}
               </View>
@@ -433,7 +433,7 @@ export default function MaterielScreen() {
             onPress={() => setViewMode('mes_listes')}
           >
             <Text style={[styles.tabText, viewMode === 'mes_listes' && styles.tabTextActive]}>
-              {isEmploye ? 'Mes listes' : 'Par employé'}
+              {isEmploye ? t.materiel.myLists : t.materiel.byEmployee}
             </Text>
           </Pressable>
           <Pressable
@@ -441,7 +441,7 @@ export default function MaterielScreen() {
             onPress={() => setViewMode('acheteur')}
           >
             <Text style={[styles.tabText, viewMode === 'acheteur' && styles.tabTextActive]}>
-              Vue acheteur {nbNonAchetes > 0 ? `(${nbNonAchetes})` : ''}
+              {t.materiel.buyerView} {nbNonAchetes > 0 ? `(${nbNonAchetes})` : ''}
             </Text>
           </Pressable>
         </View>
@@ -455,14 +455,14 @@ export default function MaterielScreen() {
       <Modal visible={!!addModal} transparent animationType="slide" onRequestClose={() => setAddModal(null)}>
         <Pressable style={styles.modalOverlay} onPress={() => setAddModal(null)}>
           <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>Ajouter un article</Text>
+            <Text style={styles.modalTitle}>{t.materiel.addItem}</Text>
             <Text style={styles.modalSubtitle}>{addModal?.chantierNom}</Text>
 
-            <Text style={styles.inputLabel}>Article *</Text>
+            <Text style={styles.inputLabel}>{t.materiel.article} *</Text>
             <TextInput
               ref={inputRef}
               style={styles.input}
-              placeholder="Ex: Peinture blanche, Vis 6x50..."
+              placeholder={t.materiel.articlePlaceholder}
               value={newArticle}
               onChangeText={setNewArticle}
               onSubmitEditing={handleAddArticle}
@@ -470,16 +470,16 @@ export default function MaterielScreen() {
               autoFocus
             />
 
-            <Text style={styles.inputLabel}>Quantité (optionnel)</Text>
+            <Text style={styles.inputLabel}>{t.materiel.quantity} ({t.common.optional})</Text>
             <TextInput
               style={styles.input}
-              placeholder="Ex: 3 rouleaux, 2 boîtes..."
+              placeholder={t.materiel.quantityPlaceholder}
               value={newQuantite}
               onChangeText={setNewQuantite}
               returnKeyType="next"
             />
 
-            <Text style={styles.inputLabel}>Commentaire (optionnel)</Text>
+            <Text style={styles.inputLabel}>{t.common.comment} ({t.common.optional})</Text>
             <TextInput
               style={[styles.input, styles.inputMultiline]}
               placeholder="Ex: Marque Leroy Merlin, ref. 12345, couleur RAL 9010..."
@@ -492,14 +492,14 @@ export default function MaterielScreen() {
 
             <View style={styles.modalActions}>
               <Pressable style={styles.btnCancel} onPress={() => setAddModal(null)}>
-                <Text style={styles.btnCancelText}>Fermer</Text>
+                <Text style={styles.btnCancelText}>{t.common.close}</Text>
               </Pressable>
               <Pressable
                 style={[styles.btnSave, !newArticle.trim() && styles.btnDisabled]}
                 onPress={handleAddArticle}
                 disabled={!newArticle.trim()}
               >
-                <Text style={styles.btnSaveText}>+ Ajouter</Text>
+                <Text style={styles.btnSaveText}>+ {t.common.add}</Text>
               </Pressable>
             </View>
           </Pressable>

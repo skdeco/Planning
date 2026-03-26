@@ -88,27 +88,27 @@ export default function LoginScreen() {
 
           {/* Formulaire */}
           <View style={styles.card}>
-            <Text style={styles.cardTitle}>Connexion</Text>
+            <Text style={styles.cardTitle}>{t.auth.login}</Text>
 
-            <Text style={styles.label}>Identifiant</Text>
+            <Text style={styles.label}>{t.auth.username}</Text>
             <TextInput
               style={styles.input}
               value={identifiant}
               onChangeText={v => { setIdentifiant(v); setError(''); }}
-              placeholder="Votre identifiant"
+              placeholder={t.auth.usernamePlaceholder}
               placeholderTextColor="#687076"
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
             />
 
-            <Text style={styles.label}>Mot de passe</Text>
+            <Text style={styles.label}>{t.auth.password}</Text>
             <View style={styles.passwordRow}>
               <TextInput
                 style={[styles.input, styles.passwordInput]}
                 value={motDePasse}
                 onChangeText={v => { setMotDePasse(v); setError(''); }}
-                placeholder="Votre mot de passe"
+                placeholder={t.auth.passwordPlaceholder}
                 placeholderTextColor="#687076"
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
@@ -133,14 +133,14 @@ export default function LoginScreen() {
               onPress={handleLogin}
               disabled={!identifiant || !motDePasse}
             >
-              <Text style={styles.loginBtnText}>Se connecter</Text>
+              <Text style={styles.loginBtnText}>{t.auth.loginBtn}</Text>
             </Pressable>
 
             <Text style={styles.hint}>
-              Admin : <Text style={styles.hintBold}>admin</Text> / <Text style={styles.hintBold}>admin</Text>
+              {t.auth.adminHint} <Text style={styles.hintBold}>admin</Text> / <Text style={styles.hintBold}>admin</Text>
             </Text>
             <Text style={styles.hint}>
-              Employés démo : prénom (ex: <Text style={styles.hintBold}>sacha</Text>) / <Text style={styles.hintBold}>1234</Text>
+              {t.auth.employeeHint} (ex: <Text style={styles.hintBold}>sacha</Text>) / <Text style={styles.hintBold}>1234</Text>
             </Text>
           </View>
       </ScrollView>

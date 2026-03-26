@@ -303,7 +303,7 @@ export default function RHScreen() {
         <Text style={styles.headerTitle}>👥 {t.rh.title}</Text>
         {nbEnAttente > 0 && (
           <View style={styles.headerBadge}>
-            <Text style={styles.headerBadgeText}>{nbEnAttente} en attente</Text>
+            <Text style={styles.headerBadgeText}>{nbEnAttente} {t.rh.pending}</Text>
           </View>
         )}
       </View>
@@ -311,10 +311,10 @@ export default function RHScreen() {
       {/* Onglets */}
       <View style={styles.tabs}>
         {([
-          { key: 'conges', label: '🏖 Congés', count: isRH ? conges.filter(d => d.statut === 'en_attente').length : 0 },
-          { key: 'maladie', label: '🤒 Maladie', count: isRH ? arrets.filter(d => d.statut === 'en_attente').length : 0 },
-          { key: 'avances', label: '💶 Avances', count: isRH ? avances.filter(d => d.statut === 'en_attente').length : 0 },
-          { key: 'paies', label: '📄 Fiches de paie', count: 0 },
+          { key: 'conges', label: `🏖 ${t.rh.leaves}`, count: isRH ? conges.filter(d => d.statut === 'en_attente').length : 0 },
+          { key: 'maladie', label: `🤒 ${t.rh.sick}`, count: isRH ? arrets.filter(d => d.statut === 'en_attente').length : 0 },
+          { key: 'avances', label: `💶 ${t.rh.advances}`, count: isRH ? avances.filter(d => d.statut === 'en_attente').length : 0 },
+          { key: 'paies', label: `📄 ${t.rh.payslips}`, count: 0 },
         ] as const).map(tab => (
           <Pressable
             key={tab.key}
@@ -337,21 +337,21 @@ export default function RHScreen() {
             {/* Tout employé (y compris RH) peut faire une demande pour lui-même */}
             {/* L'employé RH voit aussi les demandes des autres, mais peut en créer pour lui */}
             <Pressable style={styles.addBtn} onPress={() => { setEditConge(null); setCongeForm({ dateDebut: '', dateFin: '', motif: '', employeId: '' }); setShowCongeModal(true); }}>
-              <Text style={styles.addBtnText}>+ Nouvelle demande de congés</Text>
+              <Text style={styles.addBtnText}>+ {t.rh.newLeaveRequest}</Text>
             </Pressable>
-            {congesTries.length === 0 && <Text style={styles.emptyText}>Aucune demande de congés</Text>}
+            {congesTries.length === 0 && <Text style={styles.emptyText}>{t.rh.noLeaves}</Text>}
             {congesTries.map(d => (
               <View key={d.id} style={[styles.card, d.statut === 'en_attente' && styles.cardEnAttente]}>
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
                     {isRH && <Text style={styles.cardEmploye}>{getEmployeNom(d.employeId)}</Text>}
-                    <Text style={styles.cardTitle}>Du {formatDate(d.dateDebut)} au {formatDate(d.dateFin)}</Text>
-                    {d.motif ? <Text style={styles.cardSub}>Motif : {d.motif}</Text> : null}
+                    <Text style={styles.cardTitle}>{t.rh.from} {formatDate(d.dateDebut)} {t.rh.to} {formatDate(d.dateFin)}</Text>
+                    {d.motif ? <Text style={styles.cardSub}>{t.rh.reason}: {d.motif}</Text> : null}
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: 4 }}>
                     <StatutBadge statut={d.statut} />
                     {isRH && isNouveau(d.createdAt) && d.statut === 'en_attente' && (
-                      <View style={styles.nouveauBadge}><Text style={styles.nouveauBadgeText}>NOUVEAU</Text></View>
+                      <View style={styles.nouveauBadge}><Text style={styles.nouveauBadgeText}>{t.rh.new}</Text></View>
                     )}
                   </View>
                 </View>
@@ -359,12 +359,12 @@ export default function RHScreen() {
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
                     <Pressable style={styles.repondreBtn} onPress={() => { setReponseTarget({ type: 'conge', id: d.id }); setReponseForm({ statut: 'approuve', commentaire: '' }); setShowReponseModal(true); }}>
-                      <Text style={styles.repondreBtnText}>Répondre</Text>
+                      <Text style={styles.repondreBtnText}>{t.rh.reply}</Text>
                     </Pressable>
                   )}
                   {(!isRH || d.statut === 'en_attente') && (
                     <Pressable style={styles.deleteBtn} onPress={() => handleDeleteConge(d.id)}>
-                      <Text style={styles.deleteBtnText}>Supprimer</Text>
+                      <Text style={styles.deleteBtnText}>{t.common.delete}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -378,15 +378,15 @@ export default function RHScreen() {
           <>
             {/* Tout employé (y compris RH) peut déclarer un arrêt pour lui-même */}
             <Pressable style={styles.addBtn} onPress={() => { setEditArret(null); setArretForm({ dateDebut: '', dateFin: '', commentaire: '', justificatif: '', justificatifNom: '', employeId: '' }); setShowArretModal(true); }}>
-              <Text style={styles.addBtnText}>+ Déclarer un arrêt maladie</Text>
+              <Text style={styles.addBtnText}>+ {t.rh.declareSick}</Text>
             </Pressable>
-            {arretsTries.length === 0 && <Text style={styles.emptyText}>Aucun arrêt maladie déclaré</Text>}
+            {arretsTries.length === 0 && <Text style={styles.emptyText}>{t.rh.noSick}</Text>}
             {arretsTries.map(d => (
               <View key={d.id} style={[styles.card, d.statut === 'en_attente' && styles.cardEnAttente]}>
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
                     {isRH && <Text style={styles.cardEmploye}>{getEmployeNom(d.employeId)}</Text>}
-                    <Text style={styles.cardTitle}>Début : {formatDate(d.dateDebut)}{d.dateFin ? ` → ${formatDate(d.dateFin)}` : ' (en cours)'}</Text>
+                    <Text style={styles.cardTitle}>{t.rh.start}: {formatDate(d.dateDebut)}{d.dateFin ? ` → ${formatDate(d.dateFin)}` : ` (${t.rh.ongoing})`}</Text>
                   {(d as any).justificatif && (
                     <Pressable onPress={() => {
                       if (Platform.OS === 'web') {
@@ -394,14 +394,14 @@ export default function RHScreen() {
                         if (win) win.document.write(`<iframe src="${(d as any).justificatif}" style="width:100%;height:100%;border:none;"/>`);
                       }
                     }}>
-                      <Text style={styles.justificatifLink}>📎 Voir le justificatif</Text>
+                      <Text style={styles.justificatifLink}>{t.rh.viewProof}</Text>
                     </Pressable>
                   )}
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: 4 }}>
                     <StatutBadge statut={d.statut} />
                     {isRH && isNouveau(d.createdAt) && d.statut === 'en_attente' && (
-                      <View style={styles.nouveauBadge}><Text style={styles.nouveauBadgeText}>NOUVEAU</Text></View>
+                      <View style={styles.nouveauBadge}><Text style={styles.nouveauBadgeText}>{t.rh.new}</Text></View>
                     )}
                   </View>
                 </View>
@@ -409,12 +409,12 @@ export default function RHScreen() {
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
                     <Pressable style={styles.repondreBtn} onPress={() => { setReponseTarget({ type: 'arret', id: d.id }); setReponseForm({ statut: 'approuve', commentaire: '' }); setShowReponseModal(true); }}>
-                      <Text style={styles.repondreBtnText}>Répondre</Text>
+                      <Text style={styles.repondreBtnText}>{t.rh.reply}</Text>
                     </Pressable>
                   )}
                   {(!isRH || d.statut === 'en_attente') && (
                     <Pressable style={styles.deleteBtn} onPress={() => deleteArretMaladie(d.id)}>
-                      <Text style={styles.deleteBtnText}>Supprimer</Text>
+                      <Text style={styles.deleteBtnText}>{t.common.delete}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -428,21 +428,21 @@ export default function RHScreen() {
           <>
             {/* Tout employé (y compris RH) peut demander une avance pour lui-même */}
             <Pressable style={styles.addBtn} onPress={() => { setEditAvance(null); setAvanceForm({ montant: '', motif: '', employeId: '' }); setShowAvanceModal(true); }}>
-              <Text style={styles.addBtnText}>+ Demander une avance</Text>
+              <Text style={styles.addBtnText}>+ {t.rh.requestAdvance}</Text>
             </Pressable>
-            {avancesTries.length === 0 && <Text style={styles.emptyText}>Aucune demande d'avance</Text>}
+            {avancesTries.length === 0 && <Text style={styles.emptyText}>{t.rh.noAdvances}</Text>}
             {avancesTries.map(d => (
               <View key={d.id} style={[styles.card, d.statut === 'en_attente' && styles.cardEnAttente]}>
                 <View style={styles.cardHeader}>
                   <View style={{ flex: 1 }}>
                     {isRH && <Text style={styles.cardEmploye}>{getEmployeNom(d.employeId)}</Text>}
                     <Text style={styles.cardTitle}>{d.montant.toFixed(2)} €</Text>
-                    {d.motif ? <Text style={styles.cardSub}>Motif : {d.motif}</Text> : null}
+                    {d.motif ? <Text style={styles.cardSub}>{t.rh.reason}: {d.motif}</Text> : null}
                   </View>
                   <View style={{ alignItems: 'flex-end', gap: 4 }}>
                     <StatutBadge statut={d.statut} />
                     {isRH && isNouveau(d.createdAt) && d.statut === 'en_attente' && (
-                      <View style={styles.nouveauBadge}><Text style={styles.nouveauBadgeText}>NOUVEAU</Text></View>
+                      <View style={styles.nouveauBadge}><Text style={styles.nouveauBadgeText}>{t.rh.new}</Text></View>
                     )}
                   </View>
                 </View>
@@ -450,7 +450,7 @@ export default function RHScreen() {
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
                     <Pressable style={styles.repondreBtn} onPress={() => { setReponseTarget({ type: 'avance', id: d.id }); setReponseForm({ statut: 'approuve', commentaire: '' }); setShowReponseModal(true); }}>
-                      <Text style={styles.repondreBtnText}>Répondre</Text>
+                      <Text style={styles.repondreBtnText}>{t.rh.reply}</Text>
                     </Pressable>
                   )}
                   {isRH && (
@@ -498,7 +498,7 @@ export default function RHScreen() {
           <>
             {isRH && (
               <View style={styles.paieUploadSection}>
-                <Text style={styles.paieUploadTitle}>Déposer une fiche de paie</Text>
+                <Text style={styles.paieUploadTitle}>{t.rh.uploadPayslip}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.paieEmployeScroll}>
                   {data.employes.map(emp => (
                     <Pressable key={emp.id} style={[styles.paieEmployeBtn, { borderColor: emp.couleur || '#1A3A6B' }]} onPress={() => handleUploadPaie(emp.id)}>
@@ -506,13 +506,13 @@ export default function RHScreen() {
                         <Text style={styles.paieEmployeAvatarText}>{emp.prenom[0]}{emp.nom[0]}</Text>
                       </View>
                       <Text style={styles.paieEmployeNom} numberOfLines={1}>{emp.prenom}</Text>
-                      <Text style={styles.paieEmployeAction}>+ Déposer</Text>
+                      <Text style={styles.paieEmployeAction}>+ {t.rh.upload}</Text>
                     </Pressable>
                   ))}
                 </ScrollView>
               </View>
             )}
-            {paies.length === 0 && <Text style={styles.emptyText}>Aucune fiche de paie disponible</Text>}
+            {paies.length === 0 && <Text style={styles.emptyText}>{t.rh.noPayslips}</Text>}
             {paiesParAnnee.map(([annee, fichesAnnee]) => (
               <View key={annee}>
                 <View style={styles.anneeHeader}>
@@ -532,7 +532,7 @@ export default function RHScreen() {
                           if (win) { win.document.write(`<iframe src="${f.fichier}" style="width:100%;height:100%;border:none;"/>`); }
                         }
                       }}>
-                        <Text style={styles.voirBtnText}>👁 Voir</Text>
+                        <Text style={styles.voirBtnText}>{t.common.view}</Text>
                       </Pressable>
                       {/* Télécharger */}
                       <Pressable style={[styles.voirBtn, { backgroundColor: '#EFF6FF' }]} onPress={() => {
@@ -543,7 +543,7 @@ export default function RHScreen() {
                           a.click();
                         }
                       }}>
-                        <Text style={[styles.voirBtnText, { color: '#1A3A6B' }]}>⬇ Télécharger</Text>
+                        <Text style={[styles.voirBtnText, { color: '#1A3A6B' }]}>{t.common.download}</Text>
                       </Pressable>
                       {/* Suppression : admin uniquement (pas RH employé) */}
                       {isAdmin && (
@@ -558,7 +558,7 @@ export default function RHScreen() {
                             ]);
                           }
                         }}>
-                          <Text style={styles.deleteBtnText}>🗑 Supprimer</Text>
+                          <Text style={styles.deleteBtnText}>{t.common.delete}</Text>
                         </Pressable>
                       )}
                     </View>
@@ -574,16 +574,16 @@ export default function RHScreen() {
       <Modal visible={showCongeModal} transparent animationType="slide" onRequestClose={() => setShowCongeModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowCongeModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>{editConge ? 'Modifier la demande' : 'Demande de congés'}</Text>
+            <Text style={styles.sheetTitle}>{editConge ? t.rh.editRequest : t.rh.leaveRequest}</Text>
             {isRH && !editConge && (
               <>
-                <Text style={styles.fieldLabel}>Employé concerné</Text>
+                <Text style={styles.fieldLabel}>{t.rh.concernedEmployee}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
                   <Pressable
                     style={[styles.empChip, !congeForm.employeId && styles.empChipActive]}
                     onPress={() => setCongeForm(f => ({ ...f, employeId: '' }))}
                   >
-                    <Text style={[styles.empChipText, !congeForm.employeId && styles.empChipTextActive]}>Moi-même</Text>
+                    <Text style={[styles.empChipText, !congeForm.employeId && styles.empChipTextActive]}>{t.rh.myself}</Text>
                   </Pressable>
                   {data.employes.filter(e => e.id !== myId).map(emp => (
                     <Pressable
@@ -598,21 +598,21 @@ export default function RHScreen() {
               </>
             )}
             <DateField
-              label="Date de début *"
+              label={`${t.common.startDate} *`}
               value={congeForm.dateDebut}
               onChange={v => setCongeForm(f => ({ ...f, dateDebut: v }))}
               maxDate={congeForm.dateFin || undefined}
             />
             <DateField
-              label="Date de fin *"
+              label={`${t.common.endDate} *`}
               value={congeForm.dateFin}
               onChange={v => setCongeForm(f => ({ ...f, dateFin: v }))}
               minDate={congeForm.dateDebut || undefined}
             />
-            <Text style={styles.fieldLabel}>Motif (optionnel)</Text>
-            <TextInput style={[styles.input, styles.inputMulti]} placeholder="Ex: vacances d'été" value={congeForm.motif} onChangeText={v => setCongeForm(f => ({ ...f, motif: v }))} multiline />
+            <Text style={styles.fieldLabel}>{t.rh.reason} ({t.common.optional})</Text>
+            <TextInput style={[styles.input, styles.inputMulti]} placeholder={t.rh.reasonPlaceholder} value={congeForm.motif} onChangeText={v => setCongeForm(f => ({ ...f, motif: v }))} multiline />
             <Pressable style={styles.saveBtn} onPress={handleSaveConge}>
-              <Text style={styles.saveBtnText}>Envoyer la demande</Text>
+              <Text style={styles.saveBtnText}>{t.rh.sendRequest}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -622,16 +622,16 @@ export default function RHScreen() {
       <Modal visible={showArretModal} transparent animationType="slide" onRequestClose={() => setShowArretModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowArretModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Déclarer un arrêt maladie</Text>
+            <Text style={styles.sheetTitle}>{t.rh.declareSick}</Text>
             {isRH && !editArret && (
               <>
-                <Text style={styles.fieldLabel}>Employé concerné</Text>
+                <Text style={styles.fieldLabel}>{t.rh.concernedEmployee}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
                   <Pressable
                     style={[styles.empChip, !arretForm.employeId && styles.empChipActive]}
                     onPress={() => setArretForm(f => ({ ...f, employeId: '' }))}
                   >
-                    <Text style={[styles.empChipText, !arretForm.employeId && styles.empChipTextActive]}>Moi-même</Text>
+                    <Text style={[styles.empChipText, !arretForm.employeId && styles.empChipTextActive]}>{t.rh.myself}</Text>
                   </Pressable>
                   {data.employes.filter(e => e.id !== myId).map(emp => (
                     <Pressable
@@ -646,18 +646,18 @@ export default function RHScreen() {
               </>
             )}
             <DateField
-              label="Date de début *"
+              label={`${t.common.startDate} *`}
               value={arretForm.dateDebut}
               onChange={v => setArretForm(f => ({ ...f, dateDebut: v }))}
               maxDate={arretForm.dateFin || undefined}
             />
             <DateField
-              label="Date de fin (si connue)"
+              label={t.rh.endDateIfKnown}
               value={arretForm.dateFin}
               onChange={v => setArretForm(f => ({ ...f, dateFin: v }))}
               minDate={arretForm.dateDebut || undefined}
             />
-            <Text style={styles.fieldLabel}>Justificatif (photo ou PDF)</Text>
+            <Text style={styles.fieldLabel}>{t.rh.proof}</Text>
             <Pressable
               style={styles.uploadArretBtn}
               onPress={() => {
@@ -683,16 +683,16 @@ export default function RHScreen() {
               }}
             >
               <Text style={styles.uploadArretBtnText}>
-                {arretForm.justificatif ? `✅ ${arretForm.justificatifNom || 'Fichier chargé'}` : '📎 Joindre un justificatif'}
+                {arretForm.justificatif ? `✅ ${arretForm.justificatifNom || t.rh.fileLoaded}` : `📎 ${t.rh.attachProof}`}
               </Text>
             </Pressable>
             {arretForm.justificatif ? (
               <Pressable onPress={() => setArretForm(f => ({ ...f, justificatif: '', justificatifNom: '' }))}>
-                <Text style={styles.removeFileText}>Supprimer le fichier</Text>
+                <Text style={styles.removeFileText}>{t.rh.removeFile}</Text>
               </Pressable>
             ) : null}
             <Pressable style={styles.saveBtn} onPress={handleSaveArret}>
-              <Text style={styles.saveBtnText}>Déclarer l'arrêt</Text>
+              <Text style={styles.saveBtnText}>{t.rh.declareSickBtn}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -702,16 +702,16 @@ export default function RHScreen() {
       <Modal visible={showAvanceModal} transparent animationType="slide" onRequestClose={() => setShowAvanceModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowAvanceModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Demande d'avance sur salaire</Text>
+            <Text style={styles.sheetTitle}>{t.rh.advanceRequest}</Text>
             {isRH && !editAvance && (
               <>
-                <Text style={styles.fieldLabel}>Employé concerné</Text>
+                <Text style={styles.fieldLabel}>{t.rh.concernedEmployee}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
                   <Pressable
                     style={[styles.empChip, !avanceForm.employeId && styles.empChipActive]}
                     onPress={() => setAvanceForm(f => ({ ...f, employeId: '' }))}
                   >
-                    <Text style={[styles.empChipText, !avanceForm.employeId && styles.empChipTextActive]}>Moi-même</Text>
+                    <Text style={[styles.empChipText, !avanceForm.employeId && styles.empChipTextActive]}>{t.rh.myself}</Text>
                   </Pressable>
                   {data.employes.filter(e => e.id !== myId).map(emp => (
                     <Pressable
@@ -725,12 +725,12 @@ export default function RHScreen() {
                 </ScrollView>
               </>
             )}
-            <Text style={styles.fieldLabel}>Montant souhaité (€) *</Text>
+            <Text style={styles.fieldLabel}>{t.rh.amount} *</Text>
             <TextInput style={styles.input} placeholder="Ex: 500" keyboardType="numeric" value={avanceForm.montant} onChangeText={v => setAvanceForm(f => ({ ...f, montant: v }))} />
-            <Text style={styles.fieldLabel}>Motif (optionnel)</Text>
-            <TextInput style={[styles.input, styles.inputMulti]} placeholder="Expliquez votre besoin..." value={avanceForm.motif} onChangeText={v => setAvanceForm(f => ({ ...f, motif: v }))} multiline />
+            <Text style={styles.fieldLabel}>{t.rh.reason} ({t.common.optional})</Text>
+            <TextInput style={[styles.input, styles.inputMulti]} placeholder={t.rh.explainNeed} value={avanceForm.motif} onChangeText={v => setAvanceForm(f => ({ ...f, motif: v }))} multiline />
             <Pressable style={styles.saveBtn} onPress={handleSaveAvance}>
-              <Text style={styles.saveBtnText}>Envoyer la demande</Text>
+              <Text style={styles.saveBtnText}>{t.rh.sendRequest}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -740,13 +740,13 @@ export default function RHScreen() {
       <Modal visible={showPaieModal} transparent animationType="slide" onRequestClose={() => setShowPaieModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowPaieModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Déposer une fiche de paie</Text>
+            <Text style={styles.sheetTitle}>{t.rh.uploadPayslip}</Text>
             {paieEmployeId && (
               <Text style={[styles.fieldLabel, { marginBottom: 12, color: '#1A3A6B', fontSize: 14 }]}>
-                Employé : {getEmployeNom(paieEmployeId)}
+                {t.rh.employee}: {getEmployeNom(paieEmployeId)}
               </Text>
             )}
-            <Text style={styles.fieldLabel}>Année</Text>
+            <Text style={styles.fieldLabel}>{t.rh.year}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
               {ANNEES_LABELS.map(a => (
                 <Pressable
@@ -758,7 +758,7 @@ export default function RHScreen() {
                 </Pressable>
               ))}
             </ScrollView>
-            <Text style={styles.fieldLabel}>Mois</Text>
+            <Text style={styles.fieldLabel}>{t.rh.month}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
               {MOIS_LABELS.map(m => (
                 <Pressable

@@ -100,11 +100,11 @@ export default function SousTraitantsScreen() {
   const handleDeleteST = (st: SousTraitant) => {
     const confirm = () => { deleteSousTraitant(st.id); setSelectedST(null); };
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`Supprimer "${st.prenom} ${st.nom}" ?`) : true)) confirm();
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.sousTraitants.deleteST} "${st.prenom} ${st.nom}" ?`) : true)) confirm();
     } else {
-      Alert.alert('Supprimer', `Supprimer "${st.prenom} ${st.nom}" ?`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: confirm },
+      Alert.alert(t.common.delete, `${t.sousTraitants.deleteST} "${st.prenom} ${st.nom}" ?`, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: confirm },
       ]);
     }
   };
@@ -185,11 +185,11 @@ export default function SousTraitantsScreen() {
   const handleDeleteDevis = (d: DevisST) => {
     const confirm = () => deleteDevis(d.id);
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm('Supprimer ce devis et tous ses acomptes ?') : true)) confirm();
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(t.sousTraitants.deleteDevis) : true)) confirm();
     } else {
-      Alert.alert('Supprimer', 'Supprimer ce devis et tous ses acomptes ?', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: confirm },
+      Alert.alert(t.common.delete, t.sousTraitants.deleteDevis, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: confirm },
       ]);
     }
   };
@@ -299,7 +299,7 @@ export default function SousTraitantsScreen() {
           </View>
         </View>
         <View style={styles.cardFooter}>
-          <Text style={styles.cardFooterText}>{stMarchesCount} marché{stMarchesCount !== 1 ? 's' : ''}</Text>
+          <Text style={styles.cardFooterText}>{stMarchesCount} {t.sousTraitants.contracts}</Text>
           <Text style={styles.cardFooterText}>ID : {item.identifiant}</Text>
         </View>
       </Pressable>
@@ -313,7 +313,7 @@ export default function SousTraitantsScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t.sousTraitants.title}</Text>
           <Pressable style={styles.newBtn} onPress={openNewST}>
-            <Text style={styles.newBtnText}>+ Nouveau</Text>
+            <Text style={styles.newBtnText}>+ {t.common.new}</Text>
           </Pressable>
         </View>
 
@@ -324,8 +324,8 @@ export default function SousTraitantsScreen() {
           contentContainerStyle={styles.list}
           ListEmptyComponent={
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>Aucun sous-traitant.</Text>
-              <Text style={styles.emptyHint}>Appuyez sur "+ Nouveau" pour en ajouter un.</Text>
+              <Text style={styles.emptyText}>{t.sousTraitants.empty}</Text>
+              <Text style={styles.emptyHint}>{t.sousTraitants.emptyHint}</Text>
             </View>
           }
         />
@@ -336,7 +336,7 @@ export default function SousTraitantsScreen() {
             <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
               <View style={styles.handle} />
               <View style={styles.sheetHeader}>
-                <Text style={styles.sheetTitle}>{editSTId ? 'Modifier' : 'Nouveau sous-traitant'}</Text>
+                <Text style={styles.sheetTitle}>{editSTId ? t.common.edit : t.sousTraitants.newST}</Text>
                 <Pressable onPress={() => setShowSTForm(false)}><Text style={styles.closeX}>✕</Text></Pressable>
               </View>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -373,7 +373,7 @@ export default function SousTraitantsScreen() {
                 </Field>
               </ScrollView>
               <Pressable style={[styles.saveBtn, (!stForm.prenom.trim() || !stForm.nom.trim()) && styles.saveBtnDisabled]} onPress={handleSaveST} disabled={!stForm.prenom.trim() || !stForm.nom.trim()}>
-                <Text style={styles.saveBtnText}>{editSTId ? 'Enregistrer' : 'Créer'}</Text>
+                <Text style={styles.saveBtnText}>{editSTId ? t.common.save : t.common.create}</Text>
               </Pressable>
             </Pressable>
           </Pressable>
@@ -390,7 +390,7 @@ export default function SousTraitantsScreen() {
       {/* En-tête fiche */}
       <View style={styles.ficheHeader}>
         <Pressable style={styles.backBtn} onPress={() => setSelectedST(null)}>
-          <Text style={styles.backBtnText}>‹ Retour</Text>
+          <Text style={styles.backBtnText}>‹ {t.common.back}</Text>
         </Pressable>
         <View style={[styles.ficheAvatar, { backgroundColor: currentST.couleur }]}>
           <Text style={styles.ficheAvatarText}>{currentST.prenom[0]}{currentST.nom[0]}</Text>
@@ -407,10 +407,10 @@ export default function SousTraitantsScreen() {
       {/* Onglets intérieurs */}
       <View style={styles.innerTabs}>
         <Pressable style={[styles.innerTab, innerTab === 'infos' && styles.innerTabActive]} onPress={() => setInnerTab('infos')}>
-          <Text style={[styles.innerTabText, innerTab === 'infos' && styles.innerTabTextActive]}>Informations</Text>
+          <Text style={[styles.innerTabText, innerTab === 'infos' && styles.innerTabTextActive]}>{t.sousTraitants.tabInfo}</Text>
         </Pressable>
         <Pressable style={[styles.innerTab, innerTab === 'finances' && styles.innerTabActive]} onPress={() => setInnerTab('finances')}>
-          <Text style={[styles.innerTabText, innerTab === 'finances' && styles.innerTabTextActive]}>Chantiers & Finances</Text>
+          <Text style={[styles.innerTabText, innerTab === 'finances' && styles.innerTabTextActive]}>{t.sousTraitants.tabFinances}</Text>
         </Pressable>
       </View>
 
@@ -419,11 +419,11 @@ export default function SousTraitantsScreen() {
         <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
           {/* Coordonnées */}
           <View style={styles.infoCard}>
-            <Text style={styles.infoCardTitle}>Coordonnées</Text>
+            <Text style={styles.infoCardTitle}>{t.sousTraitants.coordinates}</Text>
             {[
-              { icon: '📍', label: 'Adresse', value: currentST.adresse },
-              { icon: '📞', label: 'Téléphone', value: currentST.telephone },
-              { icon: '✉', label: 'Email', value: currentST.email },
+              { icon: '📍', label: t.common.address, value: currentST.adresse },
+              { icon: '📞', label: t.common.phone, value: currentST.telephone },
+              { icon: '✉', label: t.common.email, value: currentST.email },
             ].map((row, i) => row.value ? (
               <View key={i} style={styles.infoRow}>
                 <Text style={styles.infoRowIcon}>{row.icon}</Text>
@@ -437,7 +437,7 @@ export default function SousTraitantsScreen() {
 
           {/* Connexion */}
           <View style={styles.infoCard}>
-            <Text style={styles.infoCardTitle}>Accès application</Text>
+            <Text style={styles.infoCardTitle}>{t.sousTraitants.appAccess}</Text>
             <View style={styles.infoRow}>
               <Text style={styles.infoRowIcon}>👤</Text>
               <View>
@@ -457,13 +457,13 @@ export default function SousTraitantsScreen() {
           {/* Documents légaux */}
           <View style={styles.infoCard}>
             <View style={styles.infoCardHeaderRow}>
-              <Text style={styles.infoCardTitle}>Documents légaux</Text>
+              <Text style={styles.infoCardTitle}>{t.sousTraitants.legalDocs}</Text>
               <Pressable style={styles.addDocBtn} onPress={() => { setDocLibelle(''); setDocFichier(''); setShowDocModal(true); }}>
-                <Text style={styles.addDocBtnText}>+ Ajouter</Text>
+                <Text style={styles.addDocBtnText}>+ {t.common.add}</Text>
               </Pressable>
             </View>
             {currentST.documents.length === 0 ? (
-              <Text style={styles.emptySmall}>Aucun document.</Text>
+              <Text style={styles.emptySmall}>{t.sousTraitants.noDocs}</Text>
             ) : (
               currentST.documents.map(doc => {
                 const isPdf = doc.fichier.startsWith('data:application/pdf');
@@ -503,16 +503,16 @@ export default function SousTraitantsScreen() {
       {innerTab === 'finances' && (
         <ScrollView style={styles.tabContent} showsVerticalScrollIndicator={false}>
           <View style={styles.financeHeader}>
-            <Text style={styles.financeTitle}>Devis & Finances</Text>
+            <Text style={styles.financeTitle}>{t.sousTraitants.financeTitle}</Text>
             <Pressable style={styles.newBtn} onPress={openNewDevis}>
-              <Text style={styles.newBtnText}>+ Devis</Text>
+              <Text style={styles.newBtnText}>+ {t.sousTraitants.newDevis}</Text>
             </Pressable>
           </View>
 
           {stDevis.length === 0 ? (
             <View style={styles.emptyState}>
-              <Text style={styles.emptyText}>Aucun devis associé.</Text>
-              <Text style={styles.emptyHint}>Appuyez sur "+ Devis" pour en créer un.</Text>
+              <Text style={styles.emptyText}>{t.sousTraitants.noDevis}</Text>
+              <Text style={styles.emptyHint}>{t.sousTraitants.noDevisHint}</Text>
             </View>
           ) : (
             stDevis.map(devis => {
@@ -526,7 +526,7 @@ export default function SousTraitantsScreen() {
                   {/* En-tête devis */}
                   <View style={styles.marcheCardHeader}>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.marcheChantier}>{chantier?.nom || 'Chantier inconnu'}</Text>
+                      <Text style={styles.marcheChantier}>{chantier?.nom || t.common.unknownProject}</Text>
                       <Text style={styles.devisObjet}>{devis.objet}</Text>
                     </View>
                     <View style={styles.cardActions}>
@@ -541,9 +541,9 @@ export default function SousTraitantsScreen() {
 
                   {/* Résumé financier */}
                   <View style={styles.financeRow}>
-                    <FinanceCell label="Prix convenu" value={fmt(devis.prixConvenu)} color="#1A3A6B" />
-                    <FinanceCell label="Acomptes versés" value={fmt(totalAcomptes)} color="#E67E22" />
-                    <FinanceCell label="Reste à payer" value={fmt(resteAPayer)} color={resteAPayer > 0 ? '#E74C3C' : '#27AE60'} />
+                    <FinanceCell label={t.sousTraitants.agreedPrice} value={fmt(devis.prixConvenu)} color="#1A3A6B" />
+                    <FinanceCell label={t.sousTraitants.deposits} value={fmt(totalAcomptes)} color="#E67E22" />
+                    <FinanceCell label={t.sousTraitants.remaining} value={fmt(resteAPayer)} color={resteAPayer > 0 ? '#E74C3C' : '#27AE60'} />
                   </View>
 
                   {/* Documents devis */}
@@ -555,11 +555,11 @@ export default function SousTraitantsScreen() {
                           if (w) w.document.write(`<iframe src="${devis.devisFichier}" width="100%" height="100%"></iframe>`);
                         }
                       }}>
-                        <Text style={styles.devisBtnText}>📄 Devis ST</Text>
+                        <Text style={styles.devisBtnText}>📄 {t.sousTraitants.devisFile}</Text>
                       </Pressable>
                     ) : (
                       <Pressable style={[styles.devisBtn, styles.devisBtnUpload]} onPress={() => handleUploadDevisFichier(devis.id)}>
-                        <Text style={styles.devisBtnText}>⬆ Uploader devis</Text>
+                        <Text style={styles.devisBtnText}>⬆ {t.sousTraitants.uploadDevis}</Text>
                       </Pressable>
                     )}
                     {devis.devisSigne ? (
@@ -569,11 +569,11 @@ export default function SousTraitantsScreen() {
                           if (w) w.document.write(`<iframe src="${devis.devisSigne}" width="100%" height="100%"></iframe>`);
                         }
                       }}>
-                        <Text style={styles.devisBtnText}>✅ Devis signé</Text>
+                        <Text style={styles.devisBtnText}>✅ {t.sousTraitants.signedDevis}</Text>
                       </Pressable>
                     ) : (
                       <Pressable style={[styles.devisBtn, styles.devisBtnUpload]} onPress={() => handleUploadDevisSigne(devis.id)}>
-                        <Text style={styles.devisBtnText}>⬆ Retourner signé</Text>
+                        <Text style={styles.devisBtnText}>⬆ {t.sousTraitants.returnSigned}</Text>
                       </Pressable>
                     )}
                   </View>
@@ -581,13 +581,13 @@ export default function SousTraitantsScreen() {
                   {/* Acomptes */}
                   <View style={styles.acomptesSection}>
                     <View style={styles.acomptesSectionHeader}>
-                      <Text style={styles.acomptesSectionTitle}>Acomptes versés</Text>
+                      <Text style={styles.acomptesSectionTitle}>{t.sousTraitants.deposits}</Text>
                       <Pressable style={styles.addAcompteBtn} onPress={() => openNewAcompte(devis.id)}>
-                        <Text style={styles.addAcompteBtnText}>+ Acompte</Text>
+                        <Text style={styles.addAcompteBtnText}>+ {t.sousTraitants.newDeposit}</Text>
                       </Pressable>
                     </View>
                     {acomptes.length === 0 ? (
-                      <Text style={styles.emptySmall}>Aucun acompte versé.</Text>
+                      <Text style={styles.emptySmall}>{t.sousTraitants.noDeposits}</Text>
                     ) : (
                       acomptes.map(a => (
                         <View key={a.id} style={styles.acompteRow}>
@@ -601,11 +601,11 @@ export default function SousTraitantsScreen() {
                                   if (w) w.document.write(`<iframe src="${a.facture}" width="100%" height="100%"></iframe>`);
                                 }
                               }}>
-                                <Text style={styles.factureLink}>📄 Voir la facture</Text>
+                                <Text style={styles.factureLink}>📄 {t.sousTraitants.viewInvoice}</Text>
                               </Pressable>
                             ) : (
                               <Pressable onPress={() => handleUploadFacture(a.id)}>
-                                <Text style={styles.factureUpload}>⬆ Joindre facture</Text>
+                                <Text style={styles.factureUpload}>⬆ {t.sousTraitants.attachInvoice}</Text>
                               </Pressable>
                             )}
                           </View>
@@ -629,7 +629,7 @@ export default function SousTraitantsScreen() {
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
             <View style={styles.handle} />
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{editSTId ? 'Modifier' : 'Nouveau sous-traitant'}</Text>
+              <Text style={styles.sheetTitle}>{editSTId ? t.common.edit : t.sousTraitants.newST}</Text>
               <Pressable onPress={() => setShowSTForm(false)}><Text style={styles.closeX}>✕</Text></Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
@@ -650,7 +650,7 @@ export default function SousTraitantsScreen() {
               </Field>
             </ScrollView>
             <Pressable style={[styles.saveBtn, (!stForm.prenom.trim() || !stForm.nom.trim()) && styles.saveBtnDisabled]} onPress={handleSaveST} disabled={!stForm.prenom.trim() || !stForm.nom.trim()}>
-              <Text style={styles.saveBtnText}>{editSTId ? 'Enregistrer' : 'Créer'}</Text>
+              <Text style={styles.saveBtnText}>{editSTId ? t.common.save : t.common.create}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -662,17 +662,17 @@ export default function SousTraitantsScreen() {
           <Pressable style={styles.sheetSmall} onPress={e => e.stopPropagation()}>
             <View style={styles.handle} />
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Ajouter un document</Text>
+              <Text style={styles.sheetTitle}>{t.sousTraitants.addDoc}</Text>
               <Pressable onPress={() => setShowDocModal(false)}><Text style={styles.closeX}>✕</Text></Pressable>
             </View>
             <Field label="Libellé *">
               <TextInput style={styles.input} value={docLibelle} onChangeText={setDocLibelle} placeholder="Ex: Kbis, Assurance décennale..." placeholderTextColor="#B0BEC5" />
             </Field>
             <Pressable style={styles.uploadBtn} onPress={handlePickDoc}>
-              <Text style={styles.uploadBtnText}>{docFichier ? '✅ Fichier sélectionné' : '⬆ Choisir un fichier (PDF/image)'}</Text>
+              <Text style={styles.uploadBtnText}>{docFichier ? `✅ ${t.common.fileSelected}` : `⬆ ${t.common.chooseFile}`}</Text>
             </Pressable>
             <Pressable style={[styles.saveBtn, (!docLibelle.trim() || !docFichier) && styles.saveBtnDisabled]} onPress={handleSaveDoc} disabled={!docLibelle.trim() || !docFichier}>
-              <Text style={styles.saveBtnText}>Ajouter</Text>
+              <Text style={styles.saveBtnText}>{t.common.add}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -684,7 +684,7 @@ export default function SousTraitantsScreen() {
           <Pressable style={styles.sheetSmall} onPress={e => e.stopPropagation()}>
             <View style={styles.handle} />
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>{editDevisId ? 'Modifier le devis' : 'Nouveau devis'}</Text>
+              <Text style={styles.sheetTitle}>{editDevisId ? t.sousTraitants.editDevis : t.sousTraitants.newDevis}</Text>
               <Pressable onPress={() => setShowDevisForm(false)}><Text style={styles.closeX}>✕</Text></Pressable>
             </View>
             <ScrollView keyboardShouldPersistTaps="handled">
@@ -707,7 +707,7 @@ export default function SousTraitantsScreen() {
               </Field>
             </ScrollView>
             <Pressable style={[styles.saveBtn, (!devisForm.chantierId || !devisForm.prixConvenu) && styles.saveBtnDisabled]} onPress={handleSaveDevis} disabled={!devisForm.chantierId || !devisForm.prixConvenu}>
-              <Text style={styles.saveBtnText}>{editDevisId ? 'Enregistrer' : 'Créer le devis'}</Text>
+              <Text style={styles.saveBtnText}>{editDevisId ? t.common.save : t.sousTraitants.createDevis}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -719,7 +719,7 @@ export default function SousTraitantsScreen() {
           <Pressable style={styles.sheetSmall} onPress={e => e.stopPropagation()}>
             <View style={styles.handle} />
             <View style={styles.sheetHeader}>
-              <Text style={styles.sheetTitle}>Ajouter un acompte</Text>
+              <Text style={styles.sheetTitle}>{t.sousTraitants.addDeposit}</Text>
               <Pressable onPress={() => setShowAcompteForm(false)}><Text style={styles.closeX}>✕</Text></Pressable>
             </View>
             <DatePicker
@@ -734,7 +734,7 @@ export default function SousTraitantsScreen() {
               <TextInput style={styles.input} value={acompteForm.commentaire} onChangeText={v => setAcompteForm(f => ({ ...f, commentaire: v }))} placeholder="Ex: Acompte démarrage" placeholderTextColor="#B0BEC5" />
             </Field>
             <Pressable style={[styles.saveBtn, !acompteForm.montant && styles.saveBtnDisabled]} onPress={handleSaveAcompte} disabled={!acompteForm.montant}>
-              <Text style={styles.saveBtnText}>Enregistrer</Text>
+              <Text style={styles.saveBtnText}>{t.common.save}</Text>
             </Pressable>
           </Pressable>
         </Pressable>

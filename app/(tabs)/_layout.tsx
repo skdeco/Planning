@@ -8,6 +8,7 @@ import { IconSymbol } from "@/components/ui/icon-symbol";
 import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/app/context/AppContext";
 import { LanguageFlag } from "@/components/LanguageFlag";
+import { useLanguage } from "@/app/context/LanguageContext";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -15,6 +16,7 @@ export default function TabLayout() {
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
   const { currentUser, data } = useApp();
+  const { t } = useLanguage();
   const isAdmin = currentUser?.role === 'admin';
   const isST = currentUser?.role === 'soustraitant';
   const isEmploye = currentUser?.role === 'employe';
@@ -97,7 +99,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="planning"
         options={{
-          title: "Planning",
+          title: t.nav.planning,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="calendar" color={color} />
           ),
@@ -108,7 +110,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="pointage"
         options={{
-          title: "Horaires",
+          title: t.nav.pointage,
           href: (isEmploye && doitPointer) ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="clock.fill" color={color} />
@@ -120,7 +122,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chantiers"
         options={{
-          title: "Chantiers",
+          title: t.nav.chantiers,
           href: isAdmin ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="hammer.fill" color={color} />
@@ -132,7 +134,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="equipe"
         options={{
-          title: "Équipe",
+          title: t.nav.equipe,
           href: isAdmin ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="person.3.fill" color={color} />
@@ -144,7 +146,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="sous-traitants"
         options={{
-          title: "Sous-traitants",
+          title: t.nav.sousTraitants,
           href: isAdmin ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="wrench.and.screwdriver.fill" color={color} />
@@ -156,7 +158,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="reporting"
         options={{
-          title: "Reporting",
+          title: t.nav.reporting,
           href: isAdmin ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="chart.bar.fill" color={color} />
@@ -168,7 +170,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="financier-st"
         options={{
-          title: "Mes finances",
+          title: t.nav.finances,
           href: isST ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="eurosign.circle.fill" color={color} />
@@ -180,7 +182,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="materiel"
         options={{
-          title: "Matériel",
+          title: t.nav.materiel,
           href: isST ? null : undefined,
           tabBarBadge: isAcheteur && nbNonAchetes > 0 ? nbNonAchetes : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
@@ -194,7 +196,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="rh"
         options={{
-          title: "RH",
+          title: t.nav.rh,
           href: hasRHAccess ? undefined : null,
           tabBarBadge: nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
@@ -208,7 +210,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="messagerie"
         options={{
-          title: "Messages",
+          title: t.nav.messages,
           href: !isST ? undefined : undefined,
           tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },

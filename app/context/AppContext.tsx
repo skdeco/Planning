@@ -9,6 +9,7 @@ import type {
   PhotoChantier,
   DocumentRHEmploye,
   NoteChantier,
+  PlanChantier,
 } from '@/app/types';
 import type { MessagePrive } from '@/app/types/messages';
 import { EMPLOYE_COLORS } from '@/app/types';
@@ -100,6 +101,9 @@ interface AppContextType {
   updateNoteChantier: (n: NoteChantier) => void;
   deleteNoteChantier: (id: string) => void;
   archiveNoteChantier: (noteId: string, userId: string) => void;
+  // Plans chantier
+  addPlanChantier: (chantierId: string, plan: PlanChantier) => void;
+  deletePlanChantier: (chantierId: string, planId: string) => void;
   // Messagerie privée
   addMessagePrive: (m: MessagePrive) => void;
   updateMessagePrive: (m: MessagePrive) => void;
@@ -842,7 +846,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateNoteChantier = (n: NoteChantier) =>
     setData(p => ({ ...p, notesChantier: (p.notesChantier || []).map(x => x.id === n.id ? n : x) }));
   const deleteNoteChantier = (id: string) =>
-    setData(p => ({ ...p, notesChantier: (p.notesChantier || []).filter(x => x.id !== id) }));
+    setData(p => {
+      const note = (p.notesChantier || []).find(x => x.id === id);
+      if (!note) return p;
+      const deletedNote: NoteChantier = {
+        ...note,
+        deletedAt: new Date().toISOString(),
+        deletedBy: 'admin',
+        deletedNom: 'Admin',
+      };
+      return {
+        ...p,
+        notesChantier: (p.notesChantier || []).filter(x => x.id !== id),
+        notesChantierSupprimees: [...(p.notesChantierSupprimees || []), deletedNote],
+      };
+    });
   const archiveNoteChantier = (noteId: string, userId: string) =>
     setData(p => ({
       ...p,
@@ -850,6 +868,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         n.id === noteId
           ? { ...n, archivedBy: n.archivedBy.includes(userId) ? n.archivedBy : [...n.archivedBy, userId] }
           : n
+      ),
+    }));
+
+  // ── Plans chantier ──
+  const addPlanChantier = (chantierId: string, plan: PlanChantier) =>
+    setData(p => ({
+      ...p,
+      chantiers: p.chantiers.map(c =>
+        c.id === chantierId
+          ? { ...c, fiche: { ...(c.fiche || { codeAcces: '', emplacementCle: '', codeAlarme: '', contacts: '', notes: '', photos: [], updatedAt: '' }), plans: [...(c.fiche?.plans || []), plan] } }
+          : c
+      ),
+    }));
+
+  const deletePlanChantier = (chantierId: string, planId: string) =>
+    setData(p => ({
+      ...p,
+      chantiers: p.chantiers.map(c =>
+        c.id === chantierId
+          ? { ...c, fiche: c.fiche ? { ...c.fiche, plans: (c.fiche.plans || []).filter(pl => pl.id !== planId) } : c.fiche }
+          : c
       ),
     }));
 
@@ -884,6 +923,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addDocumentRH, deleteDocumentRH,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier,
+      addPlanChantier, deletePlanChantier,
       logout,
     }}>
       {children}

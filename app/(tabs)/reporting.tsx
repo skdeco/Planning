@@ -363,11 +363,10 @@ export default function ReportingScreen() {
 
   const handleDeleteAcompte = (ac: Acompte) => {
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`Supprimer l'acompte de ${ac.montant} € ?`) : true)) deleteAcompte(ac.id);
-    } else {
-      Alert.alert('Supprimer', `Supprimer l'acompte de ${ac.montant} € ?`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => deleteAcompte(ac.id) },
+   if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.reporting.deleteDeposit} ${ac.montant} € ?`) : true)) deleteAcompte(ac.id);  } else {
+      Alert.alert(t.common.delete, `${t.reporting.deleteDeposit} ${ac.montant} € ?`, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: () => deleteAcompte(ac.id) },
       ]);
     }
   };
@@ -502,7 +501,7 @@ export default function ReportingScreen() {
     return (
       <ScreenContainer containerClassName="bg-[#F2F4F7]">
         <View style={styles.center}>
-          <Text style={styles.noAccess}>Accès réservé à l'administrateur</Text>
+          <Text style={styles.noAccess}>{t.common.adminOnly}</Text>
         </View>
       </ScreenContainer>
     );
@@ -535,7 +534,7 @@ export default function ReportingScreen() {
           onPress={() => setVue('journalier')}
         >
           <Text style={[styles.vueBtnText, vue === 'journalier' && styles.vueBtnTextActive]}>
-            Journalier
+            {t.reporting.daily}
           </Text>
         </Pressable>
         <Pressable
@@ -543,7 +542,7 @@ export default function ReportingScreen() {
           onPress={() => setVue('employe')}
         >
           <Text style={[styles.vueBtnText, vue === 'employe' && styles.vueBtnTextActive]}>
-            Par employé
+            {t.reporting.byEmployee}
           </Text>
         </Pressable>
         <Pressable
@@ -551,7 +550,7 @@ export default function ReportingScreen() {
           onPress={() => setVue('saisie')}
         >
           <Text style={[styles.vueBtnText, vue === 'saisie' && styles.vueBtnTextActive]}>
-            ✏️ Saisie
+            ✏️ {t.reporting.manualEntry}
           </Text>
         </Pressable>
       </View>
@@ -603,7 +602,7 @@ export default function ReportingScreen() {
                       </View>
                     ) : isAbsent ? (
                       <View style={[styles.dureeBadge, styles.dureeBadgeAbsent]}>
-                        <Text style={[styles.dureeBadgeText, { color: '#E74C3C' }]}>Abs.</Text>
+                        <Text style={[styles.dureeBadgeText, { color: '#E74C3C' }]}>{t.reporting.absent}</Text>
                       </View>
                     ) : null}
                   </View>
@@ -611,7 +610,7 @@ export default function ReportingScreen() {
                   <View style={styles.pointageRow}>
                     {debut ? (
                       <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>Arrivée</Text>
+                        <Text style={styles.pointageLabel}>{t.reporting.arrival}</Text>
                         <Text style={styles.pointageHeure}>{debut.heure}</Text>
                         {ecartD !== null && (
                           <Text style={[styles.ecartText, { color: getPonctualiteColor(ecartD) }]}>
@@ -621,14 +620,14 @@ export default function ReportingScreen() {
                       </View>
                     ) : (
                       <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>Arrivée</Text>
+                        <Text style={styles.pointageLabel}>{t.reporting.arrival}</Text>
                         <Text style={styles.pointageAbsent}>—</Text>
                       </View>
                     )}
                     <View style={styles.pointageSep} />
                     {fin ? (
                       <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>Départ</Text>
+                        <Text style={styles.pointageLabel}>{t.reporting.departure}</Text>
                         <Text style={styles.pointageHeure}>{fin.heure}</Text>
                         {ecartF !== null && (
                           <Text style={[styles.ecartText, { color: getPonctualiteColor(ecartF) }]}>
@@ -638,7 +637,7 @@ export default function ReportingScreen() {
                       </View>
                     ) : (
                       <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>Départ</Text>
+                        <Text style={styles.pointageLabel}>{t.reporting.departure}</Text>
                         <Text style={styles.pointageAbsent}>—</Text>
                       </View>
                     )}
@@ -662,7 +661,7 @@ export default function ReportingScreen() {
 
                   {/* Bouton ajouter acompte */}
                   <Pressable style={styles.addAcompteBtn} onPress={() => openAcompteModal(emp.id)}>
-                    <Text style={styles.addAcompteBtnText}>+ Acompte</Text>
+                    <Text style={styles.addAcompteBtnText}>+ {t.reporting.deposit}</Text>
                   </Pressable>
                 </View>
               );
@@ -671,7 +670,7 @@ export default function ReportingScreen() {
           {/* Résumé acomptes du jour */}
           {acomptesJour.length > 0 && (
             <View style={styles.resumeCard}>
-              <Text style={styles.resumeTitle}>Total acomptes ce jour</Text>
+              <Text style={styles.resumeTitle}>{t.reporting.totalDepositsDay}</Text>
               <Text style={styles.resumeAmount}>
                 {acomptesJour.reduce((s, a) => s + a.montant, 0).toLocaleString('fr-FR')} €
               </Text>
@@ -718,7 +717,7 @@ export default function ReportingScreen() {
 
           {!empSelectionne ? (
             <View style={styles.emptyCard}>
-              <Text style={styles.emptyText}>Sélectionnez un employé ci-dessus.</Text>
+              <Text style={styles.emptyText}>{t.reporting.selectEmployee}</Text>
             </View>
           ) : rapportEmploye ? (
             <>
@@ -726,14 +725,14 @@ export default function ReportingScreen() {
               <View style={styles.resumeMensuel}>
                 {/* Ligne total heures */}
                 <View style={styles.resumeMensuelRow}>
-                  <Text style={styles.resumeMensuelLabel}>Total heures</Text>
+                  <Text style={styles.resumeMensuelLabel}>{t.reporting.totalHours}</Text>
                   <Text style={styles.resumeMensuelValue}>{formatDuree(rapportEmploye.totalMinutes)}</Text>
                 </View>
 
                 {/* Retards (admin/RH toujours, employé si retardAfficheEmploye) */}
                 {rapportEmploye.totalRetardMinutes > 0 && (isAdmin || (currentUser as any)?.isRH || empSelectionne.retardAfficheEmploye) && (
                   <View style={styles.resumeMensuelRow}>
-                    <Text style={[styles.resumeMensuelLabel, { color: '#E67E22' }]}>Total retards</Text>
+                    <Text style={[styles.resumeMensuelLabel, { color: '#E67E22' }]}>{t.reporting.totalLate}</Text>
                     <Text style={[styles.resumeMensuelValue, { color: '#E67E22' }]}>+{formatDuree(rapportEmploye.totalRetardMinutes)} (info)</Text>
                   </View>
                 )}
@@ -742,37 +741,37 @@ export default function ReportingScreen() {
                 {rapportEmploye.modeSalaire === 'journalier' && rapportEmploye.tarifJournalier != null && (
                   <>
                     <View style={[styles.resumeMensuelRow, { backgroundColor: '#F0F4FF', borderRadius: 6, paddingHorizontal: 8, marginTop: 4 }]}>
-                      <Text style={styles.resumeMensuelLabel}>Jours ouvrables du mois</Text>
+                      <Text style={styles.resumeMensuelLabel}>{t.reporting.workingDays}</Text>
                       <Text style={styles.resumeMensuelValue}>{rapportEmploye.joursOuvrablesMois} j</Text>
                     </View>
                     <View style={styles.resumeMensuelRow}>
-                      <Text style={styles.resumeMensuelLabel}>Tarif journalier</Text>
+                      <Text style={styles.resumeMensuelLabel}>{t.reporting.dailyRate}</Text>
                       <Text style={styles.resumeMensuelValue}>{rapportEmploye.tarifJournalier.toLocaleString('fr-FR')} €/j</Text>
                     </View>
                     <View style={styles.resumeMensuelRow}>
-                      <Text style={styles.resumeMensuelLabel}>Salaire de base</Text>
+                      <Text style={styles.resumeMensuelLabel}>{t.reporting.baseSalary}</Text>
                       <Text style={styles.resumeMensuelValue}>{(rapportEmploye.salaireBase ?? 0).toLocaleString('fr-FR')} €</Text>
                     </View>
                     {rapportEmploye.joursFeriesComptes > 0 && (
                       <View style={styles.resumeMensuelRow}>
-                        <Text style={[styles.resumeMensuelLabel, { color: '#8E44AD' }]}>J. fériés (déjà exclus)</Text>
+                        <Text style={[styles.resumeMensuelLabel, { color: '#8E44AD' }]}>{t.reporting.holidays}</Text>
                         <Text style={[styles.resumeMensuelValue, { color: '#8E44AD' }]}>{rapportEmploye.joursFeriesComptes} j</Text>
                       </View>
                     )}
                     {rapportEmploye.joursFeriesTravailles > 0 && (
                       <View style={[styles.resumeMensuelRow, { backgroundColor: '#E8F5E9', borderRadius: 6, paddingHorizontal: 8 }]}>
-                        <Text style={[styles.resumeMensuelLabel, { color: '#27AE60' }]}>🎉 J. fériés travaillés (bonus)</Text>
+                        <Text style={[styles.resumeMensuelLabel, { color: '#27AE60' }]}>🎉 {t.reporting.holidaysWorked}</Text>
                         <Text style={[styles.resumeMensuelValue, { color: '#27AE60' }]}>+{rapportEmploye.joursFeriesTravailles} j (+{(rapportEmploye.joursFeriesTravailles * (rapportEmploye.tarifJournalier ?? 0)).toLocaleString('fr-FR')} €)</Text>
                       </View>
                     )}
                     {rapportEmploye.joursAbsents > 0 && (
                       <View style={styles.resumeMensuelRow}>
-                        <Text style={[styles.resumeMensuelLabel, { color: '#E74C3C' }]}>Absences déduites</Text>
+                        <Text style={[styles.resumeMensuelLabel, { color: '#E74C3C' }]}>{t.reporting.absencesDeducted}</Text>
                         <Text style={[styles.resumeMensuelValue, { color: '#E74C3C' }]}>- {rapportEmploye.joursAbsents} j (- {(rapportEmploye.joursAbsents * (rapportEmploye.tarifJournalier ?? 0)).toLocaleString('fr-FR')} €)</Text>
                       </View>
                     )}
                     <View style={[styles.resumeMensuelRow, { borderTopWidth: 1, borderTopColor: '#E0E0E0', marginTop: 4, paddingTop: 4 }]}>
-                      <Text style={styles.resumeMensuelLabel}>Salaire avant acompte</Text>
+                      <Text style={styles.resumeMensuelLabel}>{t.reporting.salaryBeforeDeposit}</Text>
                       <Text style={[styles.resumeMensuelValue, { fontWeight: '700' }]}>{(rapportEmploye.salaireAvantAcompte ?? 0).toLocaleString('fr-FR')} €</Text>
                     </View>
                   </>
@@ -781,7 +780,7 @@ export default function ReportingScreen() {
                 {/* Mode mensuel fixe */}
                 {rapportEmploye.modeSalaire === 'mensuel' && rapportEmploye.salaireBase != null && (
                   <View style={styles.resumeMensuelRow}>
-                    <Text style={styles.resumeMensuelLabel}>Salaire net mensuel</Text>
+                    <Text style={styles.resumeMensuelLabel}>{t.reporting.monthlySalary}</Text>
                     <Text style={styles.resumeMensuelValue}>{rapportEmploye.salaireBase.toLocaleString('fr-FR')} €</Text>
                   </View>
                 )}
@@ -789,7 +788,7 @@ export default function ReportingScreen() {
                 {/* Acomptes */}
                 {(rapportEmploye.salaireBase != null) && (
                   <View style={styles.resumeMensuelRow}>
-                    <Text style={styles.resumeMensuelLabel}>Acomptes versés</Text>
+                    <Text style={styles.resumeMensuelLabel}>{t.reporting.depositsTotal}</Text>
                     <Text style={[styles.resumeMensuelValue, { color: '#E74C3C' }]}>
                       - {rapportEmploye.totalAcomptes.toLocaleString('fr-FR')} €
                     </Text>
@@ -799,7 +798,7 @@ export default function ReportingScreen() {
                 {/* Reste à payer */}
                 {rapportEmploye.resteAPayer != null && (
                   <View style={[styles.resumeMensuelRow, styles.resumeMensuelTotal]}>
-                    <Text style={styles.resumeMensuelTotalLabel}>Reste à payer</Text>
+                    <Text style={styles.resumeMensuelTotalLabel}>{t.reporting.remaining}</Text>
                     <Text style={[styles.resumeMensuelTotalValue, { color: rapportEmploye.resteAPayer >= 0 ? '#1A3A6B' : '#E74C3C' }]}>
                       {rapportEmploye.resteAPayer.toLocaleString('fr-FR')} €
                     </Text>
@@ -807,14 +806,14 @@ export default function ReportingScreen() {
                 )}
 
                 <Pressable style={styles.addAcompteBtnLarge} onPress={() => openAcompteModal(empSelectionne.id)}>
-                  <Text style={styles.addAcompteBtnLargeText}>+ Ajouter un acompte</Text>
+                  <Text style={styles.addAcompteBtnLargeText}>+ {t.reporting.addDeposit}</Text>
                 </Pressable>
               </View>
 
               {/* Acomptes du mois */}
               {rapportEmploye.acomptesMois.length > 0 && (
                 <View style={styles.acomptesMoisSection}>
-                  <Text style={styles.sectionTitle}>Acomptes du mois</Text>
+                  <Text style={styles.sectionTitle}>{t.reporting.monthDeposits}</Text>
                   {rapportEmploye.acomptesMois.map(ac => (
                     <View key={ac.id} style={styles.acompteRow}>
                       <Text style={styles.acompteIcon}>💶</Text>
@@ -830,14 +829,14 @@ export default function ReportingScreen() {
               )}
 
               {/* Tableau des jours */}
-              <Text style={styles.sectionTitle}>Détail du mois</Text>
+              <Text style={styles.sectionTitle}>{t.reporting.monthDetail}</Text>
               <View style={styles.tableau}>
                 {/* En-tête */}
                 <View style={[styles.tableauRow, styles.tableauHeader]}>
-                  <Text style={[styles.tableauCell, styles.tableauCellDate, styles.tableauHeaderText]}>Date</Text>
-                  <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>Arrivée</Text>
-                  <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>Départ</Text>
-                  <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>Durée</Text>
+                  <Text style={[styles.tableauCell, styles.tableauCellDate, styles.tableauHeaderText]}>{t.common.date}</Text>
+                  <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.arrival}</Text>
+                  <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.departure}</Text>
+                  <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.duration}</Text>
                 </View>
                 {rapportEmploye.lignes.map(({ dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, joursFeriesTravaille }) => {
                   const isWeekend = [0, 6].includes(new Date(dateStr + 'T12:00:00').getDay());
@@ -921,7 +920,7 @@ export default function ReportingScreen() {
             </Pressable>
           </View>
           <Text style={{ marginHorizontal: 16, marginBottom: 8, fontSize: 12, color: '#687076' }}>
-            Appuyez sur une ligne pour modifier le pointage d’un employé.
+            {t.reporting.tapToEdit}
           </Text>
           {data.employes.map(emp => {
             const mc = METIER_COLORS[emp.metier];
@@ -938,10 +937,10 @@ export default function ReportingScreen() {
                 <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                   <View>
                     <View style={styles.saisieTableHeader}>
-                      <Text style={[styles.saisieCellDate, styles.saisieHeaderText]}>Date</Text>
-                      <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>Arrivée</Text>
-                      <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>Départ</Text>
-                      <Text style={[styles.saisieCellDuree, styles.saisieHeaderText]}>Durée</Text>
+                      <Text style={[styles.saisieCellDate, styles.saisieHeaderText]}>{t.common.date}</Text>
+                      <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>{t.reporting.arrival}</Text>
+                      <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>{t.reporting.departure}</Text>
+                      <Text style={[styles.saisieCellDuree, styles.saisieHeaderText]}>{t.reporting.duration}</Text>
                       <Text style={[styles.saisieCellAction, styles.saisieHeaderText]}>✏️</Text>
                     </View>
                     {joursDuMois.map(dateStr => {
@@ -970,7 +969,7 @@ export default function ReportingScreen() {
                           </Text>
                           <View style={[styles.saisieCellHeure, debut?.saisieManuelle && styles.saisieCellManuelle]}>
                             <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : '#B0BEC5' }]}>
-                              {debut ? debut.heure : isAbsent ? 'Abs.' : '—'}
+                              {debut ? debut.heure : isAbsent ? t.reporting.absent : '—'}
                             </Text>
                             {debut?.saisieManuelle && <Text style={styles.saisieManuelleIcon}>✏️</Text>}
                           </View>
@@ -1008,7 +1007,7 @@ export default function ReportingScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setEditPointageModal(false)}>
           <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>✏️ Modifier le pointage</Text>
+            <Text style={styles.modalTitle}>✏️ {t.reporting.editTimesheet}</Text>
             {editEmpId && (
               <Text style={styles.modalSubtitle}>
                 {data.employes.find(e => e.id === editEmpId)?.prenom}{' '}
@@ -1020,12 +1019,12 @@ export default function ReportingScreen() {
               onPress={() => setEditIsAbsent(v => !v)}
             >
               <Text style={[styles.editAbsentBtnText, editIsAbsent && { color: '#fff' }]}>
-                {editIsAbsent ? '✓ Marqué absent' : 'Marquer absent (supprimer pointage)'}
+                {editIsAbsent ? `✓ ${t.reporting.markedAbsent}` : t.reporting.markAbsent}
               </Text>
             </Pressable>
             {!editIsAbsent && (
               <>
-                <Text style={styles.modalFieldLabel}>Heure d’arrivée (HH:MM)</Text>
+                <Text style={styles.modalFieldLabel}>{t.reporting.arrivalTime}</Text>
                 <TextInput
                   style={styles.modalInput}
                   value={editArrivee}
@@ -1034,7 +1033,7 @@ export default function ReportingScreen() {
                   placeholderTextColor="#B0BEC5"
                   keyboardType="numbers-and-punctuation"
                 />
-                <Text style={styles.modalFieldLabel}>Heure de départ (HH:MM)</Text>
+                <Text style={styles.modalFieldLabel}>{t.reporting.departureTime}</Text>
                 <TextInput
                   style={styles.modalInput}
                   value={editDepart}
@@ -1047,10 +1046,10 @@ export default function ReportingScreen() {
             )}
             <View style={styles.modalActions}>
               <Pressable style={styles.modalCancelBtn} onPress={() => setEditPointageModal(false)}>
-                <Text style={styles.modalCancelBtnText}>Annuler</Text>
+                <Text style={styles.modalCancelBtnText}>{t.common.cancel}</Text>
               </Pressable>
               <Pressable style={styles.modalSaveBtn} onPress={handleSaveEditPointage}>
-                <Text style={styles.modalSaveBtnText}>Enregistrer</Text>
+                <Text style={styles.modalSaveBtnText}>{t.common.save}</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -1067,7 +1066,7 @@ export default function ReportingScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setShowAcompteModal(false)}>
           <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Ajouter un acompte</Text>
+            <Text style={styles.modalTitle}>{t.reporting.addDeposit}</Text>
             {acompteEmployeId && (
               <Text style={styles.modalSubtitle}>
                 {data.employes.find(e => e.id === acompteEmployeId)?.prenom}{' '}
@@ -1081,7 +1080,7 @@ export default function ReportingScreen() {
               onChange={setAcompteDate}
             />
 
-            <Text style={styles.modalFieldLabel}>Montant (€) *</Text>
+            <Text style={styles.modalFieldLabel}>{t.reporting.amount} *</Text>
             <TextInput
               style={styles.modalInput}
               value={acompteMontant}
@@ -1092,7 +1091,7 @@ export default function ReportingScreen() {
               autoFocus
             />
 
-            <Text style={styles.modalFieldLabel}>Commentaire</Text>
+            <Text style={styles.modalFieldLabel}>{t.common.comment}</Text>
             <TextInput
               style={[styles.modalInput, { minHeight: 72, textAlignVertical: 'top' }]}
               value={acompteCommentaire}
@@ -1104,14 +1103,14 @@ export default function ReportingScreen() {
 
             <View style={styles.modalActions}>
               <Pressable style={styles.modalCancelBtn} onPress={() => setShowAcompteModal(false)}>
-                <Text style={styles.modalCancelBtnText}>Annuler</Text>
+                <Text style={styles.modalCancelBtnText}>{t.common.cancel}</Text>
               </Pressable>
               <Pressable
                 style={[styles.modalSaveBtn, (!acompteMontant.trim()) && styles.modalSaveBtnDisabled]}
                 onPress={handleSaveAcompte}
                 disabled={!acompteMontant.trim()}
               >
-                <Text style={styles.modalSaveBtnText}>Enregistrer</Text>
+                <Text style={styles.modalSaveBtnText}>{t.common.save}</Text>
               </Pressable>
             </View>
           </Pressable>

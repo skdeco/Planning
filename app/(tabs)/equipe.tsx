@@ -146,7 +146,7 @@ export default function EquipeScreen() {
       if ((typeof window !== 'undefined' && window.confirm ? window.confirm(msg) : true)) setForm(f => ({ ...f, [field]: true }));
     } else {
       Alert.alert('Confirmation', msg, [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         { text: 'Confirmer', onPress: () => setForm(f => ({ ...f, [field]: true })) },
       ]);
     }
@@ -186,11 +186,11 @@ export default function EquipeScreen() {
 
   const handleDelete = (id: string, nom: string) => {
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`Supprimer "${nom}" ?`) : true)) deleteEmploye(id);
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.common.deleteConfirm} "${nom}" ?`) : true)) deleteEmploye(id);
     } else {
-      Alert.alert('Supprimer l\'employé', `Êtes-vous sûr de vouloir supprimer "${nom}" ?`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => deleteEmploye(id) },
+      Alert.alert(t.equipe.deleteEmployee, `${t.common.deleteConfirm} "${nom}" ?`, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: () => deleteEmploye(id) },
       ]);
     }
   };
@@ -270,7 +270,7 @@ export default function EquipeScreen() {
       if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`Supprimer le document "${label}" ?\nCette action est irréversible.`) : true)) doDelete();
     } else {
       Alert.alert('Supprimer ?', `Supprimer "${label}" ?`, [
-        { text: 'Annuler', style: 'cancel' },
+        { text: t.common.cancel, style: 'cancel' },
         { text: 'Supprimer', style: 'destructive', onPress: doDelete },
       ]);
     }
@@ -313,11 +313,11 @@ export default function EquipeScreen() {
 
   const handleDeleteST = (id: string, nom: string) => {
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`Supprimer "${nom}" ?`) : true)) deleteSousTraitant(id);
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.common.deleteConfirm} "${nom}" ?`) : true)) deleteSousTraitant(id);
     } else {
-      Alert.alert('Supprimer', `Supprimer "${nom}" ?`, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => deleteSousTraitant(id) },
+      Alert.alert(t.common.delete, `${t.common.deleteConfirm} "${nom}" ?`, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: () => deleteSousTraitant(id) },
       ]);
     }
   };
@@ -423,7 +423,7 @@ export default function EquipeScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.equipe.title}</Text>
         <Pressable style={styles.addBtn} onPress={activeTab === 'employes' ? openNew : openNewST}>
-          <Text style={styles.addBtnText}>+ Ajouter</Text>
+          <Text style={styles.addBtnText}>{t.common.add}</Text>
         </Pressable>
       </View>
 
@@ -431,12 +431,12 @@ export default function EquipeScreen() {
       <View style={styles.tabRow}>
         <Pressable style={[styles.tabBtn, activeTab === 'employes' && styles.tabBtnActive]} onPress={() => setActiveTab('employes')}>
           <Text style={[styles.tabBtnText, activeTab === 'employes' && styles.tabBtnTextActive]}>
-            👷 Employés ({data.employes.length})
+            {t.equipe.employees} ({data.employes.length})
           </Text>
         </Pressable>
         <Pressable style={[styles.tabBtn, activeTab === 'soustraitants' && styles.tabBtnActive]} onPress={() => setActiveTab('soustraitants')}>
           <Text style={[styles.tabBtnText, activeTab === 'soustraitants' && styles.tabBtnTextActive]}>
-            🔧 Sous-traitants ({data.sousTraitants.length})
+            {t.equipe.subcontractors} ({data.sousTraitants.length})
           </Text>
         </Pressable>
       </View>
@@ -446,7 +446,7 @@ export default function EquipeScreen() {
           {/* Filtre métiers */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
             <Pressable style={[styles.filterChip, filterMetier === 'all' && styles.filterChipActive]} onPress={() => setFilterMetier('all')}>
-              <Text style={[styles.filterChipText, filterMetier === 'all' && styles.filterChipTextActive]}>Tous</Text>
+              <Text style={[styles.filterChipText, filterMetier === 'all' && styles.filterChipTextActive]}>{t.common.all}</Text>
             </Pressable>
             {METIERS_LIST.map(m => {
               const mc = METIER_COLORS[m];
@@ -464,7 +464,7 @@ export default function EquipeScreen() {
             keyExtractor={item => item.id}
             renderItem={renderEmploye}
             contentContainerStyle={styles.list}
-            ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>Aucun employé trouvé.</Text></View>}
+            ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>{t.equipe.noEmployee}</Text></View>}
           />
         </>
       )}
@@ -475,7 +475,7 @@ export default function EquipeScreen() {
           keyExtractor={item => item.id}
           renderItem={renderST}
           contentContainerStyle={styles.list}
-          ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>Aucun sous-traitant.</Text></View>}
+          ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>{t.equipe.noSubcontractor}</Text></View>}
         />
       )}
 
@@ -485,7 +485,7 @@ export default function EquipeScreen() {
           <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{editId ? 'Modifier l\'employé' : 'Nouvel employé'}</Text>
+              <Text style={styles.modalTitle}>{editId ? t.equipe.editEmployee : t.equipe.newEmployee}</Text>
               <Pressable onPress={() => setShowForm(false)}><Text style={styles.modalClose}>✕</Text></Pressable>
             </View>
 
@@ -493,11 +493,11 @@ export default function EquipeScreen() {
               {/* Prénom / Nom */}
               <View style={styles.nameRow}>
                 <View style={{ flex: 1, marginRight: 8 }}>
-                  <Text style={styles.fieldLabel}>Prénom *</Text>
+                  <Text style={styles.fieldLabel}>{t.common.firstName} *</Text>
                   <TextInput style={styles.input} value={form.prenom} onChangeText={v => setForm(f => ({ ...f, prenom: v }))} placeholder="Ex: Sacha" placeholderTextColor="#B0BEC5" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Nom</Text>
+                  <Text style={styles.fieldLabel}>{t.equipe.lastName}</Text>
                   <TextInput style={styles.input} value={form.nom} onChangeText={v => setForm(f => ({ ...f, nom: v }))} placeholder="Ex: Martin" placeholderTextColor="#B0BEC5" />
                 </View>
               </View>
@@ -515,11 +515,11 @@ export default function EquipeScreen() {
               </View>
 
               {/* Identifiant */}
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Identifiant de connexion *</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.loginId} *</Text>
               <TextInput style={styles.input} value={form.identifiant} onChangeText={v => setForm(f => ({ ...f, identifiant: v }))} placeholder="Ex: sacha.martin" placeholderTextColor="#B0BEC5" autoCapitalize="none" autoCorrect={false} />
 
               {/* Mot de passe */}
-              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Mot de passe *</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.common.password} *</Text>
               <View style={styles.mdpRow}>
                 <TextInput style={[styles.input, { flex: 1 }]} value={form.motDePasse} onChangeText={v => setForm(f => ({ ...f, motDePasse: v }))} placeholder="Ex: 1234" placeholderTextColor="#B0BEC5" secureTextEntry={!showMdp} autoCapitalize="none" autoCorrect={false} />
                 <Pressable style={styles.mdpToggle} onPress={() => setShowMdp(v => !v)}>
@@ -528,12 +528,12 @@ export default function EquipeScreen() {
               </View>
 
               {/* Mode salaire */}
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Mode de rémunération</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.payMode}</Text>
               <View style={styles.roleRow}>
                 {(['mensuel', 'journalier'] as const).map(m => (
                   <Pressable key={m} style={[styles.roleChip, form.modeSalaire === m && styles.roleChipActive]} onPress={() => setForm(f => ({ ...f, modeSalaire: m }))}>
                     <Text style={[styles.roleChipText, form.modeSalaire === m && styles.roleChipTextActive]}>
-                      {m === 'mensuel' ? '💶 Mensuel fixe' : '📅 Journalier'}
+                      {m === 'mensuel' ? `💶 ${t.equipe.monthly}` : `📅 ${t.equipe.daily}`}
                     </Text>
                   </Pressable>
                 ))}
@@ -541,20 +541,20 @@ export default function EquipeScreen() {
 
               {form.modeSalaire === 'mensuel' ? (
                 <>
-                  <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Salaire net mensuel (€)</Text>
+                  <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.equipe.monthlySalary}</Text>
                   <TextInput style={styles.input} value={form.salaireNet} onChangeText={v => setForm(f => ({ ...f, salaireNet: v }))} placeholder="Ex: 1800" placeholderTextColor="#B0BEC5" keyboardType="numeric" />
-                  <Text style={styles.fieldHint}>Visible uniquement par l'administrateur et le RH</Text>
+                  <Text style={styles.fieldHint}>{t.equipe.salaryHint}</Text>
                 </>
               ) : (
                 <>
-                  <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Tarif journalier (€/jour)</Text>
+                  <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.equipe.dailyRate}</Text>
                   <TextInput style={styles.input} value={form.tarifJournalier} onChangeText={v => setForm(f => ({ ...f, tarifJournalier: v }))} placeholder="Ex: 150" placeholderTextColor="#B0BEC5" keyboardType="numeric" />
-                  <Text style={styles.fieldHint}>Salaire = nb jours ouvrables du mois × tarif journalier</Text>
+                  <Text style={styles.fieldHint}>{t.equipe.dailyRateHint}</Text>
                 </>
               )}
 
               {/* Couleur */}
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Couleur dans le planning</Text>
+          <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.colorInPlanning}</Text>
               <View style={styles.colorRow}>
                 {EMPLOYE_COLORS.map(c => (
                   <Pressable key={c} style={[styles.colorSwatch, { backgroundColor: c }, form.couleur === c && styles.colorSwatchActive]} onPress={() => setForm(f => ({ ...f, couleur: c }))} />
@@ -562,7 +562,7 @@ export default function EquipeScreen() {
               </View>
 
               {/* Métier */}
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Métier</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.trade}</Text>
               <View style={styles.metierGrid}>
                 {METIERS_LIST.map(m => {
                   const mc = METIER_COLORS[m];
@@ -577,11 +577,11 @@ export default function EquipeScreen() {
               </View>
 
               {/* Rôle */}
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Rôle</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.role}</Text>
               <View style={styles.roleRow}>
                 {(['employe', 'admin'] as const).map(r => (
                   <Pressable key={r} style={[styles.roleChip, form.role === r && styles.roleChipActive]} onPress={() => setForm(f => ({ ...f, role: r }))}>
-                    <Text style={[styles.roleChipText, form.role === r && styles.roleChipTextActive]}>{r === 'admin' ? 'Administrateur' : 'Employé'}</Text>
+                    <Text style={[styles.roleChipText, form.role === r && styles.roleChipTextActive]}>{r === 'admin' ? t.equipe.administrator : t.equipe.employeeRole}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -589,8 +589,8 @@ export default function EquipeScreen() {
               {/* Pointage obligatoire */}
               <View style={styles.acheteurRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Pointage requis ⏱</Text>
-                  <Text style={styles.fieldHint}>Désactiver pour les employés qui ne pointent pas</Text>
+                  <Text style={styles.fieldLabel}>{t.equipe.timesheetRequired}</Text>
+                  <Text style={styles.fieldHint}>{t.equipe.timesheetHint}</Text>
                 </View>
                 <Switch value={form.doitPointer} onValueChange={v => setForm(f => ({ ...f, doitPointer: v }))} trackColor={{ false: '#E2E6EA', true: '#1A3A6B' }} thumbColor="#fff" />
               </View>
@@ -598,8 +598,8 @@ export default function EquipeScreen() {
               {/* Accréditation Acheteur */}
               <View style={styles.acheteurRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Rôle acheteur 🛒</Text>
-                  <Text style={styles.fieldHint}>Peut voir toutes les listes matériel et valider les achats</Text>
+                  <Text style={styles.fieldLabel}>{t.equipe.buyerRole}</Text>
+                  <Text style={styles.fieldHint}>{t.equipe.buyerHint}</Text>
                 </View>
                 <Switch value={form.isAcheteur} onValueChange={v => confirmAccreditation('isAcheteur', v, 'Acheteur 🛒')} trackColor={{ false: '#E2E6EA', true: '#1A3A6B' }} thumbColor="#fff" />
               </View>
@@ -607,8 +607,8 @@ export default function EquipeScreen() {
               {/* Accréditation RH */}
               <View style={styles.acheteurRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Accréditation RH 👥</Text>
-                  <Text style={styles.fieldHint}>Peut gérer les congés, arrêts maladie et avances</Text>
+                  <Text style={styles.fieldLabel}>{t.equipe.hrRole}</Text>
+                  <Text style={styles.fieldHint}>{t.equipe.hrHint}</Text>
                 </View>
                 <Switch value={form.isRH} onValueChange={v => confirmAccreditation('isRH', v, 'Ressources Humaines 👥')} trackColor={{ false: '#E2E6EA', true: '#27AE60' }} thumbColor="#fff" />
               </View>
@@ -616,16 +616,16 @@ export default function EquipeScreen() {
               {/* Accréditation Commercial */}
               <View style={styles.acheteurRow}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Accréditation Commercial 💼</Text>
-                  <Text style={styles.fieldHint}>Accès au module devis et facturation (bientôt)</Text>
+                  <Text style={styles.fieldLabel}>{t.equipe.commercialRole}</Text>
+                  <Text style={styles.fieldHint}>{t.equipe.commercialHint}</Text>
                 </View>
                 <Switch value={form.isCommercial} onValueChange={v => confirmAccreditation('isCommercial', v, 'Commercial 💼')} trackColor={{ false: '#E2E6EA', true: '#F39C12' }} thumbColor="#fff" />
               </View>
 
               {/* Horaires théoriques */}
               <Pressable style={styles.horairesToggle} onPress={() => setShowHoraires(v => !v)}>
-                <Text style={styles.horairesToggleText}>{showHoraires ? '▼' : '▶'} Horaires théoriques</Text>
-                <Text style={styles.horairesToggleHint}>Utilisés pour détecter les retards</Text>
+                <Text style={styles.horairesToggleText}>{showHoraires ? '▼' : '▶'} {t.equipe.theoreticalHours}</Text>
+                <Text style={styles.horairesToggleHint}>{t.equipe.hoursHint}</Text>
               </Pressable>
 
               {showHoraires && (
@@ -645,7 +645,7 @@ export default function EquipeScreen() {
                             <TextInput style={styles.horaireInput} value={h.fin} onChangeText={v => updateHoraire(jour, 'fin', v)} placeholder="17:00" placeholderTextColor="#B0BEC5" keyboardType="numbers-and-punctuation" maxLength={5} />
                           </View>
                         ) : (
-                          <Text style={styles.horaireRepos}>Repos</Text>
+                          <Text style={styles.horaireRepos}>{t.equipe.dayOff}</Text>
                         )}
                       </View>
                     );
@@ -659,7 +659,7 @@ export default function EquipeScreen() {
               onPress={handleSave}
               disabled={!form.prenom.trim() || !form.identifiant.trim() || !form.motDePasse.trim()}
             >
-              <Text style={styles.saveBtnText}>{editId ? 'Enregistrer' : 'Ajouter l\'employé'}</Text>
+              <Text style={styles.saveBtnText}>{editId ? t.common.save : t.equipe.addEmployee}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -695,12 +695,12 @@ export default function EquipeScreen() {
                           style={docStyles.uploadBtn}
                           onPress={() => docsEmployeId && handleUploadDoc(docsEmployeId, type, DOC_RH_LABELS[type])}
                         >
-                          <Text style={docStyles.uploadBtnText}>+ Ajouter</Text>
+                          <Text style={docStyles.uploadBtnText}>{t.common.add}</Text>
                         </Pressable>
                       )}
                     </View>
                     {docs.length === 0 ? (
-                      <Text style={docStyles.emptyDoc}>Aucun document</Text>
+                      <Text style={docStyles.emptyDoc}>{t.equipe.noDocument}</Text>
                     ) : (
                       docs.map(doc => (
                         <View key={doc.id} style={docStyles.docRow}>
@@ -745,11 +745,11 @@ export default function EquipeScreen() {
           <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>{editSTId ? 'Modifier le sous-traitant' : 'Nouveau sous-traitant'}</Text>
+              <Text style={styles.modalTitle}>{editSTId ? t.equipe.editSubcontractor : t.equipe.newSubcontractor}</Text>
               <Pressable onPress={() => setShowSTForm(false)}><Text style={styles.modalClose}>✕</Text></Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              <Text style={styles.fieldLabel}>Société / Raison sociale</Text>
+              <Text style={styles.fieldLabel}>{t.equipe.company}</Text>
               <TextInput style={styles.input} value={stForm.societe} onChangeText={v => setSTForm(f => ({ ...f, societe: v }))} placeholder="Ex: Plomberie Dupont" placeholderTextColor="#B0BEC5" />
 
               <View style={[styles.nameRow, { marginTop: 12 }]}>
@@ -758,7 +758,7 @@ export default function EquipeScreen() {
                   <TextInput style={styles.input} value={stForm.prenom} onChangeText={v => setSTForm(f => ({ ...f, prenom: v }))} placeholder="Jean" placeholderTextColor="#B0BEC5" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.fieldLabel}>Nom</Text>
+                  <Text style={styles.fieldLabel}>{t.equipe.lastName}</Text>
                   <TextInput style={styles.input} value={stForm.nom} onChangeText={v => setSTForm(f => ({ ...f, nom: v }))} placeholder="Dupont" placeholderTextColor="#B0BEC5" />
                 </View>
               </View>
@@ -774,10 +774,10 @@ export default function EquipeScreen() {
                 </View>
               </View>
 
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Identifiant de connexion *</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.loginId} *</Text>
               <TextInput style={styles.input} value={stForm.identifiant} onChangeText={v => setSTForm(f => ({ ...f, identifiant: v }))} placeholder="Ex: plomberie.dupont" placeholderTextColor="#B0BEC5" autoCapitalize="none" autoCorrect={false} />
 
-              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Mot de passe * (visible par l'admin)</Text>
+              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.common.password} * ({t.equipe.visibleByAdmin})</Text>
               <View style={styles.mdpRow}>
                 <TextInput style={[styles.input, { flex: 1 }]} value={stForm.motDePasse} onChangeText={v => setSTForm(f => ({ ...f, motDePasse: v }))} placeholder="Ex: st1234" placeholderTextColor="#B0BEC5" secureTextEntry={!showSTMdp} autoCapitalize="none" autoCorrect={false} />
                 <Pressable style={styles.mdpToggle} onPress={() => setShowSTMdp(v => !v)}>
@@ -798,7 +798,7 @@ export default function EquipeScreen() {
               onPress={handleSaveST}
               disabled={!stForm.identifiant.trim() || !stForm.motDePasse.trim()}
             >
-              <Text style={styles.saveBtnText}>{editSTId ? 'Enregistrer' : 'Ajouter le sous-traitant'}</Text>
+              <Text style={styles.saveBtnText}>{editSTId ? t.common.save : t.equipe.addSubcontractor}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
