@@ -13,6 +13,7 @@ import {
   type Chantier, type StatutChantier, type FicheChantier, type NoteChantier, type PlanChantier,
 } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
+import { uploadFileToStorage } from '@/lib/supabase';
 
 const STATUTS: StatutChantier[] = ['actif', 'en_attente', 'termine', 'en_pause'];
 
@@ -53,12 +54,12 @@ const DEFAULT_FORM: ChantierForm = {
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated && !currentUser) router.replace('/login' as any);
+    if (isHydrated && !currentUser) router.replace('/login');
   }, [isHydrated, currentUser, router]);
 
   const isAdmin = currentUser?.role === 'admin';
@@ -117,7 +118,13 @@ export default function ChantiersScreen() {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = () => setNewPlanFichier(reader.result as string);
+        reader.onload = async () => {
+          const base64 = reader.result as string;
+          const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const chantierId = plansChantierId || 'general';
+          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
+          setNewPlanFichier(storageUrl || base64);
+        };
         reader.readAsDataURL(file);
       };
       input.click();
@@ -183,10 +190,13 @@ export default function ChantiersScreen() {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = () => {
-          const uri = reader.result as string;
+        reader.onload = async () => {
+          const base64 = reader.result as string;
           const type = file.type.startsWith('image') ? 'image' : 'pdf';
-          setNotePieceJointe({ uri, nom: file.name, type });
+          const pjId = `note_pj_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const chantierId = notesChantierId || 'general';
+          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/notes`, pjId);
+          setNotePieceJointe({ uri: storageUrl || base64, nom: file.name, type });
         };
         reader.readAsDataURL(file);
       };
@@ -195,9 +205,14 @@ export default function ChantiersScreen() {
   };
 
   const handleAddNote = () => {
-    if (!newNoteTexte.trim() || !notesChantierId) return;
+    // Valider si texte OU photo(s) présents
+    const hasPhotos = notePieceJointe !== null;
+    if (!hasPhotos && !newNoteTexte.trim()) return;
+    if (!notesChantierId) return;
     const userId = currentUser?.role === 'admin' ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
     const nom = currentUser?.role === 'admin' ? 'Admin' : (data.employes.find(e => e.id === userId)?.prenom || data.sousTraitants?.find(s => s.id === userId)?.nom || 'Inconnu');
+    // Convertir notePieceJointe en photos[] pour qu'elle soit stockée dans la note ET dans la galerie
+    const photosNote: string[] = notePieceJointe ? [notePieceJointe.uri] : [];
     addNoteChantier({
       id: `nc_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       chantierId: notesChantierId,
@@ -207,6 +222,7 @@ export default function ChantiersScreen() {
       createdAt: new Date().toISOString(),
       destinataires: isAdmin ? noteDestinataires : 'tous',
       archivedBy: [],
+      photos: photosNote.length > 0 ? photosNote : undefined,
       ...(notePieceJointe ? {
         pieceJointe: notePieceJointe.uri,
         pieceJointeNom: notePieceJointe.nom,
@@ -347,6 +363,12 @@ export default function ChantiersScreen() {
   };
 
   const handlePickPhoto = async () => {
+    const uploadAndAddFichePhoto = async (base64Uri: string) => {
+      const photoId = `fiche_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      // On ne connaît pas encore le chantierId ici (création en cours), on utilise 'fiche'
+      const storageUrl = await uploadFileToStorage(base64Uri, 'chantiers/fiche/photos', photoId);
+      setFiche(f => ({ ...f, photos: [...f.photos, storageUrl || base64Uri] }));
+    };
     if (Platform.OS === 'web') {
       const input = document.createElement('input');
       input.type = 'file';
@@ -355,9 +377,8 @@ export default function ChantiersScreen() {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = () => {
-          const uri = reader.result as string;
-          setFiche(f => ({ ...f, photos: [...f.photos, uri] }));
+        reader.onload = async () => {
+          await uploadAndAddFichePhoto(reader.result as string);
         };
         reader.readAsDataURL(file);
       };
@@ -373,7 +394,7 @@ export default function ChantiersScreen() {
         const uri = asset.base64
           ? `data:image/jpeg;base64,${asset.base64}`
           : asset.uri;
-        setFiche(f => ({ ...f, photos: [...f.photos, uri] }));
+        await uploadAndAddFichePhoto(uri);
       }
     }
   };
@@ -930,25 +951,54 @@ export default function ChantiersScreen() {
                         </Text>
                       </View>
                       <Text style={styles.noteTexte}>{note.texte}</Text>
-                      {/* Pièce jointe */}
+                      {/* Pièce jointe unique */}
                       {note.pieceJointe && (
                         <Pressable
                           style={styles.notePJBtn}
                           onPress={() => {
                             if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                              if (note.pieceJointeType === 'pdf') {
-                                const w = window.open();
-                                if (w) w.document.write(`<iframe src="${note.pieceJointe}" width="100%" height="100%"></iframe>`);
-                              } else {
-                                const w = window.open();
-                                if (w) w.document.write(`<img src="${note.pieceJointe}" style="max-width:100%">`);
-                              }
+                              const w = window.open();
+                              if (w) w.document.write(note.pieceJointeType === 'pdf'
+                                ? `<iframe src="${note.pieceJointe}" width="100%" height="100%"></iframe>`
+                                : `<img src="${note.pieceJointe}" style="max-width:100%">`);
                             }
                           }}
                         >
                           <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
                           <Text style={styles.notePJText}>{note.pieceJointeNom || (note.pieceJointeType === 'pdf' ? 'PDF' : 'Image')}</Text>
                         </Pressable>
+                      )}
+                      {/* Photos multiples */}
+                      {note.photos && note.photos.length > 0 && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6, marginBottom: 6 }}>
+                          {note.photos.map((uri, idx) => {
+                            const isPdf = uri.startsWith('data:application/pdf');
+                            if (isPdf) {
+                              return (
+                                <Pressable
+                                  key={idx}
+                                  style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
+                                  onPress={() => {
+                                    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                                      const w = window.open();
+                                      if (w) w.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`);
+                                    }
+                                  }}
+                                >
+                                  <Text style={{ fontSize: 22 }}>📄</Text>
+                                </Pressable>
+                              );
+                            }
+                            return (
+                              <Image
+                                key={idx}
+                                source={{ uri }}
+                                style={{ width: 60, height: 60, borderRadius: 8, marginRight: 6 }}
+                                resizeMode="cover"
+                              />
+                            );
+                          })}
+                        </ScrollView>
                       )}
                       {note.destinataires !== 'tous' && isAdmin && (
                         <Text style={styles.noteDest}>
@@ -1050,9 +1100,9 @@ export default function ChantiersScreen() {
                     )}
 
                     <Pressable
-                      style={[styles.saveBtn, { marginTop: 12, opacity: newNoteTexte.trim() ? 1 : 0.5 }]}
+                      style={[styles.saveBtn, { marginTop: 12, opacity: (newNoteTexte.trim() || notePieceJointe !== null) ? 1 : 0.5 }]}
                       onPress={handleAddNote}
-                      disabled={!newNoteTexte.trim()}
+                      disabled={!newNoteTexte.trim() && notePieceJointe === null}
                     >
                       <Text style={styles.saveBtnText}>{t.common.add}</Text>
                     </Pressable>
@@ -1066,7 +1116,7 @@ export default function ChantiersScreen() {
                     <>
                       <Text style={styles.noteHistSection}>🗃️ {t.chantiers.archivedNotes}</Text>
                       {getNotesArchivees(notesChantierId).map(note => (
-                        <View key={note.id} style={[styles.noteCard, { opacity: 0.75, borderLeftColor: '#B0BEC5' }]}>
+                        <View key={note.id} style={[styles.noteCard, { opacity: 0.85, borderLeftColor: '#B0BEC5' }]}>
                           <View style={styles.noteHeader}>
                             <Text style={styles.noteAuteur}>{note.auteurNom}</Text>
                             <Text style={styles.noteDate}>
@@ -1074,6 +1124,7 @@ export default function ChantiersScreen() {
                             </Text>
                           </View>
                           <Text style={styles.noteTexte}>{note.texte}</Text>
+                          {/* Pièce jointe */}
                           {note.pieceJointe && (
                             <Pressable
                               style={styles.notePJBtn}
@@ -1088,6 +1139,58 @@ export default function ChantiersScreen() {
                             >
                               <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
                               <Text style={styles.notePJText}>{note.pieceJointeNom || 'Fichier'}</Text>
+                            </Pressable>
+                          )}
+                          {/* Photos multiples */}
+                          {note.photos && note.photos.length > 0 && (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6, marginBottom: 6 }}>
+                              {note.photos.map((uri, idx) => {
+                                const isPdf = uri.startsWith('data:application/pdf');
+                                if (isPdf) {
+                                  return (
+                                    <Pressable
+                                      key={idx}
+                                      style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
+                                      onPress={() => {
+                                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                                          const w = window.open();
+                                          if (w) w.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`);
+                                        }
+                                      }}
+                                    >
+                                      <Text style={{ fontSize: 20 }}>📄</Text>
+                                    </Pressable>
+                                  );
+                                }
+                                return (
+                                  <Image
+                                    key={idx}
+                                    source={{ uri }}
+                                    style={{ width: 56, height: 56, borderRadius: 8, marginRight: 6 }}
+                                    resizeMode="cover"
+                                  />
+                                );
+                              })}
+                            </ScrollView>
+                          )}
+                          {/* Bouton suppression admin */}
+                          {isAdmin && (
+                            <Pressable
+                              style={[styles.noteDeleteBtn, { marginTop: 8, alignSelf: 'flex-end' }]}
+                              onPress={() => {
+                                if (Platform.OS === 'web') {
+                                  if (typeof window !== 'undefined' && window.confirm && window.confirm(t.chantiers.deleteConfirm)) {
+                                    deleteNoteChantierArchivee(note.id);
+                                  }
+                                } else {
+                                  Alert.alert(t.common.delete, t.chantiers.deleteConfirm, [
+                                    { text: t.common.cancel, style: 'cancel' },
+                                    { text: t.common.delete, style: 'destructive', onPress: () => deleteNoteChantierArchivee(note.id) },
+                                  ]);
+                                }
+                              }}
+                            >
+                              <Text style={styles.noteDeleteBtnText}>🗑 {t.common.delete}</Text>
                             </Pressable>
                           )}
                         </View>

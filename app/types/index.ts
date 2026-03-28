@@ -541,6 +541,7 @@ export interface NoteChantier {
   pieceJointe?: string;      // base64 URI (image ou PDF)
   pieceJointeNom?: string;   // nom du fichier
   pieceJointeType?: 'image' | 'pdf'; // type de fichier
+  photos?: string[];         // tableau de base64 URIs (images ou PDFs)
   // Historique suppression (admin uniquement)
   deletedBy?: string;        // 'admin' ou id de celui qui a supprimé
   deletedAt?: string;        // ISO datetime de suppression
@@ -598,6 +599,8 @@ export interface AppData {
   messagesPrive?: import('./messages').MessagePrive[];
   // Fiches chantier (données structurées par chantier)
   fichesChantier?: Record<string, any>;
+  // Mot de passe administrateur (modifiable)
+  adminPassword?: string;
 }
 
 export type UserRole = 'admin' | 'employe' | 'soustraitant';

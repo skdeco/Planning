@@ -368,6 +368,7 @@ export default {
     absent: "Absent",
     plannedHours: "Planned hours",
     duration: "Duration",
+    pointedBy: "Pointed by",
     onTime: "On time",
     late: "Late",
     earlyLeave: "Early departure",

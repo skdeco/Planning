@@ -521,6 +521,7 @@ export default {
     absent: "Abs.",
     plannedHours: "Horaires prévus",
     duration: "Durée",
+    pointedBy: "Pointé par",
     onTime: "À l'heure",
     late: "Retard",
     earlyLeave: "Départ anticipé",

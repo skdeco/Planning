@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadDataFromSupabase, saveDataToSupabase, createManualBackup } from '@/lib/supabase';
+import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY } from '@/lib/supabase';
 import type {
   Employe, Chantier, Affectation, AppData, CurrentUser, Note, Pointage, Acompte, FicheChantier,
   SousTraitant, DevisST, MarcheST, AcompteST, Intervention, TaskItem, ListeMateriau, MateriauItem,
@@ -101,6 +101,7 @@ interface AppContextType {
   updateNoteChantier: (n: NoteChantier) => void;
   deleteNoteChantier: (id: string) => void;
   archiveNoteChantier: (noteId: string, userId: string) => void;
+  deleteNoteChantierArchivee: (id: string) => void;
   // Plans chantier
   addPlanChantier: (chantierId: string, plan: PlanChantier) => void;
   deletePlanChantier: (chantierId: string, planId: string) => void;
@@ -195,7 +196,7 @@ function isDemoData(d: AppData): boolean {
   return allEmpDemo && allChDemo;
 }
 
-function migrateData(parsed: any): AppData {
+function migrateData(parsed: Record<string, any>): AppData {
   // IMPORTANT : cette fonction ne doit JAMAIS supprimer de données existantes.
   // Elle ne fait qu'ajouter les champs manquants avec des valeurs par défaut.
   // Toute modification ici doit être additive, jamais destructive.
@@ -284,27 +285,80 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deletedListeIdsRef = useRef<Set<string>>(new Set());
   // Map listeId -> Set<itemId> des items supprimés — le polling ne doit JAMAIS les réintroduire
   const deletedItemIdsRef = useRef<Map<string, Set<string>>>(new Map());
+  // Timestamp de la dernière sauvegarde Supabase — évite que le polling réécrase les données locales
+  const lastSaveRef = useRef<number>(0);
+  // Timestamp de la dernière modification locale (suppression, ajout, toggle)
+  const lastLocalChangeRef = useRef<number>(0);
 
-  // ── Chargement initial : Supabase en priorité, AsyncStorage en fallback ──
+  // ── Chargement initial : SUPABASE = SOURCE DE VÉRITÉ UNIQUE ──
+  // Architecture :
+  //   1. Supabase est la source de vérité (données partagées entre tous les appareils)
+  //   2. localStorage = cache hors-ligne uniquement (fallback si Supabase inaccessible)
+  //   3. Si Supabase a des données → les utiliser (même depuis un nouveau téléphone)
+  //   4. Si Supabase est vide mais localStorage a des données → synchro vers Supabase
   useEffect(() => {
     const load = async () => {
-      // Charger l'utilisateur depuis AsyncStorage (local)
+      // ── 1. Charger l'utilisateur depuis AsyncStorage (local) ──
       let storedUser: CurrentUser | null = null;
       try {
         const raw = await AsyncStorage.getItem(USER_KEY);
         if (raw) storedUser = JSON.parse(raw);
       } catch {}
 
-      // Charger les données depuis Supabase
-      try {
-        const supabaseData = await loadDataFromSupabase();
-        if (supabaseData && Object.keys(supabaseData).length > 0) {
-          const migrated = migrateData(supabaseData);
-          setData(migrated);
+      // ── 2. Charger Supabase ET le cache local en parallèle ──
+      let supabaseRaw: Record<string, unknown> | null = null;
+      let localRaw: Record<string, unknown> | null = null;
+
+      const [supabaseResult, localResult] = await Promise.allSettled([
+        loadDataFromSupabase(),
+        AsyncStorage.getItem(LOCAL_DATA_KEY).then(raw => raw ? JSON.parse(raw) : null),
+      ]);
+
+      if (supabaseResult.status === 'fulfilled') supabaseRaw = supabaseResult.value;
+      if (localResult.status === 'fulfilled') localRaw = localResult.value;
+
+      const supabaseEmployes = (supabaseRaw?.employes as unknown[] || []).length;
+      const supabaseChantiers = (supabaseRaw?.chantiers as unknown[] || []).length;
+      const localEmployes = (localRaw?.employes as unknown[] || []).length;
+      const localChantiers = (localRaw?.chantiers as unknown[] || []).length;
+
+      console.log(`📊 Chargement: Supabase=${supabaseEmployes} emp / Local=${localEmployes} emp`);
+
+      let loadedData: ReturnType<typeof migrateData> | null = null;
+
+      // ── 3. Stratégie de sélection des données ──
+      if (supabaseRaw && (supabaseEmployes > 0 || supabaseChantiers > 0)) {
+        // CAS NORMAL : Supabase a des données → c'est la source de vérité
+        // Fusionner avec le local pour récupérer les photos (stockées localement)
+        if (localRaw) {
+          const merged = mergeDataSafely(supabaseRaw, localRaw);
+          // Mais Supabase est prioritaire pour les données structurelles
+          const mergedWithSupabasePriority = mergeDataSafely(localRaw, supabaseRaw);
+          loadedData = migrateData(mergedWithSupabasePriority);
+          console.log(`✅ Supabase prioritaire (${supabaseEmployes} emp) + cache local fusionné`);
+        } else {
+          loadedData = migrateData(supabaseRaw);
+          console.log(`✅ Données chargées depuis Supabase (${supabaseEmployes} emp)`);
         }
-        // Si Supabase est vide, garder EMPTY_DATA (déjà en state)
-      } catch (e) {
-        console.warn('Supabase non disponible, base vide utilisée');
+      } else if (localRaw && (localEmployes > 0 || localChantiers > 0)) {
+        // CAS FALLBACK : Supabase vide ou inaccessible, mais cache local a des données
+        // → Utiliser le cache local ET synchroniser vers Supabase
+        loadedData = migrateData(localRaw);
+        console.log(`⚠️ Supabase vide, utilisation du cache local (${localEmployes} emp)`);
+        // Synchroniser immédiatement vers Supabase pour les autres appareils
+        saveDataToSupabase(localRaw)
+          .then(ok => console.log(ok ? '✅ Cache local synchronisé vers Supabase' : '⚠️ Sync Supabase échouée'))
+          .catch(() => {});
+      } else if (supabaseRaw && Object.keys(supabaseRaw).length > 0) {
+        // Supabase a des données mais pas d'employés (notes, photos, etc.)
+        loadedData = migrateData(supabaseRaw);
+        console.log('✅ Données Supabase chargées (sans employés)');
+      }
+
+      // ── 4. Mettre à jour le cache local avec les données finales ──
+      if (loadedData) {
+        setData(loadedData);
+        AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(loadedData)).catch(() => {});
       }
 
       if (storedUser) setCurrentUser(storedUser);
@@ -319,39 +373,61 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     dataRef.current = data;
   }, [data]);
 
-  // ── Sauvegarde automatique dans Supabase avec debounce 1.5s ──
+  // ── Sauvegarde automatique : Supabase (source de vérité) + cache local ──
+  // Supabase est la source de vérité unique : toute modification est sauvegardée
+  // immédiatement dans Supabase pour être disponible sur tous les appareils.
   useEffect(() => {
     if (!loaded || isFirstLoad.current) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
+      const dataToSave = data as unknown as Record<string, unknown>;
+
       lastSaveRef.current = Date.now();
-      saveDataToSupabase(data as unknown as Record<string, unknown>).catch(() => {});
-    }, 1500); // 1.5s pour éviter les sauvegardes trop fréquentes lors de saisies rapides
+
+      // 1. Sauvegarder dans Supabase (SANS photos — stripPhotosForSupabase appliqué dans saveDataToSupabase)
+      saveDataToSupabase(dataToSave)
+        .then(ok => { if (!ok) console.warn('⚠️ Sauvegarde Supabase échouée'); })
+        .catch(() => {});
+
+      // 2. Sauvegarder le cache local COMPLET (avec photos) pour le fallback hors-ligne
+      AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(dataToSave)).catch(() => {});
+    }, 2000); // 2s de debounce
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
   }, [data, loaded]);
 
-  // ── Backup hebdomadaire automatique ──
-  // Crée une sauvegarde horodatée dans app_data_backups une fois par semaine.
-  // Fréquence réduite pour minimiser le trafic réseau Supabase.
+  // ── Backup automatique hebdomadaire ──
+  // 1 backup par semaine maximum (le lundi) pour éviter de saturer Supabase.
+  // Les photos sont exclues des backups (géré dans createManualBackup).
+  // Purge automatique des backups de plus de 4 semaines.
   const lastBackupCheckRef = useRef<number>(0);
   useEffect(() => {
     if (!loaded) return;
     const checkAndBackup = async () => {
-      // Vérifier max 1 fois par jour (24h)
+      // Vérifier max 1 fois par jour (24h) pour éviter les appels répétés
       if (Date.now() - lastBackupCheckRef.current < 86400000) return;
       lastBackupCheckRef.current = Date.now();
       try {
-        // Ne faire un backup que si c'est un lundi (début de semaine)
+        // Ne faire un backup que si les données sont substantielles
+        if (data.employes.length === 0 && data.chantiers.length === 0) return;
+
+        // Ne faire un backup que le lundi (1 par semaine)
         const today = new Date();
         if (today.getDay() !== 1) return; // 1 = lundi
-        if (data.employes.length > 0) {
-          await createManualBackup(
-            data as unknown as Record<string, unknown>,
-            'weekly'
-          );
-          console.log('✅ Backup hebdomadaire automatique créé');
+
+        // Vérifier si un backup a déjà été fait cette semaine
+        const weekKey = `${today.getFullYear()}-W${String(Math.ceil(today.getDate() / 7)).padStart(2, '0')}`;
+        const lastBackupWeek = await AsyncStorage.getItem('sk_last_backup_week').catch(() => null);
+        if (lastBackupWeek === weekKey) return; // Déjà fait cette semaine
+
+        const success = await createManualBackup(
+          data as unknown as Record<string, unknown>,
+          'weekly'
+        );
+        if (success) {
+          await AsyncStorage.setItem('sk_last_backup_week', weekKey).catch(() => {});
+          console.log('✅ Backup hebdomadaire créé (semaine ' + weekKey + ')');
         }
       } catch (e) {
         console.warn('Backup hebdomadaire échoué:', e);
@@ -366,9 +442,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Polling Supabase toutes les 30s pour synchroniser entre utilisateurs ──
   // Permet à l'admin de voir en temps quasi-réel les demandes RH et listes matériel
   // créées par les employés depuis leur propre session.
-  const lastSaveRef = useRef<number>(0);
-  // Timestamp de la dernière modification locale (suppression, ajout, toggle)
-  const lastLocalChangeRef = useRef<number>(0);
   useEffect(() => {
     if (!loaded) return;
     const poll = setInterval(async () => {
@@ -381,54 +454,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         const supabaseData = await loadDataFromSupabase();
         if (supabaseData && Object.keys(supabaseData).length > 0) {
           setData(prev => {
-            const fresh = migrateData(supabaseData);
-            // Vérification basique : ne pas appliquer si les données sont vides
-            if (!fresh.employes || fresh.employes.length === 0) return prev;
-            // Fusionner intelligemment les listes matériel :
-            // La version locale (prev) est toujours prioritaire si elle est plus récente
-            // OU si une liste locale n'existe pas dans fresh (elle a été supprimée localement)
+            // Fusion ADDITIVE : on ne réduit JAMAIS une collection
+            // mergeDataSafely garantit que le local est toujours prioritaire
+            // et qu'aucun élément ne peut être perdu
+            const prevAsRecord = prev as unknown as Record<string, unknown>;
+            const merged = mergeDataSafely(prevAsRecord, supabaseData);
+
+            // Appliquer la migration sur le résultat fusionné
+            const result = migrateData(merged);
+
+            // Cas spécial listes matériel : respecter les suppressions locales
             const mergedListes = (() => {
-              const freshListes = fresh.listesMateriaux || [];
+              const freshListes = result.listesMateriaux || [];
               const prevListes = prev.listesMateriaux || [];
-              // Les listes présentes localement sont la source de vérité pour les suppressions
-              // On ne réintroduit PAS une liste qui a été supprimée localement
-              const result: typeof prevListes = [];
-              for (const prevListe of prevListes) {
-                const freshListe = freshListes.find(l => l.id === prevListe.id);
-                if (!freshListe) {
-                  // Pas dans fresh → garder la version locale (peut être plus récente)
-                  result.push(prevListe);
+              const finalListes: typeof prevListes = [];
+              for (const item of freshListes) {
+                // Ne pas réintroduire une liste supprimée localement
+                if (deletedListeIdsRef.current.has(item.id)) continue;
+                const prevItem = prevListes.find(l => l.id === item.id);
+                if (prevItem) {
+                  // Prendre la plus récente mais filtrer les items supprimés localement
+                  const chosen = (prevItem.updatedAt || '') >= (item.updatedAt || '') ? prevItem : item;
+                  const deletedItems = deletedItemIdsRef.current.get(item.id);
+                  finalListes.push(deletedItems && deletedItems.size > 0
+                    ? { ...chosen, items: chosen.items.filter(i => !deletedItems.has(i.id)) }
+                    : chosen
+                  );
                 } else {
-                  // Dans les deux : prendre la plus récente, mais filtrer les items supprimés localement
-                  const prevTime = prevListe.updatedAt || '';
-                  const freshTime = freshListe.updatedAt || '';
-                  let chosen = prevTime >= freshTime ? prevListe : freshListe;
-                  // Retirer les items supprimés localement de la version choisie
-                  const deletedItems = deletedItemIdsRef.current.get(prevListe.id);
-                  if (deletedItems && deletedItems.size > 0) {
-                    chosen = { ...chosen, items: chosen.items.filter(i => !deletedItems.has(i.id)) };
-                  }
-                  result.push(chosen);
+                  finalListes.push(item);
                 }
               }
-              // Ajouter les listes présentes dans fresh mais pas encore en local (créées par un autre utilisateur)
-              // SAUF si elles ont été supprimées localement (deletedListeIdsRef)
-              for (const freshListe of freshListes) {
-                if (!prevListes.find(l => l.id === freshListe.id) && !deletedListeIdsRef.current.has(freshListe.id)) {
-                  result.push(freshListe);
-                }
-              }
-              return result;
+              return finalListes;
             })();
-            return {
-              ...prev,
-              listesMateriaux: mergedListes,
-              demandesConge: fresh.demandesConge || prev.demandesConge,
-              arretsMaladie: fresh.arretsMaladie || prev.arretsMaladie,
-              demandesAvance: fresh.demandesAvance || prev.demandesAvance,
-              retardsPlanifies: fresh.retardsPlanifies || prev.retardsPlanifies,
-              pointages: fresh.pointages || prev.pointages,
-            };
+
+            return { ...result, listesMateriaux: mergedListes };
           });
         }
       } catch {}
@@ -489,18 +548,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           continue;
         }
         // L'affectation couvre ce jour : on la découpe
+        // Utiliser la date locale (pas UTC) pour éviter les décalages de fuseau horaire
+        const toLocalYMD = (d: Date) => {
+          const y = d.getFullYear();
+          const mo = String(d.getMonth() + 1).padStart(2, '0');
+          const da = String(d.getDate()).padStart(2, '0');
+          return `${y}-${mo}-${da}`;
+        };
         // Partie avant le jour supprimé
         if (a.dateDebut < date) {
           const dayBefore = new Date(date);
           dayBefore.setDate(dayBefore.getDate() - 1);
-          const dateBefore = dayBefore.toISOString().split('T')[0];
+          const dateBefore = toLocalYMD(dayBefore);
           newAffectations.push({ ...a, id: `${a.id}_before`, dateFin: dateBefore });
         }
         // Partie après le jour supprimé
         if (a.dateFin > date) {
           const dayAfter = new Date(date);
           dayAfter.setDate(dayAfter.getDate() + 1);
-          const dateAfter = dayAfter.toISOString().split('T')[0];
+          const dateAfter = toLocalYMD(dayAfter);
           newAffectations.push({ ...a, id: `${a.id}_after`, dateDebut: dateAfter });
         }
         // Si dateDebut === dateFin === date : on ne pousse rien (suppression totale)
@@ -842,7 +908,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Notes chantier ──
   const addNoteChantier = (n: NoteChantier) =>
-    setData(p => ({ ...p, notesChantier: [...(p.notesChantier || []), n] }));
+    setData(p => {
+      // IMPORTANT : on ne duplique PAS les photos des notes dans photosChantier
+      // pour éviter d'envoyer des base64 dans Supabase (saturation).
+      // Les photos des notes sont accessibles via la note elle-même.
+      return {
+        ...p,
+        notesChantier: [...(p.notesChantier || []), n],
+      };
+    });
   const updateNoteChantier = (n: NoteChantier) =>
     setData(p => ({ ...p, notesChantier: (p.notesChantier || []).map(x => x.id === n.id ? n : x) }));
   const deleteNoteChantier = (id: string) =>
@@ -869,6 +943,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ? { ...n, archivedBy: n.archivedBy.includes(userId) ? n.archivedBy : [...n.archivedBy, userId] }
           : n
       ),
+    }));
+
+  // Suppression définitive d'une note archivée (admin uniquement)
+  const deleteNoteChantierArchivee = (id: string) =>
+    setData(p => ({
+      ...p,
+      notesChantier: (p.notesChantier || []).filter(n => n.id !== id),
     }));
 
   // ── Plans chantier ──
@@ -922,7 +1003,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPhotoChantier, addPhotosChantier, deletePhotoChantier,
       addDocumentRH, deleteDocumentRH,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
-      addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier,
+      addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,
       logout,
     }}>

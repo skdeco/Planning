@@ -122,7 +122,7 @@ export default function ReportingScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated && !currentUser) router.replace('/login' as any);
+    if (isHydrated && !currentUser) router.replace('/login');
   }, [isHydrated, currentUser, router]);
 
   const today = new Date();
@@ -836,7 +836,7 @@ export default function ReportingScreen() {
                   <Text style={[styles.tableauCell, styles.tableauCellDate, styles.tableauHeaderText]}>{t.common.date}</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.arrival}</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.departure}</Text>
-                  <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.duration}</Text>
+                  <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.pointedBy}</Text>
                 </View>
                 {rapportEmploye.lignes.map(({ dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, joursFeriesTravaille }) => {
                   const isWeekend = [0, 6].includes(new Date(dateStr + 'T12:00:00').getDay());
@@ -893,9 +893,26 @@ export default function ReportingScreen() {
                           <Text style={styles.tableauAbsent}>—</Text>
                         )}
                       </View>
-                      <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauDureeText]}>
-                        {dureeMin && dureeMin > 0 ? formatDuree(dureeMin) : '—'}
-                      </Text>
+                      <View style={[styles.tableauCell, styles.tableauCellDuree]}>
+                        {(() => {
+                          // Détermine qui a pointé (début ou fin, selon saisieManuelle)
+                          const isManuDebut = debut?.saisieManuelle;
+                          const isManuFin = fin?.saisieManuelle;
+                          const isManu = isManuDebut || isManuFin;
+                          if (!debut && !fin) return <Text style={styles.tableauDureeText}>—</Text>;
+                          if (!isManu) {
+                            // Pointé par l'employé lui-même
+                            const nom = empSelectionne ? empSelectionne.prenom : '';
+                            return <Text style={[styles.tableauDureeText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{nom}</Text>;
+                          } else {
+                            // Modifié par un admin/autre
+                            const modifieurId = (isManuDebut ? debut?.saisieParId : fin?.saisieParId) || 'admin';
+                            const modifieur = data.employes.find(e => e.id === modifieurId);
+                            const nomModif = modifieur ? modifieur.prenom : 'Admin';
+                            return <Text style={[styles.tableauDureeText, { color: '#E74C3C', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{nomModif}</Text>;
+                          }
+                        })()}
+                      </View>
                     </View>
                   );
                 })}
@@ -940,7 +957,7 @@ export default function ReportingScreen() {
                       <Text style={[styles.saisieCellDate, styles.saisieHeaderText]}>{t.common.date}</Text>
                       <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>{t.reporting.arrival}</Text>
                       <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>{t.reporting.departure}</Text>
-                      <Text style={[styles.saisieCellDuree, styles.saisieHeaderText]}>{t.reporting.duration}</Text>
+                      <Text style={[styles.saisieCellDuree, styles.saisieHeaderText]}>{t.reporting.pointedBy}</Text>
                       <Text style={[styles.saisieCellAction, styles.saisieHeaderText]}>✏️</Text>
                     </View>
                     {joursDuMois.map(dateStr => {
@@ -979,9 +996,22 @@ export default function ReportingScreen() {
                             </Text>
                             {fin?.saisieManuelle && <Text style={styles.saisieManuelleIcon}>✏️</Text>}
                           </View>
-                          <Text style={[styles.saisieCellDuree, styles.saisieCellText]}>
-                            {dureeMin && dureeMin > 0 ? formatDuree(dureeMin) : '—'}
-                          </Text>
+                          <View style={styles.saisieCellDuree}>
+                            {(() => {
+                              const isManuDebut = debut?.saisieManuelle;
+                              const isManuFin = fin?.saisieManuelle;
+                              const isManu = isManuDebut || isManuFin;
+                              if (!debut && !fin) return <Text style={[styles.saisieCellText, { color: '#B0BEC5' }]}>—</Text>;
+                              if (!isManu) {
+                                return <Text style={[styles.saisieCellText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{emp.prenom}</Text>;
+                              } else {
+                                const modifieurId = (isManuDebut ? debut?.saisieParId : fin?.saisieParId) || 'admin';
+                                const modifieur = data.employes.find(e => e.id === modifieurId);
+                                const nomModif = modifieur ? modifieur.prenom : 'Admin';
+                                return <Text style={[styles.saisieCellText, { color: '#E74C3C', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{nomModif}</Text>;
+                              }
+                            })()}
+                          </View>
                           <View style={styles.saisieCellAction}>
                             <Text style={{ fontSize: 14 }}>✏️</Text>
                           </View>

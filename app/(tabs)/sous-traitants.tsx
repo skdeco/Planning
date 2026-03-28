@@ -12,6 +12,7 @@ import {
   type SousTraitant, type DevisST, type MarcheST, type AcompteST, type DocumentST,
 } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
+import { uploadFileToStorage } from '@/lib/supabase';
 
 function genId(prefix = 'id'): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -33,8 +34,8 @@ export default function SousTraitantsScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated && !currentUser) router.replace('/login' as any);
-    if (isHydrated && currentUser && currentUser.role !== 'admin') router.replace('/(tabs)/planning' as any);
+    if (isHydrated && !currentUser) router.replace('/login');
+    if (isHydrated && currentUser && currentUser.role !== 'admin') router.replace('/(tabs)/planning');
   }, [isHydrated, currentUser, router]);
 
   // ── État liste ──
@@ -87,7 +88,8 @@ export default function SousTraitantsScreen() {
   const handleSaveST = () => {
     if (!stForm.prenom.trim() || !stForm.nom.trim()) return;
     if (editSTId) {
-      const existing = data.sousTraitants.find(s => s.id === editSTId)!;
+      const existing = data.sousTraitants.find(s => s.id === editSTId);
+      if (!existing) return;
       updateSousTraitant({ ...existing, ...stForm });
       if (selectedST?.id === editSTId) setSelectedST({ ...existing, ...stForm });
     } else {
@@ -115,11 +117,17 @@ export default function SousTraitantsScreen() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'application/pdf,image/*';
-      input.onchange = (e: Event) => {
+      input.onchange = async (e: Event) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = () => setDocFichier(reader.result as string);
+        reader.onload = async () => {
+          const base64 = reader.result as string;
+          const docId = genId('doc');
+          const stId = selectedST?.id || 'general';
+          const storageUrl = await uploadFileToStorage(base64, `sous-traitants/${stId}/documents`, docId);
+          setDocFichier(storageUrl || base64);
+        };
         reader.readAsDataURL(file);
       };
       input.click();
@@ -167,7 +175,8 @@ export default function SousTraitantsScreen() {
     const prix = parseFloat(devisForm.prixConvenu.replace(',', '.'));
     if (isNaN(prix)) return;
     if (editDevisId) {
-      const existing = data.devis.find(d => d.id === editDevisId)!;
+      const existing = data.devis.find(d => d.id === editDevisId);
+      if (!existing) return;
       updateDevis({ ...existing, chantierId: devisForm.chantierId, objet: devisForm.objet, prixConvenu: prix });
     } else {
       addDevis({
@@ -223,13 +232,17 @@ export default function SousTraitantsScreen() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf,image/*';
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const fileId = genId('devis');
+        const stId = selectedST?.id || 'general';
+        const storageUrl = await uploadFileToStorage(base64, `sous-traitants/${stId}/devis`, fileId);
         const existing = data.devis.find(d => d.id === devisId)!;
-        updateDevis({ ...existing, devisFichier: reader.result as string });
+        updateDevis({ ...existing, devisFichier: storageUrl || base64 });
       };
       reader.readAsDataURL(file);
     };
@@ -242,13 +255,17 @@ export default function SousTraitantsScreen() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf,image/*';
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const fileId = genId('signe');
+        const stId = selectedST?.id || 'general';
+        const storageUrl = await uploadFileToStorage(base64, `sous-traitants/${stId}/devis`, fileId);
         const existing = data.devis.find(d => d.id === devisId)!;
-        updateDevis({ ...existing, devisSigne: reader.result as string });
+        updateDevis({ ...existing, devisSigne: storageUrl || base64 });
       };
       reader.readAsDataURL(file);
     };
@@ -261,13 +278,17 @@ export default function SousTraitantsScreen() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf,image/*';
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const fileId = genId('facture');
+        const stId = selectedST?.id || 'general';
+        const storageUrl = await uploadFileToStorage(base64, `sous-traitants/${stId}/factures`, fileId);
         const existing = data.acomptesst.find(a => a.id === acompteId)!;
-        updateAcompteST({ ...existing, facture: reader.result as string });
+        updateAcompteST({ ...existing, facture: storageUrl || base64 });
       };
       reader.readAsDataURL(file);
     };

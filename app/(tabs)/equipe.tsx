@@ -10,8 +10,9 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import {
   METIER_COLORS, METIERS_LIST, HORAIRES_DEFAUT, EMPLOYE_COLORS, ST_COLORS,
   DOC_RH_LABELS, DOC_RH_ORDER,
-  type Employe, type Metier, type HorairesHebdo, type DocumentRHEmploye,
+  type Employe, type Metier, type HorairesHebdo, type DocumentRHEmploye, type SousTraitant,
 } from '@/app/types';
+import { uploadFileToStorage } from '@/lib/supabase';
 
 const JOURS_SEMAINE = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
@@ -76,7 +77,7 @@ export default function EquipeScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated && !currentUser) router.replace('/login' as any);
+    if (isHydrated && !currentUser) router.replace('/login');
   }, [isHydrated, currentUser, router]);
 
   const isAdmin = currentUser?.role === 'admin';
@@ -247,13 +248,17 @@ export default function EquipeScreen() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const docId = `drh_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        // Upload vers Supabase Storage
+        const storageUrl = await uploadFileToStorage(base64, `employes/${employeId}/documents`, docId);
         const doc: DocumentRHEmploye = {
-          id: `drh_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          id: docId,
           employeId,
           type,
           libelle: label,
-          fichier: reader.result as string,
+          fichier: storageUrl || base64,
           uploadedAt: new Date().toISOString(),
           uploadedBy: currentUser?.employeId || 'admin',
         };
@@ -284,7 +289,7 @@ export default function EquipeScreen() {
     setShowSTForm(true);
   };
 
-  const openEditST = (st: any) => {
+  const openEditST = (st: SousTraitant) => {
     setEditSTId(st.id);
     setSTForm({ societe: st.societe || '', prenom: st.prenom || '', nom: st.nom || '', telephone: st.telephone || '', email: st.email || '', identifiant: st.identifiant || '', motDePasse: st.motDePasse || '', couleur: st.couleur || ST_COLORS[0] });
     setShowSTMdp(false);

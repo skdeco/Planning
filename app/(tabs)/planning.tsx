@@ -17,6 +17,7 @@ import {
   type PlanChantier,
 } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
+import { uploadFileToStorage } from '@/lib/supabase';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 
 // ─── Mini calendrier inline pour la navigation planning ───────────────────────
@@ -85,7 +86,7 @@ const calStyles = StyleSheet.create({
   weekRow: { flexDirection: 'row', marginBottom: 6 },
   weekDay: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#687076', textTransform: 'uppercase' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
-  cell: { width: '14.28%' as any, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginVertical: 1 },
+  cell: { width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginVertical: 1 },
   cellToday: { borderWidth: 1.5, borderColor: '#1A3A6B' },
   cellSel: { backgroundColor: '#1A3A6B' },
   cellText: { fontSize: 13, color: '#11181C', fontWeight: '500' },
@@ -110,7 +111,11 @@ function addDays(date: Date, n: number): Date {
 }
 
 function toYMD(date: Date): string {
-  return date.toISOString().split('T')[0];
+  // Utiliser la date locale (pas UTC) pour éviter les décalages lors du changement d'heure
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
 }
 
 function dateInRange(date: Date, start: string, end: string): boolean {
@@ -194,12 +199,32 @@ export default function PlanningScreen() {
   const [notesPlanningChantierId, setNotesPlanningChantierId] = useState<string | null>(null);
   const [newNotePlanningTexte, setNewNotePlanningTexte] = useState('');
   const [notePlanningDestinataires, setNotePlanningDestinataires] = useState<'tous' | string[]>('tous');
+  const [notePlanningPhotos, setNotePlanningPhotos] = useState<string[]>([]);
 
   const openNotesPlanning = (chantierId: string) => {
     setNotesPlanningChantierId(chantierId);
     setNewNotePlanningTexte('');
     setNotePlanningDestinataires('tous');
+    setNotePlanningPhotos([]);
     setShowNotesPlanning(true);
+  };
+
+  const handlePickNotePhotosPlanning = () => {
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,application/pdf';
+      input.multiple = true;
+      input.onchange = (e: Event) => {
+        const files = Array.from((e.target as HTMLInputElement).files || []);
+        files.forEach(file => {
+          const reader = new FileReader();
+          reader.onload = () => setNotePlanningPhotos(prev => [...prev, reader.result as string]);
+          reader.readAsDataURL(file);
+        });
+      };
+      input.click();
+    }
   };
 
   // Plans chantier (modal dans planning)
@@ -224,11 +249,18 @@ export default function PlanningScreen() {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*,application/pdf';
-      input.onchange = (e: Event) => {
+      input.onchange = async (e: Event) => {
         const file = (e.target as HTMLInputElement).files?.[0];
         if (!file) return;
         const reader = new FileReader();
-        reader.onload = () => setNewPlanPlanningFichier(reader.result as string);
+        reader.onload = async () => {
+          const base64 = reader.result as string;
+          // Upload immédiat vers Supabase Storage
+          const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const chantierId = plansPlanningChantierId || 'general';
+          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
+          setNewPlanPlanningFichier(storageUrl || base64);
+        };
         reader.readAsDataURL(file);
       };
       input.click();
@@ -279,7 +311,10 @@ export default function PlanningScreen() {
   };
 
   const handleAddNotePlanning = () => {
-    if (!newNotePlanningTexte.trim() || !notesPlanningChantierId) return;
+    // Valider si texte OU photo(s) présents
+    const hasPhotos = notePlanningPhotos.length > 0;
+    if (!hasPhotos && !newNotePlanningTexte.trim()) return;
+    if (!notesPlanningChantierId) return;
     const userId = currentUser?.role === 'admin' ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
     const nom = currentUser?.role === 'admin' ? 'Admin' : (data.employes.find(e => e.id === userId)?.prenom || (data.sousTraitants || []).find(s => s.id === userId)?.nom || 'Inconnu');
     addNoteChantier({
@@ -291,9 +326,11 @@ export default function PlanningScreen() {
       createdAt: new Date().toISOString(),
       destinataires: isAdmin ? notePlanningDestinataires : 'tous',
       archivedBy: [],
+      photos: notePlanningPhotos.length > 0 ? notePlanningPhotos : undefined,
     });
     setNewNotePlanningTexte('');
     setNotePlanningDestinataires('tous');
+    setNotePlanningPhotos([]);
   };
 
   const handleArchiveNotePlanning = (noteId: string) => {
@@ -350,7 +387,7 @@ export default function PlanningScreen() {
   // IMPORTANT : attendre l'hydratation pour éviter une redirection prématurée
   useEffect(() => {
     if (isHydrated && !currentUser) {
-      router.replace('/login' as any);
+      router.replace('/login');
     }
   }, [isHydrated, currentUser, router]);
 
@@ -586,24 +623,90 @@ export default function PlanningScreen() {
     );
   }, [modal, data]);
 
+  // Génère toutes les dates entre dateDebut et dateFin en excluant les week-ends
+  const buildAffectationsSansWeekend = (
+    chantierId: string,
+    employeId: string,
+    dateDebut: string,
+    dateFin: string,
+    soustraitantId?: string
+  ): Affectation[] => {
+    const affs: Affectation[] = [];
+    let current = new Date(dateDebut);
+    current.setHours(12, 0, 0, 0); // midi pour éviter les problèmes de timezone
+    const end = new Date(dateFin);
+    end.setHours(12, 0, 0, 0);
+
+    let segStart: string | null = null;
+    let segEnd: string | null = null;
+
+    while (current <= end) {
+      const dow = current.getDay(); // 0=dim, 6=sam
+      const isWeekend = dow === 0 || dow === 6;
+      const ymd = toYMD(current);
+
+      if (!isWeekend) {
+        if (!segStart) segStart = ymd;
+        segEnd = ymd;
+      } else {
+        // Fin d'un segment : créer l'affectation
+        if (segStart && segEnd) {
+          const aff: Affectation = {
+            id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}_${affs.length}`,
+            chantierId,
+            employeId,
+            dateDebut: segStart,
+            dateFin: segEnd,
+            notes: [],
+          };
+          if (soustraitantId) aff.soustraitantId = soustraitantId;
+          affs.push(aff);
+          segStart = null;
+          segEnd = null;
+        }
+      }
+      current.setDate(current.getDate() + 1);
+    }
+    // Dernier segment
+    if (segStart && segEnd) {
+      const aff: Affectation = {
+        id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}_${affs.length}`,
+        chantierId,
+        employeId,
+        dateDebut: segStart,
+        dateFin: segEnd,
+        notes: [],
+      };
+      if (soustraitantId) aff.soustraitantId = soustraitantId;
+      affs.push(aff);
+    }
+    return affs;
+  };
+
   const toggleEmploye = (employeId: string) => {
     if (!modal) return;
     if (isEmployeInCell(employeId)) {
       removeAffectation(modal.chantierId, employeId, modal.date);
     } else {
-      // Utiliser la plage de jours si définie, sinon juste le jour courant
       const dateFin = affectationDateFin && affectationDateFin >= modal.date
         ? affectationDateFin
         : modal.date;
-      const newAff: Affectation = {
-        id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        chantierId: modal.chantierId,
-        employeId,
-        dateDebut: modal.date,
-        dateFin,
-        notes: [],
-      };
-      addAffectation(newAff);
+      // Si plage de plusieurs jours : exclure les week-ends
+      if (dateFin !== modal.date) {
+        const affs = buildAffectationsSansWeekend(modal.chantierId, employeId, modal.date, dateFin);
+        affs.forEach(a => addAffectation(a));
+      } else {
+        // Jour unique : on l'ajoute tel quel (l'utilisateur l'a choisi manuellement)
+        const newAff: Affectation = {
+          id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          chantierId: modal.chantierId,
+          employeId,
+          dateDebut: modal.date,
+          dateFin: modal.date,
+          notes: [],
+        };
+        addAffectation(newAff);
+      }
     }
   };
 
@@ -619,20 +722,25 @@ export default function PlanningScreen() {
       if (aff) removeAffectation(modal.chantierId, aff.employeId, modal.date);
     } else {
       const stPseudoId = `st:${stId}`;
-      // Utiliser la plage de jours si définie
       const dateFin = affectationDateFin && affectationDateFin >= modal.date
         ? affectationDateFin
         : modal.date;
-      const newAff: Affectation = {
-        id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        chantierId: modal.chantierId,
-        employeId: stPseudoId,
-        soustraitantId: stId,
-        dateDebut: modal.date,
-        dateFin,
-        notes: [],
-      };
-      addAffectation(newAff);
+      // Si plage de plusieurs jours : exclure les week-ends
+      if (dateFin !== modal.date) {
+        const affs = buildAffectationsSansWeekend(modal.chantierId, stPseudoId, modal.date, dateFin, stId);
+        affs.forEach(a => addAffectation(a));
+      } else {
+        const newAff: Affectation = {
+          id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+          chantierId: modal.chantierId,
+          employeId: stPseudoId,
+          soustraitantId: stId,
+          dateDebut: modal.date,
+          dateFin: modal.date,
+          notes: [],
+        };
+        addAffectation(newAff);
+      }
     }
   };
 
@@ -880,9 +988,17 @@ export default function PlanningScreen() {
   const docInputRef = useRef<HTMLInputElement | null>(null);
 
   // Ajout photo : web via input file, mobile via expo-image-picker
+  // Les photos sont uploadées immédiatement vers Supabase Storage
   const handleAddPhoto = async () => {
+    const uploadAndAdd = async (base64Uri: string) => {
+      const photoId = `note_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const chantierId = noteModal?.chantierId || 'general';
+      const folder = `chantiers/${chantierId}/notes`;
+      const storageUrl = await uploadFileToStorage(base64Uri, folder, photoId);
+      setNotePhotos(prev => [...prev, storageUrl || base64Uri]);
+    };
+
     if (Platform.OS === 'web') {
-      // Créer un input file et le déclencher
       const input = document.createElement('input') as HTMLInputElement;
       input.type = 'file';
       input.accept = 'image/*,application/pdf';
@@ -893,9 +1009,9 @@ export default function PlanningScreen() {
         const files: File[] = Array.from((e.target as HTMLInputElement).files || []);
         files.forEach(file => {
           const reader = new FileReader();
-          reader.onload = (ev) => {
+          reader.onload = async (ev) => {
             const uri = ev.target?.result as string;
-            if (uri) setNotePhotos(prev => [...prev, uri]);
+            if (uri) await uploadAndAdd(uri);
           };
           reader.readAsDataURL(file);
         });
@@ -903,7 +1019,6 @@ export default function PlanningScreen() {
       };
       input.click();
     } else {
-      // Mobile : utiliser expo-image-picker
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) return;
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -912,9 +1027,9 @@ export default function PlanningScreen() {
         quality: 0.8,
       });
       if (!result.canceled) {
-        result.assets.forEach(asset => {
-          setNotePhotos(prev => [...prev, asset.uri]);
-        });
+        for (const asset of result.assets) {
+          await uploadAndAdd(asset.uri);
+        }
       }
     }
   };
@@ -1541,7 +1656,7 @@ export default function PlanningScreen() {
                   </View>
                   {affectationDateFin && affectationDateFin > modal.date && (
                     <Text style={{ fontSize: 11, color: '#27AE60', marginTop: 2 }}>
-                      L'employé sera affecté du {modal.date} au {affectationDateFin}
+                      Affecté du {modal.date} au {affectationDateFin} (week-ends exclus automatiquement)
                     </Text>
                   )}
                 </View>
@@ -2434,6 +2549,61 @@ export default function PlanningScreen() {
                     </Text>
                   </View>
                   <Text style={{ fontSize: 14, color: '#11181C', marginBottom: 8 }}>{note.texte}</Text>
+
+                  {/* Pièce jointe unique (pieceJointe) */}
+                  {note.pieceJointe && (
+                    <Pressable
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F2F4F7', borderRadius: 8, padding: 8, marginBottom: 8 }}
+                      onPress={() => {
+                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                          const w = window.open();
+                          if (w) w.document.write(note.pieceJointeType === 'pdf'
+                            ? `<iframe src="${note.pieceJointe}" style="width:100%;height:100vh;border:none"></iframe>`
+                            : `<img src="${note.pieceJointe}" style="max-width:100%;height:auto">`);
+                        }
+                      }}
+                    >
+                      <Text style={{ fontSize: 20 }}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
+                      <Text style={{ fontSize: 12, color: '#1A3A6B', fontWeight: '600', flex: 1 }} numberOfLines={1}>
+                        {note.pieceJointeNom || (note.pieceJointeType === 'pdf' ? 'PDF' : 'Image')}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: '#687076' }}>Ouvrir →</Text>
+                    </Pressable>
+                  )}
+
+                  {/* Photos multiples (photos[]) */}
+                  {note.photos && note.photos.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                      {note.photos.map((uri, idx) => {
+                        const isPdf = uri.startsWith('data:application/pdf');
+                        if (isPdf) {
+                          return (
+                            <Pressable
+                              key={idx}
+                              style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
+                              onPress={() => {
+                                if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                                  const w = window.open();
+                                  if (w) w.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`);
+                                }
+                              }}
+                            >
+                              <Text style={{ fontSize: 22 }}>📄</Text>
+                            </Pressable>
+                          );
+                        }
+                        return (
+                          <Image
+                            key={idx}
+                            source={{ uri }}
+                            style={{ width: 60, height: 60, borderRadius: 8, marginRight: 6 }}
+                            resizeMode="cover"
+                          />
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+
                   {note.destinataires !== 'tous' && isAdmin && (
                     <Text style={{ fontSize: 11, color: '#687076', marginBottom: 6 }}>
                       👤 Pour : {(note.destinataires as string[]).map(id => {
@@ -2523,10 +2693,40 @@ export default function PlanningScreen() {
                   </View>
                 )}
 
+                {/* Pièces jointes */}
+                {notePlanningPhotos.length > 0 && (
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8, marginBottom: 4 }}>
+                    {notePlanningPhotos.map((uri, idx) => (
+                      <View key={idx} style={{ width: 64, marginRight: 8, alignItems: 'center' }}>
+                        {uri.startsWith('data:image') ? (
+                          <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
+                        ) : (
+                          <View style={{ width: 56, height: 56, borderRadius: 6, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center' }}>
+                            <Text style={{ fontSize: 22 }}>📄</Text>
+                          </View>
+                        )}
+                        <Pressable
+                          style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#E74C3C', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
+                          onPress={() => setNotePlanningPhotos(prev => prev.filter((_, i) => i !== idx))}
+                        >
+                          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
+                        </Pressable>
+                      </View>
+                    ))}
+                  </ScrollView>
+                )}
                 <Pressable
-                  style={[styles.modalCloseBtn, { marginTop: 12, opacity: newNotePlanningTexte.trim() ? 1 : 0.5 }]}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E6EA', borderStyle: 'dashed' }}
+                  onPress={handlePickNotePhotosPlanning}
+                >
+                  <Text style={{ fontSize: 16 }}>📎</Text>
+                  <Text style={{ fontSize: 13, color: '#1A3A6B', fontWeight: '600' }}>Ajouter photo / PDF</Text>
+                </Pressable>
+
+                <Pressable
+                  style={[styles.modalCloseBtn, { marginTop: 12, opacity: (newNotePlanningTexte.trim() || notePlanningPhotos.length > 0) ? 1 : 0.5 }]}
                   onPress={handleAddNotePlanning}
-                  disabled={!newNotePlanningTexte.trim()}
+                  disabled={!newNotePlanningTexte.trim() && notePlanningPhotos.length === 0}
                 >
                   <Text style={styles.modalCloseBtnText}>{t.common.add}</Text>
                 </Pressable>
@@ -2546,8 +2746,8 @@ export default function PlanningScreen() {
                 <Text style={styles.modalTitle}>{t.chantiers.plansTitle}</Text>
                 <Text style={{ fontSize: 13, color: '#687076' }}>{data.chantiers.find(c => c.id === plansPlanningChantierId)?.nom ?? ''}</Text>
               </View>
-              <Pressable onPress={() => setShowPlansPlanning(false)}>
-                <Text style={styles.modalCloseBtn}>✕</Text>
+              <Pressable style={styles.modalXBtn} onPress={() => setShowPlansPlanning(false)}>
+                <Text style={styles.modalXBtnText}>✕</Text>
               </Pressable>
             </View>
 
@@ -3195,11 +3395,22 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   modalXBtn: {
-    padding: 6,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#F2F4F7',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalXBtnText: {
+    fontSize: 14,
+    color: '#687076',
+    fontWeight: '700',
   },
   modalXText: {
-    fontSize: 18,
+    fontSize: 14,
     color: '#687076',
+    fontWeight: '700',
   },
   // ── Notes ──
   notesList: {
@@ -3768,7 +3979,7 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   monthCell: {
-    width: '14.28%' as any,
+    width: '14.28%',
     minHeight: 70,
     padding: 3,
     borderWidth: 0.5,

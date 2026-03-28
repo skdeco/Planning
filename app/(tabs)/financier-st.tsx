@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
+import { uploadFileToStorage } from '@/lib/supabase';
 
 function fmt(n: number) {
   return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
@@ -15,8 +16,8 @@ export default function FinancierSTScreen() {
   const router = useRouter();
 
   useEffect(() => {
-    if (isHydrated && !currentUser) router.replace('/login' as any);
-    if (isHydrated && currentUser && currentUser.role !== 'soustraitant') router.replace('/(tabs)/planning' as any);
+    if (isHydrated && !currentUser) router.replace('/login');
+    if (isHydrated && currentUser && currentUser.role !== 'soustraitant') router.replace('/(tabs)/planning');
   }, [isHydrated, currentUser, router]);
 
   const stId = currentUser?.soustraitantId;
@@ -36,13 +37,16 @@ export default function FinancierSTScreen() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf,image/*';
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const fileId = `devis_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const storageUrl = await uploadFileToStorage(base64, `sous-traitants/${stId}/devis`, fileId);
         const existing = data.devis.find(d => d.id === devisId);
-        if (existing) updateDevis({ ...existing, devisFichier: reader.result as string });
+        if (existing) updateDevis({ ...existing, devisFichier: storageUrl || base64 });
       };
       reader.readAsDataURL(file);
     };
@@ -55,13 +59,16 @@ export default function FinancierSTScreen() {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'application/pdf,image/*';
-    input.onchange = (e: Event) => {
+    input.onchange = async (e: Event) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) return;
       const reader = new FileReader();
-      reader.onload = () => {
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const fileId = `facture_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const storageUrl = await uploadFileToStorage(base64, `sous-traitants/${stId}/factures`, fileId);
         const existing = data.acomptesst.find(a => a.id === acompteId);
-        if (existing) updateAcompteST({ ...existing, facture: reader.result as string });
+        if (existing) updateAcompteST({ ...existing, facture: storageUrl || base64 });
       };
       reader.readAsDataURL(file);
     };
@@ -146,7 +153,7 @@ export default function FinancierSTScreen() {
                       {/* Documents devis */}
                       <View style={styles.devisDocsRow}>
                         {devis.devisFichier ? (
-                          <Pressable style={styles.docBtn} onPress={() => openDoc(devis.devisFichier!)}>
+                          <Pressable style={styles.docBtn} onPress={() => openDoc(devis.devisFichier)}>
                             <Text style={styles.docBtnText}>📄 Mon devis</Text>
                           </Pressable>
                         ) : (
@@ -155,7 +162,7 @@ export default function FinancierSTScreen() {
                           </Pressable>
                         )}
                         {devis.devisSigne ? (
-                          <Pressable style={[styles.docBtn, styles.docBtnSigne]} onPress={() => openDoc(devis.devisSigne!)}>
+                          <Pressable style={[styles.docBtn, styles.docBtnSigne]} onPress={() => openDoc(devis.devisSigne)}>
                             <Text style={styles.docBtnText}>✅ Devis signé reçu</Text>
                           </Pressable>
                         ) : (
@@ -178,7 +185,7 @@ export default function FinancierSTScreen() {
                                 </View>
                                 {a.commentaire ? <Text style={styles.acompteComment}>{a.commentaire}</Text> : null}
                                 {a.facture ? (
-                                  <Pressable onPress={() => openDoc(a.facture!)}>
+                                  <Pressable onPress={() => openDoc(a.facture)}>
                                     <Text style={styles.factureLink}>📄 Ma facture</Text>
                                   </Pressable>
                                 ) : (
