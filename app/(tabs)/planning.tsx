@@ -154,7 +154,7 @@ interface NoteModalState {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword } = useApp();
   const { t } = useLanguage();
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
@@ -358,6 +358,24 @@ export default function PlanningScreen() {
 
   const isAdmin = currentUser?.role === 'admin';
   const isST = currentUser?.role === 'soustraitant';
+
+  // Modal changement mot de passe admin
+  const [showPwdModal, setShowPwdModal] = useState(false);
+  const [pwdActuel, setPwdActuel] = useState('');
+  const [pwdNouveau, setPwdNouveau] = useState('');
+  const [pwdConfirm, setPwdConfirm] = useState('');
+  const [pwdError, setPwdError] = useState('');
+  const [pwdSuccess, setPwdSuccess] = useState(false);
+  const handleChangePwd = () => {
+    const current = data.adminPassword || 'admin';
+    if (pwdActuel !== current) { setPwdError('Mot de passe actuel incorrect.'); return; }
+    if (pwdNouveau.length < 4) { setPwdError('Le nouveau mot de passe doit faire au moins 4 caractères.'); return; }
+    if (pwdNouveau !== pwdConfirm) { setPwdError('Les mots de passe ne correspondent pas.'); return; }
+    updateAdminPassword(pwdNouveau);
+    setPwdSuccess(true);
+    setPwdError('');
+    setTimeout(() => { setShowPwdModal(false); setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdSuccess(false); }, 1500);
+  };
   const currentEmployePlanning = data.employes.find(e => e.id === currentUser?.employeId);
   const isAcheteurPlanning = isAdmin || (currentEmployePlanning?.isAcheteur === true);
 
@@ -1060,7 +1078,14 @@ export default function PlanningScreen() {
       <View style={styles.header}>
         <View style={styles.headerLogoWrap}>
           <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
-          <Text style={styles.headerSub}>{t.planning.title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Text style={styles.headerSub}>{t.planning.title}</Text>
+            {isAdmin && (
+              <Pressable onPress={() => { setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdError(''); setPwdSuccess(false); setShowPwdModal(true); }}>
+                <Text style={{ fontSize: 16 }}>🔒</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
         <View style={styles.navRow}>
           {/* Badge matériel non acheté — visible acheteurs/admin uniquement */}
@@ -2874,6 +2899,55 @@ export default function PlanningScreen() {
                 </View>
               )}
             </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      {/* Modal changement mot de passe admin */}
+      <Modal visible={showPwdModal} transparent animationType="fade" onRequestClose={() => setShowPwdModal(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
+          <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', maxWidth: 380 }} onPress={e => e.stopPropagation()}>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>🔒 Changer le mot de passe</Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Mot de passe actuel</Text>
+            <TextInput
+              style={{ backgroundColor: '#F2F4F7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+              value={pwdActuel}
+              onChangeText={v => { setPwdActuel(v); setPwdError(''); }}
+              secureTextEntry
+              autoCapitalize="none"
+              placeholder="Mot de passe actuel"
+              placeholderTextColor="#687076"
+            />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Nouveau mot de passe</Text>
+            <TextInput
+              style={{ backgroundColor: '#F2F4F7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+              value={pwdNouveau}
+              onChangeText={v => { setPwdNouveau(v); setPwdError(''); }}
+              secureTextEntry
+              autoCapitalize="none"
+              placeholder="Nouveau mot de passe"
+              placeholderTextColor="#687076"
+            />
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Confirmer le mot de passe</Text>
+            <TextInput
+              style={{ backgroundColor: '#F2F4F7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+              value={pwdConfirm}
+              onChangeText={v => { setPwdConfirm(v); setPwdError(''); }}
+              secureTextEntry
+              autoCapitalize="none"
+              placeholder="Confirmer le mot de passe"
+              placeholderTextColor="#687076"
+            />
+            {pwdError !== '' && <Text style={{ color: '#E74C3C', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{pwdError}</Text>}
+            {pwdSuccess && <Text style={{ color: '#27AE60', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>Mot de passe modifié !</Text>}
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+              <Pressable style={{ flex: 1, backgroundColor: '#F2F4F7', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
+                <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>Annuler</Text>
+              </Pressable>
+              <Pressable style={{ flex: 1, backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={handleChangePwd}>
+                <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Enregistrer</Text>
+              </Pressable>
+            </View>
           </Pressable>
         </Pressable>
       </Modal>

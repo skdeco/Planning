@@ -8,9 +8,7 @@ import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 
-// Compte administrateur fixe
 const ADMIN_LOGIN = 'admin';
-const ADMIN_PASSWORD = 'admin';
 
 export default function LoginScreen() {
   const { data, setCurrentUser } = useApp();
@@ -28,9 +26,10 @@ export default function LoginScreen() {
     const pwd = motDePasse;
 
     // Connexion admin
-    if (id === ADMIN_LOGIN && pwd === ADMIN_PASSWORD) {
+    const adminPassword = data.adminPassword || 'admin';
+    if (id === ADMIN_LOGIN && pwd === adminPassword) {
       setCurrentUser({ role: 'admin' });
-      router.replace('/(tabs)/' as any);
+      router.replace('/(tabs)/');
       return;
     }
 
@@ -45,7 +44,7 @@ export default function LoginScreen() {
         employeId: employe.id,
         nom: `${employe.prenom} ${employe.nom}`,
       });
-      router.replace('/(tabs)/' as any);
+      router.replace('/(tabs)/');
       return;
     }
 
@@ -60,7 +59,7 @@ export default function LoginScreen() {
         soustraitantId: st.id,
         nom: `${st.prenom} ${st.nom}`,
       });
-      router.replace('/(tabs)/' as any);
+      router.replace('/(tabs)/');
       return;
     }
 
@@ -136,12 +135,6 @@ export default function LoginScreen() {
               <Text style={styles.loginBtnText}>{t.auth.loginBtn}</Text>
             </Pressable>
 
-            <Text style={styles.hint}>
-              {t.auth.adminHint} <Text style={styles.hintBold}>admin</Text> / <Text style={styles.hintBold}>admin</Text>
-            </Text>
-            <Text style={styles.hint}>
-              {t.auth.employeeHint} (ex: <Text style={styles.hintBold}>sacha</Text>) / <Text style={styles.hintBold}>1234</Text>
-            </Text>
           </View>
       </ScrollView>
     </KeyboardAvoidingView>

@@ -105,6 +105,8 @@ interface AppContextType {
   // Plans chantier
   addPlanChantier: (chantierId: string, plan: PlanChantier) => void;
   deletePlanChantier: (chantierId: string, planId: string) => void;
+  // Mot de passe admin
+  updateAdminPassword: (pwd: string) => void;
   // Messagerie privée
   addMessagePrive: (m: MessagePrive) => void;
   updateMessagePrive: (m: MessagePrive) => void;
@@ -973,6 +975,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ),
     }));
 
+  const updateAdminPassword = (pwd: string) =>
+    setData(p => ({ ...p, adminPassword: pwd }));
+
   const logout = () => setCurrentUserPersisted(null);
 
   return (
@@ -1005,6 +1010,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,
+      updateAdminPassword,
       logout,
     }}>
       {children}
