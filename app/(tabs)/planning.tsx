@@ -98,7 +98,7 @@ const calStyles = StyleSheet.create({
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
 
 const SCREEN_W = Dimensions.get('window').width;
-const NAME_COL = 110;
+const NAME_COL = 120;
 const DAY_COL = Math.floor((SCREEN_W - NAME_COL) / 7);
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -1087,7 +1087,7 @@ export default function PlanningScreen() {
             )}
           </View>
         </View>
-        <View style={styles.navRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.navRow}>
           {/* Badge matériel non acheté — visible acheteurs/admin uniquement */}
           {isAcheteurPlanning && nbArticlesNonAchetes > 0 && (
             <Pressable style={styles.materielBadge} onPress={() => router.push('/(tabs)/materiel' as any)}>
@@ -1162,7 +1162,7 @@ export default function PlanningScreen() {
           <Pressable style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutBtnText}>⏻</Text>
           </Pressable>
-        </View>
+        </ScrollView>
       </View>
 
       <View style={styles.weekInfo}>
