@@ -1076,16 +1076,15 @@ export default function PlanningScreen() {
     <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
       {/* En-tête */}
       <View style={styles.header}>
+        {/* Logo + titre sur une seule ligne */}
         <View style={styles.headerLogoWrap}>
           <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={styles.headerSub}>{t.planning.title}</Text>
-            {isAdmin && (
-              <Pressable onPress={() => { setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdError(''); setPwdSuccess(false); setShowPwdModal(true); }}>
-                <Text style={{ fontSize: 16 }}>🔒</Text>
-              </Pressable>
-            )}
-          </View>
+          <Text style={styles.headerTitle}>{t.planning.title}</Text>
+          {isAdmin && (
+            <Pressable style={{ marginLeft: 4 }} onPress={() => { setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdError(''); setPwdSuccess(false); setShowPwdModal(true); }}>
+              <Text style={{ fontSize: 14 }}>🔒</Text>
+            </Pressable>
+          )}
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.navRow}>
           {/* Badge matériel non acheté — visible acheteurs/admin uniquement */}
@@ -2960,23 +2959,29 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingHorizontal: 12,
+    paddingTop: 6,
     paddingBottom: 4,
     backgroundColor: '#F2F4F7',
   },
   headerLogoWrap: {
-    flexDirection: 'column',
-    alignItems: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
   },
   headerLogo: {
-    width: 72,
+    width: 36,
     height: 36,
+  },
+  headerTitle: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#11181C',
   },
   headerSub: {
     fontSize: 12,
     color: '#687076',
-    marginTop: -2,
   },
   navRow: {
     flexDirection: 'row',
