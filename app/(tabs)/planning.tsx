@@ -1726,6 +1726,7 @@ export default function PlanningScreen() {
               {modalSection === 'employes' && (
                 <FlatList
                   data={modalEmployes}
+                  extraData={data.affectations}
                   keyExtractor={item => item.id}
                   renderItem={({ item }) => {
                     const mc = METIER_COLORS[item.metier];
@@ -1759,6 +1760,7 @@ export default function PlanningScreen() {
               {modalSection === 'st' && (
                 <FlatList
                   data={data.sousTraitants}
+                  extraData={data.affectations}
                   keyExtractor={item => item.id}
                   renderItem={({ item }) => {
                     const selected = isSTInCell(item.id);
