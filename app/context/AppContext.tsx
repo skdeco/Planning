@@ -1000,7 +1000,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
 
   const updateAdminPassword = (pwd: string) =>
-    setData(p => ({ ...p, adminPassword: pwd }));
+    setData(p => ({ ...p, adminPassword: pwd, adminPasswordUpdatedAt: new Date().toISOString() }));
 
   const updateOrdreAffectation = (employeId: string, date: string, orderedChantierIds: string[]) =>
     setData(p => ({

@@ -130,9 +130,16 @@ export function mergeDataSafely(
     result[key] = { ...remoteObj, ...localObj }; // local prioritaire
   }
 
-  // adminPassword : priorité Supabase (remote) pour synchroniser entre appareils
+  // adminPassword : le côté avec l'horodatage le plus récent gagne
+  // Si pas de timestamp, on compare les valeurs : remote gagne par défaut pour la synchro multi-appareils
+  const localPwTs = (local.adminPasswordUpdatedAt as string) || '';
+  const remotePwTs = (remote.adminPasswordUpdatedAt as string) || '';
   if (remote.adminPassword && typeof remote.adminPassword === 'string') {
-    result.adminPassword = remote.adminPassword;
+    if (remotePwTs >= localPwTs) {
+      result.adminPassword = remote.adminPassword;
+      if (remotePwTs) result.adminPasswordUpdatedAt = remotePwTs;
+    }
+    // Sinon local est plus récent → on garde local (déjà dans result via spread)
   }
 
   return result;
@@ -269,14 +276,44 @@ export async function loadDataFromSupabase(): Promise<Record<string, unknown> | 
  * 4. Debounce géré côté AppContext (ne pas appeler trop fréquemment)
  */
 export async function saveDataToSupabase(appData: Record<string, unknown>): Promise<boolean> {
-  // Retirer les photos volumineuses avant envoi (base64 dans toutes les collections)
-  // IMPORTANT : stripPhotosForSupabase doit être appelé AVANT toute fusion
-  // pour éviter que des photos base64 legacy ne soient réintroduites
+  // Retirer les photos volumineuses avant envoi
   const lightPayload = stripPhotosForSupabase(appData);
+
+  // ── Read-merge-write : protège contre les écrasements concurrents ──
+  // Si un autre onglet/appareil a fait des modifications depuis notre dernier chargement,
+  // on les intègre AVANT d'écrire, pour ne jamais perdre de données.
+  let dataToSave = lightPayload;
+  try {
+    const { data: currentRow } = await supabase
+      .from('app_data')
+      .select('data')
+      .eq('id', 'main')
+      .maybeSingle();
+
+    if (currentRow?.data) {
+      const currentData = currentRow.data as Record<string, unknown>;
+      // lightPayload = local (ce qu'on veut sauvegarder), currentData = remote (état actuel Supabase)
+      // mergeDataSafely(local, remote) : local prioritaire pour les conflits d'id
+      // → nos changements intentionnels gagnent, mais on garde ce que Supabase a en plus
+      dataToSave = mergeDataSafely(lightPayload, currentData);
+
+      // adminPassword : forcer notre version si elle a un timestamp plus récent OU si elle est définie
+      // (au moment de la sauvegarde, notre état local est intentionnel → notre mot de passe gagne)
+      const ourTs = (lightPayload.adminPasswordUpdatedAt as string) || '';
+      const theirTs = (currentData.adminPasswordUpdatedAt as string) || '';
+      if (lightPayload.adminPassword && ourTs >= theirTs) {
+        dataToSave.adminPassword = lightPayload.adminPassword;
+        if (ourTs) dataToSave.adminPasswordUpdatedAt = ourTs;
+      }
+    }
+  } catch {
+    // En cas d'erreur de lecture, on sauvegarde quand même avec notre payload
+    dataToSave = lightPayload;
+  }
 
   const { error } = await supabase
     .from('app_data')
-    .upsert({ id: 'main', data: lightPayload, updated_at: new Date().toISOString() });
+    .upsert({ id: 'main', data: dataToSave, updated_at: new Date().toISOString() });
 
   if (error) {
     console.error('Erreur sauvegarde Supabase:', error.message);

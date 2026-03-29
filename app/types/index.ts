@@ -602,6 +602,7 @@ export interface AppData {
   fichesChantier?: Record<string, any>;
   // Mot de passe administrateur (modifiable)
   adminPassword?: string;
+  adminPasswordUpdatedAt?: string; // ISO datetime de la dernière modification du mot de passe
   // Plans chantier
   plansChantier?: Record<string, any>;
   // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour
