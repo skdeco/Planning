@@ -278,6 +278,7 @@ export interface SousTraitant {
 export interface Pointage {
   id: string;
   employeId: string;
+  chantierId?: string;      // chantier concerné (multi-chantier pointage)
   type: 'debut' | 'fin';   // début ou fin de journée
   date: string;            // YYYY-MM-DD
   heure: string;           // HH:MM

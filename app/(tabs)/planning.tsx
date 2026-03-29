@@ -1419,25 +1419,34 @@ export default function PlanningScreen() {
                     );
                     const ordreNum = getOrdreNum(emp.id, chantier.id, dateStr);
                     return (
-                      <Pressable
-                        key={emp.id}
-                        style={[styles.empBadge, { backgroundColor: empColor }]}
-                        onPress={() => openNoteModal(chantier.id, dateStr, emp.id)}
-                        onLongPress={isAdmin ? () => {
-                          const ids = getOrdreChantiers(emp.id, dateStr);
-                          if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
-                        } : undefined}
-                      >
-                        <Text style={[styles.empBadgeText, { color: '#fff' }]} numberOfLines={1}>
-                          {emp.prenom.length > 4 ? emp.prenom.slice(0, 3) + '.' : emp.prenom}
-                        </Text>
-                        {empHasNotes && <View style={styles.noteDot} />}
-                        {ordreNum > 0 && (
-                          <View style={styles.ordreBadge}>
-                            <Text style={styles.ordreBadgeText}>{ordreNum}</Text>
-                          </View>
+                      <View key={emp.id} style={styles.badgeWrapper}>
+                        <Pressable
+                          style={[styles.empBadge, { backgroundColor: empColor }]}
+                          onPress={() => openNoteModal(chantier.id, dateStr, emp.id)}
+                          onLongPress={isAdmin ? () => {
+                            const ids = getOrdreChantiers(emp.id, dateStr);
+                            if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
+                          } : undefined}
+                        >
+                          <Text style={[styles.empBadgeText, { color: '#fff' }]} numberOfLines={1}>
+                            {emp.prenom.length > 4 ? emp.prenom.slice(0, 3) + '.' : emp.prenom}
+                          </Text>
+                          {empHasNotes && <View style={styles.noteDot} />}
+                          {ordreNum > 0 && (
+                            <View style={styles.ordreBadge}>
+                              <Text style={styles.ordreBadgeText}>{ordreNum}</Text>
+                            </View>
+                          )}
+                        </Pressable>
+                        {isAdmin && (
+                          <Pressable
+                            style={styles.removeBadgeBtn}
+                            onPress={() => removeAffectation(chantier.id, emp.id, dateStr)}
+                          >
+                            <Text style={styles.removeBadgeBtnText}>✕</Text>
+                          </Pressable>
                         )}
-                      </Pressable>
+                      </View>
                     );
                   })}
                   {/* Badges sous-traitants : cliquables pour ouvrir les notes */}
@@ -1449,16 +1458,25 @@ export default function PlanningScreen() {
                       (a.notes || []).some(n => !n.date || n.date === dateStr)
                     );
                     return (
-                      <Pressable
-                        key={st.id}
-                        style={[styles.stBadge, { backgroundColor: st.couleur }]}
-                        onPress={() => openSTNoteModal(chantier.id, dateStr, st.id)}
-                      >
-                        <Text style={styles.stBadgeText} numberOfLines={1}>
-                          {st.prenom.length > 4 ? st.prenom.slice(0, 3) + '.' : st.prenom}
-                        </Text>
-                        {stHasNotes && <View style={styles.noteDot} />}
-                      </Pressable>
+                      <View key={st.id} style={styles.badgeWrapper}>
+                        <Pressable
+                          style={[styles.stBadge, { backgroundColor: st.couleur }]}
+                          onPress={() => openSTNoteModal(chantier.id, dateStr, st.id)}
+                        >
+                          <Text style={styles.stBadgeText} numberOfLines={1}>
+                            {st.prenom.length > 4 ? st.prenom.slice(0, 3) + '.' : st.prenom}
+                          </Text>
+                          {stHasNotes && <View style={styles.noteDot} />}
+                        </Pressable>
+                        {isAdmin && (
+                          <Pressable
+                            style={styles.removeBadgeBtn}
+                            onPress={() => removeAffectation(chantier.id, `st:${st.id}`, dateStr)}
+                          >
+                            <Text style={styles.removeBadgeBtnText}>✕</Text>
+                          </Pressable>
+                        )}
+                      </View>
                     );
                   })}
                   {/* Bandeaux interventions externes (visibles par tous) */}
@@ -3302,6 +3320,29 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
     lineHeight: 10,
+  },
+  badgeWrapper: {
+    position: 'relative',
+  },
+  removeBadgeBtn: {
+    position: 'absolute',
+    top: -5,
+    right: -5,
+    width: 14,
+    height: 14,
+    borderRadius: 7,
+    backgroundColor: '#E74C3C',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    borderWidth: 1,
+    borderColor: '#fff',
+  },
+  removeBadgeBtnText: {
+    color: '#fff',
+    fontSize: 7,
+    fontWeight: '900',
+    lineHeight: 12,
   },
   addBtn: {
     width: DAY_COL - 6,
