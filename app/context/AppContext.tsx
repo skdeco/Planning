@@ -285,6 +285,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref pour stocker les données les plus récentes (évite les closures stale dans le polling)
   const dataRef = useRef<AppData>(EMPTY_DATA);
+  // Set des IDs d'affectations supprimées localement — le polling ne doit JAMAIS les réintroduire
+  const deletedAffectationIdsRef = useRef<Set<string>>(new Set());
   // Set des IDs de listes supprimées localement — le polling ne doit JAMAIS les réintroduire
   const deletedListeIdsRef = useRef<Set<string>>(new Set());
   // Map listeId -> Set<itemId> des items supprimés — le polling ne doit JAMAIS les réintroduire
@@ -467,6 +469,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             // Appliquer la migration sur le résultat fusionné
             const result = migrateData(merged);
 
+            // Cas spécial affectations : ne pas réintroduire les affectations supprimées localement
+            const mergedAffectations = (result.affectations || []).filter(
+              (a: Affectation) => !deletedAffectationIdsRef.current.has(a.id)
+            );
+
             // Cas spécial listes matériel : respecter les suppressions locales
             const mergedListes = (() => {
               const freshListes = result.listesMateriaux || [];
@@ -491,7 +498,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               return finalListes;
             })();
 
-            return { ...result, listesMateriaux: mergedListes };
+            return { ...result, affectations: mergedAffectations, listesMateriaux: mergedListes };
           });
         }
       } catch {}
@@ -547,7 +554,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   const updateAffectation = (a: Affectation) =>
     setData(p => ({ ...p, affectations: p.affectations.map(x => x.id === a.id ? a : x) }));
-  const removeAffectation = (chantierId: string, employeId: string, date: string) =>
+  const removeAffectation = (chantierId: string, employeId: string, date: string) => {
+    lastLocalChangeRef.current = Date.now();
+    if (saveTimer.current) clearTimeout(saveTimer.current);
     setData(p => {
       const newAffectations: Affectation[] = [];
       for (const a of p.affectations) {
@@ -561,6 +570,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           newAffectations.push(a);
           continue;
         }
+        // Mémoriser l'ID supprimé pour que le polling ne le réintroduise jamais
+        deletedAffectationIdsRef.current.add(a.id);
         // L'affectation couvre ce jour : on la découpe
         // Utiliser la date locale (pas UTC) pour éviter les décalages de fuseau horaire
         const toLocalYMD = (d: Date) => {
@@ -585,8 +596,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         // Si dateDebut === dateFin === date : on ne pousse rien (suppression totale)
       }
-      return { ...p, affectations: newAffectations };
+      const newData = { ...p, affectations: newAffectations };
+      // Sauvegarder immédiatement dans Supabase pour éviter que d'autres appareils ne réintroduisent l'affectation
+      lastSaveRef.current = Date.now();
+      saveDataToSupabase(newData as unknown as Record<string, unknown>).catch(() => {});
+      AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(newData)).catch(() => {});
+      return newData;
     });
+  };
 
   // ── Notes ──
   const upsertNote = ({ chantierId, employeId, date, note }: {
