@@ -894,6 +894,11 @@ export default function ReportingScreen() {
                                 {ecartDebut > 0 ? `+${ecartDebut}min` : `${ecartDebut}min`}
                               </Text>
                             )}
+                            {debut.latitude && debut.longitude && (
+                              <Pressable onPress={() => Platform.OS === 'web' && window.open(`https://www.google.com/maps?q=${debut.latitude},${debut.longitude}`, '_blank')}>
+                                <Text style={styles.tableauGpsText}>📍</Text>
+                              </Pressable>
+                            )}
                           </>
                         ) : (
                           <Text style={[styles.tableauAbsent, travailleTheo && !hasPointage && { color: '#E74C3C' }]}>
@@ -909,6 +914,11 @@ export default function ReportingScreen() {
                               <Text style={[styles.tableauEcartText, { color: getPonctualiteColor(ecartFin) }]}>
                                 {ecartFin > 0 ? `+${ecartFin}min` : `${ecartFin}min`}
                               </Text>
+                            )}
+                            {fin.latitude && fin.longitude && (
+                              <Pressable onPress={() => Platform.OS === 'web' && window.open(`https://www.google.com/maps?q=${fin.latitude},${fin.longitude}`, '_blank')}>
+                                <Text style={styles.tableauGpsText}>📍</Text>
+                              </Pressable>
                             )}
                           </>
                         ) : (
