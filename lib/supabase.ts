@@ -130,6 +130,11 @@ export function mergeDataSafely(
     result[key] = { ...remoteObj, ...localObj }; // local prioritaire
   }
 
+  // adminPassword : priorité Supabase (remote) pour synchroniser entre appareils
+  if (remote.adminPassword && typeof remote.adminPassword === 'string') {
+    result.adminPassword = remote.adminPassword;
+  }
+
   return result;
 }
 

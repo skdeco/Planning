@@ -107,6 +107,8 @@ interface AppContextType {
   deletePlanChantier: (chantierId: string, planId: string) => void;
   // Mot de passe admin
   updateAdminPassword: (pwd: string) => void;
+  // Ordre affectations (multi-chantiers même jour)
+  updateOrdreAffectation: (employeId: string, date: string, orderedChantierIds: string[]) => void;
   // Messagerie privée
   addMessagePrive: (m: MessagePrive) => void;
   updateMessagePrive: (m: MessagePrive) => void;
@@ -493,7 +495,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           });
         }
       } catch {}
-    }, 300000); // toutes les 5 minutes (réduit le trafic réseau Supabase)
+    }, 120000); // toutes les 2 minutes
     return () => clearInterval(poll);
   }, [loaded]);
 
@@ -532,7 +534,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Affectations ──
   const addAffectation = (a: Affectation) =>
-    setData(p => ({ ...p, affectations: [...p.affectations, a] }));
+    setData(p => {
+      // Anti-doublon : ne pas ajouter si même employé+chantier+dateDebut+dateFin existe déjà
+      const duplicate = p.affectations.some(x =>
+        x.chantierId === a.chantierId &&
+        x.employeId === a.employeId &&
+        x.dateDebut === a.dateDebut &&
+        x.dateFin === a.dateFin
+      );
+      if (duplicate) return p;
+      return { ...p, affectations: [...p.affectations, a] };
+    });
   const updateAffectation = (a: Affectation) =>
     setData(p => ({ ...p, affectations: p.affectations.map(x => x.id === a.id ? a : x) }));
   const removeAffectation = (chantierId: string, employeId: string, date: string) =>
@@ -978,6 +990,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateAdminPassword = (pwd: string) =>
     setData(p => ({ ...p, adminPassword: pwd }));
 
+  const updateOrdreAffectation = (employeId: string, date: string, orderedChantierIds: string[]) =>
+    setData(p => ({
+      ...p,
+      ordreAffectations: {
+        ...(p.ordreAffectations || {}),
+        [`${employeId}_${date}`]: orderedChantierIds,
+      },
+    }));
+
   const logout = () => setCurrentUserPersisted(null);
 
   return (
@@ -1011,6 +1032,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,
       updateAdminPassword,
+      updateOrdreAffectation,
       logout,
     }}>
       {children}

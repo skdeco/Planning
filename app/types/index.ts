@@ -601,6 +601,11 @@ export interface AppData {
   fichesChantier?: Record<string, any>;
   // Mot de passe administrateur (modifiable)
   adminPassword?: string;
+  // Plans chantier
+  plansChantier?: Record<string, any>;
+  // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour
+  // clé : "employeId_YYYY-MM-DD", valeur : liste ordonnée de chantierId
+  ordreAffectations?: Record<string, string[]>;
 }
 
 export type UserRole = 'admin' | 'employe' | 'soustraitant';

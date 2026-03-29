@@ -154,7 +154,7 @@ interface NoteModalState {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateOrdreAffectation } = useApp();
   const { t } = useLanguage();
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
@@ -376,6 +376,31 @@ export default function PlanningScreen() {
     setPwdError('');
     setTimeout(() => { setShowPwdModal(false); setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdSuccess(false); }, 1500);
   };
+  // ── Ordre affectations multi-chantiers ────────────────────────────────────
+  const [ordreModal, setOrdreModal] = useState<{ employeId: string; date: string; chantierIds: string[] } | null>(null);
+
+  /** Retourne la liste ordonnée de chantierId pour un employé un jour donné */
+  const getOrdreChantiers = (employeId: string, date: string): string[] => {
+    const key = `${employeId}_${date}`;
+    const stored = data.ordreAffectations?.[key];
+    // Chantiers réellement affectés ce jour
+    const affectedIds = data.affectations
+      .filter(a => a.employeId === employeId && a.dateDebut <= date && a.dateFin >= date)
+      .map(a => a.chantierId);
+    if (!stored) return affectedIds;
+    // Garder uniquement les chantiers encore affectés, dans l'ordre stocké, puis ajouter les nouveaux
+    const ordered = stored.filter(id => affectedIds.includes(id));
+    const extra = affectedIds.filter(id => !ordered.includes(id));
+    return [...ordered, ...extra];
+  };
+
+  /** Numéro d'ordre (1-based) d'un chantier pour un employé un jour donné, ou 0 si employé sur 1 seul chantier */
+  const getOrdreNum = (employeId: string, chantierId: string, date: string): number => {
+    const list = getOrdreChantiers(employeId, date);
+    if (list.length < 2) return 0;
+    return list.indexOf(chantierId) + 1;
+  };
+
   const currentEmployePlanning = data.employes.find(e => e.id === currentUser?.employeId);
   const isAcheteurPlanning = isAdmin || (currentEmployePlanning?.isAcheteur === true);
 
@@ -1388,16 +1413,26 @@ export default function PlanningScreen() {
                       a.dateDebut <= dateStr && a.dateFin >= dateStr &&
                       (a.notes || []).some(n => !n.date || n.date === dateStr)
                     );
+                    const ordreNum = getOrdreNum(emp.id, chantier.id, dateStr);
                     return (
                       <Pressable
                         key={emp.id}
                         style={[styles.empBadge, { backgroundColor: empColor }]}
                         onPress={() => openNoteModal(chantier.id, dateStr, emp.id)}
+                        onLongPress={isAdmin ? () => {
+                          const ids = getOrdreChantiers(emp.id, dateStr);
+                          if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
+                        } : undefined}
                       >
                         <Text style={[styles.empBadgeText, { color: '#fff' }]} numberOfLines={1}>
                           {emp.prenom.length > 4 ? emp.prenom.slice(0, 3) + '.' : emp.prenom}
                         </Text>
                         {empHasNotes && <View style={styles.noteDot} />}
+                        {ordreNum > 0 && (
+                          <View style={styles.ordreBadge}>
+                            <Text style={styles.ordreBadgeText}>{ordreNum}</Text>
+                          </View>
+                        )}
                       </Pressable>
                     );
                   })}
@@ -1441,6 +1476,7 @@ export default function PlanningScreen() {
                       style={styles.addBtn}
                       onPress={() => {
                         setInterventionForm({ libelle: '', description: '', dateDebut: dateStr, dateFin: dateStr, couleur: INTERVENTION_COLORS[0] });
+                        setAffectationDateFin(null);
                         setModal({ chantierId: chantier.id, date: dateStr });
                       }}
                     >
@@ -2950,6 +2986,85 @@ export default function PlanningScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      {/* ── Modal ordre affectations multi-chantiers ── */}
+      <Modal
+        visible={ordreModal !== null}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setOrdreModal(null)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setOrdreModal(null)}>
+          <Pressable style={[styles.modalSheet, { maxHeight: 400 }]} onPress={e => e.stopPropagation()}>
+            {ordreModal && (() => {
+              const emp = data.employes.find(e => e.id === ordreModal.employeId);
+              return (
+                <>
+                  <Text style={[styles.modalTitle, { marginBottom: 8 }]}>
+                    Ordre de passage — {emp?.prenom} {emp?.nom}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#687076', marginBottom: 12 }}>
+                    {ordreModal.date} · Appuyez sur ↑ / ↓ pour réordonner
+                  </Text>
+                  {ordreModal.chantierIds.map((cId, idx) => {
+                    const ch = data.chantiers.find(c => c.id === cId);
+                    return (
+                      <View key={cId} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                        <View style={[styles.ordreBadge, { position: 'relative', marginRight: 10 }]}>
+                          <Text style={styles.ordreBadgeText}>{idx + 1}</Text>
+                        </View>
+                        <Text style={{ flex: 1, fontSize: 14, color: '#11181C' }} numberOfLines={1}>
+                          {ch?.nom || cId}
+                        </Text>
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                          {idx > 0 && (
+                            <Pressable
+                              style={{ padding: 6, backgroundColor: '#E8EEF8', borderRadius: 6 }}
+                              onPress={() => {
+                                const newIds = [...ordreModal.chantierIds];
+                                [newIds[idx - 1], newIds[idx]] = [newIds[idx], newIds[idx - 1]];
+                                setOrdreModal({ ...ordreModal, chantierIds: newIds });
+                              }}
+                            >
+                              <Text style={{ fontSize: 14 }}>↑</Text>
+                            </Pressable>
+                          )}
+                          {idx < ordreModal.chantierIds.length - 1 && (
+                            <Pressable
+                              style={{ padding: 6, backgroundColor: '#E8EEF8', borderRadius: 6 }}
+                              onPress={() => {
+                                const newIds = [...ordreModal.chantierIds];
+                                [newIds[idx], newIds[idx + 1]] = [newIds[idx + 1], newIds[idx]];
+                                setOrdreModal({ ...ordreModal, chantierIds: newIds });
+                              }}
+                            >
+                              <Text style={{ fontSize: 14 }}>↓</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      </View>
+                    );
+                  })}
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
+                    <Pressable style={{ flex: 1, backgroundColor: '#F2F4F7', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
+                      <Text style={{ color: '#687076', fontWeight: '600' }}>Annuler</Text>
+                    </Pressable>
+                    <Pressable
+                      style={{ flex: 1, backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
+                      onPress={() => {
+                        updateOrdreAffectation(ordreModal.employeId, ordreModal.date, ordreModal.chantierIds);
+                        setOrdreModal(null);
+                      }}
+                    >
+                      <Text style={{ color: '#fff', fontWeight: '700' }}>Enregistrer</Text>
+                    </Pressable>
+                  </View>
+                </>
+              );
+            })()}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
     </ScreenContainer>
   );
 }
@@ -3164,6 +3279,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: 'rgba(0,0,0,0.3)',
+  },
+  ordreBadge: {
+    position: 'absolute',
+    bottom: 1,
+    left: 1,
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: '#E74C3C',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ordreBadgeText: {
+    fontSize: 8,
+    fontWeight: '700',
+    color: '#fff',
+    lineHeight: 10,
   },
   addBtn: {
     width: DAY_COL - 6,

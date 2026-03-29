@@ -25,6 +25,18 @@ function getAvatarColor(prenom: string): string {
   return colors[prenom.charCodeAt(0) % colors.length];
 }
 
+function buildIdentifiant(prenom: string, nom: string): string {
+  const normalize = (s: string) =>
+    s.trim().toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '.');
+  const p = normalize(prenom);
+  const n = normalize(nom);
+  if (p && n) return `${p}.${n}`;
+  if (p) return p;
+  return n;
+}
+
 function copyToClipboard(text: string) {
   if (Platform.OS === 'web') {
     navigator.clipboard?.writeText(text).catch(() => {});
@@ -107,7 +119,7 @@ export default function EquipeScreen() {
     setEditId(null);
     setForm(DEFAULT_FORM);
     setShowHoraires(false);
-    setShowMdp(false);
+    setShowMdp(true); // Mot de passe visible à la création pour que l'admin puisse le noter
     setShowForm(true);
   };
 
@@ -285,7 +297,7 @@ export default function EquipeScreen() {
   const openNewST = () => {
     setEditSTId(null);
     setSTForm({ societe: '', prenom: '', nom: '', telephone: '', email: '', identifiant: '', motDePasse: '', couleur: ST_COLORS[0] });
-    setShowSTMdp(false);
+    setShowSTMdp(true); // Mot de passe visible à la création
     setShowSTForm(true);
   };
 
@@ -499,11 +511,17 @@ export default function EquipeScreen() {
               <View style={styles.nameRow}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.fieldLabel}>{t.common.firstName} *</Text>
-                  <TextInput style={styles.input} value={form.prenom} onChangeText={v => setForm(f => ({ ...f, prenom: v }))} placeholder="Ex: Sacha" placeholderTextColor="#B0BEC5" />
+                  <TextInput style={styles.input} value={form.prenom} onChangeText={v => setForm(f => ({
+                    ...f, prenom: v,
+                    identifiant: editId ? f.identifiant : buildIdentifiant(v, f.nom),
+                  }))} placeholder="Ex: Sacha" placeholderTextColor="#B0BEC5" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>{t.equipe.lastName}</Text>
-                  <TextInput style={styles.input} value={form.nom} onChangeText={v => setForm(f => ({ ...f, nom: v }))} placeholder="Ex: Martin" placeholderTextColor="#B0BEC5" />
+                  <TextInput style={styles.input} value={form.nom} onChangeText={v => setForm(f => ({
+                    ...f, nom: v,
+                    identifiant: editId ? f.identifiant : buildIdentifiant(f.prenom, v),
+                  }))} placeholder="Ex: Martin" placeholderTextColor="#B0BEC5" />
                 </View>
               </View>
 
@@ -760,11 +778,17 @@ export default function EquipeScreen() {
               <View style={[styles.nameRow, { marginTop: 12 }]}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.fieldLabel}>Prénom</Text>
-                  <TextInput style={styles.input} value={stForm.prenom} onChangeText={v => setSTForm(f => ({ ...f, prenom: v }))} placeholder="Jean" placeholderTextColor="#B0BEC5" />
+                  <TextInput style={styles.input} value={stForm.prenom} onChangeText={v => setSTForm(f => ({
+                    ...f, prenom: v,
+                    identifiant: editSTId ? f.identifiant : buildIdentifiant(v, f.nom),
+                  }))} placeholder="Jean" placeholderTextColor="#B0BEC5" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>{t.equipe.lastName}</Text>
-                  <TextInput style={styles.input} value={stForm.nom} onChangeText={v => setSTForm(f => ({ ...f, nom: v }))} placeholder="Dupont" placeholderTextColor="#B0BEC5" />
+                  <TextInput style={styles.input} value={stForm.nom} onChangeText={v => setSTForm(f => ({
+                    ...f, nom: v,
+                    identifiant: editSTId ? f.identifiant : buildIdentifiant(f.prenom, v),
+                  }))} placeholder="Dupont" placeholderTextColor="#B0BEC5" />
                 </View>
               </View>
 
