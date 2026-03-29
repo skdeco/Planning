@@ -275,11 +275,15 @@ function migrateData(parsed: Record<string, any>): AppData {
   };
 }
 
-// ─── Gestion session unique (un seul onglet actif à la fois) ─────────────────
+// ─── Gestion session unique (un seul onglet actif PAR COMPTE) ────────────────
 const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-const SESSION_CHANNEL = typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined'
-  ? new BroadcastChannel('sk_deco_session')
-  : null;
+const canUseBroadcast = typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined';
+
+/** Crée un canal BroadcastChannel isolé par compte utilisateur */
+function makeSessionChannel(accountKey: string): BroadcastChannel | null {
+  if (!canUseBroadcast) return null;
+  return new BroadcastChannel(`sk_deco_session_${accountKey}`);
+}
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(EMPTY_DATA);
@@ -305,24 +309,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Timestamp de la dernière modification locale (suppression, ajout, toggle)
   const lastLocalChangeRef = useRef<number>(0);
 
-  // ── Session unique : invalider les anciens onglets ──────────────────────────
+  // ── Session unique PAR COMPTE : invalider les anciens onglets du même utilisateur ──
+  // Le canal est créé uniquement quand on connaît le compte connecté.
+  // Un admin et un employé peuvent avoir chacun leur onglet actif sans interférence.
   useEffect(() => {
-    if (!SESSION_CHANNEL) return;
+    if (!currentUser) return;
 
-    // Annoncer notre présence aux autres onglets
-    SESSION_CHANNEL.postMessage({ type: 'NEW_SESSION', sessionId: SESSION_ID });
+    // Clé unique par compte : admin, employeId, ou soustraitantId
+    const accountKey = currentUser.role === 'admin'
+      ? 'admin'
+      : currentUser.employeId || currentUser.soustraitantId || 'unknown';
 
-    // Écouter les nouvelles sessions entrantes
+    const channel = makeSessionChannel(accountKey);
+    if (!channel) return;
+
+    // Réinitialiser sessionExpired si on vient de se reconnecter
+    setSessionExpired(false);
+
+    // Annoncer notre présence aux autres onglets du MÊME compte
+    channel.postMessage({ type: 'NEW_SESSION', sessionId: SESSION_ID, accountKey });
+
+    // Écouter les nouvelles sessions du même compte
     const handleMessage = (e: MessageEvent) => {
       if (e.data?.type === 'NEW_SESSION' && e.data?.sessionId !== SESSION_ID) {
-        // Un autre onglet vient de s'ouvrir → on se met en lecture seule
+        // Un autre onglet du même compte vient de s'ouvrir → lecture seule
         setSessionExpired(true);
         if (saveTimer.current) clearTimeout(saveTimer.current);
       }
     };
-    SESSION_CHANNEL.addEventListener('message', handleMessage);
-    return () => SESSION_CHANNEL.removeEventListener('message', handleMessage);
-  }, []);
+    channel.addEventListener('message', handleMessage);
+    return () => {
+      channel.removeEventListener('message', handleMessage);
+      channel.close();
+    };
+  }, [currentUser]);
 
   // ── Chargement initial : SUPABASE = SOURCE DE VÉRITÉ UNIQUE ──
   // Architecture :
