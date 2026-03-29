@@ -5,6 +5,8 @@ import {
   TextInput, ScrollView, Alert, Platform, Image,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import * as XLSX from 'xlsx';
+import JSZip from 'jszip';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -63,6 +65,7 @@ export default function ChantiersScreen() {
   }, [isHydrated, currentUser, router]);
 
   const isAdmin = currentUser?.role === 'admin';
+  const [exportingId, setExportingId] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
@@ -342,59 +345,262 @@ export default function ChantiersScreen() {
     setShowFiche(false);
   };
 
-  const handleExportChantier = (chantier: Chantier) => {
-    // Collecter toutes les données liées à ce chantier
+  const triggerDownload = (blob: Blob, filename: string) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  };
+
+  const handleExportChantier = async (chantier: Chantier) => {
+    setExportingId(chantier.id);
+    const slug = chantier.nom.replace(/[^a-z0-9]/gi, '_');
+    const dateStr = new Date().toISOString().slice(0, 10);
+
+    // ── Données liées au chantier ──────────────────────────────────────────
     const affectations = data.affectations.filter(a => a.chantierId === chantier.id);
-    const pointages = data.pointages.filter(p => (p as any).chantierId === chantier.id);
-    const acomptes = (data.acomptes || []).filter(a => (a as any).chantierId === chantier.id);
+    const employeIds = new Set(affectations.map(a => a.employeId));
+
+    // Pointages : tous les pointages des employés affectés sur la période du chantier
+    const pointages = data.pointages.filter(p =>
+      employeIds.has(p.employeId) &&
+      p.date >= chantier.dateDebut && p.date <= chantier.dateFin
+    );
     const notes = (data.notesChantier || []).filter(n => n.chantierId === chantier.id);
     const photos = (data.photosChantier || []).filter(p => p.chantierId === chantier.id);
     const docs = (data.docsSuiviChantier || []).filter(d => d.chantierId === chantier.id);
     const depenses = (data.depensesChantier || []).filter(d => d.chantierId === chantier.id);
     const supplements = (data.supplementsChantier || []).filter(s => s.chantierId === chantier.id);
     const interventions = (data.interventions || []).filter(i => i.chantierId === chantier.id);
-    const plans = data.plansChantier?.[chantier.id] || [];
-    const fiche = data.fichesChantier?.[chantier.id];
+    const plans: any[] = data.plansChantier?.[chantier.id] || [];
+    const listesMateriaux = (data.listesMateriaux || []).filter(l => l.chantierId === chantier.id);
 
-    const exportData = {
-      chantier,
-      affectations,
-      pointages,
-      acomptes,
-      notes,
-      photos: photos.map(p => ({ ...p, uri: undefined })), // exclure les URIs base64 volumineuses
-      docs,
-      depenses,
-      supplements,
-      interventions,
-      plans: plans.map((p: any) => ({ ...p, uri: undefined })),
-      fiche,
-      exportedAt: new Date().toISOString(),
+    const empName = (id: string) => {
+      const e = data.employes.find(x => x.id === id);
+      return e ? `${e.prenom} ${e.nom}` : id;
     };
 
-    const json = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `chantier_${chantier.nom.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().slice(0, 10)}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
+    // ── 1. FICHIER EXCEL ───────────────────────────────────────────────────
+    const wb = XLSX.utils.book_new();
+
+    // Onglet Chantier
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet([{
+      Nom: chantier.nom,
+      Adresse: chantier.adresse || '',
+      Statut: STATUT_LABELS[chantier.statut],
+      'Date début': chantier.dateDebut,
+      'Date fin': chantier.dateFin,
+    }]), 'Chantier');
+
+    // Onglet Affectations
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      affectations.length ? affectations.map(a => ({
+        Employé: empName(a.employeId),
+        'Date début': a.dateDebut,
+        'Date fin': a.dateFin,
+      })) : [{ info: 'Aucune affectation' }]
+    ), 'Affectations');
+
+    // Onglet Pointages
+    const pointageRows: any[] = [];
+    // Grouper par employé + date pour avoir arrivée / départ sur la même ligne
+    const ptMap = new Map<string, { debut?: string; fin?: string; adresse?: string }>();
+    for (const p of pointages) {
+      const key = `${p.employeId}_${p.date}`;
+      if (!ptMap.has(key)) ptMap.set(key, {});
+      const row = ptMap.get(key)!;
+      if (p.type === 'debut') row.debut = p.heure;
+      else row.fin = p.heure;
+      if (p.adresse) row.adresse = p.adresse;
+    }
+    for (const [key, val] of ptMap.entries()) {
+      const [empId, date] = key.split('_');
+      pointageRows.push({
+        Employé: empName(empId),
+        Date: date,
+        Arrivée: val.debut || '',
+        Départ: val.fin || '',
+        Adresse: val.adresse || '',
+      });
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      pointageRows.length ? pointageRows : [{ info: 'Aucun pointage' }]
+    ), 'Pointages');
+
+    // Onglet Dépenses
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      depenses.length ? depenses.map(d => ({
+        Date: d.date,
+        Libellé: d.libelle,
+        Catégorie: d.categorie || '',
+        'Montant (€)': d.montant,
+        'Saisi par': d.createdBy || '',
+      })) : [{ info: 'Aucune dépense' }]
+    ), 'Dépenses');
+
+    // Onglet Suppléments
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      supplements.length ? supplements.map(s => ({
+        Date: s.date,
+        Libellé: s.libelle,
+        Quantité: s.quantite ?? '',
+        Unité: s.unite || '',
+        'Prix unitaire (€)': s.prixUnitaire ?? '',
+        'Total (€)': s.montantTotal ?? '',
+        Note: s.note || '',
+      })) : [{ info: 'Aucun supplément' }]
+    ), 'Suppléments');
+
+    // Onglet Interventions externes
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      interventions.length ? interventions.map(i => ({
+        Libellé: i.libelle,
+        Description: i.description || '',
+        'Date début': i.dateDebut,
+        'Date fin': i.dateFin,
+      })) : [{ info: 'Aucune intervention' }]
+    ), 'Interventions');
+
+    // Onglet Notes chantier
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      notes.length ? notes.map(n => ({
+        Date: n.createdAt?.slice(0, 10) || '',
+        Texte: n.texte || '',
+        Auteur: n.auteurNom || n.auteurId || '',
+        Destinataires: Array.isArray(n.destinataires) ? n.destinataires.join(', ') : (n.destinataires || 'tous'),
+      })) : [{ info: 'Aucune note' }]
+    ), 'Notes');
+
+    // Onglet Listes matériau
+    const matRows: any[] = [];
+    for (const liste of listesMateriaux) {
+      for (const item of liste.items) {
+        matRows.push({
+          Employé: empName(liste.employeId),
+          Article: item.texte,
+          Quantité: item.quantite || '',
+          Commentaire: item.commentaire || '',
+          Acheté: item.achete ? 'Oui' : 'Non',
+          'Acheté par': item.achetePar || '',
+        });
+      }
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      matRows.length ? matRows : [{ info: 'Aucun matériau' }]
+    ), 'Matériaux');
+
+    // Onglet Plans & Documents (liste)
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      plans.length ? plans.map((p: any) => ({
+        Nom: p.nom || '',
+        Date: p.date || '',
+        'Ajouté par': p.addedBy || '',
+        'Visible pour': p.visiblePour || 'tous',
+      })) : [{ info: 'Aucun plan' }]
+    ), 'Plans');
+
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
+      docs.length ? docs.map(d => ({
+        Type: d.type,
+        Libellé: d.libelle,
+        'Uploadé le': d.uploadedAt?.slice(0, 10) || '',
+        'Uploadé par': d.uploadedBy || '',
+        Commentaire: d.commentaire || '',
+      })) : [{ info: 'Aucun document' }]
+    ), 'Documents');
+
+    // Télécharger l'Excel
+    const xlsxBlob = new Blob(
+      [XLSX.write(wb, { bookType: 'xlsx', type: 'array' })],
+      { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }
+    );
+    triggerDownload(xlsxBlob, `${slug}_${dateStr}_données.xlsx`);
+
+    // ── 2. ZIP MÉDIAS ──────────────────────────────────────────────────────
+    const zip = new JSZip();
+    let hasMedia = false;
+
+    const addFileToZip = async (folder: string, filename: string, uri: string) => {
+      try {
+        if (!uri) return;
+        if (uri.startsWith('data:')) {
+          const base64 = uri.split(',')[1];
+          if (base64) { zip.folder(folder)!.file(filename, base64, { base64: true }); hasMedia = true; }
+        } else if (uri.startsWith('http')) {
+          const res = await fetch(uri);
+          if (res.ok) { zip.folder(folder)!.file(filename, await res.blob()); hasMedia = true; }
+        }
+      } catch {}
+    };
+
+    const ext = (uri: string, fallback = 'jpg') => {
+      if (uri.startsWith('data:')) {
+        const m = uri.match(/data:[^/]+\/([^;]+)/);
+        return m ? (m[1] === 'jpeg' ? 'jpg' : m[1]) : fallback;
+      }
+      return uri.split('.').pop()?.split('?')[0] || fallback;
+    };
+
+    // Photos chantier
+    for (const p of photos) {
+      if (p.uri) {
+        const nom = `${p.date}_${p.employeId.slice(-4)}_${p.id.slice(-6)}.${ext(p.uri)}`;
+        await addFileToZip('photos', nom, p.uri);
+      }
+    }
+
+    // Plans
+    for (const p of plans) {
+      if (p.uri) {
+        const nom = `${(p.nom || p.id).replace(/[^a-z0-9]/gi, '_')}.${ext(p.uri, 'pdf')}`;
+        await addFileToZip('plans', nom, p.uri);
+      }
+    }
+
+    // Documents de suivi
+    for (const d of docs) {
+      if (d.fichier) {
+        const nom = `${d.type}_${(d.libelle || d.id).replace(/[^a-z0-9]/gi, '_')}.${ext(d.fichier, 'pdf')}`;
+        await addFileToZip('documents', nom, d.fichier);
+      }
+      for (const photoUri of d.photos || []) {
+        await addFileToZip('documents/photos', `${d.id}_${Date.now()}.${ext(photoUri)}`, photoUri);
+      }
+    }
+
+    // Dépenses (photos / scans)
+    for (const d of depenses) {
+      if (d.fichier) {
+        const nom = `${d.date}_${(d.libelle || d.id).replace(/[^a-z0-9]/gi, '_')}.${ext(d.fichier, 'pdf')}`;
+        await addFileToZip('depenses', nom, d.fichier);
+      }
+    }
+
+    if (hasMedia) {
+      const zipBlob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 6 } });
+      triggerDownload(zipBlob, `${slug}_${dateStr}_médias.zip`);
+    }
+
+    setExportingId(null);
   };
 
   const handleClotureChantier = (chantier: Chantier) => {
-    const msg = `Clôturer le chantier "${chantier.nom}" ?\n\nCela va :\n1. Exporter toutes les données\n2. Marquer le chantier comme terminé\n3. Le retirer du planning`;
+    const msg = `Clôturer le chantier "${chantier.nom}" ?\n\nCela va :\n1. Exporter un fichier Excel (données)\n2. Exporter un ZIP (photos, plans, documents)\n3. Marquer le chantier comme terminé et le retirer du planning`;
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && window.confirm(msg)) {
-        handleExportChantier(chantier);
-        updateChantier({ ...chantier, statut: 'termine', visibleSurPlanning: false });
+        handleExportChantier(chantier).then(() => {
+          updateChantier({ ...chantier, statut: 'termine', visibleSurPlanning: false });
+        });
       }
     } else {
       Alert.alert('Clôturer le chantier', msg, [
         { text: 'Annuler', style: 'cancel' },
         { text: 'Clôturer + Exporter', style: 'destructive', onPress: () => {
-          handleExportChantier(chantier);
-          updateChantier({ ...chantier, statut: 'termine', visibleSurPlanning: false });
+          handleExportChantier(chantier).then(() => {
+            updateChantier({ ...chantier, statut: 'termine', visibleSurPlanning: false });
+          });
         }},
       ]);
     }
@@ -512,8 +718,12 @@ export default function ChantiersScreen() {
               </View>
             </Pressable>
             {isAdmin && item.statut !== 'termine' && (
-              <Pressable style={styles.actionBtn} onPress={() => handleClotureChantier(item)}>
-                <Text style={{ fontSize: 18 }}>📦</Text>
+              <Pressable
+                style={[styles.actionBtn, exportingId === item.id && { opacity: 0.5 }]}
+                onPress={() => handleClotureChantier(item)}
+                disabled={exportingId === item.id}
+              >
+                <Text style={{ fontSize: 18 }}>{exportingId === item.id ? '⏳' : '📦'}</Text>
               </Pressable>
             )}
             {isAdmin && (
