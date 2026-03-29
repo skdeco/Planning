@@ -411,32 +411,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (!loaded) return;
     const checkAndBackup = async () => {
-      // Vérifier max 1 fois par jour (24h) pour éviter les appels répétés
+      // Maximum 1 backup par jour
       if (Date.now() - lastBackupCheckRef.current < 86400000) return;
       lastBackupCheckRef.current = Date.now();
       try {
-        // Ne faire un backup que si les données sont substantielles
         if (data.employes.length === 0 && data.chantiers.length === 0) return;
 
-        // Ne faire un backup que le lundi (1 par semaine)
         const today = new Date();
-        if (today.getDay() !== 1) return; // 1 = lundi
-
-        // Vérifier si un backup a déjà été fait cette semaine
-        const weekKey = `${today.getFullYear()}-W${String(Math.ceil(today.getDate() / 7)).padStart(2, '0')}`;
-        const lastBackupWeek = await AsyncStorage.getItem('sk_last_backup_week').catch(() => null);
-        if (lastBackupWeek === weekKey) return; // Déjà fait cette semaine
+        const dayKey = today.toISOString().slice(0, 10); // YYYY-MM-DD
+        const lastBackupDay = await AsyncStorage.getItem('sk_last_backup_day').catch(() => null);
+        if (lastBackupDay === dayKey) return; // Déjà fait aujourd'hui
 
         const success = await createManualBackup(
           data as unknown as Record<string, unknown>,
-          'weekly'
+          'daily'
         );
         if (success) {
-          await AsyncStorage.setItem('sk_last_backup_week', weekKey).catch(() => {});
-          console.log('✅ Backup hebdomadaire créé (semaine ' + weekKey + ')');
+          await AsyncStorage.setItem('sk_last_backup_day', dayKey).catch(() => {});
+          console.log('✅ Backup quotidien créé (' + dayKey + ')');
         }
       } catch (e) {
-        console.warn('Backup hebdomadaire échoué:', e);
+        console.warn('Backup quotidien échoué:', e);
       }
     };
     // Vérifier au chargement puis toutes les 24h

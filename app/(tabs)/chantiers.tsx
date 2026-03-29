@@ -342,6 +342,64 @@ export default function ChantiersScreen() {
     setShowFiche(false);
   };
 
+  const handleExportChantier = (chantier: Chantier) => {
+    // Collecter toutes les données liées à ce chantier
+    const affectations = data.affectations.filter(a => a.chantierId === chantier.id);
+    const pointages = data.pointages.filter(p => (p as any).chantierId === chantier.id);
+    const acomptes = (data.acomptes || []).filter(a => (a as any).chantierId === chantier.id);
+    const notes = (data.notesChantier || []).filter(n => n.chantierId === chantier.id);
+    const photos = (data.photosChantier || []).filter(p => p.chantierId === chantier.id);
+    const docs = (data.docsSuiviChantier || []).filter(d => d.chantierId === chantier.id);
+    const depenses = (data.depensesChantier || []).filter(d => d.chantierId === chantier.id);
+    const supplements = (data.supplementsChantier || []).filter(s => s.chantierId === chantier.id);
+    const interventions = (data.interventions || []).filter(i => i.chantierId === chantier.id);
+    const plans = data.plansChantier?.[chantier.id] || [];
+    const fiche = data.fichesChantier?.[chantier.id];
+
+    const exportData = {
+      chantier,
+      affectations,
+      pointages,
+      acomptes,
+      notes,
+      photos: photos.map(p => ({ ...p, uri: undefined })), // exclure les URIs base64 volumineuses
+      docs,
+      depenses,
+      supplements,
+      interventions,
+      plans: plans.map((p: any) => ({ ...p, uri: undefined })),
+      fiche,
+      exportedAt: new Date().toISOString(),
+    };
+
+    const json = JSON.stringify(exportData, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `chantier_${chantier.nom.replace(/[^a-z0-9]/gi, '_')}_${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleClotureChantier = (chantier: Chantier) => {
+    const msg = `Clôturer le chantier "${chantier.nom}" ?\n\nCela va :\n1. Exporter toutes les données\n2. Marquer le chantier comme terminé\n3. Le retirer du planning`;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(msg)) {
+        handleExportChantier(chantier);
+        updateChantier({ ...chantier, statut: 'termine', visibleSurPlanning: false });
+      }
+    } else {
+      Alert.alert('Clôturer le chantier', msg, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Clôturer + Exporter', style: 'destructive', onPress: () => {
+          handleExportChantier(chantier);
+          updateChantier({ ...chantier, statut: 'termine', visibleSurPlanning: false });
+        }},
+      ]);
+    }
+  };
+
   const handleDelete = (id: string, nom: string) => {
     if (Platform.OS === 'web') {
       if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.chantiers.deleteConfirm} "${nom}" ?`) : true)) deleteChantier(id);
@@ -453,6 +511,11 @@ export default function ChantiersScreen() {
                 <Text style={[styles.actionBtnFiche, hasFiche && styles.actionBtnFicheActive]}>🪪</Text>
               </View>
             </Pressable>
+            {isAdmin && item.statut !== 'termine' && (
+              <Pressable style={styles.actionBtn} onPress={() => handleClotureChantier(item)}>
+                <Text style={{ fontSize: 18 }}>📦</Text>
+              </Pressable>
+            )}
             {isAdmin && (
               <Pressable style={styles.actionBtn} onPress={() => handleDelete(item.id, item.nom)}>
                 <Text style={styles.actionBtnDelete}>🗑</Text>

@@ -327,14 +327,25 @@ export async function createManualBackup(
 }
 
 /**
- * Supprime les backups de plus de 28 jours pour éviter de saturer Supabase.
+ * Supprime les backups au-delà des 3 plus récents.
+ * Conserve TOUJOURS au minimum les 3 derniers backups (récupération J-3 max).
  */
 async function purgeOldBackups(): Promise<void> {
-  const cutoff = new Date(Date.now() - 28 * 24 * 3600 * 1000).toISOString();
+  // Lister tous les backups triés du plus récent au plus ancien
+  const { data, error } = await supabase
+    .from('app_data_backups')
+    .select('id, saved_at')
+    .order('saved_at', { ascending: false });
+  if (error || !data) return;
+
+  // Garder les 3 plus récents, supprimer le reste
+  const toDelete = data.slice(3).map(b => b.id);
+  if (toDelete.length === 0) return;
+
   await supabase
     .from('app_data_backups')
     .delete()
-    .lt('saved_at', cutoff);
+    .in('id', toDelete);
 }
 
 /**
