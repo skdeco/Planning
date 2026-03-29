@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY } from '@/lib/supabase';
@@ -279,6 +279,14 @@ function migrateData(parsed: Record<string, any>): AppData {
 const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 const canUseBroadcast = typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined';
 
+/** Canal partagé entre tous les comptes pour notifier les mises à jour en temps réel */
+const DATA_CHANNEL = canUseBroadcast ? new BroadcastChannel('sk_deco_data_updates') : null;
+
+/** Notifie tous les autres onglets (tous comptes confondus) qu'une sauvegarde vient d'avoir lieu */
+export function notifyDataUpdated(authorSessionId: string): void {
+  DATA_CHANNEL?.postMessage({ type: 'DATA_UPDATED', sessionId: authorSessionId });
+}
+
 /** Crée un canal BroadcastChannel isolé par compte utilisateur */
 function makeSessionChannel(accountKey: string): BroadcastChannel | null {
   if (!canUseBroadcast) return null;
@@ -442,7 +450,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // 1. Sauvegarder dans Supabase (SANS photos — stripPhotosForSupabase appliqué dans saveDataToSupabase)
       saveDataToSupabase(dataToSave)
-        .then(ok => { if (!ok) console.warn('⚠️ Sauvegarde Supabase échouée'); })
+        .then(ok => {
+          if (!ok) { console.warn('⚠️ Sauvegarde Supabase échouée'); return; }
+          // Notifier les autres onglets (admin, autres employés) qu'il y a du nouveau
+          notifyDataUpdated(SESSION_ID);
+        })
         .catch(() => {});
 
       // 2. Sauvegarder le cache local COMPLET (avec photos) pour le fallback hors-ligne
@@ -490,66 +502,73 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(backupInterval);
   }, [loaded]);
 
-  // ── Polling Supabase toutes les 30s pour synchroniser entre utilisateurs ──
-  // Permet à l'admin de voir en temps quasi-réel les demandes RH et listes matériel
-  // créées par les employés depuis leur propre session.
+  // ── Rechargement depuis Supabase (utilisé par polling ET BroadcastChannel) ──
+  const reloadFromSupabase = useCallback(async () => {
+    // Ne pas recharger si on vient de sauvegarder OU si un changement local récent n'est pas encore sauvegardé
+    const timeSinceSave = Date.now() - lastSaveRef.current;
+    const timeSinceChange = Date.now() - lastLocalChangeRef.current;
+    if (timeSinceSave < 15000 || timeSinceChange < 15000) return;
+    try {
+      const supabaseData = await loadDataFromSupabase();
+      if (supabaseData && Object.keys(supabaseData).length > 0) {
+        setData(prev => {
+          const prevAsRecord = prev as unknown as Record<string, unknown>;
+          const merged = mergeDataSafely(prevAsRecord, supabaseData);
+          const result = migrateData(merged);
+
+          const mergedAffectations = (result.affectations || []).filter(
+            (a: Affectation) => !deletedAffectationIdsRef.current.has(a.id)
+          );
+
+          const mergedListes = (() => {
+            const freshListes = result.listesMateriaux || [];
+            const prevListes = prev.listesMateriaux || [];
+            const finalListes: typeof prevListes = [];
+            for (const item of freshListes) {
+              if (deletedListeIdsRef.current.has(item.id)) continue;
+              const prevItem = prevListes.find(l => l.id === item.id);
+              if (prevItem) {
+                const chosen = (prevItem.updatedAt || '') >= (item.updatedAt || '') ? prevItem : item;
+                const deletedItems = deletedItemIdsRef.current.get(item.id);
+                finalListes.push(deletedItems && deletedItems.size > 0
+                  ? { ...chosen, items: chosen.items.filter(i => !deletedItems.has(i.id)) }
+                  : chosen
+                );
+              } else {
+                finalListes.push(item);
+              }
+            }
+            return finalListes;
+          })();
+
+          return { ...result, affectations: mergedAffectations, listesMateriaux: mergedListes };
+        });
+      }
+    } catch {}
+  }, []);
+
+  // ── Polling Supabase toutes les 2 minutes (fallback) ──
   useEffect(() => {
     if (!loaded) return;
-    const poll = setInterval(async () => {
-      // Ne pas recharger si on vient de sauvegarder OU si un changement local récent n'est pas encore sauvegardé
-      // Protection étendue à 15s pour couvrir le debounce 1.5s + marge réseau
-      const timeSinceSave = Date.now() - lastSaveRef.current;
-      const timeSinceChange = Date.now() - lastLocalChangeRef.current;
-      if (timeSinceSave < 15000 || timeSinceChange < 15000) return;
-      try {
-        const supabaseData = await loadDataFromSupabase();
-        if (supabaseData && Object.keys(supabaseData).length > 0) {
-          setData(prev => {
-            // Fusion ADDITIVE : on ne réduit JAMAIS une collection
-            // mergeDataSafely garantit que le local est toujours prioritaire
-            // et qu'aucun élément ne peut être perdu
-            const prevAsRecord = prev as unknown as Record<string, unknown>;
-            const merged = mergeDataSafely(prevAsRecord, supabaseData);
-
-            // Appliquer la migration sur le résultat fusionné
-            const result = migrateData(merged);
-
-            // Cas spécial affectations : ne pas réintroduire les affectations supprimées localement
-            const mergedAffectations = (result.affectations || []).filter(
-              (a: Affectation) => !deletedAffectationIdsRef.current.has(a.id)
-            );
-
-            // Cas spécial listes matériel : respecter les suppressions locales
-            const mergedListes = (() => {
-              const freshListes = result.listesMateriaux || [];
-              const prevListes = prev.listesMateriaux || [];
-              const finalListes: typeof prevListes = [];
-              for (const item of freshListes) {
-                // Ne pas réintroduire une liste supprimée localement
-                if (deletedListeIdsRef.current.has(item.id)) continue;
-                const prevItem = prevListes.find(l => l.id === item.id);
-                if (prevItem) {
-                  // Prendre la plus récente mais filtrer les items supprimés localement
-                  const chosen = (prevItem.updatedAt || '') >= (item.updatedAt || '') ? prevItem : item;
-                  const deletedItems = deletedItemIdsRef.current.get(item.id);
-                  finalListes.push(deletedItems && deletedItems.size > 0
-                    ? { ...chosen, items: chosen.items.filter(i => !deletedItems.has(i.id)) }
-                    : chosen
-                  );
-                } else {
-                  finalListes.push(item);
-                }
-              }
-              return finalListes;
-            })();
-
-            return { ...result, affectations: mergedAffectations, listesMateriaux: mergedListes };
-          });
-        }
-      } catch {}
-    }, 120000); // toutes les 2 minutes
+    const poll = setInterval(reloadFromSupabase, 120000);
     return () => clearInterval(poll);
-  }, [loaded]);
+  }, [loaded, reloadFromSupabase]);
+
+  // ── Mise à jour en temps réel : écouter les notifications des autres onglets ──
+  // Quand un employé sauvegarde (liste matériel, demande RH, pointage...),
+  // il notifie tous les autres onglets via DATA_CHANNEL.
+  // L'admin reçoit la notification et recharge immédiatement depuis Supabase.
+  useEffect(() => {
+    if (!loaded || !DATA_CHANNEL) return;
+    const handleDataUpdate = (e: MessageEvent) => {
+      // Ignorer nos propres notifications
+      if (e.data?.type === 'DATA_UPDATED' && e.data?.sessionId !== SESSION_ID) {
+        reloadFromSupabase();
+      }
+    };
+    DATA_CHANNEL.addEventListener('message', handleDataUpdate);
+    return () => DATA_CHANNEL.removeEventListener('message', handleDataUpdate);
+  }, [loaded, reloadFromSupabase]);
 
   const setCurrentUserPersisted = (user: CurrentUser | null) => {
     setCurrentUser(user);
