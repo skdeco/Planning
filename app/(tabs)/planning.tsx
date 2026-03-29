@@ -383,10 +383,12 @@ export default function PlanningScreen() {
   const getOrdreChantiers = (employeId: string, date: string): string[] => {
     const key = `${employeId}_${date}`;
     const stored = data.ordreAffectations?.[key];
-    // Chantiers réellement affectés ce jour
-    const affectedIds = data.affectations
-      .filter(a => a.employeId === employeId && a.dateDebut <= date && a.dateFin >= date)
-      .map(a => a.chantierId);
+    // Chantiers réellement affectés ce jour — dédupliqués
+    const affectedIds = [...new Set(
+      data.affectations
+        .filter(a => a.employeId === employeId && a.dateDebut <= date && a.dateFin >= date)
+        .map(a => a.chantierId)
+    )];
     if (!stored) return affectedIds;
     // Garder uniquement les chantiers encore affectés, dans l'ordre stocké, puis ajouter les nouveaux
     const ordered = stored.filter(id => affectedIds.includes(id));
@@ -538,9 +540,11 @@ export default function PlanningScreen() {
       const emp = data.employes.find(e => e.id === myAff.employeId);
       return emp ? [emp] : [];
     }
+    // Dédupliquer : un employé ne doit apparaître qu'une seule fois par case
+    const seen = new Set<string>();
     return affectations
       .map(a => data.employes.find(e => e.id === a.employeId))
-      .filter(Boolean) as Employe[];
+      .filter((e): e is Employe => !!e && !seen.has(e.id) && (seen.add(e.id), true));
   }, [data, isAdmin, isST, currentUser]);
 
   /** Interventions externes pour un chantier et un jour donné */
