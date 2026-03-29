@@ -246,7 +246,7 @@ export async function loadDataFromSupabase(): Promise<Record<string, unknown> | 
 
   const query = supabase
     .from('app_data')
-    .select('data, updated_at')
+    .select('data')
     .eq('id', 'main')
     .maybeSingle()
     .then(({ data, error }) => {
@@ -256,11 +256,6 @@ export async function loadDataFromSupabase(): Promise<Record<string, unknown> | 
       }
       const payload = data?.data as Record<string, unknown> | null;
       if (!payload || Object.keys(payload).length === 0) return null;
-      // Initialiser lastWriteTimestamp avec la date de la dernière écriture connue
-      // Cela évite qu'au premier save on écrase quelque chose d'écrit entre le load et le save
-      if (data?.updated_at && data.updated_at > lastWriteTimestamp) {
-        lastWriteTimestamp = data.updated_at;
-      }
       return payload;
     });
 
@@ -280,57 +275,18 @@ export async function loadDataFromSupabase(): Promise<Record<string, unknown> | 
  * 3. Fusionner avec les données existantes si nécessaire
  * 4. Debounce géré côté AppContext (ne pas appeler trop fréquemment)
  */
-/**
- * Timestamp de session : généré une fois au chargement du module.
- * Permet de savoir si notre session est "propriétaire" de la dernière écriture.
- */
-const SESSION_STARTED_AT = new Date().toISOString();
-
-/**
- * Timestamp de la dernière écriture réussie dans cette session.
- * Si Supabase a été écrit par quelqu'un d'autre APRÈS notre dernier write,
- * on refuse d'écraser ses données et on recharge à la place.
- */
-let lastWriteTimestamp = '';
-
 export async function saveDataToSupabase(appData: Record<string, unknown>): Promise<boolean> {
   // Retirer les photos volumineuses avant envoi (base64 dans toutes les collections)
   const lightPayload = stripPhotosForSupabase(appData);
 
-  // ── Protection contre les écrasements inter-onglets ──
-  // On lit le updated_at actuel de Supabase pour vérifier si un autre onglet a écrit
-  // plus récemment que notre dernier write. Si oui, on refuse d'écraser.
-  // Exception : si on n'a jamais écrit (lastWriteTimestamp vide), on écrit toujours.
-  if (lastWriteTimestamp) {
-    try {
-      const { data: currentRow } = await supabase
-        .from('app_data')
-        .select('updated_at')
-        .eq('id', 'main')
-        .maybeSingle();
-
-      if (currentRow?.updated_at && currentRow.updated_at > lastWriteTimestamp) {
-        // Un autre onglet/appareil a écrit après nous → ne pas écraser
-        // Le polling va récupérer les changements lors du prochain cycle
-        console.warn('⚠️ Supabase modifié par un autre onglet — écriture annulée pour éviter écrasement');
-        return false;
-      }
-    } catch {
-      // Erreur de lecture : on écrit quand même (mieux vaut sauvegarder que perdre)
-    }
-  }
-
-  const now = new Date().toISOString();
   const { error } = await supabase
     .from('app_data')
-    .upsert({ id: 'main', data: lightPayload, updated_at: now });
+    .upsert({ id: 'main', data: lightPayload, updated_at: new Date().toISOString() });
 
   if (error) {
     console.error('Erreur sauvegarde Supabase:', error.message);
     return false;
   }
-
-  lastWriteTimestamp = now;
   return true;
 }
 

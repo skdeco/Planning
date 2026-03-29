@@ -2,6 +2,15 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY } from '@/lib/supabase';
+
+// Clés AsyncStorage pour persister les IDs supprimés entre rechargements
+const DELETED_AFFECTATIONS_KEY = 'sk_deleted_affectation_ids';
+const DELETED_CHANTIERS_KEY = 'sk_deleted_chantier_ids';
+const DELETED_EMPLOYES_KEY = 'sk_deleted_employe_ids';
+
+function persistDeletedIds(key: string, set: Set<string>): void {
+  AsyncStorage.setItem(key, JSON.stringify([...set])).catch(() => {});
+}
 import type {
   Employe, Chantier, Affectation, AppData, CurrentUser, Note, Pointage, Acompte, FicheChantier,
   SousTraitant, DevisST, MarcheST, AcompteST, Intervention, TaskItem, ListeMateriau, MateriauItem,
@@ -306,8 +315,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Ref pour stocker les données les plus récentes (évite les closures stale dans le polling)
   const dataRef = useRef<AppData>(EMPTY_DATA);
-  // Set des IDs d'affectations supprimées localement — le polling ne doit JAMAIS les réintroduire
+  // Sets des IDs supprimés — persistés dans AsyncStorage pour survivre aux rechargements
   const deletedAffectationIdsRef = useRef<Set<string>>(new Set());
+  const deletedChantierIdsRef = useRef<Set<string>>(new Set());
+  const deletedEmployeIdsRef = useRef<Set<string>>(new Set());
   // Set des IDs de listes supprimées localement — le polling ne doit JAMAIS les réintroduire
   const deletedListeIdsRef = useRef<Set<string>>(new Set());
   // Map listeId -> Set<itemId> des items supprimés — le polling ne doit JAMAIS les réintroduire
@@ -360,11 +371,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   //   4. Si Supabase est vide mais localStorage a des données → synchro vers Supabase
   useEffect(() => {
     const load = async () => {
-      // ── 1. Charger l'utilisateur depuis AsyncStorage (local) ──
+      // ── 1. Charger l'utilisateur ET les IDs supprimés depuis AsyncStorage ──
       let storedUser: CurrentUser | null = null;
       try {
         const raw = await AsyncStorage.getItem(USER_KEY);
         if (raw) storedUser = JSON.parse(raw);
+      } catch {}
+
+      // Recharger les IDs supprimés persistés pour que le polling ne les réintroduise pas
+      try {
+        const rawAff = await AsyncStorage.getItem(DELETED_AFFECTATIONS_KEY);
+        if (rawAff) deletedAffectationIdsRef.current = new Set(JSON.parse(rawAff));
+        const rawCh = await AsyncStorage.getItem(DELETED_CHANTIERS_KEY);
+        if (rawCh) deletedChantierIdsRef.current = new Set(JSON.parse(rawCh));
+        const rawEmp = await AsyncStorage.getItem(DELETED_EMPLOYES_KEY);
+        if (rawEmp) deletedEmployeIdsRef.current = new Set(JSON.parse(rawEmp));
       } catch {}
 
       // ── 2. Charger Supabase ET le cache local en parallèle ──
@@ -541,7 +562,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             return finalListes;
           })();
 
-          return { ...result, affectations: mergedAffectations, listesMateriaux: mergedListes };
+          // Filtrer les chantiers et employés supprimés localement
+          const mergedChantiers = (result.chantiers || []).filter(
+            (c: Chantier) => !deletedChantierIdsRef.current.has(c.id)
+          );
+          const mergedEmployes = (result.employes || []).filter(
+            (e: Employe) => !deletedEmployeIdsRef.current.has(e.id)
+          );
+
+          return {
+            ...result,
+            affectations: mergedAffectations,
+            listesMateriaux: mergedListes,
+            chantiers: mergedChantiers,
+            employes: mergedEmployes,
+          };
         });
       }
     } catch {}
@@ -581,20 +616,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, chantiers: [...p.chantiers, c] }));
   const updateChantier = (c: Chantier) =>
     setData(p => ({ ...p, chantiers: p.chantiers.map(x => x.id === c.id ? c : x) }));
-  const deleteChantier = (id: string) =>
+  const deleteChantier = (id: string) => {
+    deletedChantierIdsRef.current.add(id);
+    persistDeletedIds(DELETED_CHANTIERS_KEY, deletedChantierIdsRef.current);
     setData(p => ({
       ...p,
       chantiers: p.chantiers.filter(c => c.id !== id),
       affectations: p.affectations.filter(a => a.chantierId !== id),
       marches: p.marches.filter(m => m.chantierId !== id),
     }));
+  };
 
   // ── Employés ──
   const addEmploye = (e: Employe) =>
     setData(p => ({ ...p, employes: [...p.employes, e] }));
   const updateEmploye = (e: Employe) =>
     setData(p => ({ ...p, employes: p.employes.map(x => x.id === e.id ? e : x) }));
-  const deleteEmploye = (id: string) =>
+  const deleteEmploye = (id: string) => {
+    deletedEmployeIdsRef.current.add(id);
+    persistDeletedIds(DELETED_EMPLOYES_KEY, deletedEmployeIdsRef.current);
     setData(p => ({
       ...p,
       employes: p.employes.filter(e => e.id !== id),
@@ -602,6 +642,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       acomptes: p.acomptes.filter(a => a.employeId !== id),
       chantiers: p.chantiers.map(c => ({ ...c, employeIds: c.employeIds.filter(eid => eid !== id) })),
     }));
+  };
 
   // ── Affectations ──
   const addAffectation = (a: Affectation) =>
@@ -634,8 +675,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           newAffectations.push(a);
           continue;
         }
-        // Mémoriser l'ID supprimé pour que le polling ne le réintroduise jamais
+        // Mémoriser l'ID supprimé pour que le polling ne le réintroduise jamais (persisté)
         deletedAffectationIdsRef.current.add(a.id);
+        persistDeletedIds(DELETED_AFFECTATIONS_KEY, deletedAffectationIdsRef.current);
         // L'affectation couvre ce jour : on la découpe
         // Utiliser la date locale (pas UTC) pour éviter les décalages de fuseau horaire
         const toLocalYMD = (d: Date) => {
