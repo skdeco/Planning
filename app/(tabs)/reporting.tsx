@@ -617,6 +617,17 @@ export default function ReportingScreen() {
                             {formatEcart(ecartD, 'debut')}
                           </Text>
                         )}
+                        {debut.latitude && debut.longitude ? (
+                          <Pressable
+                            onPress={() => {
+                              const url = `https://www.google.com/maps?q=${debut.latitude},${debut.longitude}`;
+                              if (Platform.OS === 'web') window.open(url, '_blank');
+                            }}
+                            style={styles.gpsBtn}
+                          >
+                            <Text style={styles.gpsBtnText}>📍 Voir position</Text>
+                          </Pressable>
+                        ) : null}
                       </View>
                     ) : (
                       <View style={styles.pointageCell}>
@@ -634,6 +645,17 @@ export default function ReportingScreen() {
                             {formatEcart(ecartF, 'fin')}
                           </Text>
                         )}
+                        {fin.latitude && fin.longitude ? (
+                          <Pressable
+                            onPress={() => {
+                              const url = `https://www.google.com/maps?q=${fin.latitude},${fin.longitude}`;
+                              if (Platform.OS === 'web') window.open(url, '_blank');
+                            }}
+                            style={styles.gpsBtn}
+                          >
+                            <Text style={styles.gpsBtnText}>📍 Voir position</Text>
+                          </Pressable>
+                        ) : null}
                       </View>
                     ) : (
                       <View style={styles.pointageCell}>
@@ -1374,6 +1396,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     marginTop: 2,
+  },
+  gpsBtn: {
+    marginTop: 5,
+    backgroundColor: '#EEF2FF',
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 3,
+  },
+  gpsBtnText: {
+    fontSize: 10,
+    color: '#3B4A9E',
+    fontWeight: '600',
   },
   acomptesSection: {
     marginBottom: 8,
