@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY } from '@/lib/supabase';
 import type {
@@ -274,11 +275,19 @@ function migrateData(parsed: Record<string, any>): AppData {
   };
 }
 
+// ─── Gestion session unique (un seul onglet actif à la fois) ─────────────────
+const SESSION_ID = `session_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+const SESSION_CHANNEL = typeof window !== 'undefined' && typeof BroadcastChannel !== 'undefined'
+  ? new BroadcastChannel('sk_deco_session')
+  : null;
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [data, setData] = useState<AppData>(EMPTY_DATA);
   const [currentUser, setCurrentUser] = useState<CurrentUser | null>(null);
   const [loaded, setLoaded] = useState(false);
   const isHydrated = loaded;
+  // Session expirée : un autre onglet plus récent a pris le contrôle
+  const [sessionExpired, setSessionExpired] = useState(false);
   // Ref pour éviter la sauvegarde au premier chargement
   const isFirstLoad = useRef(true);
   // Ref pour debounce de la sauvegarde Supabase
@@ -295,6 +304,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const lastSaveRef = useRef<number>(0);
   // Timestamp de la dernière modification locale (suppression, ajout, toggle)
   const lastLocalChangeRef = useRef<number>(0);
+
+  // ── Session unique : invalider les anciens onglets ──────────────────────────
+  useEffect(() => {
+    if (!SESSION_CHANNEL) return;
+
+    // Annoncer notre présence aux autres onglets
+    SESSION_CHANNEL.postMessage({ type: 'NEW_SESSION', sessionId: SESSION_ID });
+
+    // Écouter les nouvelles sessions entrantes
+    const handleMessage = (e: MessageEvent) => {
+      if (e.data?.type === 'NEW_SESSION' && e.data?.sessionId !== SESSION_ID) {
+        // Un autre onglet vient de s'ouvrir → on se met en lecture seule
+        setSessionExpired(true);
+        if (saveTimer.current) clearTimeout(saveTimer.current);
+      }
+    };
+    SESSION_CHANNEL.addEventListener('message', handleMessage);
+    return () => SESSION_CHANNEL.removeEventListener('message', handleMessage);
+  }, []);
 
   // ── Chargement initial : SUPABASE = SOURCE DE VÉRITÉ UNIQUE ──
   // Architecture :
@@ -384,6 +412,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // immédiatement dans Supabase pour être disponible sur tous les appareils.
   useEffect(() => {
     if (!loaded || isFirstLoad.current) return;
+    // Session expirée → ne jamais écrire dans Supabase
+    if (sessionExpired) return;
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const dataToSave = data as unknown as Record<string, unknown>;
@@ -401,7 +431,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
-  }, [data, loaded]);
+  }, [data, loaded, sessionExpired]);
 
   // ── Backup automatique hebdomadaire ──
   // 1 backup par semaine maximum (le lundi) pour éviter de saturer Supabase.
@@ -1048,9 +1078,65 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       logout,
     }}>
       {children}
+      {sessionExpired && (
+        <View style={sessionStyles.overlay}>
+          <View style={sessionStyles.box}>
+            <Text style={sessionStyles.icon}>⚠️</Text>
+            <Text style={sessionStyles.title}>Session expirée</Text>
+            <Text style={sessionStyles.message}>
+              Cette application a été ouverte dans un autre onglet.{'\n'}
+              Pour éviter tout conflit de données, cet onglet est maintenant en lecture seule.
+            </Text>
+            <Pressable
+              style={sessionStyles.btn}
+              onPress={() => {
+                if (Platform.OS === 'web' && typeof window !== 'undefined') {
+                  window.location.reload();
+                }
+              }}
+            >
+              <Text style={sessionStyles.btnText}>Recharger cet onglet</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
     </AppContext.Provider>
   );
 }
+
+const sessionStyles = StyleSheet.create({
+  overlay: {
+    position: 'absolute' as const,
+    top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 99999,
+  },
+  box: {
+    backgroundColor: '#fff',
+    borderRadius: 16,
+    padding: 32,
+    maxWidth: 380,
+    width: '90%',
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 20,
+  },
+  icon: { fontSize: 40, marginBottom: 12 },
+  title: { fontSize: 20, fontWeight: '700', color: '#11181C', marginBottom: 10, textAlign: 'center' },
+  message: { fontSize: 14, color: '#687076', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  btn: {
+    backgroundColor: '#1A3A6B',
+    borderRadius: 10,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
+  },
+  btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+});
 
 export function useApp(): AppContextType {
   const ctx = useContext(AppContext);
