@@ -64,6 +64,7 @@ const ARRAY_COLLECTIONS = [
   'messagesPrive',
   'notesChantier',
   'notesChantierSupprimees',
+  'activityLog',
 ] as const;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -288,6 +289,30 @@ export async function saveDataToSupabase(appData: Record<string, unknown>): Prom
     return false;
   }
   return true;
+}
+
+/**
+ * Souscription Supabase Realtime : écoute les changements sur la ligne `main` de `app_data`.
+ * Appelle `onUpdate` quand un UPDATE est détecté (= un autre utilisateur a sauvegardé).
+ * Retourne une fonction de cleanup.
+ */
+export function subscribeToRealtimeUpdates(onUpdate: () => void): () => void {
+  const channel = supabase
+    .channel('app_data_changes')
+    .on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table: 'app_data' },
+      () => { onUpdate(); }
+    )
+    .subscribe((status) => {
+      console.log('[Realtime] status:', status);
+      if (status === 'CHANNEL_ERROR') {
+        // Realtime indisponible — le polling prend le relais
+        console.warn('[Realtime] Connexion échouée, le polling sera utilisé');
+      }
+    });
+
+  return () => { supabase.removeChannel(channel); };
 }
 
 /**

@@ -560,6 +560,17 @@ export interface NoteSuiviChantier {
   createdBy?: string;
 }
 
+/** Journal d'activité — chaque action importante crée une entrée */
+export interface ActivityLog {
+  id: string;
+  timestamp: string;       // ISO datetime
+  userId: string;          // id de l'auteur (employeId, 'admin', soustraitantId)
+  userName: string;        // prénom/nom lisible
+  action: string;          // type d'action : 'pointage', 'affectation', 'conge', 'materiel', etc.
+  description: string;     // description courte lisible
+  targetId?: string;       // id de l'objet concerné (chantierId, employeId, etc.)
+}
+
 export interface AppData {
   employes: Employe[];
   chantiers: Chantier[];
@@ -608,6 +619,8 @@ export interface AppData {
   // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour
   // clé : "employeId_YYYY-MM-DD", valeur : liste ordonnée de chantierId
   ordreAffectations?: Record<string, string[]>;
+  // Journal d'activité pour les notifications cross-utilisateurs
+  activityLog?: ActivityLog[];
 }
 
 export type UserRole = 'admin' | 'employe' | 'soustraitant';

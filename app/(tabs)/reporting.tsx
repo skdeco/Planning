@@ -856,6 +856,7 @@ export default function ReportingScreen() {
                 {/* En-tête */}
                 <View style={[styles.tableauRow, styles.tableauHeader]}>
                   <Text style={[styles.tableauCell, styles.tableauCellDate, styles.tableauHeaderText]}>{t.common.date}</Text>
+                  <Text style={[styles.tableauCell, { flex: 1.5 }, styles.tableauHeaderText]}>Chantier</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.arrival}</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.departure}</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.pointedBy}</Text>
@@ -885,6 +886,20 @@ export default function ReportingScreen() {
                           </Text>
                         )}
                       </View>
+                      <View style={[styles.tableauCell, { flex: 1.5 }]}>
+                        {(() => {
+                          const chId = debut?.chantierId || fin?.chantierId;
+                          if (chId) {
+                            const ch = data.chantiers.find(c => c.id === chId);
+                            return <Text style={{ fontSize: 10, color: '#1A3A6B', fontWeight: '600' }} numberOfLines={2}>{ch?.nom || '—'}</Text>;
+                          }
+                          const affs = data.affectations
+                            .filter(a => a.employeId === empSelectionne.id && a.dateDebut <= dateStr && a.dateFin >= dateStr)
+                            .map(a => data.chantiers.find(c => c.id === a.chantierId)?.nom || '')
+                            .filter(Boolean);
+                          return <Text style={{ fontSize: 10, color: '#687076' }} numberOfLines={2}>{affs.length > 0 ? affs.join(', ') : '—'}</Text>;
+                        })()}
+                      </View>
                       <View style={[styles.tableauCell, styles.tableauCellHeure]}>
                         {debut ? (
                           <>
@@ -895,8 +910,14 @@ export default function ReportingScreen() {
                               </Text>
                             )}
                             {debut.latitude && debut.longitude && (
-                              <Pressable onPress={() => Platform.OS === 'web' && window.open(`https://www.google.com/maps?q=${debut.latitude},${debut.longitude}`, '_blank')}>
-                                <Text style={styles.tableauGpsText}>📍</Text>
+                              <Pressable
+                                onPress={() => {
+                                  const url = `https://www.google.com/maps?q=${debut.latitude},${debut.longitude}`;
+                                  if (Platform.OS === 'web') window.open(url, '_blank');
+                                }}
+                                style={{ marginTop: 2 }}
+                              >
+                                <Text style={styles.gpsBtnText}>📍</Text>
                               </Pressable>
                             )}
                           </>
@@ -916,8 +937,14 @@ export default function ReportingScreen() {
                               </Text>
                             )}
                             {fin.latitude && fin.longitude && (
-                              <Pressable onPress={() => Platform.OS === 'web' && window.open(`https://www.google.com/maps?q=${fin.latitude},${fin.longitude}`, '_blank')}>
-                                <Text style={styles.tableauGpsText}>📍</Text>
+                              <Pressable
+                                onPress={() => {
+                                  const url = `https://www.google.com/maps?q=${fin.latitude},${fin.longitude}`;
+                                  if (Platform.OS === 'web') window.open(url, '_blank');
+                                }}
+                                style={{ marginTop: 2 }}
+                              >
+                                <Text style={styles.gpsBtnText}>📍</Text>
                               </Pressable>
                             )}
                           </>

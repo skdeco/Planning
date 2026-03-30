@@ -1,5 +1,6 @@
 import { Tabs } from "expo-router";
 import { useMemo } from 'react';
+import { View } from 'react-native';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
 
@@ -9,6 +10,7 @@ import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/app/context/AppContext";
 import { LanguageFlag } from "@/components/LanguageFlag";
 import { useLanguage } from "@/app/context/LanguageContext";
+import { NotificationBanner } from "@/components/NotificationBanner";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -71,6 +73,8 @@ export default function TabLayout() {
   );
 
   return (
+    <View style={{ flex: 1 }}>
+    <NotificationBanner />
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#1A3A6B',
@@ -228,5 +232,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </View>
   );
 }

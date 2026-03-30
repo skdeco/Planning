@@ -1,12 +1,14 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY } from '@/lib/supabase';
+import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY, subscribeToRealtimeUpdates } from '@/lib/supabase';
 
 // Clés AsyncStorage pour persister les IDs supprimés entre rechargements
 const DELETED_AFFECTATIONS_KEY = 'sk_deleted_affectation_ids';
 const DELETED_CHANTIERS_KEY = 'sk_deleted_chantier_ids';
 const DELETED_EMPLOYES_KEY = 'sk_deleted_employe_ids';
+const DELETED_POINTAGES_KEY = 'sk_deleted_pointage_ids';
+const LAST_SEEN_KEY = 'sk_deco_last_seen_at';
 
 function persistDeletedIds(key: string, set: Set<string>): void {
   AsyncStorage.setItem(key, JSON.stringify([...set])).catch(() => {});
@@ -20,6 +22,7 @@ import type {
   DocumentRHEmploye,
   NoteChantier,
   PlanChantier,
+  ActivityLog,
 } from '@/app/types';
 import type { MessagePrive } from '@/app/types/messages';
 import { EMPLOYE_COLORS } from '@/app/types';
@@ -124,6 +127,9 @@ interface AppContextType {
   updateMessagePrive: (m: MessagePrive) => void;
   deleteMessagePrive: (id: string) => void;
   marquerMessagesLus: (conversationId: string, lecteurRole: 'admin' | 'employe' | 'soustraitant') => void;
+  // Notifications
+  notifications: ActivityLog[];
+  markNotificationsRead: () => void;
   logout: () => void;
 }
 
@@ -195,6 +201,7 @@ const EMPTY_DATA: AppData = {
   documentsRH: [],
   messagesPrive: [],
   fichesChantier: {},
+  activityLog: [],
 };
 
 /**
@@ -281,6 +288,8 @@ function migrateData(parsed: Record<string, any>): AppData {
     messagesPrive: parsed.messagesPrive || [],
     // Fiches chantier (ne jamais écraser)
     fichesChantier: parsed.fichesChantier || {},
+    // Journal d'activité (ne jamais écraser)
+    activityLog: parsed.activityLog || [],
   };
 }
 
@@ -309,6 +318,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const isHydrated = loaded;
   // Session expirée : un autre onglet plus récent a pris le contrôle
   const [sessionExpired, setSessionExpired] = useState(false);
+  const [notifications, setNotifications] = useState<ActivityLog[]>([]);
   // Ref pour éviter la sauvegarde au premier chargement
   const isFirstLoad = useRef(true);
   // Ref pour debounce de la sauvegarde Supabase
@@ -319,6 +329,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deletedAffectationIdsRef = useRef<Set<string>>(new Set());
   const deletedChantierIdsRef = useRef<Set<string>>(new Set());
   const deletedEmployeIdsRef = useRef<Set<string>>(new Set());
+  const deletedPointageIdsRef = useRef<Set<string>>(new Set());
   // Set des IDs de listes supprimées localement — le polling ne doit JAMAIS les réintroduire
   const deletedListeIdsRef = useRef<Set<string>>(new Set());
   // Map listeId -> Set<itemId> des items supprimés — le polling ne doit JAMAIS les réintroduire
@@ -327,6 +338,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const lastSaveRef = useRef<number>(0);
   // Timestamp de la dernière modification locale (suppression, ajout, toggle)
   const lastLocalChangeRef = useRef<number>(0);
+  // Compteur : incrémenté à chaque reload distant, le useEffect de sauvegarde skip quand il change
+  const remoteReloadCountRef = useRef<number>(0);
+  const lastSavedReloadCountRef = useRef<number>(0);
 
   // ── Session unique PAR COMPTE : invalider les anciens onglets du même utilisateur ──
   // Le canal est créé uniquement quand on connaît le compte connecté.
@@ -386,6 +400,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (rawCh) deletedChantierIdsRef.current = new Set(JSON.parse(rawCh));
         const rawEmp = await AsyncStorage.getItem(DELETED_EMPLOYES_KEY);
         if (rawEmp) deletedEmployeIdsRef.current = new Set(JSON.parse(rawEmp));
+        const rawPt = await AsyncStorage.getItem(DELETED_POINTAGES_KEY);
+        if (rawPt) deletedPointageIdsRef.current = new Set(JSON.parse(rawPt));
       } catch {}
 
       // ── 2. Charger Supabase ET le cache local en parallèle ──
@@ -463,6 +479,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!loaded || isFirstLoad.current) return;
     // Session expirée → ne jamais écrire dans Supabase
     if (sessionExpired) return;
+    // Reload distant → ne PAS re-sauvegarder (sinon boucle infinie)
+    if (remoteReloadCountRef.current !== lastSavedReloadCountRef.current) {
+      lastSavedReloadCountRef.current = remoteReloadCountRef.current;
+      // Mettre à jour le cache local uniquement
+      AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data)).catch(() => {});
+      return;
+    }
+    lastLocalChangeRef.current = Date.now();
     if (saveTimer.current) clearTimeout(saveTimer.current);
     saveTimer.current = setTimeout(() => {
       const dataToSave = data as unknown as Record<string, unknown>;
@@ -480,7 +504,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // 2. Sauvegarder le cache local COMPLET (avec photos) pour le fallback hors-ligne
       AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(dataToSave)).catch(() => {});
-    }, 2000); // 2s de debounce
+    }, 1500); // 1.5s de debounce
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
@@ -523,70 +547,74 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(backupInterval);
   }, [loaded]);
 
-  // ── Rechargement depuis Supabase (utilisé par polling ET BroadcastChannel) ──
+  // ── Rechargement depuis Supabase (utilisé par polling, Realtime ET BroadcastChannel) ──
+  // Supabase est la SOURCE DE VÉRITÉ : les données distantes remplacent les locales.
+  // Seules les suppressions locales non encore propagées sont protégées.
   const reloadFromSupabase = useCallback(async () => {
-    // Ne pas recharger si on vient de sauvegarder OU si un changement local récent n'est pas encore sauvegardé
-    const timeSinceSave = Date.now() - lastSaveRef.current;
+    // Ne pas recharger si un changement local récent n'est pas encore sauvegardé (debounce 1.5s + marge)
     const timeSinceChange = Date.now() - lastLocalChangeRef.current;
-    if (timeSinceSave < 15000 || timeSinceChange < 15000) return;
+    if (timeSinceChange < 3000) return;
     try {
       const supabaseData = await loadDataFromSupabase();
       if (supabaseData && Object.keys(supabaseData).length > 0) {
+        remoteReloadCountRef.current += 1;
         setData(prev => {
-          const prevAsRecord = prev as unknown as Record<string, unknown>;
-          const merged = mergeDataSafely(prevAsRecord, supabaseData);
-          const result = migrateData(merged);
+          // Utiliser les données Supabase comme base (source de vérité)
+          const result = migrateData(supabaseData);
 
-          const mergedAffectations = (result.affectations || []).filter(
-            (a: Affectation) => !deletedAffectationIdsRef.current.has(a.id)
-          );
+          // Protéger les photos locales (non envoyées à Supabase)
+          const localPhotos = prev.photosChantier || [];
+          const remotePhotos = result.photosChantier || [];
+          const remotePhotoIds = new Set(remotePhotos.map(p => p.id));
+          const mergedPhotos = [...remotePhotos, ...localPhotos.filter(p => !remotePhotoIds.has(p.id) && p.uri)];
 
-          const mergedListes = (() => {
-            const freshListes = result.listesMateriaux || [];
-            const prevListes = prev.listesMateriaux || [];
-            const finalListes: typeof prevListes = [];
-            for (const item of freshListes) {
-              if (deletedListeIdsRef.current.has(item.id)) continue;
-              const prevItem = prevListes.find(l => l.id === item.id);
-              if (prevItem) {
-                const chosen = (prevItem.updatedAt || '') >= (item.updatedAt || '') ? prevItem : item;
-                const deletedItems = deletedItemIdsRef.current.get(item.id);
-                finalListes.push(deletedItems && deletedItems.size > 0
-                  ? { ...chosen, items: chosen.items.filter(i => !deletedItems.has(i.id)) }
-                  : chosen
-                );
-              } else {
-                finalListes.push(item);
-              }
+          // Protéger les listes matériaux localement supprimées
+          const mergedListes = (result.listesMateriaux || []).filter(
+            l => !deletedListeIdsRef.current.has(l.id)
+          ).map(l => {
+            const deletedItems = deletedItemIdsRef.current.get(l.id);
+            if (deletedItems && deletedItems.size > 0) {
+              return { ...l, items: l.items.filter(i => !deletedItems.has(i.id)) };
             }
-            return finalListes;
-          })();
+            return l;
+          });
 
-          // Filtrer les chantiers et employés supprimés localement
-          const mergedChantiers = (result.chantiers || []).filter(
-            (c: Chantier) => !deletedChantierIdsRef.current.has(c.id)
-          );
-          const mergedEmployes = (result.employes || []).filter(
-            (e: Employe) => !deletedEmployeIdsRef.current.has(e.id)
-          );
-
+          // Protéger les suppressions locales non encore propagées
           return {
             ...result,
-            affectations: mergedAffectations,
+            affectations: (result.affectations || []).filter(
+              (a: Affectation) => !deletedAffectationIdsRef.current.has(a.id)
+            ),
+            chantiers: (result.chantiers || []).filter(
+              (c: Chantier) => !deletedChantierIdsRef.current.has(c.id)
+            ),
+            employes: (result.employes || []).filter(
+              (e: Employe) => !deletedEmployeIdsRef.current.has(e.id)
+            ),
+            pointages: (result.pointages || []).filter(
+              (p: Pointage) => !deletedPointageIdsRef.current.has(p.id)
+            ),
             listesMateriaux: mergedListes,
-            chantiers: mergedChantiers,
-            employes: mergedEmployes,
+            photosChantier: mergedPhotos,
+            // Conserver les données locales qui ne sont pas dans Supabase (plans, fiches)
+            fichesChantier: { ...(result.fichesChantier || {}), ...(prev.fichesChantier || {}) },
+            plansChantier: { ...(result.plansChantier || {}), ...(prev.plansChantier || {}) },
           };
         });
       }
     } catch {}
   }, []);
 
-  // ── Polling Supabase toutes les 2 minutes (fallback) ──
+  // ── Supabase Realtime : mise à jour instantanée cross-devices ──
   useEffect(() => {
     if (!loaded) return;
-    const poll = setInterval(reloadFromSupabase, 120000);
-    return () => clearInterval(poll);
+    const unsubscribe = subscribeToRealtimeUpdates(() => {
+      // Un autre utilisateur a sauvegardé → recharger
+      reloadFromSupabase();
+    });
+    // Polling court en fallback (30s) pour garantir la sync si Realtime échoue
+    const poll = setInterval(reloadFromSupabase, 30000);
+    return () => { unsubscribe(); clearInterval(poll); };
   }, [loaded, reloadFromSupabase]);
 
   // ── Mise à jour en temps réel : écouter les notifications des autres onglets ──
@@ -645,7 +673,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ── Affectations ──
-  const addAffectation = (a: Affectation) =>
+  const addAffectation = (a: Affectation) => {
+    const emp = data.employes.find(e => e.id === a.employeId);
+    const ch = data.chantiers.find(c => c.id === a.chantierId);
+    if (emp && ch) logActivity('affectation', `${emp.prenom} ${emp.nom} affecté à ${ch.nom} (${a.dateDebut})`, a.chantierId);
     setData(p => {
       // Anti-doublon : ne pas ajouter si même employé+chantier+dateDebut+dateFin existe déjà
       const duplicate = p.affectations.some(x =>
@@ -657,6 +688,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (duplicate) return p;
       return { ...p, affectations: [...p.affectations, a] };
     });
+  };
   const updateAffectation = (a: Affectation) =>
     setData(p => ({ ...p, affectations: p.affectations.map(x => x.id === a.id ? a : x) }));
   const removeAffectation = (chantierId: string, employeId: string, date: string) => {
@@ -797,16 +829,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
 
   // ── Pointages ──
-  const addPointage = (pointage: Pointage) =>
+  const addPointage = (pointage: Pointage) => {
+    const emp = data.employes.find(e => e.id === pointage.employeId);
+    const empName = emp ? `${emp.prenom} ${emp.nom}` : pointage.employeId;
+    const ch = data.chantiers.find(c => c.id === pointage.chantierId);
+    const label = pointage.type === 'debut' ? 'Arrivée' : 'Départ';
+    logActivity('pointage', `${label} de ${empName} à ${pointage.heure}${ch ? ` — ${ch.nom}` : ''}`, pointage.employeId);
     setData(p => {
       const exists = p.pointages.some(x => x.id === pointage.id);
       if (exists) return { ...p, pointages: p.pointages.map(x => x.id === pointage.id ? pointage : x) };
       return { ...p, pointages: [...p.pointages, pointage] };
     });
+  };
   const updatePointage = (pointage: Pointage) =>
     setData(p => ({ ...p, pointages: p.pointages.map(x => x.id === pointage.id ? pointage : x) }));
-  const deletePointage = (id: string) =>
+  const deletePointage = (id: string) => {
+    deletedPointageIdsRef.current.add(id);
+    persistDeletedIds(DELETED_POINTAGES_KEY, deletedPointageIdsRef.current);
+    lastLocalChangeRef.current = Date.now();
     setData(p => ({ ...p, pointages: p.pointages.filter(x => x.id !== id) }));
+  };
 
   // ── Acomptes employés ──
   const addAcompte = (acompte: Acompte) =>
@@ -875,7 +917,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, interventions: (p.interventions || []).filter(i => i.id !== id) }));
 
   // ── Listes matériel ──
-  const upsertListeMateriau = (liste: ListeMateriau) =>
+  const upsertListeMateriau = (liste: ListeMateriau) => {
+    const ch = data.chantiers.find(c => c.id === liste.chantierId);
+    const emp = data.employes.find(e => e.id === liste.employeId);
+    const isNew = !(data.listesMateriaux || []).some(l => l.id === liste.id);
+    if (isNew && emp && ch) logActivity('materiel', `Liste matériel ajoutée par ${emp.prenom} pour ${ch.nom}`, liste.chantierId);
     setData(p => {
       const exists = (p.listesMateriaux || []).some(l => l.id === liste.id);
       return {
@@ -885,6 +931,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : [...(p.listesMateriaux || []), liste],
       };
     });
+  };
 
   const deleteListeMateriau = (id: string) => {
     lastLocalChangeRef.current = Date.now();
@@ -949,8 +996,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   // ── Module RH ──
-  const addDemandeConge = (d: DemandeConge) =>
+  const addDemandeConge = (d: DemandeConge) => {
+    const emp = data.employes.find(e => e.id === d.employeId);
+    const empName = emp ? `${emp.prenom} ${emp.nom}` : 'Employé';
+    logActivity('conge', `Demande de congé de ${empName} (${d.dateDebut} → ${d.dateFin})`, d.employeId);
     setData(p => ({ ...p, demandesConge: [...(p.demandesConge || []), d] }));
+  };
   const updateDemandeConge = (d: DemandeConge) =>
     setData(p => ({ ...p, demandesConge: (p.demandesConge || []).map(x => x.id === d.id ? d : x) }));
   const deleteDemandeConge = (id: string) =>
@@ -963,8 +1014,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deleteArretMaladie = (id: string) =>
     setData(p => ({ ...p, arretsMaladie: (p.arretsMaladie || []).filter(x => x.id !== id) }));
 
-  const addDemandeAvance = (d: DemandeAvance) =>
+  const addDemandeAvance = (d: DemandeAvance) => {
+    const emp = data.employes.find(e => e.id === d.employeId);
+    const empName = emp ? `${emp.prenom} ${emp.nom}` : 'Employé';
+    logActivity('avance', `Demande d'avance de ${empName} (${d.montant} €)`, d.employeId);
     setData(p => ({ ...p, demandesAvance: [...(p.demandesAvance || []), d] }));
+  };
   const updateDemandeAvance = (d: DemandeAvance) =>
     setData(p => ({ ...p, demandesAvance: (p.demandesAvance || []).map(x => x.id === d.id ? d : x) }));
   const deleteDemandeAvance = (id: string) =>
@@ -1122,6 +1177,58 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
     }));
 
+  // ── Système de notifications / journal d'activité ──
+  const logActivity = useCallback((action: string, description: string, targetId?: string) => {
+    if (!currentUser) return;
+    const userId = currentUser.role === 'admin' ? 'admin' : currentUser.employeId || currentUser.soustraitantId || 'unknown';
+    const userName = currentUser.role === 'admin' ? 'Admin' :
+      (() => {
+        const emp = data.employes.find(e => e.id === currentUser.employeId);
+        if (emp) return `${emp.prenom} ${emp.nom}`;
+        const st = data.sousTraitants.find(s => s.id === currentUser.soustraitantId);
+        if (st) return st.nom;
+        return 'Utilisateur';
+      })();
+    const entry: ActivityLog = {
+      id: `log_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      timestamp: new Date().toISOString(),
+      userId,
+      userName,
+      action,
+      description,
+      targetId,
+    };
+    setData(p => ({
+      ...p,
+      activityLog: [...(p.activityLog || []).slice(-199), entry], // garder les 200 dernières entrées
+    }));
+  }, [currentUser, data.employes, data.sousTraitants]);
+
+  // Calculer les notifications non lues après chaque reload
+  const lastSeenRef = useRef<string>('');
+  useEffect(() => {
+    if (!loaded || !currentUser) return;
+    const userId = currentUser.role === 'admin' ? 'admin' : currentUser.employeId || currentUser.soustraitantId || 'unknown';
+    const userKey = `${LAST_SEEN_KEY}_${userId}`;
+    AsyncStorage.getItem(userKey).then(raw => {
+      const lastSeen = raw || '1970-01-01T00:00:00.000Z';
+      lastSeenRef.current = lastSeen;
+      const unread = (data.activityLog || []).filter(
+        log => log.timestamp > lastSeen && log.userId !== userId
+      );
+      setNotifications(unread);
+    }).catch(() => {});
+  }, [loaded, currentUser, data.activityLog]);
+
+  const markNotificationsRead = useCallback(() => {
+    if (!currentUser) return;
+    const userId = currentUser.role === 'admin' ? 'admin' : currentUser.employeId || currentUser.soustraitantId || 'unknown';
+    const now = new Date().toISOString();
+    lastSeenRef.current = now;
+    AsyncStorage.setItem(`${LAST_SEEN_KEY}_${userId}`, now).catch(() => {});
+    setNotifications([]);
+  }, [currentUser]);
+
   const logout = () => setCurrentUserPersisted(null);
 
   return (
@@ -1156,6 +1263,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPlanChantier, deletePlanChantier,
       updateAdminPassword,
       updateOrdreAffectation,
+      notifications, markNotificationsRead,
       logout,
     }}>
       {children}
