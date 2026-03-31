@@ -275,6 +275,7 @@ function migrateData(parsed: Record<string, any>): AppData {
   // Toute modification ici doit être additive, jamais destructive.
   return {
     ...parsed,
+    chantiers: parsed.chantiers || [],
     employes: (parsed.employes || []).map((e: any, idx: number) => ({
       ...e,
       identifiant: e.identifiant || e.prenom.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, ''),
@@ -328,10 +329,18 @@ function migrateData(parsed: Record<string, any>): AppData {
     fichesPaie: parsed.fichesPaie || [],
     retardsPlanifies: parsed.retardsPlanifies || [],
     // Modules de suivi chantier (ajoutés progressivement, ne jamais écraser)
-    depensesChantier: parsed.depensesChantier || [],
-    supplementsChantier: parsed.supplementsChantier || [],
-    docsSuiviChantier: parsed.docsSuiviChantier || [],
-    notesSuiviChantier: parsed.notesSuiviChantier || [],
+    // Support des deux noms (courts et longs) pour compatibilité
+    depensesChantier: parsed.depensesChantier || parsed.depenses || [],
+    supplementsChantier: parsed.supplementsChantier || parsed.supplements || [],
+    docsSuiviChantier: parsed.docsSuiviChantier || parsed.docsSuivi || [],
+    notesSuiviChantier: parsed.notesSuiviChantier || parsed.notesSuivi || [],
+    depenses: parsed.depenses || parsed.depensesChantier || [],
+    supplements: parsed.supplements || parsed.supplementsChantier || [],
+    docsSuivi: parsed.docsSuivi || parsed.docsSuiviChantier || [],
+    notesSuivi: parsed.notesSuivi || parsed.notesSuiviChantier || [],
+    // Notes chantier (ne jamais écraser)
+    notesChantier: parsed.notesChantier || [],
+    notesChantierSupprimees: parsed.notesChantierSupprimees || [],
     // Galerie photos (ne jamais écraser)
     photosChantier: parsed.photosChantier || [],
     // Documents RH employé (ne jamais écraser)

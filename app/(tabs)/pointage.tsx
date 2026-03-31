@@ -487,22 +487,32 @@ export default function PointageScreen() {
     setUploadingPhotos(true);
     try {
       const newPhotos: PhotoChantier[] = [];
+      let failCount = 0;
       for (const f of photosEnAttente) {
         const photoId = `ph_${Date.now()}_${Math.random().toString(36).slice(2)}`;
         const folder = `chantiers/${photosChantierId}/photos`;
         const storageUrl = await uploadFileToStorage(f.uri, folder, photoId);
-        newPhotos.push({
-          id: photoId,
-          chantierId: photosChantierId,
-          employeId,
-          date: todayStr,
-          uri: storageUrl || f.uri,
-          nom: f.name,
-          createdAt: new Date().toISOString(),
-          source: 'fin_journee' as const,
-        });
+        if (storageUrl) {
+          newPhotos.push({
+            id: photoId,
+            chantierId: photosChantierId,
+            employeId,
+            date: todayStr,
+            uri: storageUrl,
+            nom: f.name,
+            createdAt: new Date().toISOString(),
+            source: 'fin_journee' as const,
+          });
+        } else {
+          failCount++;
+        }
       }
-      addPhotosChantier(newPhotos);
+      if (newPhotos.length > 0) addPhotosChantier(newPhotos);
+      if (failCount > 0) {
+        const msg = `${failCount} photo(s) n'ont pas pu être envoyées. Veuillez réessayer.`;
+        if (Platform.OS === 'web') alert(msg);
+        else Alert.alert('Erreur upload', msg);
+      }
     } finally {
       setUploadingPhotos(false);
       setShowPhotosModal(false);

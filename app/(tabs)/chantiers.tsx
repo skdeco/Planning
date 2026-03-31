@@ -129,7 +129,12 @@ export default function ChantiersScreen() {
           const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
           const chantierId = plansChantierId || 'general';
           const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
-          setNewPlanFichier(storageUrl || base64);
+          if (storageUrl) {
+            setNewPlanFichier(storageUrl);
+          } else {
+            if (Platform.OS === 'web') alert('Erreur lors de l\'upload du fichier. Veuillez réessayer.');
+            else Alert.alert('Erreur', 'Erreur lors de l\'upload du fichier. Veuillez réessayer.');
+          }
         };
         reader.readAsDataURL(file);
       };
@@ -202,7 +207,12 @@ export default function ChantiersScreen() {
           const pjId = `note_pj_${Date.now()}_${Math.random().toString(36).slice(2)}`;
           const chantierId = notesChantierId || 'general';
           const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/notes`, pjId);
-          setNotePieceJointe({ uri: storageUrl || base64, nom: file.name, type });
+          if (storageUrl) {
+            setNotePieceJointe({ uri: storageUrl, nom: file.name, type });
+          } else {
+            if (Platform.OS === 'web') alert('Erreur lors de l\'upload. Veuillez réessayer.');
+            else Alert.alert('Erreur', 'Erreur lors de l\'upload. Veuillez réessayer.');
+          }
         };
         reader.readAsDataURL(file);
       };
@@ -634,7 +644,12 @@ export default function ChantiersScreen() {
       const photoId = `fiche_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
       // On ne connaît pas encore le chantierId ici (création en cours), on utilise 'fiche'
       const storageUrl = await uploadFileToStorage(base64Uri, 'chantiers/fiche/photos', photoId);
-      setFiche(f => ({ ...f, photos: [...f.photos, storageUrl || base64Uri] }));
+      if (storageUrl) {
+        setFiche(f => ({ ...f, photos: [...f.photos, storageUrl] }));
+      } else {
+        if (Platform.OS === 'web') alert('Erreur lors de l\'upload de la photo. Veuillez réessayer.');
+        else Alert.alert('Erreur', 'Erreur lors de l\'upload de la photo. Veuillez réessayer.');
+      }
     };
     if (Platform.OS === 'web') {
       const input = document.createElement('input');

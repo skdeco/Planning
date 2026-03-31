@@ -153,7 +153,7 @@ export default function FinancierSTScreen() {
                       {/* Documents devis */}
                       <View style={styles.devisDocsRow}>
                         {devis.devisFichier ? (
-                          <Pressable style={styles.docBtn} onPress={() => openDoc(devis.devisFichier)}>
+                          <Pressable style={styles.docBtn} onPress={() => openDoc(devis.devisFichier!)}>
                             <Text style={styles.docBtnText}>📄 Mon devis</Text>
                           </Pressable>
                         ) : (
@@ -162,7 +162,7 @@ export default function FinancierSTScreen() {
                           </Pressable>
                         )}
                         {devis.devisSigne ? (
-                          <Pressable style={[styles.docBtn, styles.docBtnSigne]} onPress={() => openDoc(devis.devisSigne)}>
+                          <Pressable style={[styles.docBtn, styles.docBtnSigne]} onPress={() => openDoc(devis.devisSigne!)}>
                             <Text style={styles.docBtnText}>✅ Devis signé reçu</Text>
                           </Pressable>
                         ) : (
@@ -185,7 +185,7 @@ export default function FinancierSTScreen() {
                                 </View>
                                 {a.commentaire ? <Text style={styles.acompteComment}>{a.commentaire}</Text> : null}
                                 {a.facture ? (
-                                  <Pressable onPress={() => openDoc(a.facture)}>
+                                  <Pressable onPress={() => openDoc(a.facture!)}>
                                     <Text style={styles.factureLink}>📄 Ma facture</Text>
                                   </Pressable>
                                 ) : (

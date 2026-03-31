@@ -29,7 +29,7 @@ export default function LoginScreen() {
     const adminPassword = data.adminPassword || 'admin';
     if (id === ADMIN_LOGIN && pwd === adminPassword) {
       setCurrentUser({ role: 'admin' });
-      router.replace('/(tabs)/');
+      router.replace('/(tabs)' as any);
       return;
     }
 
@@ -44,7 +44,7 @@ export default function LoginScreen() {
         employeId: employe.id,
         nom: `${employe.prenom} ${employe.nom}`,
       });
-      router.replace('/(tabs)/');
+      router.replace('/(tabs)' as any);
       return;
     }
 
@@ -59,7 +59,7 @@ export default function LoginScreen() {
         soustraitantId: st.id,
         nom: `${st.prenom} ${st.nom}`,
       });
-      router.replace('/(tabs)/');
+      router.replace('/(tabs)' as any);
       return;
     }
 
