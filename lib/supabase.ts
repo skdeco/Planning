@@ -4,8 +4,8 @@ import { createClient } from '@supabase/supabase-js';
 //// ─── Supabase client ────────────────────────────────────────────────
 const SUPABASE_URL = 'https://wgbzslmwhyuoxqhishzk.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnYnpzbG13aHl1b3hxaGlzaHprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDQzODQsImV4cCI6MjA5MDEyMDM4NH0.qJ6JX5Ps58rbURffJR-kP7ZP9W5YEW7qQmMfykaZpKs';
-// Clé service_role pour les uploads Storage (contourne les RLS)
-const SUPABASE_SERVICE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnYnpzbG13aHl1b3hxaGlzaHprIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NDU0NDM4NCwiZXhwIjoyMDkwMTIwMzg0fQ.32hV-bZ_6CR3oONK5CufwO7hsLfPIlEe4CQ08HKfFxk';
+// NOTE: La clé service_role a été retirée du code client pour des raisons de sécurité.
+// Les uploads Storage utilisent désormais le client anon avec des policies RLS sur le bucket.
 /** Nom du bucket Supabase Storage pour les photos et documents */
 export const STORAGE_BUCKET = 'sk-photos';
 /** URL de base publique pour accéder aux fichiers */
@@ -18,13 +18,8 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   },
 });
 
-/** Client Supabase avec droits élevés pour les uploads Storage */
-export const supabaseStorage = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-});
+/** Client Supabase pour les uploads Storage (utilise anon key + policies RLS sur le bucket) */
+export const supabaseStorage = supabase;
 
 // ─── Clés de stockage local ───────────────────────────────────────────────────
 /** Cache local des données principales (sans photos base64) */
@@ -111,15 +106,27 @@ export function mergeDataSafely(
       continue;
     }
 
-    // Les deux ont des données → fusionner par id (local prioritaire)
-    const merged = [...localArr];
-    const localIds = new Set(localArr.map(item => item.id as string));
-    for (const remoteItem of remoteArr) {
-      if (!localIds.has(remoteItem.id as string)) {
-        // Élément présent dans remote mais pas en local → l'ajouter
-        merged.push(remoteItem);
+    // Les deux ont des données → fusionner par id
+    // Si un item a un champ updatedAt, la version la plus récente gagne
+    // Sinon, la version locale est prioritaire (rétro-compatible)
+    const localMap = new Map(localArr.map(item => [item.id as string, item]));
+    const remoteMap = new Map(remoteArr.map(item => [item.id as string, item]));
+    const allIds = new Set([...localMap.keys(), ...remoteMap.keys()]);
+    const merged: Record<string, unknown>[] = [];
+    for (const id of allIds) {
+      const localItem = localMap.get(id);
+      const remoteItem = remoteMap.get(id);
+      if (!localItem) { merged.push(remoteItem!); continue; }
+      if (!remoteItem) { merged.push(localItem); continue; }
+      // Les deux existent → comparer par updatedAt si disponible
+      const localTs = (localItem.updatedAt as string) || '';
+      const remoteTs = (remoteItem.updatedAt as string) || '';
+      if (localTs && remoteTs) {
+        merged.push(remoteTs > localTs ? remoteItem : localItem);
+      } else {
+        // Pas de timestamp → local prioritaire (comportement historique)
+        merged.push(localItem);
       }
-      // Si déjà en local → la version locale est prioritaire, on ne touche pas
     }
     result[key] = merged;
   }
@@ -280,15 +287,27 @@ export async function saveDataToSupabase(appData: Record<string, unknown>): Prom
   // Retirer les photos volumineuses avant envoi (base64 dans toutes les collections)
   const lightPayload = stripPhotosForSupabase(appData);
 
-  const { error } = await supabase
-    .from('app_data')
-    .upsert({ id: 'main', data: lightPayload, updated_at: new Date().toISOString() });
+  // ── Merge côté client pour éviter les conflits multi-utilisateurs ──
+  // 1. Charger la version distante
+  // 2. Fusionner (remote + local) pour ne pas écraser les changements d'un autre utilisateur
+  // 3. Écrire le résultat fusionné
+  try {
+    const remote = await loadDataFromSupabase();
+    const toSave = remote ? mergeDataSafely(remote, lightPayload) : lightPayload;
 
-  if (error) {
-    console.error('Erreur sauvegarde Supabase:', error.message);
+    const { error } = await supabase
+      .from('app_data')
+      .upsert({ id: 'main', data: toSave, updated_at: new Date().toISOString() });
+
+    if (error) {
+      console.error('Erreur sauvegarde Supabase:', error.message);
+      return false;
+    }
+    return true;
+  } catch (err) {
+    console.error('Erreur sauvegarde Supabase (exception):', err);
     return false;
   }
-  return true;
 }
 
 /**

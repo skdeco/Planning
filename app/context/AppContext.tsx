@@ -1,17 +1,69 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY, subscribeToRealtimeUpdates } from '@/lib/supabase';
+import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY, subscribeToRealtimeUpdates, deleteFileFromStorage } from '@/lib/supabase';
 
 // Clés AsyncStorage pour persister les IDs supprimés entre rechargements
 const DELETED_AFFECTATIONS_KEY = 'sk_deleted_affectation_ids';
 const DELETED_CHANTIERS_KEY = 'sk_deleted_chantier_ids';
 const DELETED_EMPLOYES_KEY = 'sk_deleted_employe_ids';
 const DELETED_POINTAGES_KEY = 'sk_deleted_pointage_ids';
+const DELETED_GENERIC_KEY = 'sk_deleted_generic_ids';
 const LAST_SEEN_KEY = 'sk_deco_last_seen_at';
 
+// ── Sauvegarde fiable avec retry ──────────────────────────────────────────────
+const MAX_RETRY = 3;
+const RETRY_DELAY_MS = 2000;
+
+async function safeSaveToSupabase(
+  data: Record<string, unknown>,
+  onError: (msg: string) => void,
+): Promise<boolean> {
+  for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
+    try {
+      const ok = await saveDataToSupabase(data);
+      if (ok) return true;
+      console.warn(`[Save] Tentative ${attempt}/${MAX_RETRY} échouée (retour false)`);
+    } catch (err) {
+      console.warn(`[Save] Tentative ${attempt}/${MAX_RETRY} erreur:`, err);
+    }
+    if (attempt < MAX_RETRY) {
+      await new Promise(r => setTimeout(r, RETRY_DELAY_MS * attempt));
+    }
+  }
+  markPendingSave();
+  onError('La sauvegarde vers le serveur a échoué après plusieurs tentatives. Vos données sont conservées localement et seront synchronisées dès que possible.');
+  return false;
+}
+
+async function safeAsyncStorageSet(key: string, value: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(key, value);
+  } catch (err) {
+    console.warn(`[AsyncStorage] Erreur écriture ${key}:`, err);
+  }
+}
+
 function persistDeletedIds(key: string, set: Set<string>): void {
-  AsyncStorage.setItem(key, JSON.stringify([...set])).catch(() => {});
+  safeAsyncStorageSet(key, JSON.stringify([...set]));
+}
+
+// ── Queue offline : re-tente les sauvegardes échouées ─────────────────────────
+const PENDING_SAVE_KEY = 'sk_deco_pending_save';
+let offlineRetryTimer: ReturnType<typeof setInterval> | null = null;
+
+async function markPendingSave(): Promise<void> {
+  await safeAsyncStorageSet(PENDING_SAVE_KEY, 'true');
+}
+
+async function clearPendingSave(): Promise<void> {
+  try { await AsyncStorage.removeItem(PENDING_SAVE_KEY); } catch {}
+}
+
+async function hasPendingSave(): Promise<boolean> {
+  try {
+    return (await AsyncStorage.getItem(PENDING_SAVE_KEY)) === 'true';
+  } catch { return false; }
 }
 import type {
   Employe, Chantier, Affectation, AppData, CurrentUser, Note, Pointage, Acompte, FicheChantier,
@@ -319,6 +371,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Session expirée : un autre onglet plus récent a pris le contrôle
   const [sessionExpired, setSessionExpired] = useState(false);
   const [notifications, setNotifications] = useState<ActivityLog[]>([]);
+  // Bannière d'erreur de sauvegarde visible par l'utilisateur
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const saveErrorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const showSaveError = useCallback((msg: string) => {
+    setSaveError(msg);
+    if (saveErrorTimeout.current) clearTimeout(saveErrorTimeout.current);
+    saveErrorTimeout.current = setTimeout(() => setSaveError(null), 15000);
+  }, []);
   // Ref pour éviter la sauvegarde au premier chargement
   const isFirstLoad = useRef(true);
   // Ref pour debounce de la sauvegarde Supabase
@@ -334,6 +394,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const deletedListeIdsRef = useRef<Set<string>>(new Set());
   // Map listeId -> Set<itemId> des items supprimés — le polling ne doit JAMAIS les réintroduire
   const deletedItemIdsRef = useRef<Map<string, Set<string>>>(new Map());
+  // Set générique pour toutes les autres entités (acomptes, devis, marches, sousTraitants, notes, etc.)
+  const deletedGenericIdsRef = useRef<Set<string>>(new Set());
   // Timestamp de la dernière sauvegarde Supabase — évite que le polling réécrase les données locales
   const lastSaveRef = useRef<number>(0);
   // Timestamp de la dernière modification locale (suppression, ajout, toggle)
@@ -402,6 +464,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (rawEmp) deletedEmployeIdsRef.current = new Set(JSON.parse(rawEmp));
         const rawPt = await AsyncStorage.getItem(DELETED_POINTAGES_KEY);
         if (rawPt) deletedPointageIdsRef.current = new Set(JSON.parse(rawPt));
+        const rawGeneric = await AsyncStorage.getItem(DELETED_GENERIC_KEY);
+        if (rawGeneric) deletedGenericIdsRef.current = new Set(JSON.parse(rawGeneric));
       } catch {}
 
       // ── 2. Charger Supabase ET le cache local en parallèle ──
@@ -445,9 +509,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         loadedData = migrateData(localRaw);
         console.log(`⚠️ Supabase vide, utilisation du cache local (${localEmployes} emp)`);
         // Synchroniser immédiatement vers Supabase pour les autres appareils
-        saveDataToSupabase(localRaw)
-          .then(ok => console.log(ok ? '✅ Cache local synchronisé vers Supabase' : '⚠️ Sync Supabase échouée'))
-          .catch(() => {});
+        safeSaveToSupabase(localRaw, showSaveError)
+          .then(ok => console.log(ok ? '✅ Cache local synchronisé vers Supabase' : '⚠️ Sync Supabase échouée'));
       } else if (supabaseRaw && Object.keys(supabaseRaw).length > 0) {
         // Supabase a des données mais pas d'employés (notes, photos, etc.)
         loadedData = migrateData(supabaseRaw);
@@ -457,7 +520,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // ── 4. Mettre à jour le cache local avec les données finales ──
       if (loadedData) {
         setData(loadedData);
-        AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(loadedData)).catch(() => {});
+        safeAsyncStorageSet(LOCAL_DATA_KEY, JSON.stringify(loadedData));
       }
 
       if (storedUser) setCurrentUser(storedUser);
@@ -483,7 +546,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (remoteReloadCountRef.current !== lastSavedReloadCountRef.current) {
       lastSavedReloadCountRef.current = remoteReloadCountRef.current;
       // Mettre à jour le cache local uniquement
-      AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(data)).catch(() => {});
+      safeAsyncStorageSet(LOCAL_DATA_KEY, JSON.stringify(data));
       return;
     }
     lastLocalChangeRef.current = Date.now();
@@ -494,16 +557,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       lastSaveRef.current = Date.now();
 
       // 1. Sauvegarder dans Supabase (SANS photos — stripPhotosForSupabase appliqué dans saveDataToSupabase)
-      saveDataToSupabase(dataToSave)
+      safeSaveToSupabase(dataToSave, showSaveError)
         .then(ok => {
-          if (!ok) { console.warn('⚠️ Sauvegarde Supabase échouée'); return; }
-          // Notifier les autres onglets (admin, autres employés) qu'il y a du nouveau
-          notifyDataUpdated(SESSION_ID);
-        })
-        .catch(() => {});
+          if (ok) { clearPendingSave(); notifyDataUpdated(SESSION_ID); }
+        });
 
       // 2. Sauvegarder le cache local COMPLET (avec photos) pour le fallback hors-ligne
-      AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(dataToSave)).catch(() => {});
+      safeAsyncStorageSet(LOCAL_DATA_KEY, JSON.stringify(dataToSave));
     }, 1500); // 1.5s de debounce
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -534,7 +594,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           'daily'
         );
         if (success) {
-          await AsyncStorage.setItem('sk_last_backup_day', dayKey).catch(() => {});
+          await safeAsyncStorageSet('sk_last_backup_day', dayKey);
           console.log('✅ Backup quotidien créé (' + dayKey + ')');
         }
       } catch (e) {
@@ -546,6 +606,30 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const backupInterval = setInterval(checkAndBackup, 86400000); // 24h
     return () => clearInterval(backupInterval);
   }, [loaded]);
+
+  // ── Queue offline : re-tente les sauvegardes échouées toutes les 30s ──
+  useEffect(() => {
+    if (!loaded || sessionExpired) return;
+    const retryPendingSave = async () => {
+      const pending = await hasPendingSave();
+      if (!pending) return;
+      console.log('[Offline] Tentative de re-synchronisation…');
+      const dataToSave = dataRef.current as unknown as Record<string, unknown>;
+      const ok = await safeSaveToSupabase(dataToSave, showSaveError);
+      if (ok) {
+        await clearPendingSave();
+        setSaveError(null);
+        notifyDataUpdated(SESSION_ID);
+        console.log('[Offline] Re-synchronisation réussie');
+      }
+    };
+    offlineRetryTimer = setInterval(retryPendingSave, 30000);
+    // Tenter immédiatement au chargement
+    retryPendingSave();
+    return () => {
+      if (offlineRetryTimer) clearInterval(offlineRetryTimer);
+    };
+  }, [loaded, sessionExpired, showSaveError]);
 
   // ── Rechargement depuis Supabase (utilisé par polling, Realtime ET BroadcastChannel) ──
   // Supabase est la SOURCE DE VÉRITÉ : les données distantes remplacent les locales.
@@ -595,7 +679,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               (p: Pointage) => !deletedPointageIdsRef.current.has(p.id)
             ),
             listesMateriaux: mergedListes,
-            photosChantier: mergedPhotos,
+            photosChantier: mergedPhotos.filter((p: PhotoChantier) => !deletedGenericIdsRef.current.has(p.id)),
+            // Filtrer les suppressions génériques sur toutes les collections restantes
+            acomptes: (result.acomptes || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            sousTraitants: (result.sousTraitants || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            devis: (result.devis || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            marches: (result.marches || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            acomptesst: (result.acomptesst || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            interventions: (result.interventions || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            demandesConge: (result.demandesConge || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            arretsMaladie: (result.arretsMaladie || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            demandesAvance: (result.demandesAvance || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            fichesPaie: (result.fichesPaie || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            depenses: (result.depenses || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            supplements: (result.supplements || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            docsSuivi: (result.docsSuivi || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            notesSuivi: (result.notesSuivi || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            documentsRH: (result.documentsRH || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            messagesPrive: (result.messagesPrive || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            retardsPlanifies: (result.retardsPlanifies || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            notesChantier: (result.notesChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             // Conserver les données locales qui ne sont pas dans Supabase (plans, fiches)
             fichesChantier: { ...(result.fichesChantier || {}), ...(prev.fichesChantier || {}) },
             plansChantier: { ...(result.plansChantier || {}), ...(prev.plansChantier || {}) },
@@ -635,8 +738,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setCurrentUserPersisted = (user: CurrentUser | null) => {
     setCurrentUser(user);
-    if (user) AsyncStorage.setItem(USER_KEY, JSON.stringify(user)).catch(() => {});
-    else AsyncStorage.removeItem(USER_KEY).catch(() => {});
+    if (user) safeAsyncStorageSet(USER_KEY, JSON.stringify(user));
+    else AsyncStorage.removeItem(USER_KEY).catch(err => console.warn('[AsyncStorage] Erreur suppression user:', err));
+  };
+
+  // Helper : tracker la suppression d'un ID générique (acomptes, devis, marchés, notes, etc.)
+  const trackGenericDeletion = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    persistDeletedIds(DELETED_GENERIC_KEY, deletedGenericIdsRef.current);
+    lastLocalChangeRef.current = Date.now();
   };
 
   // ── Chantiers ──
@@ -737,8 +847,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const newData = { ...p, affectations: newAffectations };
       // Sauvegarder immédiatement dans Supabase pour éviter que d'autres appareils ne réintroduisent l'affectation
       lastSaveRef.current = Date.now();
-      saveDataToSupabase(newData as unknown as Record<string, unknown>).catch(() => {});
-      AsyncStorage.setItem(LOCAL_DATA_KEY, JSON.stringify(newData)).catch(() => {});
+      safeSaveToSupabase(newData as unknown as Record<string, unknown>, showSaveError);
+      safeAsyncStorageSet(LOCAL_DATA_KEY, JSON.stringify(newData));
       return newData;
     });
   };
@@ -853,8 +963,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Acomptes employés ──
   const addAcompte = (acompte: Acompte) =>
     setData(p => ({ ...p, acomptes: [...p.acomptes, acompte] }));
-  const deleteAcompte = (id: string) =>
+  const deleteAcompte = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, acomptes: p.acomptes.filter(a => a.id !== id) }));
+  };
 
   // ── Fiche chantier ──
   const upsertFicheChantier = (chantierId: string, fiche: FicheChantier) =>
@@ -868,34 +980,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, sousTraitants: [...p.sousTraitants, st] }));
   const updateSousTraitant = (st: SousTraitant) =>
     setData(p => ({ ...p, sousTraitants: p.sousTraitants.map(x => x.id === st.id ? st : x) }));
-  const deleteSousTraitant = (id: string) =>
-    setData(p => ({
-      ...p,
-      sousTraitants: p.sousTraitants.filter(s => s.id !== id),
-      devis: p.devis.filter(d => d.soustraitantId !== id),
-      marches: p.devis.filter(d => d.soustraitantId !== id),
-      acomptesst: p.acomptesst.filter(a => {
-        const devisIds = p.devis.filter(d => d.soustraitantId === id).map(d => d.id);
-        return !devisIds.includes(a.devisId);
-      }),
-    }));
+  const deleteSousTraitant = (id: string) => {
+    trackGenericDeletion(id);
+    setData(p => {
+      const devisIds = p.devis.filter(d => d.soustraitantId === id).map(d => d.id);
+      const marcheIds = p.marches.filter(m => m.soustraitantId === id).map(m => m.id);
+      const allIds = new Set([...devisIds, ...marcheIds]);
+      return {
+        ...p,
+        sousTraitants: p.sousTraitants.filter(s => s.id !== id),
+        devis: p.devis.filter(d => d.soustraitantId !== id),
+        marches: p.marches.filter(m => m.soustraitantId !== id),
+        acomptesst: p.acomptesst.filter(a => !allIds.has(a.devisId)),
+      };
+    });
+  };
 
   // ── Devis ST ──
   const addDevis = (devis: DevisST) =>
-    setData(p => ({ ...p, devis: [...p.devis, devis], marches: [...p.devis, devis] }));
+    setData(p => ({ ...p, devis: [...p.devis, devis], marches: [...p.marches, devis] }));
   const updateDevis = (devis: DevisST) =>
     setData(p => ({
       ...p,
       devis: p.devis.map(x => x.id === devis.id ? devis : x),
-      marches: p.devis.map(x => x.id === devis.id ? devis : x),
+      marches: p.marches.map(x => x.id === devis.id ? devis : x),
     }));
-  const deleteDevis = (id: string) =>
+  const deleteDevis = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({
       ...p,
       devis: p.devis.filter(d => d.id !== id),
-      marches: p.devis.filter(d => d.id !== id),
+      marches: p.marches.filter(d => d.id !== id),
       acomptesst: p.acomptesst.filter(a => a.devisId !== id),
     }));
+  };
   const addMarche = addDevis;
   const updateMarche = updateDevis;
   const deleteMarche = deleteDevis;
@@ -905,16 +1023,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, acomptesst: [...p.acomptesst, acompte] }));
   const updateAcompteST = (acompte: AcompteST) =>
     setData(p => ({ ...p, acomptesst: p.acomptesst.map(x => x.id === acompte.id ? acompte : x) }));
-  const deleteAcompteST = (id: string) =>
+  const deleteAcompteST = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, acomptesst: p.acomptesst.filter(a => a.id !== id) }));
+  };
 
   // ── Interventions externes ──
   const addIntervention = (intervention: Intervention) =>
     setData(p => ({ ...p, interventions: [...(p.interventions || []), intervention] }));
   const updateIntervention = (intervention: Intervention) =>
     setData(p => ({ ...p, interventions: (p.interventions || []).map(x => x.id === intervention.id ? intervention : x) }));
-  const deleteIntervention = (id: string) =>
+  const deleteIntervention = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, interventions: (p.interventions || []).filter(i => i.id !== id) }));
+  };
 
   // ── Listes matériel ──
   const upsertListeMateriau = (liste: ListeMateriau) => {
@@ -942,7 +1064,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const newData = { ...p, listesMateriaux: (p.listesMateriaux || []).filter(l => l.id !== id) };
       // Sauvegarder immédiatement dans Supabase
       lastSaveRef.current = Date.now();
-      saveDataToSupabase(newData as unknown as Record<string, unknown>).catch(() => {});
+      safeSaveToSupabase(newData as unknown as Record<string, unknown>, showSaveError);
       return newData;
     });
   };
@@ -990,7 +1112,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       };
       // Sauvegarder immédiatement dans Supabase (pas de debounce pour les suppressions)
       lastSaveRef.current = Date.now();
-      saveDataToSupabase(newData as unknown as Record<string, unknown>).catch(() => {});
+      safeSaveToSupabase(newData as unknown as Record<string, unknown>, showSaveError);
       return newData;
     });
   };
@@ -1004,15 +1126,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
   const updateDemandeConge = (d: DemandeConge) =>
     setData(p => ({ ...p, demandesConge: (p.demandesConge || []).map(x => x.id === d.id ? d : x) }));
-  const deleteDemandeConge = (id: string) =>
+  const deleteDemandeConge = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, demandesConge: (p.demandesConge || []).filter(x => x.id !== id) }));
+  };
 
   const addArretMaladie = (a: ArretMaladie) =>
     setData(p => ({ ...p, arretsMaladie: [...(p.arretsMaladie || []), a] }));
   const updateArretMaladie = (a: ArretMaladie) =>
     setData(p => ({ ...p, arretsMaladie: (p.arretsMaladie || []).map(x => x.id === a.id ? a : x) }));
-  const deleteArretMaladie = (id: string) =>
+  const deleteArretMaladie = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, arretsMaladie: (p.arretsMaladie || []).filter(x => x.id !== id) }));
+  };
 
   const addDemandeAvance = (d: DemandeAvance) => {
     const emp = data.employes.find(e => e.id === d.employeId);
@@ -1022,56 +1148,75 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
   const updateDemandeAvance = (d: DemandeAvance) =>
     setData(p => ({ ...p, demandesAvance: (p.demandesAvance || []).map(x => x.id === d.id ? d : x) }));
-  const deleteDemandeAvance = (id: string) =>
+  const deleteDemandeAvance = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, demandesAvance: (p.demandesAvance || []).filter(x => x.id !== id) }));
+  };
 
   const addFichePaie = (f: FichePaie) =>
     setData(p => ({ ...p, fichesPaie: [...(p.fichesPaie || []), f] }));
-  const deleteFichePaie = (id: string) =>
+  const deleteFichePaie = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, fichesPaie: (p.fichesPaie || []).filter(x => x.id !== id) }));
+  };
 
   // ── Module Suivi Chantier ──
   const addDepense = (d: DepenseChantier) =>
     setData(p => ({ ...p, depenses: [...(p.depenses || []), d] }));
   const updateDepense = (d: DepenseChantier) =>
     setData(p => ({ ...p, depenses: (p.depenses || []).map(x => x.id === d.id ? d : x) }));
-  const deleteDepense = (id: string) =>
+  const deleteDepense = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, depenses: (p.depenses || []).filter(x => x.id !== id) }));
+  };
 
   const addSupplement = (s: SupplementChantier) =>
     setData(p => ({ ...p, supplements: [...(p.supplements || []), s] }));
   const updateSupplement = (s: SupplementChantier) =>
     setData(p => ({ ...p, supplements: (p.supplements || []).map(x => x.id === s.id ? s : x) }));
-  const deleteSupplement = (id: string) =>
+  const deleteSupplement = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, supplements: (p.supplements || []).filter(x => x.id !== id) }));
+  };
 
   const addDocSuivi = (d: DocSuiviChantier) =>
     setData(p => ({ ...p, docsSuivi: [...(p.docsSuivi || []), d] }));
   const updateDocSuivi = (d: DocSuiviChantier) =>
     setData(p => ({ ...p, docsSuivi: (p.docsSuivi || []).map(x => x.id === d.id ? d : x) }));
-  const deleteDocSuivi = (id: string) =>
+  const deleteDocSuivi = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, docsSuivi: (p.docsSuivi || []).filter(x => x.id !== id) }));
+  };
 
   const addNoteSuivi = (n: NoteSuiviChantier) =>
     setData(p => ({ ...p, notesSuivi: [...(p.notesSuivi || []), n] }));
   const updateNoteSuivi = (n: NoteSuiviChantier) =>
     setData(p => ({ ...p, notesSuivi: (p.notesSuivi || []).map(x => x.id === n.id ? n : x) }));
-  const deleteNoteSuivi = (id: string) =>
+  const deleteNoteSuivi = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, notesSuivi: (p.notesSuivi || []).filter(x => x.id !== id) }));
+  };
 
   // ── Documents RH employé ──
   const addDocumentRH = (d: DocumentRHEmploye) =>
     setData(p => ({ ...p, documentsRH: [...(p.documentsRH || []), d] }));
-  const deleteDocumentRH = (id: string) =>
+  const deleteDocumentRH = (id: string) => {
+    trackGenericDeletion(id);
+    // Supprimer le fichier du Storage Supabase si c'est une URL distante
+    const doc = data.documentsRH?.find(d => d.id === id);
+    if (doc?.fichier?.startsWith('http')) deleteFileFromStorage(doc.fichier).catch(() => {});
     setData(p => ({ ...p, documentsRH: (p.documentsRH || []).filter(x => x.id !== id) }));
+  };
 
   // ── Messagerie privée ──
   const addMessagePrive = (m: MessagePrive) =>
     setData(p => ({ ...p, messagesPrive: [...(p.messagesPrive || []), m] }));
   const updateMessagePrive = (m: MessagePrive) =>
     setData(p => ({ ...p, messagesPrive: (p.messagesPrive || []).map(x => x.id === m.id ? m : x) }));
-  const deleteMessagePrive = (id: string) =>
+  const deleteMessagePrive = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, messagesPrive: (p.messagesPrive || []).filter(x => x.id !== id) }));
+  };
   const marquerMessagesLus = (conversationId: string, lecteurRole: 'admin' | 'employe' | 'soustraitant') =>
     setData(p => ({
       ...p,
@@ -1087,16 +1232,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, photosChantier: [...(p.photosChantier || []), photo] }));
   const addPhotosChantier = (photos: PhotoChantier[]) =>
     setData(p => ({ ...p, photosChantier: [...(p.photosChantier || []), ...photos] }));
-  const deletePhotoChantier = (id: string) =>
+  const deletePhotoChantier = (id: string) => {
+    trackGenericDeletion(id);
+    // Supprimer le fichier du Storage Supabase si c'est une URL distante
+    const photo = data.photosChantier?.find(p => p.id === id);
+    if (photo?.uri?.startsWith('http')) deleteFileFromStorage(photo.uri).catch(() => {});
     setData(p => ({ ...p, photosChantier: (p.photosChantier || []).filter(x => x.id !== id) }));
+  };
 
   // ── Retards planifiés ──
   const addRetardPlanifie = (r: RetardPlanifie) =>
     setData(p => ({ ...p, retardsPlanifies: [...(p.retardsPlanifies || []), r] }));
   const updateRetardPlanifie = (r: RetardPlanifie) =>
     setData(p => ({ ...p, retardsPlanifies: (p.retardsPlanifies || []).map(x => x.id === r.id ? r : x) }));
-  const deleteRetardPlanifie = (id: string) =>
+  const deleteRetardPlanifie = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, retardsPlanifies: (p.retardsPlanifies || []).filter(x => x.id !== id) }));
+  };
 
   // ── Notes chantier ──
   const addNoteChantier = (n: NoteChantier) =>
@@ -1138,11 +1290,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
 
   // Suppression définitive d'une note archivée (admin uniquement)
-  const deleteNoteChantierArchivee = (id: string) =>
+  const deleteNoteChantierArchivee = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({
       ...p,
       notesChantier: (p.notesChantier || []).filter(n => n.id !== id),
     }));
+  };
 
   // ── Plans chantier ──
   const addPlanChantier = (chantierId: string, plan: PlanChantier) =>
@@ -1155,7 +1309,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ),
     }));
 
-  const deletePlanChantier = (chantierId: string, planId: string) =>
+  const deletePlanChantier = (chantierId: string, planId: string) => {
+    // Supprimer le fichier du Storage Supabase si c'est une URL distante
+    const chantier = data.chantiers.find(c => c.id === chantierId);
+    const plan = chantier?.fiche?.plans?.find(p => p.id === planId);
+    if (plan?.fichier?.startsWith('http')) deleteFileFromStorage(plan.fichier).catch(() => {});
     setData(p => ({
       ...p,
       chantiers: p.chantiers.map(c =>
@@ -1164,6 +1322,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           : c
       ),
     }));
+  };
 
   const updateAdminPassword = (pwd: string) =>
     setData(p => ({ ...p, adminPassword: pwd, adminPasswordUpdatedAt: new Date().toISOString() }));
@@ -1217,7 +1376,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         log => log.timestamp > lastSeen && log.userId !== userId
       );
       setNotifications(unread);
-    }).catch(() => {});
+    }).catch(err => console.warn('[Notifications] Erreur chargement lastSeen:', err));
   }, [loaded, currentUser, data.activityLog]);
 
   const markNotificationsRead = useCallback(() => {
@@ -1225,7 +1384,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const userId = currentUser.role === 'admin' ? 'admin' : currentUser.employeId || currentUser.soustraitantId || 'unknown';
     const now = new Date().toISOString();
     lastSeenRef.current = now;
-    AsyncStorage.setItem(`${LAST_SEEN_KEY}_${userId}`, now).catch(() => {});
+    safeAsyncStorageSet(`${LAST_SEEN_KEY}_${userId}`, now);
     setNotifications([]);
   }, [currentUser]);
 
@@ -1267,6 +1426,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       logout,
     }}>
       {children}
+      {saveError && (
+        <View style={saveErrorStyles.banner}>
+          <View style={saveErrorStyles.content}>
+            <Text style={saveErrorStyles.icon}>&#9888;</Text>
+            <Text style={saveErrorStyles.text}>{saveError}</Text>
+            <Pressable onPress={() => setSaveError(null)} style={saveErrorStyles.close}>
+              <Text style={saveErrorStyles.closeText}>&#10005;</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
       {sessionExpired && (
         <View style={sessionStyles.overlay}>
           <View style={sessionStyles.box}>
@@ -1325,6 +1495,27 @@ const sessionStyles = StyleSheet.create({
     paddingHorizontal: 28,
   },
   btnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+});
+
+const saveErrorStyles = StyleSheet.create({
+  banner: {
+    position: 'absolute' as const,
+    top: 0, left: 0, right: 0,
+    zIndex: 99998,
+    backgroundColor: '#EF4444',
+    paddingTop: Platform.OS === 'web' ? 8 : 48,
+    paddingBottom: 8,
+    paddingHorizontal: 16,
+  },
+  content: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  icon: { fontSize: 18, color: '#fff' },
+  text: { flex: 1, color: '#fff', fontSize: 13, fontWeight: '600' },
+  close: { padding: 4 },
+  closeText: { color: '#fff', fontSize: 16, fontWeight: '700' },
 });
 
 export function useApp(): AppContextType {

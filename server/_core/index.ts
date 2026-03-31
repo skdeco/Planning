@@ -7,6 +7,7 @@ import { registerOAuthRoutes } from "./oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { registerMaterielNotificationRoute } from "../materielNotification";
+import rateLimit from "express-rate-limit";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -31,10 +32,21 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
 
-  // Enable CORS for all routes - reflect the request origin to support credentials
+  // CORS — origines autorisées uniquement
+  const ALLOWED_ORIGINS = [
+    'https://sk-deco-planning.vercel.app',
+    'https://sk-deco-planning-git-main-sk-decos-projects.vercel.app',
+    ...(process.env.NODE_ENV !== 'production' ? [
+      'http://localhost:8081',
+      'http://localhost:3000',
+      process.env.EXPO_WEB_PREVIEW_URL,
+      process.env.EXPO_PACKAGER_PROXY_URL,
+    ] : []),
+  ].filter(Boolean) as string[];
+
   app.use((req, res, next) => {
     const origin = req.headers.origin;
-    if (origin) {
+    if (origin && ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed) || origin.endsWith('.vercel.app'))) {
       res.header("Access-Control-Allow-Origin", origin);
     }
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
@@ -54,6 +66,15 @@ async function startServer() {
 
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // Rate limiting global : 100 requêtes par minute par IP
+  app.use(rateLimit({
+    windowMs: 60 * 1000,
+    max: 100,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Trop de requêtes, réessayez dans une minute' },
+  }));
 
   registerOAuthRoutes(app);
   registerMaterielNotificationRoute(app);

@@ -7,6 +7,7 @@ import {
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import {
   METIER_COLORS, METIERS_LIST, HORAIRES_DEFAUT, EMPLOYE_COLORS, ST_COLORS,
   DOC_RH_LABELS, DOC_RH_ORDER,
@@ -99,6 +100,7 @@ export default function EquipeScreen() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<EmployeForm>(DEFAULT_FORM);
+  useUnsavedChanges(showForm && (form.prenom.trim().length > 0 || form.nom.trim().length > 0));
   const [filterMetier, setFilterMetier] = useState<Metier | 'all'>('all');
   const [showHoraires, setShowHoraires] = useState(false);
   const [showMdp, setShowMdp] = useState(false);

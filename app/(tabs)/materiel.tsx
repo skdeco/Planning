@@ -50,7 +50,7 @@ function sendNotificationEmail(
       chantierNom,
       articles,
     }),
-  }).catch(() => {});
+  }).catch(err => console.warn('[Materiel] Erreur notification email:', err));
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────

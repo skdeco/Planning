@@ -10,6 +10,7 @@ import JSZip from 'jszip';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   type Chantier, type StatutChantier, type FicheChantier, type NoteChantier, type PlanChantier,
@@ -70,6 +71,8 @@ export default function ChantiersScreen() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ChantierForm>(DEFAULT_FORM);
+  // Protection contre la perte de données si refresh pendant édition
+  useUnsavedChanges(showForm && form.nom.trim().length > 0);
 
   // Fiche chantier unifiée (fiche + modifier)
   const [showFiche, setShowFiche] = useState(false);
