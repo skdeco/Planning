@@ -9,6 +9,7 @@ export interface MessagePrive {
   expediteurId: string;    // employeId ou soustraitantId ou 'admin'
   expediteurNom: string;   // Nom affiché
   contenu: string;         // Texte du message
+  chantierId?: string;     // Chantier lié au message (contexte)
   fichiers?: string[];     // Photos/vidéos en base64 ou URL
   createdAt: string;       // ISO datetime
   lu: boolean;             // Lu par le destinataire

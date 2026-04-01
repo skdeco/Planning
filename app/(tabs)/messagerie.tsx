@@ -53,7 +53,31 @@ export default function MessagerieScreen() {
   const [selectedConvId, setSelectedConvId] = useState<string | null>(null);
   const [messageText, setMessageText] = useState('');
   const [showArchive, setShowArchive] = useState(false);
+  const [selectedChantierId, setSelectedChantierId] = useState<string | null>(null);
   const scrollRef = useRef<ScrollView>(null);
+
+  // Chantiers où l'employé travaille aujourd'hui (pour le contexte par défaut)
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const mesChantiersAujourdhui = useMemo(() => {
+    const empId = currentUser?.employeId || currentUser?.soustraitantId;
+    if (!empId || isAdmin) return data.chantiers.filter(c => c.statut === 'actif');
+    return data.chantiers.filter(c =>
+      c.statut === 'actif' &&
+      data.affectations.some(a =>
+        a.chantierId === c.id &&
+        a.employeId === empId &&
+        a.dateDebut <= todayStr &&
+        a.dateFin >= todayStr
+      )
+    );
+  }, [data.chantiers, data.affectations, currentUser, isAdmin, todayStr]);
+
+  // Auto-sélectionner le premier chantier du jour
+  useEffect(() => {
+    if (!selectedChantierId && mesChantiersAujourdhui.length > 0) {
+      setSelectedChantierId(mesChantiersAujourdhui[0].id);
+    }
+  }, [mesChantiersAujourdhui]);
 
   // ─── Liste des conversations (admin voit toutes, employé/ST voit la sienne) ──
   const conversations = useMemo(() => {
@@ -153,6 +177,7 @@ export default function MessagerieScreen() {
       expediteurId: myConvId,
       expediteurNom,
       contenu: texte,
+      chantierId: selectedChantierId || undefined,
       createdAt: now(),
       lu: false,
       archive: false,
@@ -190,6 +215,7 @@ export default function MessagerieScreen() {
           expediteurId: myConvId,
           expediteurNom,
           contenu: file.type.startsWith('video/') ? '🎥 Vidéo' : '📷 Photo',
+          chantierId: selectedChantierId || undefined,
           fichiers: [uri],
           createdAt: now(),
           lu: false,
@@ -318,6 +344,21 @@ export default function MessagerieScreen() {
         </Pressable>
       </View>
 
+      {/* Sélecteur de chantier */}
+      {mesChantiersAujourdhui.length > 0 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierBar} contentContainerStyle={styles.chantierBarContent}>
+          {mesChantiersAujourdhui.map(c => (
+            <Pressable
+              key={c.id}
+              style={[styles.chantierChip, selectedChantierId === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+              onPress={() => setSelectedChantierId(selectedChantierId === c.id ? null : c.id)}
+            >
+              <Text style={[styles.chantierChipText, selectedChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+
       {/* Messages */}
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView
@@ -364,6 +405,14 @@ export default function MessagerieScreen() {
                       {!isMine && (
                         <Text style={styles.msgExpéditeur}>{msg.expediteurNom}</Text>
                       )}
+                      {msg.chantierId && (() => {
+                        const ch = data.chantiers.find(c => c.id === msg.chantierId);
+                        return ch ? (
+                          <View style={[styles.msgChantierTag, { backgroundColor: (ch.couleur || '#1A3A6B') + '20', borderColor: ch.couleur || '#1A3A6B' }]}>
+                            <Text style={[styles.msgChantierTagText, { color: ch.couleur || '#1A3A6B' }]}>📍 {ch.nom}</Text>
+                          </View>
+                        ) : null;
+                      })()}
                       {msg.fichiers && msg.fichiers.length > 0 && (
                         <Pressable onPress={() => {
                           if (Platform.OS === 'web') {
@@ -480,4 +529,12 @@ const styles = StyleSheet.create({
   sendBtn: { padding: 10, backgroundColor: '#1A3A6B', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
   sendBtnDisabled: { backgroundColor: '#B0BEC5' },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  // Sélecteur de chantier
+  chantierBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', maxHeight: 44 },
+  chantierBarContent: { paddingHorizontal: 12, paddingVertical: 6, gap: 6, alignItems: 'center' as const },
+  chantierChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
+  chantierChipText: { fontSize: 12, fontWeight: '600', color: '#687076', maxWidth: 120 },
+  // Tag chantier sur les messages
+  msgChantierTag: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, marginBottom: 4, borderWidth: 1, alignSelf: 'flex-start' as const },
+  msgChantierTagText: { fontSize: 10, fontWeight: '700' },
 });
