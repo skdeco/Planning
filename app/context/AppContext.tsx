@@ -503,18 +503,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // ── 3. Stratégie de sélection des données ──
       if (supabaseRaw && (supabaseEmployes > 0 || supabaseChantiers > 0)) {
-        // CAS NORMAL : Supabase a des données → c'est la source de vérité
-        // Fusionner avec le local pour récupérer les photos (stockées localement)
-        if (localRaw) {
-          const merged = mergeDataSafely(supabaseRaw, localRaw);
-          // Mais Supabase est prioritaire pour les données structurelles
-          const mergedWithSupabasePriority = mergeDataSafely(localRaw, supabaseRaw);
-          loadedData = migrateData(mergedWithSupabasePriority);
-          console.log(`✅ Supabase prioritaire (${supabaseEmployes} emp) + cache local fusionné`);
-        } else {
-          loadedData = migrateData(supabaseRaw);
-          console.log(`✅ Données chargées depuis Supabase (${supabaseEmployes} emp)`);
-        }
+        // CAS NORMAL : Supabase est la SOURCE DE VÉRITÉ unique
+        // On utilise directement les données Supabase, sans merge avec le cache local
+        // Le cache local ne sert qu'au fallback offline
+        loadedData = migrateData(supabaseRaw);
+        console.log(`✅ Données chargées depuis Supabase (${supabaseEmployes} emp, ${supabaseChantiers} ch)`);
       } else if (localRaw && (localEmployes > 0 || localChantiers > 0)) {
         // CAS FALLBACK : Supabase vide ou inaccessible, mais cache local a des données
         // → Utiliser le cache local ET synchroniser vers Supabase
