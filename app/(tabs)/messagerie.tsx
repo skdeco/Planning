@@ -141,9 +141,19 @@ export default function MessagerieScreen() {
   const messages = useMemo(() => {
     if (!convId) return [];
     return (data.messagesPrive || [])
-      .filter(m => m.conversationId === convId && (showArchive || !m.archive))
+      .filter(m => {
+        if (m.conversationId !== convId) return false;
+        // Filtrer par chantier si un chantier est sélectionné
+        if (selectedChantierId) {
+          if (showArchive) return m.archive && m.chantierId === selectedChantierId;
+          return !m.archive && m.chantierId === selectedChantierId;
+        }
+        // Pas de chantier sélectionné : montrer les messages sans chantier
+        if (showArchive) return m.archive;
+        return !m.archive && !m.chantierId;
+      })
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  }, [data.messagesPrive, convId, showArchive]);
+  }, [data.messagesPrive, convId, showArchive, selectedChantierId]);
 
   // Marquer les messages comme lus quand on ouvre une conversation
   useEffect(() => {
@@ -232,7 +242,27 @@ export default function MessagerieScreen() {
     input.click();
   };
 
-  // ─── Archiver un message ───────────────────────────────────────────────────
+  // ─── Archiver toute la discussion d'un chantier ─────────────────────────────
+  const handleArchiveDiscussion = () => {
+    if (!convId || !selectedChantierId) return;
+    const msgsToArchive = (data.messagesPrive || []).filter(
+      m => m.conversationId === convId && m.chantierId === selectedChantierId && !m.archive
+    );
+    if (msgsToArchive.length === 0) return;
+    msgsToArchive.forEach(m => updateMessagePrive({ ...m, archive: true }));
+  };
+
+  // ─── Désarchiver toute la discussion d'un chantier ─────────────────────────
+  const handleUnarchiveDiscussion = () => {
+    if (!convId || !selectedChantierId) return;
+    const msgsToUnarchive = (data.messagesPrive || []).filter(
+      m => m.conversationId === convId && m.chantierId === selectedChantierId && m.archive
+    );
+    if (msgsToUnarchive.length === 0) return;
+    msgsToUnarchive.forEach(m => updateMessagePrive({ ...m, archive: false }));
+  };
+
+  // ─── Archiver un message individuel ───────────────────────────────────────
   const handleArchive = (msg: MessagePrive) => {
     updateMessagePrive({ ...msg, archive: !msg.archive });
   };
@@ -433,6 +463,30 @@ export default function MessagerieScreen() {
           ))}
         </ScrollView>
 
+        {/* Bouton archiver la discussion */}
+        {!showArchive && selectedChantierId && messages.length > 0 && (
+          <Pressable style={styles.archiveDiscussionBtn} onPress={() => {
+            const chNom = data.chantiers.find(c => c.id === selectedChantierId)?.nom || 'ce chantier';
+            if (Platform.OS === 'web') {
+              if (window.confirm(`Archiver toute la discussion "${chNom}" ?\nLes messages seront visibles dans les archives.`)) handleArchiveDiscussion();
+            } else {
+              Alert.alert('Archiver la discussion', `Archiver tous les messages de "${chNom}" ?`, [
+                { text: 'Annuler', style: 'cancel' },
+                { text: 'Archiver', onPress: handleArchiveDiscussion },
+              ]);
+            }
+          }}>
+            <Text style={styles.archiveDiscussionBtnText}>📁 Clore et archiver cette discussion</Text>
+          </Pressable>
+        )}
+
+        {/* Bouton désarchiver */}
+        {showArchive && selectedChantierId && messages.length > 0 && (
+          <Pressable style={[styles.archiveDiscussionBtn, { backgroundColor: '#EEF2F8' }]} onPress={handleUnarchiveDiscussion}>
+            <Text style={[styles.archiveDiscussionBtnText, { color: '#1A3A6B' }]}>📂 Restaurer cette discussion</Text>
+          </Pressable>
+        )}
+
         {/* Zone de saisie */}
         {!showArchive && (
           <View style={styles.inputZone}>
@@ -553,6 +607,9 @@ const styles = StyleSheet.create({
   chantierBarContent: { paddingHorizontal: 12, paddingVertical: 6, gap: 6, alignItems: 'center' as const },
   chantierChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
   chantierChipText: { fontSize: 12, fontWeight: '600', color: '#687076', maxWidth: 120 },
+  // Bouton archiver discussion
+  archiveDiscussionBtn: { marginHorizontal: 12, marginVertical: 6, paddingVertical: 10, borderRadius: 10, backgroundColor: '#FFF3E0', alignItems: 'center' as const, borderWidth: 1, borderColor: '#FFE0B2' },
+  archiveDiscussionBtnText: { fontSize: 13, fontWeight: '600', color: '#E65100' },
   // Menu contextuel
   contextOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center' as const, alignItems: 'center' as const, padding: 24 },
   contextMenu: { backgroundColor: '#fff', borderRadius: 14, padding: 8, width: '100%', maxWidth: 320 },
