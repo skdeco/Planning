@@ -572,13 +572,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setSyncStatus('saving');
       safeSaveToSupabase(dataToSave, showSaveError)
         .then(ok => {
+          lastSaveRef.current = Date.now(); // Marquer la fin de la sauvegarde
           if (ok) { clearPendingSave(); notifyDataUpdated(SESSION_ID); setSyncStatus('synced'); }
           else { setSyncStatus('error'); }
         });
 
       // 2. Sauvegarder le cache local COMPLET (avec photos) pour le fallback hors-ligne
       safeAsyncStorageSet(LOCAL_DATA_KEY, JSON.stringify(dataToSave));
-    }, 1500); // 1.5s de debounce
+    }, 800); // 0.8s de debounce — sauvegarde rapide
     return () => {
       if (saveTimer.current) clearTimeout(saveTimer.current);
     };
@@ -652,9 +653,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Supabase est la SOURCE DE VÉRITÉ : les données distantes remplacent les locales.
   // Seules les suppressions locales non encore propagées sont protégées.
   const reloadFromSupabase = useCallback(async () => {
-    // Ne pas recharger si un changement local récent n'est pas encore sauvegardé (debounce 1.5s + marge)
+    // Ne pas recharger si un changement local récent n'est pas encore sauvegardé
+    // Protection étendue : debounce 1.5s + temps réseau (jusqu'à 10s avec retries)
     const timeSinceChange = Date.now() - lastLocalChangeRef.current;
-    if (timeSinceChange < 3000) return;
+    const timeSinceSave = Date.now() - lastSaveRef.current;
+    if (timeSinceChange < 8000 || timeSinceSave < 5000) return;
     try {
       const supabaseData = await loadDataFromSupabase();
       if (supabaseData && Object.keys(supabaseData).length > 0) {
