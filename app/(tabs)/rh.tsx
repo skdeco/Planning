@@ -334,10 +334,49 @@ export default function RHScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
 
         {/* ── Congés ── */}
-        {activeTab === 'conges' && (
+        {activeTab === 'conges' && (() => {
+          // Calcul du solde de congés
+          const JOURS_PAR_AN = 25;
+          const targetId = isRH ? null : myId; // Admin voit tous, employé voit le sien
+          const congesApprouves = conges.filter(d => d.statut === 'approuve' && (!targetId || d.employeId === targetId));
+          const joursPris = congesApprouves.reduce((total, d) => {
+            const debut = new Date(d.dateDebut);
+            const fin = new Date(d.dateFin);
+            let jours = 0;
+            const current = new Date(debut);
+            while (current <= fin) {
+              const dow = current.getDay();
+              if (dow !== 0 && dow !== 6) jours++; // Jours ouvrés uniquement
+              current.setDate(current.getDate() + 1);
+            }
+            return total + jours;
+          }, 0);
+          const solde = JOURS_PAR_AN - joursPris;
+
+          return (
           <>
-            {/* Tout employé (y compris RH) peut faire une demande pour lui-même */}
-            {/* L'employé RH voit aussi les demandes des autres, mais peut en créer pour lui */}
+            {/* Solde de congés */}
+            {!isRH && (
+              <View style={styles.soldeCard}>
+                <View style={styles.soldeRow}>
+                  <View style={styles.soldeItem}>
+                    <Text style={styles.soldeValue}>{JOURS_PAR_AN}</Text>
+                    <Text style={styles.soldeLabel}>Acquis</Text>
+                  </View>
+                  <View style={styles.soldeSeparator} />
+                  <View style={styles.soldeItem}>
+                    <Text style={[styles.soldeValue, { color: '#E74C3C' }]}>{joursPris}</Text>
+                    <Text style={styles.soldeLabel}>Pris</Text>
+                  </View>
+                  <View style={styles.soldeSeparator} />
+                  <View style={styles.soldeItem}>
+                    <Text style={[styles.soldeValue, { color: solde >= 0 ? '#27AE60' : '#E74C3C' }]}>{solde}</Text>
+                    <Text style={styles.soldeLabel}>Restants</Text>
+                  </View>
+                </View>
+              </View>
+            )}
+
             <Pressable style={styles.addBtn} onPress={() => { setEditConge(null); setCongeForm({ dateDebut: '', dateFin: '', motif: '', employeId: '' }); setShowCongeModal(true); }}>
               <Text style={styles.addBtnText}>+ {t.rh.newLeaveRequest}</Text>
             </Pressable>
@@ -373,7 +412,7 @@ export default function RHScreen() {
               </View>
             ))}
           </>
-        )}
+        ); })()}
 
         {/* ── Arrêt maladie ── */}
         {activeTab === 'maladie' && (
@@ -815,6 +854,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A3A6B' },
   headerBadge: { backgroundColor: '#E74C3C', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   headerBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  soldeCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  soldeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
+  soldeItem: { alignItems: 'center' },
+  soldeValue: { fontSize: 28, fontWeight: '800', color: '#1A3A6B' },
+  soldeLabel: { fontSize: 12, color: '#687076', marginTop: 2, fontWeight: '500' },
+  soldeSeparator: { width: 1, height: 40, backgroundColor: '#E2E6EA' },
   tabs: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingHorizontal: 8 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4, borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabActive: { borderBottomColor: '#1A3A6B' },

@@ -479,6 +479,35 @@ export default function ReportingScreen() {
         html += `</table>`;
       }
     });
+    // Acomptes du mois
+    const acomptesMois = data.acomptes.filter(a => a.date.startsWith(`${selectedYear}-${String(selectedMonth + 1).padStart(2, '0')}`));
+    if (acomptesMois.length > 0) {
+      html += `<h2>Acomptes versés</h2><table><tr><th>Employé</th><th>Date</th><th>Montant</th><th>Commentaire</th></tr>`;
+      acomptesMois.forEach(a => {
+        const emp = data.employes.find(e => e.id === a.employeId);
+        html += `<tr><td>${emp ? `${emp.prenom} ${emp.nom}` : '—'}</td><td>${formatDateFr(a.date)}</td><td>${a.montant} €</td><td>${a.commentaire || '—'}</td></tr>`;
+      });
+      const totalAcomptes = acomptesMois.reduce((s, a) => s + a.montant, 0);
+      html += `</table><p><strong>Total acomptes : ${totalAcomptes} €</strong></p>`;
+    }
+
+    // Récapitulatif salaires
+    html += `<h2>Récapitulatif mensuel</h2><table><tr><th>Employé</th><th>Heures travaillées</th><th>Acomptes</th><th>Salaire estimé</th></tr>`;
+    data.employes.forEach(emp => {
+      const pts = pointagesParEmpDate[emp.id] || {};
+      let totalMin = 0;
+      joursDuMois.forEach(d => {
+        const p = pts[d];
+        if (p?.debut && p?.fin) totalMin += calcDureeMin(p.debut.heure, p.fin.heure);
+      });
+      const acomptesEmp = acomptesMois.filter(a => a.employeId === emp.id).reduce((s, a) => s + a.montant, 0);
+      const salaire = emp.modeSalaire === 'journalier' && emp.tarifJournalier
+        ? Math.round(totalMin / 60 / 8 * emp.tarifJournalier)
+        : emp.salaireNet || 0;
+      html += `<tr><td>${emp.prenom} ${emp.nom}</td><td>${formatDuree(totalMin)}</td><td>${acomptesEmp} €</td><td>${salaire > 0 ? `${salaire} €` : '—'}</td></tr>`;
+    });
+    html += `</table>`;
+
     html += `<div class="footer">SK DECO Planning — Rapport généré automatiquement</div></body></html>`;
     const win = window.open('', '_blank');
     if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500); }
