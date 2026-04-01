@@ -1,19 +1,37 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 
 const STATUS_CONFIG = {
   synced: { color: '#27AE60', label: '' },
   saving: { color: '#F59E0B', label: 'Synchronisation...' },
   error: { color: '#EF4444', label: 'Erreur de sync' },
-  offline: { color: '#EF4444', label: 'Hors ligne' },
+  offline: { color: '#EF4444', label: 'Hors ligne — modifications conservées localement' },
 } as const;
 
 export function SyncIndicator() {
   const { syncStatus } = useApp();
-  const config = STATUS_CONFIG[syncStatus];
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Détection connexion réseau (web)
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof window === 'undefined') return;
+    setIsOnline(navigator.onLine);
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener('online', goOnline);
+    window.addEventListener('offline', goOffline);
+    return () => {
+      window.removeEventListener('online', goOnline);
+      window.removeEventListener('offline', goOffline);
+    };
+  }, []);
+
+  const effectiveStatus = !isOnline ? 'offline' : syncStatus;
+  const config = STATUS_CONFIG[effectiveStatus];
 
   // Ne rien afficher quand tout est ok
-  if (syncStatus === 'synced') return null;
+  if (effectiveStatus === 'synced') return null;
 
   return (
     <View style={styles.container}>

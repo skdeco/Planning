@@ -12,6 +12,7 @@ import { LanguageFlag } from "@/components/LanguageFlag";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { SyncIndicator } from "@/components/SyncIndicator";
+import { NotificationListener } from "@/components/NotificationListener";
 
 export default function TabLayout() {
   const colors = useColors();
@@ -77,6 +78,7 @@ export default function TabLayout() {
     <View style={{ flex: 1 }}>
     <NotificationBanner />
     <SyncIndicator />
+    <NotificationListener />
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#1A3A6B',
