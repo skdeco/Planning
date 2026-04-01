@@ -287,27 +287,17 @@ export async function saveDataToSupabase(appData: Record<string, unknown>): Prom
   // Retirer les photos volumineuses avant envoi (base64 dans toutes les collections)
   const lightPayload = stripPhotosForSupabase(appData);
 
-  // ── Merge côté client pour éviter les conflits multi-utilisateurs ──
-  // 1. Charger la version distante
-  // 2. Fusionner (remote + local) pour ne pas écraser les changements d'un autre utilisateur
-  // 3. Écrire le résultat fusionné
-  try {
-    const remote = await loadDataFromSupabase();
-    const toSave = remote ? mergeDataSafely(remote, lightPayload) : lightPayload;
+  // Écriture directe : les données locales sont la source de vérité au moment de la sauvegarde.
+  // La résolution de conflits est gérée côté lecture (reloadFromSupabase dans AppContext).
+  const { error } = await supabase
+    .from('app_data')
+    .upsert({ id: 'main', data: lightPayload, updated_at: new Date().toISOString() });
 
-    const { error } = await supabase
-      .from('app_data')
-      .upsert({ id: 'main', data: toSave, updated_at: new Date().toISOString() });
-
-    if (error) {
-      console.error('Erreur sauvegarde Supabase:', error.message);
-      return false;
-    }
-    return true;
-  } catch (err) {
-    console.error('Erreur sauvegarde Supabase (exception):', err);
+  if (error) {
+    console.error('Erreur sauvegarde Supabase:', error.message);
     return false;
   }
+  return true;
 }
 
 /**
