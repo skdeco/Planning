@@ -1,4 +1,4 @@
-// SK Deco Planning — v2.2.0 — Protection complète des données (2026-03-26)
+// SK Deco Planning — v2.3.0 — Stabilité + recherche + sync indicator (2026-04-01)
 import { createClient } from '@supabase/supabase-js';
 
 //// ─── Supabase client ────────────────────────────────────────────────
