@@ -54,30 +54,33 @@ export default function MessagerieScreen() {
   const [messageText, setMessageText] = useState('');
   const [showArchive, setShowArchive] = useState(false);
   const [selectedChantierId, setSelectedChantierId] = useState<string | null>(null);
+  const [contextMsg, setContextMsg] = useState<MessagePrive | null>(null);
   const scrollRef = useRef<ScrollView>(null);
 
-  // Chantiers où l'employé travaille aujourd'hui (pour le contexte par défaut)
+  // Chantiers de l'employé : tous les chantiers actifs où il est affecté (pas seulement aujourd'hui)
   const todayStr = new Date().toISOString().slice(0, 10);
-  const mesChantiersAujourdhui = useMemo(() => {
+  const mesChantiers = useMemo(() => {
     const empId = currentUser?.employeId || currentUser?.soustraitantId;
     if (!empId || isAdmin) return data.chantiers.filter(c => c.statut === 'actif');
     return data.chantiers.filter(c =>
       c.statut === 'actif' &&
+      data.affectations.some(a => a.chantierId === c.id && a.employeId === empId)
+    );
+  }, [data.chantiers, data.affectations, currentUser, isAdmin]);
+
+  // Auto-sélectionner le chantier du jour si possible, sinon le premier
+  useEffect(() => {
+    if (selectedChantierId) return;
+    const empId = currentUser?.employeId || currentUser?.soustraitantId;
+    const chantierDuJour = mesChantiers.find(c =>
       data.affectations.some(a =>
-        a.chantierId === c.id &&
-        a.employeId === empId &&
-        a.dateDebut <= todayStr &&
-        a.dateFin >= todayStr
+        a.chantierId === c.id && a.employeId === empId &&
+        a.dateDebut <= todayStr && a.dateFin >= todayStr
       )
     );
-  }, [data.chantiers, data.affectations, currentUser, isAdmin, todayStr]);
-
-  // Auto-sélectionner le premier chantier du jour
-  useEffect(() => {
-    if (!selectedChantierId && mesChantiersAujourdhui.length > 0) {
-      setSelectedChantierId(mesChantiersAujourdhui[0].id);
-    }
-  }, [mesChantiersAujourdhui]);
+    if (chantierDuJour) setSelectedChantierId(chantierDuJour.id);
+    else if (mesChantiers.length > 0) setSelectedChantierId(mesChantiers[0].id);
+  }, [mesChantiers]);
 
   // ─── Liste des conversations (admin voit toutes, employé/ST voit la sienne) ──
   const conversations = useMemo(() => {
@@ -345,9 +348,9 @@ export default function MessagerieScreen() {
       </View>
 
       {/* Sélecteur de chantier */}
-      {mesChantiersAujourdhui.length > 0 && (
+      {mesChantiers.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierBar} contentContainerStyle={styles.chantierBarContent}>
-          {mesChantiersAujourdhui.map(c => (
+          {mesChantiers.map(c => (
             <Pressable
               key={c.id}
               style={[styles.chantierChip, selectedChantierId === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
@@ -385,21 +388,7 @@ export default function MessagerieScreen() {
                   <Pressable
                     key={msg.id}
                     style={[styles.msgBubbleWrap, isMine && styles.msgBubbleWrapMine]}
-                    onLongPress={() => {
-                      if (Platform.OS === 'web') {
-                        const action = (typeof window !== 'undefined' && window.confirm ? window.confirm(
-                          `${msg.archive ? t.messagerie.unarchive : t.messagerie.archive} ?\n\nOK = ${msg.archive ? t.messagerie.unarchive : t.messagerie.archive}\n${t.common.cancel} = ${t.common.delete}`
-                        ) : true);
-                        if (action) handleArchive(msg);
-                        else if (!action) handleDelete(msg);
-                      } else {
-                        Alert.alert(t.messagerie.message, '', [
-                          { text: t.common.cancel, style: 'cancel' },
-                          { text: msg.archive ? t.messagerie.unarchive : t.messagerie.archive, onPress: () => handleArchive(msg) },
-                          { text: t.common.delete, style: 'destructive', onPress: () => handleDelete(msg) },
-                        ]);
-                      }
-                    }}
+                    onLongPress={() => setContextMsg(msg)}
                   >
                     <View style={[styles.msgBubble, isMine ? styles.msgBubbleMine : styles.msgBubbleOther]}>
                       {!isMine && (
@@ -469,6 +458,36 @@ export default function MessagerieScreen() {
           </View>
         )}
       </KeyboardAvoidingView>
+
+      {/* Menu contextuel message */}
+      {contextMsg && (
+        <Modal visible transparent animationType="fade" onRequestClose={() => setContextMsg(null)}>
+          <Pressable style={styles.contextOverlay} onPress={() => setContextMsg(null)}>
+            <View style={styles.contextMenu}>
+              <Text style={styles.contextTitle} numberOfLines={1}>
+                {contextMsg.contenu.slice(0, 50)}{contextMsg.contenu.length > 50 ? '…' : ''}
+              </Text>
+              <Pressable
+                style={styles.contextBtn}
+                onPress={() => { handleArchive(contextMsg); setContextMsg(null); }}
+              >
+                <Text style={styles.contextBtnText}>
+                  {contextMsg.archive ? '📂 Désarchiver' : '📁 Archiver'}
+                </Text>
+              </Pressable>
+              <Pressable
+                style={[styles.contextBtn, styles.contextBtnDanger]}
+                onPress={() => { handleDelete(contextMsg); setContextMsg(null); }}
+              >
+                <Text style={[styles.contextBtnText, { color: '#EF4444' }]}>🗑 Supprimer</Text>
+              </Pressable>
+              <Pressable style={styles.contextBtn} onPress={() => setContextMsg(null)}>
+                <Text style={[styles.contextBtnText, { color: '#687076' }]}>Annuler</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Modal>
+      )}
     </ScreenContainer>
   );
 }
@@ -534,6 +553,13 @@ const styles = StyleSheet.create({
   chantierBarContent: { paddingHorizontal: 12, paddingVertical: 6, gap: 6, alignItems: 'center' as const },
   chantierChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
   chantierChipText: { fontSize: 12, fontWeight: '600', color: '#687076', maxWidth: 120 },
+  // Menu contextuel
+  contextOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center' as const, alignItems: 'center' as const, padding: 24 },
+  contextMenu: { backgroundColor: '#fff', borderRadius: 14, padding: 8, width: '100%', maxWidth: 320 },
+  contextTitle: { fontSize: 13, color: '#687076', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' },
+  contextBtn: { paddingHorizontal: 16, paddingVertical: 14, borderRadius: 8 },
+  contextBtnDanger: {},
+  contextBtnText: { fontSize: 15, fontWeight: '600', color: '#11181C' },
   // Tag chantier sur les messages
   msgChantierTag: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, marginBottom: 4, borderWidth: 1, alignSelf: 'flex-start' as const },
   msgChantierTagText: { fontSize: 10, fontWeight: '700' },
