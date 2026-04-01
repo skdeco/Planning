@@ -131,6 +131,7 @@ export default function ReportingScreen() {
   const [selectedYear, setSelectedYear] = useState(today.getFullYear());
   const [selectedDate, setSelectedDate] = useState(toYMD(today));
   const [selectedEmployeId, setSelectedEmployeId] = useState<string | null>(null);
+  const [filterChantierId, setFilterChantierId] = useState<string | 'all'>('all');
 
   // Modal saisie manuelle pointage
   const [editPointageModal, setEditPointageModal] = useState(false);
@@ -229,12 +230,22 @@ export default function ReportingScreen() {
 
   /** Tous les employés avec leurs pointages du jour (présents ou non) */
   const pointagesJour = useMemo(() => {
-    return data.employes
+    let employes = data.employes;
+    // Filtrer par chantier : ne montrer que les employés affectés à ce chantier ce jour-là
+    if (filterChantierId !== 'all') {
+      const affectedIds = new Set(
+        data.affectations
+          .filter(a => a.chantierId === filterChantierId && a.dateDebut <= selectedDate && a.dateFin >= selectedDate)
+          .map(a => a.employeId)
+      );
+      employes = employes.filter(e => affectedIds.has(e.id));
+    }
+    return employes
       .map(emp => {
         const pts = pointagesParEmpDate[emp.id]?.[selectedDate];
         return { emp, debut: pts?.debut, fin: pts?.fin };
       });
-  }, [data.employes, pointagesParEmpDate, selectedDate]);
+  }, [data.employes, data.affectations, pointagesParEmpDate, selectedDate, filterChantierId]);
 
   /** Notes journalières (acomptes du jour) */
   const acomptesJour = useMemo(() =>
@@ -568,6 +579,25 @@ export default function ReportingScreen() {
               <Text style={styles.navArrow}>›</Text>
             </Pressable>
           </View>
+
+          {/* Filtre par chantier */}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8, paddingHorizontal: 12 }} contentContainerStyle={{ gap: 6 }}>
+            <Pressable
+              style={[styles.filterChip, filterChantierId === 'all' && styles.filterChipActive]}
+              onPress={() => setFilterChantierId('all')}
+            >
+              <Text style={[styles.filterChipText, filterChantierId === 'all' && styles.filterChipTextActive]}>Tous</Text>
+            </Pressable>
+            {data.chantiers.filter(c => c.statut === 'actif').map(c => (
+              <Pressable
+                key={c.id}
+                style={[styles.filterChip, filterChantierId === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+                onPress={() => setFilterChantierId(filterChantierId === c.id ? 'all' : c.id)}
+              >
+                <Text style={[styles.filterChipText, filterChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
+              </Pressable>
+            ))}
+          </ScrollView>
 
           {/* Pointages du jour */}
           {pointagesJour.map(({ emp, debut, fin }) => {
@@ -1210,6 +1240,10 @@ export default function ReportingScreen() {
 }
 
 const styles = StyleSheet.create({
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
+  filterChipActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
+  filterChipText: { fontSize: 12, fontWeight: '600', color: '#687076', maxWidth: 120 },
+  filterChipTextActive: { color: '#fff' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
