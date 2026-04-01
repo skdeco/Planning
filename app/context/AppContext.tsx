@@ -573,7 +573,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       safeSaveToSupabase(dataToSave, showSaveError)
         .then(ok => {
           lastSaveRef.current = Date.now(); // Marquer la fin de la sauvegarde
-          if (ok) { clearPendingSave(); notifyDataUpdated(SESSION_ID); setSyncStatus('synced'); }
+          if (ok) {
+            clearPendingSave();
+            notifyDataUpdated(SESSION_ID);
+            setSyncStatus('synced');
+            // Nettoyer les sets de suppression : la save a réussi, Supabase est à jour
+            deletedAffectationIdsRef.current.clear();
+            deletedChantierIdsRef.current.clear();
+            deletedEmployeIdsRef.current.clear();
+            deletedPointageIdsRef.current.clear();
+            deletedGenericIdsRef.current.clear();
+            deletedListeIdsRef.current.clear();
+            deletedItemIdsRef.current.clear();
+            persistDeletedIds(DELETED_AFFECTATIONS_KEY, deletedAffectationIdsRef.current);
+            persistDeletedIds(DELETED_CHANTIERS_KEY, deletedChantierIdsRef.current);
+            persistDeletedIds(DELETED_EMPLOYES_KEY, deletedEmployeIdsRef.current);
+            persistDeletedIds(DELETED_POINTAGES_KEY, deletedPointageIdsRef.current);
+            persistDeletedIds(DELETED_GENERIC_KEY, deletedGenericIdsRef.current);
+          }
           else { setSyncStatus('error'); }
         });
 
