@@ -1,4 +1,4 @@
-// SK Deco Planning — v2.3.0 — Stabilité + recherche + sync indicator (2026-04-01)
+// SK Deco Planning — v2.3.1 — Fix persistence polling (2026-04-01)
 import { createClient } from '@supabase/supabase-js';
 
 //// ─── Supabase client ────────────────────────────────────────────────
