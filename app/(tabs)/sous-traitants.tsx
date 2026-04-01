@@ -7,6 +7,7 @@ import {
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { useConfirm } from '@/hooks/useConfirm';
 import {
   ST_COLORS, STATUT_LABELS, STATUT_COLORS,
   type SousTraitant, type DevisST, type MarcheST, type AcompteST, type DocumentST,
@@ -37,6 +38,8 @@ export default function SousTraitantsScreen() {
     if (isHydrated && !currentUser) router.replace('/login');
     if (isHydrated && currentUser && currentUser.role !== 'admin') router.replace('/(tabs)/planning');
   }, [isHydrated, currentUser, router]);
+
+  const { confirm: confirmDelete, ConfirmModal } = useConfirm();
 
   // ── État liste ──
   const [selectedST, setSelectedST] = useState<SousTraitant | null>(null);
@@ -630,7 +633,9 @@ export default function SousTraitantsScreen() {
                               </Pressable>
                             )}
                           </View>
-                          <Pressable onPress={() => deleteAcompteST(a.id)}>
+                          <Pressable onPress={async () => {
+                            if (await confirmDelete(`Supprimer cet acompte de ${a.montant} € ?`)) deleteAcompteST(a.id);
+                          }}>
                             <Text style={styles.actionDelete}>🗑</Text>
                           </Pressable>
                         </View>
@@ -760,6 +765,7 @@ export default function SousTraitantsScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      <ConfirmModal />
     </ScreenContainer>
   );
 }

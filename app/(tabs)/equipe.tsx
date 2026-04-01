@@ -102,6 +102,7 @@ export default function EquipeScreen() {
   const [form, setForm] = useState<EmployeForm>(DEFAULT_FORM);
   useUnsavedChanges(showForm && (form.prenom.trim().length > 0 || form.nom.trim().length > 0));
   const [filterMetier, setFilterMetier] = useState<Metier | 'all'>('all');
+  const [searchQuery, setSearchQuery] = useState('');
   const [showHoraires, setShowHoraires] = useState(false);
   const [showMdp, setShowMdp] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -113,9 +114,18 @@ export default function EquipeScreen() {
   const [showSTMdp, setShowSTMdp] = useState(false);
 
   const filteredEmployes = useMemo(() => {
-    if (filterMetier === 'all') return data.employes;
-    return data.employes.filter(e => e.metier === filterMetier);
-  }, [data.employes, filterMetier]);
+    let list = data.employes;
+    if (filterMetier !== 'all') list = list.filter(e => e.metier === filterMetier);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(e =>
+        `${e.prenom} ${e.nom}`.toLowerCase().includes(q) ||
+        e.identifiant.toLowerCase().includes(q) ||
+        (e.telephone || '').includes(q)
+      );
+    }
+    return list;
+  }, [data.employes, filterMetier, searchQuery]);
 
   const openNew = () => {
     setEditId(null);
@@ -460,6 +470,22 @@ export default function EquipeScreen() {
         </Pressable>
       </View>
 
+      {/* Barre de recherche */}
+      <View style={styles.searchBar}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder={activeTab === 'employes' ? 'Rechercher un employé...' : 'Rechercher un sous-traitant...'}
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')} style={styles.searchClear}>
+            <Text style={{ color: '#999', fontSize: 16 }}>✕</Text>
+          </Pressable>
+        )}
+      </View>
+
       {activeTab === 'employes' && (
         <>
           {/* Filtre métiers */}
@@ -490,7 +516,10 @@ export default function EquipeScreen() {
 
       {activeTab === 'soustraitants' && (
         <FlatList
-          data={data.sousTraitants}
+          data={searchQuery.trim() ? data.sousTraitants.filter(s => {
+            const q = searchQuery.toLowerCase().trim();
+            return `${s.prenom} ${s.nom}`.toLowerCase().includes(q) || s.societe.toLowerCase().includes(q) || s.telephone.includes(q);
+          }) : data.sousTraitants}
           keyExtractor={item => item.id}
           renderItem={renderST}
           contentContainerStyle={styles.list}
@@ -848,6 +877,9 @@ const styles = StyleSheet.create({
   tabBtnActive: { borderColor: '#1A3A6B', backgroundColor: '#1A3A6B' },
   tabBtnText: { fontSize: 13, fontWeight: '600', color: '#687076' },
   tabBtnTextActive: { color: '#fff' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F2F4F7', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA' },
+  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#11181C' },
+  searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   filterScroll: { maxHeight: 44, marginBottom: 8 },
   filterContent: { paddingHorizontal: 16, gap: 8, alignItems: 'center' },
   filterChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 20, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#fff', gap: 5 },

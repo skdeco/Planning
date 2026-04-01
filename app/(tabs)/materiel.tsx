@@ -77,6 +77,7 @@ export default function MaterielScreen() {
   const [viewMode, setViewMode] = useState<'mes_listes' | 'acheteur'>(
     isAcheteur && !isEmploye ? 'acheteur' : 'mes_listes'
   );
+  const [searchQuery, setSearchQuery] = useState('');
 
   // ── État d'ouverture des sections archivées (par listeId) ──
   const [openArchives, setOpenArchives] = useState<Record<string, boolean>>({});
@@ -108,13 +109,22 @@ export default function MaterielScreen() {
         )
       );
 
+  // ── Helper recherche matériel ──
+  const matchSearch = useCallback((liste: ListeMateriau) => {
+    if (!searchQuery.trim()) return true;
+    const q = searchQuery.toLowerCase().trim();
+    const chantier = data.chantiers.find(c => c.id === liste.chantierId);
+    if (chantier?.nom.toLowerCase().includes(q)) return true;
+    return liste.items.some(i => i.texte.toLowerCase().includes(q));
+  }, [searchQuery, data.chantiers]);
+
   // ── Listes de l'employé connecté ──
   const mesListes = isEmploye
-    ? (data.listesMateriaux || []).filter(l => l.employeId === currentUser?.employeId)
-    : (data.listesMateriaux || []);
+    ? (data.listesMateriaux || []).filter(l => l.employeId === currentUser?.employeId && matchSearch(l))
+    : (data.listesMateriaux || []).filter(matchSearch);
 
   // ── Toutes les listes pour la vue acheteur ──
-  const toutesListes = data.listesMateriaux || [];
+  const toutesListes = (data.listesMateriaux || []).filter(matchSearch);
 
   // ── Grouper par chantier pour la vue acheteur ──
   const listesParChantier = chantiersVisibles.map(c => ({
@@ -447,6 +457,22 @@ export default function MaterielScreen() {
         </View>
       )}
 
+      {/* Barre de recherche */}
+      <View style={styles.searchBar}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher un article ou chantier..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')} style={styles.searchClear}>
+            <Text style={{ color: '#999', fontSize: 16 }}>&#10005;</Text>
+          </Pressable>
+        )}
+      </View>
+
       {viewMode === 'mes_listes' ? renderMesListes() : renderVueAcheteur()}
 
       <ConfirmModal />
@@ -515,6 +541,9 @@ const styles = StyleSheet.create({
   title: { fontSize: 20, fontWeight: '700', color: '#1A3A6B', flex: 1 },
   badge: { backgroundColor: '#E74C3C', borderRadius: 12, minWidth: 24, height: 24, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F2F4F7', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA' },
+  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#11181C' },
+  searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   tabBar: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F0F4FF', borderRadius: 8, padding: 3 },
   tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 6 },
   tabActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },

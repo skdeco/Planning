@@ -7,6 +7,7 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useRouter } from 'expo-router';
+import { useConfirm } from '@/hooks/useConfirm';
 import type {
   DemandeConge, ArretMaladie, DemandeAvance, FichePaie,
 } from '@/app/types';
@@ -53,6 +54,7 @@ export default function RHScreen() {
   const currentEmploye = data.employes.find(e => e.id === currentUser?.employeId);
   const isRH = isAdmin || currentEmploye?.isRH === true;
 
+  const { confirm, ConfirmModal } = useConfirm();
   const [activeTab, setActiveTab] = useState<Tab>('conges');
 
   // ─── Filtrage selon le rôle ───────────────────────────────────────────────
@@ -413,7 +415,9 @@ export default function RHScreen() {
                     </Pressable>
                   )}
                   {(!isRH || d.statut === 'en_attente') && (
-                    <Pressable style={styles.deleteBtn} onPress={() => deleteArretMaladie(d.id)}>
+                    <Pressable style={styles.deleteBtn} onPress={async () => {
+                      if (await confirm('Supprimer cet arrêt maladie ?')) deleteArretMaladie(d.id);
+                    }}>
                       <Text style={styles.deleteBtnText}>{t.common.delete}</Text>
                     </Pressable>
                   )}
@@ -801,6 +805,7 @@ export default function RHScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      <ConfirmModal />
     </ScreenContainer>
   );
 }

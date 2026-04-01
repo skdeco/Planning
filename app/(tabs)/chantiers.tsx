@@ -71,6 +71,7 @@ export default function ChantiersScreen() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ChantierForm>(DEFAULT_FORM);
+  const [searchQuery, setSearchQuery] = useState('');
   // Protection contre la perte de données si refresh pendant édition
   useUnsavedChanges(showForm && form.nom.trim().length > 0);
 
@@ -791,8 +792,27 @@ export default function ChantiersScreen() {
         )}
       </View>
 
+      {/* Barre de recherche */}
+      <View style={styles.searchBar}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Rechercher un chantier..."
+          placeholderTextColor="#999"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+        />
+        {searchQuery.length > 0 && (
+          <Pressable onPress={() => setSearchQuery('')} style={styles.searchClear}>
+            <Text style={{ color: '#999', fontSize: 16 }}>&#10005;</Text>
+          </Pressable>
+        )}
+      </View>
+
       <FlatList
-        data={data.chantiers}
+        data={searchQuery.trim() ? data.chantiers.filter(c => {
+          const q = searchQuery.toLowerCase().trim();
+          return c.nom.toLowerCase().includes(q) || (c.adresse || '').toLowerCase().includes(q) || (c.ville || '').toLowerCase().includes(q);
+        }) : data.chantiers}
         keyExtractor={item => item.id}
         renderItem={renderChantier}
         contentContainerStyle={styles.list}
@@ -1708,6 +1728,9 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#11181C',
   },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F2F4F7', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA' },
+  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#11181C' },
+  searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   newBtn: {
     backgroundColor: '#1A3A6B',
     paddingHorizontal: 16,
