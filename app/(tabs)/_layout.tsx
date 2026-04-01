@@ -226,11 +226,15 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Index caché */}
+      {/* Dashboard : admin uniquement */}
       <Tabs.Screen
         name="index"
         options={{
-          href: null,
+          title: 'Accueil',
+          href: isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="house.fill" color={color} />
+          ),
         }}
       />
     </Tabs>
