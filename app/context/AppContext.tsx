@@ -182,6 +182,8 @@ interface AppContextType {
   // Notifications
   notifications: ActivityLog[];
   markNotificationsRead: () => void;
+  // Sync status
+  syncStatus: 'synced' | 'saving' | 'error' | 'offline';
   logout: () => void;
 }
 
@@ -380,6 +382,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // Session expirée : un autre onglet plus récent a pris le contrôle
   const [sessionExpired, setSessionExpired] = useState(false);
   const [notifications, setNotifications] = useState<ActivityLog[]>([]);
+  const [syncStatus, setSyncStatus] = useState<'synced' | 'saving' | 'error' | 'offline'>('synced');
   // Bannière d'erreur de sauvegarde visible par l'utilisateur
   const [saveError, setSaveError] = useState<string | null>(null);
   const saveErrorTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -566,9 +569,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       lastSaveRef.current = Date.now();
 
       // 1. Sauvegarder dans Supabase (SANS photos — stripPhotosForSupabase appliqué dans saveDataToSupabase)
+      setSyncStatus('saving');
       safeSaveToSupabase(dataToSave, showSaveError)
         .then(ok => {
-          if (ok) { clearPendingSave(); notifyDataUpdated(SESSION_ID); }
+          if (ok) { clearPendingSave(); notifyDataUpdated(SESSION_ID); setSyncStatus('synced'); }
+          else { setSyncStatus('error'); }
         });
 
       // 2. Sauvegarder le cache local COMPLET (avec photos) pour le fallback hors-ligne
@@ -628,8 +633,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (ok) {
         await clearPendingSave();
         setSaveError(null);
+        setSyncStatus('synced');
         notifyDataUpdated(SESSION_ID);
         console.log('[Offline] Re-synchronisation réussie');
+      } else {
+        setSyncStatus('offline');
       }
     };
     offlineRetryTimer = setInterval(retryPendingSave, 30000);
@@ -1432,6 +1440,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateAdminPassword,
       updateOrdreAffectation,
       notifications, markNotificationsRead,
+      syncStatus,
       logout,
     }}>
       {children}
