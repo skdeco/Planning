@@ -1413,50 +1413,27 @@ export default function PlanningScreen() {
               style={[styles.nameCell, { width: NAME_COL }]}
               onPress={() => setFicheModal({ chantier })}
             >
-              <View style={[styles.colorDot, { backgroundColor: chantier.couleur }]} />
-              <Text style={styles.chantierName} numberOfLines={3}>{chantier.nom}</Text>
-              {chantier.fiche && (
-                chantier.fiche.codeAcces || chantier.fiche.emplacementCle ||
-                chantier.fiche.codeAlarme || chantier.fiche.contacts ||
-                chantier.fiche.notes || chantier.fiche.photos.length > 0
-              ) ? (
-                <Text style={styles.ficheIndicator}>🪪</Text>
-              ) : null}
               <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
-              {/* Bouton notes chantier */}
+              <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
+              {/* Icônes notes + plans en ligne */}
+              <View style={{ flexDirection: 'row', gap: 2, marginTop: 2 }}>
               {(() => {
                 const nbNotes = getNotesActivesPlanning(chantier.id).length;
                 return (
-                  <Pressable
-                    style={styles.notePlanningBtn}
-                    onPress={() => openNotesPlanning(chantier.id)}
-                  >
-                    <Text style={[styles.notePlanningIcon, nbNotes > 0 && styles.notePlanningIconActive]}>📝</Text>
-                    {nbNotes > 0 && (
-                      <View style={styles.notePlanningBadge}>
-                        <Text style={styles.notePlanningBadgeText}>{nbNotes}</Text>
-                      </View>
-                    )}
+                  <Pressable style={{ padding: 2 }} onPress={() => openNotesPlanning(chantier.id)}>
+                    <Text style={{ fontSize: 10, opacity: nbNotes > 0 ? 1 : 0.4 }}>📝{nbNotes > 0 ? nbNotes : ''}</Text>
                   </Pressable>
                 );
               })()}
-              {/* Bouton plans chantier */}
               {(() => {
                 const nbPlans = getPlansVisiblesPlanning(chantier.id).length;
                 return (
-                  <Pressable
-                    style={[styles.notePlanningBtn, { bottom: 24 }]}
-                    onPress={() => openPlansPlanning(chantier.id)}
-                  >
-                    <Text style={[styles.notePlanningIcon, nbPlans > 0 && styles.notePlanningIconActive]}>📍</Text>
-                    {nbPlans > 0 && (
-                      <View style={styles.notePlanningBadge}>
-                        <Text style={styles.notePlanningBadgeText}>{nbPlans}</Text>
-                      </View>
-                    )}
+                  <Pressable style={{ padding: 2 }} onPress={() => openPlansPlanning(chantier.id)}>
+                    <Text style={{ fontSize: 10, opacity: nbPlans > 0 ? 1 : 0.4 }}>📍{nbPlans > 0 ? nbPlans : ''}</Text>
                   </Pressable>
                 );
               })()}
+              </View>
             </Pressable>
 
             {/* Cellules des jours */}
@@ -1510,7 +1487,7 @@ export default function PlanningScreen() {
                           } : undefined}
                         >
                           <Text style={[styles.empBadgeText, { color: '#fff' }]} numberOfLines={1}>
-                            {emp.prenom.length > 4 ? emp.prenom.slice(0, 3) + '.' : emp.prenom}
+                            {emp.prenom.slice(0, 3) + '.'}
                           </Text>
                           {empHasNotes && <View style={styles.noteDot} />}
                           {ordreNum > 0 && (
@@ -1545,7 +1522,7 @@ export default function PlanningScreen() {
                           onPress={() => openSTNoteModal(chantier.id, dateStr, st.id)}
                         >
                           <Text style={styles.stBadgeText} numberOfLines={1}>
-                            {st.prenom.length > 4 ? st.prenom.slice(0, 3) + '.' : st.prenom}
+                            {(st.prenom || st.nom).slice(0, 3) + '.'}
                           </Text>
                           {stHasNotes && <View style={styles.noteDot} />}
                         </Pressable>
@@ -3311,8 +3288,9 @@ const styles = StyleSheet.create({
   nameCell: {
     width: NAME_COL_DEFAULT, // overridé dynamiquement en inline
     minHeight: 50,
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingHorizontal: 4,
+    paddingVertical: 4,
+    paddingLeft: 6,
     justifyContent: 'center',
     borderRightWidth: 1,
     borderRightColor: '#E2E6EA',
@@ -3400,7 +3378,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   empBadgeText: {
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '700',
   },
   noteDot: {
