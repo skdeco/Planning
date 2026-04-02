@@ -97,10 +97,10 @@ const calStyles = StyleSheet.create({
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
 
-const NAME_COL = 100;
-const MIN_DAY_COL = 110;
-// DAY_COL statique pour les styles — utilisé comme largeur minimum garantie
-const DAY_COL = MIN_DAY_COL;
+// Dimensions recalculées dynamiquement dans le composant
+// Ces valeurs servent uniquement de fallback pour les styles statiques
+const NAME_COL_DEFAULT = 70;
+const DAY_COL = 80; // fallback pour les styles statiques
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -158,9 +158,10 @@ export default function PlanningScreen() {
   const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateOrdreAffectation } = useApp();
   const { t } = useLanguage();
   const { width: windowWidth } = useWindowDimensions();
-  // Scroll horizontal si la grille ne tient pas dans la fenêtre
-  const GRID_WIDTH = NAME_COL + MIN_DAY_COL * 7; // 100 + 770 = 870px minimum
-  const needsHorizontalScroll = GRID_WIDTH > windowWidth;
+  // Calcul dynamique : la grille tient TOUJOURS dans l'écran
+  const NAME_COL = Math.max(50, Math.floor(windowWidth * 0.15)); // 15% de l'écran, min 50px
+  const dayCol = Math.floor((windowWidth - NAME_COL) / 7);
+  const needsHorizontalScroll = false; // Plus jamais de scroll horizontal
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [viewMode, setViewMode] = useState<'semaine' | 'mois'>('semaine');
@@ -1328,11 +1329,10 @@ export default function PlanningScreen() {
 
       {/* Grille hebdomadaire */}
       {viewMode === 'semaine' && (
-      <ScrollView horizontal={needsHorizontalScroll} showsHorizontalScrollIndicator={needsHorizontalScroll} style={{ flex: 1 }}>
-      <ScrollView style={[styles.gridScroll, needsHorizontalScroll && { width: GRID_WIDTH }]} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
         {/* En-tête des jours */}
         <View style={styles.gridRow}>
-          <View style={[styles.nameCell, styles.headerCell]} />
+          <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL }]} />
           {days.map((day, i) => {
             const today = isToday(day);
             return (
@@ -1340,6 +1340,7 @@ export default function PlanningScreen() {
                 key={i}
                 style={[
                   styles.dayHeaderCell,
+                  { width: dayCol },
                   today && styles.dayHeaderCellToday,
                 ]}
               >
@@ -1357,9 +1358,9 @@ export default function PlanningScreen() {
         {/* Lignes des chantiers */}
         {visibleChantiers.map(chantier => (
           <View key={chantier.id} style={styles.chantierRow}>
-            {/* Colonne nom — clic = ouvrir fiche chantier / long press = naviguer vers chantiers */}
+            {/* Colonne nom — clic = ouvrir fiche chantier */}
             <Pressable
-              style={styles.nameCell}
+              style={[styles.nameCell, { width: NAME_COL }]}
               onPress={() => setFicheModal({ chantier })}
             >
               <View style={[styles.colorDot, { backgroundColor: chantier.couleur }]} />
@@ -1427,6 +1428,7 @@ export default function PlanningScreen() {
                   key={i}
                   style={[
                     styles.cell,
+                    { width: dayCol },
                     today && styles.cellToday,
                     !inRange && styles.cellOutOfRange,
                   ]}
@@ -1597,7 +1599,6 @@ export default function PlanningScreen() {
         </View>
           );
         })()}
-      </ScrollView>
       </ScrollView>
       )}
 
@@ -3252,7 +3253,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E2E6EA',
   },
   nameCell: {
-    width: NAME_COL,
+    width: NAME_COL_DEFAULT, // overridé dynamiquement en inline
     minHeight: 50,
     paddingHorizontal: 8,
     paddingVertical: 8,
@@ -3272,7 +3273,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   chantierName: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '600',
     color: '#11181C',
     lineHeight: 14,
@@ -3320,10 +3321,10 @@ const styles = StyleSheet.create({
     minHeight: 70,
   },
   cell: {
-    width: DAY_COL,
+    width: DAY_COL, // overridé dynamiquement en inline
     paddingVertical: 4,
-    paddingHorizontal: 2,
-    gap: 3,
+    paddingHorizontal: 1,
+    gap: 2,
     borderRightWidth: 0.5,
     borderRightColor: '#E2E6EA',
     alignItems: 'center',
@@ -3335,15 +3336,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F4F7',
   },
   empBadge: {
-    width: DAY_COL - 6,
-    paddingVertical: 3,
-    paddingHorizontal: 3,
+    width: '94%',
+    paddingVertical: 2,
+    paddingHorizontal: 2,
     borderRadius: 5,
     alignItems: 'center',
     position: 'relative',
   },
   empBadgeText: {
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '700',
   },
   noteDot: {
@@ -3398,7 +3399,7 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   addBtn: {
-    width: DAY_COL - 6,
+    width: '94%',
     paddingVertical: 2,
     alignItems: 'center',
   },
@@ -3408,7 +3409,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   noteBtn: {
-    width: DAY_COL - 6,
+    width: '94%',
     paddingVertical: 2,
     alignItems: 'center',
   },
@@ -3417,7 +3418,7 @@ const styles = StyleSheet.create({
     color: '#687076',
   },
   stBadge: {
-    width: DAY_COL - 6,
+    width: '94%',
     paddingVertical: 3,
     paddingHorizontal: 3,
     // Forme losange-ish via borderRadius asymétrique pour différencier des employés
@@ -3967,7 +3968,7 @@ const styles = StyleSheet.create({
   },
   // ── Interventions externes ──
   intervBandeau: {
-    width: DAY_COL - 4,
+    width: '96%',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 4,
