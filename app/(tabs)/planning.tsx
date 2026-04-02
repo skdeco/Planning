@@ -2,7 +2,7 @@ import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react'
 import { useRouter } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
-  FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView,
+  FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
   TouchableWithoutFeedback, Keyboard, Image, Alert,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -97,9 +97,10 @@ const calStyles = StyleSheet.create({
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
 
-const SCREEN_W = Dimensions.get('window').width;
-const NAME_COL = 120;
-const DAY_COL = Math.floor((SCREEN_W - NAME_COL) / 7);
+const NAME_COL = 100;
+const MIN_DAY_COL = 110;
+// DAY_COL statique pour les styles — utilisé comme largeur minimum garantie
+const DAY_COL = MIN_DAY_COL;
 
 const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
@@ -156,6 +157,10 @@ interface NoteModalState {
 export default function PlanningScreen() {
   const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateOrdreAffectation } = useApp();
   const { t } = useLanguage();
+  const { width: windowWidth } = useWindowDimensions();
+  // Scroll horizontal si la grille ne tient pas dans la fenêtre
+  const GRID_WIDTH = NAME_COL + MIN_DAY_COL * 7; // 100 + 770 = 870px minimum
+  const needsHorizontalScroll = GRID_WIDTH > windowWidth;
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [viewMode, setViewMode] = useState<'semaine' | 'mois'>('semaine');
@@ -1299,7 +1304,8 @@ export default function PlanningScreen() {
 
       {/* Grille hebdomadaire */}
       {viewMode === 'semaine' && (
-      <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView horizontal={needsHorizontalScroll} showsHorizontalScrollIndicator={needsHorizontalScroll} style={{ flex: 1 }}>
+      <ScrollView style={[styles.gridScroll, needsHorizontalScroll && { width: GRID_WIDTH }]} showsVerticalScrollIndicator={false}>
         {/* En-tête des jours */}
         <View style={styles.gridRow}>
           <View style={[styles.nameCell, styles.headerCell]} />
@@ -1574,6 +1580,7 @@ export default function PlanningScreen() {
         </View>
           );
         })()}
+      </ScrollView>
       </ScrollView>
       )}
 
