@@ -652,6 +652,15 @@ export default function MessagerieScreen() {
                         )}
                         {msg.archive && <Text style={styles.msgArchiveBadge}>📁</Text>}
                       </View>
+                      {/* Actions rapides */}
+                      <View style={styles.msgQuickActions}>
+                        <Pressable onPress={() => handleArchive(msg)} style={styles.msgQuickBtn}>
+                          <Text style={{ fontSize: 11 }}>{msg.archive ? '📂' : '📁'}</Text>
+                        </Pressable>
+                        <Pressable onPress={() => handleDelete(msg)} style={styles.msgQuickBtn}>
+                          <Text style={{ fontSize: 11 }}>🗑</Text>
+                        </Pressable>
+                      </View>
                     </View>
                   </Pressable>
                 );
@@ -791,6 +800,8 @@ const styles = StyleSheet.create({
   msgHeureMine: { color: 'rgba(255,255,255,0.6)' },
   msgLu: { fontSize: 10, color: 'rgba(255,255,255,0.6)' },
   msgArchiveBadge: { fontSize: 10 },
+  msgQuickActions: { flexDirection: 'row' as const, gap: 2, marginTop: 2 },
+  msgQuickBtn: { padding: 4, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.04)' },
   // Zone saisie
   inputZone: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E2E6EA', gap: 8 },
   photoBtn: { padding: 10, backgroundColor: '#F2F4F7', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },

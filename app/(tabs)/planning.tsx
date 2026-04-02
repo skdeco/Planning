@@ -1201,7 +1201,30 @@ export default function PlanningScreen() {
 
       <View style={styles.weekInfo}>
         <Text style={styles.weekLabel}>{viewMode === 'semaine' ? weekLabel : monthData.label}</Text>
-        <Text style={styles.chantierCount}>{visibleChantiers.length} chantier{visibleChantiers.length !== 1 ? 's' : ''}</Text>
+        <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
+          <Text style={styles.chantierCount}>{visibleChantiers.length} chantier{visibleChantiers.length !== 1 ? 's' : ''}</Text>
+          {isAdmin && viewMode === 'semaine' && (() => {
+            const todayStr = toYMD(new Date());
+            const nbAffectes = new Set(data.affectations.filter(a => a.dateDebut <= todayStr && a.dateFin >= todayStr).map(a => a.employeId)).size;
+            const nbPointes = new Set(data.pointages.filter(p => p.date === todayStr && p.type === 'debut').map(p => p.employeId)).size;
+            const nbRetards = data.pointages.filter(p => {
+              if (p.date !== todayStr || p.type !== 'debut') return false;
+              const emp = data.employes.find(e => e.id === p.employeId);
+              const dow = new Date().getDay();
+              const horaire = emp?.horaires?.[dow];
+              if (!horaire?.actif || !horaire.debut) return false;
+              const [h, m] = horaire.debut.split(':').map(Number);
+              const [ph, pm] = p.heure.split(':').map(Number);
+              return (ph * 60 + pm) > (h * 60 + m) + 5;
+            }).length;
+            return (
+              <>
+                <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>{nbPointes}/{nbAffectes} pointés</Text>
+                {nbRetards > 0 && <Text style={{ fontSize: 11, color: '#E74C3C', fontWeight: '600' }}>{nbRetards} retard{nbRetards > 1 ? 's' : ''}</Text>}
+              </>
+            );
+          })()}
+        </View>
       </View>
 
       {/* Modal calendrier de navigation */}
