@@ -98,12 +98,24 @@ export default function TabLayout() {
           borderTopWidth: 0.5,
         },
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: '500',
+          fontSize: 12,
+          fontWeight: '600',
         },
       }}
     >
-      {/* Planning : visible pour tous */}
+      {/* ═══ ONGLET 1 : Accueil / Ma journée — en premier ═══ */}
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: isAdmin ? 'Accueil' : 'Ma journée',
+          href: isST ? null : undefined,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="house.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* ═══ ONGLET 2 : Planning — visible pour tous ═══ */}
       <Tabs.Screen
         name="planning"
         options={{
@@ -114,7 +126,17 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Horaires (pointage) : visible uniquement pour les employés qui doivent pointer */}
+      {/* ═══ ONGLET 3 : Chantiers (admin) / Pointage (employé) ═══ */}
+      <Tabs.Screen
+        name="chantiers"
+        options={{
+          title: t.nav.chantiers,
+          href: isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="hammer.fill" color={color} />
+          ),
+        }}
+      />
       <Tabs.Screen
         name="pointage"
         options={{
@@ -126,19 +148,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Chantiers : admin uniquement */}
-      <Tabs.Screen
-        name="chantiers"
-        options={{
-          title: t.nav.chantiers,
-          href: isAdmin ? undefined : null,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="hammer.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* Équipe : admin uniquement */}
+      {/* ═══ ONGLET 4 : Équipe (admin, inclut ST) / Matériel (employé) ═══ */}
       <Tabs.Screen
         name="equipe"
         options={{
@@ -149,28 +159,52 @@ export default function TabLayout() {
           ),
         }}
       />
-
-      {/* Sous-traitants : admin uniquement */}
       <Tabs.Screen
-        name="sous-traitants"
+        name="materiel"
         options={{
-          title: t.nav.sousTraitants,
-          href: isAdmin ? undefined : null,
+          title: t.nav.materiel,
+          href: (isEmploye) ? undefined : null,
+          tabBarBadge: isAcheteur && nbNonAchetes > 0 ? nbNonAchetes : undefined,
+          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="wrench.and.screwdriver.fill" color={color} />
+            <IconSymbol size={26} name="cart.fill" color={color} />
           ),
         }}
       />
 
-      {/* Reporting : admin uniquement */}
+      {/* ═══ ONGLET 5 : Messages — avec badge ═══ */}
+      <Tabs.Screen
+        name="messagerie"
+        options={{
+          title: t.nav.messages,
+          tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
+          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="message.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* ═══ ONGLETS SECONDAIRES — cachés de la tab bar admin, accessibles via dashboard ═══ */}
+      <Tabs.Screen
+        name="sous-traitants"
+        options={{
+          title: t.nav.sousTraitants,
+          href: null,
+        }}
+      />
       <Tabs.Screen
         name="reporting"
         options={{
           title: t.nav.reporting,
-          href: isAdmin ? undefined : null,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="chart.bar.fill" color={color} />
-          ),
+          href: null,
+        }}
+      />
+      <Tabs.Screen
+        name="rh"
+        options={{
+          title: t.nav.rh,
+          href: null,
         }}
       />
 
@@ -182,60 +216,6 @@ export default function TabLayout() {
           href: isST ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="eurosign.circle.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* Matériel : visible pour tous sauf sous-traitants */}
-      <Tabs.Screen
-        name="materiel"
-        options={{
-          title: t.nav.materiel,
-          href: isST ? null : undefined,
-          tabBarBadge: isAcheteur && nbNonAchetes > 0 ? nbNonAchetes : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="cart.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* RH : visible pour tous sauf sous-traitants */}
-      <Tabs.Screen
-        name="rh"
-        options={{
-          title: t.nav.rh,
-          href: hasRHAccess ? undefined : null,
-          tabBarBadge: nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="person.badge.clock.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* Messagerie : visible pour tous sauf sous-traitants (ou avec sous-traitants si on veut) */}
-      <Tabs.Screen
-        name="messagerie"
-        options={{
-          title: t.nav.messages,
-          href: !isST ? undefined : undefined,
-          tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="message.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* Dashboard admin / Ma journée employé */}
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: isAdmin ? 'Accueil' : 'Ma journée',
-          href: isST ? null : undefined,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="house.fill" color={color} />
           ),
         }}
       />

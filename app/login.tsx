@@ -197,11 +197,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F4F7',
     borderRadius: 10,
     paddingHorizontal: 14,
-    paddingVertical: 12,
+    paddingVertical: 14,
     fontSize: 15,
     color: '#11181C',
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: '#E2E6EA',
+    // @ts-ignore — propriété web pour le focus
+    outlineColor: '#1A3A6B',
   },
   passwordRow: {
     position: 'relative',

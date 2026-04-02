@@ -315,6 +315,15 @@ export default function DashboardScreen() {
           </>
         )}
 
+        {/* Export rapide */}
+        <Pressable
+          style={[styles.statCard, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderLeftWidth: 4, borderLeftColor: '#1A3A6B', marginTop: 20 }]}
+          onPress={() => router.push('/(tabs)/reporting' as any)}
+        >
+          <Text style={{ fontSize: 20 }}>📄</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A3A6B' }}>Exporter le rapport du mois</Text>
+        </Pressable>
+
         {/* Raccourcis */}
         <Text style={styles.sectionTitle}>Accès rapide</Text>
         <View style={styles.shortcutsGrid}>
@@ -323,6 +332,10 @@ export default function DashboardScreen() {
             { icon: '🏗', label: 'Chantiers', route: '/(tabs)/chantiers' },
             { icon: '👷', label: 'Équipe', route: '/(tabs)/equipe' },
             { icon: '📊', label: 'Reporting', route: '/(tabs)/reporting' },
+            { icon: '🛒', label: 'Matériel', route: '/(tabs)/materiel' },
+            { icon: '📋', label: 'RH', route: '/(tabs)/rh' },
+            { icon: '🔧', label: 'Sous-traitants', route: '/(tabs)/sous-traitants' },
+            { icon: '💬', label: 'Messages', route: '/(tabs)/messagerie' },
           ].map(s => (
             <Pressable key={s.route} style={styles.shortcut} onPress={() => router.push(s.route as any)}>
               <Text style={styles.shortcutIcon}>{s.icon}</Text>
