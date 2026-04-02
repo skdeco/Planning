@@ -55,6 +55,11 @@ export default function MessagerieScreen() {
   const [showArchive, setShowArchive] = useState(false);
   const [selectedChantierId, setSelectedChantierId] = useState<string | null>(null);
   const [contextMsg, setContextMsg] = useState<MessagePrive | null>(null);
+  const [showFilters, setShowFilters] = useState(false);
+  const [filterDateFrom, setFilterDateFrom] = useState('');
+  const [filterDateTo, setFilterDateTo] = useState('');
+  const [filterExpId, setFilterExpId] = useState<string | 'all'>('all');
+  const [filterType, setFilterType] = useState<'all' | 'photo' | 'pdf' | 'text'>('all');
   const scrollRef = useRef<ScrollView>(null);
 
   // Chantiers de l'employé : tous les chantiers actifs où il est affecté (pas seulement aujourd'hui)
@@ -143,17 +148,27 @@ export default function MessagerieScreen() {
     return (data.messagesPrive || [])
       .filter(m => {
         if (m.conversationId !== convId) return false;
-        // Filtrer par chantier si un chantier est sélectionné
+        // Archive
         if (selectedChantierId) {
-          if (showArchive) return m.archive && m.chantierId === selectedChantierId;
-          return !m.archive && m.chantierId === selectedChantierId;
+          if (showArchive) { if (!m.archive || m.chantierId !== selectedChantierId) return false; }
+          else { if (m.archive || m.chantierId !== selectedChantierId) return false; }
+        } else {
+          if (showArchive) { if (!m.archive) return false; }
+          else { if (m.archive || m.chantierId) return false; }
         }
-        // Pas de chantier sélectionné : montrer les messages sans chantier
-        if (showArchive) return m.archive;
-        return !m.archive && !m.chantierId;
+        // Filtre date
+        if (filterDateFrom && m.createdAt.slice(0, 10) < filterDateFrom) return false;
+        if (filterDateTo && m.createdAt.slice(0, 10) > filterDateTo) return false;
+        // Filtre expéditeur
+        if (filterExpId !== 'all' && m.expediteurId !== filterExpId) return false;
+        // Filtre type de contenu
+        if (filterType === 'photo' && !(m.fichiers?.some(f => f.startsWith('data:image') || f.includes('/image')))) return false;
+        if (filterType === 'pdf' && !(m.fichiers?.some(f => f.includes('pdf')))) return false;
+        if (filterType === 'text' && m.fichiers && m.fichiers.length > 0) return false;
+        return true;
       })
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
-  }, [data.messagesPrive, convId, showArchive, selectedChantierId]);
+  }, [data.messagesPrive, convId, showArchive, selectedChantierId, filterDateFrom, filterDateTo, filterExpId, filterType]);
 
   // Marquer les messages comme lus quand on ouvre une conversation
   useEffect(() => {
@@ -377,9 +392,10 @@ export default function MessagerieScreen() {
         </Pressable>
       </View>
 
-      {/* Sélecteur de chantier */}
-      {mesChantiers.length > 0 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierBar} contentContainerStyle={styles.chantierBarContent}>
+      {/* Barre de filtres */}
+      <View style={styles.filterBar}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 12, alignItems: 'center' }}>
+          {/* Chantiers */}
           {mesChantiers.map(c => (
             <Pressable
               key={c.id}
@@ -389,7 +405,61 @@ export default function MessagerieScreen() {
               <Text style={[styles.chantierChipText, selectedChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
             </Pressable>
           ))}
+          {/* Bouton filtres avancés */}
+          <Pressable
+            style={[styles.chantierChip, showFilters && { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' }]}
+            onPress={() => setShowFilters(v => !v)}
+          >
+            <Text style={[styles.chantierChipText, showFilters && { color: '#fff' }]}>🔍 Filtres</Text>
+          </Pressable>
         </ScrollView>
+      </View>
+
+      {/* Panneau filtres avancés */}
+      {showFilters && (
+        <View style={styles.filterPanel}>
+          {/* Date */}
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Du</Text>
+            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={filterDateFrom} onChangeText={setFilterDateFrom} maxLength={10} />
+            <Text style={styles.filterLabel}>au</Text>
+            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={filterDateTo} onChangeText={setFilterDateTo} maxLength={10} />
+          </View>
+          {/* Qui */}
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>De</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+              <Pressable style={[styles.filterChip, filterExpId === 'all' && styles.filterChipActive]} onPress={() => setFilterExpId('all')}>
+                <Text style={[styles.filterChipText, filterExpId === 'all' && styles.filterChipTextActive]}>Tous</Text>
+              </Pressable>
+              <Pressable style={[styles.filterChip, filterExpId === 'admin' && styles.filterChipActive]} onPress={() => setFilterExpId(filterExpId === 'admin' ? 'all' : 'admin')}>
+                <Text style={[styles.filterChipText, filterExpId === 'admin' && styles.filterChipTextActive]}>Admin</Text>
+              </Pressable>
+              {data.employes.slice(0, 8).map(e => (
+                <Pressable key={e.id} style={[styles.filterChip, filterExpId === e.id && styles.filterChipActive]} onPress={() => setFilterExpId(filterExpId === e.id ? 'all' : e.id)}>
+                  <Text style={[styles.filterChipText, filterExpId === e.id && styles.filterChipTextActive]}>{e.prenom}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+          {/* Type */}
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Type</Text>
+            {(['all', 'text', 'photo', 'pdf'] as const).map(t => (
+              <Pressable key={t} style={[styles.filterChip, filterType === t && styles.filterChipActive]} onPress={() => setFilterType(filterType === t ? 'all' : t)}>
+                <Text style={[styles.filterChipText, filterType === t && styles.filterChipTextActive]}>
+                  {t === 'all' ? 'Tout' : t === 'text' ? '💬 Texte' : t === 'photo' ? '📷 Photos' : '📄 PDF'}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+          {/* Reset */}
+          <Pressable style={{ alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 10 }} onPress={() => {
+            setFilterDateFrom(''); setFilterDateTo(''); setFilterExpId('all'); setFilterType('all');
+          }}>
+            <Text style={{ fontSize: 12, color: '#E74C3C', fontWeight: '600' }}>Réinitialiser</Text>
+          </Pressable>
+        </View>
       )}
 
       {/* Messages */}
@@ -602,6 +672,16 @@ const styles = StyleSheet.create({
   sendBtn: { padding: 10, backgroundColor: '#1A3A6B', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
   sendBtnDisabled: { backgroundColor: '#B0BEC5' },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  // Barre et panneau de filtres
+  filterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingVertical: 6 },
+  filterPanel: { backgroundColor: '#FAFBFC', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', padding: 12, gap: 8 },
+  filterRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, flexWrap: 'wrap' as const },
+  filterLabel: { fontSize: 12, fontWeight: '600', color: '#687076', minWidth: 28 },
+  filterInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 12, color: '#11181C', width: 105 },
+  filterChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
+  filterChipActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
+  filterChipText: { fontSize: 11, fontWeight: '600', color: '#687076' },
+  filterChipTextActive: { color: '#fff' },
   // Sélecteur de chantier
   chantierBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', maxHeight: 44 },
   chantierBarContent: { paddingHorizontal: 12, paddingVertical: 6, gap: 6, alignItems: 'center' as const },
