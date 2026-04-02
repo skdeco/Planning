@@ -228,12 +228,12 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Dashboard : admin uniquement */}
+      {/* Dashboard admin / Ma journée employé */}
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Accueil',
-          href: isAdmin ? undefined : null,
+          title: isAdmin ? 'Accueil' : 'Ma journée',
+          href: isST ? null : undefined,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="house.fill" color={color} />
           ),

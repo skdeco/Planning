@@ -17,9 +17,9 @@ export default function RootIndex() {
     return <Redirect href={'/login' as any} />;
   }
 
-  // Admin → dashboard, autres → planning
-  if (currentUser.role === 'admin') {
-    return <Redirect href={'/(tabs)' as any} />;
+  // Admin → dashboard, employé → ma journée, ST → planning
+  if (currentUser.role === 'soustraitant') {
+    return <Redirect href={'/(tabs)/planning' as any} />;
   }
-  return <Redirect href={'/(tabs)/planning' as any} />;
+  return <Redirect href={'/(tabs)' as any} />;
 }

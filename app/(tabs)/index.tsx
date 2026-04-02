@@ -15,13 +15,15 @@ export default function DashboardScreen() {
   const router = useRouter();
 
   const isAdmin = currentUser?.role === 'admin';
+  const isEmploye = currentUser?.role === 'employe';
+  const isST = currentUser?.role === 'soustraitant';
 
-  // Non-admin → planning directement
-  if (isHydrated && currentUser && !isAdmin) {
-    return <Redirect href={'/(tabs)/planning' as any} />;
-  }
   if (isHydrated && !currentUser) {
     return <Redirect href={'/login' as any} />;
+  }
+  // Sous-traitants → planning
+  if (isHydrated && currentUser && isST) {
+    return <Redirect href={'/(tabs)/planning' as any} />;
   }
 
   const today = toYMD(new Date());
@@ -57,6 +59,123 @@ export default function DashboardScreen() {
     (data.activityLog || []).slice(-8).reverse(),
     [data.activityLog]
   );
+
+  // ── Vue "Ma journée" pour les employés ──────────────────────────────────────
+  const myId = currentUser?.employeId;
+  const myChantiers = useMemo(() => {
+    if (!myId) return [];
+    return data.chantiers.filter(c =>
+      c.statut === 'actif' &&
+      data.affectations.some(a => a.chantierId === c.id && a.employeId === myId && a.dateDebut <= today && a.dateFin >= today)
+    );
+  }, [data.chantiers, data.affectations, myId, today]);
+
+  const myTasks = useMemo(() => {
+    if (!myId) return [];
+    return data.affectations
+      .filter(a => a.employeId === myId && a.dateDebut <= today && a.dateFin >= today)
+      .flatMap(a => (a.notes || []).filter(n => n.date === today).flatMap(n => (n.tasks || []).filter(t => !t.fait)));
+  }, [data.affectations, myId, today]);
+
+  const myPointagesDuJour = useMemo(() => {
+    if (!myId) return { debut: null as string | null, fin: null as string | null };
+    const pts = data.pointages.filter(p => p.employeId === myId && p.date === today);
+    return {
+      debut: pts.find(p => p.type === 'debut')?.heure || null,
+      fin: pts.find(p => p.type === 'fin')?.heure || null,
+    };
+  }, [data.pointages, myId, today]);
+
+  if (isEmploye) {
+    const emp = data.employes.find(e => e.id === myId);
+    return (
+      <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          <View style={styles.header}>
+            <Text style={styles.greeting}>Bonjour {emp?.prenom || ''} 👋</Text>
+            <Text style={styles.date}>
+              {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </Text>
+          </View>
+
+          {/* Pointage du jour */}
+          <View style={styles.statCard}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <View>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C', marginBottom: 4 }}>Pointage du jour</Text>
+                <Text style={{ fontSize: 13, color: '#687076' }}>
+                  {myPointagesDuJour.debut ? `Arrivée : ${myPointagesDuJour.debut}` : 'Pas encore pointé'}
+                  {myPointagesDuJour.fin ? ` — Départ : ${myPointagesDuJour.fin}` : ''}
+                </Text>
+              </View>
+              <Pressable
+                style={{ backgroundColor: '#1A3A6B', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }}
+                onPress={() => router.push('/(tabs)/pointage' as any)}
+              >
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 13 }}>Pointer</Text>
+              </Pressable>
+            </View>
+          </View>
+
+          {/* Chantiers du jour */}
+          <Text style={styles.sectionTitle}>Mes chantiers aujourd'hui</Text>
+          {myChantiers.length === 0 && (
+            <View style={styles.statCard}><Text style={{ color: '#687076', textAlign: 'center' }}>Aucun chantier prévu aujourd'hui</Text></View>
+          )}
+          {myChantiers.map(c => (
+            <Pressable key={c.id} style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: c.couleur || '#1A3A6B' }]}
+              onPress={() => router.push('/(tabs)/planning' as any)}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>{c.nom}</Text>
+              {c.adresse ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{c.adresse}</Text> : null}
+              {c.fiche && (
+                <View style={{ marginTop: 8, gap: 4 }}>
+                  {c.fiche.codeAcces ? <Text style={{ fontSize: 12, color: '#1A3A6B' }}>🔑 Code : {c.fiche.codeAcces}</Text> : null}
+                  {c.fiche.emplacementCle ? <Text style={{ fontSize: 12, color: '#1A3A6B' }}>🗝 Clé : {c.fiche.emplacementCle}</Text> : null}
+                  {c.fiche.codeAlarme ? <Text style={{ fontSize: 12, color: '#1A3A6B' }}>🔔 Alarme : {c.fiche.codeAlarme}</Text> : null}
+                </View>
+              )}
+            </Pressable>
+          ))}
+
+          {/* Tâches en cours */}
+          {myTasks.length > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Mes tâches du jour ({myTasks.length})</Text>
+              <View style={styles.statCard}>
+                {myTasks.map(task => (
+                  <View key={task.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 8, borderBottomWidth: 0.5, borderBottomColor: '#F2F4F7' }}>
+                    <Text style={{ fontSize: 16 }}>☐</Text>
+                    <Text style={{ fontSize: 13, color: '#11181C', flex: 1 }}>{task.texte}</Text>
+                  </View>
+                ))}
+              </View>
+            </>
+          )}
+
+          {/* Raccourcis */}
+          <Text style={styles.sectionTitle}>Accès rapide</Text>
+          <View style={styles.shortcutsGrid}>
+            <Pressable style={styles.shortcut} onPress={() => router.push('/(tabs)/planning' as any)}>
+              <Text style={styles.shortcutIcon}>📅</Text>
+              <Text style={styles.shortcutLabel}>Planning</Text>
+            </Pressable>
+            <Pressable style={styles.shortcut} onPress={() => router.push('/(tabs)/messagerie' as any)}>
+              <Text style={styles.shortcutIcon}>💬</Text>
+              <Text style={styles.shortcutLabel}>Messages</Text>
+            </Pressable>
+            <Pressable style={styles.shortcut} onPress={() => router.push('/(tabs)/materiel' as any)}>
+              <Text style={styles.shortcutIcon}>🛒</Text>
+              <Text style={styles.shortcutLabel}>Matériel</Text>
+            </Pressable>
+            <Pressable style={styles.shortcut} onPress={() => router.push('/(tabs)/rh' as any)}>
+              <Text style={styles.shortcutIcon}>📋</Text>
+              <Text style={styles.shortcutLabel}>RH</Text>
+            </Pressable>
+          </View>
+        </ScrollView>
+      </ScreenContainer>
+    );
+  }
 
   if (!isAdmin) return null;
 
