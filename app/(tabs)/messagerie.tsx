@@ -316,8 +316,62 @@ export default function MessagerieScreen() {
     [conversations]
   );
 
+  // ─── Filtres page d'accueil admin ──────────────────────────────────────────
+  const [listFilterChantier, setListFilterChantier] = useState<string | 'all'>('all');
+  const [listFilterWho, setListFilterWho] = useState<string | 'all'>('all');
+  const [listFilterDateFrom, setListFilterDateFrom] = useState('');
+  const [listFilterDateTo, setListFilterDateTo] = useState('');
+  const [listFilterType, setListFilterType] = useState<'all' | 'photo' | 'pdf' | 'text'>('all');
+
+  // Conversations filtrées et triées par chantier
+  const filteredConversations = useMemo(() => {
+    if (!isAdmin) return conversations;
+    const allMsgs = data.messagesPrive || [];
+    return conversations.map(conv => {
+      // Compter les messages qui matchent les filtres pour cette conversation
+      const convMsgs = allMsgs.filter(m => {
+        if (m.conversationId !== conv.id) return false;
+        if (listFilterChantier !== 'all' && m.chantierId !== listFilterChantier) return false;
+        if (listFilterDateFrom && m.createdAt.slice(0, 10) < listFilterDateFrom) return false;
+        if (listFilterDateTo && m.createdAt.slice(0, 10) > listFilterDateTo) return false;
+        if (listFilterType === 'photo' && !(m.fichiers?.some(f => f.startsWith('data:image') || f.includes('/image')))) return false;
+        if (listFilterType === 'pdf' && !(m.fichiers?.some(f => f.includes('pdf')))) return false;
+        if (listFilterType === 'text' && m.fichiers && m.fichiers.length > 0) return false;
+        return true;
+      });
+      // Chantier principal de cette conversation (le plus fréquent)
+      const chantierCounts = new Map<string, number>();
+      convMsgs.forEach(m => { if (m.chantierId) chantierCounts.set(m.chantierId, (chantierCounts.get(m.chantierId) || 0) + 1); });
+      const topChantierId = [...chantierCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+      return { ...conv, matchCount: convMsgs.length, topChantierId };
+    })
+    .filter(c => {
+      if (listFilterWho !== 'all' && c.id !== listFilterWho) return false;
+      if (listFilterChantier !== 'all' && c.matchCount === 0) return false;
+      if (listFilterDateFrom && c.matchCount === 0) return false;
+      if (listFilterType !== 'all' && c.matchCount === 0) return false;
+      return true;
+    })
+    .sort((a, b) => {
+      // Tri par chantier par défaut
+      const chA = a.topChantierId || 'zzz';
+      const chB = b.topChantierId || 'zzz';
+      if (chA !== chB) return chA.localeCompare(chB);
+      if (a.dernierMessageAt && b.dernierMessageAt) return b.dernierMessageAt.localeCompare(a.dernierMessageAt);
+      return a.nom.localeCompare(b.nom);
+    });
+  }, [conversations, data.messagesPrive, isAdmin, listFilterChantier, listFilterWho, listFilterDateFrom, listFilterDateTo, listFilterType]);
+
   // ─── Vue liste des conversations (admin) ──────────────────────────────────
   if (isAdmin && !selectedConvId) {
+    // Grouper par chantier
+    const chantierGroups = new Map<string, Array<(typeof filteredConversations)[0]>>();
+    filteredConversations.forEach(c => {
+      const chId = (c as any).topChantierId || '__none__';
+      if (!chantierGroups.has(chId)) chantierGroups.set(chId, []);
+      chantierGroups.get(chId)!.push(c);
+    });
+
     return (
       <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
@@ -328,38 +382,111 @@ export default function MessagerieScreen() {
             </View>
           )}
         </View>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          {conversations.map(conv => (
-            <Pressable
-              key={conv.id}
-              style={[styles.convCard, conv.nbNonLus > 0 && styles.convCardUnread]}
-              onPress={() => setSelectedConvId(conv.id)}
-            >
-              <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#1A3A6B' : '#00BCD4' }]}>
-                <Text style={styles.convAvatarText}>{conv.nom[0].toUpperCase()}</Text>
-              </View>
-              <View style={styles.convInfo}>
-                <View style={styles.convRow}>
-                  <Text style={styles.convNom} numberOfLines={1}>{conv.nom}</Text>
-                  {conv.dernierMessageAt && (
-                    <Text style={styles.convHeure}>{formatHeure(conv.dernierMessageAt)}</Text>
-                  )}
-                </View>
-                <View style={styles.convRow}>
-                  <Text style={styles.convDernier} numberOfLines={1}>
-                    {conv.dernierMessage || t.messagerie.noMessage}
-                  </Text>
-                  {conv.nbNonLus > 0 && (
-                    <View style={styles.unreadBadge}>
-                      <Text style={styles.unreadBadgeText}>{conv.nbNonLus}</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={styles.convType}>{conv.type === 'employe' ? `👷 ${t.messagerie.employee}` : `🏗 ${t.messagerie.subcontractor}`}</Text>
-              </View>
+
+        {/* Filtres — toujours visibles */}
+        <View style={styles.filterPanel}>
+          {/* Chantiers */}
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Chantier</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+              <Pressable style={[styles.filterChip, listFilterChantier === 'all' && styles.filterChipActive]} onPress={() => setListFilterChantier('all')}>
+                <Text style={[styles.filterChipText, listFilterChantier === 'all' && styles.filterChipTextActive]}>Tous</Text>
+              </Pressable>
+              {data.chantiers.filter(c => c.statut === 'actif').map(c => (
+                <Pressable key={c.id} style={[styles.filterChip, listFilterChantier === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+                  onPress={() => setListFilterChantier(listFilterChantier === c.id ? 'all' : c.id)}>
+                  <Text style={[styles.filterChipText, listFilterChantier === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+          {/* Qui */}
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Qui</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+              <Pressable style={[styles.filterChip, listFilterWho === 'all' && styles.filterChipActive]} onPress={() => setListFilterWho('all')}>
+                <Text style={[styles.filterChipText, listFilterWho === 'all' && styles.filterChipTextActive]}>Tous</Text>
+              </Pressable>
+              {data.employes.map(e => (
+                <Pressable key={e.id} style={[styles.filterChip, listFilterWho === e.id && styles.filterChipActive]}
+                  onPress={() => setListFilterWho(listFilterWho === e.id ? 'all' : e.id)}>
+                  <Text style={[styles.filterChipText, listFilterWho === e.id && styles.filterChipTextActive]}>{e.prenom}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+          </View>
+          {/* Date + Type */}
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Du</Text>
+            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={listFilterDateFrom} onChangeText={setListFilterDateFrom} maxLength={10} />
+            <Text style={styles.filterLabel}>au</Text>
+            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={listFilterDateTo} onChangeText={setListFilterDateTo} maxLength={10} />
+          </View>
+          <View style={styles.filterRow}>
+            <Text style={styles.filterLabel}>Type</Text>
+            {(['all', 'text', 'photo', 'pdf'] as const).map(tp => (
+              <Pressable key={tp} style={[styles.filterChip, listFilterType === tp && styles.filterChipActive]}
+                onPress={() => setListFilterType(listFilterType === tp ? 'all' : tp)}>
+                <Text style={[styles.filterChipText, listFilterType === tp && styles.filterChipTextActive]}>
+                  {tp === 'all' ? 'Tout' : tp === 'text' ? '💬' : tp === 'photo' ? '📷' : '📄'}
+                </Text>
+              </Pressable>
+            ))}
+            <Pressable style={{ marginLeft: 'auto', paddingVertical: 4, paddingHorizontal: 8 }} onPress={() => {
+              setListFilterChantier('all'); setListFilterWho('all'); setListFilterDateFrom(''); setListFilterDateTo(''); setListFilterType('all');
+            }}>
+              <Text style={{ fontSize: 11, color: '#E74C3C', fontWeight: '600' }}>Réinitialiser</Text>
             </Pressable>
-          ))}
-          {conversations.length === 0 && (
+          </View>
+        </View>
+
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+          {[...chantierGroups.entries()].map(([chId, convs]) => {
+            const chantier = data.chantiers.find(c => c.id === chId);
+            return (
+              <View key={chId}>
+                {chantier && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 6 }}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: chantier.couleur || '#1A3A6B' }} />
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A3A6B' }}>{chantier.nom}</Text>
+                  </View>
+                )}
+                {!chantier && chId === '__none__' && convs.length > 0 && (
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#687076', marginTop: 12, marginBottom: 6 }}>Sans chantier</Text>
+                )}
+                {convs.map(conv => (
+                  <Pressable
+                    key={conv.id}
+                    style={[styles.convCard, conv.nbNonLus > 0 && styles.convCardUnread]}
+                    onPress={() => setSelectedConvId(conv.id)}
+                  >
+                    <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#1A3A6B' : '#00BCD4' }]}>
+                      <Text style={styles.convAvatarText}>{conv.nom[0].toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.convInfo}>
+                      <View style={styles.convRow}>
+                        <Text style={styles.convNom} numberOfLines={1}>{conv.nom}</Text>
+                        {conv.dernierMessageAt && (
+                          <Text style={styles.convHeure}>{formatHeure(conv.dernierMessageAt)}</Text>
+                        )}
+                      </View>
+                      <View style={styles.convRow}>
+                        <Text style={styles.convDernier} numberOfLines={1}>
+                          {conv.dernierMessage || t.messagerie.noMessage}
+                        </Text>
+                        {conv.nbNonLus > 0 && (
+                          <View style={styles.unreadBadge}>
+                            <Text style={styles.unreadBadgeText}>{conv.nbNonLus}</Text>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
+            );
+          })}
+          {filteredConversations.length === 0 && (
             <Text style={styles.emptyText}>{t.messagerie.noConversation}</Text>
           )}
         </ScrollView>
