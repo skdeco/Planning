@@ -176,6 +176,7 @@ export default function PlanningScreen() {
   const [interventionModal, setInterventionModal] = useState<{ chantierId: string; editId: string | null } | null>(null);
   const [interventionForm, setInterventionForm] = useState<InterventionForm>({ libelle: '', description: '', dateDebut: '', dateFin: '', couleur: INTERVENTION_COLORS[0] });
   const [noteText, setNoteText] = useState('');
+  const [mentionQuery, setMentionQuery] = useState<string | null>(null);
   const [notePhotos, setNotePhotos] = useState<string[]>([]);
   const [showNoteEditor, setShowNoteEditor] = useState(false);
   // Checklist dans les notes
@@ -2088,8 +2089,13 @@ export default function PlanningScreen() {
                         <TextInput
                           style={styles.noteInput}
                           value={noteText}
-                          onChangeText={setNoteText}
-                          placeholder="Saisir une note..."
+                          onChangeText={(text) => {
+                            setNoteText(text);
+                            // Détecter @mention
+                            const match = text.match(/@(\w*)$/);
+                            setMentionQuery(match ? match[1] : null);
+                          }}
+                          placeholder="Saisir une note... (tapez @ pour mentionner)"
                           placeholderTextColor="#B0BEC5"
                           multiline
                           numberOfLines={4}
@@ -2097,6 +2103,30 @@ export default function PlanningScreen() {
                           blurOnSubmit
                           autoFocus
                         />
+                        {/* Suggestions @mentions */}
+                        {mentionQuery !== null && (() => {
+                          const q = mentionQuery.toLowerCase();
+                          const suggestions = data.employes.filter(e =>
+                            `${e.prenom} ${e.nom}`.toLowerCase().includes(q) || e.prenom.toLowerCase().startsWith(q)
+                          ).slice(0, 5);
+                          if (suggestions.length === 0) return null;
+                          return (
+                            <View style={{ backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, maxHeight: 150 }}>
+                              {suggestions.map(emp => (
+                                <Pressable key={emp.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F2F4F7' }}
+                                  onPress={() => {
+                                    const before = noteText.replace(/@\w*$/, '');
+                                    setNoteText(`${before}@${emp.prenom} `);
+                                    setMentionQuery(null);
+                                  }}>
+                                  <Text style={{ fontSize: 14, color: '#11181C' }}>
+                                    <Text style={{ fontWeight: '700' }}>{emp.prenom}</Text> {emp.nom}
+                                  </Text>
+                                </Pressable>
+                              ))}
+                            </View>
+                          );
+                        })()}
                         <Pressable style={styles.keyboardDismissBtn} onPress={Keyboard.dismiss}>
                           <Text style={styles.keyboardDismissText}>↓</Text>
                         </Pressable>

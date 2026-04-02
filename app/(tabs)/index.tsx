@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
@@ -27,6 +27,29 @@ export default function DashboardScreen() {
   }
 
   const today = toYMD(new Date());
+
+  // ── Météo (Paris par défaut, API Open-Meteo gratuite) ──
+  const [weather, setWeather] = useState<{ temp: number; description: string; icon: string } | null>(null);
+  useEffect(() => {
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=48.8566&longitude=2.3522&current=temperature_2m,weather_code&timezone=Europe/Paris')
+      .then(r => r.json())
+      .then(d => {
+        const code = d.current?.weather_code || 0;
+        const temp = Math.round(d.current?.temperature_2m || 0);
+        const icons: Record<number, [string, string]> = {
+          0: ['☀️', 'Ciel dégagé'], 1: ['🌤', 'Peu nuageux'], 2: ['⛅', 'Partiellement nuageux'], 3: ['☁️', 'Nuageux'],
+          45: ['🌫', 'Brouillard'], 48: ['🌫', 'Brouillard givrant'],
+          51: ['🌦', 'Bruine légère'], 53: ['🌦', 'Bruine'], 55: ['🌦', 'Bruine forte'],
+          61: ['🌧', 'Pluie légère'], 63: ['🌧', 'Pluie'], 65: ['🌧', 'Forte pluie'],
+          71: ['🌨', 'Neige légère'], 73: ['🌨', 'Neige'], 75: ['🌨', 'Forte neige'],
+          80: ['🌦', 'Averses'], 81: ['🌧', 'Averses modérées'], 82: ['⛈', 'Fortes averses'],
+          95: ['⛈', 'Orage'], 96: ['⛈', 'Orage + grêle'], 99: ['⛈', 'Orage violent'],
+        };
+        const [icon, description] = icons[code] || ['🌡', `Code ${code}`];
+        setWeather({ temp, description, icon });
+      })
+      .catch(() => {});
+  }, []);
 
   const stats = useMemo(() => {
     const chantiersActifs = data.chantiers.filter(c => c.statut === 'actif').length;
@@ -183,10 +206,21 @@ export default function DashboardScreen() {
     <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <Text style={styles.greeting}>Bonjour 👋</Text>
-          <Text style={styles.date}>
-            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            <View>
+              <Text style={styles.greeting}>Bonjour 👋</Text>
+              <Text style={styles.date}>
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </Text>
+            </View>
+            {weather && (
+              <View style={{ alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
+                <Text style={{ fontSize: 24 }}>{weather.icon}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>{weather.temp}°C</Text>
+                <Text style={{ fontSize: 10, color: '#687076' }}>{weather.description}</Text>
+              </View>
+            )}
+          </View>
         </View>
 
         {/* Stats */}
