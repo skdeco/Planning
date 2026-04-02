@@ -1357,17 +1357,10 @@ export default function PlanningScreen() {
         {/* Lignes des chantiers */}
         {visibleChantiers.map(chantier => (
           <View key={chantier.id} style={styles.chantierRow}>
-            {/* Colonne nom */}
+            {/* Colonne nom — clic = ouvrir fiche chantier / long press = naviguer vers chantiers */}
             <Pressable
               style={styles.nameCell}
-              onPress={() => {
-                const hasFiche = chantier.fiche && (
-                  chantier.fiche.codeAcces || chantier.fiche.emplacementCle ||
-                  chantier.fiche.codeAlarme || chantier.fiche.contacts ||
-                  chantier.fiche.notes || chantier.fiche.photos.length > 0
-                );
-                if (hasFiche) setFicheModal({ chantier });
-              }}
+              onPress={() => setFicheModal({ chantier })}
             >
               <View style={[styles.colorDot, { backgroundColor: chantier.couleur }]} />
               <Text style={styles.chantierName} numberOfLines={3}>{chantier.nom}</Text>
