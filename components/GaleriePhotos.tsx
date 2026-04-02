@@ -54,6 +54,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   // Upload
   const [uploading, setUploading] = useState(false);
   const [uploadLegende, setUploadLegende] = useState('');
+  const [uploadChantierId, setUploadChantierId] = useState<string>(chantierId || '');
 
   const isAdmin = currentUser?.role === 'admin';
   const myId = currentUser?.employeId || currentUser?.soustraitantId || 'admin';
@@ -106,8 +107,8 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   // Upload photos
   const handleUploadPhotos = useCallback(async () => {
     if (Platform.OS !== 'web') return;
-    const targetChantierId = chantierId || data.chantiers.find(c => c.statut === 'actif')?.id;
-    if (!targetChantierId) { alert('Aucun chantier actif'); return; }
+    const targetChantierId = uploadChantierId || chantierId || data.chantiers.find(c => c.statut === 'actif')?.id;
+    if (!targetChantierId) { alert('Veuillez sélectionner un chantier'); return; }
 
     const input = document.createElement('input');
     input.type = 'file';
@@ -184,16 +185,33 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
 
           {/* Zone ajout */}
           <View style={styles.uploadBar}>
-            <TextInput
-              style={styles.legendeInput}
-              placeholder="Légende (optionnel)..."
-              placeholderTextColor="#999"
-              value={uploadLegende}
-              onChangeText={setUploadLegende}
-            />
-            <Pressable style={[styles.uploadBtn, uploading && { opacity: 0.5 }]} onPress={handleUploadPhotos} disabled={uploading}>
-              <Text style={styles.uploadBtnText}>{uploading ? '...' : '📸 Ajouter des photos'}</Text>
-            </Pressable>
+            {/* Sélecteur chantier — visible si pas de chantierId fixe (admin galerie globale) */}
+            {!chantierId && (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
+                {data.chantiers.filter(c => c.statut === 'actif').map(c => (
+                  <Pressable key={c.id}
+                    style={[styles.triBtn, uploadChantierId === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+                    onPress={() => setUploadChantierId(c.id)}>
+                    <Text style={[styles.triBtnText, uploadChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            )}
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput
+                style={[styles.legendeInput, { flex: 1 }]}
+                placeholder="Légende (optionnel)..."
+                placeholderTextColor="#999"
+                value={uploadLegende}
+                onChangeText={setUploadLegende}
+              />
+              <Pressable
+                style={[styles.uploadBtn, (uploading || (!chantierId && !uploadChantierId)) && { opacity: 0.5 }]}
+                onPress={handleUploadPhotos}
+                disabled={uploading || (!chantierId && !uploadChantierId)}>
+                <Text style={styles.uploadBtnText}>{uploading ? '...' : '📸 Ajouter'}</Text>
+              </Pressable>
+            </View>
           </View>
 
           {/* Barre de tri + filtre employé */}
@@ -330,7 +348,7 @@ const styles = StyleSheet.create({
   downloadAllBtn: { backgroundColor: '#1A3A6B', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
   downloadAllBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   // Upload
-  uploadBar: { flexDirection: 'row', padding: 10, gap: 8, borderBottomWidth: 1, borderBottomColor: '#F2F4F7', backgroundColor: '#FAFBFC' },
+  uploadBar: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#F2F4F7', backgroundColor: '#FAFBFC' },
   legendeInput: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: '#11181C' },
   uploadBtn: { backgroundColor: '#1A3A6B', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, justifyContent: 'center' },
   uploadBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
