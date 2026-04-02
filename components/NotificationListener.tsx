@@ -66,5 +66,45 @@ export function NotificationListener() {
     prevAffectationsCount.current = mesAffectations;
   }, [data.affectations]);
 
+  // Alerte absences : employés qui n'ont pas pointé 30min après leur horaire (admin seulement)
+  const absenceCheckRef = useRef(false);
+  useEffect(() => {
+    if (!isAdmin || absenceCheckRef.current) return;
+    absenceCheckRef.current = true;
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const now = new Date();
+    const nowMinutes = now.getHours() * 60 + now.getMinutes();
+
+    const retardataires = data.employes.filter(emp => {
+      if (emp.doitPointer === false) return false;
+      // Vérifier s'il est affecté aujourd'hui
+      const isAffected = data.affectations.some(a =>
+        a.employeId === emp.id && a.dateDebut <= todayStr && a.dateFin >= todayStr
+      );
+      if (!isAffected) return false;
+      // Vérifier s'il a déjà pointé
+      const hasPointed = data.pointages.some(p =>
+        p.employeId === emp.id && p.date === todayStr && p.type === 'debut'
+      );
+      if (hasPointed) return false;
+      // Vérifier son horaire prévu
+      const dow = now.getDay(); // 0=dim
+      const horaire = emp.horaires?.[dow];
+      if (!horaire?.actif || !horaire.debut) return false;
+      const [h, m] = horaire.debut.split(':').map(Number);
+      const heureDebut = h * 60 + m;
+      // En retard de plus de 30min
+      return nowMinutes > heureDebut + 30;
+    });
+
+    if (retardataires.length > 0) {
+      const noms = retardataires.map(e => e.prenom).join(', ');
+      sendNotification(
+        'SK DECO — Absences',
+        `${retardataires.length} employé(s) non pointé(s) : ${noms}`
+      );
+    }
+  }, [data.pointages, data.employes, data.affectations, isAdmin]);
+
   return null;
 }

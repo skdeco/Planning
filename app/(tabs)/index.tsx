@@ -244,6 +244,27 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
+        {/* Couverture chantiers */}
+        <Text style={styles.sectionTitle}>Couverture du jour</Text>
+        <View style={{ gap: 6 }}>
+          {data.chantiers.filter(c => c.statut === 'actif').map(c => {
+            const nbAffectes = new Set(
+              data.affectations.filter(a => a.chantierId === c.id && a.dateDebut <= today && a.dateFin >= today).map(a => a.employeId)
+            ).size;
+            const nbPointes = data.pointages.filter(p =>
+              p.date === today && p.type === 'debut' &&
+              data.affectations.some(a => a.chantierId === c.id && a.employeId === p.employeId && a.dateDebut <= today && a.dateFin >= today)
+            ).length;
+            const color = nbAffectes === 0 ? '#E2E6EA' : nbPointes >= nbAffectes ? '#27AE60' : nbPointes > 0 ? '#F59E0B' : '#EF4444';
+            return (
+              <View key={c.id} style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: color, paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', flex: 1 }} numberOfLines={1}>{c.nom}</Text>
+                <Text style={{ fontSize: 12, color, fontWeight: '700' }}>{nbPointes}/{nbAffectes} pointés</Text>
+              </View>
+            );
+          })}
+        </View>
+
         {/* Alertes */}
         {(stats.msgsNonLus > 0 || stats.demandesRH > 0 || stats.materielNonAchete > 0) && (
           <>
