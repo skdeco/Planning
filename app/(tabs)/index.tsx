@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
+import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -109,6 +110,10 @@ export default function DashboardScreen() {
     };
   }, [data.pointages, myId, today]);
 
+  // Galerie photos state
+  const [galerieVisible, setGalerieVisible] = useState(false);
+  const [galerieChantierId, setGalerieChantierId] = useState<string | undefined>(undefined);
+
   if (isEmploye) {
     const emp = data.employes.find(e => e.id === myId);
     return (
@@ -157,6 +162,16 @@ export default function DashboardScreen() {
                   {c.fiche.codeAlarme ? <Text style={{ fontSize: 12, color: '#1A3A6B' }}>🔔 Alarme : {c.fiche.codeAlarme}</Text> : null}
                 </View>
               )}
+              {/* Bouton photos chantier */}
+              <Pressable
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, backgroundColor: '#EBF0FF', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}
+                onPress={() => { setGalerieChantierId(c.id); setGalerieVisible(true); }}
+              >
+                <Text style={{ fontSize: 14 }}>📸</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>
+                  Photos ({(data.photosChantier || []).filter(p => p.chantierId === c.id).length})
+                </Text>
+              </Pressable>
             </Pressable>
           ))}
 
@@ -196,6 +211,7 @@ export default function DashboardScreen() {
             </Pressable>
           </View>
         </ScrollView>
+        <GaleriePhotos visible={galerieVisible} onClose={() => setGalerieVisible(false)} chantierId={galerieChantierId} />
       </ScreenContainer>
     );
   }

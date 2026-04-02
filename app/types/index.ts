@@ -485,6 +485,7 @@ export interface PhotoChantier {
   date: string;          // YYYY-MM-DD : jour de la prise de vue
   uri: string;           // base64 URI ou URL de la photo
   nom?: string;          // nom optionnel (ex: "Mur nord")
+  legende?: string;      // légende/description (ex: "Mur nord terminé")
   createdAt: string;     // ISO datetime
   source: 'fin_journee' | 'manuel'; // déclenché par pointage fin ou ajout manuel
 }
