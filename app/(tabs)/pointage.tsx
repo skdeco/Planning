@@ -380,13 +380,18 @@ export default function PointageScreen() {
         longitude = pos.longitude;
         adresse = `${pos.latitude.toFixed(5)}, ${pos.longitude.toFixed(5)}`;
 
-        // Vérification distance si adresse disponible
-        if (adresseChantier) {
-          // Charger depuis cache ou géocoder
-          if (!(chantierId in geocacheRef.current)) {
-            geocacheRef.current[chantierId] = await geocodeAddress(adresseChantier);
+        // Vérification distance — utiliser GPS du chantier si disponible, sinon géocoder
+        const chantierGPS = chantier?.latitude && chantier?.longitude
+          ? { lat: chantier.latitude, lng: chantier.longitude }
+          : null;
+        if (chantierGPS || adresseChantier) {
+          let coords = chantierGPS;
+          if (!coords && adresseChantier) {
+            if (!(chantierId in geocacheRef.current)) {
+              geocacheRef.current[chantierId] = await geocodeAddress(adresseChantier);
+            }
+            coords = geocacheRef.current[chantierId];
           }
-          const coords = geocacheRef.current[chantierId];
           if (coords) {
             const dist = haversineDistance(pos.latitude, pos.longitude, coords.lat, coords.lng);
             if (dist > 100) {

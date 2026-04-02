@@ -1184,6 +1184,56 @@ export default function PlanningScreen() {
               </Pressable>
             );
           })()}
+          {/* Bouton dupliquer semaine — admin uniquement */}
+          {isAdmin && viewMode === 'semaine' && (
+            <Pressable style={styles.galerieBtn} onPress={() => {
+              const prevWeekDays = days.map(d => {
+                const prev = new Date(d);
+                prev.setDate(prev.getDate() - 7);
+                return prev;
+              });
+              // Trouver les affectations de la semaine précédente
+              const prevStart = toYMD(prevWeekDays[0]);
+              const prevEnd = toYMD(prevWeekDays[6]);
+              const prevAffectations = data.affectations.filter(a =>
+                a.dateFin >= prevStart && a.dateDebut <= prevEnd
+              );
+              if (prevAffectations.length === 0) {
+                if (Platform.OS === 'web') alert('Aucune affectation la semaine précédente');
+                else Alert.alert('Info', 'Aucune affectation la semaine précédente');
+                return;
+              }
+              const msg = `Dupliquer ${prevAffectations.length} affectation(s) de la semaine précédente vers cette semaine ?`;
+              const doDuplicate = () => {
+                prevAffectations.forEach(a => {
+                  const debutDate = new Date(a.dateDebut + 'T12:00:00');
+                  debutDate.setDate(debutDate.getDate() + 7);
+                  const finDate = new Date(a.dateFin + 'T12:00:00');
+                  finDate.setDate(finDate.getDate() + 7);
+                  const newDebut = toYMD(debutDate);
+                  const newFin = toYMD(finDate);
+                  // Vérifier qu'elle n'existe pas déjà
+                  const exists = data.affectations.some(x =>
+                    x.chantierId === a.chantierId && x.employeId === a.employeId &&
+                    x.dateDebut === newDebut && x.dateFin === newFin
+                  );
+                  if (!exists) {
+                    addAffectation({
+                      ...a,
+                      id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                      dateDebut: newDebut,
+                      dateFin: newFin,
+                      notes: [],
+                    });
+                  }
+                });
+              };
+              if (Platform.OS === 'web') { if (window.confirm(msg)) doDuplicate(); }
+              else Alert.alert('Dupliquer', msg, [{ text: 'Annuler', style: 'cancel' }, { text: 'Dupliquer', onPress: doDuplicate }]);
+            }} accessibilityLabel="Dupliquer semaine">
+              <Text style={styles.galerieBtnText}>📋</Text>
+            </Pressable>
+          )}
           {/* Bouton galerie photos — visible pour tous */}
           <Pressable style={styles.galerieBtn} onPress={() => setShowGalerieGlobale(true)}>
             <Text style={styles.galerieBtnText}>📷</Text>
@@ -1424,14 +1474,20 @@ export default function PlanningScreen() {
               );
 
               return (
-                <View
+                <Pressable
                   key={i}
                   style={[
                     styles.cell,
                     { width: dayCol },
                     today && styles.cellToday,
                     !inRange && styles.cellOutOfRange,
+                    hasNotes && !today && { backgroundColor: '#FFF9E6' },
                   ]}
+                  onPress={isAdmin ? () => {
+                    setInterventionForm({ libelle: '', description: '', dateDebut: dateStr, dateFin: dateStr, couleur: INTERVENTION_COLORS[0] });
+                    setAffectationDateFin(null);
+                    setModal({ chantierId: chantier.id, date: dateStr });
+                  } : undefined}
                 >
                   {/* Badges employés : couleur personnalisée, masqués pour le sous-traitant connecté */}
                   {!isST && employes.map(emp => {
@@ -1530,7 +1586,7 @@ export default function PlanningScreen() {
                       <Text style={styles.addBtnText}>+</Text>
                     </Pressable>
                   )}
-                </View>
+                </Pressable>
               );
             })}
           </View>

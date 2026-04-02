@@ -318,9 +318,27 @@ export default function ChantiersScreen() {
     setShowFiche(true);
   };
 
-  const handleSave = () => {
+  // Géocodage automatique de l'adresse → coordonnées GPS
+  const geocodeAddress = async (adresse: string): Promise<{ latitude: number; longitude: number } | null> => {
+    if (!adresse.trim()) return null;
+    try {
+      const res = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adresse)}&limit=1`, {
+        headers: { 'User-Agent': 'SKDecoPlanning/1.0' },
+      });
+      const data = await res.json();
+      if (data && data[0]) return { latitude: parseFloat(data[0].lat), longitude: parseFloat(data[0].lon) };
+    } catch {}
+    return null;
+  };
+
+  const handleSave = async () => {
     if (!form.nom.trim()) return;
     const existing = editId ? data.chantiers.find(c => c.id === editId) : null;
+    // Géocoder l'adresse si elle a changé
+    let coords = existing ? { latitude: existing.latitude, longitude: existing.longitude } : null;
+    if (form.adresse.trim() && (!existing || form.adresse.trim() !== existing.adresse)) {
+      coords = await geocodeAddress(form.adresse.trim());
+    }
     if (editId) {
       updateChantier({
         id: editId,
@@ -333,6 +351,7 @@ export default function ChantiersScreen() {
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
         fiche: existing?.fiche,
+        ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       });
     } else {
       addChantier({
@@ -345,6 +364,7 @@ export default function ChantiersScreen() {
         couleur: form.couleur,
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
+        ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       });
     }
     setShowForm(false);

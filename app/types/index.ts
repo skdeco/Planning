@@ -152,6 +152,8 @@ export interface Chantier {
   visibleSurPlanning: boolean;
   employeIds: string[];
   couleur: string;
+  latitude?: number;        // coordonnées GPS du chantier
+  longitude?: number;       // coordonnées GPS du chantier
   fiche?: FicheChantier;   // fiche chantier (optionnelle)
   ordre?: number;           // ordre d'affichage dans le planning (0 = premier)
 }
