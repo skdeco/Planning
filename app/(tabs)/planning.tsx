@@ -3370,15 +3370,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2F4F7',
   },
   empBadge: {
-    width: '94%',
-    paddingVertical: 2,
-    paddingHorizontal: 2,
-    borderRadius: 5,
+    width: '100%',
+    paddingVertical: 3,
+    paddingHorizontal: 1,
+    borderRadius: 4,
     alignItems: 'center',
     position: 'relative',
   },
   empBadgeText: {
-    fontSize: 8,
+    fontSize: 9,
     fontWeight: '700',
   },
   noteDot: {
@@ -3433,7 +3433,7 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
   addBtn: {
-    width: '94%',
+    width: '100%',
     paddingVertical: 2,
     alignItems: 'center',
   },
@@ -3443,7 +3443,7 @@ const styles = StyleSheet.create({
     fontWeight: '400',
   },
   noteBtn: {
-    width: '94%',
+    width: '100%',
     paddingVertical: 2,
     alignItems: 'center',
   },
@@ -3452,22 +3452,19 @@ const styles = StyleSheet.create({
     color: '#687076',
   },
   stBadge: {
-    width: '94%',
+    width: '100%',
     paddingVertical: 3,
-    paddingHorizontal: 3,
-    // Forme losange-ish via borderRadius asymétrique pour différencier des employés
-    borderRadius: 2,
+    paddingHorizontal: 1,
+    borderRadius: 4,
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.6)',
     borderStyle: 'dashed',
-    opacity: 0.92,
   },
   stBadgeText: {
     fontSize: 9,
     fontWeight: '800',
     color: '#fff',
-    letterSpacing: 0.3,
     textTransform: 'uppercase',
   },
   modalSectionTabs: {
@@ -4002,7 +3999,7 @@ const styles = StyleSheet.create({
   },
   // ── Interventions externes ──
   intervBandeau: {
-    width: '96%',
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 4,
