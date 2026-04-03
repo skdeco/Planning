@@ -83,11 +83,7 @@ export default function TabLayout() {
       screenOptions={{
         tabBarActiveTintColor: '#1A3A6B',
         tabBarInactiveTintColor: '#687076',
-        headerShown: true,
-        headerRight: () => <LanguageFlag />,
-        headerRightContainerStyle: { paddingRight: 16 },
-        headerStyle: { backgroundColor: '#FFFFFF', elevation: 0, shadowOpacity: 0 },
-        headerTitleStyle: { fontSize: 16, fontWeight: '700', color: '#11181C' },
+        headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
           paddingTop: 8,
