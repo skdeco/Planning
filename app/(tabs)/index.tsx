@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
+import { LanguageFlag } from '@/components/LanguageFlag';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 
@@ -119,11 +120,14 @@ export default function DashboardScreen() {
     return (
       <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
-            <Text style={styles.greeting}>Bonjour {emp?.prenom || ''} 👋</Text>
-            <Text style={styles.date}>
-              {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-            </Text>
+          <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.greeting}>Bonjour {emp?.prenom || ''} 👋</Text>
+              <Text style={styles.date}>
+                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+              </Text>
+            </View>
+            <LanguageFlag />
           </View>
 
           {/* Pointage du jour */}

@@ -10,6 +10,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { LanguageFlag } from '@/components/LanguageFlag';
 import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
   type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem, type RetardPlanifie,
@@ -1244,6 +1245,7 @@ export default function PlanningScreen() {
               <Text style={styles.galerieBtnText}>💾</Text>
             </Pressable>
           )}
+          <LanguageFlag />
           <Pressable style={styles.logoutBtn} onPress={handleLogout}>
             <Text style={styles.logoutBtnText}>⏻</Text>
           </Pressable>
