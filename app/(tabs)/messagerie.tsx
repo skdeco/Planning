@@ -712,18 +712,56 @@ export default function MessagerieScreen() {
         )}
 
         {/* Panneau programmation (admin) */}
-        {showSchedule && isAdmin && (
+        {showSchedule && isAdmin && (() => {
+          const todayYmd = new Date().toISOString().slice(0, 10);
+          const demainYmd = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); })();
+          const apresDemainYmd = (() => { const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().slice(0, 10); })();
+          const lundiYmd = (() => { const d = new Date(); const dow = d.getDay(); d.setDate(d.getDate() + (dow === 0 ? 1 : 8 - dow)); return d.toISOString().slice(0, 10); })();
+          const formatFr = (ymd: string) => { const d = new Date(ymd + 'T12:00:00'); return `${d.getDate()}/${d.getMonth() + 1}`; };
+          const heures = ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
+          return (
           <View style={styles.scheduleBar}>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#1A3A6B' }}>⏰ Programmer l'envoi :</Text>
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-              <TextInput style={[styles.scheduleInput, { flex: 1 }]} value={scheduleDate} onChangeText={setScheduleDate} placeholder="AAAA-MM-JJ" maxLength={10} />
-              <TextInput style={[styles.scheduleInput, { width: 70 }]} value={scheduleTime} onChangeText={setScheduleTime} placeholder="HH:MM" maxLength={5} />
-              <Pressable onPress={() => { setShowSchedule(false); setScheduleDate(''); setScheduleTime(''); }} style={{ padding: 6 }}>
-                <Text style={{ color: '#E74C3C', fontSize: 12, fontWeight: '600' }}>✕</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#1A3A6B' }}>⏰ Programmer l'envoi</Text>
+              <Pressable onPress={() => { setShowSchedule(false); setScheduleDate(''); setScheduleTime(''); }} style={{ padding: 4 }}>
+                <Text style={{ color: '#E74C3C', fontSize: 14, fontWeight: '600' }}>✕</Text>
               </Pressable>
             </View>
+            {/* Date rapide */}
+            <Text style={{ fontSize: 11, color: '#687076', marginTop: 6, marginBottom: 4 }}>Date :</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+              {[
+                { label: `Aujourd'hui (${formatFr(todayYmd)})`, value: todayYmd },
+                { label: `Demain (${formatFr(demainYmd)})`, value: demainYmd },
+                { label: `Après-demain (${formatFr(apresDemainYmd)})`, value: apresDemainYmd },
+                { label: `Lundi (${formatFr(lundiYmd)})`, value: lundiYmd },
+              ].map(opt => (
+                <Pressable key={opt.value}
+                  style={[styles.scheduleChip, scheduleDate === opt.value && styles.scheduleChipActive]}
+                  onPress={() => setScheduleDate(opt.value)}>
+                  <Text style={[styles.scheduleChipText, scheduleDate === opt.value && { color: '#fff' }]}>{opt.label}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            {/* Heure */}
+            <Text style={{ fontSize: 11, color: '#687076', marginTop: 8, marginBottom: 4 }}>Heure :</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+              {heures.map(h => (
+                <Pressable key={h}
+                  style={[styles.scheduleChip, scheduleTime === h && styles.scheduleChipActive]}
+                  onPress={() => setScheduleTime(h)}>
+                  <Text style={[styles.scheduleChipText, scheduleTime === h && { color: '#fff' }]}>{h}</Text>
+                </Pressable>
+              ))}
+            </ScrollView>
+            {scheduleDate && scheduleTime && (
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#27AE60', marginTop: 6 }}>
+                Envoi prévu le {scheduleDate.split('-').reverse().join('/')} à {scheduleTime}
+              </Text>
+            )}
           </View>
-        )}
+          );
+        })()}
 
         {/* Zone de saisie */}
         {!showArchive && (
@@ -849,7 +887,9 @@ const styles = StyleSheet.create({
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   // Programmation message
   scheduleBar: { backgroundColor: '#FAFBFC', borderTopWidth: 1, borderTopColor: '#E2E6EA', padding: 10 },
-  scheduleInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#11181C' },
+  scheduleChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: '#F2F4F7', borderWidth: 1, borderColor: '#E2E6EA' },
+  scheduleChipActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
+  scheduleChipText: { fontSize: 12, fontWeight: '600', color: '#687076' },
   // Barre et panneau de filtres
   filterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingVertical: 6 },
   filterPanel: { backgroundColor: '#FAFBFC', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', padding: 12, gap: 8 },
