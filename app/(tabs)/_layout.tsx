@@ -144,7 +144,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ═══ ONGLET 4 : Équipe (admin, inclut ST) / Matériel (employé) ═══ */}
+      {/* ═══ ONGLET 4 : Équipe (admin) / Matériel (employé) ═══ */}
       <Tabs.Screen
         name="equipe"
         options={{
@@ -159,7 +159,7 @@ export default function TabLayout() {
         name="materiel"
         options={{
           title: t.nav.materiel,
-          href: (isEmploye) ? undefined : null,
+          href: isST ? null : undefined,
           tabBarBadge: isAcheteur && nbNonAchetes > 0 ? nbNonAchetes : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
           tabBarIcon: ({ color }) => (
@@ -168,7 +168,33 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ═══ ONGLET 5 : Messages — avec badge ═══ */}
+      {/* ═══ ONGLET 5 : Reporting (admin) ═══ */}
+      <Tabs.Screen
+        name="reporting"
+        options={{
+          title: t.nav.reporting,
+          href: isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="chart.bar.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* ═══ ONGLET 6 : RH (tous sauf ST) ═══ */}
+      <Tabs.Screen
+        name="rh"
+        options={{
+          title: t.nav.rh,
+          href: hasRHAccess ? undefined : null,
+          tabBarBadge: nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
+          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="person.badge.clock.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* ═══ ONGLET 7 : Messages — avec badge ═══ */}
       <Tabs.Screen
         name="messagerie"
         options={{
@@ -181,25 +207,11 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ═══ ONGLETS SECONDAIRES — cachés de la tab bar admin, accessibles via dashboard ═══ */}
+      {/* ═══ ONGLETS CACHÉS ═══ */}
       <Tabs.Screen
         name="sous-traitants"
         options={{
           title: t.nav.sousTraitants,
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="reporting"
-        options={{
-          title: t.nav.reporting,
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="rh"
-        options={{
-          title: t.nav.rh,
           href: null,
         }}
       />

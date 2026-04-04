@@ -567,33 +567,27 @@ export default function ReportingScreen() {
         )}
       </View>
 
-      {/* Sélecteur de vue */}
-      <View style={styles.vueSelector}>
+      {/* Filtres */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ borderBottomWidth: 1, borderBottomColor: '#E2E6EA', backgroundColor: '#fff' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8, gap: 6 }}>
         <Pressable
-          style={[styles.vueBtn, vue === 'journalier' && styles.vueBtnActive]}
+          style={[styles.filterChip, vue === 'journalier' && styles.filterChipActive]}
           onPress={() => setVue('journalier')}
         >
-          <Text style={[styles.vueBtnText, vue === 'journalier' && styles.vueBtnTextActive]}>
-            {t.reporting.daily}
-          </Text>
+          <Text style={[styles.filterChipText, vue === 'journalier' && styles.filterChipTextActive]}>📅 Par jour</Text>
         </Pressable>
         <Pressable
-          style={[styles.vueBtn, vue === 'employe' && styles.vueBtnActive]}
+          style={[styles.filterChip, vue === 'employe' && styles.filterChipActive]}
           onPress={() => setVue('employe')}
         >
-          <Text style={[styles.vueBtnText, vue === 'employe' && styles.vueBtnTextActive]}>
-            {t.reporting.byEmployee}
-          </Text>
+          <Text style={[styles.filterChipText, vue === 'employe' && styles.filterChipTextActive]}>👷 Par employé</Text>
         </Pressable>
         <Pressable
-          style={[styles.vueBtn, vue === 'saisie' && styles.vueBtnActive]}
+          style={[styles.filterChip, vue === 'saisie' && styles.filterChipActive]}
           onPress={() => setVue('saisie')}
         >
-          <Text style={[styles.vueBtnText, vue === 'saisie' && styles.vueBtnTextActive]}>
-            ✏️ {t.reporting.manualEntry}
-          </Text>
+          <Text style={[styles.filterChipText, vue === 'saisie' && styles.filterChipTextActive]}>✏️ Saisie</Text>
         </Pressable>
-      </View>
+      </ScrollView>
 
       {/* ── VUE JOURNALIÈRE ── */}
       {vue === 'journalier' && (

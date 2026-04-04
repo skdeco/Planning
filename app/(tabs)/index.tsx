@@ -226,20 +226,28 @@ export default function DashboardScreen() {
     <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-            <View>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ flex: 1 }}>
               <Text style={styles.greeting}>Bonjour 👋</Text>
               <Text style={styles.date}>
                 {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
               </Text>
             </View>
-            {weather && (
-              <View style={{ alignItems: 'center', backgroundColor: '#fff', borderRadius: 12, padding: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
-                <Text style={{ fontSize: 24 }}>{weather.icon}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>{weather.temp}°C</Text>
-                <Text style={{ fontSize: 10, color: '#687076' }}>{weather.description}</Text>
-              </View>
-            )}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              {weather && (
+                <View style={{ alignItems: 'center' }}>
+                  <Text style={{ fontSize: 20 }}>{weather.icon}</Text>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#11181C' }}>{weather.temp}°C</Text>
+                </View>
+              )}
+              <LanguageFlag />
+              <Pressable
+                style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FECACA' }}
+                onPress={logout}
+              >
+                <Text style={{ fontSize: 16, color: '#EF4444' }}>⏻</Text>
+              </Pressable>
+            </View>
           </View>
         </View>
 
@@ -324,43 +332,6 @@ export default function DashboardScreen() {
           <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A3A6B' }}>Exporter le rapport du mois</Text>
         </Pressable>
 
-        {/* Déconnexion + Langue */}
-        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 20 }}>
-          <LanguageFlag />
-          <Pressable
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FEF2F2', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#FECACA' }}
-            onPress={logout}
-          >
-            <Text style={{ fontSize: 14 }}>⏻</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#EF4444' }}>Déconnexion</Text>
-          </Pressable>
-        </View>
-
-        {/* Sections rapides : Reporting, RH, Matériel */}
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 20 }}>
-          <Pressable style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 14 }]} onPress={() => router.push('/(tabs)/reporting' as any)}>
-            <Text style={{ fontSize: 22 }}>📊</Text>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', marginTop: 4 }}>Reporting</Text>
-          </Pressable>
-          <Pressable style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 14 }]} onPress={() => router.push('/(tabs)/rh' as any)}>
-            <Text style={{ fontSize: 22 }}>📋</Text>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', marginTop: 4 }}>RH</Text>
-            {stats.demandesRH > 0 && (
-              <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{stats.demandesRH}</Text>
-              </View>
-            )}
-          </Pressable>
-          <Pressable style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 14 }]} onPress={() => router.push('/(tabs)/materiel' as any)}>
-            <Text style={{ fontSize: 22 }}>🛒</Text>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', marginTop: 4 }}>Matériel</Text>
-            {stats.materielNonAchete > 0 && (
-              <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{stats.materielNonAchete}</Text>
-              </View>
-            )}
-          </Pressable>
-        </View>
 
         {/* Activité récente — tout en bas */}
         {activiteRecente.length > 0 && (
