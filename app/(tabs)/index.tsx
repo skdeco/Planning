@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
@@ -13,7 +13,7 @@ function toYMD(d: Date): string {
 }
 
 export default function DashboardScreen() {
-  const { data, currentUser, isHydrated, logout, toggleTask } = useApp();
+  const { data, currentUser, isHydrated, logout, toggleTask, addRetardPlanifie } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -117,6 +117,8 @@ export default function DashboardScreen() {
     };
   }, [data.pointages, myId, today]);
 
+  // Historique complet
+  const [showHistorique, setShowHistorique] = useState(false);
   // Galerie photos state
   const [galerieVisible, setGalerieVisible] = useState(false);
   const [galerieChantierId, setGalerieChantierId] = useState<string | undefined>(undefined);
@@ -154,6 +156,42 @@ export default function DashboardScreen() {
               </Pressable>
             </View>
           </View>
+
+          {/* Bouton "Je suis en retard" */}
+          {!myPointagesDuJour.debut && myChantiers.length > 0 && (
+            <Pressable
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFF3E0', paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#FFE082', marginTop: 8 }}
+              onPress={() => {
+                const motifs = ['Bouchons / Transport', 'Problème véhicule', 'Rendez-vous médical', 'Raison personnelle', 'Autre'];
+                if (Platform.OS === 'web') {
+                  const choix = window.prompt('Motif du retard :\n' + motifs.map((m, i) => `${i + 1}. ${m}`).join('\n'), '1');
+                  const motif = motifs[parseInt(choix || '1') - 1] || motifs[0];
+                  addRetardPlanifie({
+                    id: `ret_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                    employeId: myId || '',
+                    date: today,
+                    heureArrivee: '',
+                    motif,
+                    createdAt: new Date().toISOString(),
+                  });
+                } else {
+                  Alert.alert('Je suis en retard', 'Sélectionnez le motif', motifs.map(m => ({
+                    text: m,
+                    onPress: () => addRetardPlanifie({
+                      id: `ret_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                      employeId: myId || '',
+                      date: today,
+                      heureArrivee: '',
+                      motif: m,
+                      createdAt: new Date().toISOString(),
+                    }),
+                  })));
+                }
+              }}>
+              <Text style={{ fontSize: 16 }}>⚠️</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#E65100' }}>Je suis en retard</Text>
+            </Pressable>
+          )}
 
           {/* Chantiers du jour */}
           <Text style={styles.sectionTitle}>Mes chantiers aujourd'hui</Text>
@@ -348,7 +386,12 @@ export default function DashboardScreen() {
         {/* Activité récente — tout en bas */}
         {activiteRecente.length > 0 && (
           <>
-            <Text style={styles.sectionTitle}>Activité récente</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 10 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>Activité récente</Text>
+              <Pressable onPress={() => setShowHistorique(true)}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>Voir tout →</Text>
+              </Pressable>
+            </View>
             <View style={styles.activityContainer}>
               {activiteRecente.map(log => (
                 <View key={log.id} style={styles.activityRow}>
@@ -364,6 +407,41 @@ export default function DashboardScreen() {
             </View>
           </>
         )}
+
+        {/* Modal historique complet */}
+        <Modal visible={showHistorique} transparent animationType="slide" onRequestClose={() => setShowHistorique(false)}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', padding: 16 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>📋 Historique complet</Text>
+                <Pressable onPress={() => setShowHistorique(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2F4F7', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
+                </Pressable>
+              </View>
+              <ScrollView showsVerticalScrollIndicator={false}>
+                {(data.activityLog || []).slice().reverse().map(log => {
+                  const d = new Date(log.timestamp);
+                  const dateStr = d.toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' });
+                  const heureStr = d.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+                  return (
+                    <View key={log.id} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F2F4F7', gap: 10 }}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#1A3A6B', marginTop: 5 }} />
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, color: '#11181C' }}>{log.description}</Text>
+                        <Text style={{ fontSize: 11, color: '#687076', marginTop: 2 }}>
+                          {log.userName} — {dateStr} {heureStr}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+                {(data.activityLog || []).length === 0 && (
+                  <Text style={{ textAlign: 'center', color: '#687076', paddingVertical: 32 }}>Aucune activité enregistrée</Text>
+                )}
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
       </ScrollView>
     </ScreenContainer>
   );

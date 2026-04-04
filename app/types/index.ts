@@ -574,6 +574,37 @@ export interface ActivityLog {
   targetId?: string;       // id de l'objet concerné (chantierId, employeId, etc.)
 }
 
+// ─── Catalogue articles (matériel) ────────────────────────────────────────
+export type CategorieArticle = 'outillage' | 'plomberie' | 'electricite' | 'peinture' | 'maconnerie' | 'menuiserie' | 'quincaillerie' | 'securite' | 'nettoyage' | 'autre';
+
+export const CATEGORIES_ARTICLES: { value: CategorieArticle; label: string }[] = [
+  { value: 'outillage', label: 'Outillage' },
+  { value: 'plomberie', label: 'Plomberie' },
+  { value: 'electricite', label: 'Électricité' },
+  { value: 'peinture', label: 'Peinture' },
+  { value: 'maconnerie', label: 'Maçonnerie' },
+  { value: 'menuiserie', label: 'Menuiserie' },
+  { value: 'quincaillerie', label: 'Quincaillerie' },
+  { value: 'securite', label: 'Sécurité' },
+  { value: 'nettoyage', label: 'Nettoyage' },
+  { value: 'autre', label: 'Autre' },
+];
+
+export interface ArticleCatalogue {
+  id: string;
+  nom: string;                  // nom de l'article
+  categorie: CategorieArticle;
+  description?: string;         // description pour l'employé
+  reference?: string;           // référence fournisseur
+  prixUnitaire?: number;        // prix en euros (masqué pour l'employé)
+  fournisseur?: string;         // nom du fournisseur
+  lienFournisseur?: string;     // URL vers le site du fournisseur
+  ficheTechnique?: string;      // URL ou base64 de la fiche technique
+  unite?: string;               // unité (pièce, m, m², kg...)
+  createdAt: string;
+  updatedAt: string;
+}
+
 // ─── Agenda admin partagé ──────────────────────────────────────────────────
 export interface AgendaEvent {
   id: string;
@@ -636,6 +667,8 @@ export interface AppData {
   messagesPrive?: import('./messages').MessagePrive[];
   // Fiches chantier (données structurées par chantier)
   fichesChantier?: Record<string, any>;
+  // Catalogue articles
+  catalogueArticles?: ArticleCatalogue[];
   // Agenda admin partagé
   agendaEvents?: AgendaEvent[];
   // Mot de passe administrateur (modifiable)

@@ -76,6 +76,7 @@ import type {
   PlanChantier,
   ActivityLog,
   AgendaEvent,
+  ArticleCatalogue,
 } from '@/app/types';
 import type { MessagePrive } from '@/app/types/messages';
 import { EMPLOYE_COLORS } from '@/app/types';
@@ -183,6 +184,10 @@ interface AppContextType {
   // Notifications
   notifications: ActivityLog[];
   markNotificationsRead: () => void;
+  // Catalogue articles
+  addArticleCatalogue: (article: ArticleCatalogue) => void;
+  updateArticleCatalogue: (article: ArticleCatalogue) => void;
+  deleteArticleCatalogue: (id: string) => void;
   // Agenda admin
   addAgendaEvent: (event: AgendaEvent) => void;
   updateAgendaEvent: (event: AgendaEvent) => void;
@@ -348,6 +353,7 @@ function migrateData(parsed: Record<string, any>): AppData {
     notesSuivi: parsed.notesSuivi || parsed.notesSuiviChantier || [],
     // Notes chantier (ne jamais écraser)
     notesChantier: parsed.notesChantier || [],
+    catalogueArticles: parsed.catalogueArticles || [],
     agendaEvents: parsed.agendaEvents || [],
     notesChantierSupprimees: parsed.notesChantierSupprimees || [],
     // Galerie photos (ne jamais écraser)
@@ -1400,6 +1406,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, [currentUser, data.employes, data.sousTraitants]);
 
+  // ── Catalogue articles ──
+  const addArticleCatalogue = (article: ArticleCatalogue) =>
+    setData(p => ({ ...p, catalogueArticles: [...(p.catalogueArticles || []), article] }));
+  const updateArticleCatalogue = (article: ArticleCatalogue) =>
+    setData(p => ({ ...p, catalogueArticles: (p.catalogueArticles || []).map(a => a.id === article.id ? article : a) }));
+  const deleteArticleCatalogue = (id: string) => {
+    trackGenericDeletion(id);
+    setData(p => ({ ...p, catalogueArticles: (p.catalogueArticles || []).filter(a => a.id !== id) }));
+  };
+
   // ── Agenda admin ──
   const addAgendaEvent = (event: AgendaEvent) =>
     setData(p => ({ ...p, agendaEvents: [...(p.agendaEvents || []), event] }));
@@ -1469,6 +1485,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPlanChantier, deletePlanChantier,
       updateAdminPassword,
       updateOrdreAffectation,
+      addArticleCatalogue, updateArticleCatalogue, deleteArticleCatalogue,
       addAgendaEvent, updateAgendaEvent, deleteAgendaEvent,
       notifications, markNotificationsRead,
       syncStatus,

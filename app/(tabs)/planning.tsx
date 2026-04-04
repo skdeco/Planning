@@ -2404,13 +2404,23 @@ export default function PlanningScreen() {
                       <Text style={styles.noteLabel}>
                         {noteModal?.editingNote ? 'Modifier la note' : 'Nouvelle note'}
                       </Text>
+                      {/* Modèles de notes rapides */}
+                      {!noteModal?.editingNote && !noteText && (
+                        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
+                          {['Finitions à terminer', 'Attente livraison matériel', 'Nettoyage fin de chantier', 'Problème à signaler', 'RAS — Travail en cours'].map(tpl => (
+                            <Pressable key={tpl} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F2F4F7', borderWidth: 1, borderColor: '#E2E6EA' }}
+                              onPress={() => setNoteText(tpl)}>
+                              <Text style={{ fontSize: 11, color: '#687076' }}>{tpl}</Text>
+                            </Pressable>
+                          ))}
+                        </ScrollView>
+                      )}
                       <View style={styles.noteInputRow}>
                         <TextInput
                           style={styles.noteInput}
                           value={noteText}
                           onChangeText={(text) => {
                             setNoteText(text);
-                            // Détecter @mention
                             const match = text.match(/@(\w*)$/);
                             setMentionQuery(match ? match[1] : null);
                           }}
