@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert, Linking } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
@@ -86,6 +86,48 @@ export default function DashboardScreen() {
     (data.activityLog || []).slice(-8).reverse(),
     [data.activityLog]
   );
+
+  // Récap hebdo (lundi à dimanche courant)
+  const recapHebdo = useMemo(() => {
+    const now = new Date();
+    const dow = now.getDay();
+    const mondayOff = dow === 0 ? -6 : 1 - dow;
+    const monday = new Date(now); monday.setDate(now.getDate() + mondayOff);
+    const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+    const start = toYMD(monday); const end = toYMD(sunday);
+
+    const ptsSemaine = data.pointages.filter(p => p.date >= start && p.date <= end);
+    const nbJoursPointes = new Set(ptsSemaine.map(p => `${p.employeId}_${p.date}`)).size;
+    let totalMinutes = 0;
+    const parJour = new Map<string, { debut?: string; fin?: string }>();
+    ptsSemaine.forEach(p => {
+      const key = `${p.employeId}_${p.date}`;
+      if (!parJour.has(key)) parJour.set(key, {});
+      const entry = parJour.get(key)!;
+      if (p.type === 'debut') entry.debut = p.heure;
+      if (p.type === 'fin') entry.fin = p.heure;
+    });
+    parJour.forEach(v => {
+      if (v.debut && v.fin) {
+        const [dh, dm] = v.debut.split(':').map(Number);
+        const [fh, fm] = v.fin.split(':').map(Number);
+        totalMinutes += (fh * 60 + fm) - (dh * 60 + dm);
+      }
+    });
+    const totalHeures = Math.floor(totalMinutes / 60);
+    const nbRetards = ptsSemaine.filter(p => {
+      if (p.type !== 'debut') return false;
+      const emp = data.employes.find(e => e.id === p.employeId);
+      const d = new Date(p.date + 'T12:00:00');
+      const horaire = emp?.horaires?.[d.getDay()];
+      if (!horaire?.actif || !horaire.debut) return false;
+      const [h, m] = horaire.debut.split(':').map(Number);
+      const [ph, pm] = p.heure.split(':').map(Number);
+      return (ph * 60 + pm) > (h * 60 + m) + 5;
+    }).length;
+
+    return { nbJoursPointes, totalHeures, nbRetards, start, end };
+  }, [data.pointages, data.employes]);
 
   // ── Vue "Ma journée" pour les employés ──────────────────────────────────────
   const myId = currentUser?.employeId;
@@ -210,16 +252,36 @@ export default function DashboardScreen() {
                   {c.fiche.codeAlarme ? <Text style={{ fontSize: 12, color: '#1A3A6B' }}>🔔 Alarme : {c.fiche.codeAlarme}</Text> : null}
                 </View>
               )}
-              {/* Bouton photos chantier */}
-              <Pressable
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, backgroundColor: '#EBF0FF', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, alignSelf: 'flex-start' }}
-                onPress={() => { setGalerieChantierId(c.id); setGalerieVisible(true); }}
-              >
-                <Text style={{ fontSize: 14 }}>📸</Text>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>
-                  Photos ({(data.photosChantier || []).filter(p => p.chantierId === c.id).length})
-                </Text>
-              </Pressable>
+              {/* Boutons actions */}
+              <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
+                <Pressable
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EBF0FF', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8 }}
+                  onPress={() => { setGalerieChantierId(c.id); setGalerieVisible(true); }}
+                >
+                  <Text style={{ fontSize: 12 }}>📸</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#1A3A6B' }}>Photos ({(data.photosChantier || []).filter(p => p.chantierId === c.id).length})</Text>
+                </Pressable>
+                {c.adresse && (
+                  <Pressable
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#E8F5E9', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8 }}
+                    onPress={() => {
+                      const addr = encodeURIComponent(c.adresse || '');
+                      if (Platform.OS === 'web') {
+                        window.open(`https://www.google.com/maps/dir/?api=1&destination=${addr}`, '_blank');
+                      } else {
+                        Alert.alert('Itinéraire', 'Ouvrir avec :', [
+                          { text: 'Google Maps', onPress: () => Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${addr}`) },
+                          { text: 'Waze', onPress: () => Linking.openURL(`https://waze.com/ul?q=${addr}&navigate=yes`) },
+                          { text: 'Annuler', style: 'cancel' },
+                        ]);
+                      }
+                    }}
+                  >
+                    <Text style={{ fontSize: 12 }}>🗺</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#2E7D32' }}>Itinéraire</Text>
+                  </Pressable>
+                )}
+              </View>
             </Pressable>
           ))}
 
@@ -320,6 +382,23 @@ export default function DashboardScreen() {
             <Text style={[styles.statValue, { color: '#00BCD4' }]}>{stats.nbArrivees} / {stats.nbDeparts}</Text>
             <Text style={styles.statLabel}>Arrivées / Départs</Text>
           </Pressable>
+        </View>
+
+        {/* Récap semaine */}
+        <Text style={styles.sectionTitle}>Résumé de la semaine</Text>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          <View style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#1A3A6B' }}>{recapHebdo.totalHeures}h</Text>
+            <Text style={{ fontSize: 10, color: '#687076' }}>Heures travaillées</Text>
+          </View>
+          <View style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#27AE60' }}>{recapHebdo.nbJoursPointes}</Text>
+            <Text style={{ fontSize: 10, color: '#687076' }}>Pointages</Text>
+          </View>
+          <View style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
+            <Text style={{ fontSize: 20, fontWeight: '800', color: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60' }}>{recapHebdo.nbRetards}</Text>
+            <Text style={{ fontSize: 10, color: '#687076' }}>Retards</Text>
+          </View>
         </View>
 
         {/* Couverture chantiers — 2 colonnes */}
