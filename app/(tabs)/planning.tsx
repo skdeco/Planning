@@ -157,7 +157,7 @@ interface NoteModalState {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateOrdreAffectation } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateOrdreAffectation, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const { width: windowWidth } = useWindowDimensions();
@@ -165,6 +165,15 @@ export default function PlanningScreen() {
   const NAME_COL = Math.max(50, Math.floor(windowWidth * 0.15)); // 15% de l'écran, min 50px
   const dayCol = Math.floor((windowWidth - NAME_COL) / 7);
   const needsHorizontalScroll = false; // Plus jamais de scroll horizontal
+  // Mode planning : Équipe (grille) ou Direction (agenda)
+  const [planningMode, setPlanningMode] = useState<'equipe' | 'direction'>('equipe');
+  // Direction : vue jour/semaine/mois
+  const [directionView, setDirectionView] = useState<'jour' | 'semaine' | 'mois'>('semaine');
+  const [directionDate, setDirectionDate] = useState(toYMD(new Date()));
+  const [showAgendaForm, setShowAgendaForm] = useState(false);
+  const [agendaEditId, setAgendaEditId] = useState<string | null>(null);
+  const [agendaForm, setAgendaForm] = useState({ titre: '', description: '', date: toYMD(new Date()), heureDebut: '09:00', heureFin: '10:00', lieu: '', couleur: '#1A3A6B', invites: [] as string[], chantierId: '' });
+  const AGENDA_COULEURS = ['#1A3A6B', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
   const [viewMode, setViewMode] = useState<'semaine' | 'mois'>('semaine');
@@ -1255,6 +1264,243 @@ export default function PlanningScreen() {
         </ScrollView>
       </View>
 
+      {/* Sélecteur Planning Équipe / Direction (admin) */}
+      {isAdmin && (
+        <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingHorizontal: 12, paddingVertical: 6, gap: 6 }}>
+          <Pressable
+            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'equipe' ? '#1A3A6B' : '#F2F4F7' }}
+            onPress={() => setPlanningMode('equipe')}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: planningMode === 'equipe' ? '#fff' : '#687076' }}>👷 Planning Équipe</Text>
+          </Pressable>
+          <Pressable
+            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'direction' ? '#1A3A6B' : '#F2F4F7' }}
+            onPress={() => setPlanningMode('direction')}>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: planningMode === 'direction' ? '#fff' : '#687076' }}>📅 Planning Direction</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* ═══ PLANNING DIRECTION (Agenda) ═══ */}
+      {planningMode === 'direction' && isAdmin && (() => {
+        const agendaEvents = (data.agendaEvents || []);
+        const MOIS_LONG = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+        const JOURS_COURT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
+
+        const dirDate = new Date(directionDate + 'T12:00:00');
+        const dirLabel = `${JOURS_COURT[dirDate.getDay()]} ${dirDate.getDate()} ${MOIS_LONG[dirDate.getMonth()]} ${dirDate.getFullYear()}`;
+        const prevDir = () => { const d = new Date(directionDate + 'T12:00:00'); d.setDate(d.getDate() - (directionView === 'jour' ? 1 : directionView === 'semaine' ? 7 : 30)); setDirectionDate(toYMD(d)); };
+        const nextDir = () => { const d = new Date(directionDate + 'T12:00:00'); d.setDate(d.getDate() + (directionView === 'jour' ? 1 : directionView === 'semaine' ? 7 : 30)); setDirectionDate(toYMD(d)); };
+
+        // Jours à afficher
+        let datesToShow: string[] = [];
+        if (directionView === 'jour') {
+          datesToShow = [directionDate];
+        } else if (directionView === 'semaine') {
+          const dow = dirDate.getDay();
+          const mondayOff = dow === 0 ? -6 : 1 - dow;
+          for (let i = 0; i < 7; i++) {
+            const d = new Date(dirDate); d.setDate(dirDate.getDate() + mondayOff + i);
+            datesToShow.push(toYMD(d));
+          }
+        } else {
+          const y = dirDate.getFullYear(); const m = dirDate.getMonth();
+          const d = new Date(y, m, 1);
+          while (d.getMonth() === m) { datesToShow.push(toYMD(d)); d.setDate(d.getDate() + 1); }
+        }
+
+        const eventsForDates = datesToShow.map(dt => ({
+          date: dt,
+          events: agendaEvents.filter(e => e.date === dt).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut)),
+        }));
+
+        const handleSaveAgenda = () => {
+          if (!agendaForm.titre.trim()) return;
+          const event = {
+            id: agendaEditId || `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+            titre: agendaForm.titre.trim(),
+            description: agendaForm.description.trim() || undefined,
+            date: agendaForm.date,
+            heureDebut: agendaForm.heureDebut,
+            heureFin: agendaForm.heureFin || undefined,
+            lieu: agendaForm.lieu.trim() || undefined,
+            couleur: agendaForm.couleur,
+            createdBy: 'admin',
+            createdByNom: 'Admin',
+            invites: agendaForm.invites,
+            chantierId: agendaForm.chantierId || undefined,
+            acceptes: [] as string[],
+            refuses: [] as string[],
+            createdAt: new Date().toISOString(),
+          };
+          if (agendaEditId) updateAgendaEvent(event as any);
+          else addAgendaEvent(event as any);
+          setShowAgendaForm(false);
+        };
+
+        return (
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 32 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
+            {/* Vue selector + nav */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+              {(['jour', 'semaine', 'mois'] as const).map(v => (
+                <Pressable key={v} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: directionView === v ? '#1A3A6B' : '#F2F4F7', borderWidth: 1, borderColor: directionView === v ? '#1A3A6B' : '#E2E6EA' }}
+                  onPress={() => setDirectionView(v)}>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: directionView === v ? '#fff' : '#687076' }}>
+                    {v === 'jour' ? 'Jour' : v === 'semaine' ? 'Semaine' : 'Mois'}
+                  </Text>
+                </Pressable>
+              ))}
+              <View style={{ flex: 1 }} />
+              <Pressable onPress={prevDir} style={{ padding: 6 }}><Text style={{ fontSize: 18 }}>‹</Text></Pressable>
+              <Pressable onPress={() => setDirectionDate(toYMD(new Date()))} style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#1A3A6B', borderRadius: 8 }}>
+                <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Auj.</Text>
+              </Pressable>
+              <Pressable onPress={nextDir} style={{ padding: 6 }}><Text style={{ fontSize: 18 }}>›</Text></Pressable>
+            </View>
+
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C', marginBottom: 10 }}>{dirLabel}</Text>
+
+            {/* Bouton nouveau RDV */}
+            <Pressable style={{ backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginBottom: 12 }}
+              onPress={() => {
+                setAgendaEditId(null);
+                setAgendaForm({ titre: '', description: '', date: directionDate, heureDebut: '09:00', heureFin: '10:00', lieu: '', couleur: '#1A3A6B', invites: [], chantierId: '' });
+                setShowAgendaForm(true);
+              }}>
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>+ Nouveau rendez-vous</Text>
+            </Pressable>
+
+            {/* Events */}
+            {eventsForDates.map(({ date, events: evts }) => (
+              <View key={date}>
+                {directionView !== 'jour' && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginBottom: 4 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B' }}>{JOURS_COURT[new Date(date + 'T12:00:00').getDay()]} {new Date(date + 'T12:00:00').getDate()}</Text>
+                    {evts.length === 0 && <Text style={{ fontSize: 11, color: '#B0BEC5' }}>—</Text>}
+                  </View>
+                )}
+                {evts.map(evt => {
+                  const ch = evt.chantierId ? data.chantiers.find(c => c.id === evt.chantierId) : null;
+                  return (
+                    <Pressable key={evt.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 6, borderLeftWidth: 4, borderLeftColor: evt.couleur, shadowColor: '#000', shadowOpacity: 0.04, shadowRadius: 4, elevation: 1 }}
+                      onPress={() => {
+                        setAgendaEditId(evt.id);
+                        setAgendaForm({ titre: evt.titre, description: evt.description || '', date: evt.date, heureDebut: evt.heureDebut, heureFin: evt.heureFin || '', lieu: evt.lieu || '', couleur: evt.couleur, invites: evt.invites, chantierId: (evt as any).chantierId || '' });
+                        setShowAgendaForm(true);
+                      }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: evt.couleur }}>{evt.heureDebut}{evt.heureFin ? ` — ${evt.heureFin}` : ''}</Text>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{evt.titre}</Text>
+                          {evt.description ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{evt.description}</Text> : null}
+                          {evt.lieu ? <Text style={{ fontSize: 11, color: '#687076', marginTop: 2 }}>📍 {evt.lieu}</Text> : null}
+                          {ch ? <Text style={{ fontSize: 11, color: ch.couleur, fontWeight: '600', marginTop: 2 }}>🏗 {ch.nom}</Text> : null}
+                        </View>
+                        <Pressable onPress={() => deleteAgendaEvent(evt.id)} style={{ padding: 4 }}>
+                          <Text style={{ fontSize: 12, color: '#E74C3C' }}>🗑</Text>
+                        </Pressable>
+                      </View>
+                      {evt.invites.length > 0 && (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+                          {evt.invites.map(invId => {
+                            const emp = data.employes.find(e => e.id === invId);
+                            return <View key={invId} style={{ backgroundColor: '#EBF0FF', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
+                              <Text style={{ fontSize: 10, color: '#1A3A6B', fontWeight: '600' }}>{emp ? `${emp.prenom} ${emp.nom.charAt(0)}.` : invId}</Text>
+                            </View>;
+                          })}
+                        </View>
+                      )}
+                    </Pressable>
+                  );
+                })}
+                {directionView === 'jour' && evts.length === 0 && (
+                  <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+                    <Text style={{ fontSize: 36, marginBottom: 8 }}>📭</Text>
+                    <Text style={{ fontSize: 14, color: '#687076' }}>Aucun rendez-vous</Text>
+                  </View>
+                )}
+              </View>
+            ))}
+
+            {/* Modal formulaire RDV */}
+            <Modal visible={showAgendaForm} transparent animationType="slide" onRequestClose={() => setShowAgendaForm(false)}>
+              <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowAgendaForm(false)}>
+                <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '90%' }} onPress={e => e.stopPropagation()}>
+                  <ScrollView showsVerticalScrollIndicator={false}>
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C', marginBottom: 12 }}>{agendaEditId ? 'Modifier' : 'Nouveau rendez-vous'}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Titre *</Text>
+                    <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8 }}
+                      value={agendaForm.titre} onChangeText={v => setAgendaForm(f => ({ ...f, titre: v }))} placeholder="Réunion, visite..." />
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Description</Text>
+                    <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, minHeight: 50 }}
+                      value={agendaForm.description} onChangeText={v => setAgendaForm(f => ({ ...f, description: v }))} multiline placeholder="Détails..." />
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Date</Text>
+                        <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA' }}
+                          value={agendaForm.date} onChangeText={v => setAgendaForm(f => ({ ...f, date: v }))} placeholder="AAAA-MM-JJ" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Début</Text>
+                        <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA' }}
+                          value={agendaForm.heureDebut} onChangeText={v => setAgendaForm(f => ({ ...f, heureDebut: v }))} placeholder="HH:MM" />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Fin</Text>
+                        <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA' }}
+                          value={agendaForm.heureFin} onChangeText={v => setAgendaForm(f => ({ ...f, heureFin: v }))} placeholder="HH:MM" />
+                      </View>
+                    </View>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4, marginTop: 8 }}>Lieu</Text>
+                    <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8 }}
+                      value={agendaForm.lieu} onChangeText={v => setAgendaForm(f => ({ ...f, lieu: v }))} placeholder="Adresse..." />
+                    {/* Chantier */}
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Chantier associé</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
+                      <Pressable style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: !agendaForm.chantierId ? '#1A3A6B' : '#F2F4F7', borderWidth: 1, borderColor: !agendaForm.chantierId ? '#1A3A6B' : '#E2E6EA' }}
+                        onPress={() => setAgendaForm(f => ({ ...f, chantierId: '' }))}>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: !agendaForm.chantierId ? '#fff' : '#687076' }}>Aucun</Text>
+                      </Pressable>
+                      {data.chantiers.filter(c => c.statut === 'actif').map(c => (
+                        <Pressable key={c.id} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: agendaForm.chantierId === c.id ? c.couleur : '#F2F4F7', borderWidth: 1, borderColor: agendaForm.chantierId === c.id ? c.couleur : '#E2E6EA' }}
+                          onPress={() => setAgendaForm(f => ({ ...f, chantierId: f.chantierId === c.id ? '' : c.id }))}>
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: agendaForm.chantierId === c.id ? '#fff' : '#687076' }}>{c.nom}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                    {/* Couleur */}
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Couleur</Text>
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                      {AGENDA_COULEURS.map(c => (
+                        <Pressable key={c} onPress={() => setAgendaForm(f => ({ ...f, couleur: c }))}
+                          style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c, borderWidth: agendaForm.couleur === c ? 3 : 0, borderColor: '#11181C' }} />
+                      ))}
+                    </View>
+                    {/* Invités */}
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Inviter</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
+                      {data.employes.map(emp => (
+                        <Pressable key={emp.id} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: agendaForm.invites.includes(emp.id) ? '#1A3A6B' : '#F2F4F7', borderWidth: 1, borderColor: agendaForm.invites.includes(emp.id) ? '#1A3A6B' : '#E2E6EA' }}
+                          onPress={() => setAgendaForm(f => ({ ...f, invites: f.invites.includes(emp.id) ? f.invites.filter(i => i !== emp.id) : [...f.invites, emp.id] }))}>
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: agendaForm.invites.includes(emp.id) ? '#fff' : '#687076' }}>{emp.prenom} {emp.nom.charAt(0)}.</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    <Pressable style={{ backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: agendaForm.titre.trim() ? 1 : 0.5 }}
+                      onPress={handleSaveAgenda} disabled={!agendaForm.titre.trim()}>
+                      <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{agendaEditId ? 'Modifier' : 'Créer'}</Text>
+                    </Pressable>
+                  </ScrollView>
+                </Pressable>
+              </Pressable>
+            </Modal>
+          </ScrollView>
+        );
+      })()}
+
+      {/* ═══ PLANNING ÉQUIPE (existant) ═══ */}
+      {(planningMode === 'equipe' || !isAdmin) && (
+      <>
       <View style={styles.weekInfo}>
         <Text style={styles.weekLabel}>{viewMode === 'semaine' ? weekLabel : monthData.label}</Text>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
@@ -3188,6 +3434,8 @@ export default function PlanningScreen() {
         </Pressable>
       </Modal>
 
+    </>
+    )}
     </ScreenContainer>
   );
 }

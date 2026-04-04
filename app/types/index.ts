@@ -584,6 +584,7 @@ export interface AgendaEvent {
   heureFin?: string;       // HH:MM
   lieu?: string;
   couleur: string;
+  chantierId?: string;     // chantier associé au RDV
   createdBy: string;       // 'admin' ou identifiant admin
   createdByNom: string;
   invites: string[];       // liste des IDs admin invités
