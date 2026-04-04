@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
-  TouchableWithoutFeedback, Keyboard, Image, Alert,
+  TouchableWithoutFeedback, Keyboard, Image, Alert, RefreshControl,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
@@ -11,6 +11,7 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { LanguageFlag } from '@/components/LanguageFlag';
+import { useRefresh } from '@/hooks/useRefresh';
 import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
   type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem, type RetardPlanifie,
@@ -158,6 +159,7 @@ interface NoteModalState {
 export default function PlanningScreen() {
   const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateOrdreAffectation } = useApp();
   const { t } = useLanguage();
+  const { refreshing, onRefresh } = useRefresh();
   const { width: windowWidth } = useWindowDimensions();
   // Calcul dynamique : la grille tient TOUJOURS dans l'écran
   const NAME_COL = Math.max(50, Math.floor(windowWidth * 0.15)); // 15% de l'écran, min 50px
@@ -1312,7 +1314,7 @@ export default function PlanningScreen() {
 
       {/* Vue mensuelle */}
       {viewMode === 'mois' && (
-        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
           {/* En-tête jours semaine */}
           <View style={styles.monthHeaderRow}>
             {CAL_JOURS.map(j => (
@@ -1382,7 +1384,7 @@ export default function PlanningScreen() {
 
       {/* Grille hebdomadaire */}
       {viewMode === 'semaine' && (
-      <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
         {/* En-tête des jours */}
         <View style={styles.gridRow}>
           <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL }]} />
@@ -1786,7 +1788,7 @@ export default function PlanningScreen() {
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={{ fontSize: 12, color: '#444', minWidth: 30 }}>Du :</Text>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>{modal.date}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>{modal.date.split('-').reverse().join('/')}</Text>
                     <Text style={{ fontSize: 12, color: '#444', marginLeft: 8, minWidth: 30 }}>Au :</Text>
                     <DatePicker
                       value={affectationDateFin || modal.date}
@@ -1805,7 +1807,7 @@ export default function PlanningScreen() {
                   </View>
                   {affectationDateFin && affectationDateFin > modal.date && (
                     <Text style={{ fontSize: 11, color: '#27AE60', marginTop: 2 }}>
-                      Affecté du {modal.date} au {affectationDateFin} (week-ends exclus automatiquement)
+                      Affecté du {modal.date.split('-').reverse().join('/')} au {affectationDateFin.split('-').reverse().join('/')} (week-ends exclus automatiquement)
                     </Text>
                   )}
                 </View>
@@ -3424,8 +3426,8 @@ const styles = StyleSheet.create({
   },
   removeBadgeBtn: {
     position: 'absolute',
-    top: -5,
-    right: -5,
+    top: -4,
+    right: 2,
     width: 14,
     height: 14,
     borderRadius: 7,

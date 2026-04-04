@@ -184,6 +184,7 @@ interface AppContextType {
   markNotificationsRead: () => void;
   // Sync status
   syncStatus: 'synced' | 'saving' | 'error' | 'offline';
+  refreshData: () => Promise<void>;
   logout: () => void;
 }
 
@@ -1454,6 +1455,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateOrdreAffectation,
       notifications, markNotificationsRead,
       syncStatus,
+      refreshData: reloadFromSupabase,
       logout,
     }}>
       {children}

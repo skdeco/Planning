@@ -568,26 +568,20 @@ export default function ReportingScreen() {
       </View>
 
       {/* Filtres */}
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ borderBottomWidth: 1, borderBottomColor: '#E2E6EA', backgroundColor: '#fff' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 8, gap: 6 }}>
+      <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 8, gap: 6 }}>
         <Pressable
-          style={[styles.filterChip, vue === 'journalier' && styles.filterChipActive]}
+          style={[styles.filterChip, { flex: 1, alignItems: 'center' }, vue === 'journalier' && styles.filterChipActive]}
           onPress={() => setVue('journalier')}
         >
           <Text style={[styles.filterChipText, vue === 'journalier' && styles.filterChipTextActive]}>📅 Par jour</Text>
         </Pressable>
         <Pressable
-          style={[styles.filterChip, vue === 'employe' && styles.filterChipActive]}
+          style={[styles.filterChip, { flex: 1, alignItems: 'center' }, vue === 'employe' && styles.filterChipActive]}
           onPress={() => setVue('employe')}
         >
           <Text style={[styles.filterChipText, vue === 'employe' && styles.filterChipTextActive]}>👷 Par employé</Text>
         </Pressable>
-        <Pressable
-          style={[styles.filterChip, vue === 'saisie' && styles.filterChipActive]}
-          onPress={() => setVue('saisie')}
-        >
-          <Text style={[styles.filterChipText, vue === 'saisie' && styles.filterChipTextActive]}>✏️ Saisie</Text>
-        </Pressable>
-      </ScrollView>
+      </View>
 
       {/* ── VUE JOURNALIÈRE ── */}
       {vue === 'journalier' && (

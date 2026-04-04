@@ -1,11 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { useRefresh } from '@/hooks/useRefresh';
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -16,6 +17,7 @@ export default function DashboardScreen() {
   const { t } = useLanguage();
   const router = useRouter();
 
+  const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
   const isEmploye = currentUser?.role === 'employe';
   const isST = currentUser?.role === 'soustraitant';
@@ -119,7 +121,7 @@ export default function DashboardScreen() {
     const emp = data.employes.find(e => e.id === myId);
     return (
       <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
           <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.greeting}>Bonjour {emp?.prenom || ''} 👋</Text>
