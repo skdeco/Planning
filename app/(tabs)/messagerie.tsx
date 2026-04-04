@@ -56,6 +56,9 @@ export default function MessagerieScreen() {
   const [selectedChantierId, setSelectedChantierId] = useState<string | null>(null);
   const [contextMsg, setContextMsg] = useState<MessagePrive | null>(null);
   const [showFilters, setShowFilters] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduleDate, setScheduleDate] = useState('');
+  const [scheduleTime, setScheduleTime] = useState('');
   const [filterDateFrom, setFilterDateFrom] = useState('');
   const [filterDateTo, setFilterDateTo] = useState('');
   const [filterExpId, setFilterExpId] = useState<string | 'all'>('all');
@@ -165,6 +168,8 @@ export default function MessagerieScreen() {
         if (filterType === 'photo' && !(m.fichiers?.some(f => f.startsWith('data:image') || f.includes('/image')))) return false;
         if (filterType === 'pdf' && !(m.fichiers?.some(f => f.includes('pdf')))) return false;
         if (filterType === 'text' && m.fichiers && m.fichiers.length > 0) return false;
+        // Messages différés : visibles seulement après scheduledAt (sauf admin qui voit tout)
+        if (m.scheduledAt && !isAdmin && new Date(m.scheduledAt) > new Date()) return false;
         return true;
       })
       .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
@@ -198,6 +203,12 @@ export default function MessagerieScreen() {
       expediteurNom = st ? (st.societe || `${st.prenom} ${st.nom}`) : t.messagerie.subcontractor;
     }
 
+    // Construire le scheduledAt si programmé
+    let scheduledAt: string | undefined;
+    if (showSchedule && scheduleDate && scheduleTime) {
+      scheduledAt = `${scheduleDate}T${scheduleTime}:00.000Z`;
+    }
+
     const msg: MessagePrive = {
       id: genId(),
       conversationId: convId,
@@ -206,12 +217,16 @@ export default function MessagerieScreen() {
       expediteurNom,
       contenu: texte,
       chantierId: selectedChantierId || undefined,
+      scheduledAt,
       createdAt: now(),
       lu: false,
       archive: false,
     };
     addMessagePrive(msg);
     setMessageText('');
+    setShowSchedule(false);
+    setScheduleDate('');
+    setScheduleTime('');
   };
 
   // ─── Upload photo ──────────────────────────────────────────────────────────
@@ -651,6 +666,9 @@ export default function MessagerieScreen() {
                           <Text style={styles.msgLu}>{msg.lu ? '✓✓' : '✓'}</Text>
                         )}
                         {msg.archive && <Text style={styles.msgArchiveBadge}>📁</Text>}
+                        {msg.scheduledAt && new Date(msg.scheduledAt) > new Date() && (
+                          <Text style={{ fontSize: 9, color: '#F59E0B', fontWeight: '600' }}>⏰ {msg.scheduledAt.slice(0, 16).replace('T', ' ')}</Text>
+                        )}
                       </View>
                       {/* Actions rapides */}
                       <View style={styles.msgQuickActions}>
@@ -693,15 +711,34 @@ export default function MessagerieScreen() {
           </Pressable>
         )}
 
+        {/* Panneau programmation (admin) */}
+        {showSchedule && isAdmin && (
+          <View style={styles.scheduleBar}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#1A3A6B' }}>⏰ Programmer l'envoi :</Text>
+            <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
+              <TextInput style={[styles.scheduleInput, { flex: 1 }]} value={scheduleDate} onChangeText={setScheduleDate} placeholder="AAAA-MM-JJ" maxLength={10} />
+              <TextInput style={[styles.scheduleInput, { width: 70 }]} value={scheduleTime} onChangeText={setScheduleTime} placeholder="HH:MM" maxLength={5} />
+              <Pressable onPress={() => { setShowSchedule(false); setScheduleDate(''); setScheduleTime(''); }} style={{ padding: 6 }}>
+                <Text style={{ color: '#E74C3C', fontSize: 12, fontWeight: '600' }}>✕</Text>
+              </Pressable>
+            </View>
+          </View>
+        )}
+
         {/* Zone de saisie */}
         {!showArchive && (
           <View style={styles.inputZone}>
             <Pressable style={styles.photoBtn} onPress={handleUploadPhoto}>
               <Text style={styles.photoBtnText}>📎</Text>
             </Pressable>
+            {isAdmin && (
+              <Pressable style={[styles.photoBtn, showSchedule && { backgroundColor: '#EBF0FF' }]} onPress={() => setShowSchedule(v => !v)}>
+                <Text style={styles.photoBtnText}>⏰</Text>
+              </Pressable>
+            )}
             <TextInput
               style={styles.msgInput}
-              placeholder={t.messagerie.messagePlaceholder}
+              placeholder={showSchedule && scheduleDate ? `Programmé le ${scheduleDate}...` : t.messagerie.messagePlaceholder}
               value={messageText}
               onChangeText={setMessageText}
               multiline
@@ -709,11 +746,11 @@ export default function MessagerieScreen() {
               onSubmitEditing={handleSend}
             />
             <Pressable
-              style={[styles.sendBtn, !messageText.trim() && styles.sendBtnDisabled]}
+              style={[styles.sendBtn, !messageText.trim() && styles.sendBtnDisabled, showSchedule && scheduleDate && { backgroundColor: '#F59E0B' }]}
               onPress={handleSend}
               disabled={!messageText.trim()}
             >
-              <Text style={styles.sendBtnText}>➤</Text>
+              <Text style={styles.sendBtnText}>{showSchedule && scheduleDate ? '⏰' : '➤'}</Text>
             </Pressable>
           </View>
         )}
@@ -810,6 +847,9 @@ const styles = StyleSheet.create({
   sendBtn: { padding: 10, backgroundColor: '#1A3A6B', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
   sendBtnDisabled: { backgroundColor: '#B0BEC5' },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
+  // Programmation message
+  scheduleBar: { backgroundColor: '#FAFBFC', borderTopWidth: 1, borderTopColor: '#E2E6EA', padding: 10 },
+  scheduleInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 13, color: '#11181C' },
   // Barre et panneau de filtres
   filterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingVertical: 6 },
   filterPanel: { backgroundColor: '#FAFBFC', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', padding: 12, gap: 8 },

@@ -12,6 +12,7 @@ export interface MessagePrive {
   chantierId?: string;     // Chantier lié au message (contexte)
   fichiers?: string[];     // Photos/vidéos en base64 ou URL
   createdAt: string;       // ISO datetime
+  scheduledAt?: string;    // ISO datetime — message différé (visible à partir de cette date)
   lu: boolean;             // Lu par le destinataire
   archive: boolean;        // Archivé (mais toujours accessible)
 }
