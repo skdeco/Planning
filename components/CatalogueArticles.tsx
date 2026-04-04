@@ -116,7 +116,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
           </View>
 
           {/* Filtres catégories */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ borderBottomWidth: 1, borderBottomColor: '#F2F4F7' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 6, gap: 4 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 38, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 6, gap: 4, alignItems: 'center' }}>
             <Pressable style={[chipS, filterCat === 'all' && chipSA]} onPress={() => setFilterCat('all')}>
               <Text style={[chipT, filterCat === 'all' && chipTA]}>Tout ({(data.catalogueArticles || []).length})</Text>
             </Pressable>
@@ -176,7 +176,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
               <TextInput style={inp} value={form.nom} onChangeText={v => setForm(f => ({ ...f, nom: v }))} placeholder="Ex: Disjoncteur 20A" />
 
               <Text style={lbl}>Catégorie</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8, maxHeight: 32 }} contentContainerStyle={{ gap: 4, alignItems: 'center' }}>
                 {CATEGORIES_ARTICLES.map(c => (
                   <Pressable key={c.value} style={[chipS, form.categorie === c.value && chipSA]} onPress={() => setForm(f => ({ ...f, categorie: c.value }))}>
                     <Text style={[chipT, form.categorie === c.value && chipTA]}>{c.label}</Text>
