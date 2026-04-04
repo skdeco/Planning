@@ -13,6 +13,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { ScreenContainer } from '@/components/screen-container';
 import type { ListeMateriau, MateriauItem } from '@/app/types';
+import { CatalogueArticles } from '@/components/CatalogueArticles';
 import { router } from 'expo-router';
 import { apiCall } from '@/lib/_core/api';
 
@@ -79,6 +80,7 @@ export default function MaterielScreen() {
   );
   const [searchQuery, setSearchQuery] = useState('');
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [showCatalogue, setShowCatalogue] = useState(false);
 
   // ── État d'ouverture des sections archivées (par listeId) ──
   const [openArchives, setOpenArchives] = useState<Record<string, boolean>>({});
@@ -444,6 +446,15 @@ export default function MaterielScreen() {
         )}
       </View>
 
+      {/* Bouton catalogue — admin/acheteur */}
+      {isAcheteur && (
+        <Pressable style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 12, marginBottom: 6, backgroundColor: '#EBF0FF', paddingVertical: 8, borderRadius: 8 }}
+          onPress={() => setShowCatalogue(true)}>
+          <Text style={{ fontSize: 14 }}>📦</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>Gérer le catalogue ({(data.catalogueArticles || []).length} articles)</Text>
+        </Pressable>
+      )}
+
       {isAcheteur && (
         <View style={styles.tabBar}>
           <Pressable
@@ -484,6 +495,7 @@ export default function MaterielScreen() {
       {viewMode === 'mes_listes' ? renderMesListes() : renderVueAcheteur()}
 
       <ConfirmModal />
+      <CatalogueArticles visible={showCatalogue} onClose={() => setShowCatalogue(false)} />
 
       {/* Modal d'ajout d'article */}
       <Modal visible={!!addModal} transparent animationType="slide" onRequestClose={() => setAddModal(null)}>
@@ -503,6 +515,29 @@ export default function MaterielScreen() {
               returnKeyType="next"
               autoFocus
             />
+            {/* Suggestions du catalogue */}
+            {newArticle.trim().length >= 2 && (() => {
+              const q = newArticle.toLowerCase().trim();
+              const suggestions = (data.catalogueArticles || []).filter(a =>
+                a.nom.toLowerCase().includes(q) || (a.reference || '').toLowerCase().includes(q)
+              ).slice(0, 5);
+              if (suggestions.length === 0) return null;
+              return (
+                <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, marginBottom: 6 }}>
+                  {suggestions.map(a => (
+                    <Pressable key={a.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F2F4F7' }}
+                      onPress={() => setNewArticle(a.nom + (a.reference ? ` (${a.reference})` : ''))}>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C' }}>{a.nom}</Text>
+                      <View style={{ flexDirection: 'row', gap: 8 }}>
+                        {a.reference && <Text style={{ fontSize: 10, color: '#687076' }}>Réf: {a.reference}</Text>}
+                        {a.fournisseur && <Text style={{ fontSize: 10, color: '#687076' }}>🏪 {a.fournisseur}</Text>}
+                        {a.description && <Text style={{ fontSize: 10, color: '#B0BEC5' }}>{a.description}</Text>}
+                      </View>
+                    </Pressable>
+                  ))}
+                </View>
+              );
+            })()}
 
             <Text style={styles.inputLabel}>{t.materiel.quantity} ({t.common.optional})</Text>
             <TextInput
