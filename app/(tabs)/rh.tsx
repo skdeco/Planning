@@ -355,8 +355,8 @@ export default function RHScreen() {
 
           return (
           <>
-            {/* Solde de congés */}
-            {!isRH && (
+            {/* Solde de congés — masqué pour les employés, visible admin/RH uniquement */}
+            {isRH && (
               <View style={styles.soldeCard}>
                 <View style={styles.soldeRow}>
                   <View style={styles.soldeItem}>

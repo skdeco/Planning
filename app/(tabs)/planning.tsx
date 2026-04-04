@@ -1511,6 +1511,13 @@ export default function PlanningScreen() {
           <Text style={styles.chantierCount}>{visibleChantiers.length} chantier{visibleChantiers.length !== 1 ? 's' : ''}</Text>
           {isAdmin && viewMode === 'semaine' && (() => {
             const todayStr = toYMD(new Date());
+            // Employés en congé cette semaine
+            const startWeek = toYMD(days[0]);
+            const endWeek = toYMD(days[6]);
+            const enConge = (data.demandesConge || []).filter(d =>
+              d.statut === 'approuve' && d.dateFin >= startWeek && d.dateDebut <= endWeek
+            );
+            const nbEnConge = new Set(enConge.map(d => d.employeId)).size;
             const nbAffectes = new Set(data.affectations.filter(a => a.dateDebut <= todayStr && a.dateFin >= todayStr).map(a => a.employeId)).size;
             const nbPointes = new Set(data.pointages.filter(p => p.date === todayStr && p.type === 'debut').map(p => p.employeId)).size;
             const nbRetards = data.pointages.filter(p => {
@@ -1527,6 +1534,7 @@ export default function PlanningScreen() {
               <>
                 <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>{nbPointes}/{nbAffectes} pointés</Text>
                 {nbRetards > 0 && <Text style={{ fontSize: 11, color: '#E74C3C', fontWeight: '600' }}>{nbRetards} retard{nbRetards > 1 ? 's' : ''}</Text>}
+                {nbEnConge > 0 && <Text style={{ fontSize: 11, color: '#F59E0B', fontWeight: '600' }}>🏖 {nbEnConge} en congé</Text>}
               </>
             );
           })()}

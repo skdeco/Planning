@@ -306,6 +306,7 @@ export default function PointageScreen() {
 
   const [now, setNow] = useState(new Date());
   const [loadingChantierId, setLoadingChantierId] = useState<string | null>(null);
+  const [pointageFeedback, setPointageFeedback] = useState<string | null>(null);
 
   // ── État modal photos fin de journée ──
   const [showPhotosModal, setShowPhotosModal] = useState(false);
@@ -436,6 +437,11 @@ export default function PointageScreen() {
       };
       addPointage(pointage);
 
+      // Feedback visuel
+      const label = type === 'debut' ? 'Arrivée' : 'Départ';
+      setPointageFeedback(`✓ ${label} enregistré${type === 'fin' ? 'e' : ''} à ${toHM(ts)}`);
+      setTimeout(() => setPointageFeedback(null), 4000);
+
       // Ouvrir modal photos après fin de journée
       if (type === 'fin') {
         setPhotosChantierId(chantierId);
@@ -551,6 +557,13 @@ export default function PointageScreen() {
         <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
         <Text style={styles.headerSub}>{t.pointage.title}</Text>
       </View>
+
+      {/* Feedback pointage */}
+      {pointageFeedback && (
+        <View style={{ backgroundColor: '#D4EDDA', paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#27AE60' }}>
+          <Text style={{ color: '#155724', fontWeight: '700', fontSize: 14, textAlign: 'center' }}>{pointageFeedback}</Text>
+        </View>
+      )}
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
 

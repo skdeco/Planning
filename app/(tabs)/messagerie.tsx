@@ -524,14 +524,16 @@ export default function MessagerieScreen() {
           </Pressable>
         )}
         <Text style={styles.headerTitle} numberOfLines={1}>💬 {convNom}</Text>
-        <Pressable
-          style={[styles.archiveToggle, showArchive && styles.archiveToggleActive]}
-          onPress={() => setShowArchive(v => !v)}
-        >
-          <Text style={[styles.archiveToggleText, showArchive && styles.archiveToggleTextActive]}>
-            {showArchive ? `📂 ${t.messagerie.archived}` : `📁 ${t.messagerie.archives}`}
-          </Text>
-        </Pressable>
+        {isAdmin && (
+          <Pressable
+            style={[styles.archiveToggle, showArchive && styles.archiveToggleActive]}
+            onPress={() => setShowArchive(v => !v)}
+          >
+            <Text style={[styles.archiveToggleText, showArchive && styles.archiveToggleTextActive]}>
+              {showArchive ? `📂 ${t.messagerie.archived}` : `📁 ${t.messagerie.archives}`}
+            </Text>
+          </Pressable>
+        )}
       </View>
 
       {/* Barre de filtres */}
@@ -547,13 +549,15 @@ export default function MessagerieScreen() {
               <Text style={[styles.chantierChipText, selectedChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
             </Pressable>
           ))}
-          {/* Bouton filtres avancés */}
-          <Pressable
-            style={[styles.chantierChip, showFilters && { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' }]}
-            onPress={() => setShowFilters(v => !v)}
-          >
-            <Text style={[styles.chantierChipText, showFilters && { color: '#fff' }]}>🔍 Filtres</Text>
-          </Pressable>
+          {/* Bouton filtres avancés — admin seulement */}
+          {isAdmin && (
+            <Pressable
+              style={[styles.chantierChip, showFilters && { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' }]}
+              onPress={() => setShowFilters(v => !v)}
+            >
+              <Text style={[styles.chantierChipText, showFilters && { color: '#fff' }]}>🔍 Filtres</Text>
+            </Pressable>
+          )}
         </ScrollView>
       </View>
 

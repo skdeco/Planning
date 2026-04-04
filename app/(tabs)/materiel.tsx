@@ -78,6 +78,7 @@ export default function MaterielScreen() {
     isAcheteur && !isEmploye ? 'acheteur' : 'mes_listes'
   );
   const [searchQuery, setSearchQuery] = useState('');
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   // ── État d'ouverture des sections archivées (par listeId) ──
   const [openArchives, setOpenArchives] = useState<Record<string, boolean>>({});
@@ -187,6 +188,8 @@ export default function MaterielScreen() {
       : 'Admin';
     sendNotificationEmail(acheteurs, employeNom, addModal.chantierNom, [item.texte]);
 
+    setToastMsg(`✓ "${item.texte}" ajouté`);
+    setTimeout(() => setToastMsg(null), 3000);
     setNewArticle('');
     setNewQuantite('');
     setNewCommentaire('');
@@ -429,6 +432,11 @@ export default function MaterielScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>🛒 {t.materiel.title}</Text>
+        {toastMsg && (
+          <View style={{ backgroundColor: '#D4EDDA', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
+            <Text style={{ color: '#155724', fontSize: 12, fontWeight: '600' }}>{toastMsg}</Text>
+          </View>
+        )}
         {nbNonAchetes > 0 && isAcheteur && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{nbNonAchetes}</Text>

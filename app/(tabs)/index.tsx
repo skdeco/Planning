@@ -13,7 +13,7 @@ function toYMD(d: Date): string {
 }
 
 export default function DashboardScreen() {
-  const { data, currentUser, isHydrated, logout } = useApp();
+  const { data, currentUser, isHydrated, logout, toggleTask } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -98,10 +98,14 @@ export default function DashboardScreen() {
   }, [data.chantiers, data.affectations, myId, today]);
 
   const myTasks = useMemo(() => {
-    if (!myId) return [];
-    return data.affectations
+    if (!myId) return [] as { task: any; affectationId: string; noteId: string }[];
+    const result: { task: any; affectationId: string; noteId: string }[] = [];
+    data.affectations
       .filter(a => a.employeId === myId && a.dateDebut <= today && a.dateFin >= today)
-      .flatMap(a => (a.notes || []).filter(n => n.date === today).flatMap(n => (n.tasks || []).filter(t => !t.fait)));
+      .forEach(a => (a.notes || []).filter(n => n.date === today).forEach(n =>
+        (n.tasks || []).filter(t => !t.fait).forEach(t => result.push({ task: t, affectationId: a.id, noteId: n.id }))
+      ));
+    return result;
   }, [data.affectations, myId, today]);
 
   const myPointagesDuJour = useMemo(() => {
@@ -186,12 +190,18 @@ export default function DashboardScreen() {
             <>
               <Text style={styles.sectionTitle}>Mes tâches du jour ({myTasks.length})</Text>
               <View style={styles.statCard}>
-                {myTasks.map(task => (
-                  <View key={task.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, gap: 8, borderBottomWidth: 0.5, borderBottomColor: '#F2F4F7' }}>
-                    <Text style={{ fontSize: 16 }}>☐</Text>
-                    <Text style={{ fontSize: 13, color: '#11181C', flex: 1 }}>{task.texte}</Text>
-                  </View>
-                ))}
+                {myTasks.map(({ task, affectationId, noteId }) => {
+                  const empName = data.employes.find(e => e.id === myId)?.prenom || '';
+                  return (
+                    <Pressable key={task.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8, borderBottomWidth: 0.5, borderBottomColor: '#F2F4F7' }}
+                      onPress={() => toggleTask(affectationId, noteId, task.id, empName)}>
+                      <View style={{ width: 22, height: 22, borderRadius: 4, borderWidth: 2, borderColor: '#1A3A6B', alignItems: 'center', justifyContent: 'center' }}>
+                        {task.fait && <Text style={{ color: '#1A3A6B', fontSize: 14, fontWeight: '700' }}>✓</Text>}
+                      </View>
+                      <Text style={{ fontSize: 14, color: '#11181C', flex: 1 }}>{task.texte}</Text>
+                    </Pressable>
+                  );
+                })}
               </View>
             </>
           )}
