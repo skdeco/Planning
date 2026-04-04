@@ -88,6 +88,7 @@ const config: ExpoConfig = {
   },
   plugins: [
     "expo-router",
+    "expo-updates",
     [
       "expo-audio",
       {
@@ -123,6 +124,17 @@ const config: ExpoConfig = {
       },
     ],
   ],
+  updates: {
+    url: "https://u.expo.dev/55f7c535-968c-46a3-9873-36f7d61c54ab",
+  },
+  runtimeVersion: {
+    policy: "appVersion",
+  },
+  extra: {
+    eas: {
+      projectId: "55f7c535-968c-46a3-9873-36f7d61c54ab",
+    },
+  },
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
