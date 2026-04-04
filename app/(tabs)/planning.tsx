@@ -3366,12 +3366,12 @@ const styles = StyleSheet.create({
   },
   cell: {
     width: DAY_COL, // overridé dynamiquement en inline
-    paddingVertical: 4,
-    paddingHorizontal: 1,
-    gap: 2,
+    paddingVertical: 3,
+    paddingHorizontal: 0,
+    gap: 1,
     borderRightWidth: 0.5,
     borderRightColor: '#E2E6EA',
-    alignItems: 'center',
+    alignItems: 'stretch',
   },
   cellToday: {
     backgroundColor: '#EEF2F8',
@@ -3381,14 +3381,14 @@ const styles = StyleSheet.create({
   },
   empBadge: {
     width: '100%',
-    paddingVertical: 3,
-    paddingHorizontal: 1,
-    borderRadius: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    borderRadius: 3,
     alignItems: 'center',
     position: 'relative',
   },
   empBadgeText: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '700',
   },
   noteDot: {
@@ -3444,7 +3444,7 @@ const styles = StyleSheet.create({
   },
   addBtn: {
     width: '100%',
-    paddingVertical: 2,
+    paddingVertical: 3,
     alignItems: 'center',
   },
   addBtnText: {
@@ -3463,16 +3463,16 @@ const styles = StyleSheet.create({
   },
   stBadge: {
     width: '100%',
-    paddingVertical: 3,
-    paddingHorizontal: 1,
-    borderRadius: 4,
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    borderRadius: 3,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.6)',
     borderStyle: 'dashed',
   },
   stBadgeText: {
-    fontSize: 9,
+    fontSize: 11,
     fontWeight: '800',
     color: '#fff',
     textTransform: 'uppercase',
