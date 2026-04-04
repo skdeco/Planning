@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useMemo } from 'react';
 import { useApp } from '@/app/context/AppContext';
 import { useNotifications } from '@/hooks/useNotifications';
 
@@ -14,10 +14,19 @@ export function NotificationListener() {
   const myId = currentUser?.employeId || currentUser?.soustraitantId || '';
   const myRole = currentUser?.role;
 
+  // Chantiers de l'employé (pour les notifications notes/photos)
+  const mesChantiersIds = useMemo(() => {
+    if (!myId || isAdmin) return new Set<string>();
+    return new Set(data.affectations.filter(a => a.employeId === myId).map(a => a.chantierId));
+  }, [data.affectations, myId, isAdmin]);
+
   // Refs pour tracker les compteurs précédents
   const prevMsgsCount = useRef(-1);
   const prevDemandesCount = useRef(-1);
   const prevAffectationsCount = useRef(-1);
+  const prevNotesCount = useRef(-1);
+  const prevPhotosCount = useRef(-1);
+  const prevCongesCount = useRef(-1);
 
   // Notifications messages
   useEffect(() => {
@@ -65,6 +74,39 @@ export function NotificationListener() {
     }
     prevAffectationsCount.current = mesAffectations;
   }, [data.affectations]);
+
+  // Notifications notes chantier (employé : quand une note est ajoutée sur un de ses chantiers)
+  useEffect(() => {
+    if (!myId || isAdmin) return;
+    const mesNotes = (data.notesChantier || []).filter(n => mesChantiersIds.has(n.chantierId) && n.auteurId !== myId).length;
+    if (prevNotesCount.current >= 0 && mesNotes > prevNotesCount.current) {
+      sendNotification('SK DECO Planning', 'Nouvelle note sur votre chantier');
+    }
+    prevNotesCount.current = mesNotes;
+  }, [data.notesChantier]);
+
+  // Notifications photos chantier (employé : quand une photo est ajoutée sur un de ses chantiers)
+  useEffect(() => {
+    if (!myId || isAdmin) return;
+    const mesPhotos = (data.photosChantier || []).filter(p => mesChantiersIds.has(p.chantierId) && p.employeId !== myId).length;
+    if (prevPhotosCount.current >= 0 && mesPhotos > prevPhotosCount.current) {
+      sendNotification('SK DECO Planning', 'Nouvelle photo sur votre chantier');
+    }
+    prevPhotosCount.current = mesPhotos;
+  }, [data.photosChantier]);
+
+  // Notifications réponse congé/avance (employé : quand sa demande est traitée)
+  useEffect(() => {
+    if (!myId || isAdmin) return;
+    const mesCongesTraites = [
+      ...(data.demandesConge || []).filter(d => d.employeId === myId && d.statut !== 'en_attente'),
+      ...(data.demandesAvance || []).filter(d => d.employeId === myId && d.statut !== 'en_attente'),
+    ].length;
+    if (prevCongesCount.current >= 0 && mesCongesTraites > prevCongesCount.current) {
+      sendNotification('SK DECO — RH', 'Votre demande a été traitée');
+    }
+    prevCongesCount.current = mesCongesTraites;
+  }, [data.demandesConge, data.demandesAvance]);
 
   // Alerte absences : employés qui n'ont pas pointé 30min après leur horaire (admin seulement)
   const absenceCheckRef = useRef(false);
