@@ -27,6 +27,13 @@ export function NotificationListener() {
   const prevNotesCount = useRef(-1);
   const prevPhotosCount = useRef(-1);
   const prevCongesCount = useRef(-1);
+  // Admin : tracker tout
+  const prevPointagesCount = useRef(-1);
+  const prevNotesChantierCount = useRef(-1);
+  const prevPhotosChantierCount = useRef(-1);
+  const prevMaterielCount = useRef(-1);
+  const prevArretsMaladieCount = useRef(-1);
+  const prevNotesPlanningCount = useRef(-1);
 
   // Notifications messages
   useEffect(() => {
@@ -61,6 +68,84 @@ export function NotificationListener() {
     }
     prevDemandesCount.current = nbEnAttente;
   }, [data.demandesConge, data.arretsMaladie, data.demandesAvance]);
+
+  // Admin : notification quand un employé pointe
+  useEffect(() => {
+    if (!isAdmin) return;
+    const nbPointages = data.pointages.length;
+    if (prevPointagesCount.current >= 0 && nbPointages > prevPointagesCount.current) {
+      const derniers = data.pointages.slice(-1)[0];
+      if (derniers) {
+        const emp = data.employes.find(e => e.id === derniers.employeId);
+        const label = derniers.type === 'debut' ? 'Arrivée' : 'Départ';
+        sendNotification('Pointage', `${label} de ${emp?.prenom || 'Employé'} à ${derniers.heure}`);
+      }
+    }
+    prevPointagesCount.current = nbPointages;
+  }, [data.pointages]);
+
+  // Admin : notification quand une note chantier est ajoutée
+  useEffect(() => {
+    if (!isAdmin) return;
+    const nb = (data.notesChantier || []).length;
+    if (prevNotesChantierCount.current >= 0 && nb > prevNotesChantierCount.current) {
+      const derniere = (data.notesChantier || []).slice(-1)[0];
+      if (derniere && derniere.auteurId !== 'admin') {
+        const ch = data.chantiers.find(c => c.id === derniere.chantierId);
+        sendNotification('Note chantier', `${derniere.auteurNom} sur ${ch?.nom || 'chantier'}`);
+      }
+    }
+    prevNotesChantierCount.current = nb;
+  }, [data.notesChantier]);
+
+  // Admin : notification quand une photo est ajoutée
+  useEffect(() => {
+    if (!isAdmin) return;
+    const nb = (data.photosChantier || []).length;
+    if (prevPhotosChantierCount.current >= 0 && nb > prevPhotosChantierCount.current) {
+      const derniere = (data.photosChantier || []).slice(-1)[0];
+      if (derniere) {
+        const emp = data.employes.find(e => e.id === derniere.employeId);
+        const ch = data.chantiers.find(c => c.id === derniere.chantierId);
+        sendNotification('Photo ajoutée', `${emp?.prenom || 'Employé'} sur ${ch?.nom || 'chantier'}`);
+      }
+    }
+    prevPhotosChantierCount.current = nb;
+  }, [data.photosChantier]);
+
+  // Admin : notification quand du matériel est ajouté/modifié
+  useEffect(() => {
+    if (!isAdmin) return;
+    const nbItems = (data.listesMateriaux || []).reduce((acc, l) => acc + l.items.length, 0);
+    if (prevMaterielCount.current >= 0 && nbItems > prevMaterielCount.current) {
+      sendNotification('Matériel', 'Nouvel article ajouté à une liste');
+    }
+    prevMaterielCount.current = nbItems;
+  }, [data.listesMateriaux]);
+
+  // Admin : notification arrêt maladie
+  useEffect(() => {
+    if (!isAdmin) return;
+    const nb = (data.arretsMaladie || []).length;
+    if (prevArretsMaladieCount.current >= 0 && nb > prevArretsMaladieCount.current) {
+      const dernier = (data.arretsMaladie || []).slice(-1)[0];
+      if (dernier) {
+        const emp = data.employes.find(e => e.id === dernier.employeId);
+        sendNotification('Arrêt maladie', `Déclaration de ${emp?.prenom || 'Employé'}`);
+      }
+    }
+    prevArretsMaladieCount.current = nb;
+  }, [data.arretsMaladie]);
+
+  // Admin : notification notes planning (dans les affectations)
+  useEffect(() => {
+    if (!isAdmin) return;
+    const nbNotes = data.affectations.reduce((acc, a) => acc + (a.notes || []).length, 0);
+    if (prevNotesPlanningCount.current >= 0 && nbNotes > prevNotesPlanningCount.current) {
+      sendNotification('Note planning', 'Nouvelle note ajoutée par un employé');
+    }
+    prevNotesPlanningCount.current = nbNotes;
+  }, [data.affectations]);
 
   // Notifications nouvelles affectations (employé seulement)
   useEffect(() => {
