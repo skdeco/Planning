@@ -75,6 +75,7 @@ import type {
   NoteChantier,
   PlanChantier,
   ActivityLog,
+  AgendaEvent,
 } from '@/app/types';
 import type { MessagePrive } from '@/app/types/messages';
 import { EMPLOYE_COLORS } from '@/app/types';
@@ -182,6 +183,10 @@ interface AppContextType {
   // Notifications
   notifications: ActivityLog[];
   markNotificationsRead: () => void;
+  // Agenda admin
+  addAgendaEvent: (event: AgendaEvent) => void;
+  updateAgendaEvent: (event: AgendaEvent) => void;
+  deleteAgendaEvent: (id: string) => void;
   // Sync status
   syncStatus: 'synced' | 'saving' | 'error' | 'offline';
   refreshData: () => Promise<void>;
@@ -343,6 +348,7 @@ function migrateData(parsed: Record<string, any>): AppData {
     notesSuivi: parsed.notesSuivi || parsed.notesSuiviChantier || [],
     // Notes chantier (ne jamais écraser)
     notesChantier: parsed.notesChantier || [],
+    agendaEvents: parsed.agendaEvents || [],
     notesChantierSupprimees: parsed.notesChantierSupprimees || [],
     // Galerie photos (ne jamais écraser)
     photosChantier: parsed.photosChantier || [],
@@ -1394,6 +1400,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, [currentUser, data.employes, data.sousTraitants]);
 
+  // ── Agenda admin ──
+  const addAgendaEvent = (event: AgendaEvent) =>
+    setData(p => ({ ...p, agendaEvents: [...(p.agendaEvents || []), event] }));
+  const updateAgendaEvent = (event: AgendaEvent) =>
+    setData(p => ({ ...p, agendaEvents: (p.agendaEvents || []).map(e => e.id === event.id ? event : e) }));
+  const deleteAgendaEvent = (id: string) => {
+    trackGenericDeletion(id);
+    setData(p => ({ ...p, agendaEvents: (p.agendaEvents || []).filter(e => e.id !== id) }));
+  };
+
   // Calculer les notifications non lues après chaque reload
   const lastSeenRef = useRef<string>('');
   useEffect(() => {
@@ -1453,6 +1469,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPlanChantier, deletePlanChantier,
       updateAdminPassword,
       updateOrdreAffectation,
+      addAgendaEvent, updateAgendaEvent, deleteAgendaEvent,
       notifications, markNotificationsRead,
       syncStatus,
       refreshData: reloadFromSupabase,

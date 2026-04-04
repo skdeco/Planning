@@ -122,6 +122,18 @@ export default function TabLayout() {
         }}
       />
 
+      {/* ═══ Agenda : admin uniquement ═══ */}
+      <Tabs.Screen
+        name="agenda"
+        options={{
+          title: 'Agenda',
+          href: isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="book.fill" color={color} />
+          ),
+        }}
+      />
+
       {/* ═══ ONGLET 3 : Chantiers (admin) / Pointage (employé) ═══ */}
       <Tabs.Screen
         name="chantiers"

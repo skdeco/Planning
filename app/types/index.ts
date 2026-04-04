@@ -574,6 +574,24 @@ export interface ActivityLog {
   targetId?: string;       // id de l'objet concerné (chantierId, employeId, etc.)
 }
 
+// ─── Agenda admin partagé ──────────────────────────────────────────────────
+export interface AgendaEvent {
+  id: string;
+  titre: string;
+  description?: string;
+  date: string;            // YYYY-MM-DD
+  heureDebut: string;      // HH:MM
+  heureFin?: string;       // HH:MM
+  lieu?: string;
+  couleur: string;
+  createdBy: string;       // 'admin' ou identifiant admin
+  createdByNom: string;
+  invites: string[];       // liste des IDs admin invités
+  acceptes: string[];      // IDs qui ont accepté
+  refuses: string[];       // IDs qui ont refusé
+  createdAt: string;
+}
+
 export interface AppData {
   employes: Employe[];
   chantiers: Chantier[];
@@ -614,6 +632,8 @@ export interface AppData {
   messagesPrive?: import('./messages').MessagePrive[];
   // Fiches chantier (données structurées par chantier)
   fichesChantier?: Record<string, any>;
+  // Agenda admin partagé
+  agendaEvents?: AgendaEvent[];
   // Mot de passe administrateur (modifiable)
   adminPassword?: string;
   adminPasswordUpdatedAt?: string; // ISO datetime de la dernière modification du mot de passe
