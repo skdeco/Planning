@@ -22,9 +22,9 @@ function toYMD(d: Date): string {
 
 function genId() { return `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`; }
 
-const HOUR_HEIGHT = 60;
-const HEADER_HEIGHT = 40;
-const TIME_COL = 44;
+const HOUR_HEIGHT = 40;
+const HEADER_HEIGHT = 36;
+const TIME_COL = 38;
 
 export function PlanningDirection() {
   const { data, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent } = useApp();
@@ -192,22 +192,22 @@ export function PlanningDirection() {
         </Pressable>
       </View>
 
-      {/* Grille horaire */}
-      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
-        {/* Header jours */}
-        <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', backgroundColor: '#F8F9FA' }}>
-          <View style={{ width: TIME_COL, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center' }} />
-          {days.map((day, i) => {
-            const isToday = toYMD(day) === toYMD(new Date());
-            return (
-              <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#EBF0FF' : undefined }}>
-                <Text style={{ fontSize: 10, fontWeight: '500', color: isToday ? '#1A3A6B' : '#687076' }}>{JOURS_COURT[i]}</Text>
-                <Text style={{ fontSize: 14, fontWeight: isToday ? '800' : '600', color: isToday ? '#1A3A6B' : '#11181C' }}>{day.getDate()}</Text>
-              </View>
-            );
-          })}
-        </View>
+      {/* Header jours — FIXE (ne défile pas) */}
+      <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', backgroundColor: '#F8F9FA' }}>
+        <View style={{ width: TIME_COL, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center' }} />
+        {days.map((day, i) => {
+          const isToday = toYMD(day) === toYMD(new Date());
+          return (
+            <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#EBF0FF' : undefined }}>
+              <Text style={{ fontSize: 9, fontWeight: '500', color: isToday ? '#1A3A6B' : '#687076' }}>{JOURS_COURT[i]}</Text>
+              <Text style={{ fontSize: 13, fontWeight: isToday ? '800' : '600', color: isToday ? '#1A3A6B' : '#11181C' }}>{day.getDate()}</Text>
+            </View>
+          );
+        })}
+      </View>
 
+      {/* Grille horaire — défile verticalement */}
+      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
         {/* Lignes horaires */}
         <View style={{ flexDirection: 'row' }}>
           {/* Colonne heures */}
