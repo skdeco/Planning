@@ -4,6 +4,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
 import { LanguageFlag } from '@/components/LanguageFlag';
+import { ImportExcel } from '@/components/ImportExcel';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useRefresh } from '@/hooks/useRefresh';
@@ -161,6 +162,7 @@ export default function DashboardScreen() {
 
   // Historique complet
   const [showHistorique, setShowHistorique] = useState(false);
+  const [showImport, setShowImport] = useState(false);
   // Galerie photos state
   const [galerieVisible, setGalerieVisible] = useState(false);
   const [galerieChantierId, setGalerieChantierId] = useState<string | undefined>(undefined);
@@ -453,14 +455,23 @@ export default function DashboardScreen() {
         )}
 
         {/* Export rapide */}
-        <Pressable
-          style={[styles.statCard, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderLeftWidth: 4, borderLeftColor: '#1A3A6B', marginTop: 20 }]}
-          onPress={() => router.push('/(tabs)/reporting' as any)}
-        >
-          <Text style={{ fontSize: 20 }}>📄</Text>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A3A6B' }}>Exporter le rapport du mois</Text>
-        </Pressable>
-
+        {/* Export + Import */}
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 20 }}>
+          <Pressable
+            style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderLeftWidth: 4, borderLeftColor: '#1A3A6B' }]}
+            onPress={() => router.push('/(tabs)/reporting' as any)}
+          >
+            <Text style={{ fontSize: 16 }}>📄</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B' }}>Export rapport</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderLeftWidth: 4, borderLeftColor: '#27AE60' }]}
+            onPress={() => setShowImport(true)}
+          >
+            <Text style={{ fontSize: 16 }}>📥</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>Import Excel</Text>
+          </Pressable>
+        </View>
 
         {/* Activité récente — tout en bas */}
         {activiteRecente.length > 0 && (
@@ -522,6 +533,7 @@ export default function DashboardScreen() {
           </View>
         </Modal>
       </ScrollView>
+      <ImportExcel visible={showImport} onClose={() => setShowImport(false)} />
     </ScreenContainer>
   );
 }
