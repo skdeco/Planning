@@ -336,7 +336,33 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
-        {/* Activité récente — en bas */}
+        {/* Sections rapides : Reporting, RH, Matériel */}
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 20 }}>
+          <Pressable style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 14 }]} onPress={() => router.push('/(tabs)/reporting' as any)}>
+            <Text style={{ fontSize: 22 }}>📊</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', marginTop: 4 }}>Reporting</Text>
+          </Pressable>
+          <Pressable style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 14 }]} onPress={() => router.push('/(tabs)/rh' as any)}>
+            <Text style={{ fontSize: 22 }}>📋</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', marginTop: 4 }}>RH</Text>
+            {stats.demandesRH > 0 && (
+              <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{stats.demandesRH}</Text>
+              </View>
+            )}
+          </Pressable>
+          <Pressable style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 14 }]} onPress={() => router.push('/(tabs)/materiel' as any)}>
+            <Text style={{ fontSize: 22 }}>🛒</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', marginTop: 4 }}>Matériel</Text>
+            {stats.materielNonAchete > 0 && (
+              <View style={{ position: 'absolute', top: 6, right: 6, backgroundColor: '#EF4444', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{stats.materielNonAchete}</Text>
+              </View>
+            )}
+          </Pressable>
+        </View>
+
+        {/* Activité récente — tout en bas */}
         {activiteRecente.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Activité récente</Text>
