@@ -93,6 +93,7 @@ export default function AgendaScreen() {
       createdBy: 'admin',
       createdByNom: 'Admin',
       invites: form.invites,
+      visiblePar: [],
       acceptes: editId ? (data.agendaEvents || []).find(e => e.id === editId)?.acceptes || [] : [],
       refuses: editId ? (data.agendaEvents || []).find(e => e.id === editId)?.refuses || [] : [],
       createdAt: editId ? (data.agendaEvents || []).find(e => e.id === editId)?.createdAt || new Date().toISOString() : new Date().toISOString(),

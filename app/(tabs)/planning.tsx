@@ -12,6 +12,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { useRefresh } from '@/hooks/useRefresh';
+import { PlanningDirection } from '@/components/PlanningDirection';
 import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
   type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem, type RetardPlanifie,
@@ -1280,8 +1281,11 @@ export default function PlanningScreen() {
         </View>
       )}
 
-      {/* ═══ PLANNING DIRECTION (Agenda) ═══ */}
-      {planningMode === 'direction' && isAdmin && (() => {
+      {/* ═══ PLANNING DIRECTION ═══ */}
+      {planningMode === 'direction' && isAdmin && <PlanningDirection />}
+
+      {/* ancien code direction supprimé */}
+      {false && (() => {
         const agendaEvents = (data.agendaEvents || []);
         const MOIS_LONG = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
         const JOURS_COURT = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];

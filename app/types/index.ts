@@ -587,9 +587,12 @@ export interface AgendaEvent {
   chantierId?: string;     // chantier associé au RDV
   createdBy: string;       // 'admin' ou identifiant admin
   createdByNom: string;
-  invites: string[];       // liste des IDs admin invités
+  invites: string[];       // liste des IDs invités (participants)
+  visiblePar: string[];    // IDs qui peuvent voir le RDV sans être invités
   acceptes: string[];      // IDs qui ont accepté
   refuses: string[];       // IDs qui ont refusé
+  recurrence?: 'aucune' | 'quotidien' | 'hebdomadaire' | 'mensuel';
+  recurrenceFinDate?: string; // YYYY-MM-DD fin de récurrence
   createdAt: string;
 }
 
