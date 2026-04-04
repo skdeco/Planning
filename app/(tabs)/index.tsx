@@ -12,7 +12,7 @@ function toYMD(d: Date): string {
 }
 
 export default function DashboardScreen() {
-  const { data, currentUser, isHydrated } = useApp();
+  const { data, currentUser, isHydrated, logout } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -264,9 +264,9 @@ export default function DashboardScreen() {
           </Pressable>
         </View>
 
-        {/* Couverture chantiers */}
+        {/* Couverture chantiers — 2 colonnes */}
         <Text style={styles.sectionTitle}>Couverture du jour</Text>
-        <View style={{ gap: 6 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {data.chantiers.filter(c => c.statut === 'actif').map(c => {
             const nbAffectes = new Set(
               data.affectations.filter(a => a.chantierId === c.id && a.dateDebut <= today && a.dateFin >= today).map(a => a.employeId)
@@ -277,9 +277,9 @@ export default function DashboardScreen() {
             ).length;
             const color = nbAffectes === 0 ? '#E2E6EA' : nbPointes >= nbAffectes ? '#27AE60' : nbPointes > 0 ? '#F59E0B' : '#EF4444';
             return (
-              <View key={c.id} style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: color, paddingVertical: 10, paddingHorizontal: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', flex: 1 }} numberOfLines={1}>{c.nom}</Text>
-                <Text style={{ fontSize: 12, color, fontWeight: '700' }}>{nbPointes}/{nbAffectes} pointés</Text>
+              <View key={c.id} style={[styles.statCard, { width: '48%' as any, borderLeftWidth: 4, borderLeftColor: color, paddingVertical: 8, paddingHorizontal: 10 }]}>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{c.nom}</Text>
+                <Text style={{ fontSize: 11, color, fontWeight: '700', marginTop: 2 }}>{nbPointes}/{nbAffectes} pointés</Text>
               </View>
             );
           })}
@@ -315,7 +315,28 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* Activité récente */}
+        {/* Export rapide */}
+        <Pressable
+          style={[styles.statCard, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderLeftWidth: 4, borderLeftColor: '#1A3A6B', marginTop: 20 }]}
+          onPress={() => router.push('/(tabs)/reporting' as any)}
+        >
+          <Text style={{ fontSize: 20 }}>📄</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A3A6B' }}>Exporter le rapport du mois</Text>
+        </Pressable>
+
+        {/* Déconnexion + Langue */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 12, marginTop: 20 }}>
+          <LanguageFlag />
+          <Pressable
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FEF2F2', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#FECACA' }}
+            onPress={logout}
+          >
+            <Text style={{ fontSize: 14 }}>⏻</Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#EF4444' }}>Déconnexion</Text>
+          </Pressable>
+        </View>
+
+        {/* Activité récente — en bas */}
         {activiteRecente.length > 0 && (
           <>
             <Text style={styles.sectionTitle}>Activité récente</Text>
@@ -334,35 +355,6 @@ export default function DashboardScreen() {
             </View>
           </>
         )}
-
-        {/* Export rapide */}
-        <Pressable
-          style={[styles.statCard, { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderLeftWidth: 4, borderLeftColor: '#1A3A6B', marginTop: 20 }]}
-          onPress={() => router.push('/(tabs)/reporting' as any)}
-        >
-          <Text style={{ fontSize: 20 }}>📄</Text>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A3A6B' }}>Exporter le rapport du mois</Text>
-        </Pressable>
-
-        {/* Raccourcis */}
-        <Text style={styles.sectionTitle}>Accès rapide</Text>
-        <View style={styles.shortcutsGrid}>
-          {[
-            { icon: '📅', label: 'Planning', route: '/(tabs)/planning' },
-            { icon: '🏗', label: 'Chantiers', route: '/(tabs)/chantiers' },
-            { icon: '👷', label: 'Équipe', route: '/(tabs)/equipe' },
-            { icon: '📊', label: 'Reporting', route: '/(tabs)/reporting' },
-            { icon: '🛒', label: 'Matériel', route: '/(tabs)/materiel' },
-            { icon: '📋', label: 'RH', route: '/(tabs)/rh' },
-            { icon: '🔧', label: 'Sous-traitants', route: '/(tabs)/sous-traitants' },
-            { icon: '💬', label: 'Messages', route: '/(tabs)/messagerie' },
-          ].map(s => (
-            <Pressable key={s.route} style={styles.shortcut} onPress={() => router.push(s.route as any)}>
-              <Text style={styles.shortcutIcon}>{s.icon}</Text>
-              <Text style={styles.shortcutLabel}>{s.label}</Text>
-            </Pressable>
-          ))}
-        </View>
       </ScrollView>
     </ScreenContainer>
   );

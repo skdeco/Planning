@@ -202,6 +202,7 @@ export default function PlanningScreen() {
   const [noteVisibleIds, setNoteVisibleIds] = useState<string[]>([]);
   // Galerie photos globale
   const [showGalerieGlobale, setShowGalerieGlobale] = useState(false);
+  const [galerieChantierId, setGalerieChantierId] = useState<string | undefined>(undefined);
   // Notes chantier (modal dans planning)
   const [showNotesPlanning, setShowNotesPlanning] = useState(false);
   const [notesPlanningChantierId, setNotesPlanningChantierId] = useState<string | null>(null);
@@ -1236,7 +1237,7 @@ export default function PlanningScreen() {
             </Pressable>
           )}
           {/* Bouton galerie photos — visible pour tous */}
-          <Pressable style={styles.galerieBtn} onPress={() => setShowGalerieGlobale(true)}>
+          <Pressable style={styles.galerieBtn} onPress={() => { setGalerieChantierId(undefined); setShowGalerieGlobale(true); }}>
             <Text style={styles.galerieBtnText}>📷</Text>
           </Pressable>
           {/* Bouton export/sauvegarde — admin uniquement */}
@@ -1417,24 +1418,30 @@ export default function PlanningScreen() {
             >
               <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
               <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
-              {/* Icônes notes + plans en ligne */}
-              <View style={{ flexDirection: 'row', gap: 2, marginTop: 2 }}>
-              {(() => {
-                const nbNotes = getNotesActivesPlanning(chantier.id).length;
-                return (
-                  <Pressable style={{ padding: 2 }} onPress={() => openNotesPlanning(chantier.id)}>
-                    <Text style={{ fontSize: 10, opacity: nbNotes > 0 ? 1 : 0.4 }}>📝{nbNotes > 0 ? nbNotes : ''}</Text>
-                  </Pressable>
-                );
-              })()}
-              {(() => {
-                const nbPlans = getPlansVisiblesPlanning(chantier.id).length;
-                return (
-                  <Pressable style={{ padding: 2 }} onPress={() => openPlansPlanning(chantier.id)}>
-                    <Text style={{ fontSize: 10, opacity: nbPlans > 0 ? 1 : 0.4 }}>📍{nbPlans > 0 ? nbPlans : ''}</Text>
-                  </Pressable>
-                );
-              })()}
+              {/* Icônes : notes, plans, photos — accessibles à tous */}
+              <View style={{ flexDirection: 'row', gap: 3, marginTop: 3 }}>
+                {(() => {
+                  const nbNotes = getNotesActivesPlanning(chantier.id).length;
+                  return (
+                    <Pressable style={{ backgroundColor: nbNotes > 0 ? '#EBF0FF' : '#F2F4F7', borderRadius: 4, paddingHorizontal: 3, paddingVertical: 1 }}
+                      onPress={() => openNotesPlanning(chantier.id)}>
+                      <Text style={{ fontSize: 9, color: nbNotes > 0 ? '#1A3A6B' : '#B0BEC5' }}>✏ {nbNotes || ''}</Text>
+                    </Pressable>
+                  );
+                })()}
+                {(() => {
+                  const nbPlans = getPlansVisiblesPlanning(chantier.id).length;
+                  return (
+                    <Pressable style={{ backgroundColor: nbPlans > 0 ? '#E8F5E9' : '#F2F4F7', borderRadius: 4, paddingHorizontal: 3, paddingVertical: 1 }}
+                      onPress={() => openPlansPlanning(chantier.id)}>
+                      <Text style={{ fontSize: 9, color: nbPlans > 0 ? '#2E7D32' : '#B0BEC5' }}>▤ {nbPlans || ''}</Text>
+                    </Pressable>
+                  );
+                })()}
+                <Pressable style={{ backgroundColor: '#FFF3E0', borderRadius: 4, paddingHorizontal: 3, paddingVertical: 1 }}
+                  onPress={() => { setGalerieChantierId(chantier.id); setShowGalerieGlobale(true); }}>
+                  <Text style={{ fontSize: 9, color: '#E65100' }}>◻</Text>
+                </Pressable>
               </View>
             </Pressable>
 
@@ -2690,7 +2697,8 @@ export default function PlanningScreen() {
       {/* Galerie photos globale */}
       <GaleriePhotos
         visible={showGalerieGlobale}
-        onClose={() => setShowGalerieGlobale(false)}
+        onClose={() => { setShowGalerieGlobale(false); setGalerieChantierId(undefined); }}
+        chantierId={galerieChantierId}
         titre="📷 Galerie photos"
       />
 
