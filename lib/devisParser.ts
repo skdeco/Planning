@@ -112,6 +112,64 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
 }
 
 /**
+ * Détecte un montant de remise / rabais / réduction globale appliquée au devis.
+ * Cherche des motifs comme "Remise 5 000,00 €", "Rabais 5%", "Réduction -2 500,00 €".
+ * Retourne le montant HT absolu (positif) de la remise, ou null si non détectée.
+ */
+export function extraireRemiseHT(texte: string, totalLotsHT: number): number | null {
+  if (!texte || totalLotsHT <= 0) return null;
+  const t = texte.replace(/\s+/g, ' ');
+
+  // Chaque occurrence du mot-clé (ignore "TVA", "acompte", "garantie", "retenue")
+  const keyword = new RegExp('\\b(?:remise|rabais|r[eé]duction)\\b[^.\\n]{0,120}', 'gi');
+  let match: RegExpExecArray | null;
+
+  while ((match = keyword.exec(t)) !== null) {
+    const segment = match[0];
+    if (new RegExp('\\b(?:tva|acompte|garantie|retenue)\\b', 'i').test(segment)) continue;
+
+    // 1) montant en € (signé ou non) — prioritaire
+    const eurMatch = segment.match(new RegExp('-?\\s*(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€'));
+    if (eurMatch) {
+      const amount = parseMontant(eurMatch[1]);
+      if (!isNaN(amount) && amount > 0 && amount < totalLotsHT) {
+        return amount;
+      }
+    }
+
+    // 2) pourcentage
+    const pctMatch = segment.match(new RegExp('(\\d{1,2}(?:[,.]\\d+)?)\\s*%'));
+    if (pctMatch) {
+      const pct = parseFloat(pctMatch[1].replace(',', '.'));
+      if (!isNaN(pct) && pct > 0 && pct < 100) {
+        return Math.round(totalLotsHT * (pct / 100) * 100) / 100;
+      }
+    }
+  }
+  return null;
+}
+
+/**
+ * Extrait les lots d'un devis ET ventile proportionnellement la remise éventuelle.
+ * Retourne `{ lots, remiseHT, totalBrutHT }`.
+ * Les montants dans `lots` sont DÉJÀ ajustés (nets après remise).
+ */
+export function extraireLotsAvecRemise(texte: string): { lots: LotExtrait[]; remiseHT: number; totalBrutHT: number } {
+  const lotsBruts = extraireLotsDuTexte(texte);
+  const totalBrutHT = lotsBruts.reduce((s, l) => s + l.montantHT, 0);
+  const remiseHT = totalBrutHT > 0 ? (extraireRemiseHT(texte, totalBrutHT) || 0) : 0;
+  if (remiseHT <= 0 || totalBrutHT <= 0) {
+    return { lots: lotsBruts, remiseHT: 0, totalBrutHT };
+  }
+  const ratio = 1 - remiseHT / totalBrutHT;
+  const lots = lotsBruts.map(l => ({
+    nom: l.nom,
+    montantHT: Math.round(l.montantHT * ratio * 100) / 100,
+  }));
+  return { lots, remiseHT, totalBrutHT };
+}
+
+/**
  * Parse une saisie manuelle rapide (un lot par ligne).
  */
 export function parseSaisieManuelle(texte: string): LotExtrait[] {

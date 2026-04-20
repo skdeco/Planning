@@ -6,7 +6,7 @@ import {
 import { useApp } from '@/app/context/AppContext';
 import { APPORTEUR_TYPE_LABELS } from '@/app/types';
 import type { Chantier } from '@/app/types';
-import { extraireLotsDuTexte, parseSaisieManuelle, type LotExtrait } from '@/lib/devisParser';
+import { extraireLotsDuTexte, extraireLotsAvecRemise, parseSaisieManuelle, type LotExtrait } from '@/lib/devisParser';
 
 interface PortailClientProps {
   visible: boolean;
@@ -299,13 +299,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         return;
       }
       setImportTexte(texte);
-      const lots = extraireLotsDuTexte(texte);
+      const { lots, remiseHT, totalBrutHT } = extraireLotsAvecRemise(texte);
       setLotsDetectes(lots);
       const sel: Record<number, boolean> = {};
       lots.forEach((_, i) => { sel[i] = true; });
       setLotsSelection(sel);
       if (lots.length === 0) {
         window.alert(`Texte extrait (${texte.length} caractères) mais aucun lot détecté. Passez en mode "Coller devis" pour ajuster manuellement.`);
+      } else if (remiseHT > 0) {
+        const msg = `✓ ${lots.length} lots détectés\n🎯 Remise de ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata (total brut ${totalBrutHT.toLocaleString('fr-FR')} €)`;
+        if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Extraction', msg);
       }
     } catch (e) {
       window.alert("Erreur lors de l'extraction. Essayez le mode 'Coller devis'.");
@@ -314,11 +317,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     }
   };
   const detecterLots = () => {
-    const lots = importMode === 'coller'
-      ? extraireLotsDuTexte(importTexte)
-      : parseSaisieManuelle(importTexte);
+    let lots: LotExtrait[];
+    let remiseInfo: { remiseHT: number; totalBrutHT: number } | null = null;
+    if (importMode === 'coller') {
+      const r = extraireLotsAvecRemise(importTexte);
+      lots = r.lots;
+      if (r.remiseHT > 0) remiseInfo = { remiseHT: r.remiseHT, totalBrutHT: r.totalBrutHT };
+    } else {
+      lots = parseSaisieManuelle(importTexte);
+    }
     setLotsDetectes(lots);
-    // Tout cocher par défaut
     const sel: Record<number, boolean> = {};
     lots.forEach((_, i) => { sel[i] = true; });
     setLotsSelection(sel);
@@ -326,6 +334,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       const msg = 'Aucun lot détecté. Vérifiez que le texte contient bien des lignes avec un nom et un montant.';
       if (Platform.OS === 'web') window.alert(msg);
       else Alert.alert('Aucun lot détecté', msg);
+    } else if (remiseInfo) {
+      const msg = `✓ ${lots.length} lots détectés\n🎯 Remise de ${remiseInfo.remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata`;
+      if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Extraction', msg);
     }
   };
   const importerLots = () => {
@@ -391,7 +402,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         if (!silent && Platform.OS === 'web') window.alert("Impossible d'extraire le texte du PDF. Utilisez le bouton 📋 Extraire les lots du devis.");
         return;
       }
-      const lots = extraireLotsDuTexte(texte);
+      const { lots, remiseHT } = extraireLotsAvecRemise(texte);
       if (lots.length === 0) {
         if (!silent && Platform.OS === 'web') window.alert('Aucun lot détecté dans le devis.');
         return;
@@ -410,6 +421,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         if (!silent && Platform.OS === 'web') window.alert('Aucun nouveau lot à ajouter (tous déjà présents).');
         return;
       }
+      if (remiseHT > 0) {
+        setAutoExtractToast(`${nouveaux.length} lots importés — remise ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée`);
+      } else {
+        setAutoExtractToast(`${nouveaux.length} lots importés automatiquement`);
+      }
+      setTimeout(() => setAutoExtractToast(null), 5000);
       updateChantier({ ...chantier, avancementCorps: [...existing, ...nouveaux] });
       setAutoExtractToast(`✓ ${nouveaux.length} lot(s) détecté(s) depuis le devis`);
       setTimeout(() => setAutoExtractToast(null), 4000);
