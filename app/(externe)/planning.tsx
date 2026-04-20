@@ -1,42 +1,63 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
+import type { Chantier } from '@/app/types';
 
-function iso(d: Date) {
-  return d.toISOString().slice(0, 10);
+function iso(d: Date) { return d.toISOString().slice(0, 10); }
+function parseISO(s: string): Date { return new Date(s + (s.length === 10 ? 'T12:00:00' : '')); }
+function addDays(d: Date, n: number) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
+function diffDays(a: Date, b: Date): number {
+  return Math.round((b.getTime() - a.getTime()) / 86400000);
 }
-function parseISO(s: string): Date {
-  return new Date(s + (s.length === 10 ? 'T12:00:00' : ''));
-}
-function addDays(d: Date, n: number) {
-  const x = new Date(d);
-  x.setDate(x.getDate() + n);
-  return x;
-}
-function isWithin(day: string, start: string, end: string) {
-  return day >= start && day <= end;
-}
-function formatJour(d: Date): string {
-  return d.toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: '2-digit' });
+
+/**
+ * Calcule les plages prévues pour chaque lot :
+ * - Si le lot a dateDebutPrevue ET dateFinPrevue → on garde.
+ * - Sinon : on répartit au prorata des montants HT sur la durée du chantier.
+ */
+function computeLotPlanning(chantier: Chantier): Array<{ id: string; nom: string; start: string; end: string; montant: number; manuel: boolean }> {
+  const lots = (chantier.avancementCorps || []).filter(l => l.nom);
+  if (lots.length === 0) return [];
+
+  // Durée : fenêtre du chantier
+  const chantierStart = chantier.dateDebut ? parseISO(chantier.dateDebut) : new Date();
+  const chantierEnd = chantier.dateFin ? parseISO(chantier.dateFin) : addDays(chantierStart, 180); // défaut 6 mois
+  const totalDays = Math.max(1, diffDays(chantierStart, chantierEnd));
+
+  // Montant total des lots sans dates
+  const autoLots = lots.filter(l => !(l.dateDebutPrevue && l.dateFinPrevue));
+  const totalHTAuto = autoLots.reduce((s, l) => s + (l.montant || 1), 0) || autoLots.length;
+
+  let cursor = chantierStart;
+  const result: ReturnType<typeof computeLotPlanning> = [];
+  for (const l of lots) {
+    if (l.dateDebutPrevue && l.dateFinPrevue) {
+      result.push({ id: l.id, nom: l.nom, start: l.dateDebutPrevue, end: l.dateFinPrevue, montant: l.montant || 0, manuel: true });
+    } else {
+      const part = (l.montant || 1) / totalHTAuto;
+      const durationDays = Math.max(1, Math.round(totalDays * part));
+      const startD = new Date(cursor);
+      const endD = addDays(startD, durationDays - 1);
+      result.push({
+        id: l.id,
+        nom: l.nom,
+        start: iso(startD),
+        end: iso(endD),
+        montant: l.montant || 0,
+        manuel: false,
+      });
+      cursor = addDays(endD, 1);
+    }
+  }
+  return result;
 }
 
 export default function PlanningExterne() {
   const { data, currentUser } = useApp();
   const apporteurId = currentUser?.apporteurId;
-  const [offset, setOffset] = useState(0); // décalage en semaines
+  const [selectedChantierId, setSelectedChantierId] = useState<string | null>(null);
+  const [weekOffset, setWeekOffset] = useState(0);
 
-  // Semaine affichée (lundi → dimanche)
-  const { lundi, dimanche, jours } = useMemo(() => {
-    const today = new Date();
-    const dow = today.getDay() === 0 ? 7 : today.getDay();
-    const start = addDays(today, -(dow - 1) + offset * 7);
-    const end = addDays(start, 6);
-    const arr: Date[] = [];
-    for (let i = 0; i < 7; i++) arr.push(addDays(start, i));
-    return { lundi: start, dimanche: end, jours: arr };
-  }, [offset]);
-
-  // Chantiers visibles pour cet apporteur
   const mesChantiers = useMemo(() => {
     if (!apporteurId) return [];
     const apporteur = (data.apporteurs || []).find(a => a.id === apporteurId);
@@ -48,145 +69,257 @@ export default function PlanningExterne() {
         c.apporteurId === apporteurId ||
         c.contractantId === apporteurId;
       if (!lie) return false;
-      // Si client : masqué par défaut sauf si admin a activé afficherPlanningAuClient
       if (estClient && c.afficherPlanningAuClient === false) return false;
       return true;
     });
   }, [data.chantiers, data.apporteurs, apporteurId]);
 
-  // Pour chaque jour : nb total d'employés/ST affectés sur mes chantiers + lots en cours ce jour
-  const joursData = useMemo(() => {
-    return jours.map(d => {
-      const dayIso = iso(d);
-      const chantiersActifsAujourdhui: { chantier: typeof mesChantiers[number]; nbPersonnes: number; lotsJour: string[] }[] = [];
-      for (const c of mesChantiers) {
-        // Affectations ce jour sur ce chantier
-        const aff = data.affectations.filter(
-          a => a.chantierId === c.id && isWithin(dayIso, a.dateDebut, a.dateFin)
-        );
-        const nbPersonnes = aff.length;
-        // Lots prévus ce jour
-        const lotsJour = (c.avancementCorps || [])
-          .filter(l =>
-            l.enCours ||
-            (l.dateDebutPrevue && l.dateFinPrevue && isWithin(dayIso, l.dateDebutPrevue, l.dateFinPrevue))
-          )
-          .map(l => l.nom);
-        if (nbPersonnes > 0 || lotsJour.length > 0) {
-          chantiersActifsAujourdhui.push({ chantier: c, nbPersonnes, lotsJour });
-        }
+  // Par défaut, premier chantier
+  const selectedChantier = useMemo(() => {
+    if (selectedChantierId) return mesChantiers.find(c => c.id === selectedChantierId) || null;
+    return mesChantiers[0] || null;
+  }, [mesChantiers, selectedChantierId]);
+
+  const lotPlanning = useMemo(() => {
+    return selectedChantier ? computeLotPlanning(selectedChantier) : [];
+  }, [selectedChantier]);
+
+  // Fenêtre Gantt : englobe tous les lots + marge
+  const ganttRange = useMemo(() => {
+    if (lotPlanning.length === 0) {
+      const today = new Date();
+      return { start: today, end: addDays(today, 84) }; // 12 semaines
+    }
+    const starts = lotPlanning.map(l => parseISO(l.start));
+    const ends = lotPlanning.map(l => parseISO(l.end));
+    const minS = new Date(Math.min(...starts.map(d => d.getTime())));
+    const maxE = new Date(Math.max(...ends.map(d => d.getTime())));
+    // aligner au lundi
+    const dowS = (minS.getDay() + 6) % 7;
+    const start = addDays(minS, -dowS);
+    const dowE = (maxE.getDay() + 6) % 7;
+    const end = addDays(maxE, 6 - dowE);
+    return { start, end };
+  }, [lotPlanning]);
+
+  // Calcul jours totaux + semaines affichées
+  const totalDays = diffDays(ganttRange.start, ganttRange.end) + 1;
+  const totalWeeks = Math.ceil(totalDays / 7);
+
+  const screenW = Math.min(Dimensions.get('window').width, 1400);
+  const labelColW = 120;
+  const availableW = screenW - 32 - labelColW;
+  const weekW = Math.max(50, Math.min(90, Math.floor(availableW / Math.max(totalWeeks, 6))));
+  const dayW = weekW / 7;
+
+  // Marqueur "aujourd'hui"
+  const today = new Date();
+  const todayOffsetDays = Math.max(0, diffDays(ganttRange.start, today));
+  const todayOffsetPx = todayOffsetDays * dayW;
+  const todayInRange = today >= ganttRange.start && today <= ganttRange.end;
+
+  // Jours avec équipe sur place (aff. employés) sur ce chantier
+  const joursAvecEquipe = useMemo(() => {
+    if (!selectedChantier) return new Set<string>();
+    const set = new Set<string>();
+    for (const a of data.affectations) {
+      if (a.chantierId !== selectedChantier.id) continue;
+      const s = a.dateDebut;
+      const e = a.dateFin;
+      if (!s || !e) continue;
+      let d = parseISO(s);
+      const fin = parseISO(e);
+      while (d <= fin) {
+        set.add(iso(d));
+        d = addDays(d, 1);
       }
-      return { date: d, chantiers: chantiersActifsAujourdhui };
-    });
-  }, [jours, mesChantiers, data.affectations]);
+    }
+    return set;
+  }, [data.affectations, selectedChantier]);
+
+  if (mesChantiers.length === 0) {
+    return (
+      <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 20 }}>
+        <View style={styles.emptyBox}>
+          <Text style={styles.emptyText}>Aucun chantier dans votre planning.</Text>
+        </View>
+      </ScrollView>
+    );
+  }
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
-      {/* Navigation semaine */}
-      <View style={styles.navRow}>
-        <Pressable onPress={() => setOffset(o => o - 1)} style={styles.navBtn}>
-          <Text style={styles.navBtnText}>‹ Sem. préc.</Text>
-        </Pressable>
-        <View style={{ flex: 1, alignItems: 'center' }}>
-          <Text style={styles.weekTitle}>
-            Du {lundi.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })} au {dimanche.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' })}
-          </Text>
-          {offset !== 0 && (
-            <Pressable onPress={() => setOffset(0)} style={{ marginTop: 4 }}>
-              <Text style={styles.todayLink}>Revenir à cette semaine</Text>
-            </Pressable>
-          )}
-        </View>
-        <Pressable onPress={() => setOffset(o => o + 1)} style={styles.navBtn}>
-          <Text style={styles.navBtnText}>Sem. suiv. ›</Text>
-        </Pressable>
-      </View>
+    <View style={{ flex: 1, backgroundColor: '#F5EDE3' }}>
+      {/* Sélecteur de chantier */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierTabs} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 12 }}>
+        {mesChantiers.map(c => (
+          <Pressable
+            key={c.id}
+            onPress={() => setSelectedChantierId(c.id)}
+            style={[styles.chantierChip, selectedChantier?.id === c.id && styles.chantierChipActive]}
+          >
+            <Text style={[styles.chantierChipText, selectedChantier?.id === c.id && { color: '#fff' }]}>
+              {c.nom}
+            </Text>
+          </Pressable>
+        ))}
+      </ScrollView>
 
-      {mesChantiers.length === 0 ? (
-        <View style={styles.emptyBox}>
-          <Text style={styles.emptyText}>Aucun chantier visible dans votre planning.</Text>
-        </View>
-      ) : (
-        joursData.map((jd, idx) => {
-          const isToday = iso(jd.date) === iso(new Date());
-          const hasActivity = jd.chantiers.length > 0;
-          return (
-            <View key={idx} style={[styles.dayRow, isToday && styles.dayRowToday]}>
-              <View style={styles.dayHeader}>
-                <Text style={[styles.dayLabel, isToday && { color: '#8C6D2F' }]}>
-                  {formatJour(jd.date)}{isToday ? ' · Aujourd\'hui' : ''}
-                </Text>
-                {!hasActivity && (
-                  <Text style={styles.noActivity}>Aucune activité prévue</Text>
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+        {selectedChantier && (
+          <>
+            <Text style={styles.title}>{selectedChantier.nom}</Text>
+            <Text style={styles.subtitle}>
+              {selectedChantier.dateDebut ? new Date(selectedChantier.dateDebut).toLocaleDateString('fr-FR') : '?'}
+              {' → '}
+              {selectedChantier.dateFin ? new Date(selectedChantier.dateFin).toLocaleDateString('fr-FR') : '?'}
+            </Text>
+          </>
+        )}
+
+        {lotPlanning.length === 0 ? (
+          <View style={styles.emptyBox}>
+            <Text style={styles.emptyText}>Pas encore de lots définis sur ce chantier.</Text>
+          </View>
+        ) : (
+          <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+            <View>
+              {/* En-tête semaines */}
+              <View style={{ flexDirection: 'row' }}>
+                <View style={{ width: labelColW }} />
+                {Array.from({ length: totalWeeks }).map((_, wi) => {
+                  const wStart = addDays(ganttRange.start, wi * 7);
+                  return (
+                    <View key={wi} style={[styles.weekHeader, { width: weekW }]}>
+                      <Text style={styles.weekHeaderText}>
+                        {wStart.getDate().toString().padStart(2, '0')}/{String(wStart.getMonth() + 1).padStart(2, '0')}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
+
+              {/* Lignes de lots */}
+              <View style={{ position: 'relative' }}>
+                {lotPlanning.map((l, idx) => {
+                  const s = parseISO(l.start);
+                  const e = parseISO(l.end);
+                  const offsetDays = Math.max(0, diffDays(ganttRange.start, s));
+                  const durationDays = diffDays(s, e) + 1;
+                  const left = offsetDays * dayW;
+                  const width = durationDays * dayW;
+                  const isEnCours = today >= s && today <= e;
+                  return (
+                    <View key={l.id} style={[styles.ganttRow, idx % 2 === 0 && { backgroundColor: '#FAF7F3' }]}>
+                      <View style={{ width: labelColW, paddingHorizontal: 8, justifyContent: 'center' }}>
+                        <Text style={styles.lotLabel} numberOfLines={2}>{l.nom}</Text>
+                        {!l.manuel && <Text style={styles.prorataTag}>prorata</Text>}
+                      </View>
+                      <View style={{ width: totalWeeks * weekW, height: 36, position: 'relative' }}>
+                        <View
+                          style={[
+                            styles.ganttBar,
+                            {
+                              left,
+                              width,
+                              backgroundColor: isEnCours ? '#C9A96E' : '#E8DDD0',
+                              borderColor: isEnCours ? '#8C6D2F' : '#C9A96E',
+                            },
+                          ]}
+                        >
+                          <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#8C6D2F' }]} numberOfLines={1}>
+                            {isEnCours ? '🔨 En cours' : l.manuel ? '📅 Planifié' : '~ Prévu'}
+                          </Text>
+                        </View>
+                      </View>
+                    </View>
+                  );
+                })}
+
+                {/* Ligne "aujourd'hui" */}
+                {todayInRange && (
+                  <View
+                    pointerEvents="none"
+                    style={{
+                      position: 'absolute', top: 0, bottom: 0,
+                      left: labelColW + todayOffsetPx,
+                      width: 2, backgroundColor: '#E74C3C',
+                    }}
+                  />
                 )}
               </View>
-              {jd.chantiers.map((cc, i) => (
-                <View key={i} style={styles.chantierBox}>
-                  <Text style={styles.chantierName}>🏗️ {cc.chantier.nom}</Text>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 4, flexWrap: 'wrap' }}>
-                    {cc.nbPersonnes > 0 && (
-                      <View style={styles.presenceBadge}>
-                        <Text style={styles.presenceBadgeText}>
-                          👷 Équipe sur place ({cc.nbPersonnes})
-                        </Text>
-                      </View>
-                    )}
-                    {cc.nbPersonnes === 0 && cc.lotsJour.length > 0 && (
-                      <View style={[styles.presenceBadge, { backgroundColor: '#E8DDD0' }]}>
-                        <Text style={[styles.presenceBadgeText, { color: '#8C8077' }]}>📅 Planifié</Text>
-                      </View>
-                    )}
-                  </View>
-                  {cc.lotsJour.length > 0 && (
-                    <Text style={styles.lotsJour}>🔨 {cc.lotsJour.join(' · ')}</Text>
-                  )}
+            </View>
+          </ScrollView>
+        )}
+
+        {/* Équipes sur place : indication jour par jour (sans nombre, sans noms) */}
+        {selectedChantier && joursAvecEquipe.size > 0 && (
+          <View style={styles.equipeBox}>
+            <Text style={styles.equipeTitle}>👷 Jours avec équipe sur place</Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
+              {Array.from(joursAvecEquipe).sort().slice(0, 30).map(d => (
+                <View key={d} style={styles.equipeChip}>
+                  <Text style={styles.equipeChipText}>{new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</Text>
                 </View>
               ))}
+              {joursAvecEquipe.size > 30 && (
+                <Text style={{ fontSize: 11, color: '#8C8077', alignSelf: 'center' }}>+ {joursAvecEquipe.size - 30} autres</Text>
+              )}
             </View>
-          );
-        })
-      )}
+          </View>
+        )}
 
-      <View style={styles.legendBox}>
-        <Text style={styles.legendTitle}>ℹ️ À propos de ce planning</Text>
-        <Text style={styles.legendText}>
-          Les journées d'activité indiquent la présence d'équipes SK DECO sur place et les lots planifiés ou en cours. Les détails des intervenants ne sont pas communiqués.
-        </Text>
-      </View>
-    </ScrollView>
+        <View style={styles.legendBox}>
+          <Text style={styles.legendTitle}>ℹ️ Légende</Text>
+          <Text style={styles.legendText}>
+            Les lots avec "prorata" sont estimés automatiquement selon leur part du budget. Les lots "Planifié" ont des dates saisies par SK DECO.
+            Le statut "En cours" est automatique quand la date du jour est dans la fenêtre.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  navRow: {
-    flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16,
+  chantierTabs: {
+    maxHeight: 54, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E8DDD0', flexGrow: 0,
   },
-  navBtn: {
-    backgroundColor: '#fff', paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8,
-    borderWidth: 1, borderColor: '#E8DDD0',
+  chantierChip: {
+    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
+    backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E8DDD0',
   },
-  navBtnText: { fontSize: 12, fontWeight: '700', color: '#2C2C2C' },
-  weekTitle: { fontSize: 13, fontWeight: '800', color: '#2C2C2C' },
-  todayLink: { fontSize: 11, color: '#8C6D2F', textDecorationLine: 'underline' },
-  dayRow: {
-    backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8,
-    borderLeftWidth: 3, borderLeftColor: '#E8DDD0',
+  chantierChipActive: {
+    backgroundColor: '#2C2C2C', borderColor: '#2C2C2C',
   },
-  dayRowToday: {
-    borderLeftColor: '#C9A96E', backgroundColor: '#FFFDF8',
+  chantierChipText: { fontSize: 12, fontWeight: '700', color: '#2C2C2C' },
+  title: { fontSize: 17, fontWeight: '800', color: '#2C2C2C', marginBottom: 2 },
+  subtitle: { fontSize: 12, color: '#8C8077', marginBottom: 16 },
+  weekHeader: {
+    borderWidth: 1, borderColor: '#E8DDD0', backgroundColor: '#fff',
+    alignItems: 'center', justifyContent: 'center', paddingVertical: 6,
   },
-  dayHeader: { marginBottom: 6 },
-  dayLabel: { fontSize: 13, fontWeight: '800', color: '#2C2C2C' },
-  noActivity: { fontSize: 11, color: '#B0BEC5', fontStyle: 'italic', marginTop: 2 },
-  chantierBox: {
-    marginTop: 8, padding: 10, backgroundColor: '#FAF7F3', borderRadius: 8,
+  weekHeaderText: { fontSize: 10, fontWeight: '700', color: '#2C2C2C' },
+  ganttRow: {
+    flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 1, borderBottomColor: '#E8DDD0',
   },
-  chantierName: { fontSize: 13, fontWeight: '700', color: '#2C2C2C' },
-  presenceBadge: {
+  lotLabel: { fontSize: 12, fontWeight: '700', color: '#2C2C2C' },
+  prorataTag: { fontSize: 9, color: '#8C8077', fontStyle: 'italic' },
+  ganttBar: {
+    position: 'absolute', top: 6, bottom: 6,
+    borderWidth: 1, borderRadius: 6,
+    alignItems: 'center', justifyContent: 'center',
+    paddingHorizontal: 6,
+  },
+  ganttBarText: { fontSize: 10, fontWeight: '800' },
+  equipeBox: {
+    marginTop: 24, padding: 12, backgroundColor: '#fff',
+    borderRadius: 10, borderLeftWidth: 3, borderLeftColor: '#2E7D32',
+  },
+  equipeTitle: { fontSize: 12, fontWeight: '800', color: '#2C2C2C' },
+  equipeChip: {
     backgroundColor: '#D4EDDA', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
   },
-  presenceBadgeText: { fontSize: 10, fontWeight: '800', color: '#155724' },
-  lotsJour: { fontSize: 11, color: '#8C6D2F', marginTop: 4, fontWeight: '600' },
+  equipeChipText: { fontSize: 10, fontWeight: '700', color: '#155724' },
   emptyBox: {
     padding: 32, backgroundColor: '#fff', borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',

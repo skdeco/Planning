@@ -15,6 +15,7 @@ import {
   parseSaisieManuelle,
   type LotExtrait,
 } from '@/lib/devisParser';
+import { DatePickerField } from '@/components/ui/DatePickerField';
 
 interface PortailClientProps {
   visible: boolean;
@@ -24,6 +25,12 @@ interface PortailClientProps {
 
 function fmt(n: number) { return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
+function todayIso(): string { return new Date().toISOString().slice(0, 10); }
+function isLotEnCours(l: { dateDebutPrevue?: string; dateFinPrevue?: string }): boolean {
+  if (!l.dateDebutPrevue || !l.dateFinPrevue) return false;
+  const t = todayIso();
+  return t >= l.dateDebutPrevue && t <= l.dateFinPrevue;
+}
 
 const SAV_STATUT_LABELS: Record<string, string> = {
   ouvert: 'Ouvert',
@@ -76,7 +83,6 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     photos: [] as string[],
     dateDebutPrevue: '',
     dateFinPrevue: '',
-    enCours: false,
   });
   // ── Import depuis devis ──
   const [showImportDevis, setShowImportDevis] = useState(false);
@@ -283,7 +289,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   const openNewCorps = () => {
     setEditCorpsId(null);
-    setCorpsForm({ nom: '', montant: '', pourcentage: 0, commentaire: '', photos: [], dateDebutPrevue: '', dateFinPrevue: '', enCours: false });
+    setCorpsForm({ nom: '', montant: '', pourcentage: 0, commentaire: '', photos: [], dateDebutPrevue: '', dateFinPrevue: '' });
     setShowCorpsForm(true);
   };
   const openEditCorps = (c: NonNullable<Chantier['avancementCorps']>[number]) => {
@@ -296,7 +302,6 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       photos: c.photos || [],
       dateDebutPrevue: c.dateDebutPrevue || '',
       dateFinPrevue: c.dateFinPrevue || '',
-      enCours: !!c.enCours,
     });
     setShowCorpsForm(true);
   };
@@ -312,7 +317,6 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       photos: corpsForm.photos.length > 0 ? corpsForm.photos : undefined,
       dateDebutPrevue: corpsForm.dateDebutPrevue || undefined,
       dateFinPrevue: corpsForm.dateFinPrevue || undefined,
-      enCours: corpsForm.enCours || undefined,
     };
     const next = editCorpsId
       ? existing.map(c => c.id === editCorpsId ? entry : c)
@@ -505,13 +509,17 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         return;
       }
       const patch: Partial<Chantier> = { avancementCorps: [...existing, ...nouveaux] };
-      if (tvaBreak.length > 0) patch.devisTVABreakdown = tvaBreak;
-      // Priorité au TTC du récap si présent, sinon au TTC direct
-      if (ttcDevis && ttcDevis > 0) patch.devisTotalTTC = ttcDevis;
-      else if (recap.totalNetHT && tvaBreak.length > 0) {
-        const totalTva = tvaBreak.reduce((s, t) => s + t.montant, 0);
-        patch.devisTotalTTC = recap.totalNetHT + totalTva;
+      if (tvaBreak.length > 0) {
+        patch.devisTVABreakdown = tvaBreak;
+      } else if (recap.totalTVA && recap.totalTVA > 0 && recap.totalNetHT && recap.totalNetHT > 0) {
+        // Aucun split individuel — on stocke 1 ligne agrégée au taux effectif
+        const tauxEff = Math.round((recap.totalTVA / recap.totalNetHT) * 1000) / 10; // ex : 9.5
+        patch.devisTVABreakdown = [{ taux: tauxEff, montant: recap.totalTVA }];
       }
+      // TTC : priorité absolue au TTC lu dans le devis
+      const ttcFromRecap = ttcDevis || recap.totalTTC
+        || (recap.totalNetHT && recap.totalTVA ? recap.totalNetHT + recap.totalTVA : undefined);
+      if (ttcFromRecap && ttcFromRecap > 0) patch.devisTotalTTC = ttcFromRecap;
       updateChantier({ ...chantier, ...patch });
       let toastMsg = `${nouveaux.length} lot(s) importé(s)`;
       if (remiseHT > 0) toastMsg += ` — remise ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € ventilée`;
@@ -1060,7 +1068,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               ) : (
                 <>
                   {avancementCorps.map(c => (
-                    <View key={c.id} style={[{ marginBottom: 10 }, c.enCours && styles.lotEnCoursCard]}>
+                    <View key={c.id} style={[{ marginBottom: 10 }, isLotEnCours(c) && styles.lotEnCoursCard]}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                         <Pressable
                           onPress={isAdmin ? () => openEditCorps(c) : undefined}
@@ -1070,7 +1078,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
                               {c.nom}{c.montant ? ` — ${fmt(c.montant)} € HT` : ''}
                             </Text>
-                            {c.enCours && (
+                            {isLotEnCours(c) && (
                               <View style={styles.lotBadgeEnCours}>
                                 <Text style={styles.lotBadgeEnCoursText}>🔨 En cours</Text>
                               </View>
@@ -1544,7 +1552,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           >
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 }}>
-              {editCorpsId ? 'Modifier' : 'Ajouter'} un corps de métier
+              {editCorpsId
+                ? `Avancement${corpsForm.nom ? ` — ${corpsForm.nom}` : ''}`
+                : 'Ajouter un corps de métier'}
             </Text>
             <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Nom *</Text>
             <TextInput
@@ -1590,38 +1600,26 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>📅 Planning prévu</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 2 }}>Début (AAAA-MM-JJ)</Text>
-                <TextInput
-                  style={styles.corpsInp}
+                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>Début</Text>
+                <DatePickerField
                   value={corpsForm.dateDebutPrevue}
-                  onChangeText={v => setCorpsForm(f => ({ ...f, dateDebutPrevue: v }))}
-                  placeholder="2026-05-15"
+                  onChange={v => setCorpsForm(f => ({ ...f, dateDebutPrevue: v }))}
+                  placeholder="Choisir une date"
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 2 }}>Fin (AAAA-MM-JJ)</Text>
-                <TextInput
-                  style={styles.corpsInp}
+                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>Fin</Text>
+                <DatePickerField
                   value={corpsForm.dateFinPrevue}
-                  onChangeText={v => setCorpsForm(f => ({ ...f, dateFinPrevue: v }))}
-                  placeholder="2026-05-30"
+                  onChange={v => setCorpsForm(f => ({ ...f, dateFinPrevue: v }))}
+                  placeholder="Choisir une date"
+                  minDate={corpsForm.dateDebutPrevue || undefined}
                 />
               </View>
             </View>
-            <Pressable
-              onPress={() => setCorpsForm(f => ({ ...f, enCours: !f.enCours }))}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}
-            >
-              <View style={{
-                width: 20, height: 20, borderRadius: 4,
-                borderWidth: 2, borderColor: corpsForm.enCours ? '#C9A96E' : '#B0BEC5',
-                backgroundColor: corpsForm.enCours ? '#C9A96E' : 'transparent',
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                {corpsForm.enCours && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>✓</Text>}
-              </View>
-              <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>Lot en cours de réalisation</Text>
-            </Pressable>
+            <Text style={{ fontSize: 11, color: '#8C8077', marginTop: 10, fontStyle: 'italic' }}>
+              Le statut "En cours" est automatique : actif si la date d'aujourd'hui est entre le début et la fin prévus.
+            </Text>
 
             {/* Commentaire admin (visible par externes) */}
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>💬 Commentaire (visible par le client / apporteur)</Text>

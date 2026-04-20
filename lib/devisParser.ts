@@ -171,10 +171,7 @@ export function extraireLotsAvecRemise(texte: string): { lots: LotExtrait[]; rem
 
 /**
  * Détecte la décomposition TVA d'un devis (multi-taux : 5.5%, 10%, 20%...).
- *
- * Stratégie prioritaire : trouver la section récap "Taux TVA | Base HT | Total"
- * et parser toutes les lignes `X % <base>,XX € <montantTVA>,XX €`.
- * À défaut, fallback sur recherche "TVA X%" ligne par ligne.
+ * Plusieurs stratégies en cascade pour maximiser la réussite.
  */
 export function extraireTVAsDuTexte(texte: string): { taux: number; montant: number }[] {
   if (!texte) return [];
@@ -182,43 +179,53 @@ export function extraireTVAsDuTexte(texte: string): { taux: number; montant: num
   const out: { taux: number; montant: number }[] = [];
   const seen = new Set<string>();
 
-  // 1) PRIORITAIRE : récap "Taux TVA ... Base HT ... Total"
-  const recapMatch = t.match(new RegExp('taux\\s*tva[\\s\\S]{0,30}?base\\s*ht[\\s\\S]{0,30}?total([\\s\\S]{0,500})', 'i'));
-  if (recapMatch) {
-    const section = recapMatch[1];
-    // Capture répétée : (taux) % (base) € (montantTVA) €
-    const line = new RegExp('(\\d{1,2}(?:[,.]\\d{1,2})?)\\s*%\\s*(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€\\s*(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'g');
-    let lm: RegExpExecArray | null;
-    while ((lm = line.exec(section)) !== null) {
-      const taux = parseFloat(lm[1].replace(',', '.'));
-      const montant = parseMontant(lm[3]);
+  // Localiser la zone récap (après "Total TTC" ou "NET À PAYER" ou "Taux TVA")
+  const markers = [
+    new RegExp('taux\\s*tva[\\s\\S]{0,40}?base\\s*ht[\\s\\S]{0,40}?total', 'i'),
+    new RegExp('net\\s*[àa]\\s*payer', 'i'),
+    new RegExp('total\\s*ttc', 'i'),
+  ];
+  let sectionStart = -1;
+  for (const re of markers) {
+    const m = t.match(re);
+    if (m && m.index !== undefined) {
+      sectionStart = m.index + m[0].length;
+      break;
+    }
+  }
+  const section = sectionStart >= 0 ? t.slice(sectionStart, sectionStart + 800) : '';
+
+  // Pattern : (taux %) (opt base €) (montant TVA €) — 2 ou 3 valeurs
+  const pattern = new RegExp(
+    '(\\d{1,2}(?:[,.]\\d{1,2})?)\\s*%\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€(?:\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€)?',
+    'g'
+  );
+
+  if (section) {
+    let m: RegExpExecArray | null;
+    while ((m = pattern.exec(section)) !== null) {
+      const taux = parseFloat(m[1].replace(',', '.'));
       if (isNaN(taux) || taux <= 0 || taux >= 40) continue;
+      const montantStr = m[3] || m[2];
+      const baseStr = m[3] ? m[2] : undefined;
+      const montant = parseMontant(montantStr);
       if (isNaN(montant) || montant <= 0) continue;
+      // Cohérence base × taux ≈ montant
+      if (baseStr) {
+        const base = parseMontant(baseStr);
+        if (!isNaN(base) && base > 0) {
+          const attendu = base * (taux / 100);
+          const delta = Math.abs(attendu - montant) / Math.max(montant, 1);
+          if (delta > 0.08) continue; // ne correspond pas → probablement pas une ligne TVA
+        }
+      }
       const key = `${taux}`;
       if (seen.has(key)) continue;
       seen.add(key);
       out.push({ taux, montant });
     }
-    if (out.length > 0) return out.sort((a, b) => a.taux - b.taux);
   }
 
-  // 2) FALLBACK : "TVA X%" ligne par ligne (pour devis sans récap)
-  const pattern = new RegExp('\\btva\\b[^\\n]{0,12}?(\\d{1,2}(?:[,.]\\d{1,2})?)\\s*%([^\\n]{0,80})', 'gi');
-  let m: RegExpExecArray | null;
-  while ((m = pattern.exec(t)) !== null) {
-    const taux = parseFloat(m[1].replace(',', '.'));
-    if (isNaN(taux) || taux <= 0 || taux >= 40) continue;
-    const after = m[2] || '';
-    const amounts = Array.from(after.matchAll(new RegExp('(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'g')));
-    if (amounts.length === 0) continue;
-    const last = amounts[amounts.length - 1][1];
-    const montant = parseMontant(last);
-    if (isNaN(montant) || montant <= 0) continue;
-    const key = `${taux}`;
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ taux, montant });
-  }
   return out.sort((a, b) => a.taux - b.taux);
 }
 
@@ -226,38 +233,48 @@ export function extraireTVAsDuTexte(texte: string): { taux: number; montant: num
  * Extrait le "Total brut HT", "Remise globale", "Total net HT" du récap en bas du devis.
  * Utile pour afficher le vrai montant brut et la remise effective dans l'UI.
  */
-export function extraireRecapDevis(texte: string): { totalBrutHT?: number; remiseGlobale?: number; totalNetHT?: number } {
+export function extraireRecapDevis(texte: string): {
+  totalBrutHT?: number;
+  remiseGlobale?: number;
+  totalNetHT?: number;
+  totalTVA?: number;
+  totalTTC?: number;
+} {
   if (!texte) return {};
   const t = texte.replace(/\s+/g, ' ');
-  const find = (label: string): number | undefined => {
-    const re = new RegExp(label + '[^\\n]{0,20}?(-?\\s*\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'i');
+  const findAmount = (label: string, allowNeg = false): number | undefined => {
+    const pre = allowNeg ? '(-?\\s*' : '(';
+    const re = new RegExp(label + '[^€]{0,30}?' + pre + '\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'i');
     const m = t.match(re);
     if (!m) return undefined;
-    const clean = m[1].replace(/-\s*/, '-');
-    const val = parseMontant(clean.replace(/^-/, ''));
-    return clean.startsWith('-') ? -val : val;
+    const raw = m[1].replace(/-\s*/, '-');
+    const val = parseMontant(raw.replace(/^-/, ''));
+    return raw.startsWith('-') ? -val : val;
   };
   return {
-    totalBrutHT: find('total\\s*brut\\s*ht'),
-    remiseGlobale: find('remise\\s*globale'),
-    totalNetHT: find('total\\s*net\\s*ht'),
+    totalBrutHT: findAmount('total\\s*brut\\s*ht'),
+    remiseGlobale: findAmount('remise\\s*globale', true),
+    totalNetHT: findAmount('total\\s*net\\s*ht'),
+    totalTVA: findAmount('(?:^|[\\s])tva(?=\\s|$)'),
+    totalTTC: findAmount('total\\s*ttc'),
   };
 }
 
 /**
- * Cherche le "Total TTC" / "Net à payer TTC" dans le texte.
+ * Cherche le Total TTC du devis (plusieurs variantes).
  */
 export function extraireTotalTTC(texte: string): number | null {
   if (!texte) return null;
+  const recap = extraireRecapDevis(texte);
+  if (recap.totalTTC && recap.totalTTC > 0) return recap.totalTTC;
   const t = texte.replace(/\s+/g, ' ');
   const candidates = [
-    'total(?:\\s+g[eé]n[eé]ral)?\\s*ttc',
-    'ttc\\s*(?:total|final|g[eé]n[eé]ral)',
     'net\\s*[àa]\\s*payer\\s*ttc',
     'net\\s*[àa]\\s*payer',
+    'ttc\\s*(?:total|final|g[eé]n[eé]ral)',
   ];
   for (const c of candidates) {
-    const re = new RegExp(c + '[^\\n]{0,40}?(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'i');
+    const re = new RegExp(c + '[^€]{0,60}?(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'i');
     const m = t.match(re);
     if (m) {
       const amt = parseMontant(m[1]);
