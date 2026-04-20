@@ -170,8 +170,11 @@ export function extraireLotsAvecRemise(texte: string): { lots: LotExtrait[]; rem
 }
 
 /**
- * Détecte les lignes "TVA X% ... montant" d'un devis et retourne la décomposition.
- * Gère les taux multi-TVA (5.5%, 10%, 20%...).
+ * Détecte la décomposition TVA d'un devis (multi-taux : 5.5%, 10%, 20%...).
+ *
+ * Stratégie prioritaire : trouver la section récap "Taux TVA | Base HT | Total"
+ * et parser toutes les lignes `X % <base>,XX € <montantTVA>,XX €`.
+ * À défaut, fallback sur recherche "TVA X%" ligne par ligne.
  */
 export function extraireTVAsDuTexte(texte: string): { taux: number; montant: number }[] {
   if (!texte) return [];
@@ -179,7 +182,27 @@ export function extraireTVAsDuTexte(texte: string): { taux: number; montant: num
   const out: { taux: number; montant: number }[] = [];
   const seen = new Set<string>();
 
-  // "TVA 5,5%" ... "55,00 €"  — on prend le dernier montant € de la fenêtre
+  // 1) PRIORITAIRE : récap "Taux TVA ... Base HT ... Total"
+  const recapMatch = t.match(new RegExp('taux\\s*tva[\\s\\S]{0,30}?base\\s*ht[\\s\\S]{0,30}?total([\\s\\S]{0,500})', 'i'));
+  if (recapMatch) {
+    const section = recapMatch[1];
+    // Capture répétée : (taux) % (base) € (montantTVA) €
+    const line = new RegExp('(\\d{1,2}(?:[,.]\\d{1,2})?)\\s*%\\s*(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€\\s*(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'g');
+    let lm: RegExpExecArray | null;
+    while ((lm = line.exec(section)) !== null) {
+      const taux = parseFloat(lm[1].replace(',', '.'));
+      const montant = parseMontant(lm[3]);
+      if (isNaN(taux) || taux <= 0 || taux >= 40) continue;
+      if (isNaN(montant) || montant <= 0) continue;
+      const key = `${taux}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push({ taux, montant });
+    }
+    if (out.length > 0) return out.sort((a, b) => a.taux - b.taux);
+  }
+
+  // 2) FALLBACK : "TVA X%" ligne par ligne (pour devis sans récap)
   const pattern = new RegExp('\\btva\\b[^\\n]{0,12}?(\\d{1,2}(?:[,.]\\d{1,2})?)\\s*%([^\\n]{0,80})', 'gi');
   let m: RegExpExecArray | null;
   while ((m = pattern.exec(t)) !== null) {
@@ -188,7 +211,6 @@ export function extraireTVAsDuTexte(texte: string): { taux: number; montant: num
     const after = m[2] || '';
     const amounts = Array.from(after.matchAll(new RegExp('(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'g')));
     if (amounts.length === 0) continue;
-    // Prendre le dernier (c'est usuellement le montant TVA, pas la base)
     const last = amounts[amounts.length - 1][1];
     const montant = parseMontant(last);
     if (isNaN(montant) || montant <= 0) continue;
@@ -198,6 +220,28 @@ export function extraireTVAsDuTexte(texte: string): { taux: number; montant: num
     out.push({ taux, montant });
   }
   return out.sort((a, b) => a.taux - b.taux);
+}
+
+/**
+ * Extrait le "Total brut HT", "Remise globale", "Total net HT" du récap en bas du devis.
+ * Utile pour afficher le vrai montant brut et la remise effective dans l'UI.
+ */
+export function extraireRecapDevis(texte: string): { totalBrutHT?: number; remiseGlobale?: number; totalNetHT?: number } {
+  if (!texte) return {};
+  const t = texte.replace(/\s+/g, ' ');
+  const find = (label: string): number | undefined => {
+    const re = new RegExp(label + '[^\\n]{0,20}?(-?\\s*\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'i');
+    const m = t.match(re);
+    if (!m) return undefined;
+    const clean = m[1].replace(/-\s*/, '-');
+    const val = parseMontant(clean.replace(/^-/, ''));
+    return clean.startsWith('-') ? -val : val;
+  };
+  return {
+    totalBrutHT: find('total\\s*brut\\s*ht'),
+    remiseGlobale: find('remise\\s*globale'),
+    totalNetHT: find('total\\s*net\\s*ht'),
+  };
 }
 
 /**

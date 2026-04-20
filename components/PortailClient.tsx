@@ -11,6 +11,7 @@ import {
   extraireLotsAvecRemise,
   extraireTVAsDuTexte,
   extraireTotalTTC,
+  extraireRecapDevis,
   parseSaisieManuelle,
   type LotExtrait,
 } from '@/lib/devisParser';
@@ -59,7 +60,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
   const [showCorpsForm, setShowCorpsForm] = useState(false);
   const [editCorpsId, setEditCorpsId] = useState<string | null>(null);
-  const [corpsForm, setCorpsForm] = useState({ nom: '', montant: '', pourcentage: 0 });
+  const [corpsForm, setCorpsForm] = useState({
+    nom: '',
+    montant: '',
+    pourcentage: 0,
+    commentaire: '',
+    photos: [] as string[],
+    dateDebutPrevue: '',
+    dateFinPrevue: '',
+    enCours: false,
+  });
   // ── Import depuis devis ──
   const [showImportDevis, setShowImportDevis] = useState(false);
   const [importMode, setImportMode] = useState<'pdf' | 'coller' | 'rapide'>('pdf');
@@ -265,12 +275,21 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   const openNewCorps = () => {
     setEditCorpsId(null);
-    setCorpsForm({ nom: '', montant: '', pourcentage: 0 });
+    setCorpsForm({ nom: '', montant: '', pourcentage: 0, commentaire: '', photos: [], dateDebutPrevue: '', dateFinPrevue: '', enCours: false });
     setShowCorpsForm(true);
   };
-  const openEditCorps = (c: { id: string; nom: string; pourcentage: number; montant?: number }) => {
+  const openEditCorps = (c: NonNullable<Chantier['avancementCorps']>[number]) => {
     setEditCorpsId(c.id);
-    setCorpsForm({ nom: c.nom, montant: c.montant ? String(c.montant) : '', pourcentage: c.pourcentage });
+    setCorpsForm({
+      nom: c.nom,
+      montant: c.montant ? String(c.montant) : '',
+      pourcentage: c.pourcentage,
+      commentaire: c.commentaire || '',
+      photos: c.photos || [],
+      dateDebutPrevue: c.dateDebutPrevue || '',
+      dateFinPrevue: c.dateFinPrevue || '',
+      enCours: !!c.enCours,
+    });
     setShowCorpsForm(true);
   };
   const saveCorps = () => {
@@ -281,12 +300,35 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       nom: corpsForm.nom.trim(),
       pourcentage: Math.max(0, Math.min(100, Math.round(corpsForm.pourcentage))),
       montant: corpsForm.montant.trim() ? parseFloat(corpsForm.montant.replace(',', '.')) || undefined : undefined,
+      commentaire: corpsForm.commentaire.trim() || undefined,
+      photos: corpsForm.photos.length > 0 ? corpsForm.photos : undefined,
+      dateDebutPrevue: corpsForm.dateDebutPrevue || undefined,
+      dateFinPrevue: corpsForm.dateFinPrevue || undefined,
+      enCours: corpsForm.enCours || undefined,
     };
     const next = editCorpsId
       ? existing.map(c => c.id === editCorpsId ? entry : c)
       : [...existing, entry];
     updateChantier({ ...chantier, avancementCorps: next });
     setShowCorpsForm(false);
+  };
+  const pickPhotoForLot = async () => {
+    try {
+      const ImagePicker = require('expo-image-picker');
+      const res = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        quality: 0.7,
+        allowsMultipleSelection: Platform.OS !== 'ios',
+      });
+      if (res.canceled) return;
+      const uris: string[] = (res.assets || []).map((a: any) => a.uri).filter(Boolean);
+      if (uris.length > 0) setCorpsForm(f => ({ ...f, photos: [...f.photos, ...uris] }));
+    } catch {
+      Alert.alert('Erreur', "Impossible d'ouvrir la bibliothèque photos.");
+    }
+  };
+  const removeLotPhoto = (uri: string) => {
+    setCorpsForm(f => ({ ...f, photos: f.photos.filter(p => p !== uri) }));
   };
   const deleteCorps = (id: string) => {
     if (!chantier) return;
@@ -435,6 +477,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       const { lots, remiseHT } = extraireLotsAvecRemise(texte);
       const tvaBreak = extraireTVAsDuTexte(texte);
       const ttcDevis = extraireTotalTTC(texte);
+      const recap = extraireRecapDevis(texte);
       if (lots.length === 0) {
         if (!silent && Platform.OS === 'web') window.alert('Aucun lot détecté dans le devis.');
         return;
@@ -455,7 +498,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       }
       const patch: Partial<Chantier> = { avancementCorps: [...existing, ...nouveaux] };
       if (tvaBreak.length > 0) patch.devisTVABreakdown = tvaBreak;
+      // Priorité au TTC du récap si présent, sinon au TTC direct
       if (ttcDevis && ttcDevis > 0) patch.devisTotalTTC = ttcDevis;
+      else if (recap.totalNetHT && tvaBreak.length > 0) {
+        const totalTva = tvaBreak.reduce((s, t) => s + t.montant, 0);
+        patch.devisTotalTTC = recap.totalNetHT + totalTva;
+      }
       updateChantier({ ...chantier, ...patch });
       let toastMsg = `${nouveaux.length} lot(s) importé(s)`;
       if (remiseHT > 0) toastMsg += ` — remise ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € ventilée`;
@@ -752,7 +800,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // ── Figer un nouveau point financier (snapshot immuable dans l'historique) ──
   const handleFigerSituation = async () => {
     if (!chantier) return;
-    if (situation.lignes.length === 0 || !situation.peutFiger) return;
+    if (situation.lignes.length === 0) return;
 
     const year = new Date().getFullYear();
     const existingYear = situationsHistorique.filter(s => s.numero.includes(`PFS-${year}-`));
@@ -1004,15 +1052,27 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               ) : (
                 <>
                   {avancementCorps.map(c => (
-                    <View key={c.id} style={{ marginBottom: 10 }}>
+                    <View key={c.id} style={[{ marginBottom: 10 }, c.enCours && styles.lotEnCoursCard]}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                         <Pressable
                           onPress={isAdmin ? () => openEditCorps(c) : undefined}
                           style={{ flex: 1 }}
                         >
-                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
-                            {c.nom}{c.montant ? ` — ${fmt(c.montant)} € HT` : ''}
-                          </Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
+                              {c.nom}{c.montant ? ` — ${fmt(c.montant)} € HT` : ''}
+                            </Text>
+                            {c.enCours && (
+                              <View style={styles.lotBadgeEnCours}>
+                                <Text style={styles.lotBadgeEnCoursText}>🔨 En cours</Text>
+                              </View>
+                            )}
+                          </View>
+                          {(c.dateDebutPrevue || c.dateFinPrevue) && (
+                            <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 2 }}>
+                              📅 {c.dateDebutPrevue || '?'} → {c.dateFinPrevue || '?'}
+                            </Text>
+                          )}
                         </Pressable>
                         <Text style={{ fontSize: 13, fontWeight: '800', color: '#C9A96E', marginLeft: 8 }}>{c.pourcentage}%</Text>
                         {isAdmin && (
@@ -1024,6 +1084,18 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       <View style={styles.corpsBarBg}>
                         <View style={[styles.corpsBarFill, { width: `${c.pourcentage}%` }]} />
                       </View>
+                      {c.commentaire && (
+                        <View style={styles.lotCommentaireBox}>
+                          <Text style={styles.lotCommentaireText}>💬 {c.commentaire}</Text>
+                        </View>
+                      )}
+                      {c.photos && c.photos.length > 0 && (
+                        <View style={{ flexDirection: 'row', gap: 6, marginTop: 6, flexWrap: 'wrap' }}>
+                          {c.photos.map((p, idx) => (
+                            <Image key={idx} source={{ uri: p }} style={{ width: 56, height: 56, borderRadius: 6 }} resizeMode="cover" />
+                          ))}
+                        </View>
+                      )}
                     </View>
                   ))}
                   {/* Total HT des lots */}
@@ -1191,17 +1263,18 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </View>
 
                     {isAdmin && (
-                      situation.peutFiger ? (
+                      <>
+                        {!situation.peutFiger && (
+                          <View style={styles.pfsBlockedBox}>
+                            <Text style={styles.pfsBlockedText}>
+                              ⚠️ L'avancement cumulé ({fmt(situation.totalTTC)} € TTC) ne dépasse pas encore le(s) acompte(s) encaissé(s) ({fmt(dejaPayeTotal)} € TTC).{"\n"}Déconseillé de faire une demande au client pour l'instant — vous pouvez tout de même figer ce point si besoin.
+                            </Text>
+                          </View>
+                        )}
                         <Pressable style={styles.factureBtn} onPress={handleFigerSituation}>
                           <Text style={styles.factureBtnText}>📸 Figer ce point financier + PDF</Text>
                         </Pressable>
-                      ) : (
-                        <View style={styles.pfsBlockedBox}>
-                          <Text style={styles.pfsBlockedText}>
-                            ⏳ L'avancement cumulé ({fmt(situation.totalTTC)} € TTC) ne dépasse pas encore le(s) acompte(s) déjà encaissé(s) ({fmt(dejaPayeTotal)} € TTC).{"\n"}Aucune demande au client possible pour l'instant.
-                          </Text>
-                        </View>
-                      )
+                      </>
                     )}
                   </>
                 )}
@@ -1504,6 +1577,78 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             <View style={styles.corpsBarBg}>
               <View style={[styles.corpsBarFill, { width: `${corpsForm.pourcentage}%` }]} />
             </View>
+
+            {/* Planning prévu (visible par externes) */}
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>📅 Planning prévu</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 2 }}>Début (AAAA-MM-JJ)</Text>
+                <TextInput
+                  style={styles.corpsInp}
+                  value={corpsForm.dateDebutPrevue}
+                  onChangeText={v => setCorpsForm(f => ({ ...f, dateDebutPrevue: v }))}
+                  placeholder="2026-05-15"
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 2 }}>Fin (AAAA-MM-JJ)</Text>
+                <TextInput
+                  style={styles.corpsInp}
+                  value={corpsForm.dateFinPrevue}
+                  onChangeText={v => setCorpsForm(f => ({ ...f, dateFinPrevue: v }))}
+                  placeholder="2026-05-30"
+                />
+              </View>
+            </View>
+            <Pressable
+              onPress={() => setCorpsForm(f => ({ ...f, enCours: !f.enCours }))}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 10 }}
+            >
+              <View style={{
+                width: 20, height: 20, borderRadius: 4,
+                borderWidth: 2, borderColor: corpsForm.enCours ? '#C9A96E' : '#B0BEC5',
+                backgroundColor: corpsForm.enCours ? '#C9A96E' : 'transparent',
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                {corpsForm.enCours && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '800' }}>✓</Text>}
+              </View>
+              <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>Lot en cours de réalisation</Text>
+            </Pressable>
+
+            {/* Commentaire admin (visible par externes) */}
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>💬 Commentaire (visible par le client / apporteur)</Text>
+            <TextInput
+              style={[styles.corpsInp, { minHeight: 70, textAlignVertical: 'top' }]}
+              value={corpsForm.commentaire}
+              onChangeText={v => setCorpsForm(f => ({ ...f, commentaire: v }))}
+              placeholder="Ex : Attente livraison du parquet, chantier reprendra lundi..."
+              multiline
+            />
+
+            {/* Photos */}
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>📷 Photos attachées ({corpsForm.photos.length})</Text>
+            {corpsForm.photos.length > 0 && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
+                {corpsForm.photos.map(uri => (
+                  <View key={uri} style={{ position: 'relative' }}>
+                    <Image source={{ uri }} style={{ width: 80, height: 80, borderRadius: 8 }} resizeMode="cover" />
+                    <Pressable
+                      onPress={() => removeLotPhoto(uri)}
+                      style={{ position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✕</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )}
+            <Pressable
+              onPress={pickPhotoForLot}
+              style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' }}
+            >
+              <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>+ Ajouter une photo</Text>
+            </Pressable>
+
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
               <Pressable onPress={() => setShowCorpsForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
@@ -2402,5 +2547,36 @@ const styles = StyleSheet.create({
     color: '#8C6D2F',
     fontWeight: '600',
     lineHeight: 18,
+  },
+  lotEnCoursCard: {
+    backgroundColor: '#FFF8E1',
+    borderRadius: 10,
+    padding: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#F5C242',
+  },
+  lotBadgeEnCours: {
+    backgroundColor: '#F5C242',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  lotBadgeEnCoursText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#5A4500',
+  },
+  lotCommentaireBox: {
+    backgroundColor: '#F5EDE3',
+    borderRadius: 8,
+    padding: 8,
+    marginTop: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#C9A96E',
+  },
+  lotCommentaireText: {
+    fontSize: 12,
+    color: '#2C2C2C',
+    lineHeight: 17,
   },
 });

@@ -209,7 +209,17 @@ export interface Chantier {
   // Portail client : photos sélectionnées pour affichage
   photosPortailClient?: string[];  // IDs des photos visibles dans le portail client
   // Avancement par corps de métier (affiché dans le portail client)
-  avancementCorps?: { id: string; nom: string; pourcentage: number; montant?: number }[];
+  avancementCorps?: {
+    id: string;
+    nom: string;
+    pourcentage: number;
+    montant?: number;
+    commentaire?: string;                 // note admin visible par externes
+    photos?: string[];                    // URIs des photos attachées au lot
+    dateDebutPrevue?: string;             // YYYY-MM-DD
+    dateFinPrevue?: string;               // YYYY-MM-DD
+    enCours?: boolean;                    // marqué "en cours de réalisation"
+  }[];
   // Historique des points financiers de situation figés (avant émission facture)
   situationsHistorique?: SituationFigee[];
   // Décomposition TVA extraite du devis (ex : [{taux:5.5, montant:55}, {taux:20, montant:16000}])
