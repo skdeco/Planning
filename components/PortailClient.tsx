@@ -273,6 +273,15 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     if (Platform.OS === 'web') { if (window.confirm('Supprimer ce corps de métier ?')) doDel(); }
     else Alert.alert('Supprimer', 'Supprimer ce corps de métier ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDel }]);
   };
+  const deleteAllCorps = () => {
+    if (!chantier) return;
+    const nb = (chantier.avancementCorps || []).length;
+    if (nb === 0) return;
+    const msg = `Supprimer les ${nb} lots de ce chantier ?\n\nCette action est irréversible. L'historique des points financiers sera conservé.`;
+    const doDel = () => updateChantier({ ...chantier, avancementCorps: [] });
+    if (Platform.OS === 'web') { if (window.confirm(msg)) doDel(); }
+    else Alert.alert('Tout supprimer', msg, [{ text: 'Annuler', style: 'cancel' }, { text: 'Tout supprimer', style: 'destructive', onPress: doDel }]);
+  };
 
   // ── Import lots depuis devis ──
   const openImportDevis = () => {
@@ -928,29 +937,41 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   Aucun corps de métier ajouté
                 </Text>
               ) : (
-                avancementCorps.map(c => (
-                  <View key={c.id} style={{ marginBottom: 10 }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Pressable
-                        onPress={isAdmin ? () => openEditCorps(c) : undefined}
-                        style={{ flex: 1 }}
-                      >
-                        <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
-                          {c.nom}{c.montant ? ` — ${fmt(c.montant)} €` : ''}
-                        </Text>
-                      </Pressable>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#C9A96E', marginLeft: 8 }}>{c.pourcentage}%</Text>
-                      {isAdmin && (
-                        <Pressable onPress={() => deleteCorps(c.id)} style={{ marginLeft: 8 }}>
-                          <Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text>
+                <>
+                  {avancementCorps.map(c => (
+                    <View key={c.id} style={{ marginBottom: 10 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <Pressable
+                          onPress={isAdmin ? () => openEditCorps(c) : undefined}
+                          style={{ flex: 1 }}
+                        >
+                          <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
+                            {c.nom}{c.montant ? ` — ${fmt(c.montant)} € HT` : ''}
+                          </Text>
                         </Pressable>
-                      )}
+                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#C9A96E', marginLeft: 8 }}>{c.pourcentage}%</Text>
+                        {isAdmin && (
+                          <Pressable onPress={() => deleteCorps(c.id)} style={{ marginLeft: 8 }}>
+                            <Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text>
+                          </Pressable>
+                        )}
+                      </View>
+                      <View style={styles.corpsBarBg}>
+                        <View style={[styles.corpsBarFill, { width: `${c.pourcentage}%` }]} />
+                      </View>
                     </View>
-                    <View style={styles.corpsBarBg}>
-                      <View style={[styles.corpsBarFill, { width: `${c.pourcentage}%` }]} />
-                    </View>
+                  ))}
+                  {/* Total HT des lots */}
+                  <View style={styles.totalLotsRow}>
+                    <Text style={styles.totalLotsLabel}>Total lots HT</Text>
+                    <Text style={styles.totalLotsValue}>{fmt(totalChantierHT)} €</Text>
                   </View>
-                ))
+                  {isAdmin && (
+                    <Pressable style={styles.deleteAllLotsBtn} onPress={deleteAllCorps}>
+                      <Text style={styles.deleteAllLotsBtnText}>🗑 Supprimer tous les lots</Text>
+                    </Pressable>
+                  )}
+                </>
               )}
               {isAdmin && (
                 <>
@@ -1014,15 +1035,23 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 {/* Résumé chantier — clair et lisible */}
                 <View style={styles.pfsResumeBox}>
                   <View style={styles.pfsResumeRow}>
-                    <Text style={styles.pfsResumeLabel}>Total chantier TTC</Text>
-                    <Text style={styles.pfsResumeValue}>{fmt(totalChantierTTC)} €</Text>
+                    <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
+                    <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT)} €</Text>
                   </View>
                   <View style={styles.pfsResumeRow}>
+                    <Text style={styles.pfsResumeLabel}>+ TVA 20%</Text>
+                    <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT * TVA_RATE)} €</Text>
+                  </View>
+                  <View style={[styles.pfsResumeRow, { borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 6, marginTop: 2 }]}>
+                    <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>= Total chantier TTC</Text>
+                    <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
+                  </View>
+                  <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
                     <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Déjà payé (situations)</Text>
                     <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(totalPayeSituations)} €</Text>
                   </View>
                   <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
-                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Restant à payer</Text>
+                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Restant à payer TTC</Text>
                     <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
                   </View>
                 </View>
@@ -2075,6 +2104,44 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     color: '#8C6D2F',
+  },
+  totalLotsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#FAF7F3',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginTop: 6,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  totalLotsLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#2C2C2C',
+    textTransform: 'uppercase',
+    letterSpacing: 0.3,
+  },
+  totalLotsValue: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#8C6D2F',
+  },
+  deleteAllLotsBtn: {
+    backgroundColor: '#FBEFEC',
+    borderWidth: 1,
+    borderColor: '#E74C3C',
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  deleteAllLotsBtnText: {
+    fontSize: 12,
+    color: '#B83A2E',
+    fontWeight: '700',
   },
   // ── Point financier de situation ──
   situationTableHeader: {
