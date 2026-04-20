@@ -210,6 +210,31 @@ export interface Chantier {
   photosPortailClient?: string[];  // IDs des photos visibles dans le portail client
   // Avancement par corps de métier (affiché dans le portail client)
   avancementCorps?: { id: string; nom: string; pourcentage: number; montant?: number }[];
+  // Historique des points financiers de situation figés (avant émission facture)
+  situationsHistorique?: SituationFigee[];
+}
+
+/** Snapshot figé d'un point financier de situation (avant émission d'une facture). */
+export interface SituationFigee {
+  id: string;
+  numero: string;                 // "PFS-2026-001"
+  date: string;                   // ISO date (figement)
+  lignes: {
+    id: string;
+    nom: string;
+    montantLotHT: number;
+    pourcentage: number;
+    montantFactureHT: number;
+  }[];
+  totalHT: number;                // cumulé avancement × montants
+  tva: number;
+  totalTTC: number;
+  dejaPayeAvant: number;          // somme des situations payées antérieures (TTC)
+  montantSituation: number;       // TTC à demander sur CE point = totalTTC - dejaPayeAvant
+  statut: 'en_attente' | 'payee';
+  numeroFacture?: string;         // n° de facture créée dans le logiciel externe
+  paidAt?: string;                // ISO datetime de paiement
+  notes?: string;
 }
 
 /** Une tâche dans la checklist d'une note */

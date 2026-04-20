@@ -170,8 +170,21 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     return Math.round(moy);
   }, [avancementCorps]);
 
-  // ── Facture de situation ──
+  // ── Point financier de situation ──
   const TVA_RATE = 0.20; // 20% par défaut
+  const situationsHistorique = useMemo(() => chantier?.situationsHistorique || [], [chantier?.situationsHistorique]);
+  const totalPayeSituations = useMemo(
+    () => situationsHistorique.filter(s => s.statut === 'payee').reduce((s, x) => s + x.montantSituation, 0),
+    [situationsHistorique]
+  );
+  // Total chantier TTC = somme montants lots HT × 1.20
+  const totalChantierHT = useMemo(
+    () => avancementCorps.reduce((s, c) => s + (c.montant || 0), 0),
+    [avancementCorps]
+  );
+  const totalChantierTTC = totalChantierHT * (1 + TVA_RATE);
+  const resteAPayerChantier = Math.max(0, totalChantierTTC - totalPayeSituations);
+
   const situation = useMemo(() => {
     const lignes = avancementCorps
       .filter(c => c.montant && c.montant > 0)
@@ -182,8 +195,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     const totalHT = lignes.reduce((s, l) => s + l.montantFactureHT, 0);
     const tva = totalHT * TVA_RATE;
     const totalTTC = totalHT + tva;
-    return { lignes, totalHT, tva, totalTTC };
-  }, [avancementCorps]);
+    const montantSituation = Math.max(0, totalTTC - totalPayeSituations);
+    return { lignes, totalHT, tva, totalTTC, montantSituation };
+  }, [avancementCorps, totalPayeSituations]);
 
   // ── Contact principal (priorité Client > Architecte > Apporteur > Contractant) ──
   const getApp = (id?: string) => id ? apporteurs.find(a => a.id === id) : undefined;
@@ -568,17 +582,37 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     }
   };
 
-  // ── Génération facture de situation (HTML → print/PDF) ──
-  const handleGenererFactureSituation = async () => {
-    if (!chantier) return;
-    if (situation.lignes.length === 0) {
-      const msg = 'Aucun lot avec montant saisi. Ajoutez des montants aux corps de métier pour calculer la facture de situation.';
-      if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Facture de situation', msg);
+  // ── Ouvre un HTML dans une nouvelle fenêtre/print PDF ──
+  const openHtmlForPrint = async (html: string, fallbackName: string) => {
+    if (Platform.OS === 'web') {
+      const w = window.open();
+      if (w) {
+        w.document.write(html);
+        w.document.close();
+        setTimeout(() => w.print(), 500);
+      }
       return;
     }
+    try {
+      const Print = require('expo-print');
+      await Print.printAsync({ html });
+    } catch {
+      try {
+        const FileSystem = require('expo-file-system');
+        const WebBrowser = require('expo-web-browser');
+        const path = `${FileSystem.cacheDirectory}${fallbackName}.html`;
+        await FileSystem.writeAsStringAsync(path, html, { encoding: FileSystem.EncodingType.UTF8 });
+        await WebBrowser.openBrowserAsync(path);
+      } catch {
+        Alert.alert('Erreur', 'Impossible de générer le document');
+      }
+    }
+  };
 
-    const today = new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-    const numFacture = `FS-${new Date().getFullYear()}-${String(Date.now()).slice(-5)}`;
+  // ── Construit le HTML d'un point financier de situation depuis un snapshot ──
+  const buildSituationHTML = (snap: import('@/app/types').SituationFigee) => {
+    if (!chantier) return '';
+    const dateFr = new Date(snap.date).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
     const adresseComplete = [chantier.rue, chantier.codePostal, chantier.ville].filter(Boolean).join(', ') || chantier.adresse || '';
     const cli = getApp(chantier.clientApporteurId);
     const clientNom = cli ? `${cli.prenom} ${cli.nom}` : (chantier.client || '—');
@@ -586,10 +620,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     const clientEmail = cli?.email || '';
     const clientTel = cli?.telephone || '';
 
-    const dejaPaye = financials.totalPaye;
-    const montantCetteFacture = Math.max(0, situation.totalTTC - dejaPaye);
-
-    const lignesHtml = situation.lignes.map(l => `
+    const lignesHtml = snap.lignes.map(l => `
       <tr style="border-bottom:1px solid #E8DDD0;">
         <td style="padding:10px 8px;">${l.nom}</td>
         <td style="padding:10px 8px;text-align:right;">${fmt(l.montantLotHT)} EUR</td>
@@ -598,8 +629,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       </tr>
     `).join('');
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
-      <title>Facture de situation - ${chantier.nom}</title>
+    return `<!DOCTYPE html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+      <title>Point financier ${snap.numero} — ${chantier.nom}</title>
       <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color:#2C2C2C; background:#fff; padding:32px; max-width:820px; margin:0 auto; }
@@ -616,9 +647,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           <p style="color:#8C8077;font-size:12px;margin-top:2px;">Travaux &amp; Decoration</p>
         </div>
         <div style="text-align:right;">
-          <h2 style="font-size:18px;color:#C9A96E;">FACTURE DE SITUATION</h2>
-          <p style="font-size:12px;color:#687076;margin-top:4px;">N&deg; ${numFacture}</p>
-          <p style="font-size:12px;color:#687076;">Date : ${today}</p>
+          <h2 style="font-size:18px;color:#C9A96E;">POINT FINANCIER DE SITUATION</h2>
+          <p style="font-size:11px;color:#8C8077;margin-top:2px;">Avant émission de facture</p>
+          <p style="font-size:12px;color:#687076;margin-top:4px;">N&deg; ${snap.numero}</p>
+          <p style="font-size:12px;color:#687076;">Date : ${dateFr}</p>
         </div>
       </div>
 
@@ -644,65 +676,114 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             <th>Corps de metier</th>
             <th style="text-align:right;">Montant HT</th>
             <th style="text-align:right;">% Avancement</th>
-            <th style="text-align:right;">A facturer (HT)</th>
+            <th style="text-align:right;">Cumulé HT</th>
           </tr>
         </thead>
         <tbody>${lignesHtml}</tbody>
       </table>
 
       <div style="display:flex;justify-content:flex-end;margin-bottom:20px;">
-        <table style="width:auto;min-width:320px;">
-          <tr><td style="padding:6px 12px;color:#687076;">Total HT</td><td style="padding:6px 12px;text-align:right;font-weight:700;">${fmt(situation.totalHT)} EUR</td></tr>
-          <tr><td style="padding:6px 12px;color:#687076;">TVA 20%</td><td style="padding:6px 12px;text-align:right;font-weight:700;">${fmt(situation.tva)} EUR</td></tr>
-          <tr style="background:#2C2C2C;color:#C9A96E;"><td style="padding:10px 12px;font-weight:800;">Total TTC</td><td style="padding:10px 12px;text-align:right;font-weight:800;">${fmt(situation.totalTTC)} EUR</td></tr>
-          <tr><td style="padding:6px 12px;color:#687076;">Deja paye</td><td style="padding:6px 12px;text-align:right;">${fmt(dejaPaye)} EUR</td></tr>
-          <tr style="background:#F5EDE3;"><td style="padding:10px 12px;font-weight:800;color:#8C6D2F;">Montant de cette facture</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:#8C6D2F;">${fmt(montantCetteFacture)} EUR</td></tr>
+        <table style="width:auto;min-width:340px;">
+          <tr><td style="padding:6px 12px;color:#687076;">Cumulé HT</td><td style="padding:6px 12px;text-align:right;font-weight:700;">${fmt(snap.totalHT)} EUR</td></tr>
+          <tr><td style="padding:6px 12px;color:#687076;">TVA 20%</td><td style="padding:6px 12px;text-align:right;font-weight:700;">${fmt(snap.tva)} EUR</td></tr>
+          <tr style="background:#2C2C2C;color:#C9A96E;"><td style="padding:10px 12px;font-weight:800;">Cumulé TTC</td><td style="padding:10px 12px;text-align:right;font-weight:800;">${fmt(snap.totalTTC)} EUR</td></tr>
+          <tr><td style="padding:6px 12px;color:#687076;">Situations déjà payées</td><td style="padding:6px 12px;text-align:right;">− ${fmt(snap.dejaPayeAvant)} EUR</td></tr>
+          <tr style="background:#F5EDE3;"><td style="padding:10px 12px;font-weight:800;color:#8C6D2F;">Montant de cette situation</td><td style="padding:10px 12px;text-align:right;font-weight:800;color:#8C6D2F;">${fmt(snap.montantSituation)} EUR</td></tr>
         </table>
       </div>
 
       <div style="background:#FAF7F3;border-left:3px solid #C9A96E;padding:12px 16px;border-radius:6px;margin-bottom:32px;">
-        <p style="font-size:12px;color:#687076;">Cette facture correspond a l'avancement constate des travaux a la date du ${today}. Le reste a facturer sera etabli selon la progression des lots.</p>
-      </div>
-
-      <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-top:40px;border-top:1px solid #E8DDD0;padding-top:20px;">
-        <div>
-          <p style="font-size:11px;color:#8C8077;">Date d'emission</p>
-          <p style="font-size:13px;font-weight:700;">${today}</p>
-        </div>
-        <div style="text-align:right;">
-          <p style="font-size:11px;color:#8C8077;margin-bottom:24px;">Signature &amp; cachet</p>
-          <p style="font-size:11px;color:#8C8077;border-top:1px solid #8C8077;padding-top:4px;min-width:180px;">SK DECO</p>
-        </div>
+        <p style="font-size:12px;color:#687076;">
+          Ce document est un <strong>point financier de situation</strong> figé au ${dateFr}, destiné à servir de base à l'émission d'une facture dans le logiciel de gestion.
+          ${snap.numeroFacture ? `<br/>Facture associée : <strong>${snap.numeroFacture}</strong>` : ''}
+        </p>
       </div>
 
       <div style="text-align:center;padding:16px 0;margin-top:16px;color:#8C8077;font-size:11px;">
-        SK DECO &middot; Facture de situation generee le ${today}
+        SK DECO &middot; Point financier ${snap.numero} figé le ${dateFr}
       </div>
     </body></html>`;
+  };
 
-    if (Platform.OS === 'web') {
-      const w = window.open();
-      if (w) {
-        w.document.write(html);
-        w.document.close();
-        setTimeout(() => w.print(), 500);
-      }
-    } else {
-      try {
-        const Print = require('expo-print');
-        await Print.printAsync({ html });
-      } catch {
-        try {
-          const FileSystem = require('expo-file-system');
-          const WebBrowser = require('expo-web-browser');
-          const path = `${FileSystem.cacheDirectory}facture_situation_${chantier.nom.replace(/[^a-zA-Z0-9]/g, '_')}.html`;
-          await FileSystem.writeAsStringAsync(path, html, { encoding: FileSystem.EncodingType.UTF8 });
-          await WebBrowser.openBrowserAsync(path);
-        } catch {
-          Alert.alert('Erreur', 'Impossible de generer la facture');
-        }
-      }
+  // ── Figer un nouveau point financier (snapshot immuable dans l'historique) ──
+  const handleFigerSituation = async () => {
+    if (!chantier) return;
+    if (situation.lignes.length === 0) {
+      const msg = 'Aucun lot avec montant saisi. Ajoutez des montants aux corps de métier pour figer un point financier.';
+      if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Point financier', msg);
+      return;
     }
+    const confirmMsg = `Figer un point financier de situation au montant de ${fmt(situation.montantSituation)} € TTC ?\n\nCe snapshot sera conservé en historique (non modifiable) et servira de base pour créer la facture correspondante dans votre logiciel.`;
+    const ok = Platform.OS === 'web' ? window.confirm(confirmMsg) : await new Promise<boolean>(r => {
+      Alert.alert('Figer le point financier', confirmMsg, [
+        { text: 'Annuler', style: 'cancel', onPress: () => r(false) },
+        { text: 'Figer', onPress: () => r(true) },
+      ]);
+    });
+    if (!ok) return;
+
+    const year = new Date().getFullYear();
+    const existingYear = situationsHistorique.filter(s => s.numero.includes(`PFS-${year}-`));
+    const numero = `PFS-${year}-${String(existingYear.length + 1).padStart(3, '0')}`;
+
+    const snap = {
+      id: genId('pfs'),
+      numero,
+      date: new Date().toISOString(),
+      lignes: situation.lignes.map(l => ({ ...l })),
+      totalHT: situation.totalHT,
+      tva: situation.tva,
+      totalTTC: situation.totalTTC,
+      dejaPayeAvant: totalPayeSituations,
+      montantSituation: situation.montantSituation,
+      statut: 'en_attente' as const,
+    };
+    updateChantier({ ...chantier, situationsHistorique: [...situationsHistorique, snap] });
+    await openHtmlForPrint(buildSituationHTML(snap), `point_financier_${snap.numero}`);
+  };
+
+  const handleReimprimerSituation = async (id: string) => {
+    const snap = situationsHistorique.find(s => s.id === id);
+    if (!snap) return;
+    await openHtmlForPrint(buildSituationHTML(snap), `point_financier_${snap.numero}`);
+  };
+
+  const handleToggleSituationPayee = (id: string) => {
+    if (!chantier) return;
+    const next = situationsHistorique.map(s => {
+      if (s.id !== id) return s;
+      if (s.statut === 'payee') return { ...s, statut: 'en_attente' as const, paidAt: undefined };
+      return { ...s, statut: 'payee' as const, paidAt: new Date().toISOString() };
+    });
+    updateChantier({ ...chantier, situationsHistorique: next });
+  };
+
+  const handleEditNumFacture = (id: string) => {
+    if (!chantier) return;
+    const snap = situationsHistorique.find(s => s.id === id);
+    if (!snap) return;
+    const current = snap.numeroFacture || '';
+    if (Platform.OS === 'web') {
+      const val = window.prompt('N° de facture créée dans votre logiciel (ex : F2026-042)', current);
+      if (val === null) return;
+      const next = situationsHistorique.map(s => s.id === id ? { ...s, numeroFacture: val.trim() || undefined } : s);
+      updateChantier({ ...chantier, situationsHistorique: next });
+    } else {
+      Alert.prompt?.('N° facture', 'Saisissez le n° de facture associée', (val?: string) => {
+        const next = situationsHistorique.map(s => s.id === id ? { ...s, numeroFacture: (val || '').trim() || undefined } : s);
+        updateChantier({ ...chantier, situationsHistorique: next });
+      }, undefined, current);
+    }
+  };
+
+  const handleSupprimerSituation = (id: string) => {
+    if (!chantier) return;
+    const snap = situationsHistorique.find(s => s.id === id);
+    if (!snap) return;
+    const msg = `Supprimer le point financier ${snap.numero} ?\nCette action est irréversible.`;
+    const doDel = () => updateChantier({ ...chantier, situationsHistorique: situationsHistorique.filter(s => s.id !== id) });
+    if (Platform.OS === 'web') { if (window.confirm(msg)) doDel(); }
+    else Alert.alert('Supprimer', msg, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDel }]);
   };
 
   if (!chantier) {
@@ -912,54 +993,147 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               )}
             </View>
 
-            {/* ── Facture de situation ── */}
-            {situation.lignes.length > 0 && (
+            {/* ── Point financier de situation ── */}
+            {(situation.lignes.length > 0 || situationsHistorique.length > 0) && (
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>💰 Facture de situation</Text>
-                <View style={styles.situationTableHeader}>
-                  <Text style={[styles.situationColHeader, { flex: 2 }]}>Corps de métier</Text>
-                  <Text style={[styles.situationColHeader, { flex: 1, textAlign: 'right' }]}>Montant</Text>
-                  <Text style={[styles.situationColHeader, { width: 44, textAlign: 'right' }]}>%</Text>
-                  <Text style={[styles.situationColHeader, { flex: 1.1, textAlign: 'right' }]}>À facturer</Text>
-                </View>
-                {situation.lignes.map(l => (
-                  <View key={l.id} style={styles.situationRow}>
-                    <Text style={[styles.situationCell, { flex: 2, fontWeight: '700', color: '#2C2C2C' }]} numberOfLines={1}>{l.nom}</Text>
-                    <Text style={[styles.situationCell, { flex: 1, textAlign: 'right' }]}>{fmt(l.montantLotHT)} €</Text>
-                    <Text style={[styles.situationCell, { width: 44, textAlign: 'right', color: '#C9A96E', fontWeight: '800' }]}>{l.pourcentage}%</Text>
-                    <Text style={[styles.situationCell, { flex: 1.1, textAlign: 'right', fontWeight: '800', color: '#2C2C2C' }]}>{fmt(l.montantFactureHT)} €</Text>
-                  </View>
-                ))}
+                <Text style={styles.sectionTitle}>💰 Point financier de situation</Text>
+                <Text style={styles.pfsSubtitle}>Avant émission de facture</Text>
 
-                <View style={styles.situationTotals}>
-                  <View style={styles.situationTotalRow}>
-                    <Text style={styles.situationTotalLabel}>Total HT</Text>
-                    <Text style={styles.situationTotalValue}>{fmt(situation.totalHT)} €</Text>
+                {/* Résumé chantier — clair et lisible */}
+                <View style={styles.pfsResumeBox}>
+                  <View style={styles.pfsResumeRow}>
+                    <Text style={styles.pfsResumeLabel}>Total chantier TTC</Text>
+                    <Text style={styles.pfsResumeValue}>{fmt(totalChantierTTC)} €</Text>
                   </View>
-                  <View style={styles.situationTotalRow}>
-                    <Text style={styles.situationTotalLabel}>TVA 20%</Text>
-                    <Text style={styles.situationTotalValue}>{fmt(situation.tva)} €</Text>
+                  <View style={styles.pfsResumeRow}>
+                    <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Déjà payé (situations)</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(totalPayeSituations)} €</Text>
                   </View>
-                  <View style={[styles.situationTotalRow, styles.situationTotalTTC]}>
-                    <Text style={[styles.situationTotalLabel, { color: '#C9A96E' }]}>Total TTC</Text>
-                    <Text style={[styles.situationTotalValue, { color: '#C9A96E' }]}>{fmt(situation.totalTTC)} €</Text>
-                  </View>
-                  <View style={styles.situationTotalRow}>
-                    <Text style={styles.situationTotalLabel}>Déjà payé</Text>
-                    <Text style={styles.situationTotalValue}>{fmt(financials.totalPaye)} €</Text>
-                  </View>
-                  <View style={[styles.situationTotalRow, { backgroundColor: '#F5EDE3', borderRadius: 8 }]}>
-                    <Text style={[styles.situationTotalLabel, { color: '#8C6D2F' }]}>Reste à facturer</Text>
-                    <Text style={[styles.situationTotalValue, { color: '#8C6D2F' }]}>
-                      {fmt(Math.max(0, situation.totalTTC - financials.totalPaye))} €
-                    </Text>
+                  <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
+                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Restant à payer</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
                   </View>
                 </View>
 
-                {isAdmin && (
-                  <Pressable style={styles.factureBtn} onPress={handleGenererFactureSituation}>
-                    <Text style={styles.factureBtnText}>📄 Générer facture de situation (PDF)</Text>
-                  </Pressable>
+                {/* Détail du point financier actuel (si avancement > 0) */}
+                {situation.lignes.length > 0 && (
+                  <>
+                    <Text style={styles.pfsSectionLabel}>Situation actuelle (selon avancements)</Text>
+                    <View style={styles.situationTableHeader}>
+                      <Text style={[styles.situationColHeader, { flex: 2 }]}>Corps de métier</Text>
+                      <Text style={[styles.situationColHeader, { flex: 1, textAlign: 'right' }]}>Montant</Text>
+                      <Text style={[styles.situationColHeader, { width: 44, textAlign: 'right' }]}>%</Text>
+                      <Text style={[styles.situationColHeader, { flex: 1.1, textAlign: 'right' }]}>Cumulé</Text>
+                    </View>
+                    {situation.lignes.map(l => (
+                      <View key={l.id} style={styles.situationRow}>
+                        <Text style={[styles.situationCell, { flex: 2, fontWeight: '700', color: '#2C2C2C' }]} numberOfLines={1}>{l.nom}</Text>
+                        <Text style={[styles.situationCell, { flex: 1, textAlign: 'right' }]}>{fmt(l.montantLotHT)} €</Text>
+                        <Text style={[styles.situationCell, { width: 44, textAlign: 'right', color: '#C9A96E', fontWeight: '800' }]}>{l.pourcentage}%</Text>
+                        <Text style={[styles.situationCell, { flex: 1.1, textAlign: 'right', fontWeight: '800', color: '#2C2C2C' }]}>{fmt(l.montantFactureHT)} €</Text>
+                      </View>
+                    ))}
+
+                    <View style={styles.situationTotals}>
+                      <View style={styles.situationTotalRow}>
+                        <Text style={styles.situationTotalLabel}>Cumulé HT</Text>
+                        <Text style={styles.situationTotalValue}>{fmt(situation.totalHT)} €</Text>
+                      </View>
+                      <View style={styles.situationTotalRow}>
+                        <Text style={styles.situationTotalLabel}>TVA 20%</Text>
+                        <Text style={styles.situationTotalValue}>{fmt(situation.tva)} €</Text>
+                      </View>
+                      <View style={[styles.situationTotalRow, styles.situationTotalTTC]}>
+                        <Text style={[styles.situationTotalLabel, { color: '#C9A96E' }]}>Cumulé TTC</Text>
+                        <Text style={[styles.situationTotalValue, { color: '#C9A96E' }]}>{fmt(situation.totalTTC)} €</Text>
+                      </View>
+                      <View style={styles.situationTotalRow}>
+                        <Text style={styles.situationTotalLabel}>− Situations déjà payées</Text>
+                        <Text style={styles.situationTotalValue}>{fmt(totalPayeSituations)} €</Text>
+                      </View>
+                      <View style={[styles.situationTotalRow, { backgroundColor: '#F5EDE3', borderRadius: 8 }]}>
+                        <Text style={[styles.situationTotalLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Montant de cette situation</Text>
+                        <Text style={[styles.situationTotalValue, { color: '#8C6D2F', fontWeight: '800' }]}>
+                          {fmt(situation.montantSituation)} €
+                        </Text>
+                      </View>
+                    </View>
+
+                    {isAdmin && (
+                      <Pressable style={styles.factureBtn} onPress={handleFigerSituation}>
+                        <Text style={styles.factureBtnText}>📸 Figer ce point financier + PDF</Text>
+                      </Pressable>
+                    )}
+                  </>
+                )}
+
+                {/* Historique des points financiers figés */}
+                {situationsHistorique.length > 0 && (
+                  <>
+                    <Text style={[styles.pfsSectionLabel, { marginTop: 16 }]}>📚 Historique ({situationsHistorique.length})</Text>
+                    {[...situationsHistorique].sort((a, b) => b.date.localeCompare(a.date)).map(s => {
+                      const dateFr = new Date(s.date).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                      const isPayee = s.statut === 'payee';
+                      return (
+                        <View key={s.id} style={[styles.pfsHistItem, isPayee && styles.pfsHistItemPayee]}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.pfsHistNumero}>{s.numero}</Text>
+                              <Text style={styles.pfsHistDate}>{dateFr}</Text>
+                            </View>
+                            <View style={[styles.pfsBadge, isPayee ? styles.pfsBadgePayee : styles.pfsBadgeAttente]}>
+                              <Text style={[styles.pfsBadgeText, isPayee ? { color: '#155724' } : { color: '#856404' }]}>
+                                {isPayee ? '✓ Payée' : '⏳ En attente'}
+                              </Text>
+                            </View>
+                          </View>
+                          <View style={styles.pfsHistRow}>
+                            <Text style={styles.pfsHistLabel}>Montant :</Text>
+                            <Text style={styles.pfsHistMontant}>{fmt(s.montantSituation)} € TTC</Text>
+                          </View>
+                          <View style={styles.pfsHistRow}>
+                            <Text style={styles.pfsHistLabel}>Cumulé :</Text>
+                            <Text style={styles.pfsHistSub}>{fmt(s.totalTTC)} € TTC</Text>
+                          </View>
+                          {s.numeroFacture && (
+                            <View style={styles.pfsHistRow}>
+                              <Text style={styles.pfsHistLabel}>N° facture :</Text>
+                              <Text style={styles.pfsHistSub}>{s.numeroFacture}</Text>
+                            </View>
+                          )}
+                          {isPayee && s.paidAt && (
+                            <View style={styles.pfsHistRow}>
+                              <Text style={styles.pfsHistLabel}>Payée le :</Text>
+                              <Text style={styles.pfsHistSub}>{new Date(s.paidAt).toLocaleDateString('fr-FR')}</Text>
+                            </View>
+                          )}
+                          <View style={styles.pfsHistActions}>
+                            <Pressable style={styles.pfsActionBtn} onPress={() => handleReimprimerSituation(s.id)}>
+                              <Text style={styles.pfsActionBtnText}>📄 PDF</Text>
+                            </Pressable>
+                            {isAdmin && (
+                              <>
+                                <Pressable style={styles.pfsActionBtn} onPress={() => handleEditNumFacture(s.id)}>
+                                  <Text style={styles.pfsActionBtnText}>🧾 N° facture</Text>
+                                </Pressable>
+                                <Pressable
+                                  style={[styles.pfsActionBtn, isPayee ? styles.pfsActionBtnUndo : styles.pfsActionBtnPay]}
+                                  onPress={() => handleToggleSituationPayee(s.id)}
+                                >
+                                  <Text style={[styles.pfsActionBtnText, { color: '#fff' }]}>
+                                    {isPayee ? '↩ Non payée' : '✓ Marquer payée'}
+                                  </Text>
+                                </Pressable>
+                                <Pressable style={[styles.pfsActionBtn, styles.pfsActionBtnDel]} onPress={() => handleSupprimerSituation(s.id)}>
+                                  <Text style={[styles.pfsActionBtnText, { color: '#fff' }]}>🗑</Text>
+                                </Pressable>
+                              </>
+                            )}
+                          </View>
+                        </View>
+                      );
+                    })}
+                  </>
                 )}
               </View>
             )}
@@ -1890,7 +2064,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#8C6D2F',
   },
-  // ── Facture de situation ──
+  // ── Point financier de situation ──
   situationTableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1960,5 +2134,131 @@ const styles = StyleSheet.create({
     color: '#C9A96E',
     fontSize: 13,
     fontWeight: '800',
+  },
+  // ── Point financier de situation ──
+  pfsSubtitle: {
+    fontSize: 11,
+    color: '#8C8077',
+    marginTop: -6,
+    marginBottom: 10,
+    fontStyle: 'italic',
+  },
+  pfsResumeBox: {
+    backgroundColor: '#FAF7F3',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 14,
+  },
+  pfsResumeRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  pfsResumeReste: {
+    borderTopWidth: 1,
+    borderTopColor: '#E8DDD0',
+    paddingTop: 8,
+    marginTop: 4,
+  },
+  pfsResumeLabel: {
+    fontSize: 13,
+    color: '#687076',
+    fontWeight: '600',
+  },
+  pfsResumeValue: {
+    fontSize: 14,
+    color: '#2C2C2C',
+    fontWeight: '700',
+  },
+  pfsSectionLabel: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#2C2C2C',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  pfsHistItem: {
+    backgroundColor: '#FAF7F3',
+    borderRadius: 10,
+    padding: 12,
+    marginBottom: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: '#C9A96E',
+  },
+  pfsHistItemPayee: {
+    borderLeftColor: '#2E7D32',
+    backgroundColor: '#F1F8F2',
+  },
+  pfsHistNumero: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#2C2C2C',
+  },
+  pfsHistDate: {
+    fontSize: 11,
+    color: '#8C8077',
+    marginTop: 2,
+  },
+  pfsHistRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  pfsHistLabel: {
+    fontSize: 12,
+    color: '#687076',
+  },
+  pfsHistMontant: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#8C6D2F',
+  },
+  pfsHistSub: {
+    fontSize: 12,
+    color: '#2C2C2C',
+    fontWeight: '600',
+  },
+  pfsBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  pfsBadgePayee: {
+    backgroundColor: '#D4EDDA',
+  },
+  pfsBadgeAttente: {
+    backgroundColor: '#FFF3CD',
+  },
+  pfsBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  pfsHistActions: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 10,
+  },
+  pfsActionBtn: {
+    backgroundColor: '#E8DDD0',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  pfsActionBtnText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#2C2C2C',
+  },
+  pfsActionBtnPay: {
+    backgroundColor: '#2E7D32',
+  },
+  pfsActionBtnUndo: {
+    backgroundColor: '#8C8077',
+  },
+  pfsActionBtnDel: {
+    backgroundColor: '#B83A2E',
   },
 });
