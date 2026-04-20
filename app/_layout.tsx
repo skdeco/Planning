@@ -96,6 +96,7 @@ export default function RootLayout() {
             <Stack.Screen name="login" />
             <Stack.Screen name="language-select" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="(externe)" />
             <Stack.Screen name="oauth/callback" />
           </Stack>
           <StatusBar style="auto" />

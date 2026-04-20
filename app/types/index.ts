@@ -226,6 +226,10 @@ export interface Chantier {
   devisTVABreakdown?: { taux: number; montant: number }[];
   // Total TTC extrait du devis (utilisé comme vérité pour calculer la part TTC de chaque situation)
   devisTotalTTC?: number;
+  // Statut du chantier (pour filtrer actifs vs clôturés côté externes)
+  statutChantier?: 'actif' | 'cloture';
+  // Option admin : afficher ou masquer le planning approximatif du chantier aux externes (clients notamment)
+  afficherPlanningAuClient?: boolean;  // par défaut true pour architectes/apporteurs, à confirmer pour client
 }
 
 /** Snapshot figé d'un point financier de situation (avant émission d'une facture). */
@@ -390,8 +394,12 @@ export interface Apporteur {
   notes?: string;
   // Accès externe (optionnel) : l'admin peut activer un accès à l'app pour ce contact
   identifiant?: string;        // login pour se connecter
-  motDePasse?: string;         // mot de passe
+  motDePasse?: string;         // (legacy) mot de passe en clair — migré vers hash au premier login
+  motDePasseHash?: string;     // hash SHA-256(salt + mdp) — utilisé pour l'auth
+  motDePasseSalt?: string;     // salt aléatoire par compte
+  motDePasseVisible?: string;  // copie visible côté admin seulement (masquée par défaut avec œil)
   accesApp?: boolean;          // true si l'admin a activé l'accès à l'app
+  derniereConnexion?: string;  // ISO datetime
   createdAt: string;
   updatedAt: string;
 }

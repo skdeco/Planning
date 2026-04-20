@@ -725,26 +725,50 @@ export default function EquipeScreen() {
       type: a.type, prenom: a.prenom, nom: a.nom, societe: a.societe || '',
       telephone: a.telephone || '', email: a.email || '', adresse: a.adresse || '',
       siret: a.siret || '', notes: a.notes || '',
-      identifiant: a.identifiant || '', motDePasse: a.motDePasse || '', accesApp: a.accesApp || false,
+      // Le champ motDePasseVisible (côté admin) est la source de vérité affichable
+      identifiant: a.identifiant || '', motDePasse: a.motDePasseVisible || a.motDePasse || '', accesApp: a.accesApp || false,
     });
     setShowApporteurMdp(false);
     setShowApporteurForm(true);
   };
+  const genererMdpPourForm = async () => {
+    const { generatePassword } = await import('@/lib/externAuth');
+    const nouveau = generatePassword(10);
+    setApporteurForm(f => ({ ...f, motDePasse: nouveau }));
+    setShowApporteurMdp(true);
+  };
 
-  const handleSaveApporteur = () => {
+  const handleSaveApporteur = async () => {
     if (!apporteurForm.prenom.trim() || !apporteurForm.nom.trim()) return;
     const now = new Date().toISOString();
     const isCreation = !editApporteurId;
-    // Nettoyage : si accesApp désactivé, on garde l'identifiant/mdp mais on n'autorise pas la connexion
+    const existing = editApporteurId ? apporteurs.find(a => a.id === editApporteurId) : undefined;
+
+    // Hash du mot de passe si changé
+    const newMdp = (apporteurForm.motDePasse || '').trim();
+    const previousVisible = existing?.motDePasseVisible;
+    let mdpFields: Partial<Apporteur> = {};
+    if (newMdp && newMdp !== previousVisible) {
+      const { preparerChangementMotDePasse } = await import('@/lib/externAuth');
+      mdpFields = await preparerChangementMotDePasse(newMdp);
+    } else if (!newMdp && existing) {
+      // L'admin a vidé le champ → on garde l'existant (pas de reset)
+      mdpFields = {
+        motDePasseHash: existing.motDePasseHash,
+        motDePasseSalt: existing.motDePasseSalt,
+        motDePasseVisible: existing.motDePasseVisible,
+        motDePasse: undefined,
+      };
+    }
+
     const cleanForm: Omit<Apporteur, 'id' | 'createdAt' | 'updatedAt'> = {
       ...apporteurForm,
       identifiant: apporteurForm.identifiant?.trim().toLowerCase() || undefined,
-      motDePasse: apporteurForm.motDePasse || undefined,
+      motDePasse: undefined,   // plus de stockage en clair
+      ...mdpFields,
       accesApp: !!apporteurForm.accesApp,
     };
-    if (editApporteurId) {
-      const existing = apporteurs.find(a => a.id === editApporteurId);
-      if (!existing) return;
+    if (editApporteurId && existing) {
       updateApporteur({ ...existing, ...cleanForm, updatedAt: now });
     } else {
       addApporteur({
@@ -1248,6 +1272,30 @@ export default function EquipeScreen() {
                         <Text style={styles.mdpToggleText}>{showApporteurMdp ? '🙈' : '👁'}</Text>
                       </Pressable>
                     </View>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                      <Pressable
+                        style={{ flex: 1, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#C9A96E', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+                        onPress={genererMdpPourForm}
+                      >
+                        <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>🎲 Générer un mot de passe</Text>
+                      </Pressable>
+                      {apporteurForm.motDePasse && Platform.OS === 'web' && (
+                        <Pressable
+                          style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'center' }}
+                          onPress={() => {
+                            try {
+                              // @ts-ignore
+                              navigator.clipboard?.writeText(apporteurForm.motDePasse || '');
+                            } catch {}
+                          }}
+                        >
+                          <Text style={{ color: '#C9A96E', fontWeight: '700', fontSize: 12 }}>📋 Copier</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                    <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 6, lineHeight: 14 }}>
+                      Ce mot de passe est affiché uniquement pour l'admin. Le contact se connectera avec son identifiant + ce mot de passe. Stocké de manière sécurisée (SHA-256 + salt) en plus de la copie visible.
+                    </Text>
                   </>
                 )}
               </View>

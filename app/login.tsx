@@ -7,9 +7,10 @@ import {
 import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { verifierMotDePasse, preparerChangementMotDePasse } from '@/lib/externAuth';
 
 export default function LoginScreen() {
-  const { data, setCurrentUser } = useApp();
+  const { data, setCurrentUser, updateApporteur } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
 
@@ -18,7 +19,7 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     setError('');
     const id = identifiant.trim().toLowerCase();
     const pwd = motDePasse;
@@ -70,17 +71,25 @@ export default function LoginScreen() {
     }
 
     // Connexion apporteur (architecte / apporteur / contractant / client) avec accesApp = true
-    const apporteur = (data.apporteurs || []).find(
-      a => !!a.accesApp && (a.identifiant || '').toLowerCase() === id && a.motDePasse === pwd
+    const candidats = (data.apporteurs || []).filter(
+      a => !!a.accesApp && (a.identifiant || '').toLowerCase() === id
     );
-
-    if (apporteur) {
+    for (const apporteur of candidats) {
+      const { ok, needsMigration } = await verifierMotDePasse(apporteur, pwd);
+      if (!ok) continue;
+      // Migration legacy clair → hash + mémorisation du mot de passe visible admin
+      if (needsMigration) {
+        const maj = await preparerChangementMotDePasse(pwd);
+        updateApporteur({ ...apporteur, ...maj, derniereConnexion: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      } else {
+        updateApporteur({ ...apporteur, derniereConnexion: new Date().toISOString(), updatedAt: new Date().toISOString() });
+      }
       setCurrentUser({
         role: 'apporteur',
         apporteurId: apporteur.id,
         nom: `${apporteur.prenom} ${apporteur.nom}`,
       });
-      router.replace('/(tabs)/chantiers' as any);
+      router.replace('/(externe)/mes-chantiers' as any);
       return;
     }
 

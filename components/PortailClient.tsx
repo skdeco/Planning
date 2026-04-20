@@ -50,8 +50,16 @@ const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contract
 export function PortailClient({ visible, onClose, chantierId }: PortailClientProps) {
   const { data, currentUser, updateChantier } = useApp();
   const isAdmin = currentUser?.role === 'admin';
+  const isExterne = currentUser?.role === 'apporteur';
+  const externAp = isExterne ? (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId) : undefined;
+  const isClient = externAp?.type === 'client';
+  // Le client ne voit JAMAIS les commissions. Les autres externes oui.
+  const peutVoirCommissions = isAdmin || (isExterne && !isClient);
+  // Le client ne voit le planning que si l'admin l'a activé pour ce chantier
+  const chantierForPlanning = data.chantiers.find(c => c.id === chantierId);
+  const peutVoirPlanning = isAdmin || !isClient || chantierForPlanning?.afficherPlanningAuClient === true;
 
-  const chantier = data.chantiers.find(c => c.id === chantierId);
+  const chantier = chantierForPlanning;
   const apporteurs = data.apporteurs || [];
 
   // ── UI state ──
