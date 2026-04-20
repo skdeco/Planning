@@ -681,39 +681,40 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // ── Imprimer / partager un HTML en PDF sans quitter l'app ──
   const openHtmlForPrint = async (html: string, _fallbackName: string) => {
     if (Platform.OS === 'web') {
-      // iframe cachée → reste sur la même page, ouvre le dialogue d'impression du navigateur
-      const iframe = document.createElement('iframe');
-      iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
-      document.body.appendChild(iframe);
-      const doc = iframe.contentDocument || iframe.contentWindow?.document;
-      if (!doc) { document.body.removeChild(iframe); return; }
-      doc.open();
-      doc.write(html);
-      doc.close();
-      setTimeout(() => {
-        try {
-          iframe.contentWindow?.focus();
-          iframe.contentWindow?.print();
-        } catch {}
-        setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 3000);
-      }, 400);
+      try {
+        const iframe = document.createElement('iframe');
+        iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+        document.body.appendChild(iframe);
+        const doc = iframe.contentDocument || iframe.contentWindow?.document;
+        if (!doc) { document.body.removeChild(iframe); return; }
+        doc.open(); doc.write(html); doc.close();
+        setTimeout(() => {
+          try {
+            iframe.contentWindow?.focus();
+            iframe.contentWindow?.print();
+          } catch {}
+          setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 3000);
+        }, 400);
+      } catch (e: any) {
+        window.alert?.(`Impression indisponible : ${e?.message || 'erreur'}`);
+      }
       return;
     }
-    // Mobile : génère le PDF en local puis partage natif (reste dans l'app)
+    // Mobile : Print.printAsync ouvre le dialogue système (AirPrint/Android Print),
+    // reste dans l'app. Evite expo-sharing qui peut crash sur certains devices sans FileProvider.
+    let Print: any = null;
+    try { Print = require('expo-print'); } catch {}
+    if (!Print?.printAsync) {
+      Alert.alert(
+        'Export PDF indisponible',
+        'Cette version de l\'app ne peut pas générer le PDF. Ouvrez ce chantier depuis la version web pour exporter le point financier.',
+      );
+      return;
+    }
     try {
-      const Print = require('expo-print');
-      const { uri } = await Print.printToFileAsync({ html });
-      try {
-        const Sharing = require('expo-sharing');
-        if (await Sharing.isAvailableAsync()) {
-          await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Point financier' });
-          return;
-        }
-      } catch {}
-      // Si le partage n'est pas dispo, fallback sur la boîte d'impression iOS
-      await Print.printAsync({ uri });
-    } catch {
-      Alert.alert('Erreur', 'Impossible de générer le document');
+      await Print.printAsync({ html });
+    } catch (e: any) {
+      Alert.alert('Erreur PDF', e?.message || 'Impression impossible.');
     }
   };
 
