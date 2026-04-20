@@ -1147,7 +1147,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             </Text>
                           )}
                         </Pressable>
-                        <Text style={{ fontSize: 13, fontWeight: '800', color: '#C9A96E', marginLeft: 8 }}>{c.pourcentage}%</Text>
+                        <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
+                          <Text style={{ fontSize: 13, fontWeight: '800', color: '#C9A96E' }}>{c.pourcentage}%</Text>
+                          {c.montant && c.pourcentage > 0 && (
+                            <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700', marginTop: 1 }}>
+                              = {fmt((c.montant || 0) * (c.pourcentage / 100))} €
+                            </Text>
+                          )}
+                        </View>
                         {isAdmin && (
                           <Pressable onPress={() => deleteCorps(c.id)} style={{ marginLeft: 8 }}>
                             <Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text>
@@ -1171,11 +1178,17 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       )}
                     </View>
                   ))}
-                  {/* Total HT des lots */}
+                  {/* Totaux lots */}
                   <View style={styles.totalLotsRow}>
                     <Text style={styles.totalLotsLabel}>Total lots HT</Text>
                     <Text style={styles.totalLotsValue}>{fmt(totalChantierHT)} €</Text>
                   </View>
+                  {situation.totalHT > 0 && (
+                    <View style={[styles.totalLotsRow, { marginTop: 6, backgroundColor: '#F5EDE3' }]}>
+                      <Text style={[styles.totalLotsLabel, { color: '#8C6D2F' }]}>Cumulé selon avancement</Text>
+                      <Text style={[styles.totalLotsValue, { color: '#8C6D2F' }]}>{fmt(situation.totalHT)} € HT</Text>
+                    </View>
+                  )}
                   {isAdmin && (
                     <Pressable style={styles.deleteAllLotsBtn} onPress={deleteAllCorps}>
                       <Text style={styles.deleteAllLotsBtnText}>🗑 Supprimer tous les lots</Text>
@@ -1243,25 +1256,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
                 <Text style={styles.pfsSubtitle}>Avant émission de facture</Text>
 
-                {/* Détail du point financier actuel (si avancement > 0) */}
+                {/* Calcul TVA / TTC de la situation (basé sur cumulé HT vu dans la liste lots) */}
                 {situation.lignes.length > 0 && (
                   <>
-                    <Text style={styles.pfsSectionLabel}>Situation actuelle (selon avancements)</Text>
-                    <View style={styles.situationTableHeader}>
-                      <Text style={[styles.situationColHeader, { flex: 2 }]}>Corps de métier</Text>
-                      <Text style={[styles.situationColHeader, { flex: 1, textAlign: 'right' }]}>Montant</Text>
-                      <Text style={[styles.situationColHeader, { width: 44, textAlign: 'right' }]}>%</Text>
-                      <Text style={[styles.situationColHeader, { flex: 1.1, textAlign: 'right' }]}>Cumulé</Text>
-                    </View>
-                    {situation.lignes.map(l => (
-                      <View key={l.id} style={styles.situationRow}>
-                        <Text style={[styles.situationCell, { flex: 2, fontWeight: '700', color: '#2C2C2C' }]} numberOfLines={1}>{l.nom}</Text>
-                        <Text style={[styles.situationCell, { flex: 1, textAlign: 'right' }]}>{fmt(l.montantLotHT)} €</Text>
-                        <Text style={[styles.situationCell, { width: 44, textAlign: 'right', color: '#C9A96E', fontWeight: '800' }]}>{l.pourcentage}%</Text>
-                        <Text style={[styles.situationCell, { flex: 1.1, textAlign: 'right', fontWeight: '800', color: '#2C2C2C' }]}>{fmt(l.montantFactureHT)} €</Text>
-                      </View>
-                    ))}
-
                     <View style={styles.situationTotals}>
                       <View style={styles.situationTotalRow}>
                         <Text style={styles.situationTotalLabel}>Cumulé HT</Text>
