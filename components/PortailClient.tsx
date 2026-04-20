@@ -1062,6 +1062,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         <Text style={styles.pfsResumeValue}>{fmt(t.montant)} €</Text>
                       </View>
                     ))
+                  ) : chantier?.devisTotalTTC && totalChantierHT > 0 ? (
+                    // Pas de split, mais TTC du devis connu → calcul effectif
+                    <View style={styles.pfsResumeRow}>
+                      <Text style={styles.pfsResumeLabel}>
+                        + TVA (taux effectif {(tvaRatioEffectif * 100).toFixed(1).replace('.', ',')}%)
+                      </Text>
+                      <Text style={styles.pfsResumeValue}>{fmt(totalChantierTTC - totalChantierHT)} €</Text>
+                    </View>
                   ) : (
                     <View style={styles.pfsResumeRow}>
                       <Text style={styles.pfsResumeLabel}>+ TVA 20% (par défaut)</Text>
