@@ -132,7 +132,7 @@ const DEFAULT_FORM: ChantierForm = {
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addPhotoChantier, deletePhotoChantier, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, updateBudgetChantier } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addPhotoChantier, deletePhotoChantier, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
   const params = useLocalSearchParams<{ action?: string; chantierId?: string; apporteurId?: string; apporteurType?: string }>();
@@ -148,6 +148,62 @@ export default function ChantiersScreen() {
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<ChantierForm>(DEFAULT_FORM);
+
+  // ── Création rapide client + espace (depuis le chantier) ──
+  const [showQuickClient, setShowQuickClient] = useState(false);
+  const [quickClient, setQuickClient] = useState({ prenom: '', nom: '', email: '', telephone: '', societe: '' });
+  const [quickClientCreds, setQuickClientCreds] = useState<{ identifiant: string; motDePasse: string } | null>(null);
+  const [quickClientSaving, setQuickClientSaving] = useState(false);
+
+  const openQuickClient = () => {
+    setQuickClient({ prenom: '', nom: '', email: '', telephone: '', societe: '' });
+    setQuickClientCreds(null);
+    setShowQuickClient(true);
+  };
+  const saveQuickClient = async () => {
+    const p = quickClient.prenom.trim();
+    const n = quickClient.nom.trim();
+    if (!p || !n) return;
+    setQuickClientSaving(true);
+    try {
+      const { preparerChangementMotDePasse, generatePassword } = await import('@/lib/externAuth');
+      // Identifiant : email (avant @) sinon prenom.nom (tout en minuscules, sans accents)
+      const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9.]/g, '');
+      const base = quickClient.email.trim()
+        ? normalize(quickClient.email.split('@')[0])
+        : `${normalize(p)}.${normalize(n)}`;
+      // Assurer unicité de l'identifiant
+      let ident = base;
+      let i = 2;
+      while (apporteursAll.some(a => (a.identifiant || '').toLowerCase() === ident)) {
+        ident = `${base}${i}`;
+        i++;
+      }
+      const mdp = generatePassword(10);
+      const mdpFields = await preparerChangementMotDePasse(mdp);
+      const now = new Date().toISOString();
+      const id = `app_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      addApporteur({
+        id,
+        type: 'client',
+        prenom: p,
+        nom: n,
+        email: quickClient.email.trim() || undefined,
+        telephone: quickClient.telephone.trim() || undefined,
+        societe: quickClient.societe.trim() || undefined,
+        identifiant: ident,
+        accesApp: true,
+        ...mdpFields,
+        createdAt: now,
+        updatedAt: now,
+      });
+      // Lier au chantier en cours d'édition
+      setForm(f => ({ ...f, clientApporteurId: id }));
+      setQuickClientCreds({ identifiant: ident, motDePasse: mdp });
+    } finally {
+      setQuickClientSaving(false);
+    }
+  };
   const [searchQuery, setSearchQuery] = useState('');
   const [bilanChantierId, setBilanChantierId] = useState<string | null>(null);
   // Protection contre la perte de données si refresh pendant édition
@@ -1629,6 +1685,16 @@ export default function ChantiersScreen() {
                           <Text style={{ fontSize: 11, fontWeight: '700', color: meta.couleur }}>+ Ajouter</Text>
                         </Pressable>
                       </ScrollView>
+                      {ty === 'client' && !selectedId && (
+                        <Pressable
+                          onPress={openQuickClient}
+                          style={{ marginTop: 8, backgroundColor: meta.couleur, borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+                        >
+                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
+                            ⚡ Créer un client + espace client immédiat
+                          </Text>
+                        </Pressable>
+                      )}
                     </View>
                   );
                 })}
@@ -1669,6 +1735,119 @@ export default function ChantiersScreen() {
             </Pressable>
           </View>
         </Pressable>
+      </ModalKeyboard>
+
+      {/* ── Modal Création rapide client + espace client ── */}
+      <ModalKeyboard visible={showQuickClient} animationType="fade" transparent onRequestClose={() => setShowQuickClient(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+          <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+            <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
+              {!quickClientCreds ? (
+                <>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 6 }}>⚡ Nouveau client</Text>
+                  <Text style={{ fontSize: 12, color: '#687076', marginBottom: 14 }}>
+                    Créez un client et son accès en une étape. Un identifiant + mot de passe sont générés automatiquement.
+                  </Text>
+
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginBottom: 4 }}>Prénom *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={quickClient.prenom}
+                    onChangeText={v => setQuickClient(f => ({ ...f, prenom: v }))}
+                    placeholder="Jean"
+                    autoCapitalize="words"
+                  />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Nom *</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={quickClient.nom}
+                    onChangeText={v => setQuickClient(f => ({ ...f, nom: v }))}
+                    placeholder="Dupont"
+                    autoCapitalize="words"
+                  />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Email</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={quickClient.email}
+                    onChangeText={v => setQuickClient(f => ({ ...f, email: v }))}
+                    placeholder="jean.dupont@mail.fr"
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    keyboardType="email-address"
+                  />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Téléphone</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={quickClient.telephone}
+                    onChangeText={v => setQuickClient(f => ({ ...f, telephone: v }))}
+                    placeholder="06 12 34 56 78"
+                    keyboardType="phone-pad"
+                  />
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Société (optionnel)</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={quickClient.societe}
+                    onChangeText={v => setQuickClient(f => ({ ...f, societe: v }))}
+                    placeholder="SAS Exemple"
+                  />
+
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
+                    <Pressable onPress={() => setShowQuickClient(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                      <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+                    </Pressable>
+                    <Pressable
+                      onPress={saveQuickClient}
+                      disabled={!quickClient.prenom.trim() || !quickClient.nom.trim() || quickClientSaving}
+                      style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (!quickClient.prenom.trim() || !quickClient.nom.trim() || quickClientSaving) ? 0.5 : 1 }}
+                    >
+                      <Text style={{ color: '#C9A96E', fontWeight: '800' }}>{quickClientSaving ? 'Création…' : 'Créer le client'}</Text>
+                    </Pressable>
+                  </View>
+                </>
+              ) : (
+                <>
+                  <Text style={{ fontSize: 20, fontWeight: '800', color: '#2E7D32', marginBottom: 6 }}>✓ Client créé</Text>
+                  <Text style={{ fontSize: 12, color: '#687076', marginBottom: 14 }}>
+                    Le client a été créé et rattaché à ce chantier. Transmettez-lui les identifiants ci-dessous.
+                  </Text>
+                  <View style={{ backgroundColor: '#FAF7F3', borderRadius: 10, padding: 14, borderLeftWidth: 4, borderLeftColor: '#C9A96E' }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C6D2F', textTransform: 'uppercase' }}>Identifiant</Text>
+                    <Text selectable style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginTop: 4, marginBottom: 10 }}>
+                      {quickClientCreds.identifiant}
+                    </Text>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C6D2F', textTransform: 'uppercase' }}>Mot de passe</Text>
+                    <Text selectable style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginTop: 4 }}>
+                      {quickClientCreds.motDePasse}
+                    </Text>
+                    <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 10, fontStyle: 'italic' }}>
+                      Ces identifiants restent disponibles dans la fiche client (Équipe → Apporteurs).
+                    </Text>
+                  </View>
+                  {Platform.OS === 'web' && (
+                    <Pressable
+                      onPress={() => {
+                        try {
+                          const txt = `Espace client SK DECO\nLien : https://sk-deco-planning.vercel.app\nIdentifiant : ${quickClientCreds.identifiant}\nMot de passe : ${quickClientCreds.motDePasse}`;
+                          // @ts-ignore
+                          navigator.clipboard?.writeText(txt);
+                        } catch {}
+                      }}
+                      style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 12 }}
+                    >
+                      <Text style={{ color: '#C9A96E', fontWeight: '800' }}>📋 Copier (lien + identifiants)</Text>
+                    </Pressable>
+                  )}
+                  <Pressable
+                    onPress={() => setShowQuickClient(false)}
+                    style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 8 }}
+                  >
+                    <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Fermer</Text>
+                  </Pressable>
+                </>
+              )}
+            </View>
+          </ScrollView>
+        </View>
       </ModalKeyboard>
 
       {/* ── Modal Fiche Chantier Unifié (Fiche + Modifier) ── */}
