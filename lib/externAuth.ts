@@ -2,18 +2,15 @@
  * Auth externe : utilitaires pour hasher/vérifier les mots de passe
  * des apporteurs (clients, architectes, apporteurs, contractants).
  *
- * Hash : SHA-256(salt + mot_de_passe). Salt généré au premier set.
+ * Hash : SHA-256(salt + mot_de_passe) via js-sha256 (pure JS, pas de module natif).
  * Le `motDePasseVisible` stocké séparément permet à l'admin de consulter
  * le mot de passe en clair (fonctionnalité demandée par SK DECO).
  */
-import * as Crypto from 'expo-crypto';
+import { sha256 } from 'js-sha256';
 import type { Apporteur } from '@/app/types';
 
 export async function hashPassword(password: string, salt: string): Promise<string> {
-  return Crypto.digestStringAsync(
-    Crypto.CryptoDigestAlgorithm.SHA256,
-    `${salt}::${password}`
-  );
+  return sha256(`${salt}::${password}`);
 }
 
 export function generateSalt(): string {

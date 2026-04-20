@@ -100,6 +100,7 @@ interface ChantierForm {
   couleur: string;
   employeIds: string[];
   visibleSurPlanning: boolean;
+  afficherPlanningAuClient: boolean;
   // Contacts externes
   architecteId: string;
   apporteurId: string;
@@ -123,6 +124,7 @@ const DEFAULT_FORM: ChantierForm = {
   couleur: CHANTIER_COLORS[0],
   employeIds: [],
   visibleSurPlanning: true,
+  afficherPlanningAuClient: false,
   architecteId: '',
   apporteurId: '',
   contractantId: '',
@@ -205,6 +207,7 @@ export default function ChantiersScreen() {
       couleur: chantier.couleur,
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
+      afficherPlanningAuClient: chantier.afficherPlanningAuClient === true,
       architecteId: chantier.architecteId || '',
       apporteurId: chantier.apporteurId || '',
       contractantId: chantier.contractantId || '',
@@ -508,6 +511,7 @@ export default function ChantiersScreen() {
       couleur: chantier.couleur,
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
+      afficherPlanningAuClient: chantier.afficherPlanningAuClient === true,
       architecteId: chantier.architecteId || '',
       apporteurId: chantier.apporteurId || '',
       contractantId: chantier.contractantId || '',
@@ -594,6 +598,7 @@ export default function ChantiersScreen() {
         couleur: form.couleur,
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
+        afficherPlanningAuClient: form.afficherPlanningAuClient,
         fiche: existing?.fiche,
         // Legacy client text conservé si existant
         client: existing?.client,
@@ -618,6 +623,7 @@ export default function ChantiersScreen() {
         couleur: form.couleur,
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
+        afficherPlanningAuClient: form.afficherPlanningAuClient,
         architecteId: form.architecteId || undefined,
         apporteurId: form.apporteurId || undefined,
         contractantId: form.contractantId || undefined,
@@ -1637,6 +1643,20 @@ export default function ChantiersScreen() {
                     {form.visibleSurPlanning ? t.common.yes : t.common.no}
                   </Text>
                 </Pressable>
+              </FormField>
+
+              <FormField label="📅 Afficher le planning au client">
+                <Pressable
+                  style={[styles.toggleBtn, form.afficherPlanningAuClient && styles.toggleBtnActive]}
+                  onPress={() => setForm(f => ({ ...f, afficherPlanningAuClient: !f.afficherPlanningAuClient }))}
+                >
+                  <Text style={[styles.toggleBtnText, form.afficherPlanningAuClient && styles.toggleBtnTextActive]}>
+                    {form.afficherPlanningAuClient ? 'Oui — le client voit le planning' : 'Non — masqué au client'}
+                  </Text>
+                </Pressable>
+                <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 4, lineHeight: 14 }}>
+                  Les architectes et apporteurs voient toujours le planning. Cette option contrôle uniquement ce que voit le client.
+                </Text>
               </FormField>
             </ScrollView>
 
