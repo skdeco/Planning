@@ -562,50 +562,45 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       </div>
     </body></html>`;
 
-    if (Platform.OS === 'web') {
-      const w = window.open();
-      if (w) {
-        w.document.write(html);
-        w.document.close();
-        setTimeout(() => w.print(), 500);
-      }
-    } else {
-      try {
-        const FileSystem = require('expo-file-system');
-        const WebBrowser = require('expo-web-browser');
-        const path = `${FileSystem.cacheDirectory}rapport_${chantier.nom.replace(/[^a-zA-Z0-9]/g, '_')}.html`;
-        await FileSystem.writeAsStringAsync(path, html, { encoding: FileSystem.EncodingType.UTF8 });
-        await WebBrowser.openBrowserAsync(path);
-      } catch {
-        Alert.alert('Erreur', 'Impossible d\'ouvrir le rapport');
-      }
-    }
+    await openHtmlForPrint(html, `rapport_${chantier.nom.replace(/[^a-zA-Z0-9]/g, '_')}`);
   };
 
-  // ── Ouvre un HTML dans une nouvelle fenêtre/print PDF ──
-  const openHtmlForPrint = async (html: string, fallbackName: string) => {
+  // ── Imprimer / partager un HTML en PDF sans quitter l'app ──
+  const openHtmlForPrint = async (html: string, _fallbackName: string) => {
     if (Platform.OS === 'web') {
-      const w = window.open();
-      if (w) {
-        w.document.write(html);
-        w.document.close();
-        setTimeout(() => w.print(), 500);
-      }
+      // iframe cachée → reste sur la même page, ouvre le dialogue d'impression du navigateur
+      const iframe = document.createElement('iframe');
+      iframe.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;';
+      document.body.appendChild(iframe);
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) { document.body.removeChild(iframe); return; }
+      doc.open();
+      doc.write(html);
+      doc.close();
+      setTimeout(() => {
+        try {
+          iframe.contentWindow?.focus();
+          iframe.contentWindow?.print();
+        } catch {}
+        setTimeout(() => { try { document.body.removeChild(iframe); } catch {} }, 3000);
+      }, 400);
       return;
     }
+    // Mobile : génère le PDF en local puis partage natif (reste dans l'app)
     try {
       const Print = require('expo-print');
-      await Print.printAsync({ html });
-    } catch {
+      const { uri } = await Print.printToFileAsync({ html });
       try {
-        const FileSystem = require('expo-file-system');
-        const WebBrowser = require('expo-web-browser');
-        const path = `${FileSystem.cacheDirectory}${fallbackName}.html`;
-        await FileSystem.writeAsStringAsync(path, html, { encoding: FileSystem.EncodingType.UTF8 });
-        await WebBrowser.openBrowserAsync(path);
-      } catch {
-        Alert.alert('Erreur', 'Impossible de générer le document');
-      }
+        const Sharing = require('expo-sharing');
+        if (await Sharing.isAvailableAsync()) {
+          await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Point financier' });
+          return;
+        }
+      } catch {}
+      // Si le partage n'est pas dispo, fallback sur la boîte d'impression iOS
+      await Print.printAsync({ uri });
+    } catch {
+      Alert.alert('Erreur', 'Impossible de générer le document');
     }
   };
 
