@@ -678,7 +678,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     await openHtmlForPrint(html, `rapport_${chantier.nom.replace(/[^a-zA-Z0-9]/g, '_')}`);
   };
 
-  // ── Imprimer / partager un HTML en PDF sans quitter l'app ──
+  // ── Imprimer / partager un HTML en PDF ──
   const openHtmlForPrint = async (html: string, _fallbackName: string) => {
     if (Platform.OS === 'web') {
       try {
@@ -700,22 +700,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       }
       return;
     }
-    // Mobile : Print.printAsync ouvre le dialogue système (AirPrint/Android Print),
-    // reste dans l'app. Evite expo-sharing qui peut crash sur certains devices sans FileProvider.
-    let Print: any = null;
-    try { Print = require('expo-print'); } catch {}
-    if (!Print?.printAsync) {
-      Alert.alert(
-        'Export PDF indisponible',
-        'Cette version de l\'app ne peut pas générer le PDF. Ouvrez ce chantier depuis la version web pour exporter le point financier.',
-      );
-      return;
-    }
-    try {
-      await Print.printAsync({ html });
-    } catch (e: any) {
-      Alert.alert('Erreur PDF', e?.message || 'Impression impossible.');
-    }
+    // Mobile : génération PDF instable (Modal+Print bug iOS, FileProvider Android).
+    // On informe l'utilisateur et il génère le PDF depuis la version web.
+    Alert.alert(
+      'Génération PDF',
+      'Pour générer le PDF du point financier, ouvrez ce chantier depuis la version web (sk-deco-planning.vercel.app). Le snapshot est déjà enregistré dans l\'historique.',
+    );
   };
 
   // ── Construit le HTML d'un point financier de situation depuis un snapshot ──
