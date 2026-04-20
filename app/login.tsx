@@ -8,8 +8,6 @@ import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 
-const ADMIN_LOGIN = 'admin';
-
 export default function LoginScreen() {
   const { data, setCurrentUser } = useApp();
   const { t } = useLanguage();
@@ -25,10 +23,18 @@ export default function LoginScreen() {
     const id = identifiant.trim().toLowerCase();
     const pwd = motDePasse;
 
-    // Connexion admin
+    // Connexion admin (identifiant configurable, défaut : 'admin')
+    const adminIdentifiant = (data.adminIdentifiant || 'admin').toLowerCase();
     const adminPassword = data.adminPassword || 'admin';
-    if (id === ADMIN_LOGIN && pwd === adminPassword) {
-      setCurrentUser({ role: 'admin' });
+    if (id === adminIdentifiant && pwd === adminPassword) {
+      const adminEmploye = data.adminEmployeId
+        ? data.employes.find(e => e.id === data.adminEmployeId)
+        : undefined;
+      setCurrentUser({
+        role: 'admin',
+        employeId: adminEmploye?.id,
+        nom: adminEmploye ? `${adminEmploye.prenom} ${adminEmploye.nom}` : undefined,
+      });
       router.replace('/(tabs)' as any);
       return;
     }
@@ -50,7 +56,7 @@ export default function LoginScreen() {
 
     // Connexion sous-traitant
     const st = data.sousTraitants.find(
-      s => s.identifiant.toLowerCase() === id && s.motDePasse === pwd
+      s => s.identifiant?.toLowerCase() === id && s.motDePasse === pwd
     );
 
     if (st) {
@@ -60,6 +66,21 @@ export default function LoginScreen() {
         nom: `${st.prenom} ${st.nom}`,
       });
       router.replace('/(tabs)' as any);
+      return;
+    }
+
+    // Connexion apporteur (architecte / apporteur / contractant / client) avec accesApp = true
+    const apporteur = (data.apporteurs || []).find(
+      a => !!a.accesApp && (a.identifiant || '').toLowerCase() === id && a.motDePasse === pwd
+    );
+
+    if (apporteur) {
+      setCurrentUser({
+        role: 'apporteur',
+        apporteurId: apporteur.id,
+        nom: `${apporteur.prenom} ${apporteur.nom}`,
+      });
+      router.replace('/(tabs)/chantiers' as any);
       return;
     }
 
@@ -95,7 +116,7 @@ export default function LoginScreen() {
               value={identifiant}
               onChangeText={v => { setIdentifiant(v); setError(''); }}
               placeholder={t.auth.usernamePlaceholder}
-              placeholderTextColor="#687076"
+              placeholderTextColor="#8C8077"
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
@@ -108,7 +129,7 @@ export default function LoginScreen() {
                 value={motDePasse}
                 onChangeText={v => { setMotDePasse(v); setError(''); }}
                 placeholder={t.auth.passwordPlaceholder}
-                placeholderTextColor="#687076"
+                placeholderTextColor="#8C8077"
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -144,7 +165,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   container: {
     flexGrow: 1,
@@ -164,7 +185,7 @@ const styles = StyleSheet.create({
   },
   appSub: {
     fontSize: 14,
-    color: '#687076',
+    color: '#8C8077',
     marginTop: 2,
   },
   card: {
@@ -182,28 +203,28 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#1A1A1A',
     marginBottom: 20,
     textAlign: 'center',
   },
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#1A1A1A',
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontSize: 15,
-    color: '#11181C',
+    color: '#1A1A1A',
     borderWidth: 1.5,
-    borderColor: '#E2E6EA',
+    borderColor: '#E8DDD0',
     // @ts-ignore — propriété web pour le focus
-    outlineColor: '#1A3A6B',
+    outlineColor: '#2C2C2C',
   },
   passwordRow: {
     position: 'relative',
@@ -229,7 +250,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loginBtn: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
@@ -245,13 +266,13 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 11,
-    color: '#687076',
+    color: '#8C8077',
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 16,
   },
   hintBold: {
     fontWeight: '700',
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
 });

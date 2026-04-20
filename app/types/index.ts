@@ -1,13 +1,8 @@
-export type Metier =
-  | 'electricien'
-  | 'plombier'
-  | 'macon'
-  | 'peintre'
-  | 'menuisier'
-  | 'plaquiste'
-  | 'carreleur'
-  | 'chef_chantier'
-  | 'autre';
+/**
+ * Métier : string libre pour permettre à l'admin d'ajouter ses propres métiers.
+ * Les métiers par défaut sont prédéfinis, mais l'admin peut en créer autant qu'il veut.
+ */
+export type Metier = string;
 
 export interface MetierInfo {
   label: string;
@@ -15,7 +10,16 @@ export interface MetierInfo {
   textColor: string;
 }
 
-export const METIER_COLORS: Record<Metier, MetierInfo> = {
+/** Métier personnalisé (ajouté par l'admin) */
+export interface MetierPerso {
+  id: string;        // slug unique ex: 'staffeur'
+  label: string;     // nom affiché ex: 'Staffeur'
+  color: string;     // couleur du badge
+  textColor: string; // couleur du texte
+}
+
+/** Métiers prédéfinis (toujours disponibles) */
+export const METIER_COLORS_DEFAULT: Record<string, MetierInfo> = {
   electricien:   { label: 'Électricien',    color: '#FFB800', textColor: '#000' },
   plombier:      { label: 'Plombier',       color: '#0088FF', textColor: '#fff' },
   macon:         { label: 'Maçon',          color: '#888888', textColor: '#fff' },
@@ -27,18 +31,50 @@ export const METIER_COLORS: Record<Metier, MetierInfo> = {
   autre:         { label: 'Autre',          color: '#AAAAAA', textColor: '#fff' },
 };
 
-export const METIERS_LIST: Metier[] = [
+/** Palette de couleurs pour les nouveaux métiers personnalisés */
+export const METIER_PERSO_COLORS = [
+  '#16A085', '#D35400', '#2C3E50', '#8E44AD', '#1ABC9C',
+  '#E91E63', '#607D8B', '#795548', '#00BCD4', '#FF5722',
+];
+
+/**
+ * METIER_COLORS dynamique : combine les métiers par défaut + les métiers perso de l'admin.
+ * Utiliser getMetierColors(data.metiersPerso) partout au lieu de METIER_COLORS directement.
+ */
+export function getMetierColors(metiersPerso?: MetierPerso[]): Record<string, MetierInfo> {
+  const result: Record<string, MetierInfo> = { ...METIER_COLORS_DEFAULT };
+  (metiersPerso || []).forEach(m => {
+    result[m.id] = { label: m.label, color: m.color, textColor: m.textColor };
+  });
+  return result;
+}
+
+/** Rétro-compatibilité : METIER_COLORS = les métiers par défaut */
+export const METIER_COLORS: Record<string, MetierInfo> = METIER_COLORS_DEFAULT;
+
+/** Liste des métiers par défaut */
+export const METIERS_LIST_DEFAULT: string[] = [
   'electricien', 'plombier', 'macon', 'peintre', 'menuisier',
   'plaquiste', 'carreleur', 'chef_chantier', 'autre',
 ];
 
-export type StatutChantier = 'actif' | 'en_attente' | 'termine' | 'en_pause';
+/** Liste dynamique des métiers (défaut + perso) */
+export function getMetiersList(metiersPerso?: MetierPerso[]): string[] {
+  const persoIds = (metiersPerso || []).map(m => m.id);
+  return [...METIERS_LIST_DEFAULT.filter(m => m !== 'autre'), ...persoIds, 'autre'];
+}
+
+/** Rétro-compatibilité */
+export const METIERS_LIST: string[] = METIERS_LIST_DEFAULT;
+
+export type StatutChantier = 'actif' | 'en_attente' | 'termine' | 'en_pause' | 'sav';
 
 export const STATUT_LABELS: Record<StatutChantier, string> = {
-  actif: 'Actif',
+  actif: 'En cours',
   en_attente: 'En attente',
   termine: 'Terminé',
   en_pause: 'En pause',
+  sav: 'SAV',
 };
 
 export const STATUT_COLORS: Record<StatutChantier, { bg: string; text: string }> = {
@@ -46,6 +82,7 @@ export const STATUT_COLORS: Record<StatutChantier, { bg: string; text: string }>
   en_attente: { bg: '#FFF3CD', text: '#856404' },
   termine:    { bg: '#D1ECF1', text: '#0C5460' },
   en_pause:   { bg: '#F8D7DA', text: '#721C24' },
+  sav:        { bg: '#E8DAEF', text: '#6C3483' },
 };
 
 export const CHANTIER_COLORS = [
@@ -105,6 +142,10 @@ export interface Employe {
   doitPointer?: boolean;     // true = l'employé doit pointer (défaut true)
   telephone?: string;        // numéro de téléphone
   email?: string;            // adresse email
+  photoProfil?: string;      // base64 URI ou URL de la photo de profil
+  penseBete?: string;        // ancien format texte simple (migration)
+  penseBetes?: { id: string; chantierId?: string; texte: string; createdAt: string }[]; // notes par chantier
+  pushToken?: string;        // Expo Push Token pour notifications push
   retardAfficheEmploye?: boolean; // true = l'employé voit ses propres retards dans le reporting
 }
 
@@ -112,6 +153,7 @@ export interface Employe {
 export interface FicheChantier {
   codeAcces: string;        // code digicode / badge
   emplacementCle: string;   // où est la clé
+  photoEmplacementCle?: string; // photo de la cachette de la clé (base64)
   codeAlarme: string;       // code alarme
   contacts: string;         // contacts utiles (gardien, proprio...)
   contactSyndic?: string;   // numéro syndic
@@ -142,10 +184,11 @@ export interface PlanChantier {
 export interface Chantier {
   id: string;
   nom: string;
-  adresse: string;          // adresse complète (legacy)
-  rue?: string;             // rue
-  codePostal?: string;      // code postal
-  ville?: string;           // ville
+  adresse: string;          // adresse complète (legacy — gardée pour compatibilité)
+  rue?: string;             // rue (ex: "45 avenue Foch")
+  codePostal?: string;      // code postal (ex: "75016")
+  ville?: string;           // ville (ex: "Paris")
+  pays?: string;            // pays (ex: "France")
   dateDebut: string; // YYYY-MM-DD
   dateFin: string;   // YYYY-MM-DD
   statut: StatutChantier;
@@ -156,6 +199,17 @@ export interface Chantier {
   longitude?: number;       // coordonnées GPS du chantier
   fiche?: FicheChantier;   // fiche chantier (optionnelle)
   ordre?: number;           // ordre d'affichage dans le planning (0 = premier)
+  // Legacy : client en texte libre
+  client?: string;
+  // Liens vers les 4 contacts externes (Apporteur selon son type)
+  architecteId?: string;       // lié à un Apporteur type 'architecte'
+  apporteurId?: string;        // lié à un Apporteur type 'apporteur'
+  contractantId?: string;      // lié à un Apporteur type 'contractant'
+  clientApporteurId?: string;  // lié à un Apporteur type 'client'
+  // Portail client : photos sélectionnées pour affichage
+  photosPortailClient?: string[];  // IDs des photos visibles dans le portail client
+  // Avancement par corps de métier (affiché dans le portail client)
+  avancementCorps?: { id: string; nom: string; pourcentage: number; montant?: number }[];
 }
 
 /** Une tâche dans la checklist d'une note */
@@ -165,6 +219,7 @@ export interface TaskItem {
   fait: boolean;       // cochée ou non
   faitPar?: string;    // nom de celui qui a coché
   faitAt?: string;     // ISO datetime du cochage
+  photos?: string[];   // URIs photos de preuve
 }
 
 /** Une note laissée par un utilisateur (admin ou employé) sur une cellule du planning */
@@ -177,9 +232,12 @@ export interface Note {
   photos: string[];    // URIs base64 ou file URI
   tasks?: TaskItem[];  // liste de tâches avec cases à cocher
   visiblePar?: 'tous' | 'employes' | 'soustraitants' | string[]; // visibilité : 'tous', 'employes', 'soustraitants', ou liste d'IDs spécifiques
+  savTicketId?: string; // lié à un ticket SAV
   createdAt: string;   // ISO datetime
   updatedAt: string;   // ISO datetime
 }
+
+export type LieuTravail = 'chantier' | 'atelier';
 
 export interface Affectation {
   id: string;
@@ -188,6 +246,7 @@ export interface Affectation {
   soustraitantId?: string;    // défini si c'est une affectation ST
   dateDebut: string; // YYYY-MM-DD
   dateFin: string;   // YYYY-MM-DD
+  lieu?: LieuTravail;         // 'chantier' (défaut) ou 'atelier'
   notes: Note[];     // tableau de notes (multi-auteurs, multi-notes)
 }
 
@@ -233,6 +292,7 @@ export interface DocumentST {
   uploadeParAdmin?: boolean; // true si uploadé par l'admin (ex: contrat à signer)
   confirme?: boolean;   // true si le ST a confirmé l'envoi définitif
   confirmeAt?: string;  // ISO datetime de confirmation
+  expirationDate?: string; // YYYY-MM-DD date d'expiration du document
 }
 
 /** Acompte versé à un sous-traitant pour un devis donné */
@@ -274,6 +334,46 @@ export interface SousTraitant {
   motDePasse: string;
   documents: DocumentST[];  // documents légaux
   couleur: string;          // couleur dans le planning
+  pushToken?: string;       // Expo Push Token pour notifications push
+}
+
+/** Un architecte, apporteur d'affaires, contractant ou client associé aux chantiers */
+export interface Apporteur {
+  id: string;
+  type: 'architecte' | 'apporteur' | 'contractant' | 'client';
+  prenom: string;
+  nom: string;
+  societe?: string;
+  telephone?: string;
+  email?: string;
+  adresse?: string;
+  siret?: string;
+  notes?: string;
+  // Accès externe (optionnel) : l'admin peut activer un accès à l'app pour ce contact
+  identifiant?: string;        // login pour se connecter
+  motDePasse?: string;         // mot de passe
+  accesApp?: boolean;          // true si l'admin a activé l'accès à l'app
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Libellés / emojis / couleurs pour les 4 types d'Apporteur */
+export const APPORTEUR_TYPE_LABELS: Record<string, { label: string; emoji: string; couleur: string }> = {
+  architecte:  { label: 'Architecte',             emoji: '📐', couleur: '#6B8EBF' },
+  apporteur:   { label: "Apporteur d'affaires",   emoji: '🤝', couleur: '#C9A96E' },
+  contractant: { label: 'Contractant',            emoji: '🔗', couleur: '#10B981' },
+  client:      { label: 'Client',                 emoji: '👤', couleur: '#E5A840' },
+};
+
+/** Commission versée à un apporteur sur un marché */
+export interface CommissionApporteur {
+  apporteurId: string;
+  modeCommission: 'montant' | 'pourcentage';
+  valeur: number;          // soit montant en €, soit pourcentage (ex: 5 pour 5%)
+  baseCalcul?: 'HT' | 'TTC'; // si pourcentage : base de calcul
+  statut: 'a_payer' | 'paye';
+  datePaiement?: string;   // YYYY-MM-DD
+  note?: string;
 }
 
 /** Un pointage (début ou fin de journée) enregistré par un employé */
@@ -331,9 +431,15 @@ export interface MateriauItem {
   texte: string;          // libellé de l'article
   quantite?: string;      // quantité optionnelle (ex: "3 rouleaux")
   commentaire?: string;   // commentaire libre de l'employé (précisions, marque, etc.)
+  catalogueArticleId?: string; // lien vers le catalogue (pour vérifier la dispo)
+  fournisseur?: string;   // fournisseur prévu (sélectionné à la création)
   achete: boolean;        // coché par l'acheteur
   achetePar?: string;     // nom de l'acheteur
   acheteAt?: string;      // ISO datetime
+  prixReel?: number;      // prix d'achat réel (€)
+  fournisseurReel?: string; // fournisseur réel d'achat
+  ajoutePar?: string;     // nom de l'employé qui a ajouté l'article
+  splitFromItemId?: string; // id de l'item d'origine si créé par un achat partiel (pour merge au désarchivage)
   createdAt: string;
 }
 
@@ -419,10 +525,13 @@ export interface DepenseChantier {
   id: string;
   chantierId: string;
   libelle: string;          // description de la dépense
-  montant: number;          // en euros
+  montant: number;          // montant HT en euros
+  montantTTC?: number;      // montant TTC en euros
   date: string;             // YYYY-MM-DD
-  categorie?: string;       // catégorie libre
-  fichier?: string;         // base64 URI (photo, scan, PDF)
+  categorie?: string;       // catégorie libre (ex: 'achat', 'location', 'sous-traitance')
+  fournisseur?: string;     // nom du fournisseur
+  fichier?: string;         // base64 URI (photo, scan, PDF — facture)
+  note?: string;            // note libre de l'administrateur
   createdAt: string;
   createdBy?: string;       // nom de l'admin qui a saisi
 }
@@ -572,6 +681,107 @@ export interface ActivityLog {
   action: string;          // type d'action : 'pointage', 'affectation', 'conge', 'materiel', etc.
   description: string;     // description courte lisible
   targetId?: string;       // id de l'objet concerné (chantierId, employeId, etc.)
+  destinataires?: string[]; // userIds ciblés ; vide = tous (admin notif globale)
+  lecturesPar?: { userId: string; lu: string }[]; // accusés de lecture
+}
+
+// ─── Marché / Devis / Factures / Acomptes par chantier ─────────────────────
+
+export type ModePaiement = 'virement' | 'cheque' | 'especes' | 'cb' | 'autre';
+
+export const MODES_PAIEMENT: { value: ModePaiement; label: string }[] = [
+  { value: 'virement', label: '🏦 Virement' },
+  { value: 'cheque', label: '📝 Chèque' },
+  { value: 'especes', label: '💵 Espèces' },
+  { value: 'cb', label: '💳 Carte' },
+  { value: 'autre', label: '❓ Autre' },
+];
+
+/** Acompte / paiement reçu sur un marché ou supplément */
+export interface PaiementRecu {
+  id: string;
+  date: string;          // YYYY-MM-DD
+  montant: number;       // €
+  mode: ModePaiement;
+  reference?: string;    // n° chèque, ref virement
+  note?: string;
+  factureUri?: string;   // facture d'acompte (pdf/image)
+  factureNom?: string;
+  // Commission sur ce paiement (si le marché parent a une commission configurée)
+  commissionFactureUri?: string;  // facture commission liée à ce paiement
+  commissionFactureNom?: string;
+  commissionMontant?: number;     // montant de la commission calculé (figé au moment du paiement)
+  commissionPaye?: boolean;       // true si la commission a été payée à l'apporteur
+  commissionDatePaiement?: string;
+}
+
+/** Marché principal d'un chantier */
+export interface MarcheChantier {
+  id: string;
+  chantierId: string;
+  libelle: string;                  // "Marché initial", "Tranche 1"...
+  montantHT: number;
+  montantTTC: number;
+  devisInitialUri?: string;         // pdf/image devis initial
+  devisInitialNom?: string;
+  devisSigneUri?: string;           // pdf/image devis signé
+  devisSigneNom?: string;
+  dateDevis?: string;               // YYYY-MM-DD
+  dateSignature?: string;           // YYYY-MM-DD si signé
+  signatureClientUri?: string;  // image base64/URL signature client
+  signatureClientDate?: string; // ISO datetime
+  paiements: PaiementRecu[];
+  commission?: CommissionApporteur; // commission versée à un architecte / apporteur d'affaires
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Statut d'un supplément */
+export type StatutSupplement = 'en_attente' | 'accepte' | 'refuse';
+
+/** Supplément (avenant) sur un chantier */
+export interface SupplementMarche {
+  id: string;
+  chantierId: string;
+  marcheId?: string;                // marché parent (optionnel)
+  libelle: string;
+  description?: string;
+  montantHT: number;
+  montantTTC: number;
+  statut: StatutSupplement;         // accepté/refusé/en attente client
+  dateProposition?: string;         // YYYY-MM-DD
+  dateAccord?: string;              // YYYY-MM-DD si accepté
+  devisUri?: string;
+  devisNom?: string;
+  factureUri?: string;
+  factureNom?: string;
+  paiements: PaiementRecu[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+// ─── SAV (tickets d'intervention) ─────────────────────────────────────────
+
+export type StatutSAV = 'ouvert' | 'en_cours' | 'resolu' | 'clos';
+export type PrioriteSAV = 'basse' | 'normale' | 'haute' | 'urgente';
+
+export interface TicketSAV {
+  id: string;
+  chantierId: string;
+  objet: string;           // ex: "Fuite robinet cuisine"
+  description?: string;
+  priorite: PrioriteSAV;
+  statut: StatutSAV;
+  dateOuverture: string;   // YYYY-MM-DD
+  dateResolution?: string;
+  resoluPar?: string;      // nom de l'employé qui a résolu
+  assigneA?: string;       // employeId
+  photos?: string[];       // URIs (photos du problème)
+  photosResolution?: string[]; // URIs (photos de la résolution)
+  fichiers?: { uri: string; nom: string }[]; // PDF/documents joints
+  commentaires?: { id: string; auteur: string; texte: string; date: string }[];
+  createdAt: string;
+  updatedAt: string;
 }
 
 // ─── Catalogue articles (matériel) ────────────────────────────────────────
@@ -596,6 +806,7 @@ export interface ArticleCatalogue {
   categorie: CategorieArticle;
   description?: string;         // description pour l'employé
   reference?: string;           // référence fournisseur
+  marque?: string;              // marque de l'article (Legrand, Schneider, etc.)
   prixUnitaire?: number;        // prix en euros (masqué pour l'employé)
   fournisseur?: string;         // nom du fournisseur
   lienFournisseur?: string;     // URL vers le site du fournisseur
@@ -626,6 +837,23 @@ export interface AgendaEvent {
   recurrenceFinDate?: string; // YYYY-MM-DD fin de récurrence
   createdAt: string;
 }
+
+export interface BadgeEmploye {
+  id: string;
+  employeId: string;
+  type: 'ponctualite' | 'qualite' | 'initiative' | 'equipe' | 'efficacite';
+  message?: string;
+  envoyePar: string;  // admin name
+  createdAt: string;
+}
+
+export const BADGE_TYPES: Record<string, { label: string; emoji: string }> = {
+  ponctualite: { label: 'Ponctualité', emoji: '⏰' },
+  qualite: { label: 'Qualité du travail', emoji: '⭐' },
+  initiative: { label: 'Prise d\'initiative', emoji: '💡' },
+  equipe: { label: 'Esprit d\'équipe', emoji: '🤝' },
+  efficacite: { label: 'Efficacité', emoji: '🚀' },
+};
 
 export interface AppData {
   employes: Employe[];
@@ -671,24 +899,44 @@ export interface AppData {
   catalogueArticles?: ArticleCatalogue[];
   // Agenda admin partagé
   agendaEvents?: AgendaEvent[];
-  // Mot de passe administrateur (modifiable)
+  // Identifiants administrateur (modifiables)
+  adminIdentifiant?: string;       // identifiant de connexion admin (défaut : 'admin')
   adminPassword?: string;
   adminPasswordUpdatedAt?: string; // ISO datetime de la dernière modification du mot de passe
+  adminEmployeId?: string;         // ID de l'employé lié au compte admin (visible par les autres)
+  magasinPrefere?: string;         // Magasin préféré pour vérifier la dispo (ex: "Leroy Merlin Ivry-sur-Seine")
+  metiersPerso?: MetierPerso[];    // Métiers personnalisés ajoutés par l'admin
+  budgetsChantier?: Record<string, number>; // Budget prévisionnel par chantierId
+  fournisseurs?: string[];         // Liste de fournisseurs prédéfinis (personnalisable par l'admin)
   // Plans chantier
   plansChantier?: Record<string, any>;
+  // Présences forcées : jours où l'employé était présent sans pointer
+  presencesForcees?: { employeId: string; date: string; forcePar?: string }[];
+  // Marchés et suppléments par chantier
+  marchesChantier?: MarcheChantier[];
+  supplementsMarche?: SupplementMarche[];
+  // Tickets SAV
+  ticketsSAV?: TicketSAV[];
   // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour
   // clé : "employeId_YYYY-MM-DD", valeur : liste ordonnée de chantierId
   ordreAffectations?: Record<string, string[]>;
+  // Ordre personnalisé des chantiers dans la vue Planning (admin, réorganisation par long-press)
+  chantierOrderPlanning?: string[];
   // Journal d'activité pour les notifications cross-utilisateurs
   activityLog?: ActivityLog[];
+  // Badges motivationnels envoyés aux employés
+  badgesEmployes?: BadgeEmploye[];
+  // Architectes / Apporteurs d'affaires (commissions sur marchés)
+  apporteurs?: Apporteur[];
 }
 
-export type UserRole = 'admin' | 'employe' | 'soustraitant';
+export type UserRole = 'admin' | 'employe' | 'soustraitant' | 'apporteur';
 
 export interface CurrentUser {
   role: UserRole;
   employeId?: string;       // défini si role === 'employe'
   soustraitantId?: string;  // défini si role === 'soustraitant'
+  apporteurId?: string;     // défini si role === 'apporteur'
   nom?: string;
 }
 

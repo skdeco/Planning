@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   TextInput, Platform, Alert,
 } from 'react-native';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -283,7 +284,7 @@ export default function RHScreen() {
       reader.readAsDataURL(file);
       document.body.removeChild(input);
     };
-    input.click();
+    input.click(); setTimeout(() => input.remove(), 60000);
   };
 
   // ─── Statut badge ────────────────────────────────────────────────────────────────────
@@ -299,7 +300,7 @@ export default function RHScreen() {
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
-    <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>👥 {t.rh.title}</Text>
@@ -544,9 +545,9 @@ export default function RHScreen() {
                 <Text style={styles.paieUploadTitle}>{t.rh.uploadPayslip}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.paieEmployeScroll}>
                   {data.employes.map(emp => (
-                    <Pressable key={emp.id} style={[styles.paieEmployeBtn, { borderColor: emp.couleur || '#1A3A6B' }]} onPress={() => handleUploadPaie(emp.id)}>
-                      <View style={[styles.paieEmployeAvatar, { backgroundColor: emp.couleur || '#1A3A6B' }]}>
-                        <Text style={styles.paieEmployeAvatarText}>{emp.prenom[0]}{emp.nom[0]}</Text>
+                    <Pressable key={emp.id} style={[styles.paieEmployeBtn, { borderColor: emp.couleur || '#2C2C2C' }]} onPress={() => handleUploadPaie(emp.id)}>
+                      <View style={[styles.paieEmployeAvatar, { backgroundColor: emp.couleur || '#2C2C2C' }]}>
+                        <Text style={styles.paieEmployeAvatarText}>{emp.prenom?.[0] || '?'}{emp.nom?.[0] || '?'}</Text>
                       </View>
                       <Text style={styles.paieEmployeNom} numberOfLines={1}>{emp.prenom}</Text>
                       <Text style={styles.paieEmployeAction}>+ {t.rh.upload}</Text>
@@ -586,7 +587,7 @@ export default function RHScreen() {
                           a.click();
                         }
                       }}>
-                        <Text style={[styles.voirBtnText, { color: '#1A3A6B' }]}>{t.common.download}</Text>
+                        <Text style={[styles.voirBtnText, { color: '#2C2C2C' }]}>{t.common.download}</Text>
                       </Pressable>
                       {/* Suppression : admin uniquement (pas RH employé) */}
                       {isAdmin && (
@@ -614,7 +615,7 @@ export default function RHScreen() {
       </ScrollView>
 
       {/* ── Modal demande de congés ── */}
-      <Modal visible={showCongeModal} transparent animationType="slide" onRequestClose={() => setShowCongeModal(false)}>
+      <ModalKeyboard visible={showCongeModal} transparent animationType="slide" onRequestClose={() => setShowCongeModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowCongeModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>{editConge ? t.rh.editRequest : t.rh.leaveRequest}</Text>
@@ -659,7 +660,7 @@ export default function RHScreen() {
             </Pressable>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal arrêt maladie ── */}
       <Modal visible={showArretModal} transparent animationType="slide" onRequestClose={() => setShowArretModal(false)}>
@@ -721,7 +722,7 @@ export default function RHScreen() {
                     reader.readAsDataURL(file);
                     document.body.removeChild(input);
                   };
-                  input.click();
+                  input.click(); setTimeout(() => input.remove(), 60000);
                 }
               }}
             >
@@ -742,7 +743,7 @@ export default function RHScreen() {
       </Modal>
 
       {/* ── Modal demande d'avance ── */}
-      <Modal visible={showAvanceModal} transparent animationType="slide" onRequestClose={() => setShowAvanceModal(false)}>
+      <ModalKeyboard visible={showAvanceModal} transparent animationType="slide" onRequestClose={() => setShowAvanceModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowAvanceModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>{t.rh.advanceRequest}</Text>
@@ -777,7 +778,7 @@ export default function RHScreen() {
             </Pressable>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal sélection mois/année fiche de paie ── */}
       <Modal visible={showPaieModal} transparent animationType="slide" onRequestClose={() => setShowPaieModal(false)}>
@@ -785,7 +786,7 @@ export default function RHScreen() {
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>{t.rh.uploadPayslip}</Text>
             {paieEmployeId && (
-              <Text style={[styles.fieldLabel, { marginBottom: 12, color: '#1A3A6B', fontSize: 14 }]}>
+              <Text style={[styles.fieldLabel, { marginBottom: 12, color: '#2C2C2C', fontSize: 14 }]}>
                 {t.rh.employee}: {getEmployeNom(paieEmployeId)}
               </Text>
             )}
@@ -825,7 +826,7 @@ export default function RHScreen() {
       </Modal>
 
       {/* ── Modal réponse RH ── */}
-      <Modal visible={showReponseModal} transparent animationType="slide" onRequestClose={() => setShowReponseModal(false)}>
+      <ModalKeyboard visible={showReponseModal} transparent animationType="slide" onRequestClose={() => setShowReponseModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowReponseModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>Répondre à la demande</Text>
@@ -843,7 +844,7 @@ export default function RHScreen() {
             </Pressable>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
       <ConfirmModal />
     </ScreenContainer>
   );
@@ -851,45 +852,45 @@ export default function RHScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#1A3A6B' },
+  headerTitle: { fontSize: 18, fontWeight: '700', color: '#2C2C2C' },
   headerBadge: { backgroundColor: '#E74C3C', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   headerBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   soldeCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
   soldeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
   soldeItem: { alignItems: 'center' },
-  soldeValue: { fontSize: 28, fontWeight: '800', color: '#1A3A6B' },
+  soldeValue: { fontSize: 28, fontWeight: '800', color: '#2C2C2C' },
   soldeLabel: { fontSize: 12, color: '#687076', marginTop: 2, fontWeight: '500' },
   soldeSeparator: { width: 1, height: 40, backgroundColor: '#E2E6EA' },
   tabs: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingHorizontal: 8 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4, borderBottomWidth: 2, borderBottomColor: 'transparent' },
-  tabActive: { borderBottomColor: '#1A3A6B' },
+  tabActive: { borderBottomColor: '#2C2C2C' },
   tabText: { fontSize: 11, color: '#687076', fontWeight: '500', textAlign: 'center' },
-  tabTextActive: { color: '#1A3A6B', fontWeight: '700' },
+  tabTextActive: { color: '#2C2C2C', fontWeight: '700' },
   tabBadge: { backgroundColor: '#E74C3C', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 3 },
   tabBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 32 },
-  addBtn: { backgroundColor: '#1A3A6B', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
+  addBtn: { backgroundColor: '#2C2C2C', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   emptyText: { textAlign: 'center', color: '#687076', fontSize: 14, marginTop: 32 },
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  cardEmploye: { fontSize: 13, fontWeight: '700', color: '#1A3A6B' },
+  cardEmploye: { fontSize: 13, fontWeight: '700', color: '#2C2C2C' },
   cardTitle: { fontSize: 15, fontWeight: '600', color: '#11181C', marginBottom: 4 },
   cardSub: { fontSize: 13, color: '#687076', marginBottom: 4 },
   cardComment: { fontSize: 13, color: '#27AE60', fontStyle: 'italic', marginTop: 4 },
   cardActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
   repondreBtn: { backgroundColor: '#EEF2F8', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  repondreBtnText: { color: '#1A3A6B', fontWeight: '600', fontSize: 13 },
+  repondreBtnText: { color: '#2C2C2C', fontWeight: '600', fontSize: 13 },
   deleteBtn: { paddingHorizontal: 14, paddingVertical: 8 },
   deleteBtnText: { color: '#E74C3C', fontWeight: '600', fontSize: 13 },
   voirBtn: { backgroundColor: '#EEF2F8', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
-  voirBtnText: { color: '#1A3A6B', fontWeight: '600', fontSize: 13 },
+  voirBtnText: { color: '#2C2C2C', fontWeight: '600', fontSize: 13 },
   statutBadge: { borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 },
   statutBadgeText: { fontSize: 12, fontWeight: '700' },
   // Fiches de paie
   paieUploadSection: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 16 },
-  paieUploadTitle: { fontSize: 14, fontWeight: '700', color: '#1A3A6B', marginBottom: 12 },
+  paieUploadTitle: { fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 12 },
   paieEmployeScroll: { flexDirection: 'row' },
   paieEmployeBtn: { alignItems: 'center', marginRight: 12, padding: 10, borderRadius: 12, borderWidth: 1.5, minWidth: 80 },
   paieEmployeAvatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', marginBottom: 4 },
@@ -901,9 +902,9 @@ const styles = StyleSheet.create({
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20 },
   sheetTitle: { fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 16, textAlign: 'center' },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
-  input: { backgroundColor: '#F2F4F7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 12 },
+  input: { backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 12 },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },
-  saveBtn: { backgroundColor: '#1A3A6B', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  saveBtn: { backgroundColor: '#2C2C2C', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   infoText: { fontSize: 13, color: '#687076', fontStyle: 'italic', marginBottom: 12, lineHeight: 18 },
   statutRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
@@ -912,19 +913,19 @@ const styles = StyleSheet.create({
   statutBtnText: { fontWeight: '700', fontSize: 14, color: '#687076' },
   // Badges notification
   cardEnAttente: { borderLeftWidth: 3, borderLeftColor: '#E67E22' },
-  uploadArretBtn: { backgroundColor: '#F0F4FF', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: '#1A3A6B', borderStyle: 'dashed', alignItems: 'center', marginBottom: 8 },
-  uploadArretBtnText: { fontSize: 14, color: '#1A3A6B', fontWeight: '600' },
+  uploadArretBtn: { backgroundColor: '#F0F4FF', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: '#2C2C2C', borderStyle: 'dashed', alignItems: 'center', marginBottom: 8 },
+  uploadArretBtnText: { fontSize: 14, color: '#2C2C2C', fontWeight: '600' },
   removeFileText: { fontSize: 12, color: '#E74C3C', textAlign: 'center', marginBottom: 8 },
-  justificatifLink: { fontSize: 13, color: '#1A3A6B', fontWeight: '600', marginTop: 4 },
+  justificatifLink: { fontSize: 13, color: '#2C2C2C', fontWeight: '600', marginTop: 4 },
   nouveauBadge: { backgroundColor: '#E74C3C', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 },
   nouveauBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800', letterSpacing: 0.5 },
   // Fiches de paie par année
-  anneeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 4, marginTop: 8, marginBottom: 4, borderBottomWidth: 2, borderBottomColor: '#1A3A6B' },
-  anneeTitle: { fontSize: 16, fontWeight: '800', color: '#1A3A6B' },
+  anneeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8, paddingHorizontal: 4, marginTop: 8, marginBottom: 4, borderBottomWidth: 2, borderBottomColor: '#2C2C2C' },
+  anneeTitle: { fontSize: 16, fontWeight: '800', color: '#2C2C2C' },
   anneeSub: { fontSize: 12, color: '#888', fontStyle: 'italic' },
   // Sélecteur employé / mois / année
   empChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#D1D5DB', backgroundColor: '#F9FAFB', marginRight: 8 },
-  empChipActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
+  empChipActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
   empChipText: { fontSize: 13, fontWeight: '600', color: '#374151' },
   empChipTextActive: { color: '#fff' },
 });

@@ -70,16 +70,21 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
     let totalMateriel = 0;
     const materielDetail: { nom: string; qte: string; prix: number }[] = [];
     articlesAchetes.forEach(item => {
-      // Chercher dans le catalogue
-      const catalogueMatch = (data.catalogueArticles || []).find(a =>
-        item.texte.toLowerCase().includes(a.nom.toLowerCase()) ||
-        (a.reference && item.texte.toLowerCase().includes(a.reference.toLowerCase()))
-      );
-      const prix = catalogueMatch?.prixUnitaire || 0;
-      const qteNum = parseFloat(item.quantite || '1') || 1;
-      const total = prix * qteNum;
-      totalMateriel += total;
-      materielDetail.push({ nom: item.texte, qte: item.quantite || '1', prix: total });
+      // Priorité au prix réel d'achat, sinon prix catalogue
+      if (item.prixReel != null) {
+        totalMateriel += item.prixReel;
+        materielDetail.push({ nom: item.texte, qte: item.quantite || '1', prix: item.prixReel });
+      } else {
+        const catalogueMatch = (data.catalogueArticles || []).find(a =>
+          item.texte.toLowerCase().includes(a.nom.toLowerCase()) ||
+          (a.reference && item.texte.toLowerCase().includes(a.reference.toLowerCase()))
+        );
+        const prix = catalogueMatch?.prixUnitaire || 0;
+        const qteNum = parseFloat(item.quantite || '1') || 1;
+        const total = prix * qteNum;
+        totalMateriel += total;
+        materielDetail.push({ nom: item.texte, qte: item.quantite || '1', prix: total });
+      }
     });
 
     // ── Sous-traitance ──
@@ -99,7 +104,30 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
     const supplements = (data.supplements || []).filter(s => s.chantierId === chantierId);
     const totalSupplements = supplements.reduce((s, sup) => s + (sup.montantTotal || 0), 0);
 
-    const totalGeneral = totalMainOeuvre + totalMateriel + totalAcomptesST + totalDepenses;
+    // ── Commissions apporteurs ──
+    const marchesChantierAll = (data.marchesChantier || []).filter(m => m.chantierId === chantierId);
+    const commissionsDetail: { apporteurNom: string; marcheLib: string; montant: number; statut: 'a_payer' | 'paye' }[] = [];
+    let totalCommissions = 0;
+    marchesChantierAll.forEach(m => {
+      if (!m.commission) return;
+      const app = (data.apporteurs || []).find(a => a.id === m.commission!.apporteurId);
+      let montant = 0;
+      if (m.commission.modeCommission === 'montant') {
+        montant = m.commission.valeur;
+      } else {
+        const base = m.commission.baseCalcul === 'TTC' ? m.montantTTC : m.montantHT;
+        montant = base * (m.commission.valeur / 100);
+      }
+      totalCommissions += montant;
+      commissionsDetail.push({
+        apporteurNom: app ? `${app.prenom} ${app.nom}` : 'Apporteur inconnu',
+        marcheLib: m.libelle,
+        montant,
+        statut: m.commission.statut,
+      });
+    });
+
+    const totalGeneral = totalMainOeuvre + totalMateriel + totalAcomptesST + totalDepenses + totalCommissions;
 
     return {
       mainOeuvre, totalMainOeuvre, totalHeures,
@@ -107,6 +135,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
       devisChantier, totalDevis, totalAcomptesST,
       depenses, totalDepenses,
       supplements, totalSupplements,
+      commissionsDetail, totalCommissions,
       totalGeneral,
     };
   }, [data, chantierId]);
@@ -123,7 +152,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
               <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C' }}>💰 Bilan financier</Text>
               <Text style={{ fontSize: 13, color: '#687076' }}>{chantier.nom}</Text>
             </View>
-            <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2F4F7', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
+            <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
               <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
             </Pressable>
           </View>
@@ -132,7 +161,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             {/* Résumé */}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               <View style={cardS}>
-                <Text style={{ fontSize: 18, fontWeight: '800', color: '#1A3A6B' }}>{fmt(bilan.totalGeneral)}</Text>
+                <Text style={{ fontSize: 18, fontWeight: '800', color: '#2C2C2C' }}>{fmt(bilan.totalGeneral)}</Text>
                 <Text style={{ fontSize: 10, color: '#687076' }}>Coût total</Text>
               </View>
               <View style={cardS}>
@@ -148,7 +177,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                 <View key={i} style={rowS}>
                   <Text style={{ flex: 1, fontSize: 12, color: '#11181C' }}>{m.empNom}</Text>
                   <Text style={{ fontSize: 11, color: '#687076', width: 50, textAlign: 'right' }}>{m.jours}j / {m.heures}h</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', width: 65, textAlign: 'right' }}>{fmt(m.cout)}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', width: 65, textAlign: 'right' }}>{fmt(m.cout)}</Text>
                 </View>
               ))}
               {bilan.mainOeuvre.length === 0 && <Text style={{ fontSize: 12, color: '#B0BEC5', padding: 8 }}>Aucune donnée</Text>}
@@ -161,7 +190,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                 <View key={i} style={rowS}>
                   <Text style={{ flex: 1, fontSize: 12, color: '#11181C' }} numberOfLines={1}>{m.nom}</Text>
                   <Text style={{ fontSize: 11, color: '#687076', width: 30, textAlign: 'right' }}>×{m.qte}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', width: 65, textAlign: 'right' }}>{fmt(m.prix)}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', width: 65, textAlign: 'right' }}>{fmt(m.prix)}</Text>
                 </View>
               ))}
               {bilan.materielDetail.filter(m => m.prix > 0).length === 0 && (
@@ -181,7 +210,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                   <View key={i} style={rowS}>
                     <Text style={{ flex: 1, fontSize: 12, color: '#11181C' }} numberOfLines={1}>{st?.nom || '?'} — {d.objet}</Text>
                     <Text style={{ fontSize: 11, color: '#687076', width: 55, textAlign: 'right' }}>{fmt(acomptes)}</Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', width: 65, textAlign: 'right' }}>{fmt(d.prixConvenu)}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', width: 65, textAlign: 'right' }}>{fmt(d.prixConvenu)}</Text>
                   </View>
                 );
               })}
@@ -197,7 +226,27 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                     <View key={i} style={rowS}>
                       <Text style={{ flex: 1, fontSize: 12, color: '#11181C' }} numberOfLines={1}>{d.libelle}</Text>
                       <Text style={{ fontSize: 11, color: '#687076', width: 60, textAlign: 'right' }}>{d.date.split('-').reverse().join('/')}</Text>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B', width: 65, textAlign: 'right' }}>{fmt(d.montant)}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', width: 65, textAlign: 'right' }}>{fmt(d.montant)}</Text>
+                    </View>
+                  ))}
+                </View>
+              </>
+            )}
+
+            {/* Commissions apporteurs */}
+            {bilan.commissionsDetail.length > 0 && (
+              <>
+                <Text style={sectionS}>💼 Commissions apporteurs — {fmt(bilan.totalCommissions)}</Text>
+                <View style={tableS}>
+                  {bilan.commissionsDetail.map((c, i) => (
+                    <View key={i} style={rowS}>
+                      <Text style={{ flex: 1, fontSize: 12, color: '#11181C' }} numberOfLines={1}>
+                        {c.apporteurNom} <Text style={{ color: '#687076' }}>— {c.marcheLib}</Text>
+                      </Text>
+                      <Text style={{ fontSize: 10, color: c.statut === 'paye' ? '#27AE60' : '#E74C3C', fontWeight: '700', width: 60, textAlign: 'right' }}>
+                        {c.statut === 'paye' ? '✓ Payé' : '⏳ À payer'}
+                      </Text>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#8C6D2F', width: 65, textAlign: 'right' }}>{fmt(c.montant)}</Text>
                     </View>
                   ))}
                 </View>

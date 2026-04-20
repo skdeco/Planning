@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import {
   View, Text, ScrollView, Pressable, Modal, TextInput, Platform, Alert,
 } from 'react-native';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
 import { CATEGORIES_ARTICLES, type ArticleCatalogue, type CategorieArticle } from '@/app/types';
 
@@ -20,7 +21,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState({
     nom: '', categorie: 'outillage' as CategorieArticle, description: '', reference: '',
-    prixUnitaire: '', fournisseur: '', lienFournisseur: '', unite: 'pièce',
+    marque: '', prixUnitaire: '', fournisseur: '', lienFournisseur: '', unite: 'pièce',
   });
 
   const articles = useMemo(() => {
@@ -46,7 +47,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
 
   const openNew = () => {
     setEditId(null);
-    setForm({ nom: '', categorie: 'outillage', description: '', reference: '', prixUnitaire: '', fournisseur: '', lienFournisseur: '', unite: 'pièce' });
+    setForm({ nom: '', categorie: 'outillage', description: '', reference: '', marque: '', prixUnitaire: '', fournisseur: '', lienFournisseur: '', unite: 'pièce' });
     setShowForm(true);
   };
 
@@ -54,7 +55,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
     setEditId(a.id);
     setForm({
       nom: a.nom, categorie: a.categorie, description: a.description || '', reference: a.reference || '',
-      prixUnitaire: a.prixUnitaire ? String(a.prixUnitaire) : '', fournisseur: a.fournisseur || '',
+      marque: a.marque || '', prixUnitaire: a.prixUnitaire ? String(a.prixUnitaire) : '', fournisseur: a.fournisseur || '',
       lienFournisseur: a.lienFournisseur || '', unite: a.unite || 'pièce',
     });
     setShowForm(true);
@@ -69,6 +70,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
       categorie: form.categorie,
       description: form.description.trim() || undefined,
       reference: form.reference.trim() || undefined,
+      marque: form.marque.trim() || undefined,
       prixUnitaire: form.prixUnitaire ? parseFloat(form.prixUnitaire) : undefined,
       fournisseur: form.fournisseur.trim() || undefined,
       lienFournisseur: form.lienFournisseur.trim() || undefined,
@@ -88,26 +90,26 @@ export function CatalogueArticles({ visible, onClose }: Props) {
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '95%', flex: 1 }}>
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>📦 Catalogue articles</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable style={{ backgroundColor: '#1A3A6B', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={openNew}>
+              <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={openNew}>
                 <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>+ Article</Text>
               </Pressable>
-              <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2F4F7', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
+              <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
                 <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
               </Pressable>
             </View>
           </View>
 
           {/* Recherche */}
-          <View style={{ flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' }}>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
             <TextInput
-              style={{ flex: 1, backgroundColor: '#F2F4F7', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, borderWidth: 1, borderColor: '#E2E6EA' }}
+              style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, borderWidth: 1, borderColor: '#E2E6EA' }}
               placeholder="Rechercher un article, référence, fournisseur..."
               placeholderTextColor="#999"
               value={search}
@@ -116,7 +118,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
           </View>
 
           {/* Filtres catégories */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 38, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 6, gap: 4, alignItems: 'center' }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 38, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 6, gap: 4, alignItems: 'center' }}>
             <Pressable style={[chipS, filterCat === 'all' && chipSA]} onPress={() => setFilterCat('all')}>
               <Text style={[chipT, filterCat === 'all' && chipTA]}>Tout ({(data.catalogueArticles || []).length})</Text>
             </Pressable>
@@ -141,12 +143,13 @@ export function CatalogueArticles({ visible, onClose }: Props) {
             )}
             {grouped.map(([cat, items]) => (
               <View key={cat}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A3A6B', marginTop: 10, marginBottom: 6 }}>{cat} ({items.length})</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 6 }}>{cat} ({items.length})</Text>
                 {items.map(a => (
                   <Pressable key={a.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: '#E2E6EA', flexDirection: 'row', gap: 10 }}
                     onPress={() => openEdit(a)}>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 14, fontWeight: '600', color: '#11181C' }}>{a.nom}</Text>
+                      {a.marque && <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{a.marque}</Text>}
                       {a.reference && <Text style={{ fontSize: 11, color: '#687076' }}>Réf: {a.reference}</Text>}
                       {a.description && <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{a.description}</Text>}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
@@ -166,10 +169,10 @@ export function CatalogueArticles({ visible, onClose }: Props) {
       </View>
 
       {/* Modal formulaire */}
-      <Modal visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 16 }} onPress={() => setShowForm(false)}>
+      <ModalKeyboard visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', padding: 16 }} onPress={() => setShowForm(false)}>
           <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '85%' }} onPress={e => e.stopPropagation()}>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
               <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 12 }}>{editId ? 'Modifier l\'article' : 'Nouvel article'}</Text>
 
               <Text style={lbl}>Nom *</Text>
@@ -190,6 +193,9 @@ export function CatalogueArticles({ visible, onClose }: Props) {
               <Text style={lbl}>Référence fournisseur</Text>
               <TextInput style={inp} value={form.reference} onChangeText={v => setForm(f => ({ ...f, reference: v }))} placeholder="Ex: LEG-04886" />
 
+              <Text style={lbl}>Marque</Text>
+              <TextInput style={inp} value={form.marque} onChangeText={v => setForm(f => ({ ...f, marque: v }))} placeholder="Ex: Legrand, Schneider, Hager..." />
+
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={lbl}>Prix unitaire (€)</Text>
@@ -207,21 +213,21 @@ export function CatalogueArticles({ visible, onClose }: Props) {
               <Text style={lbl}>Lien fournisseur (URL)</Text>
               <TextInput style={inp} value={form.lienFournisseur} onChangeText={v => setForm(f => ({ ...f, lienFournisseur: v }))} placeholder="https://..." autoCapitalize="none" />
 
-              <Pressable style={{ backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 16, opacity: form.nom.trim() ? 1 : 0.5 }}
+              <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 16, opacity: form.nom.trim() ? 1 : 0.5 }}
                 onPress={handleSave} disabled={!form.nom.trim()}>
                 <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? 'Modifier' : 'Ajouter au catalogue'}</Text>
               </Pressable>
             </ScrollView>
           </Pressable>
         </Pressable>
-      </Modal>
-    </Modal>
+      </ModalKeyboard>
+    </ModalKeyboard>
   );
 }
 
-const chipS = { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F2F4F7', borderWidth: 1, borderColor: '#E2E6EA' };
-const chipSA = { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' };
+const chipS = { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' };
+const chipSA = { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' };
 const chipT = { fontSize: 11, fontWeight: '600' as const, color: '#687076' };
 const chipTA = { color: '#fff' };
 const lbl = { fontSize: 12, fontWeight: '600' as const, color: '#687076', marginBottom: 4, marginTop: 8 };
-const inp = { backgroundColor: '#F2F4F7', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 4, color: '#11181C' };
+const inp = { backgroundColor: '#F5EDE3', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 4, color: '#11181C' };

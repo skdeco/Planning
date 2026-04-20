@@ -1,15 +1,23 @@
 /** @type {const} */
 const themeColors = {
-  primary: { light: '#1A3A6B', dark: '#2A5298' },
-  background: { light: '#F2F4F7', dark: '#151718' },
-  surface: { light: '#FFFFFF', dark: '#1e2022' },
-  foreground: { light: '#11181C', dark: '#ECEDEE' },
-  muted: { light: '#687076', dark: '#9BA1A6' },
-  border: { light: '#E2E6EA', dark: '#334155' },
-  success: { light: '#27AE60', dark: '#4ADE80' },
-  warning: { light: '#F59E0B', dark: '#FBBF24' },
-  error: { light: '#EF4444', dark: '#F87171' },
-  tint: { light: '#1A3A6B', dark: '#2A5298' },
+  // Noir doux élégant (fidèle au logo SK DECO)
+  primary: { light: '#2C2C2C', dark: '#E8DDD0' },
+  // Fond beige chaud (couleur du logo SK DECO)
+  background: { light: '#F5EDE3', dark: '#1A1816' },
+  // Cartes blanc pur
+  surface: { light: '#FFFFFF', dark: '#242220' },
+  // Textes
+  foreground: { light: '#1A1A1A', dark: '#F5EDE3' },
+  // Texte secondaire taupe
+  muted: { light: '#8C8077', dark: '#A89E94' },
+  // Bordures
+  border: { light: '#E8DDD0', dark: '#3D3835' },
+  // Accents
+  success: { light: '#10B981', dark: '#4ADE80' },
+  warning: { light: '#E5A840', dark: '#FBBF24' },
+  error: { light: '#D94F4F', dark: '#F87171' },
+  // Tint (or doux — couleur d'accent premium)
+  tint: { light: '#C9A96E', dark: '#D4B87A' },
 };
 
 module.exports = { themeColors };

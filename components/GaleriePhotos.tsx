@@ -3,8 +3,10 @@ import {
   View, Text, StyleSheet, Modal, Pressable, ScrollView,
   Image, Platform, TextInput, Alert, useWindowDimensions,
 } from 'react-native';
+import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { compressImage } from '@/lib/imageUtils';
 import type { PhotoChantier } from '@/app/types';
 
 type TriMode = 'chantier' | 'employe' | 'semaine';
@@ -19,8 +21,10 @@ interface GaleriePhotosProps {
 const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 const JOURS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
 
-function formatDatePhoto(iso: string): string {
+function formatDatePhoto(iso: string | undefined): string {
+  if (!iso) return '';
   const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
   return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]}`;
 }
 
@@ -55,6 +59,10 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   const [uploading, setUploading] = useState(false);
   const [uploadLegende, setUploadLegende] = useState('');
   const [uploadChantierId, setUploadChantierId] = useState<string>(chantierId || '');
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const isSelecting = selectedIds.size > 0;
+  const toggleSelect = (id: string) => setSelectedIds(prev => { const s = new Set(prev); if (s.has(id)) s.delete(id); else s.add(id); return s; });
+  const clearSelection = () => setSelectedIds(new Set());
 
   const isAdmin = currentUser?.role === 'admin';
   const myId = currentUser?.employeId || currentUser?.soustraitantId || 'admin';
@@ -63,11 +71,11 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
     let photos = (data.photosChantier || []);
     if (chantierId) photos = photos.filter(p => p.chantierId === chantierId);
     if (filterEmployeId !== 'all') photos = photos.filter(p => p.employeId === filterEmployeId);
-    return photos.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+    return photos.sort((a, b) => (b.createdAt || b.date || '').localeCompare(a.createdAt || a.date || ''));
   }, [data.photosChantier, chantierId, filterEmployeId]);
 
   const getChantierNom = (id: string) => data.chantiers.find(c => c.id === id)?.nom || '?';
-  const getChantierCouleur = (id: string) => data.chantiers.find(c => c.id === id)?.couleur || '#1A3A6B';
+  const getChantierCouleur = (id: string) => data.chantiers.find(c => c.id === id)?.couleur || '#2C2C2C';
   const getEmployeNom = (id: string) => {
     if (id === 'admin') return 'Admin';
     const e = data.employes.find(e => e.id === id);
@@ -92,7 +100,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
       } else if (triMode === 'employe') {
         key = p.employeId; label = getEmployeNom(p.employeId);
       } else {
-        key = getWeekKey(p.date); label = getWeekLabel(p.date);
+        key = getWeekKey(p.date || (p.createdAt || '').slice(0, 10) || '2026-01-01'); label = getWeekLabel(p.date || (p.createdAt || '').slice(0, 10) || '2026-01-01');
       }
       if (!map.has(key)) map.set(key, { label, color, photos: [] });
       map.get(key)!.photos.push(p);
@@ -106,48 +114,72 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
 
   // Upload photos
   const handleUploadPhotos = useCallback(async () => {
-    if (Platform.OS !== 'web') return;
     const targetChantierId = uploadChantierId || chantierId || data.chantiers.find(c => c.statut === 'actif')?.id;
-    if (!targetChantierId) { alert('Veuillez sélectionner un chantier'); return; }
+    if (!targetChantierId) {
+      if (Platform.OS === 'web') alert('Veuillez sélectionner un chantier');
+      else Alert.alert('Sélection requise', 'Veuillez sélectionner un chantier');
+      return;
+    }
 
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.multiple = true;
-    input.onchange = async (e: Event) => {
-      const files = (e.target as HTMLInputElement).files;
-      if (!files || files.length === 0) return;
+    const savePhoto = async (uri: string, nom?: string) => {
+      const photoId = `ph_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const compressed = await compressImage(uri);
+      const storageUrl = await uploadFileToStorage(compressed, `chantiers/${targetChantierId}/photos`, photoId);
+      if (!storageUrl) return false;
+      addPhotoChantier({
+        id: photoId,
+        chantierId: targetChantierId,
+        employeId: myId,
+        date: new Date().toISOString().slice(0, 10),
+        uri: storageUrl,
+        nom,
+        legende: uploadLegende.trim() || undefined,
+        createdAt: new Date().toISOString(),
+        source: 'manuel',
+      });
+      return true;
+    };
+
+    if (Platform.OS === 'web') {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.multiple = true;
+      input.onchange = async (e: Event) => {
+        const files = (e.target as HTMLInputElement).files;
+        if (!files || files.length === 0) return;
+        setUploading(true);
+        let ok = 0;
+        for (const file of Array.from(files)) {
+          const reader = new FileReader();
+          const base64: string = await new Promise(resolve => {
+            reader.onload = () => resolve(reader.result as string);
+            reader.readAsDataURL(file);
+          });
+          if (await savePhoto(base64, file.name)) ok++;
+        }
+        setUploading(false);
+        setUploadLegende('');
+        if (ok > 0) alert(`${ok} photo(s) ajoutée(s)`);
+      };
+      input.click(); setTimeout(() => input.remove(), 60000);
+    } else {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.5,
+        allowsMultipleSelection: true,
+      });
+      if (result.canceled) return;
       setUploading(true);
       let ok = 0;
-      for (const file of Array.from(files)) {
-        const reader = new FileReader();
-        const base64: string = await new Promise(resolve => {
-          reader.onload = () => resolve(reader.result as string);
-          reader.readAsDataURL(file);
-        });
-        const photoId = `ph_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const storageUrl = await uploadFileToStorage(base64, `chantiers/${targetChantierId}/photos`, photoId);
-        if (storageUrl) {
-          addPhotoChantier({
-            id: photoId,
-            chantierId: targetChantierId,
-            employeId: myId,
-            date: new Date().toISOString().slice(0, 10),
-            uri: storageUrl,
-            nom: file.name,
-            legende: uploadLegende.trim() || undefined,
-            createdAt: new Date().toISOString(),
-            source: 'manuel',
-          });
-          ok++;
-        }
+      for (const asset of result.assets) {
+        if (await savePhoto(asset.uri, asset.fileName || undefined)) ok++;
       }
       setUploading(false);
       setUploadLegende('');
-      if (ok > 0) alert(`${ok} photo(s) ajoutée(s)`);
-    };
-    input.click();
-  }, [chantierId, data.chantiers, myId, uploadLegende, addPhotoChantier]);
+      if (ok === 0) Alert.alert('Erreur', 'Impossible d\'uploader les photos. Vérifiez votre connexion.');
+    }
+  }, [chantierId, uploadChantierId, data.chantiers, myId, uploadLegende, addPhotoChantier]);
 
   // Télécharger une photo
   const downloadPhoto = (photo: PhotoChantier) => {
@@ -165,8 +197,9 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
+    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onDismiss={() => { setSelectedPhoto(null); clearSelection(); }}>
       <View style={styles.overlay}>
+        <Pressable style={{ flex: 1 }} onPress={onClose} />
         <View style={[styles.sheet, { maxHeight: '95%' }]}>
           {/* Header */}
           <View style={styles.header}>
@@ -190,7 +223,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
                 {data.chantiers.filter(c => c.statut === 'actif').map(c => (
                   <Pressable key={c.id}
-                    style={[styles.triBtn, uploadChantierId === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+                    style={[styles.triBtn, uploadChantierId === c.id && { backgroundColor: c.couleur || '#2C2C2C', borderColor: c.couleur || '#2C2C2C' }]}
                     onPress={() => setUploadChantierId(c.id)}>
                     <Text style={[styles.triBtnText, uploadChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
                   </Pressable>
@@ -240,6 +273,32 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
             </ScrollView>
           </View>
 
+          {/* Barre de sélection */}
+          {isSelecting && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#2C2C2C' }}>
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{selectedIds.size} sélectionnée{selectedIds.size > 1 ? 's' : ''}</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Pressable style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+                  onPress={() => { allPhotos.filter(p => selectedIds.has(p.id)).forEach((p, i) => setTimeout(() => downloadPhoto(p), i * 300)); clearSelection(); }}>
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>⬇ Télécharger</Text>
+                </Pressable>
+                {isAdmin && (
+                  <Pressable style={{ backgroundColor: 'rgba(239,68,68,0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
+                    onPress={() => {
+                      const doDelete = () => { selectedIds.forEach(id => deletePhotoChantier(id)); clearSelection(); };
+                      if (Platform.OS === 'web') { if (window.confirm(`Supprimer ${selectedIds.size} photo(s) ?`)) doDelete(); }
+                      else Alert.alert('Supprimer', `Supprimer ${selectedIds.size} photo(s) ?`, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
+                    }}>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>🗑 Supprimer</Text>
+                  </Pressable>
+                )}
+                <Pressable style={{ paddingHorizontal: 8, paddingVertical: 6 }} onPress={clearSelection}>
+                  <Text style={{ color: '#fff', fontSize: 12 }}>✕</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+
           {allPhotos.length === 0 ? (
             <View style={styles.empty}>
               <Text style={{ fontSize: 48, marginBottom: 12 }}>📷</Text>
@@ -269,12 +328,22 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
                     {isExpanded && (
                       <View style={styles.groupeGrid}>
                         {groupe.photos.map(item => (
-                          <Pressable key={item.id} style={[styles.thumb, { width: itemSize, height: itemSize }]}
-                            onPress={() => setSelectedPhoto(item)}>
-                            <Image source={{ uri: item.uri }} style={{ width: itemSize, height: itemSize, borderRadius: 8 }} resizeMode="cover" />
+                          <Pressable key={item.id} style={[styles.thumb, { width: itemSize, height: itemSize }, selectedIds.has(item.id) && { borderWidth: 3, borderColor: '#2C2C2C', borderRadius: 10 }]}
+                            onPress={() => isSelecting ? toggleSelect(item.id) : setSelectedPhoto(item)}
+                            onLongPress={() => toggleSelect(item.id)}>
+                            {item.uri ? (
+                              <Image source={{ uri: item.uri }} style={{ width: itemSize - (selectedIds.has(item.id) ? 6 : 0), height: itemSize - (selectedIds.has(item.id) ? 6 : 0), borderRadius: 8 }} resizeMode="cover" />
+                            ) : (
+                              <View style={{ width: itemSize, height: itemSize, borderRadius: 8, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20 }}>📷</Text></View>
+                            )}
+                            {selectedIds.has(item.id) && (
+                              <View style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#2C2C2C', alignItems: 'center', justifyContent: 'center' }}>
+                                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>✓</Text>
+                              </View>
+                            )}
                             <View style={styles.thumbOverlay}>
                               <Text style={styles.thumbInfo} numberOfLines={1}>
-                                {triMode === 'chantier' ? getEmployeNom(item.employeId).split(' ')[0] : triMode === 'employe' ? getChantierNom(item.chantierId) : formatDatePhoto(item.createdAt)}
+                                {triMode === 'chantier' ? getEmployeNom(item.employeId).split(' ')[0] : triMode === 'employe' ? getChantierNom(item.chantierId) : formatDatePhoto(item.createdAt || item.date)}
                               </Text>
                             </View>
                             {item.legende && (
@@ -294,11 +363,39 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
         </View>
       </View>
 
-      {/* Visionneuse plein écran enrichie */}
-      {selectedPhoto && (
+      {/* Visionneuse plein écran avec navigation */}
+      {selectedPhoto && (() => {
+        const idx = allPhotos.findIndex(p => p.id === selectedPhoto.id);
+        const hasPrev = idx > 0;
+        const hasNext = idx < allPhotos.length - 1;
+        const goPrev = () => { if (hasPrev) setSelectedPhoto(allPhotos[idx - 1]); };
+        const goNext = () => { if (hasNext) setSelectedPhoto(allPhotos[idx + 1]); };
+        return (
         <Modal visible transparent animationType="fade" onRequestClose={() => setSelectedPhoto(null)}>
           <View style={styles.viewer}>
-            <Image source={{ uri: selectedPhoto.uri }} style={styles.viewerImg} resizeMode="contain" />
+            {selectedPhoto.uri ? (
+              <Image source={{ uri: selectedPhoto.uri }} style={styles.viewerImg} resizeMode="contain" />
+            ) : (
+              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 48 }}>📷</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>Photo non disponible</Text>
+              </View>
+            )}
+            {/* Navigation prev/next */}
+            {hasPrev && (
+              <Pressable style={{ position: 'absolute', left: 8, top: '40%', width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }} onPress={goPrev}>
+                <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>‹</Text>
+              </Pressable>
+            )}
+            {hasNext && (
+              <Pressable style={{ position: 'absolute', right: 8, top: '40%', width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }} onPress={goNext}>
+                <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>›</Text>
+              </Pressable>
+            )}
+            {/* Compteur */}
+            <View style={{ position: 'absolute', top: 50, left: 0, right: 0, alignItems: 'center' }}>
+              <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, fontWeight: '600' }}>{idx + 1} / {allPhotos.length}</Text>
+            </View>
             {/* Infos en bas */}
             <View style={styles.viewerInfo}>
               <View style={{ flex: 1 }}>
@@ -306,7 +403,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
                   <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 4 }}>{selectedPhoto.legende}</Text>
                 )}
                 <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
-                  {getEmployeNom(selectedPhoto.employeId)} — {formatDatePhoto(selectedPhoto.createdAt)}
+                  {getEmployeNom(selectedPhoto.employeId)} — {formatDatePhoto(selectedPhoto.createdAt || selectedPhoto.date)}
                 </Text>
                 <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
                   {getChantierNom(selectedPhoto.chantierId)}
@@ -319,8 +416,9 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
                 {isAdmin && (
                   <Pressable style={[styles.viewerActionBtn, { backgroundColor: 'rgba(239,68,68,0.3)' }]}
                     onPress={() => {
+                      const next = hasNext ? allPhotos[idx + 1] : hasPrev ? allPhotos[idx - 1] : null;
                       deletePhotoChantier(selectedPhoto.id);
-                      setSelectedPhoto(null);
+                      setSelectedPhoto(next);
                     }}>
                     <Text style={{ fontSize: 18 }}>🗑</Text>
                   </Pressable>
@@ -333,41 +431,42 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
             </Pressable>
           </View>
         </Modal>
-      )}
+        );
+      })()}
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, minHeight: 300 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' },
   titre: { fontSize: 17, fontWeight: '700', color: '#11181C' },
-  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2F4F7', alignItems: 'center', justifyContent: 'center' },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' },
   closeTxt: { fontSize: 14, color: '#687076', fontWeight: '700' },
-  downloadAllBtn: { backgroundColor: '#1A3A6B', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  downloadAllBtn: { backgroundColor: '#2C2C2C', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
   downloadAllBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   // Upload
-  uploadBar: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#F2F4F7', backgroundColor: '#FAFBFC' },
+  uploadBar: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#F5EDE3', backgroundColor: '#FAFBFC' },
   legendeInput: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: '#11181C' },
-  uploadBtn: { backgroundColor: '#1A3A6B', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, justifyContent: 'center' },
+  uploadBtn: { backgroundColor: '#2C2C2C', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, justifyContent: 'center' },
   uploadBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   // Tri
-  triBar: { paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F2F4F7', backgroundColor: '#FAFBFC' },
+  triBar: { paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F5EDE3', backgroundColor: '#FAFBFC' },
   triLabel: { fontSize: 12, color: '#687076', fontWeight: '600' },
-  triBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F2F4F7', borderWidth: 1, borderColor: 'transparent' },
-  triBtnActive: { backgroundColor: '#EBF0FF', borderColor: '#1A3A6B' },
+  triBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: 'transparent' },
+  triBtnActive: { backgroundColor: '#EBF0FF', borderColor: '#2C2C2C' },
   triBtnText: { fontSize: 12, color: '#687076', fontWeight: '600' },
-  triBtnTextActive: { color: '#1A3A6B' },
+  triBtnTextActive: { color: '#2C2C2C' },
   // Groupes
   groupeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#F8F9FA', borderBottomWidth: 1, borderBottomColor: '#E2E6EA' },
-  groupeNom: { fontSize: 14, fontWeight: '700', color: '#1A3A6B' },
-  groupeBadge: { backgroundColor: '#1A3A6B', borderRadius: 10, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  groupeNom: { fontSize: 14, fontWeight: '700', color: '#2C2C2C' },
+  groupeBadge: { backgroundColor: '#2C2C2C', borderRadius: 10, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   groupeBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   groupeGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 4 },
   // Miniatures
   empty: { alignItems: 'center', padding: 48 },
-  thumb: { borderRadius: 8, overflow: 'hidden', backgroundColor: '#F2F4F7' },
+  thumb: { borderRadius: 8, overflow: 'hidden', backgroundColor: '#F5EDE3' },
   thumbOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 4, paddingVertical: 2 },
   thumbInfo: { color: '#fff', fontSize: 10, fontWeight: '600', textAlign: 'center' },
   thumbLegendeTag: { position: 'absolute', top: 4, left: 4, backgroundColor: 'rgba(26,58,107,0.8)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, maxWidth: '80%' },

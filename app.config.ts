@@ -51,9 +51,16 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "1",
+    buildNumber: "3",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
+      NSPhotoLibraryUsageDescription: "SK DECO utilise votre bibliothèque photo pour importer des photos de chantier, documents et profils employés.",
+      NSCameraUsageDescription: "SK DECO utilise l'appareil photo pour photographier les chantiers, les documents et les profils.",
+      NSPhotoLibraryAddOnlyUsageDescription: "SK DECO enregistre les photos prises dans votre bibliothèque.",
+      NSMicrophoneUsageDescription: "SK DECO peut utiliser le microphone pour les enregistrements audio.",
+      NSLocationWhenInUseUsageDescription: "SK DECO utilise votre position lors du pointage pour vérifier que vous êtes bien sur le chantier.",
+      // Schémes d'URL que l'app peut ouvrir (obligatoire iOS pour canOpenURL)
+      LSApplicationQueriesSchemes: ["waze", "comgooglemaps", "maps"],
     },
   },
   android: {

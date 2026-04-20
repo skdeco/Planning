@@ -11,8 +11,32 @@ function fmt(n: number) {
   return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 }
 
+// Documents légaux requis pour les sous-traitants
+const DOCUMENTS_LEGAUX_TYPES = [
+  { id: 'kbis', label: 'Kbis (< 3 mois)' },
+  { id: 'urssaf', label: 'Attestation URSSAF (vigilance)' },
+  { id: 'fiscal', label: 'Attestation fiscale' },
+  { id: 'decennale', label: 'Assurance décennale' },
+  { id: 'rc', label: 'Assurance RC Pro' },
+  { id: 'cni', label: "Carte d'identité du dirigeant" },
+  { id: 'rib', label: 'RIB' },
+];
+
+function normalizeDocLabel(s: string): string {
+  return (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+function findDocForType(documents: any[], typeLabel: string): any | undefined {
+  const target = normalizeDocLabel(typeLabel);
+  const targetShort = target.split(' ')[0];
+  return (documents || []).find(d => {
+    const n = normalizeDocLabel(d.libelle || '');
+    return n === target || n.includes(targetShort) || target.includes(n);
+  });
+}
+
 export default function FinancierSTScreen() {
-  const { data, currentUser, isHydrated, updateDevis, updateAcompteST } = useApp();
+  const { data, currentUser, isHydrated, updateDevis, updateAcompteST, updateSousTraitant } = useApp();
   const router = useRouter();
 
   useEffect(() => {
@@ -50,7 +74,7 @@ export default function FinancierSTScreen() {
       };
       reader.readAsDataURL(file);
     };
-    input.click();
+    input.click(); setTimeout(() => input.remove(), 60000);
   };
 
   // ── Upload facture par le ST pour un acompte ──
@@ -72,7 +96,7 @@ export default function FinancierSTScreen() {
       };
       reader.readAsDataURL(file);
     };
-    input.click();
+    input.click(); setTimeout(() => input.remove(), 60000);
   };
 
   const openDoc = (uri: string) => {
@@ -82,15 +106,100 @@ export default function FinancierSTScreen() {
     }
   };
 
+  // ── Upload d'un document légal par le ST lui-même ──
+  const monST = data.sousTraitants.find(s => s.id === stId);
+  const handleUploadDocLegal = (typeLabel: string) => {
+    if (Platform.OS !== 'web' || !monST) return;
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'application/pdf,image/*';
+    input.onchange = async (e: Event) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const base64 = reader.result as string;
+        const docId = `doc_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const storageUrl = await uploadFileToStorage(base64, `sous-traitants/${stId}/documents`, docId);
+        const newDoc = {
+          id: docId,
+          libelle: typeLabel,
+          fichier: storageUrl || base64,
+          uploadedAt: new Date().toISOString(),
+        };
+        // Remplacer le doc existant du même type OU ajouter
+        const existing = findDocForType(monST.documents || [], typeLabel);
+        const newDocs = existing
+          ? (monST.documents || []).map(d => d.id === existing.id ? newDoc : d)
+          : [...(monST.documents || []), newDoc];
+        updateSousTraitant({ ...monST, documents: newDocs });
+      };
+      reader.readAsDataURL(file);
+    };
+    input.click(); setTimeout(() => input.remove(), 60000);
+  };
+
+  const handleDeleteDocLegal = (docId: string) => {
+    if (!monST) return;
+    const newDocs = (monST.documents || []).filter(d => d.id !== docId);
+    updateSousTraitant({ ...monST, documents: newDocs });
+  };
+
   const chantiersIds = Object.keys(devisByChantier);
 
   return (
-    <ScreenContainer containerClassName="bg-[#F2F4F7]">
+    <ScreenContainer containerClassName="bg-[#F5EDE3]">
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Mes finances</Text>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        {/* ─── Mes documents légaux ─── */}
+        {monST && (() => {
+          const nbFournis = DOCUMENTS_LEGAUX_TYPES.filter(t => findDocForType(monST.documents || [], t.label)).length;
+          const complete = nbFournis === DOCUMENTS_LEGAUX_TYPES.length;
+          return (
+            <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 12, marginTop: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#1A1A1A' }}>📄 Mes documents légaux</Text>
+                <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: complete ? '#D4EDDA' : '#FFF3CD' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: complete ? '#155724' : '#856404' }}>{nbFournis}/{DOCUMENTS_LEGAUX_TYPES.length}</Text>
+                </View>
+              </View>
+              <Text style={{ fontSize: 11, color: '#8C8077', marginBottom: 10 }}>
+                Chargez ici vos documents légaux. L'admin les verra automatiquement.
+              </Text>
+              {DOCUMENTS_LEGAUX_TYPES.map(t => {
+                const doc = findDocForType(monST.documents || [], t.label);
+                return (
+                  <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F0E8DE' }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A1A1A' }}>{t.label}</Text>
+                      <Text style={{ fontSize: 10, color: doc ? '#10B981' : '#C9A96E', marginTop: 2 }}>
+                        {doc ? `✅ Fourni le ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : '⚠️ Manquant'}
+                      </Text>
+                    </View>
+                    {doc ? (
+                      <View style={{ flexDirection: 'row', gap: 6 }}>
+                        <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#F5EDE3' }} onPress={() => openDoc(doc.fichier)}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Voir</Text>
+                        </Pressable>
+                        <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#FEE2E2' }} onPress={() => handleDeleteDocLegal(doc.id)}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#D94F4F' }}>Suppr.</Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2C2C2C' }} onPress={() => handleUploadDocLegal(t.label)}>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>⬆ Charger</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          );
+        })()}
+
         {chantiersIds.length === 0 ? (
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>Aucun devis associé.</Text>
@@ -117,7 +226,7 @@ export default function FinancierSTScreen() {
 
                 {/* Récapitulatif chantier */}
                 <View style={styles.financeRow}>
-                  <FinanceCell label="Total convenu" value={fmt(totalPrix)} color="#1A3A6B" />
+                  <FinanceCell label="Total convenu" value={fmt(totalPrix)} color="#2C2C2C" />
                   <FinanceCell label="Reçu" value={fmt(totalAcomptes)} color="#E67E22" />
                   <FinanceCell label="Reste à recevoir" value={fmt(totalReste)} color={totalReste > 0 ? '#E74C3C' : '#27AE60'} />
                 </View>
@@ -240,11 +349,11 @@ const styles = StyleSheet.create({
   devisCard: {
     backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
-    borderLeftWidth: 3, borderLeftColor: '#1A3A6B',
+    borderLeftWidth: 3, borderLeftColor: '#2C2C2C',
   },
   devisHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   devisObjetBadge: { backgroundColor: '#EEF2F8', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  devisObjetText: { fontSize: 13, fontWeight: '700', color: '#1A3A6B' },
+  devisObjetText: { fontSize: 13, fontWeight: '700', color: '#2C2C2C' },
   devisPrix: { fontSize: 16, fontWeight: '800', color: '#11181C' },
   devisFinanceRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
   devisFinanceCell: { flex: 1, backgroundColor: '#F8F9FA', borderRadius: 8, padding: 8, alignItems: 'center' },
@@ -255,16 +364,16 @@ const styles = StyleSheet.create({
   docBtnUpload: { backgroundColor: '#FFF3CD', borderWidth: 1.5, borderColor: '#FFB74D', borderStyle: 'dashed' },
   docBtnSigne: { backgroundColor: '#D4EDDA' },
   docBtnAttente: { backgroundColor: '#F8F9FA' },
-  docBtnText: { fontSize: 12, fontWeight: '600', color: '#1A3A6B' },
+  docBtnText: { fontSize: 12, fontWeight: '600', color: '#2C2C2C' },
   docBtnTextGrey: { fontSize: 12, fontWeight: '500', color: '#B0BEC5' },
   // Acomptes
-  acomptesSection: { borderTopWidth: 1, borderTopColor: '#F2F4F7', paddingTop: 10 },
+  acomptesSection: { borderTopWidth: 1, borderTopColor: '#F5EDE3', paddingTop: 10 },
   sectionTitle: { fontSize: 12, fontWeight: '700', color: '#687076', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 },
-  acompteRow: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' },
+  acompteRow: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' },
   acompteRowHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
   acompteMontant: { fontSize: 15, fontWeight: '800', color: '#27AE60' },
   acompteDate: { fontSize: 12, color: '#687076' },
   acompteComment: { fontSize: 13, color: '#687076', marginBottom: 4 },
-  factureLink: { fontSize: 12, fontWeight: '600', color: '#1A3A6B', marginTop: 4 },
+  factureLink: { fontSize: 12, fontWeight: '600', color: '#2C2C2C', marginTop: 4 },
   factureUpload: { fontSize: 12, fontWeight: '600', color: '#E67E22', marginTop: 4 },
 });

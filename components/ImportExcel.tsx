@@ -69,7 +69,7 @@ export function ImportExcel({ visible, onClose }: Props) {
       };
       reader.readAsBinaryString(file);
     };
-    input.click();
+    input.click(); setTimeout(() => input.remove(), 60000);
   };
 
   const handleDownloadTemplate = () => {
@@ -111,7 +111,7 @@ export function ImportExcel({ visible, onClose }: Props) {
             couleur: EMPLOYE_COLORS[idx % EMPLOYE_COLORS.length],
             telephone: row['Téléphone'] || row['telephone'] || row['Tel'] || undefined,
             email: row['Email'] || row['email'] || undefined,
-            tarifJournalier: parseFloat(row['Tarif journalier'] || row['tarif'] || '0') || undefined,
+            tarifJournalier: (() => { const v = parseFloat(row['Tarif journalier'] || row['tarif'] || ''); return isNaN(v) ? undefined : v; })(),
             modeSalaire: row['Tarif journalier'] ? 'journalier' : undefined,
             doitPointer: true,
           };
@@ -129,7 +129,7 @@ export function ImportExcel({ visible, onClose }: Props) {
             categorie: (row['Catégorie'] || row['categorie'] || row['Categorie'] || 'autre') as CategorieArticle,
             description: row['Description'] || row['description'] || undefined,
             reference: row['Référence'] || row['reference'] || row['Ref'] || undefined,
-            prixUnitaire: parseFloat(row['Prix unitaire'] || row['prix'] || row['Prix'] || '0') || undefined,
+            prixUnitaire: (() => { const v = parseFloat(row['Prix unitaire'] || row['prix'] || row['Prix'] || ''); return isNaN(v) ? undefined : v; })(),
             unite: row['Unité'] || row['unite'] || row['Unite'] || undefined,
             fournisseur: row['Fournisseur'] || row['fournisseur'] || undefined,
             lienFournisseur: row['Lien fournisseur'] || row['lien'] || row['URL'] || undefined,
@@ -152,7 +152,7 @@ export function ImportExcel({ visible, onClose }: Props) {
             statut: (row['Statut'] || row['statut'] || 'actif') as any,
             visibleSurPlanning: true,
             employeIds: [],
-            couleur: '#1A3A6B',
+            couleur: '#2C2C2C',
           });
           count++;
         });
@@ -173,7 +173,7 @@ export function ImportExcel({ visible, onClose }: Props) {
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>📥 Import Excel</Text>
-            <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2F4F7', alignItems: 'center', justifyContent: 'center' }} onPress={() => { onClose(); setPreview(null); setResult(null); }}>
+            <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={() => { onClose(); setPreview(null); setResult(null); }}>
               <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
             </Pressable>
           </View>
@@ -182,7 +182,7 @@ export function ImportExcel({ visible, onClose }: Props) {
           <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
             {(['employes', 'articles', 'chantiers'] as ImportType[]).map(t => (
               <Pressable key={t}
-                style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: importType === t ? '#1A3A6B' : '#F2F4F7', borderWidth: 1, borderColor: importType === t ? '#1A3A6B' : '#E2E6EA' }}
+                style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: importType === t ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: importType === t ? '#2C2C2C' : '#E2E6EA' }}
                 onPress={() => { setImportType(t); setPreview(null); setResult(null); }}>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: importType === t ? '#fff' : '#687076' }}>{TEMPLATES[t].label}</Text>
               </Pressable>
@@ -192,16 +192,16 @@ export function ImportExcel({ visible, onClose }: Props) {
           <Text style={{ fontSize: 12, color: '#687076', marginBottom: 8 }}>{tpl.description}</Text>
 
           {/* Colonnes attendues */}
-          <Text style={{ fontSize: 11, fontWeight: '600', color: '#1A3A6B', marginBottom: 4 }}>Colonnes attendues :</Text>
+          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C', marginBottom: 4 }}>Colonnes attendues :</Text>
           <Text style={{ fontSize: 11, color: '#687076', marginBottom: 10 }}>{tpl.colonnes.join(' | ')}</Text>
 
           {/* Actions */}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
             <Pressable style={{ flex: 1, backgroundColor: '#EBF0FF', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
               onPress={handleDownloadTemplate}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>⬇ Télécharger modèle</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>⬇ Télécharger modèle</Text>
             </Pressable>
-            <Pressable style={{ flex: 1, backgroundColor: '#1A3A6B', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
+            <Pressable style={{ flex: 1, backgroundColor: '#2C2C2C', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
               onPress={handlePickFile}>
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#fff' }}>📂 Charger un fichier</Text>
             </Pressable>
@@ -222,7 +222,7 @@ export function ImportExcel({ visible, onClose }: Props) {
                 <ScrollView horizontal>
                   <View>
                     {/* Header */}
-                    <View style={{ flexDirection: 'row', backgroundColor: '#1A3A6B', borderRadius: 4 }}>
+                    <View style={{ flexDirection: 'row', backgroundColor: '#2C2C2C', borderRadius: 4 }}>
                       {Object.keys(preview[0]).map(key => (
                         <Text key={key} style={{ width: 100, paddingHorizontal: 6, paddingVertical: 4, fontSize: 10, fontWeight: '700', color: '#fff' }} numberOfLines={1}>{key}</Text>
                       ))}

@@ -60,6 +60,11 @@ const ARRAY_COLLECTIONS = [
   'notesChantier',
   'notesChantierSupprimees',
   'activityLog',
+  'marchesChantier',
+  'supplementsMarche',
+  'ticketsSAV',
+  'catalogueArticles',
+  'agendaEvents',
 ] as const;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -163,16 +168,24 @@ export function mergeDataSafely(
 function stripPhotosForSupabase(appData: Record<string, unknown>): Record<string, unknown> {
   const stripped = { ...appData };
 
-  // photosChantier : garder uniquement les métadonnées, pas l'URI base64
+  // photosChantier : garder les métadonnées + URI si c'est une URL Storage (pas base64)
   if (Array.isArray(stripped.photosChantier)) {
-    stripped.photosChantier = (stripped.photosChantier as Record<string, unknown>[]).map(p => ({
-      id: p.id,
-      chantierId: p.chantierId,
-      employeId: p.employeId,
-      date: p.date,
-      source: p.source,
-      // uri intentionnellement OMIS — stocké dans LOCAL_PHOTOS_KEY
-    }));
+    stripped.photosChantier = (stripped.photosChantier as Record<string, unknown>[]).map(p => {
+      const uri = p.uri as string | undefined;
+      const isStorageUrl = uri && (uri.startsWith('http://') || uri.startsWith('https://'));
+      return {
+        id: p.id,
+        chantierId: p.chantierId,
+        employeId: p.employeId,
+        date: p.date,
+        nom: p.nom,
+        legende: p.legende,
+        createdAt: p.createdAt,
+        source: p.source,
+        // Garder l'URI si c'est une URL Storage, sinon l'omettre (base64 trop volumineux)
+        ...(isStorageUrl ? { uri } : {}),
+      };
+    });
   }
 
   // Notes chantier : retirer les photos des pièces jointes
@@ -455,38 +468,70 @@ function mimeToExt(mimeType: string): string {
  *   chantiers/{chantierId}/notes/{noteId}/{filename}
  *   employes/{employeId}/documents/{filename}
  */
+/**
+ * Upload un fichier vers Supabase Storage.
+ * - Web : data: URI → Blob → SDK upload
+ * - Mobile : file:// URI → fetch REST API direct (contourne le SDK)
+ */
 export async function uploadFileToStorage(
-  base64Uri: string,
+  uri: string,
   folder: string,
   fileId: string
 ): Promise<string | null> {
   try {
-    // Si c'est déjà une URL (pas un base64), retourner directement
-    if (base64Uri.startsWith('http')) return base64Uri;
-    if (!base64Uri.startsWith('data:')) return null;
+    if (uri.startsWith('http')) return uri;
 
-    const { blob, mimeType } = base64ToBlob(base64Uri);
-    const ext = mimeToExt(mimeType);
+    if (uri.startsWith('data:')) {
+      // ── Web : base64 data URI → Blob → SDK upload ──
+      const { blob, mimeType } = base64ToBlob(uri);
+      const ext = mimeToExt(mimeType);
+      const webPath = `${folder}/${fileId}.${ext}`;
+      const { error } = await supabaseStorage.storage
+        .from(STORAGE_BUCKET)
+        .upload(webPath, blob, { contentType: mimeType, upsert: true });
+      if (error) { console.error('Upload web err:', error.message); return null; }
+      return `${STORAGE_PUBLIC_URL}/${webPath}`;
+    }
+
+    // ── Mobile : upload via REST API direct (le plus fiable sur React Native) ──
+    // Détecter l'extension depuis l'URI
+    const uriLower = uri.toLowerCase();
+    const ext = uriLower.endsWith('.pdf') ? 'pdf'
+      : uriLower.endsWith('.png') ? 'png'
+      : uriLower.endsWith('.webp') ? 'webp'
+      : 'jpg';
+    const contentType = ext === 'pdf' ? 'application/pdf'
+      : ext === 'png' ? 'image/png'
+      : ext === 'webp' ? 'image/webp'
+      : 'image/jpeg';
+
     const path = `${folder}/${fileId}.${ext}`;
+    const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
 
-    const { data, error } = await supabaseStorage.storage
-      .from(STORAGE_BUCKET)
-      .upload(path, blob, {
-        contentType: mimeType,
-        upsert: true, // Écraser si déjà existant
-      });
+    // Lire le fichier comme blob via fetch (fonctionne avec file:// et content:// sur RN)
+    const fileResponse = await fetch(uri);
+    const fileBlob = await fileResponse.blob();
 
-    if (error) {
-      console.error('Erreur upload Storage:', error.message);
+    // Upload direct via REST API (contourne le SDK JS qui gère mal les blobs sur RN)
+    const uploadResponse = await fetch(uploadUrl, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+        'x-upsert': 'true',
+        'Content-Type': contentType,
+      },
+      body: fileBlob,
+    });
+
+    if (!uploadResponse.ok) {
+      const errText = await uploadResponse.text();
+      console.error('Upload mobile REST err:', uploadResponse.status, errText);
       return null;
     }
 
-    // Retourner l'URL publique
-    const publicUrl = `${STORAGE_PUBLIC_URL}/${path}`;
-    console.log(`✅ Photo uploadée: ${publicUrl}`);
-    return publicUrl;
+    return `${STORAGE_PUBLIC_URL}/${path}`;
   } catch (e) {
-    console.error('Erreur upload Storage:', e);
+    console.error('Upload Storage err:', e);
     return null;
   }
 }

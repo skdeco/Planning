@@ -41,7 +41,8 @@ function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: numbe
   const a =
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const aClamped = Math.max(0, Math.min(1, a));
+  return R * 2 * Math.atan2(Math.sqrt(aClamped), Math.sqrt(1 - aClamped));
 }
 
 /** Géocode une adresse via Nominatim (OSM) — retourne lat/lng ou null */
@@ -92,7 +93,7 @@ function pickFilesWeb(): Promise<{ uri: string; name: string }[]> {
       }
       resolve(results);
     };
-    input.click();
+    input.click(); setTimeout(() => input.remove(), 60000);
   });
 }
 
@@ -176,7 +177,7 @@ interface ChantierCardProps {
 }
 
 function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loading }: ChantierCardProps) {
-  const couleur = chantier.couleur || '#1A3A6B';
+  const couleur = chantier.couleur || '#2C2C2C';
   const adresse = [chantier.rue, chantier.codePostal, chantier.ville].filter(Boolean).join(', ') || chantier.adresse || '';
 
   const canDebut = !debutPointage;
@@ -231,10 +232,10 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
             <View style={styles.horaireSep} />
             <View style={styles.horaireItem}>
               <View style={styles.horaireLabel}>
-                <IconClock size={14} color="#1A3A6B" />
-                <Text style={[styles.horaireLabelText, { color: '#1A3A6B' }]}>Durée</Text>
+                <IconClock size={14} color="#2C2C2C" />
+                <Text style={[styles.horaireLabelText, { color: '#2C2C2C' }]}>Durée</Text>
               </View>
-              <Text style={[styles.horaireHeure, { color: '#1A3A6B' }]}>
+              <Text style={[styles.horaireHeure, { color: '#2C2C2C' }]}>
                 {(() => {
                   const [dh, dm] = debutPointage.heure.split(':').map(Number);
                   const [fh, fm] = finPointage.heure.split(':').map(Number);
@@ -410,16 +411,16 @@ export default function PointageScreen() {
           }
         }
       } catch {
-        // Si géolocalisation refusée ou indisponible : on bloque
+        // Géolocalisation refusée ou indisponible : avertir mais permettre le pointage
         const msg =
-          'La géolocalisation est nécessaire pour pointer.\n\n' +
-          'Elle n\'est utilisée qu\'au moment de l\'enregistrement de votre heure d\'arrivée ou de départ.';
+          'La géolocalisation n\'est pas disponible.\n\n' +
+          'Le pointage sera enregistré sans position GPS.';
         if (Platform.OS === 'web') {
           alert(msg);
         } else {
-          Alert.alert('Géolocalisation requise', msg);
+          Alert.alert('Géolocalisation indisponible', msg);
         }
-        return;
+        // Continuer sans coordonnées GPS
       }
 
       const ts = new Date();
@@ -537,7 +538,7 @@ export default function PointageScreen() {
   // ── Vue admin ────────────────────────────────────────────────────────────────
   if (isAdmin) {
     return (
-      <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
           <Text style={styles.headerSub}>{t.pointage.title}</Text>
@@ -552,7 +553,7 @@ export default function PointageScreen() {
   const hist = historique();
 
   return (
-    <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
         <Text style={styles.headerSub}>{t.pointage.title}</Text>
@@ -572,7 +573,7 @@ export default function PointageScreen() {
           <View style={styles.identiteLeft}>
             <View style={styles.avatarCircle}>
               <Text style={styles.avatarInitials}>
-                {emp ? `${emp.prenom[0]}${emp.nom[0]}`.toUpperCase() : '?'}
+                {emp ? `${emp.prenom?.[0] || '?'}${emp.nom?.[0] || '?'}`.toUpperCase() : '?'}
               </Text>
             </View>
           </View>
@@ -590,7 +591,7 @@ export default function PointageScreen() {
 
         {/* Info géolocalisation */}
         <View style={styles.geoInfoBanner}>
-          <IconLocation size={14} color="#1A3A6B" />
+          <IconLocation size={14} color="#2C2C2C" />
           <Text style={styles.geoInfoText}>
             La géolocalisation est activée uniquement lors de l'enregistrement d'une heure d'arrivée ou de départ.
           </Text>
@@ -627,7 +628,7 @@ export default function PointageScreen() {
               return (
                 <View key={date} style={styles.histCard}>
                   <View style={styles.histDateRow}>
-                    <IconCalendar size={13} color="#1A3A6B" />
+                    <IconCalendar size={13} color="#2C2C2C" />
                     <Text style={styles.histDate}>{formatDateFr(date)}</Text>
                   </View>
                   {entries.map(([cId, { debut, fin }]) => {
@@ -635,7 +636,7 @@ export default function PointageScreen() {
                     return (
                       <View key={cId} style={styles.histChantierBlock}>
                         {ch && (
-                          <View style={[styles.histChantierTag, { borderLeftColor: ch.couleur || '#1A3A6B' }]}>
+                          <View style={[styles.histChantierTag, { borderLeftColor: ch.couleur || '#2C2C2C' }]}>
                             <Text style={styles.histChantierNom} numberOfLines={1}>{ch.nom}</Text>
                           </View>
                         )}
@@ -664,10 +665,10 @@ export default function PointageScreen() {
                               <View style={styles.histSep} />
                               <View style={styles.histItem}>
                                 <View style={styles.histItemIcon}>
-                                  <IconClock size={14} color="#1A3A6B" />
-                                  <Text style={[styles.histLabel, { color: '#1A3A6B' }]}>{t.pointage.totalHours}</Text>
+                                  <IconClock size={14} color="#2C2C2C" />
+                                  <Text style={[styles.histLabel, { color: '#2C2C2C' }]}>{t.pointage.totalHours}</Text>
                                 </View>
-                                <Text style={[styles.histTime, { color: '#1A3A6B' }]}>
+                                <Text style={[styles.histTime, { color: '#2C2C2C' }]}>
                                   {(() => {
                                     const [dh, dm] = debut.heure.split(':').map(Number);
                                     const [fh, fm] = fin.heure.split(':').map(Number);
@@ -680,6 +681,18 @@ export default function PointageScreen() {
                             </>
                           )}
                         </View>
+                        {/* Indicateur si modifié par admin */}
+                        {(debut?.saisieManuelle || fin?.saisieManuelle) && (
+                          <View style={{ marginTop: 4, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#FFF3CD', borderRadius: 4, alignSelf: 'flex-start' }}>
+                            <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }}>
+                              ✏️ {debut?.saisieManuelle ? 'Arrivée' : ''}{debut?.saisieManuelle && fin?.saisieManuelle ? ' + ' : ''}{fin?.saisieManuelle ? 'Départ' : ''} modifié par {(() => {
+                                const modId = (debut?.saisieManuelle ? debut?.saisieParId : fin?.saisieParId) || 'admin';
+                                const mod = data.employes.find(e => e.id === modId);
+                                return mod ? mod.prenom : 'Admin';
+                              })()}
+                            </Text>
+                          </View>
+                        )}
                       </View>
                     );
                   })}
@@ -688,6 +701,155 @@ export default function PointageScreen() {
             })}
           </View>
         )}
+        {/* ─── Récap mensuel ─────────────────────────────────────────────── */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Récapitulatif mensuel</Text>
+          {(() => {
+            const moisActuel = now.getMonth();
+            const annee = now.getFullYear();
+            const mesPointages = data.pointages.filter(p => {
+              if (p.employeId !== employeId) return false;
+              const d = new Date(p.date + 'T12:00:00');
+              return d.getMonth() === moisActuel && d.getFullYear() === annee;
+            });
+
+            // Grouper par date
+            const byDate: Record<string, { debut?: string; fin?: string }> = {};
+            mesPointages.forEach(p => {
+              if (!byDate[p.date]) byDate[p.date] = {};
+              if (p.type === 'debut' && !byDate[p.date].debut) byDate[p.date].debut = p.heure;
+              if (p.type === 'fin') byDate[p.date].fin = p.heure;
+            });
+
+            const dates = Object.keys(byDate).sort();
+            let totalMinutes = 0;
+            let joursComplets = 0;
+            dates.forEach(date => {
+              const { debut, fin } = byDate[date];
+              if (debut && fin) {
+                const [dh, dm] = debut.split(':').map(Number);
+                const [fh, fm] = fin.split(':').map(Number);
+                const diff = (fh * 60 + fm) - (dh * 60 + dm);
+                if (diff > 0) { totalMinutes += diff; joursComplets++; }
+              }
+            });
+
+            // Heures théoriques depuis les horaires de l'employé
+            const horaires = emp?.horaires;
+            let heuresTheoriques = 0;
+            if (horaires) {
+              // Compter les jours ouvrés du mois
+              const firstDay = new Date(annee, moisActuel, 1);
+              const lastDay = new Date(annee, moisActuel + 1, 0);
+              for (let d = new Date(firstDay); d <= lastDay; d.setDate(d.getDate() + 1)) {
+                const jour = d.getDay(); // 0=dim
+                const h = horaires[jour];
+                if (h?.actif) {
+                  const [deb_h, deb_m] = h.debut.split(':').map(Number);
+                  const [fin_h, fin_m] = h.fin.split(':').map(Number);
+                  heuresTheoriques += (fin_h * 60 + fin_m) - (deb_h * 60 + deb_m);
+                }
+              }
+            }
+
+            const heuresSup = heuresTheoriques > 0 ? Math.max(0, totalMinutes - heuresTheoriques) : 0;
+            const totalH = Math.floor(totalMinutes / 60);
+            const totalM = totalMinutes % 60;
+            const theoriqueH = Math.floor(heuresTheoriques / 60);
+            const theoriqueM = heuresTheoriques % 60;
+            const supH = Math.floor(heuresSup / 60);
+            const supM = heuresSup % 60;
+
+            const MOIS_LONG = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+
+            return (
+              <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 12 }}>
+                  {MOIS_LONG[moisActuel]} {annee}
+                </Text>
+
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <View style={{ alignItems: 'center', flex: 1 }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>{joursComplets}</Text>
+                    <Text style={{ fontSize: 11, color: '#687076' }}>jours pointés</Text>
+                  </View>
+                  <View style={{ width: 1, backgroundColor: '#E2E6EA' }} />
+                  <View style={{ alignItems: 'center', flex: 1 }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#2C2C2C' }}>{totalH}h{String(totalM).padStart(2, '0')}</Text>
+                    <Text style={{ fontSize: 11, color: '#687076' }}>heures travaillées</Text>
+                  </View>
+                  <View style={{ width: 1, backgroundColor: '#E2E6EA' }} />
+                  <View style={{ alignItems: 'center', flex: 1 }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: heuresSup > 0 ? '#E74C3C' : '#27AE60' }}>
+                      {supH}h{String(supM).padStart(2, '0')}
+                    </Text>
+                    <Text style={{ fontSize: 11, color: '#687076' }}>heures sup</Text>
+                  </View>
+                </View>
+
+                {heuresTheoriques > 0 && (
+                  <View style={{ backgroundColor: '#F5EDE3', borderRadius: 8, padding: 8, marginTop: 4 }}>
+                    <Text style={{ fontSize: 11, color: '#687076', textAlign: 'center' }}>
+                      Théorique : {theoriqueH}h{String(theoriqueM).padStart(2, '0')} • Réel : {totalH}h{String(totalM).padStart(2, '0')} • {heuresSup > 0 ? `+${supH}h${String(supM).padStart(2, '0')} sup` : 'Dans les temps'}
+                    </Text>
+                  </View>
+                )}
+
+                {/* Bouton export PDF */}
+                {Platform.OS === 'web' && (
+                  <Pressable
+                    style={{ marginTop: 12, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
+                    onPress={() => {
+                      // Générer HTML pour impression PDF
+                      const rows = dates.map(date => {
+                        const { debut, fin } = byDate[date];
+                        let duree = '—';
+                        if (debut && fin) {
+                          const [dh2, dm2] = debut.split(':').map(Number);
+                          const [fh2, fm2] = fin.split(':').map(Number);
+                          const diff2 = (fh2 * 60 + fm2) - (dh2 * 60 + dm2);
+                          if (diff2 > 0) duree = `${Math.floor(diff2 / 60)}h${String(diff2 % 60).padStart(2, '0')}`;
+                        }
+                        return `<tr><td>${formatDateFr(date)}</td><td>${debut || '—'}</td><td>${fin || '—'}</td><td>${duree}</td></tr>`;
+                      }).join('');
+
+                      const html = `
+                        <html><head><title>Feuille de pointage - ${MOIS_LONG[moisActuel]} ${annee}</title>
+                        <style>
+                          body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
+                          h1 { color: #2C2C2C; font-size: 22px; }
+                          h2 { color: #687076; font-size: 14px; margin-bottom: 20px; }
+                          table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+                          th { background: #2C2C2C; color: #fff; padding: 10px; text-align: left; font-size: 13px; }
+                          td { padding: 8px 10px; border-bottom: 1px solid #E2E6EA; font-size: 13px; }
+                          tr:nth-child(even) { background: #F8F9FA; }
+                          .summary { margin-top: 24px; padding: 16px; background: #F5EDE3; border-radius: 8px; }
+                          .summary span { font-weight: bold; color: #2C2C2C; }
+                        </style></head><body>
+                        <h1>Feuille de pointage</h1>
+                        <h2>${empNom} — ${MOIS_LONG[moisActuel]} ${annee}</h2>
+                        <table>
+                          <thead><tr><th>Date</th><th>Arrivée</th><th>Départ</th><th>Durée</th></tr></thead>
+                          <tbody>${rows}</tbody>
+                        </table>
+                        <div class="summary">
+                          <p><span>${joursComplets}</span> jours pointés • <span>${totalH}h${String(totalM).padStart(2, '0')}</span> heures travaillées</p>
+                          ${heuresTheoriques > 0 ? `<p>Heures théoriques : <span>${theoriqueH}h${String(theoriqueM).padStart(2, '0')}</span> • Heures sup : <span>${supH}h${String(supM).padStart(2, '0')}</span></p>` : ''}
+                        </div>
+                        <script>window.onload = function() { window.print(); }</script>
+                        </body></html>
+                      `;
+                      const win = window.open('', '_blank');
+                      if (win) { win.document.write(html); win.document.close(); }
+                    }}
+                  >
+                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>📄 Exporter PDF</Text>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })()}
+        </View>
       </ScrollView>
 
       {/* ── Modal Photos fin de journée ── */}
@@ -715,7 +877,7 @@ export default function PointageScreen() {
                       style={[
                         styles.chantierSelectBtn,
                         photosChantierId === c.id && styles.chantierSelectBtnActive,
-                        { borderColor: c.couleur || '#1A3A6B' },
+                        { borderColor: c.couleur || '#2C2C2C' },
                       ]}
                       onPress={() => setPhotosChantierId(c.id)}
                     >
@@ -782,7 +944,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'flex-end',
     paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4,
-    backgroundColor: '#F2F4F7', gap: 8,
+    backgroundColor: '#F5EDE3', gap: 8,
   },
   headerLogo: { width: 72, height: 36 },
   headerSub: { fontSize: 12, color: '#687076', marginBottom: 2 },
@@ -801,14 +963,14 @@ const styles = StyleSheet.create({
   identiteLeft: {},
   avatarCircle: {
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: '#1A3A6B', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#2C2C2C', alignItems: 'center', justifyContent: 'center',
   },
   avatarInitials: { color: '#fff', fontSize: 18, fontWeight: '700' },
   identiteRight: { flex: 1 },
   identiteNom: { fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 3 },
   identiteRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
   identiteDate: { fontSize: 12, color: '#687076' },
-  identiteHeure: { fontSize: 26, fontWeight: '700', color: '#1A3A6B', letterSpacing: 1 },
+  identiteHeure: { fontSize: 26, fontWeight: '700', color: '#2C2C2C', letterSpacing: 1 },
 
   // Bannière géo
   geoInfoBanner: {
@@ -854,7 +1016,7 @@ const styles = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 10,
   },
-  btnArrivee: { backgroundColor: '#1A3A6B' },
+  btnArrivee: { backgroundColor: '#2C2C2C' },
   btnDepart: { backgroundColor: '#E74C3C' },
   actionBtnDisabled: { opacity: 0.45 },
   actionBtnText: { fontSize: 12, fontWeight: '700', color: '#fff', textAlign: 'center', flex: 1 },
@@ -871,7 +1033,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   histDateRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
-  histDate: { fontSize: 13, fontWeight: '700', color: '#1A3A6B' },
+  histDate: { fontSize: 13, fontWeight: '700', color: '#2C2C2C' },
   histChantierBlock: { marginBottom: 10 },
   histChantierTag: { borderLeftWidth: 3, paddingLeft: 8, marginBottom: 6 },
   histChantierNom: { fontSize: 12, fontWeight: '600', color: '#11181C' },
@@ -901,11 +1063,11 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 2, paddingHorizontal: 14, paddingVertical: 6,
     marginRight: 8, backgroundColor: '#fff',
   },
-  chantierSelectBtnActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
-  chantierSelectText: { fontSize: 13, fontWeight: '600', color: '#1A3A6B' },
+  chantierSelectBtnActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
+  chantierSelectText: { fontSize: 13, fontWeight: '600', color: '#2C2C2C' },
   photosPreviewRow: { marginBottom: 12 },
   photoPreviewItem: { width: 80, marginRight: 10, alignItems: 'center' },
-  photoPreviewImg: { width: 72, height: 72, borderRadius: 8, backgroundColor: '#F2F4F7' },
+  photoPreviewImg: { width: 72, height: 72, borderRadius: 8, backgroundColor: '#F5EDE3' },
   photoPreviewPdf: {
     width: 72, height: 72, borderRadius: 8, backgroundColor: '#FFF3CD',
     alignItems: 'center', justifyContent: 'center',
@@ -919,20 +1081,20 @@ const styles = StyleSheet.create({
   },
   photoRemoveText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   pickPhotosBtn: {
-    backgroundColor: '#F2F4F7', borderRadius: 10, padding: 14,
+    backgroundColor: '#F5EDE3', borderRadius: 10, padding: 14,
     alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#E2E6EA',
     borderStyle: 'dashed',
   },
-  pickPhotosBtnText: { fontSize: 14, color: '#1A3A6B', fontWeight: '600' },
+  pickPhotosBtnText: { fontSize: 14, color: '#2C2C2C', fontWeight: '600' },
   modalActions: { flexDirection: 'row', gap: 12 },
   skipBtn: {
     flex: 1, borderRadius: 10, padding: 14, alignItems: 'center',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   skipBtnText: { fontSize: 14, color: '#687076', fontWeight: '600' },
   savePhotosBtn: {
     flex: 2, borderRadius: 10, padding: 14, alignItems: 'center',
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
   },
   savePhotosBtnText: { fontSize: 14, color: '#fff', fontWeight: '700' },
 });

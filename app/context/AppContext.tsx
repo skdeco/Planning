@@ -9,6 +9,7 @@ const DELETED_CHANTIERS_KEY = 'sk_deleted_chantier_ids';
 const DELETED_EMPLOYES_KEY = 'sk_deleted_employe_ids';
 const DELETED_POINTAGES_KEY = 'sk_deleted_pointage_ids';
 const DELETED_GENERIC_KEY = 'sk_deleted_generic_ids';
+const DELETED_LISTES_KEY = 'sk_deleted_liste_ids';
 const LAST_SEEN_KEY = 'sk_deco_last_seen_at';
 
 // ── Sauvegarde fiable avec retry ──────────────────────────────────────────────
@@ -98,6 +99,7 @@ interface AppContextType {
   upsertNote: (params: { chantierId: string; employeId: string; date: string; note: Note; }) => void;
   deleteNote: (affectationId: string, noteId: string) => void;
   toggleTask: (affectationId: string, noteId: string, taskId: string, faitPar: string) => void;
+  addTaskPhoto: (affectationId: string, noteId: string, taskId: string, photoUri: string) => void;
   addTask: (affectationId: string, noteId: string, task: TaskItem) => void;
   deleteTask: (affectationId: string, noteId: string, taskId: string) => void;
   addPointage: (pointage: Pointage) => void;
@@ -109,6 +111,9 @@ interface AppContextType {
   addSousTraitant: (st: SousTraitant) => void;
   updateSousTraitant: (st: SousTraitant) => void;
   deleteSousTraitant: (id: string) => void;
+  addApporteur: (a: import('@/app/types').Apporteur) => void;
+  updateApporteur: (a: import('@/app/types').Apporteur) => void;
+  deleteApporteur: (id: string) => void;
   addDevis: (devis: DevisST) => void;
   updateDevis: (devis: DevisST) => void;
   deleteDevis: (id: string) => void;
@@ -124,7 +129,7 @@ interface AppContextType {
   // Listes matériel
   upsertListeMateriau: (liste: ListeMateriau) => void;
   deleteListeMateriau: (id: string) => void;
-  toggleMateriau: (listeId: string, itemId: string, achetePar: string) => void;
+  toggleMateriau: (listeId: string, itemId: string, achetePar: string, prixReel?: number, fournisseurReel?: string) => void;
   addMateriauItem: (listeId: string, item: MateriauItem) => void;
   deleteMateriauItem: (listeId: string, itemId: string) => void;
   // Module RH
@@ -172,10 +177,23 @@ interface AppContextType {
   // Plans chantier
   addPlanChantier: (chantierId: string, plan: PlanChantier) => void;
   deletePlanChantier: (chantierId: string, planId: string) => void;
-  // Mot de passe admin
+  // Identifiants admin
   updateAdminPassword: (pwd: string) => void;
+  updateAdminIdentifiant: (id: string) => void;
+  updateAdminEmployeId: (employeId: string | undefined) => void;
+  updateMagasinPrefere: (magasin: string | undefined) => void;
+  // Métiers personnalisés
+  addMetierPerso: (m: import('@/app/types').MetierPerso) => void;
+  deleteMetierPerso: (id: string) => void;
+  // Budget prévisionnel par chantier
+  updateBudgetChantier: (chantierId: string, budget: number | undefined) => void;
+  // Fournisseurs prédéfinis
+  addFournisseur: (nom: string) => void;
+  deleteFournisseur: (nom: string) => void;
   // Ordre affectations (multi-chantiers même jour)
   updateOrdreAffectation: (employeId: string, date: string, orderedChantierIds: string[]) => void;
+  // Ordre personnalisé des chantiers dans la vue Planning (réorganisation par long-press)
+  updateChantierOrderPlanning: (ids: string[]) => void;
   // Messagerie privée
   addMessagePrive: (m: MessagePrive) => void;
   updateMessagePrive: (m: MessagePrive) => void;
@@ -192,6 +210,21 @@ interface AppContextType {
   addAgendaEvent: (event: AgendaEvent) => void;
   updateAgendaEvent: (event: AgendaEvent) => void;
   deleteAgendaEvent: (id: string) => void;
+  // Présences forcées
+  togglePresenceForcee: (employeId: string, date: string, forcePar?: string) => void;
+  // Tickets SAV
+  addTicketSAV: (t: import('@/app/types').TicketSAV) => void;
+  updateTicketSAV: (t: import('@/app/types').TicketSAV) => void;
+  deleteTicketSAV: (id: string) => void;
+  // Marchés chantier
+  addMarcheChantier: (m: import('@/app/types').MarcheChantier) => void;
+  updateMarcheChantier: (m: import('@/app/types').MarcheChantier) => void;
+  deleteMarcheChantier: (id: string) => void;
+  addSupplementMarche: (s: import('@/app/types').SupplementMarche) => void;
+  updateSupplementMarche: (s: import('@/app/types').SupplementMarche) => void;
+  deleteSupplementMarche: (id: string) => void;
+  // Badges motivationnels
+  addBadgeEmploye: (b: import('@/app/types').BadgeEmploye) => void;
   // Sync status
   syncStatus: 'synced' | 'saving' | 'error' | 'offline';
   refreshData: () => Promise<void>;
@@ -366,6 +399,15 @@ function migrateData(parsed: Record<string, any>): AppData {
     fichesChantier: parsed.fichesChantier || {},
     // Journal d'activité (ne jamais écraser)
     activityLog: parsed.activityLog || [],
+    // Marchés & supplements chantier
+    marchesChantier: parsed.marchesChantier || [],
+    supplementsMarche: parsed.supplementsMarche || [],
+    // Tickets SAV
+    ticketsSAV: parsed.ticketsSAV || [],
+    // Présences forcées
+    presencesForcees: parsed.presencesForcees || [],
+    // Ordre affectations multi-chantier
+    ordreAffectations: parsed.ordreAffectations || {},
   };
 }
 
@@ -491,6 +533,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         if (rawPt) deletedPointageIdsRef.current = new Set(JSON.parse(rawPt));
         const rawGeneric = await AsyncStorage.getItem(DELETED_GENERIC_KEY);
         if (rawGeneric) deletedGenericIdsRef.current = new Set(JSON.parse(rawGeneric));
+        const rawListes = await AsyncStorage.getItem(DELETED_LISTES_KEY);
+        if (rawListes) deletedListeIdsRef.current = new Set(JSON.parse(rawListes));
       } catch {}
 
       // ── 2. Charger Supabase ET le cache local en parallèle ──
@@ -583,19 +627,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             clearPendingSave();
             notifyDataUpdated(SESSION_ID);
             setSyncStatus('synced');
-            // Nettoyer les sets de suppression : la save a réussi, Supabase est à jour
-            deletedAffectationIdsRef.current.clear();
-            deletedChantierIdsRef.current.clear();
-            deletedEmployeIdsRef.current.clear();
-            deletedPointageIdsRef.current.clear();
-            deletedGenericIdsRef.current.clear();
-            deletedListeIdsRef.current.clear();
-            deletedItemIdsRef.current.clear();
-            persistDeletedIds(DELETED_AFFECTATIONS_KEY, deletedAffectationIdsRef.current);
-            persistDeletedIds(DELETED_CHANTIERS_KEY, deletedChantierIdsRef.current);
-            persistDeletedIds(DELETED_EMPLOYES_KEY, deletedEmployeIdsRef.current);
-            persistDeletedIds(DELETED_POINTAGES_KEY, deletedPointageIdsRef.current);
-            persistDeletedIds(DELETED_GENERIC_KEY, deletedGenericIdsRef.current);
+            // NE PAS vider les sets de suppression ici.
+            // On les garde jusqu'au prochain reload réussi depuis Supabase,
+            // pour éviter qu'un autre appareil non-syncé ne ramène les données supprimées.
           }
           else { setSyncStatus('error'); }
         });
@@ -689,11 +723,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           // Utiliser les données Supabase comme base (source de vérité)
           const result = migrateData(supabaseData);
 
-          // Protéger les photos locales (non envoyées à Supabase)
+          // Protéger les photos locales : fusionner en préférant la version avec URI
           const localPhotos = prev.photosChantier || [];
           const remotePhotos = result.photosChantier || [];
-          const remotePhotoIds = new Set(remotePhotos.map(p => p.id));
-          const mergedPhotos = [...remotePhotos, ...localPhotos.filter(p => !remotePhotoIds.has(p.id) && p.uri)];
+          const localMap = new Map(localPhotos.map(p => [p.id, p]));
+          const remoteMap = new Map(remotePhotos.map(p => [p.id, p]));
+          const allPhotoIds = new Set([...localMap.keys(), ...remoteMap.keys()]);
+          const mergedPhotos: PhotoChantier[] = [];
+          allPhotoIds.forEach(id => {
+            const local = localMap.get(id);
+            const remote = remoteMap.get(id);
+            // Préférer la version qui a un URI valide (https://)
+            if (local?.uri?.startsWith('http')) { mergedPhotos.push(local); }
+            else if (remote?.uri?.startsWith('http')) { mergedPhotos.push(remote); }
+            else if (local?.uri) { mergedPhotos.push(local); }
+            else if (remote) { mergedPhotos.push(remote); }
+            else if (local) { mergedPhotos.push(local); }
+          });
 
           // Protéger les listes matériaux localement supprimées
           const mergedListes = (result.listesMateriaux || []).filter(
@@ -747,6 +793,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             plansChantier: { ...(result.plansChantier || {}), ...(prev.plansChantier || {}) },
           };
         });
+
+        // Nettoyer les IDs de suppression APRÈS le reload réussi :
+        // Supabase est maintenant à jour, on peut vider les sets en toute sécurité.
+        // On vérifie d'abord que les éléments ne sont plus dans les données Supabase.
+        const cleanDeletedSet = (ref: React.MutableRefObject<Set<string>>, key: string, remoteItems: { id: string }[]) => {
+          const remoteIds = new Set(remoteItems.map(x => x.id));
+          const stillInRemote = new Set<string>();
+          ref.current.forEach(id => { if (remoteIds.has(id)) stillInRemote.add(id); });
+          // Garder uniquement ceux qui sont encore dans Supabase (pas encore propagé)
+          ref.current = stillInRemote;
+          persistDeletedIds(key, ref.current);
+        };
+        cleanDeletedSet(deletedChantierIdsRef, DELETED_CHANTIERS_KEY, supabaseData.chantiers || []);
+        cleanDeletedSet(deletedEmployeIdsRef, DELETED_EMPLOYES_KEY, supabaseData.employes || []);
+        cleanDeletedSet(deletedPointageIdsRef, DELETED_POINTAGES_KEY, supabaseData.pointages || []);
+        cleanDeletedSet(deletedListeIdsRef, DELETED_LISTES_KEY, supabaseData.listesMateriaux || []);
       }
     } catch {}
   }, []);
@@ -805,6 +867,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       chantiers: p.chantiers.filter(c => c.id !== id),
       affectations: p.affectations.filter(a => a.chantierId !== id),
       marches: p.marches.filter(m => m.chantierId !== id),
+      // Cascade : nettoyer toutes les données liées au chantier
+      listesMateriaux: (p.listesMateriaux || []).filter(l => l.chantierId !== id),
+      depensesChantier: (p.depensesChantier || []).filter(d => d.chantierId !== id),
+      supplementsChantier: (p.supplementsChantier || []).filter(s => s.chantierId !== id),
+      photosChantier: (p.photosChantier || []).filter(ph => ph.chantierId !== id),
+      notesChantier: (p.notesChantier || []).filter(n => n.chantierId !== id),
+      notesChantierSupprimees: (p.notesChantierSupprimees || []).filter(n => n.chantierId !== id),
+      marchesChantier: (p.marchesChantier || []).filter(m => m.chantierId !== id),
+      supplementsMarche: (p.supplementsMarche || []).filter(s => s.chantierId !== id),
+      ticketsSAV: (p.ticketsSAV || []).filter(t => t.chantierId !== id),
+      interventions: (p.interventions || []).filter(i => i.chantierId !== id),
     }));
   };
 
@@ -821,6 +894,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       employes: p.employes.filter(e => e.id !== id),
       affectations: p.affectations.filter(a => a.employeId !== id),
       acomptes: p.acomptes.filter(a => a.employeId !== id),
+      pointages: p.pointages.filter(pt => pt.employeId !== id),
+      demandesConge: (p.demandesConge || []).filter(d => d.employeId !== id),
+      arretsMaladie: (p.arretsMaladie || []).filter(d => d.employeId !== id),
+      demandesAvance: (p.demandesAvance || []).filter(d => d.employeId !== id),
+      fichesPaie: (p.fichesPaie || []).filter(f => f.employeId !== id),
       chantiers: p.chantiers.map(c => ({ ...c, employeIds: c.employeIds.filter(eid => eid !== id) })),
     }));
   };
@@ -948,6 +1026,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             };
           }),
         };
+      }),
+    }));
+
+  const addTaskPhoto = (affectationId: string, noteId: string, taskId: string, photoUri: string) =>
+    setData(p => ({
+      ...p,
+      affectations: p.affectations.map(a => {
+        if (a.id !== affectationId) return a;
+        return { ...a, notes: a.notes.map(n => {
+          if (n.id !== noteId) return n;
+          return { ...n, updatedAt: new Date().toISOString(), tasks: (n.tasks || []).map(t => t.id === taskId ? { ...t, photos: [...(t.photos || []), photoUri] } : t) };
+        }) };
       }),
     }));
 
@@ -1102,6 +1192,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     lastLocalChangeRef.current = Date.now();
     // Mémoriser l'ID supprimé pour que le polling ne le réintroduise jamais
     deletedListeIdsRef.current.add(id);
+    persistDeletedIds(DELETED_LISTES_KEY, deletedListeIdsRef.current);
     if (saveTimer.current) clearTimeout(saveTimer.current);
     setData(p => {
       const newData = { ...p, listesMateriaux: (p.listesMateriaux || []).filter(l => l.id !== id) };
@@ -1112,7 +1203,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const toggleMateriau = (listeId: string, itemId: string, achetePar: string) =>
+  const toggleMateriau = (listeId: string, itemId: string, achetePar: string, prixReel?: number, fournisseurReel?: string) =>
     setData(p => ({
       ...p,
       listesMateriaux: (p.listesMateriaux || []).map(l => {
@@ -1122,7 +1213,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...l,
           updatedAt: now,
           items: l.items.map(item => item.id === itemId
-            ? { ...item, achete: !item.achete, achetePar: !item.achete ? achetePar : undefined, acheteAt: !item.achete ? now : undefined }
+            ? { ...item, achete: !item.achete, achetePar: !item.achete ? achetePar : undefined, acheteAt: !item.achete ? now : undefined, prixReel: !item.achete ? prixReel : undefined, fournisseurReel: !item.achete ? fournisseurReel : undefined }
             : item
           ),
         };
@@ -1264,15 +1355,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({
       ...p,
       messagesPrive: (p.messagesPrive || []).map(m =>
-        m.conversationId === conversationId && m.expediteurRole !== lecteurRole
-          ? { ...m, lu: true }
+        m.conversationId === conversationId && m.expediteurRole !== lecteurRole && !m.lu
+          ? { ...m, lu: true, luAt: new Date().toISOString() }
           : m
       ),
     }));
 
   // ── Galerie photos chantier ──
-  const addPhotoChantier = (photo: PhotoChantier) =>
+  const addPhotoChantier = (photo: PhotoChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    if (saveTimer.current) clearTimeout(saveTimer.current);
     setData(p => ({ ...p, photosChantier: [...(p.photosChantier || []), photo] }));
+  };
   const addPhotosChantier = (photos: PhotoChantier[]) =>
     setData(p => ({ ...p, photosChantier: [...(p.photosChantier || []), ...photos] }));
   const deletePhotoChantier = (id: string) => {
@@ -1370,6 +1464,47 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateAdminPassword = (pwd: string) =>
     setData(p => ({ ...p, adminPassword: pwd, adminPasswordUpdatedAt: new Date().toISOString() }));
 
+  const updateAdminIdentifiant = (id: string) =>
+    setData(p => ({ ...p, adminIdentifiant: id }));
+
+  const updateAdminEmployeId = (employeId: string | undefined) =>
+    setData(p => ({ ...p, adminEmployeId: employeId }));
+
+  const updateMagasinPrefere = (magasin: string | undefined) =>
+    setData(p => ({ ...p, magasinPrefere: magasin }));
+
+  // Métiers personnalisés
+  const addMetierPerso = (m: import('@/app/types').MetierPerso) =>
+    setData(p => ({ ...p, metiersPerso: [...(p.metiersPerso || []), m] }));
+  const deleteMetierPerso = (id: string) =>
+    setData(p => ({ ...p, metiersPerso: (p.metiersPerso || []).filter(m => m.id !== id) }));
+
+  // Badges motivationnels
+  const addBadgeEmploye = (b: import('@/app/types').BadgeEmploye) =>
+    setData(p => ({ ...p, badgesEmployes: [...(p.badgesEmployes || []), b] }));
+
+  // Fournisseurs prédéfinis
+  const addFournisseur = (nom: string) =>
+    setData(p => ({ ...p, fournisseurs: [...new Set([...(p.fournisseurs || []), nom.trim()])] }));
+  const deleteFournisseur = (nom: string) =>
+    setData(p => ({ ...p, fournisseurs: (p.fournisseurs || []).filter(f => f !== nom) }));
+
+  // Apporteurs (architectes / apporteurs d'affaires)
+  const addApporteur = (a: import('@/app/types').Apporteur) =>
+    setData(p => ({ ...p, apporteurs: [...(p.apporteurs || []), a] }));
+  const updateApporteur = (a: import('@/app/types').Apporteur) =>
+    setData(p => ({ ...p, apporteurs: (p.apporteurs || []).map(x => x.id === a.id ? a : x) }));
+  const deleteApporteur = (id: string) =>
+    setData(p => ({ ...p, apporteurs: (p.apporteurs || []).filter(a => a.id !== id) }));
+
+  // Budget prévisionnel par chantier
+  const updateBudgetChantier = (chantierId: string, budget: number | undefined) =>
+    setData(p => {
+      const budgets = { ...(p.budgetsChantier || {}) };
+      if (budget === undefined) { delete budgets[chantierId]; } else { budgets[chantierId] = budget; }
+      return { ...p, budgetsChantier: budgets };
+    });
+
   const updateOrdreAffectation = (employeId: string, date: string, orderedChantierIds: string[]) =>
     setData(p => ({
       ...p,
@@ -1379,11 +1514,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
     }));
 
+  const updateChantierOrderPlanning = (ids: string[]) =>
+    setData(p => ({ ...p, chantierOrderPlanning: ids }));
+
   // ── Système de notifications / journal d'activité ──
   const logActivity = useCallback((action: string, description: string, targetId?: string) => {
     if (!currentUser) return;
     const userId = currentUser.role === 'admin' ? 'admin' : currentUser.employeId || currentUser.soustraitantId || 'unknown';
-    const userName = currentUser.role === 'admin' ? 'Admin' :
+    const adminEmp = data.adminEmployeId ? data.employes.find(e => e.id === data.adminEmployeId) : undefined;
+    const userName = currentUser.role === 'admin' ? (adminEmp ? `${adminEmp.prenom} ${adminEmp.nom}` : 'Admin') :
       (() => {
         const emp = data.employes.find(e => e.id === currentUser.employeId);
         if (emp) return `${emp.prenom} ${emp.nom}`;
@@ -1448,8 +1587,65 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const now = new Date().toISOString();
     lastSeenRef.current = now;
     safeAsyncStorageSet(`${LAST_SEEN_KEY}_${userId}`, now);
+    // Enregistrer les accusés de lecture sur les notifs concernées
+    setData(prev => {
+      const log = prev.activityLog || [];
+      const updatedLog = log.map(entry => {
+        // Si l'entrée a déjà été lue par cet user, ne pas dupliquer
+        const alreadyRead = (entry.lecturesPar || []).some(l => l.userId === userId);
+        if (alreadyRead) return entry;
+        // Si l'entrée nous est destinée (ou pas de destinataires = pour tous)
+        const isForMe = !entry.destinataires || entry.destinataires.length === 0 || entry.destinataires.includes(userId);
+        if (!isForMe) return entry;
+        if (entry.userId === userId) return entry; // pas notre propre action
+        return { ...entry, lecturesPar: [...(entry.lecturesPar || []), { userId, lu: now }] };
+      });
+      return { ...prev, activityLog: updatedLog };
+    });
     setNotifications([]);
   }, [currentUser]);
+
+  const addTicketSAV = (t: import('@/app/types').TicketSAV) => setData(p => ({ ...p, ticketsSAV: [...(p.ticketsSAV || []), t] }));
+  const updateTicketSAV = (t: import('@/app/types').TicketSAV) => setData(p => ({ ...p, ticketsSAV: (p.ticketsSAV || []).map(x => x.id === t.id ? t : x) }));
+  const deleteTicketSAV = (id: string) => { deletedGenericIdsRef.current.add(id); setData(p => ({ ...p, ticketsSAV: (p.ticketsSAV || []).filter(x => x.id !== id) })); };
+
+  const addMarcheChantier = (m: import('@/app/types').MarcheChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setData(p => ({ ...p, marchesChantier: [...(p.marchesChantier || []), m] }));
+  };
+  const updateMarcheChantier = (m: import('@/app/types').MarcheChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setData(p => ({ ...p, marchesChantier: (p.marchesChantier || []).map(x => x.id === m.id ? m : x) }));
+  };
+  const deleteMarcheChantier = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, marchesChantier: (p.marchesChantier || []).filter(x => x.id !== id) }));
+  };
+  const addSupplementMarche = (s: import('@/app/types').SupplementMarche) => {
+    lastLocalChangeRef.current = Date.now();
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setData(p => ({ ...p, supplementsMarche: [...(p.supplementsMarche || []), s] }));
+  };
+  const updateSupplementMarche = (s: import('@/app/types').SupplementMarche) => {
+    lastLocalChangeRef.current = Date.now();
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setData(p => ({ ...p, supplementsMarche: (p.supplementsMarche || []).map(x => x.id === s.id ? s : x) }));
+  };
+  const deleteSupplementMarche = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, supplementsMarche: (p.supplementsMarche || []).filter(x => x.id !== id) }));
+  };
+
+  const togglePresenceForcee = (employeId: string, date: string, forcePar?: string) => {
+    setData(p => {
+      const list = p.presencesForcees || [];
+      const exists = list.some(pf => pf.employeId === employeId && pf.date === date);
+      if (exists) return { ...p, presencesForcees: list.filter(pf => !(pf.employeId === employeId && pf.date === date)) };
+      return { ...p, presencesForcees: [...list, { employeId, date, forcePar }] };
+    });
+  };
 
   const logout = () => setCurrentUserPersisted(null);
 
@@ -1459,11 +1655,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addChantier, updateChantier, deleteChantier,
       addEmploye, updateEmploye, deleteEmploye,
       addAffectation, updateAffectation, removeAffectation,
-      upsertNote, deleteNote, toggleTask, addTask, deleteTask,
+      upsertNote, deleteNote, toggleTask, addTaskPhoto, addTask, deleteTask,
       addPointage, updatePointage, deletePointage,
       addAcompte, deleteAcompte,
       upsertFicheChantier,
       addSousTraitant, updateSousTraitant, deleteSousTraitant,
+      addApporteur, updateApporteur, deleteApporteur,
       addDevis, updateDevis, deleteDevis,
       addMarche, updateMarche, deleteMarche,
       addAcompteST, updateAcompteST, deleteAcompteST,
@@ -1483,10 +1680,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,
-      updateAdminPassword,
+      updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere,
+      addMetierPerso, deleteMetierPerso, updateBudgetChantier,
+      addFournisseur, deleteFournisseur,
       updateOrdreAffectation,
+      updateChantierOrderPlanning,
       addArticleCatalogue, updateArticleCatalogue, deleteArticleCatalogue,
       addAgendaEvent, updateAgendaEvent, deleteAgendaEvent,
+      togglePresenceForcee,
+      addTicketSAV, updateTicketSAV, deleteTicketSAV,
+      addMarcheChantier, updateMarcheChantier, deleteMarcheChantier,
+      addSupplementMarche, updateSupplementMarche, deleteSupplementMarche,
+      addBadgeEmploye,
       notifications, markNotificationsRead,
       syncStatus,
       refreshData: reloadFromSupabase,

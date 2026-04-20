@@ -3,6 +3,7 @@ import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   TextInput, Platform, Alert, FlatList, KeyboardAvoidingView,
 } from 'react-native';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -55,6 +56,16 @@ export default function MessagerieScreen() {
   const [showArchive, setShowArchive] = useState(false);
   const [selectedChantierId, setSelectedChantierId] = useState<string | null>(null);
   const [contextMsg, setContextMsg] = useState<MessagePrive | null>(null);
+  const [replyTo, setReplyTo] = useState<MessagePrive | null>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const mediaRecorderRef = useRef<any>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<any>(null);
+  const [showGroupModal, setShowGroupModal] = useState(false);
+  const [groupType, setGroupType] = useState<'equipe' | 'chantier'>('equipe');
+  const [groupChantierId, setGroupChantierId] = useState<string | null>(null);
+  const [groupMessage, setGroupMessage] = useState('');
   const [showFilters, setShowFilters] = useState(false);
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduleDate, setScheduleDate] = useState('');
@@ -90,6 +101,13 @@ export default function MessagerieScreen() {
     else if (mesChantiers.length > 0) setSelectedChantierId(mesChantiers[0].id);
   }, [mesChantiers]);
 
+  // Nom de l'admin basé sur l'employé lié (si configuré)
+  const adminDisplayName = useMemo(() => {
+    if (!data.adminEmployeId) return 'Admin';
+    const emp = data.employes.find(e => e.id === data.adminEmployeId);
+    return emp ? `${emp.prenom} ${emp.nom}` : 'Admin';
+  }, [data.adminEmployeId, data.employes]);
+
   // ─── Liste des conversations (admin voit toutes, employé/ST voit la sienne) ──
   const conversations = useMemo(() => {
     const msgs = data.messagesPrive || [];
@@ -102,7 +120,7 @@ export default function MessagerieScreen() {
       return [{
         id: convId,
         type: isEmploye ? 'employe' : 'soustraitant' as 'employe' | 'soustraitant',
-        nom: t.messagerie.administration,
+        nom: adminDisplayName !== 'Admin' ? adminDisplayName : t.messagerie.administration,
         dernierMessage: last?.contenu,
         dernierMessageAt: last?.createdAt,
         nbNonLus,
@@ -141,7 +159,7 @@ export default function MessagerieScreen() {
         if (b.dernierMessageAt) return 1;
         return a.nom.localeCompare(b.nom);
       });
-  }, [data.messagesPrive, data.employes, data.sousTraitants, isAdmin, isEmploye, currentUser]);
+  }, [data.messagesPrive, data.employes, data.sousTraitants, isAdmin, isEmploye, currentUser, adminDisplayName]);
 
   // ─── Messages de la conversation sélectionnée ──────────────────────────────
   const convId = isAdmin ? selectedConvId : (currentUser?.employeId || currentUser?.soustraitantId || '');
@@ -194,7 +212,7 @@ export default function MessagerieScreen() {
     const texte = messageText.trim();
     if (!texte || !convId) return;
 
-    let expediteurNom = 'Admin';
+    let expediteurNom = adminDisplayName;
     if (isEmploye) {
       const emp = data.employes.find(e => e.id === currentUser?.employeId);
       expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : t.messagerie.employee;
@@ -221,9 +239,15 @@ export default function MessagerieScreen() {
       createdAt: now(),
       lu: false,
       archive: false,
+      ...(replyTo ? {
+        replyToId: replyTo.id,
+        replyToContenu: replyTo.contenu.slice(0, 100),
+        replyToNom: replyTo.expediteurNom,
+      } : {}),
     };
     addMessagePrive(msg);
     setMessageText('');
+    setReplyTo(null);
     setShowSchedule(false);
     setScheduleDate('');
     setScheduleTime('');
@@ -243,7 +267,7 @@ export default function MessagerieScreen() {
       const reader = new FileReader();
       reader.onload = (ev) => {
         const uri = ev.target?.result as string;
-        let expediteurNom = 'Admin';
+        let expediteurNom = adminDisplayName;
         if (isEmploye) {
           const emp = data.employes.find(e => e.id === currentUser?.employeId);
           expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : t.messagerie.employee;
@@ -269,7 +293,76 @@ export default function MessagerieScreen() {
       reader.readAsDataURL(file);
       document.body.removeChild(input);
     };
-    input.click();
+    input.click(); setTimeout(() => input.remove(), 60000);
+  };
+
+  // ─── Enregistrement vocal (web) ─────────────────────────────────────────────
+  const startRecording = async () => {
+    if (Platform.OS !== 'web' || !convId) return;
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e: any) => audioChunksRef.current.push(e.data);
+      recorder.onstop = () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(audioChunksRef.current, { type: 'audio/webm' });
+        const reader = new FileReader();
+        reader.onload = () => {
+          const base64 = reader.result as string;
+          let expediteurNom = adminDisplayName;
+          if (isEmploye) {
+            const emp = data.employes.find(e => e.id === currentUser?.employeId);
+            expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : 'Employé';
+          } else if (isST) {
+            const st = data.sousTraitants.find(s => s.id === currentUser?.soustraitantId);
+            expediteurNom = st ? (st.societe || `${st.prenom} ${st.nom}`) : 'Sous-traitant';
+          }
+          addMessagePrive({
+            id: genId(),
+            conversationId: convId,
+            expediteurRole: myRole as 'admin' | 'employe' | 'soustraitant',
+            expediteurId: myConvId,
+            expediteurNom,
+            contenu: '🎤 Message vocal',
+            audioUri: base64,
+            audioDuration: recordingDuration,
+            createdAt: now(),
+            lu: false,
+            archive: false,
+          });
+        };
+        reader.readAsDataURL(blob);
+        setIsRecording(false);
+        setRecordingDuration(0);
+        clearInterval(recordingTimerRef.current);
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setRecordingDuration(0);
+      recordingTimerRef.current = setInterval(() => setRecordingDuration(d => d + 1), 1000);
+    } catch {
+      if (Platform.OS === 'web') window.alert('Impossible d\'accéder au microphone.');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.stop();
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+      mediaRecorderRef.current.ondataavailable = null;
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream?.getTracks().forEach((t: any) => t.stop());
+    }
+    setIsRecording(false);
+    setRecordingDuration(0);
+    clearInterval(recordingTimerRef.current);
   };
 
   // ─── Archiver toute la discussion d'un chantier ─────────────────────────────
@@ -388,7 +481,7 @@ export default function MessagerieScreen() {
     });
 
     return (
-      <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>💬 {t.messagerie.title}</Text>
           {totalNonLus > 0 && (
@@ -396,6 +489,12 @@ export default function MessagerieScreen() {
               <Text style={styles.headerBadgeText}>{totalNonLus} {t.messagerie.unread}</Text>
             </View>
           )}
+          <Pressable
+            style={{ backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}
+            onPress={() => { setGroupType('equipe'); setGroupChantierId(null); setGroupMessage(''); setShowGroupModal(true); }}
+          >
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>📢 Diffusion</Text>
+          </Pressable>
         </View>
 
         {/* Filtres — toujours visibles */}
@@ -408,7 +507,7 @@ export default function MessagerieScreen() {
                 <Text style={[styles.filterChipText, listFilterChantier === 'all' && styles.filterChipTextActive]}>Tous</Text>
               </Pressable>
               {data.chantiers.filter(c => c.statut === 'actif').map(c => (
-                <Pressable key={c.id} style={[styles.filterChip, listFilterChantier === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+                <Pressable key={c.id} style={[styles.filterChip, listFilterChantier === c.id && { backgroundColor: c.couleur || '#2C2C2C', borderColor: c.couleur || '#2C2C2C' }]}
                   onPress={() => setListFilterChantier(listFilterChantier === c.id ? 'all' : c.id)}>
                   <Text style={[styles.filterChipText, listFilterChantier === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
                 </Pressable>
@@ -462,8 +561,8 @@ export default function MessagerieScreen() {
               <View key={chId}>
                 {chantier && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 6 }}>
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: chantier.couleur || '#1A3A6B' }} />
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A3A6B' }}>{chantier.nom}</Text>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: chantier.couleur || '#2C2C2C' }} />
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>{chantier.nom}</Text>
                   </View>
                 )}
                 {!chantier && chId === '__none__' && convs.length > 0 && (
@@ -475,7 +574,7 @@ export default function MessagerieScreen() {
                     style={[styles.convCard, conv.nbNonLus > 0 && styles.convCardUnread]}
                     onPress={() => setSelectedConvId(conv.id)}
                   >
-                    <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#1A3A6B' : '#00BCD4' }]}>
+                    <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#2C2C2C' : '#00BCD4' }]}>
                       <Text style={styles.convAvatarText}>{conv.nom[0].toUpperCase()}</Text>
                     </View>
                     <View style={styles.convInfo}>
@@ -505,6 +604,135 @@ export default function MessagerieScreen() {
             <Text style={styles.emptyText}>{t.messagerie.noConversation}</Text>
           )}
         </ScrollView>
+
+        {/* Modal diffusion groupe */}
+        <ModalKeyboard visible={showGroupModal} transparent animationType="fade" onRequestClose={() => setShowGroupModal(false)}>
+          <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }} onPress={() => setShowGroupModal(false)}>
+            <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 420, maxHeight: '80%' }} onPress={() => {}}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', textAlign: 'center', marginBottom: 16 }}>📢 Message de groupe</Text>
+
+                {/* Type de diffusion */}
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 8 }}>Envoyer à</Text>
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                  <Pressable
+                    style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'equipe' ? '#2C2C2C' : '#F5EDE3' }}
+                    onPress={() => { setGroupType('equipe'); setGroupChantierId(null); }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'equipe' ? '#fff' : '#687076' }}>👷 Toute l'équipe</Text>
+                  </Pressable>
+                  <Pressable
+                    style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'chantier' ? '#2C2C2C' : '#F5EDE3' }}
+                    onPress={() => setGroupType('chantier')}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'chantier' ? '#fff' : '#687076' }}>🏗 Par chantier</Text>
+                  </Pressable>
+                </View>
+
+                {/* Sélection chantier si mode chantier */}
+                {groupType === 'chantier' && (
+                  <View style={{ marginBottom: 12 }}>
+                    <Text style={{ fontSize: 12, color: '#687076', marginBottom: 6 }}>Choisir un chantier :</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                      {data.chantiers.filter(c => c.statut === 'actif').map(c => (
+                        <Pressable
+                          key={c.id}
+                          style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: groupChantierId === c.id ? c.couleur || '#2C2C2C' : '#F5EDE3' }}
+                          onPress={() => setGroupChantierId(c.id)}
+                        >
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: groupChantierId === c.id ? '#fff' : '#11181C' }}>{c.nom}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                    {groupChantierId && (() => {
+                      const empsOnChantier = data.employes.filter(e =>
+                        data.affectations.some(a => a.chantierId === groupChantierId && a.employeId === e.id)
+                      );
+                      return empsOnChantier.length > 0 ? (
+                        <Text style={{ fontSize: 11, color: '#687076', marginTop: 6 }}>
+                          Destinataires : {empsOnChantier.map(e => e.prenom).join(', ')}
+                        </Text>
+                      ) : (
+                        <Text style={{ fontSize: 11, color: '#E74C3C', marginTop: 6 }}>Aucun employé affecté à ce chantier.</Text>
+                      );
+                    })()}
+                  </View>
+                )}
+
+                {groupType === 'equipe' && (
+                  <Text style={{ fontSize: 11, color: '#687076', marginBottom: 12 }}>
+                    Destinataires : {data.employes.length} employé{data.employes.length > 1 ? 's' : ''} + {data.sousTraitants.length} sous-traitant{data.sousTraitants.length > 1 ? 's' : ''}
+                  </Text>
+                )}
+
+                {/* Message */}
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Message</Text>
+                <TextInput
+                  style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 16, minHeight: 80, textAlignVertical: 'top' }}
+                  value={groupMessage}
+                  onChangeText={setGroupMessage}
+                  placeholder="Votre message..."
+                  placeholderTextColor="#687076"
+                  multiline
+                  maxLength={2000}
+                />
+
+                {/* Actions */}
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowGroupModal(false)}>
+                    <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>Annuler</Text>
+                  </Pressable>
+                  <Pressable
+                    style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: groupMessage.trim() ? 1 : 0.5 }}
+                    disabled={!groupMessage.trim()}
+                    onPress={() => {
+                      const texte = groupMessage.trim();
+                      if (!texte) return;
+                      // Déterminer les destinataires
+                      let destinataires: string[] = [];
+                      if (groupType === 'equipe') {
+                        destinataires = [
+                          ...data.employes.map(e => e.id),
+                          ...data.sousTraitants.map(s => s.id),
+                        ];
+                      } else if (groupChantierId) {
+                        destinataires = data.employes
+                          .filter(e => data.affectations.some(a => a.chantierId === groupChantierId && a.employeId === e.id))
+                          .map(e => e.id);
+                      }
+                      // Envoyer un message dans chaque conversation
+                      destinataires.forEach(destId => {
+                        addMessagePrive({
+                          id: genId(),
+                          conversationId: destId,
+                          expediteurRole: 'admin',
+                          expediteurId: 'admin',
+                          expediteurNom: adminDisplayName,
+                          contenu: texte,
+                          chantierId: groupChantierId || undefined,
+                          createdAt: now(),
+                          lu: false,
+                          archive: false,
+                          isGroupe: true,
+                          groupeType: groupType,
+                          groupeChantierId: groupChantierId || undefined,
+                          destinataireIds: destinataires,
+                        });
+                      });
+                      setShowGroupModal(false);
+                      setGroupMessage('');
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Envoyer ({groupType === 'equipe' ? data.employes.length + data.sousTraitants.length : (() => {
+                      if (!groupChantierId) return 0;
+                      return data.employes.filter(e => data.affectations.some(a => a.chantierId === groupChantierId && a.employeId === e.id)).length;
+                    })()})</Text>
+                  </Pressable>
+                </View>
+              </ScrollView>
+            </Pressable>
+          </Pressable>
+        </ModalKeyboard>
       </ScreenContainer>
     );
   }
@@ -515,7 +743,7 @@ export default function MessagerieScreen() {
     : t.messagerie.administration;
 
   return (
-    <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
         {isAdmin && (
@@ -543,7 +771,7 @@ export default function MessagerieScreen() {
           {mesChantiers.map(c => (
             <Pressable
               key={c.id}
-              style={[styles.chantierChip, selectedChantierId === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+              style={[styles.chantierChip, selectedChantierId === c.id && { backgroundColor: c.couleur || '#2C2C2C', borderColor: c.couleur || '#2C2C2C' }]}
               onPress={() => setSelectedChantierId(selectedChantierId === c.id ? null : c.id)}
             >
               <Text style={[styles.chantierChipText, selectedChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
@@ -552,7 +780,7 @@ export default function MessagerieScreen() {
           {/* Bouton filtres avancés — admin seulement */}
           {isAdmin && (
             <Pressable
-              style={[styles.chantierChip, showFilters && { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' }]}
+              style={[styles.chantierChip, showFilters && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
               onPress={() => setShowFilters(v => !v)}
             >
               <Text style={[styles.chantierChipText, showFilters && { color: '#fff' }]}>🔍 Filtres</Text>
@@ -640,11 +868,32 @@ export default function MessagerieScreen() {
                       {!isMine && (
                         <Text style={styles.msgExpéditeur}>{msg.expediteurNom}</Text>
                       )}
+                      {/* Citation (réponse à un message) */}
+                      {msg.replyToNom && msg.replyToContenu && (
+                        <View style={{ backgroundColor: isMine ? 'rgba(255,255,255,0.2)' : 'rgba(26,58,107,0.08)', borderLeftWidth: 3, borderLeftColor: '#2C2C2C', borderRadius: 6, padding: 6, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: isMine ? 'rgba(255,255,255,0.8)' : '#2C2C2C' }}>{msg.replyToNom}</Text>
+                          <Text style={{ fontSize: 11, color: isMine ? 'rgba(255,255,255,0.7)' : '#687076' }} numberOfLines={2}>{msg.replyToContenu}</Text>
+                        </View>
+                      )}
+                      {/* Badge groupe */}
+                      {msg.isGroupe && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+                          <Text style={{ fontSize: 10, color: isMine ? 'rgba(255,255,255,0.6)' : '#9CA3AF' }}>📢 {msg.groupeType === 'chantier' ? 'Diffusion chantier' : 'Diffusion équipe'}</Text>
+                        </View>
+                      )}
+                      {/* Audio (message vocal) */}
+                      {msg.audioUri && (
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                          <Text style={{ fontSize: 20 }}>🎤</Text>
+                          <View style={{ flex: 1, height: 4, backgroundColor: isMine ? 'rgba(255,255,255,0.3)' : '#E2E6EA', borderRadius: 2 }} />
+                          <Text style={{ fontSize: 11, color: isMine ? 'rgba(255,255,255,0.7)' : '#687076' }}>{msg.audioDuration ? `${Math.floor(msg.audioDuration / 60)}:${String(msg.audioDuration % 60).padStart(2, '0')}` : '0:00'}</Text>
+                        </View>
+                      )}
                       {msg.chantierId && (() => {
                         const ch = data.chantiers.find(c => c.id === msg.chantierId);
                         return ch ? (
-                          <View style={[styles.msgChantierTag, { backgroundColor: (ch.couleur || '#1A3A6B') + '20', borderColor: ch.couleur || '#1A3A6B' }]}>
-                            <Text style={[styles.msgChantierTagText, { color: ch.couleur || '#1A3A6B' }]}>📍 {ch.nom}</Text>
+                          <View style={[styles.msgChantierTag, { backgroundColor: (ch.couleur || '#2C2C2C') + '20', borderColor: ch.couleur || '#2C2C2C' }]}>
+                            <Text style={[styles.msgChantierTagText, { color: ch.couleur || '#2C2C2C' }]}>📍 {ch.nom}</Text>
                           </View>
                         ) : null;
                       })()}
@@ -667,7 +916,10 @@ export default function MessagerieScreen() {
                       <View style={styles.msgMeta}>
                         <Text style={[styles.msgHeure, isMine && styles.msgHeureMine]}>{formatHeure(msg.createdAt)}</Text>
                         {isMine && (
-                          <Text style={styles.msgLu}>{msg.lu ? '✓✓' : '✓'}</Text>
+                          <Text style={styles.msgLu}>
+                            {msg.lu ? '✓✓' : '✓'}
+                            {msg.lu && msg.luAt ? ` ${formatHeure(msg.luAt)}` : ''}
+                          </Text>
                         )}
                         {msg.archive && <Text style={styles.msgArchiveBadge}>📁</Text>}
                         {msg.scheduledAt && new Date(msg.scheduledAt) > new Date() && (
@@ -711,7 +963,7 @@ export default function MessagerieScreen() {
         {/* Bouton désarchiver */}
         {showArchive && selectedChantierId && messages.length > 0 && (
           <Pressable style={[styles.archiveDiscussionBtn, { backgroundColor: '#EEF2F8' }]} onPress={handleUnarchiveDiscussion}>
-            <Text style={[styles.archiveDiscussionBtnText, { color: '#1A3A6B' }]}>📂 Restaurer cette discussion</Text>
+            <Text style={[styles.archiveDiscussionBtnText, { color: '#2C2C2C' }]}>📂 Restaurer cette discussion</Text>
           </Pressable>
         )}
 
@@ -726,7 +978,7 @@ export default function MessagerieScreen() {
           return (
           <View style={styles.scheduleBar}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#1A3A6B' }}>⏰ Programmer l'envoi</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#2C2C2C' }}>⏰ Programmer l'envoi</Text>
               <Pressable onPress={() => { setShowSchedule(false); setScheduleDate(''); setScheduleTime(''); }} style={{ padding: 4 }}>
                 <Text style={{ color: '#E74C3C', fontSize: 14, fontWeight: '600' }}>✕</Text>
               </Pressable>
@@ -767,33 +1019,73 @@ export default function MessagerieScreen() {
           );
         })()}
 
+        {/* Barre réponse (citation) */}
+        {replyTo && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EEF2F8', paddingHorizontal: 12, paddingVertical: 8, borderLeftWidth: 3, borderLeftColor: '#2C2C2C' }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#2C2C2C' }}>↩️ {replyTo.expediteurNom}</Text>
+              <Text style={{ fontSize: 12, color: '#687076' }} numberOfLines={1}>{replyTo.contenu}</Text>
+            </View>
+            <Pressable onPress={() => setReplyTo(null)} style={{ padding: 6 }}>
+              <Text style={{ fontSize: 16, color: '#687076' }}>✕</Text>
+            </Pressable>
+          </View>
+        )}
+
         {/* Zone de saisie */}
         {!showArchive && (
           <View style={styles.inputZone}>
-            <Pressable style={styles.photoBtn} onPress={handleUploadPhoto}>
-              <Text style={styles.photoBtnText}>📎</Text>
-            </Pressable>
-            {isAdmin && (
-              <Pressable style={[styles.photoBtn, showSchedule && { backgroundColor: '#EBF0FF' }]} onPress={() => setShowSchedule(v => !v)}>
-                <Text style={styles.photoBtnText}>⏰</Text>
-              </Pressable>
+            {isRecording ? (
+              /* Mode enregistrement vocal */
+              <>
+                <Pressable style={[styles.photoBtn, { backgroundColor: '#FDECEA' }]} onPress={cancelRecording}>
+                  <Text style={styles.photoBtnText}>✕</Text>
+                </Pressable>
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 8 }}>
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: '#E74C3C' }} />
+                  <Text style={{ fontSize: 14, color: '#E74C3C', fontWeight: '600' }}>
+                    {Math.floor(recordingDuration / 60)}:{String(recordingDuration % 60).padStart(2, '0')}
+                  </Text>
+                  <View style={{ flex: 1, height: 3, backgroundColor: '#E74C3C', borderRadius: 2, opacity: 0.3 }} />
+                </View>
+                <Pressable style={[styles.sendBtn, { backgroundColor: '#E74C3C' }]} onPress={stopRecording}>
+                  <Text style={styles.sendBtnText}>⬛</Text>
+                </Pressable>
+              </>
+            ) : (
+              /* Mode texte normal */
+              <>
+                <Pressable style={styles.photoBtn} onPress={handleUploadPhoto}>
+                  <Text style={styles.photoBtnText}>📎</Text>
+                </Pressable>
+                {Platform.OS === 'web' && (
+                  <Pressable style={styles.photoBtn} onPress={startRecording}>
+                    <Text style={styles.photoBtnText}>🎤</Text>
+                  </Pressable>
+                )}
+                {isAdmin && (
+                  <Pressable style={[styles.photoBtn, showSchedule && { backgroundColor: '#EBF0FF' }]} onPress={() => setShowSchedule(v => !v)}>
+                    <Text style={styles.photoBtnText}>⏰</Text>
+                  </Pressable>
+                )}
+                <TextInput
+                  style={styles.msgInput}
+                  placeholder={showSchedule && scheduleDate ? `Programmé le ${scheduleDate}...` : t.messagerie.messagePlaceholder}
+                  value={messageText}
+                  onChangeText={setMessageText}
+                  multiline
+                  maxLength={2000}
+                  onSubmitEditing={handleSend}
+                />
+                <Pressable
+                  style={[styles.sendBtn, !messageText.trim() && styles.sendBtnDisabled, showSchedule && scheduleDate && { backgroundColor: '#F59E0B' }]}
+                  onPress={handleSend}
+                  disabled={!messageText.trim()}
+                >
+                  <Text style={styles.sendBtnText}>{showSchedule && scheduleDate ? '⏰' : '➤'}</Text>
+                </Pressable>
+              </>
             )}
-            <TextInput
-              style={styles.msgInput}
-              placeholder={showSchedule && scheduleDate ? `Programmé le ${scheduleDate}...` : t.messagerie.messagePlaceholder}
-              value={messageText}
-              onChangeText={setMessageText}
-              multiline
-              maxLength={2000}
-              onSubmitEditing={handleSend}
-            />
-            <Pressable
-              style={[styles.sendBtn, !messageText.trim() && styles.sendBtnDisabled, showSchedule && scheduleDate && { backgroundColor: '#F59E0B' }]}
-              onPress={handleSend}
-              disabled={!messageText.trim()}
-            >
-              <Text style={styles.sendBtnText}>{showSchedule && scheduleDate ? '⏰' : '➤'}</Text>
-            </Pressable>
           </View>
         )}
       </KeyboardAvoidingView>
@@ -806,6 +1098,12 @@ export default function MessagerieScreen() {
               <Text style={styles.contextTitle} numberOfLines={1}>
                 {contextMsg.contenu.slice(0, 50)}{contextMsg.contenu.length > 50 ? '…' : ''}
               </Text>
+              <Pressable
+                style={styles.contextBtn}
+                onPress={() => { setReplyTo(contextMsg); setContextMsg(null); }}
+              >
+                <Text style={styles.contextBtnText}>↩️ Répondre</Text>
+              </Pressable>
               <Pressable
                 style={styles.contextBtn}
                 onPress={() => { handleArchive(contextMsg); setContextMsg(null); }}
@@ -833,20 +1131,20 @@ export default function MessagerieScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', gap: 8 },
-  headerTitle: { flex: 1, fontSize: 17, fontWeight: '700', color: '#1A3A6B' },
+  headerTitle: { flex: 1, fontSize: 17, fontWeight: '700', color: '#2C2C2C' },
   headerBadge: { backgroundColor: '#E74C3C', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   headerBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   backBtn: { paddingRight: 4 },
-  backBtnText: { color: '#1A3A6B', fontWeight: '600', fontSize: 14 },
-  archiveToggle: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
-  archiveToggleActive: { backgroundColor: '#EEF2F8', borderColor: '#1A3A6B' },
+  backBtnText: { color: '#2C2C2C', fontWeight: '600', fontSize: 14 },
+  archiveToggle: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F5EDE3' },
+  archiveToggleActive: { backgroundColor: '#EEF2F8', borderColor: '#2C2C2C' },
   archiveToggleText: { fontSize: 11, color: '#687076', fontWeight: '600' },
-  archiveToggleTextActive: { color: '#1A3A6B' },
+  archiveToggleTextActive: { color: '#2C2C2C' },
   scroll: { flex: 1 },
   scrollContent: { padding: 12, paddingBottom: 24 },
   // Liste conversations
   convCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2, alignItems: 'center', gap: 12 },
-  convCardUnread: { borderLeftWidth: 3, borderLeftColor: '#1A3A6B' },
+  convCardUnread: { borderLeftWidth: 3, borderLeftColor: '#2C2C2C' },
   convAvatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   convAvatarText: { color: '#fff', fontWeight: '800', fontSize: 18 },
   convInfo: { flex: 1 },
@@ -855,20 +1153,20 @@ const styles = StyleSheet.create({
   convHeure: { fontSize: 11, color: '#687076' },
   convDernier: { fontSize: 13, color: '#687076', flex: 1 },
   convType: { fontSize: 11, color: '#B0BEC5', marginTop: 2 },
-  unreadBadge: { backgroundColor: '#1A3A6B', borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  unreadBadge: { backgroundColor: '#2C2C2C', borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   unreadBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   emptyText: { textAlign: 'center', color: '#687076', fontSize: 14, marginTop: 48 },
   // Messages
-  msgScroll: { flex: 1, backgroundColor: '#F2F4F7' },
+  msgScroll: { flex: 1, backgroundColor: '#F5EDE3' },
   msgScrollContent: { padding: 12, paddingBottom: 8 },
   dateSeparator: { alignItems: 'center', marginVertical: 12 },
   dateSeparatorText: { fontSize: 12, color: '#687076', backgroundColor: '#E2E6EA', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   msgBubbleWrap: { alignItems: 'flex-start', marginBottom: 6 },
   msgBubbleWrapMine: { alignItems: 'flex-end' },
   msgBubble: { maxWidth: '78%', borderRadius: 16, padding: 10, paddingHorizontal: 14 },
-  msgBubbleMine: { backgroundColor: '#1A3A6B', borderBottomRightRadius: 4 },
+  msgBubbleMine: { backgroundColor: '#2C2C2C', borderBottomRightRadius: 4 },
   msgBubbleOther: { backgroundColor: '#fff', borderBottomLeftRadius: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
-  msgExpéditeur: { fontSize: 11, fontWeight: '700', color: '#1A3A6B', marginBottom: 3 },
+  msgExpéditeur: { fontSize: 11, fontWeight: '700', color: '#2C2C2C', marginBottom: 3 },
   msgText: { fontSize: 15, color: '#11181C', lineHeight: 21 },
   msgTextMine: { color: '#fff' },
   msgMedia: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: 10, alignItems: 'center' },
@@ -883,16 +1181,16 @@ const styles = StyleSheet.create({
   msgQuickBtn: { padding: 4, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.04)' },
   // Zone saisie
   inputZone: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E2E6EA', gap: 8 },
-  photoBtn: { padding: 10, backgroundColor: '#F2F4F7', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  photoBtn: { padding: 10, backgroundColor: '#F5EDE3', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   photoBtnText: { fontSize: 20 },
-  msgInput: { flex: 1, backgroundColor: '#F2F4F7', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#11181C', maxHeight: 120, borderWidth: 1, borderColor: '#E2E6EA' },
-  sendBtn: { padding: 10, backgroundColor: '#1A3A6B', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
+  msgInput: { flex: 1, backgroundColor: '#F5EDE3', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#11181C', maxHeight: 120, borderWidth: 1, borderColor: '#E2E6EA' },
+  sendBtn: { padding: 10, backgroundColor: '#2C2C2C', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
   sendBtnDisabled: { backgroundColor: '#B0BEC5' },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   // Programmation message
   scheduleBar: { backgroundColor: '#FAFBFC', borderTopWidth: 1, borderTopColor: '#E2E6EA', padding: 10 },
-  scheduleChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: '#F2F4F7', borderWidth: 1, borderColor: '#E2E6EA' },
-  scheduleChipActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
+  scheduleChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' },
+  scheduleChipActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
   scheduleChipText: { fontSize: 12, fontWeight: '600', color: '#687076' },
   // Barre et panneau de filtres
   filterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingVertical: 6 },
@@ -900,14 +1198,14 @@ const styles = StyleSheet.create({
   filterRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, flexWrap: 'wrap' as const },
   filterLabel: { fontSize: 12, fontWeight: '600', color: '#687076', minWidth: 28 },
   filterInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 12, color: '#11181C', width: 105 },
-  filterChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
-  filterChipActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
+  filterChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F5EDE3' },
+  filterChipActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
   filterChipText: { fontSize: 11, fontWeight: '600', color: '#687076' },
   filterChipTextActive: { color: '#fff' },
   // Sélecteur de chantier
   chantierBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', maxHeight: 44 },
   chantierBarContent: { paddingHorizontal: 12, paddingVertical: 6, gap: 6, alignItems: 'center' as const },
-  chantierChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
+  chantierChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F5EDE3' },
   chantierChipText: { fontSize: 12, fontWeight: '600', color: '#687076', maxWidth: 120 },
   // Bouton archiver discussion
   archiveDiscussionBtn: { marginHorizontal: 12, marginVertical: 6, paddingVertical: 10, borderRadius: 10, backgroundColor: '#FFF3E0', alignItems: 'center' as const, borderWidth: 1, borderColor: '#FFE0B2' },
@@ -915,7 +1213,7 @@ const styles = StyleSheet.create({
   // Menu contextuel
   contextOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center' as const, alignItems: 'center' as const, padding: 24 },
   contextMenu: { backgroundColor: '#fff', borderRadius: 14, padding: 8, width: '100%', maxWidth: 320 },
-  contextTitle: { fontSize: 13, color: '#687076', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F2F4F7' },
+  contextTitle: { fontSize: 13, color: '#687076', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' },
   contextBtn: { paddingHorizontal: 16, paddingVertical: 14, borderRadius: 8 },
   contextBtnDanger: {},
   contextBtnText: { fontSize: 15, fontWeight: '600', color: '#11181C' },

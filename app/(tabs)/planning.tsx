@@ -3,10 +3,11 @@ import { useRouter } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
-  TouchableWithoutFeedback, Keyboard, Image, Alert, RefreshControl,
+  TouchableWithoutFeedback, Keyboard, Image, Alert, RefreshControl, Linking,
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { compressImage } from '@/lib/imageUtils';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -22,6 +23,14 @@ import {
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
+import { ChantierActionsModal } from '@/components/ChantierActionsModal';
+import { PortailClient } from '@/components/PortailClient';
+import { BilanFinancierChantier } from '@/components/BilanFinancierChantier';
+import { MarchesChantier } from '@/components/MarchesChantier';
+// expo-print et expo-sharing nécessitent un build natif — import dynamique uniquement
+const getPrintModule = () => import('expo-print').catch(() => null);
+const getSharingModule = () => import('expo-sharing').catch(() => null);
 
 // ─── Mini calendrier inline pour la navigation planning ───────────────────────
 const CAL_JOURS = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
@@ -83,17 +92,17 @@ function DatePickerCalendar({ value, onChange }: { value: string; onChange: (v: 
 }
 const calStyles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  navBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2F4F7', alignItems: 'center', justifyContent: 'center' },
-  navArrow: { fontSize: 18, color: '#1A3A6B', fontWeight: '700' },
+  navBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' },
+  navArrow: { fontSize: 18, color: '#2C2C2C', fontWeight: '700' },
   title: { fontSize: 15, fontWeight: '700', color: '#11181C' },
   weekRow: { flexDirection: 'row', marginBottom: 6 },
   weekDay: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#687076', textTransform: 'uppercase' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginVertical: 1 },
-  cellToday: { borderWidth: 1.5, borderColor: '#1A3A6B' },
-  cellSel: { backgroundColor: '#1A3A6B' },
+  cellToday: { borderWidth: 1.5, borderColor: '#2C2C2C' },
+  cellSel: { backgroundColor: '#2C2C2C' },
   cellText: { fontSize: 13, color: '#11181C', fontWeight: '500' },
-  cellTextToday: { color: '#1A3A6B', fontWeight: '700' },
+  cellTextToday: { color: '#2C2C2C', fontWeight: '700' },
   cellTextSel: { color: '#fff', fontWeight: '700' },
 });
 
@@ -158,7 +167,7 @@ interface NoteModalState {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateOrdreAffectation, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, deletePointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, updateChantierOrderPlanning, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const { width: windowWidth } = useWindowDimensions();
@@ -173,11 +182,15 @@ export default function PlanningScreen() {
   const [directionDate, setDirectionDate] = useState(toYMD(new Date()));
   const [showAgendaForm, setShowAgendaForm] = useState(false);
   const [agendaEditId, setAgendaEditId] = useState<string | null>(null);
-  const [agendaForm, setAgendaForm] = useState({ titre: '', description: '', date: toYMD(new Date()), heureDebut: '09:00', heureFin: '10:00', lieu: '', couleur: '#1A3A6B', invites: [] as string[], chantierId: '' });
-  const AGENDA_COULEURS = ['#1A3A6B', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
-  const [weekOffset, setWeekOffset] = useState(0);
+  const [agendaForm, setAgendaForm] = useState({ titre: '', description: '', date: toYMD(new Date()), heureDebut: '09:00', heureFin: '10:00', lieu: '', couleur: '#2C2C2C', invites: [] as string[], chantierId: '' });
+  const AGENDA_COULEURS = ['#2C2C2C', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
+  // Weekend (samedi/dimanche) : afficher par défaut la semaine suivante
+  const [weekOffset, setWeekOffset] = useState(() => {
+    const dow = new Date().getDay(); // 0=dim, 6=sam
+    return (dow === 0 || dow === 6) ? 1 : 0;
+  });
   const [monthOffset, setMonthOffset] = useState(0);
-  const [viewMode, setViewMode] = useState<'semaine' | 'mois'>('semaine');
+  const [viewMode, setViewMode] = useState<'semaine' | 'mois' | 'gantt'>('semaine');
   const [showDatePicker, setShowDatePicker] = useState(false);
   // Modal admin : ajout/suppression d'employés dans une cellule
   const [modal, setModal] = useState<{ chantierId: string; date: string } | null>(null);
@@ -185,6 +198,12 @@ export default function PlanningScreen() {
   const [noteModal, setNoteModal] = useState<NoteModalState | null>(null);
   // Modal fiche chantier
   const [ficheModal, setFicheModal] = useState<{ chantier: typeof data.chantiers[0] } | null>(null);
+  // Modal Actions chantier (nouveau menu roue d'actions)
+  const [actionsChantierId, setActionsChantierId] = useState<string | null>(null);
+  // Sous-modales ouvertes depuis ChantierActionsModal (unifié avec l'onglet Chantiers)
+  const [portailClientIdPlanning, setPortailClientIdPlanning] = useState<string | null>(null);
+  const [bilanChantierIdPlanning, setBilanChantierIdPlanning] = useState<string | null>(null);
+  const [marchesIdPlanning, setMarchesIdPlanning] = useState<string | null>(null);
   // Modal intervention (admin)
   interface InterventionForm { libelle: string; description: string; dateDebut: string; dateFin: string; couleur: string; }
   const [interventionModal, setInterventionModal] = useState<{ chantierId: string; editId: string | null } | null>(null);
@@ -201,6 +220,7 @@ export default function PlanningScreen() {
   // Options de la note : répétition et visibilité
   const [noteRepeatDays, setNoteRepeatDays] = useState(0); // 0 = pas de répétition
   const [noteVisiblePar, setNoteVisiblePar] = useState<'tous' | 'employes' | 'soustraitants'>('tous');
+  const [noteSavTicketId, setNoteSavTicketId] = useState<string | null>(null);
   // Saisie manuelle de pointage (admin/RH)
   const [showSaisiePointage, setShowSaisiePointage] = useState(false);
   const [saisiePointageEmployeId, setSaisiePointageEmployeId] = useState('');
@@ -244,7 +264,7 @@ export default function PlanningScreen() {
           reader.readAsDataURL(file);
         });
       };
-      input.click();
+      input.click(); setTimeout(() => input.remove(), 60000);
     }
   };
 
@@ -284,7 +304,7 @@ export default function PlanningScreen() {
         };
         reader.readAsDataURL(file);
       };
-      input.click();
+      input.click(); setTimeout(() => input.remove(), 60000);
     }
   };
 
@@ -380,22 +400,81 @@ export default function PlanningScreen() {
   const isAdmin = currentUser?.role === 'admin';
   const isST = currentUser?.role === 'soustraitant';
 
-  // Modal changement mot de passe admin
+  // Modal déplacer un employé (drag & drop simplifié)
+  const [moveModal, setMoveModal] = useState<{ employeId: string; chantierId: string; date: string } | null>(null);
+  const [moveTargetChantierId, setMoveTargetChantierId] = useState<string | null>(null);
+  const [moveTargetDate, setMoveTargetDate] = useState<string>('');
+  const handleMoveEmploye = () => {
+    if (!moveModal || !moveTargetChantierId || !moveTargetDate) return;
+    // Récupérer les notes de l'ancienne affectation AVANT suppression
+    const oldAff = data.affectations.find(a =>
+      a.chantierId === moveModal.chantierId && a.employeId === moveModal.employeId &&
+      a.dateDebut <= moveModal.date && a.dateFin >= moveModal.date
+    );
+    const notesToKeep = (oldAff?.notes || []).filter(n => n.date === moveModal.date || !n.date);
+    // Mettre à jour la date des notes pour la nouvelle date
+    const migratedNotes = notesToKeep.map(n => ({ ...n, date: moveTargetDate }));
+    // Supprimer l'ancienne affectation pour ce jour
+    removeAffectation(moveModal.chantierId, moveModal.employeId, moveModal.date);
+    // Créer la nouvelle affectation avec les notes conservées
+    addAffectation({
+      id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      chantierId: moveTargetChantierId,
+      employeId: moveModal.employeId,
+      dateDebut: moveTargetDate,
+      dateFin: moveTargetDate,
+      notes: migratedNotes,
+    });
+    setMoveModal(null);
+  };
+
+  // Modal paramètres compte admin (identifiant + mot de passe + employé lié)
   const [showPwdModal, setShowPwdModal] = useState(false);
+  const [alertsExpanded, setAlertsExpanded] = useState(false);
+  const [adminIdEdit, setAdminIdEdit] = useState('');
+  const [adminEmployeIdEdit, setAdminEmployeIdEdit] = useState<string | undefined>(undefined);
+  const [magasinEdit, setMagasinEdit] = useState('');
   const [pwdActuel, setPwdActuel] = useState('');
   const [pwdNouveau, setPwdNouveau] = useState('');
   const [pwdConfirm, setPwdConfirm] = useState('');
   const [pwdError, setPwdError] = useState('');
   const [pwdSuccess, setPwdSuccess] = useState(false);
-  const handleChangePwd = () => {
-    const current = data.adminPassword || 'admin';
-    if (pwdActuel !== current) { setPwdError('Mot de passe actuel incorrect.'); return; }
-    if (pwdNouveau.length < 4) { setPwdError('Le nouveau mot de passe doit faire au moins 4 caractères.'); return; }
-    if (pwdNouveau !== pwdConfirm) { setPwdError('Les mots de passe ne correspondent pas.'); return; }
-    updateAdminPassword(pwdNouveau);
+  const openAdminSettings = () => {
+    setAdminIdEdit(data.adminIdentifiant || 'admin');
+    setAdminEmployeIdEdit(data.adminEmployeId);
+    setMagasinEdit(data.magasinPrefere || '');
+    setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdError(''); setPwdSuccess(false);
+    setShowPwdModal(true);
+  };
+  const handleSaveAdminSettings = () => {
+    // Valider identifiant
+    const newId = adminIdEdit.trim();
+    if (!newId) { setPwdError("L'identifiant ne peut pas être vide."); return; }
+    // Vérifier que l'identifiant n'est pas déjà pris par un employé ou sous-traitant
+    const idLower = newId.toLowerCase();
+    const currentAdminId = (data.adminIdentifiant || 'admin').toLowerCase();
+    if (idLower !== currentAdminId) {
+      const conflict = data.employes.find(e => e.identifiant.toLowerCase() === idLower)
+        || data.sousTraitants.find(s => s.identifiant.toLowerCase() === idLower);
+      if (conflict) { setPwdError("Cet identifiant est déjà utilisé par un employé ou sous-traitant."); return; }
+    }
+    // Valider mot de passe (seulement si l'utilisateur veut le changer)
+    if (pwdActuel || pwdNouveau || pwdConfirm) {
+      const current = data.adminPassword || 'admin';
+      if (pwdActuel !== current) { setPwdError('Mot de passe actuel incorrect.'); return; }
+      if (pwdNouveau.length < 4) { setPwdError('Le nouveau mot de passe doit faire au moins 4 caractères.'); return; }
+      if (pwdNouveau !== pwdConfirm) { setPwdError('Les mots de passe ne correspondent pas.'); return; }
+      updateAdminPassword(pwdNouveau);
+    }
+    // Sauvegarder identifiant
+    updateAdminIdentifiant(newId);
+    // Sauvegarder employé lié
+    updateAdminEmployeId(adminEmployeIdEdit);
+    // Sauvegarder magasin préféré
+    updateMagasinPrefere(magasinEdit.trim() || undefined);
     setPwdSuccess(true);
     setPwdError('');
-    setTimeout(() => { setShowPwdModal(false); setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdSuccess(false); }, 1500);
+    setTimeout(() => { setShowPwdModal(false); setPwdSuccess(false); }, 1500);
   };
   // ── Ordre affectations multi-chantiers ────────────────────────────────────
   const [ordreModal, setOrdreModal] = useState<{ employeId: string; date: string; chantierIds: string[] } | null>(null);
@@ -508,6 +587,97 @@ export default function PlanningScreen() {
     return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
   }, [weekOffset]);
 
+  // ── Export PDF planning de la semaine ────────────────────────────────────
+  const handleExportPDF = async () => {
+    try {
+      const JOURS_PDF = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+      const weekDays = days.slice(0, 5); // Lundi à Vendredi
+      const mondayStr = `${weekDays[0].getDate()} ${MOIS[weekDays[0].getMonth()]}`;
+      const fridayStr = `${weekDays[4].getDate()} ${MOIS[weekDays[4].getMonth()]}`;
+      const titre = `Semaine du ${mondayStr} au ${fridayStr} ${weekDays[4].getFullYear()}`;
+
+      // Collecter tous les employés qui ont au moins une affectation cette semaine
+      const employeMap = new Map<string, { nom: string; prenom: string; jours: { chantierId: string; chantierNom: string; couleur: string }[][] }>();
+      data.employes.forEach(emp => {
+        const joursData = weekDays.map(day => {
+          const affs = data.affectations.filter(a =>
+            a.employeId === emp.id && !a.soustraitantId && dateInRange(day, a.dateDebut, a.dateFin)
+          );
+          return affs.map(a => {
+            const ch = data.chantiers.find(c => c.id === a.chantierId);
+            return { chantierId: a.chantierId, chantierNom: ch?.nom || '?', couleur: ch?.couleur || '#2C2C2C' };
+          });
+        });
+        if (joursData.some(j => j.length > 0)) {
+          employeMap.set(emp.id, { nom: emp.nom, prenom: emp.prenom, jours: joursData });
+        }
+      });
+
+      let html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Planning ${titre}</title><style>
+        @page { size: landscape; margin: 10mm; }
+        body { font-family: -apple-system, 'Segoe UI', sans-serif; margin: 0; padding: 20px; color: #11181C; }
+        .header { text-align: center; margin-bottom: 16px; }
+        .header h1 { font-size: 14px; color: #2C2C2C; margin: 0 0 4px; letter-spacing: 2px; }
+        .header h2 { font-size: 18px; color: #11181C; margin: 0; }
+        table { width: 100%; border-collapse: collapse; font-size: 12px; }
+        th { background: #2C2C2C; color: #fff; padding: 8px 6px; text-align: center; font-weight: 700; }
+        th:first-child { text-align: left; width: 140px; }
+        td { border: 1px solid #E2E6EA; padding: 6px; vertical-align: top; text-align: center; min-height: 32px; }
+        td:first-child { font-weight: 600; background: #FAFBFC; text-align: left; }
+        .chantier-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; color: #fff; font-size: 11px; font-weight: 600; margin: 1px 0; }
+        .footer { text-align: center; margin-top: 16px; font-size: 10px; color: #687076; }
+      </style></head><body>`;
+      html += `<div class="header"><h1>SK DECO</h1><h2>${titre}</h2></div>`;
+      html += `<table><tr><th>Employé</th>`;
+      JOURS_PDF.forEach((j, i) => {
+        html += `<th>${j} ${weekDays[i].getDate()}/${weekDays[i].getMonth() + 1}</th>`;
+      });
+      html += `</tr>`;
+
+      employeMap.forEach(({ nom, prenom, jours }) => {
+        html += `<tr><td>${prenom} ${nom}</td>`;
+        jours.forEach(dayChantiers => {
+          html += `<td>`;
+          if (dayChantiers.length === 0) {
+            html += `—`;
+          } else {
+            dayChantiers.forEach(ch => {
+              html += `<span class="chantier-tag" style="background:${ch.couleur}">${ch.chantierNom}</span><br/>`;
+            });
+          }
+          html += `</td>`;
+        });
+        html += `</tr>`;
+      });
+
+      html += `</table>`;
+      html += `<div class="footer">SK DECO Planning — Généré le ${new Date().toLocaleDateString('fr-FR')}</div>`;
+      html += `</body></html>`;
+
+      if (Platform.OS === 'web') {
+        const win = window.open('', '_blank');
+        if (win) { win.document.write(html); win.document.close(); setTimeout(() => win.print(), 500); }
+      } else {
+        // Mobile: tenter expo-print + expo-sharing (nécessite build natif)
+        try {
+          const PrintMod = await getPrintModule();
+          const SharingMod = await getSharingModule();
+          if (PrintMod && SharingMod) {
+            const { uri } = await PrintMod.printToFileAsync({ html, width: 842, height: 595 });
+            await SharingMod.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: 'Planning PDF' });
+          } else {
+            Alert.alert('Export PDF', 'Cette fonctionnalité sera disponible après la prochaine mise à jour de l\'app.');
+          }
+        } catch {
+          Alert.alert('Export PDF', 'Cette fonctionnalité sera disponible après la prochaine mise à jour de l\'app.');
+        }
+      }
+    } catch {
+      if (Platform.OS === 'web') window.alert('Erreur lors de la génération du PDF.');
+      else Alert.alert('Erreur', 'Impossible de générer le PDF.');
+    }
+  };
+
   // Calcul du mois courant (vue mensuelle)
   const monthData = useMemo(() => {
     const today = new Date();
@@ -526,8 +696,22 @@ export default function PlanningScreen() {
 
   // Chantiers visibles sur le planning
   const visibleChantiers = useMemo(() => {
-    const sortByOrdre = (arr: typeof data.chantiers) =>
-      [...arr].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
+    const customOrder = data.chantierOrderPlanning || [];
+    const sortByOrdre = (arr: typeof data.chantiers) => {
+      // Tri par défaut (champ "ordre")
+      const base = [...arr].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
+      // Si un ordre personnalisé existe, on le superpose : les chantiers listés
+      // dans customOrder passent en premier dans l'ordre indiqué, les autres à la suite.
+      if (customOrder.length === 0) return base;
+      return base.sort((a, b) => {
+        const ia = customOrder.indexOf(a.id);
+        const ib = customOrder.indexOf(b.id);
+        if (ia === -1 && ib === -1) return 0;
+        if (ia === -1) return 1;
+        if (ib === -1) return -1;
+        return ia - ib;
+      });
+    };
     if (isAdmin) {
       return sortByOrdre(data.chantiers.filter(c => c.visibleSurPlanning));
     }
@@ -538,6 +722,18 @@ export default function PlanningScreen() {
         .map(a => a.chantierId);
       return sortByOrdre(data.chantiers.filter(c => c.visibleSurPlanning && stAffChantierIds.includes(c.id)));
     }
+    // Apporteur (architecte / apporteur / contractant / client) : uniquement ses chantiers liés
+    if (currentUser?.role === 'apporteur' && currentUser?.apporteurId) {
+      const myId = currentUser.apporteurId;
+      return sortByOrdre(data.chantiers.filter(c =>
+        c.visibleSurPlanning && (
+          c.architecteId === myId ||
+          c.apporteurId === myId ||
+          c.contractantId === myId ||
+          c.clientApporteurId === myId
+        )
+      ));
+    }
     // Employé : uniquement les chantiers où il est affecté
     return sortByOrdre(data.chantiers.filter(c =>
       c.visibleSurPlanning &&
@@ -547,6 +743,53 @@ export default function PlanningScreen() {
       )
     ));
   }, [data, isAdmin, isST, currentUser]);
+
+  // ─── Réorganisation des chantiers sur le Planning (admin) ─────────────────
+  // L'ordre de référence part de visibleChantiers pour que les nouveaux chantiers
+  // (non encore dans chantierOrderPlanning) soient pris en compte automatiquement.
+  const moveChantierInPlanning = useCallback((id: string, direction: 'up' | 'down' | 'top' | 'bottom') => {
+    const base = (data.chantierOrderPlanning && data.chantierOrderPlanning.length > 0)
+      ? [...data.chantierOrderPlanning]
+      : visibleChantiers.map(c => c.id);
+    // S'assurer que tous les chantiers visibles sont dans la liste (ajoute les absents en fin)
+    visibleChantiers.forEach(c => { if (!base.includes(c.id)) base.push(c.id); });
+    const idx = base.indexOf(id);
+    if (idx === -1) return;
+    const newOrder = [...base];
+    if (direction === 'up') {
+      if (idx <= 0) return;
+      [newOrder[idx - 1], newOrder[idx]] = [newOrder[idx], newOrder[idx - 1]];
+    } else if (direction === 'down') {
+      if (idx >= newOrder.length - 1) return;
+      [newOrder[idx + 1], newOrder[idx]] = [newOrder[idx], newOrder[idx + 1]];
+    } else if (direction === 'top') {
+      if (idx === 0) return;
+      newOrder.splice(idx, 1);
+      newOrder.unshift(id);
+    } else if (direction === 'bottom') {
+      if (idx === newOrder.length - 1) return;
+      newOrder.splice(idx, 1);
+      newOrder.push(id);
+    }
+    updateChantierOrderPlanning(newOrder);
+  }, [data.chantierOrderPlanning, visibleChantiers, updateChantierOrderPlanning]);
+
+  const showReorderMenu = useCallback((chantierId: string) => {
+    if (!isAdmin) return;
+    const chantier = data.chantiers.find(c => c.id === chantierId);
+    if (!chantier) return;
+    Alert.alert(
+      chantier.nom,
+      'Réorganiser dans le planning :',
+      [
+        { text: '⇱ En premier', onPress: () => moveChantierInPlanning(chantierId, 'top') },
+        { text: '↑ Monter', onPress: () => moveChantierInPlanning(chantierId, 'up') },
+        { text: '↓ Descendre', onPress: () => moveChantierInPlanning(chantierId, 'down') },
+        { text: '⇲ En dernier', onPress: () => moveChantierInPlanning(chantierId, 'bottom') },
+        { text: 'Annuler', style: 'cancel' },
+      ]
+    );
+  }, [isAdmin, data.chantiers, moveChantierInPlanning]);
 
   // Employés affectés à un chantier pour un jour donné (excluant les affectations ST)
   const getEmployesForCell = useCallback((chantierId: string, day: Date): Employe[] => {
@@ -778,6 +1021,16 @@ export default function PlanningScreen() {
     }
   };
 
+  const toggleLieuTravail = (chantierId: string, employeId: string, dateStr: string) => {
+    const aff = data.affectations.find(a =>
+      a.chantierId === chantierId && a.employeId === employeId &&
+      a.dateDebut <= dateStr && a.dateFin >= dateStr
+    );
+    if (!aff) return;
+    const newLieu = aff.lieu === 'atelier' ? 'chantier' : 'atelier';
+    updateAffectation({ ...aff, lieu: newLieu });
+  };
+
   const toggleST = (stId: string) => {
     if (!modal) return;
     if (isSTInCell(stId)) {
@@ -844,6 +1097,7 @@ export default function PlanningScreen() {
     setNewTaskText('');
     setNoteVisiblePar('tous');
     setNoteVisibleIds([]);
+    setNoteSavTicketId(null);
     setShowNoteEditor(true);
   };
 
@@ -880,6 +1134,21 @@ export default function PlanningScreen() {
     setShowNoteEditor(false);
     setNoteText('');
     setNotePhotos([]);
+  };
+
+  /** Ferme le modal note en sauvegardant automatiquement si contenu non vide */
+  const closeNoteModal = () => {
+    if (noteModal && showNoteEditor && (noteText.trim() || pendingTasksList.length > 0)) {
+      saveNote();
+    }
+    setNoteModal(null);
+    setNoteText('');
+    setNotePhotos([]);
+    setPendingTasksList([]);
+    setNewTaskText('');
+    setShowTaskInput(false);
+    setShowNoteEditor(false);
+    Keyboard.dismiss();
   };
 
   /** Sauvegarde la note en cours d'édition */
@@ -947,6 +1216,7 @@ export default function PlanningScreen() {
           photos: notePhotos,
           tasks: tasksToSave.length > 0 ? tasksToSave.map(t => ({ ...t, id: genId() })) : undefined,
           visiblePar: finalVisiblePar,
+          savTicketId: noteSavTicketId || undefined,
           createdAt: now,
           updatedAt: now,
         };
@@ -1085,7 +1355,7 @@ export default function PlanningScreen() {
         });
         document.body.removeChild(input);
       };
-      input.click();
+      input.click(); setTimeout(() => input.remove(), 60000);
     } else {
       const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
       if (!perm.granted) return;
@@ -1096,7 +1366,8 @@ export default function PlanningScreen() {
       });
       if (!result.canceled) {
         for (const asset of result.assets) {
-          await uploadAndAdd(asset.uri);
+          const compressed = await compressImage(asset.uri);
+          await uploadAndAdd(compressed);
         }
       }
     }
@@ -1123,47 +1394,37 @@ export default function PlanningScreen() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
       {/* En-tête */}
       <View style={styles.header}>
         {/* Logo + titre sur une seule ligne */}
         <View style={styles.headerLogoWrap}>
           <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
-          <Text style={styles.headerTitle}>{t.planning.title}</Text>
           {isAdmin && (
-            <Pressable style={{ marginLeft: 4 }} onPress={() => { setPwdActuel(''); setPwdNouveau(''); setPwdConfirm(''); setPwdError(''); setPwdSuccess(false); setShowPwdModal(true); }}>
-              <Text style={{ fontSize: 14 }}>🔒</Text>
+            <Pressable style={{ marginLeft: 4 }} onPress={openAdminSettings}>
+              <Text style={{ fontSize: 14 }}>⚙️</Text>
             </Pressable>
           )}
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.navRow}>
-          {/* Badge matériel non acheté — visible acheteurs/admin uniquement */}
-          {isAcheteurPlanning && nbArticlesNonAchetes > 0 && (
-            <Pressable style={styles.materielBadge} onPress={() => router.push('/(tabs)/materiel' as any)}>
-              <Text style={styles.materielBadgeIcon}>🛒</Text>
-              <View style={styles.materielBadgeCount}>
-                <Text style={styles.materielBadgeCountText}>{nbArticlesNonAchetes}</Text>
+          {/* Toggle vue semaine / mois / gantt — masqué en planning direction */}
+          {planningMode === 'equipe' && (
+            <>
+              <View style={styles.viewToggle}>
+                <Pressable style={[styles.viewToggleBtn, viewMode === 'semaine' && styles.viewToggleBtnActive]} onPress={() => setViewMode('semaine')}>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'semaine' && styles.viewToggleBtnTextActive]}>7j</Text>
+                </Pressable>
+                <Pressable style={[styles.viewToggleBtn, viewMode === 'mois' && styles.viewToggleBtnActive]} onPress={() => setViewMode('mois')}>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'mois' && styles.viewToggleBtnTextActive]}>Mois</Text>
+                </Pressable>
+                {isAdmin && (
+                  <Pressable style={[styles.viewToggleBtn, viewMode === 'gantt' && styles.viewToggleBtnActive]} onPress={() => setViewMode('gantt')}>
+                    <Text style={[styles.viewToggleBtnText, viewMode === 'gantt' && styles.viewToggleBtnTextActive]}>Chantiers</Text>
+                  </Pressable>
+                )}
               </View>
-            </Pressable>
+            </>
           )}
-          {/* Toggle vue semaine / mois */}
-          <View style={styles.viewToggle}>
-            <Pressable style={[styles.viewToggleBtn, viewMode === 'semaine' && styles.viewToggleBtnActive]} onPress={() => setViewMode('semaine')}>
-              <Text style={[styles.viewToggleBtnText, viewMode === 'semaine' && styles.viewToggleBtnTextActive]}>7j</Text>
-            </Pressable>
-            <Pressable style={[styles.viewToggleBtn, viewMode === 'mois' && styles.viewToggleBtnActive]} onPress={() => setViewMode('mois')}>
-              <Text style={[styles.viewToggleBtnText, viewMode === 'mois' && styles.viewToggleBtnTextActive]}>Mois</Text>
-            </Pressable>
-          </View>
-          <Pressable style={styles.navBtn} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}>
-            <Text style={styles.navArrow}>‹</Text>
-          </Pressable>
-          <Pressable style={styles.todayBtn} onPress={() => setShowDatePicker(true)}>
-            <Text style={styles.todayBtnText}>Auj.</Text>
-          </Pressable>
-          <Pressable style={styles.navBtn} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}>
-            <Text style={styles.navArrow}>›</Text>
-          </Pressable>
           {/* Bouton retard planifié (employé non-admin) */}
           {!isAdmin && !isST && currentUser?.employeId && (() => {
             const nbRetards = (data.retardsPlanifies || []).filter(r => r.employeId === currentUser.employeId && !r.lu).length;
@@ -1181,23 +1442,7 @@ export default function PlanningScreen() {
               </Pressable>
             );
           })()}
-          {/* Bouton saisie manuelle pointage (admin/RH) + badge retards planifiés */}
-          {(isAdmin || (currentEmployePlanning?.isRH === true)) && (() => {
-            const nbRetardsPlanifies = (data.retardsPlanifies || []).filter(r => !r.lu).length;
-            return (
-              <Pressable
-                style={[styles.saisieBtn, { position: 'relative' }]}
-                onPress={() => setShowSaisiePointage(true)}
-              >
-                <Text style={styles.saisieBtnText}>✏️</Text>
-                {nbRetardsPlanifies > 0 && (
-                  <View style={[styles.materielBadgeCount, { position: 'absolute', top: -4, right: -4, width: 16, height: 16, backgroundColor: '#E74C3C' }]}>
-                    <Text style={[styles.materielBadgeCountText, { fontSize: 9 }]}>{nbRetardsPlanifies}</Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })()}
+          {/* Bouton saisie manuelle pointage déplacé vers l'accueil */}
           {/* Bouton dupliquer semaine — admin uniquement */}
           {isAdmin && viewMode === 'semaine' && (
             <Pressable style={styles.galerieBtn} onPress={() => {
@@ -1252,6 +1497,12 @@ export default function PlanningScreen() {
           <Pressable style={styles.galerieBtn} onPress={() => { setGalerieChantierId(undefined); setShowGalerieGlobale(true); }}>
             <Text style={styles.galerieBtnText}>📷</Text>
           </Pressable>
+          {/* Bouton PDF planning — admin uniquement */}
+          {isAdmin && (
+            <Pressable style={styles.galerieBtn} onPress={handleExportPDF} accessibilityLabel="Exporter planning PDF">
+              <Text style={styles.galerieBtnText}>📄</Text>
+            </Pressable>
+          )}
           {/* Bouton export/sauvegarde — admin uniquement */}
           {isAdmin && (
             <Pressable style={styles.galerieBtn} onPress={handleExportData} accessibilityLabel="Exporter les données">
@@ -1269,17 +1520,66 @@ export default function PlanningScreen() {
       {isAdmin && (
         <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingHorizontal: 12, paddingVertical: 6, gap: 6 }}>
           <Pressable
-            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'equipe' ? '#1A3A6B' : '#F2F4F7' }}
+            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'equipe' ? '#2C2C2C' : '#F5EDE3' }}
             onPress={() => setPlanningMode('equipe')}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: planningMode === 'equipe' ? '#fff' : '#687076' }}>👷 Planning Équipe</Text>
           </Pressable>
           <Pressable
-            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'direction' ? '#1A3A6B' : '#F2F4F7' }}
+            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'direction' ? '#2C2C2C' : '#F5EDE3' }}
             onPress={() => setPlanningMode('direction')}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: planningMode === 'direction' ? '#fff' : '#687076' }}>📅 Planning Direction</Text>
           </Pressable>
         </View>
       )}
+
+      {/* ═══ ALERTES RETARD CHANTIERS — bannière pliable (admin) ═══ */}
+      {isAdmin && (() => {
+        const today = toYMD(new Date());
+        const chantiersEnRetard = data.chantiers.filter(c =>
+          c.statut === 'actif' && c.dateFin && /^\d{4}-\d{2}-\d{2}$/.test(c.dateFin) && c.dateFin < today
+        );
+        const chantiersProches = data.chantiers.filter(c => {
+          if (c.statut !== 'actif' || !c.dateFin || !/^\d{4}-\d{2}-\d{2}$/.test(c.dateFin) || c.dateFin < today) return false;
+          const diff = Math.ceil((new Date(c.dateFin + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
+          return diff <= 7;
+        });
+        const totalAlertes = chantiersEnRetard.length + chantiersProches.length;
+        if (totalAlertes === 0) return null;
+        return (
+          <Pressable
+            style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: chantiersEnRetard.length > 0 ? '#FDECEA' : '#FFF8E1', borderRadius: 10, padding: 10, borderLeftWidth: 4, borderLeftColor: chantiersEnRetard.length > 0 ? '#E74C3C' : '#F59E0B' }}
+            onPress={() => setAlertsExpanded(v => !v)}
+          >
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Text style={{ fontWeight: '700', color: chantiersEnRetard.length > 0 ? '#B71C1C' : '#856404', fontSize: 13 }}>
+                ⚠️ {totalAlertes} alerte{totalAlertes > 1 ? 's' : ''} chantier{totalAlertes > 1 ? 's' : ''}
+                {chantiersEnRetard.length > 0 ? ` (${chantiersEnRetard.length} en retard)` : ''}
+              </Text>
+              <Text style={{ fontSize: 14, color: '#687076' }}>{alertsExpanded ? '▲' : '▼'}</Text>
+            </View>
+            {alertsExpanded && (
+              <View style={{ marginTop: 8, gap: 6 }}>
+                {chantiersEnRetard.map(c => {
+                  const jours = Math.ceil((new Date(today + 'T12:00:00').getTime() - new Date(c.dateFin + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <Text key={c.id} style={{ fontSize: 12, color: '#B71C1C', marginLeft: 8 }}>
+                      • {c.nom} — fin prévue le {new Date(c.dateFin + 'T12:00:00').toLocaleDateString('fr-FR')} ({jours}j de retard)
+                    </Text>
+                  );
+                })}
+                {chantiersProches.map(c => {
+                  const jours = Math.ceil((new Date(c.dateFin + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <Text key={c.id} style={{ fontSize: 12, color: '#856404', marginLeft: 8 }}>
+                      • {c.nom} — fin le {new Date(c.dateFin + 'T12:00:00').toLocaleDateString('fr-FR')} ({jours}j restant{jours > 1 ? 's' : ''})
+                    </Text>
+                  );
+                })}
+              </View>
+            )}
+          </Pressable>
+        );
+      })()}
 
       {/* ═══ PLANNING DIRECTION ═══ */}
       {planningMode === 'direction' && isAdmin && <PlanningDirection />}
@@ -1343,11 +1643,11 @@ export default function PlanningScreen() {
 
         return (
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 32 }}
-            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2C2C2C']} tintColor="#2C2C2C" />}>
             {/* Vue selector + nav */}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
               {(['jour', 'semaine', 'mois'] as const).map(v => (
-                <Pressable key={v} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: directionView === v ? '#1A3A6B' : '#F2F4F7', borderWidth: 1, borderColor: directionView === v ? '#1A3A6B' : '#E2E6EA' }}
+                <Pressable key={v} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: directionView === v ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: directionView === v ? '#2C2C2C' : '#E2E6EA' }}
                   onPress={() => setDirectionView(v)}>
                   <Text style={{ fontSize: 12, fontWeight: '600', color: directionView === v ? '#fff' : '#687076' }}>
                     {v === 'jour' ? 'Jour' : v === 'semaine' ? 'Semaine' : 'Mois'}
@@ -1356,7 +1656,7 @@ export default function PlanningScreen() {
               ))}
               <View style={{ flex: 1 }} />
               <Pressable onPress={prevDir} style={{ padding: 6 }}><Text style={{ fontSize: 18 }}>‹</Text></Pressable>
-              <Pressable onPress={() => setDirectionDate(toYMD(new Date()))} style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#1A3A6B', borderRadius: 8 }}>
+              <Pressable onPress={() => setDirectionDate(toYMD(new Date()))} style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#2C2C2C', borderRadius: 8 }}>
                 <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>Auj.</Text>
               </Pressable>
               <Pressable onPress={nextDir} style={{ padding: 6 }}><Text style={{ fontSize: 18 }}>›</Text></Pressable>
@@ -1365,10 +1665,10 @@ export default function PlanningScreen() {
             <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C', marginBottom: 10 }}>{dirLabel}</Text>
 
             {/* Bouton nouveau RDV */}
-            <Pressable style={{ backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginBottom: 12 }}
+            <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginBottom: 12 }}
               onPress={() => {
                 setAgendaEditId(null);
-                setAgendaForm({ titre: '', description: '', date: directionDate, heureDebut: '09:00', heureFin: '10:00', lieu: '', couleur: '#1A3A6B', invites: [], chantierId: '' });
+                setAgendaForm({ titre: '', description: '', date: directionDate, heureDebut: '09:00', heureFin: '10:00', lieu: '', couleur: '#2C2C2C', invites: [], chantierId: '' });
                 setShowAgendaForm(true);
               }}>
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>+ Nouveau rendez-vous</Text>
@@ -1379,7 +1679,7 @@ export default function PlanningScreen() {
               <View key={date}>
                 {directionView !== 'jour' && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8, marginBottom: 4 }}>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#1A3A6B' }}>{JOURS_COURT[new Date(date + 'T12:00:00').getDay()]} {new Date(date + 'T12:00:00').getDate()}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C' }}>{JOURS_COURT[new Date(date + 'T12:00:00').getDay()]} {new Date(date + 'T12:00:00').getDate()}</Text>
                     {evts.length === 0 && <Text style={{ fontSize: 11, color: '#B0BEC5' }}>—</Text>}
                   </View>
                 )}
@@ -1391,6 +1691,25 @@ export default function PlanningScreen() {
                         setAgendaEditId(evt.id);
                         setAgendaForm({ titre: evt.titre, description: evt.description || '', date: evt.date, heureDebut: evt.heureDebut, heureFin: evt.heureFin || '', lieu: evt.lieu || '', couleur: evt.couleur, invites: evt.invites, chantierId: (evt as any).chantierId || '' });
                         setShowAgendaForm(true);
+                      }}
+                      onLongPress={() => {
+                        // Proposer les jours de la semaine pour deplacer
+                        const jours: string[] = [];
+                        for (let d = -3; d <= 7; d++) {
+                          const dt = new Date();
+                          dt.setDate(dt.getDate() + d);
+                          jours.push(toYMD(dt));
+                        }
+                        if (Platform.OS === 'web') {
+                          const newDate = window.prompt(`Déplacer "${evt.titre}" à quelle date ? (AAAA-MM-JJ)`, evt.date);
+                          if (newDate && newDate !== evt.date) updateAgendaEvent({ ...evt, date: newDate });
+                        } else {
+                          const options = jours.filter(j => j !== evt.date).slice(0, 7).map(j => ({
+                            text: new Date(j + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+                            onPress: () => updateAgendaEvent({ ...evt, date: j }),
+                          }));
+                          Alert.alert(`Déplacer "${evt.titre}"`, 'Choisir la nouvelle date :', [{ text: 'Annuler', style: 'cancel' }, ...options]);
+                        }
                       }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                         <View style={{ flex: 1 }}>
@@ -1409,7 +1728,7 @@ export default function PlanningScreen() {
                           {evt.invites.map(invId => {
                             const emp = data.employes.find(e => e.id === invId);
                             return <View key={invId} style={{ backgroundColor: '#EBF0FF', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }}>
-                              <Text style={{ fontSize: 10, color: '#1A3A6B', fontWeight: '600' }}>{emp ? `${emp.prenom} ${emp.nom.charAt(0)}.` : invId}</Text>
+                              <Text style={{ fontSize: 10, color: '#2C2C2C', fontWeight: '600' }}>{emp ? `${emp.prenom} ${emp.nom.charAt(0)}.` : invId}</Text>
                             </View>;
                           })}
                         </View>
@@ -1427,46 +1746,56 @@ export default function PlanningScreen() {
             ))}
 
             {/* Modal formulaire RDV */}
-            <Modal visible={showAgendaForm} transparent animationType="slide" onRequestClose={() => setShowAgendaForm(false)}>
+            <ModalKeyboard visible={showAgendaForm} transparent animationType="slide" onRequestClose={() => setShowAgendaForm(false)}>
               <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowAgendaForm(false)}>
-                <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '90%' }} onPress={e => e.stopPropagation()}>
-                  <ScrollView showsVerticalScrollIndicator={false}>
+                <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '90%' }} onPress={() => {}}>
+                  <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
                     <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C', marginBottom: 12 }}>{agendaEditId ? 'Modifier' : 'Nouveau rendez-vous'}</Text>
                     <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Titre *</Text>
-                    <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8 }}
+                    <TextInput style={{ backgroundColor: '#F5EDE3', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8 }}
                       value={agendaForm.titre} onChangeText={v => setAgendaForm(f => ({ ...f, titre: v }))} placeholder="Réunion, visite..." />
                     <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Description</Text>
-                    <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, minHeight: 50 }}
+                    <TextInput style={{ backgroundColor: '#F5EDE3', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, minHeight: 50 }}
                       value={agendaForm.description} onChangeText={v => setAgendaForm(f => ({ ...f, description: v }))} multiline placeholder="Détails..." />
                     <View style={{ flexDirection: 'row', gap: 6 }}>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Date</Text>
-                        <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA' }}
+                        <TextInput style={{ backgroundColor: '#F5EDE3', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA' }}
                           value={agendaForm.date} onChangeText={v => setAgendaForm(f => ({ ...f, date: v }))} placeholder="AAAA-MM-JJ" />
                       </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Début</Text>
-                        <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA' }}
-                          value={agendaForm.heureDebut} onChangeText={v => setAgendaForm(f => ({ ...f, heureDebut: v }))} placeholder="HH:MM" />
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Fin</Text>
-                        <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA' }}
-                          value={agendaForm.heureFin} onChangeText={v => setAgendaForm(f => ({ ...f, heureFin: v }))} placeholder="HH:MM" />
-                      </View>
+                    </View>
+                    {/* Sélecteur heure début */}
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 6, marginTop: 8 }}>Début : {agendaForm.heureDebut}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+                      {Array.from({ length: 28 }, (_, i) => { const h = Math.floor(i / 2) + 7; const m = i % 2 === 0 ? '00' : '30'; return `${String(h).padStart(2, '0')}:${m}`; }).map(h => (
+                        <Pressable key={`d_${h}`} style={{ paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, backgroundColor: agendaForm.heureDebut === h ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: agendaForm.heureDebut === h ? '#2C2C2C' : '#E2E6EA' }}
+                          onPress={() => setAgendaForm(f => ({ ...f, heureDebut: h }))}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: agendaForm.heureDebut === h ? '#fff' : '#687076' }}>{h}</Text>
+                        </Pressable>
+                      ))}
+                    </View>
+                    {/* Sélecteur heure fin */}
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 6 }}>Fin : {agendaForm.heureFin}</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
+                      {Array.from({ length: 28 }, (_, i) => { const h = Math.floor(i / 2) + 7; const m = i % 2 === 0 ? '00' : '30'; return `${String(h).padStart(2, '0')}:${m}`; }).map(h => (
+                        <Pressable key={`f_${h}`} style={{ paddingHorizontal: 8, paddingVertical: 6, borderRadius: 8, backgroundColor: agendaForm.heureFin === h ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: agendaForm.heureFin === h ? '#2C2C2C' : '#E2E6EA' }}
+                          onPress={() => setAgendaForm(f => ({ ...f, heureFin: h }))}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: agendaForm.heureFin === h ? '#fff' : '#687076' }}>{h}</Text>
+                        </Pressable>
+                      ))}
                     </View>
                     <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4, marginTop: 8 }}>Lieu</Text>
-                    <TextInput style={{ backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8 }}
+                    <TextInput style={{ backgroundColor: '#F5EDE3', borderRadius: 8, padding: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8 }}
                       value={agendaForm.lieu} onChangeText={v => setAgendaForm(f => ({ ...f, lieu: v }))} placeholder="Adresse..." />
                     {/* Chantier */}
                     <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Chantier associé</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
-                      <Pressable style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: !agendaForm.chantierId ? '#1A3A6B' : '#F2F4F7', borderWidth: 1, borderColor: !agendaForm.chantierId ? '#1A3A6B' : '#E2E6EA' }}
+                      <Pressable style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: !agendaForm.chantierId ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: !agendaForm.chantierId ? '#2C2C2C' : '#E2E6EA' }}
                         onPress={() => setAgendaForm(f => ({ ...f, chantierId: '' }))}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: !agendaForm.chantierId ? '#fff' : '#687076' }}>Aucun</Text>
                       </Pressable>
                       {data.chantiers.filter(c => c.statut === 'actif').map(c => (
-                        <Pressable key={c.id} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: agendaForm.chantierId === c.id ? c.couleur : '#F2F4F7', borderWidth: 1, borderColor: agendaForm.chantierId === c.id ? c.couleur : '#E2E6EA' }}
+                        <Pressable key={c.id} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, backgroundColor: agendaForm.chantierId === c.id ? c.couleur : '#F5EDE3', borderWidth: 1, borderColor: agendaForm.chantierId === c.id ? c.couleur : '#E2E6EA' }}
                           onPress={() => setAgendaForm(f => ({ ...f, chantierId: f.chantierId === c.id ? '' : c.id }))}>
                           <Text style={{ fontSize: 12, fontWeight: '600', color: agendaForm.chantierId === c.id ? '#fff' : '#687076' }}>{c.nom}</Text>
                         </Pressable>
@@ -1484,20 +1813,20 @@ export default function PlanningScreen() {
                     <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Inviter</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                       {data.employes.map(emp => (
-                        <Pressable key={emp.id} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: agendaForm.invites.includes(emp.id) ? '#1A3A6B' : '#F2F4F7', borderWidth: 1, borderColor: agendaForm.invites.includes(emp.id) ? '#1A3A6B' : '#E2E6EA' }}
+                        <Pressable key={emp.id} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: agendaForm.invites.includes(emp.id) ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: agendaForm.invites.includes(emp.id) ? '#2C2C2C' : '#E2E6EA' }}
                           onPress={() => setAgendaForm(f => ({ ...f, invites: f.invites.includes(emp.id) ? f.invites.filter(i => i !== emp.id) : [...f.invites, emp.id] }))}>
                           <Text style={{ fontSize: 12, fontWeight: '600', color: agendaForm.invites.includes(emp.id) ? '#fff' : '#687076' }}>{emp.prenom} {emp.nom.charAt(0)}.</Text>
                         </Pressable>
                       ))}
                     </View>
-                    <Pressable style={{ backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: agendaForm.titre.trim() ? 1 : 0.5 }}
+                    <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: agendaForm.titre.trim() ? 1 : 0.5 }}
                       onPress={handleSaveAgenda} disabled={!agendaForm.titre.trim()}>
                       <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{agendaEditId ? 'Modifier' : 'Créer'}</Text>
                     </Pressable>
                   </ScrollView>
                 </Pressable>
               </Pressable>
-            </Modal>
+            </ModalKeyboard>
           </ScrollView>
         );
       })()}
@@ -1506,7 +1835,18 @@ export default function PlanningScreen() {
       {(planningMode === 'equipe' || !isAdmin) && (
       <>
       <View style={styles.weekInfo}>
-        <Text style={styles.weekLabel}>{viewMode === 'semaine' ? weekLabel : monthData.label}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+          <Text style={styles.weekLabel}>{viewMode === 'semaine' ? weekLabel : monthData.label}</Text>
+          <Pressable style={{ padding: 4 }} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}>
+            <Text style={{ fontSize: 16, color: '#2C2C2C' }}>‹</Text>
+          </Pressable>
+          <Pressable style={{ backgroundColor: '#F5EDE3', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }} onPress={() => setShowDatePicker(true)}>
+            <Text style={{ fontSize: 10, fontWeight: '600', color: '#2C2C2C' }}>Auj.</Text>
+          </Pressable>
+          <Pressable style={{ padding: 4 }} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}>
+            <Text style={{ fontSize: 16, color: '#2C2C2C' }}>›</Text>
+          </Pressable>
+        </View>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
           <Text style={styles.chantierCount}>{visibleChantiers.length} chantier{visibleChantiers.length !== 1 ? 's' : ''}</Text>
           {isAdmin && viewMode === 'semaine' && (() => {
@@ -1544,7 +1884,7 @@ export default function PlanningScreen() {
       {/* Modal calendrier de navigation */}
       <Modal visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
         <Pressable style={styles.datePickerOverlay} onPress={() => setShowDatePicker(false)}>
-          <Pressable style={styles.datePickerSheet} onPress={e => e.stopPropagation()}>
+          <Pressable style={styles.datePickerSheet} onPress={() => {}}>
             <Text style={styles.datePickerTitle}>Aller à la semaine du…</Text>
             <DatePickerCalendar
               value={toYMD(days[0])}
@@ -1572,7 +1912,7 @@ export default function PlanningScreen() {
 
       {/* Vue mensuelle */}
       {viewMode === 'mois' && (
-        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
+        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2C2C2C']} tintColor="#2C2C2C" />}>
           {/* En-tête jours semaine */}
           <View style={styles.monthHeaderRow}>
             {CAL_JOURS.map(j => (
@@ -1640,9 +1980,116 @@ export default function PlanningScreen() {
         </ScrollView>
       )}
 
+      {/* ═══ VUE GANTT ═══ */}
+      {viewMode === 'gantt' && isAdmin && (() => {
+        // Calcul de la plage Gantt : 3 mois glissants
+        const ganttToday = new Date();
+        const ganttStart = new Date(ganttToday.getFullYear(), ganttToday.getMonth() + monthOffset, 1);
+        const ganttEnd = new Date(ganttStart.getFullYear(), ganttStart.getMonth() + 3, 0);
+        const ganttTotalDays = Math.ceil((ganttEnd.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        const ganttChantiers = data.chantiers.filter(c => c.statut !== 'termine' || c.dateFin >= toYMD(ganttStart));
+        const ganttMonths: { label: string; days: number; startDay: number }[] = [];
+        let dayCount = 0;
+        for (let m = 0; m < 3; m++) {
+          const mDate = new Date(ganttStart.getFullYear(), ganttStart.getMonth() + m, 1);
+          const daysInMonth = new Date(mDate.getFullYear(), mDate.getMonth() + 1, 0).getDate();
+          const MOIS_NOMS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Juin', 'Juil', 'Août', 'Sep', 'Oct', 'Nov', 'Déc'];
+          ganttMonths.push({ label: `${MOIS_NOMS[mDate.getMonth()]} ${mDate.getFullYear()}`, days: daysInMonth, startDay: dayCount });
+          dayCount += daysInMonth;
+        }
+        const DAY_W = 18;
+        const NAME_W = 120;
+        const todayStr = toYMD(ganttToday);
+
+        return (
+          <View style={{ flex: 1 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 }}>
+              <Pressable onPress={() => setMonthOffset(m => m - 3)} style={{ padding: 6 }}>
+                <Text style={{ fontSize: 18, color: '#2C2C2C' }}>‹‹</Text>
+              </Pressable>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>
+                {ganttMonths.map(m => m.label).join(' — ')}
+              </Text>
+              <Pressable onPress={() => setMonthOffset(m => m + 3)} style={{ padding: 6 }}>
+                <Text style={{ fontSize: 18, color: '#2C2C2C' }}>››</Text>
+              </Pressable>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={true}>
+              <View>
+                {/* En-tête mois */}
+                <View style={{ flexDirection: 'row', marginLeft: NAME_W }}>
+                  {ganttMonths.map((m, i) => (
+                    <View key={i} style={{ width: m.days * DAY_W, borderRightWidth: 1, borderRightColor: '#E2E6EA', alignItems: 'center', paddingVertical: 4 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#2C2C2C' }}>{m.label}</Text>
+                    </View>
+                  ))}
+                </View>
+                {/* En-tête jours */}
+                <View style={{ flexDirection: 'row', marginLeft: NAME_W }}>
+                  {Array.from({ length: ganttTotalDays }, (_, i) => {
+                    const d = new Date(ganttStart);
+                    d.setDate(d.getDate() + i);
+                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                    const isT = toYMD(d) === todayStr;
+                    return (
+                      <View key={i} style={{ width: DAY_W, alignItems: 'center', paddingVertical: 2, backgroundColor: isT ? '#E8F0FE' : isWeekend ? '#F8F9FA' : 'transparent', borderRightWidth: d.getDate() === 1 ? 1 : 0, borderRightColor: '#E2E6EA' }}>
+                        <Text style={{ fontSize: 8, color: isT ? '#2C2C2C' : '#9CA3AF' }}>{d.getDate()}</Text>
+                      </View>
+                    );
+                  })}
+                </View>
+                {/* Barres chantiers */}
+                <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
+                  {ganttChantiers.sort((a, b) => a.dateDebut.localeCompare(b.dateDebut)).map(c => {
+                    const cStart = new Date(c.dateDebut + 'T12:00:00');
+                    const cEnd = new Date(c.dateFin + 'T12:00:00');
+                    const startOffset = Math.max(0, Math.ceil((cStart.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24)));
+                    const endOffset = Math.min(ganttTotalDays - 1, Math.ceil((cEnd.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24)));
+                    const barWidth = Math.max(DAY_W, (endOffset - startOffset + 1) * DAY_W);
+                    const barLeft = startOffset * DAY_W;
+                    const isEnRetard = c.statut === 'actif' && c.dateFin < todayStr;
+                    const empAffectes = data.employes.filter(e =>
+                      data.affectations.some(a => a.chantierId === c.id && a.employeId === e.id)
+                    );
+                    return (
+                      <View key={c.id} style={{ flexDirection: 'row', height: 36, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
+                        <View style={{ width: NAME_W, paddingHorizontal: 8, justifyContent: 'center' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{c.nom}</Text>
+                          <Text style={{ fontSize: 9, color: '#9CA3AF' }}>{empAffectes.length} pers.</Text>
+                        </View>
+                        <View style={{ width: ganttTotalDays * DAY_W, height: 28, position: 'relative' }}>
+                          {/* Ligne today */}
+                          {(() => {
+                            const tOff = Math.ceil((ganttToday.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24));
+                            if (tOff >= 0 && tOff < ganttTotalDays) {
+                              return <View style={{ position: 'absolute', left: tOff * DAY_W, top: 0, bottom: 0, width: 1.5, backgroundColor: '#2C2C2C', opacity: 0.3, zIndex: 1 }} />;
+                            }
+                            return null;
+                          })()}
+                          <View style={{
+                            position: 'absolute', left: barLeft, top: 4, width: barWidth, height: 20,
+                            backgroundColor: c.couleur, borderRadius: 4, opacity: c.statut === 'termine' ? 0.4 : 0.9,
+                            borderWidth: isEnRetard ? 2 : 0, borderColor: '#E74C3C',
+                            justifyContent: 'center', paddingHorizontal: 4,
+                          }}>
+                            <Text style={{ fontSize: 9, color: '#fff', fontWeight: '600' }} numberOfLines={1}>
+                              {c.nom}{isEnRetard ? ' ⚠️' : ''}
+                            </Text>
+                          </View>
+                        </View>
+                      </View>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            </ScrollView>
+          </View>
+        );
+      })()}
+
       {/* Grille hebdomadaire */}
       {viewMode === 'semaine' && (
-      <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#1A3A6B']} tintColor="#1A3A6B" />}>
+      <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2C2C2C']} tintColor="#2C2C2C" />}>
         {/* En-tête des jours */}
         <View style={styles.gridRow}>
           <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL }]} />
@@ -1671,38 +2118,17 @@ export default function PlanningScreen() {
         {/* Lignes des chantiers */}
         {visibleChantiers.map(chantier => (
           <View key={chantier.id} style={styles.chantierRow}>
-            {/* Colonne nom — clic = ouvrir fiche chantier */}
+            {/* Colonne nom — clic = ouvrir le menu d'actions chantier
+                Appui long (admin) = menu de réorganisation */}
             <Pressable
               style={[styles.nameCell, { width: NAME_COL }]}
-              onPress={() => setFicheModal({ chantier })}
+              onPress={() => setActionsChantierId(chantier.id)}
+              onLongPress={isAdmin ? () => showReorderMenu(chantier.id) : undefined}
+              delayLongPress={400}
             >
               <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
               <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
-              {/* Icônes : notes, plans, photos — accessibles à tous */}
-              <View style={{ flexDirection: 'row', gap: 3, marginTop: 3 }}>
-                {(() => {
-                  const nbNotes = getNotesActivesPlanning(chantier.id).length;
-                  return (
-                    <Pressable style={{ backgroundColor: nbNotes > 0 ? '#EBF0FF' : '#F2F4F7', borderRadius: 4, paddingHorizontal: 3, paddingVertical: 1 }}
-                      onPress={() => openNotesPlanning(chantier.id)}>
-                      <Text style={{ fontSize: 9, color: nbNotes > 0 ? '#1A3A6B' : '#B0BEC5' }}>✏ {nbNotes || ''}</Text>
-                    </Pressable>
-                  );
-                })()}
-                {(() => {
-                  const nbPlans = getPlansVisiblesPlanning(chantier.id).length;
-                  return (
-                    <Pressable style={{ backgroundColor: nbPlans > 0 ? '#E8F5E9' : '#F2F4F7', borderRadius: 4, paddingHorizontal: 3, paddingVertical: 1 }}
-                      onPress={() => openPlansPlanning(chantier.id)}>
-                      <Text style={{ fontSize: 9, color: nbPlans > 0 ? '#2E7D32' : '#B0BEC5' }}>▤ {nbPlans || ''}</Text>
-                    </Pressable>
-                  );
-                })()}
-                <Pressable style={{ backgroundColor: '#FFF3E0', borderRadius: 4, paddingHorizontal: 3, paddingVertical: 1 }}
-                  onPress={() => { setGalerieChantierId(chantier.id); setShowGalerieGlobale(true); }}>
-                  <Text style={{ fontSize: 9, color: '#E65100' }}>◻</Text>
-                </Pressable>
-              </View>
+              {/* Les Notes sont désormais accessibles depuis le menu Actions */}
             </Pressable>
 
             {/* Cellules des jours */}
@@ -1738,25 +2164,42 @@ export default function PlanningScreen() {
                   {/* Badges employés : couleur personnalisée, masqués pour le sous-traitant connecté */}
                   {!isST && employes.map(emp => {
                     const empColor = getEmployeColor(emp);
-                    const empHasNotes = data.affectations.some(a =>
-                      a.chantierId === chantier.id &&
-                      a.employeId === emp.id &&
-                      a.dateDebut <= dateStr && a.dateFin >= dateStr &&
-                      (a.notes || []).some(n => !n.date || n.date === dateStr)
+                    const empAff = data.affectations.find(a =>
+                      a.chantierId === chantier.id && a.employeId === emp.id &&
+                      a.dateDebut <= dateStr && a.dateFin >= dateStr
                     );
+                    const empHasNotes = empAff && (empAff.notes || []).some(n => !n.date || n.date === dateStr);
                     const ordreNum = getOrdreNum(emp.id, chantier.id, dateStr);
+                    const isAtelier = empAff?.lieu === 'atelier';
                     return (
                       <View key={emp.id} style={styles.badgeWrapper}>
                         <Pressable
-                          style={[styles.empBadge, { backgroundColor: empColor }]}
+                          style={[styles.empBadge, { backgroundColor: empColor }, isAtelier && { borderWidth: 2, borderColor: '#F59E0B', borderStyle: 'dashed' }]}
                           onPress={() => openNoteModal(chantier.id, dateStr, emp.id)}
                           onLongPress={isAdmin ? () => {
-                            const ids = getOrdreChantiers(emp.id, dateStr);
-                            if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
+                            if (Platform.OS === 'web') {
+                              const choice = window.prompt(`${emp.prenom} — Choisir :\n1 = Déplacer\n2 = ${isAtelier ? 'Remettre sur chantier' : 'Mettre en atelier 🏭'}`);
+                              if (choice === '2') toggleLieuTravail(chantier.id, emp.id, dateStr);
+                              else if (choice === '1') {
+                                const ids = getOrdreChantiers(emp.id, dateStr);
+                                if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
+                                else { setMoveTargetChantierId(null); setMoveTargetDate(dateStr); setMoveModal({ employeId: emp.id, chantierId: chantier.id, date: dateStr }); }
+                              }
+                            } else {
+                              Alert.alert(emp.prenom, 'Que voulez-vous faire ?', [
+                                { text: 'Annuler', style: 'cancel' },
+                                { text: isAtelier ? '🏗 Remettre sur chantier' : '🏭 Mettre en atelier', onPress: () => toggleLieuTravail(chantier.id, emp.id, dateStr) },
+                                { text: '↔ Déplacer', onPress: () => {
+                                  const ids = getOrdreChantiers(emp.id, dateStr);
+                                  if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
+                                  else { setMoveTargetChantierId(null); setMoveTargetDate(dateStr); setMoveModal({ employeId: emp.id, chantierId: chantier.id, date: dateStr }); }
+                                }},
+                              ]);
+                            }
                           } : undefined}
                         >
                           <Text style={[styles.empBadgeText, { color: '#fff' }]} numberOfLines={1}>
-                            {emp.prenom.slice(0, 3) + '.'}
+                            {isAtelier ? '🏭' : ''}{emp.prenom.slice(0, 3) + '.'}
                           </Text>
                           {empHasNotes && <View style={styles.noteDot} />}
                           {ordreNum > 0 && (
@@ -1768,7 +2211,38 @@ export default function PlanningScreen() {
                         {isAdmin && (
                           <Pressable
                             style={styles.removeBadgeBtn}
-                            onPress={() => removeAffectation(chantier.id, emp.id, dateStr)}
+                            onPress={() => {
+                              const hasPointage = data.pointages.some(p => p.employeId === emp.id && p.date === dateStr);
+                              const aff = data.affectations.find(a => a.chantierId === chantier.id && a.employeId === emp.id && a.dateDebut <= dateStr && a.dateFin >= dateStr);
+                              const hasNotes = aff && (aff.notes || []).some(n => (n.date === dateStr || !n.date) && (n.texte?.trim() || (n.tasks && n.tasks.length > 0)));
+
+                              const doRemove = (deletePointages?: boolean) => {
+                                if (deletePointages) data.pointages.filter(p => p.employeId === emp.id && p.date === dateStr).forEach(p => deletePointage(p.id));
+                                removeAffectation(chantier.id, emp.id, dateStr);
+                              };
+
+                              if (hasNotes || hasPointage) {
+                                const messages: string[] = [];
+                                if (hasNotes) messages.push('des notes/tâches');
+                                if (hasPointage) messages.push('un pointage');
+                                Alert.alert(
+                                  `Retirer ${emp.prenom}`,
+                                  `${emp.prenom} a ${messages.join(' et ')} ce jour. Que faire ?`,
+                                  [
+                                    { text: 'Annuler', style: 'cancel' },
+                                    { text: '↔ Déplacer', onPress: () => {
+                                      setMoveTargetChantierId(null);
+                                      setMoveTargetDate(dateStr);
+                                      setMoveModal({ employeId: emp.id, chantierId: chantier.id, date: dateStr });
+                                    }},
+                                    { text: 'Retirer du planning', onPress: () => doRemove(false) },
+                                    ...(hasPointage ? [{ text: 'Retirer + suppr. pointage', style: 'destructive' as const, onPress: () => doRemove(true) }] : []),
+                                  ]
+                                );
+                              } else {
+                                removeAffectation(chantier.id, emp.id, dateStr);
+                              }
+                            }}
                           >
                             <Text style={styles.removeBadgeBtnText}>✕</Text>
                           </Pressable>
@@ -1904,6 +2378,46 @@ export default function PlanningScreen() {
       </ScrollView>
       )}
 
+      {/* ── Modal Actions chantier (menu rôle-based) ── */}
+      <ChantierActionsModal
+        visible={actionsChantierId !== null}
+        onClose={() => setActionsChantierId(null)}
+        chantierId={actionsChantierId}
+        role={isAdmin ? 'admin' : (isST ? 'soustraitant' : 'employe')}
+        onOpenNotes={(id) => openNotesPlanning(id)}
+        onOpenPlans={(id) => openPlansPlanning(id)}
+        onOpenPhotos={(id) => { setGalerieChantierId(id); setShowGalerieGlobale(true); }}
+        onOpenFiche={(id) => {
+          const ch = data.chantiers.find(c => c.id === id);
+          if (ch) setFicheModal({ chantier: ch });
+        }}
+        onOpenMateriel={() => router.push('/(tabs)/materiel')}
+        onOpenSAV={(id) => router.push({ pathname: '/(tabs)/chantiers', params: { action: 'sav', chantierId: id } } as any)}
+        onOpenFinances={isAdmin ? ((id) => setBilanChantierIdPlanning(id)) : undefined}
+        onOpenPortailClient={isAdmin ? ((id) => setPortailClientIdPlanning(id)) : undefined}
+        onOpenBudget={isAdmin ? ((id) => router.push({ pathname: '/(tabs)/chantiers', params: { action: 'budget', chantierId: id } } as any)) : undefined}
+        onOpenAchats={isAdmin ? ((id) => router.push({ pathname: '/(tabs)/chantiers', params: { action: 'achats', chantierId: id } } as any)) : undefined}
+        onOpenMarches={isAdmin ? ((id) => setMarchesIdPlanning(id)) : undefined}
+        onDelete={isAdmin ? ((id) => { deleteChantier(id); }) : undefined}
+      />
+
+      {/* ── Sous-modales ouvertes depuis ChantierActionsModal (unifié avec l'onglet Chantiers) ── */}
+      <PortailClient
+        visible={!!portailClientIdPlanning}
+        onClose={() => setPortailClientIdPlanning(null)}
+        chantierId={portailClientIdPlanning || ''}
+      />
+      <BilanFinancierChantier
+        visible={!!bilanChantierIdPlanning}
+        onClose={() => setBilanChantierIdPlanning(null)}
+        chantierId={bilanChantierIdPlanning || ''}
+      />
+      <MarchesChantier
+        visible={!!marchesIdPlanning}
+        onClose={() => setMarchesIdPlanning(null)}
+        chantierId={marchesIdPlanning || ''}
+      />
+
       {/* ── Modal Fiche Chantier (lecture seule dans le planning) ── */}
       <Modal
         visible={ficheModal !== null}
@@ -1911,8 +2425,8 @@ export default function PlanningScreen() {
         transparent
         onRequestClose={() => setFicheModal(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setFicheModal(null)}>
-          <Pressable style={styles.ficheModalSheet} onPress={e => e.stopPropagation()}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setFicheModal(null)} />
+          <Pressable style={styles.ficheModalSheet} onPress={() => {}}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
               <View style={{ flex: 1 }}>
@@ -1983,7 +2497,7 @@ export default function PlanningScreen() {
               <Text style={styles.modalCloseBtnText}>Fermer</Text>
             </Pressable>
           </Pressable>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* ── Modal ajout/suppression employés + sous-traitants (Admin) ── */}
@@ -1993,12 +2507,12 @@ export default function PlanningScreen() {
         transparent
         onRequestClose={() => setModal(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setModal(null)}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setModal(null)} />
           <KeyboardAvoidingView
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
             style={styles.modalKAV}
           >
-            <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
+            <Pressable style={styles.modalSheet} onPress={() => {}}>
               <View style={styles.modalHandle} />
               <View style={styles.modalHeaderRow}>
                 <Text style={styles.modalTitle}>{data.chantiers.find(c => c.id === modal?.chantierId)?.nom}</Text>
@@ -2046,11 +2560,35 @@ export default function PlanningScreen() {
                   </Text>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     <Text style={{ fontSize: 12, color: '#444', minWidth: 30 }}>Du :</Text>
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A3A6B' }}>{modal.date.split('-').reverse().join('/')}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>{modal.date.split('-').reverse().join('/')}</Text>
                     <Text style={{ fontSize: 12, color: '#444', marginLeft: 8, minWidth: 30 }}>Au :</Text>
                     <DatePicker
                       value={affectationDateFin || modal.date}
-                      onChange={v => setAffectationDateFin(v)}
+                      onChange={v => {
+                        setAffectationDateFin(v);
+                        // Si des employés sont déjà affectés ce jour-là, étendre leur affectation
+                        if (v && v > modal.date) {
+                          const empsInCell = data.affectations
+                            .filter(a => a.chantierId === modal.chantierId && a.dateDebut <= modal.date && a.dateFin >= modal.date && !a.soustraitantId)
+                            .map(a => a.employeId);
+                          empsInCell.forEach(empId => {
+                            // Supprimer l'affectation jour unique existante
+                            removeAffectation(modal.chantierId, empId, modal.date);
+                            // Recréer avec la plage complète (sans week-ends)
+                            const affs = buildAffectationsSansWeekend(modal.chantierId, empId, modal.date, v);
+                            affs.forEach(a => addAffectation(a));
+                          });
+                          // Étendre aussi les sous-traitants déjà affectés ce jour-là
+                          const stsInCell = data.affectations
+                            .filter(a => a.chantierId === modal.chantierId && a.dateDebut <= modal.date && a.dateFin >= modal.date && !!a.soustraitantId)
+                            .map(a => ({ stId: a.soustraitantId!, pseudoEmployeId: a.employeId }));
+                          stsInCell.forEach(({ stId, pseudoEmployeId }) => {
+                            removeAffectation(modal.chantierId, pseudoEmployeId, modal.date);
+                            const affs = buildAffectationsSansWeekend(modal.chantierId, pseudoEmployeId, modal.date, v, stId);
+                            affs.forEach(a => addAffectation(a));
+                          });
+                        }
+                      }}
                       minDate={modal.date}
                       placeholder="Fin (optionnel)"
                     />
@@ -2087,7 +2625,7 @@ export default function PlanningScreen() {
                       >
                         <View style={[styles.modalAvatar, { backgroundColor: mc.color }]}>
                           <Text style={[styles.modalAvatarText, { color: mc.textColor }]}>
-                            {item.prenom[0]}
+                            {item.prenom?.[0] || '?'}
                           </Text>
                         </View>
                         <View style={styles.modalEmpInfo}>
@@ -2120,7 +2658,7 @@ export default function PlanningScreen() {
                       >
                         <View style={[styles.modalAvatar, { backgroundColor: item.couleur }]}>
                           <Text style={[styles.modalAvatarText, { color: '#fff' }]}>
-                            {item.prenom[0]}
+                            {item.prenom?.[0] || '?'}
                           </Text>
                         </View>
                         <View style={styles.modalEmpInfo}>
@@ -2233,7 +2771,7 @@ export default function PlanningScreen() {
               </Pressable>
             </Pressable>
           </KeyboardAvoidingView>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* ── Modal notes (Admin + Employés) ── */}
@@ -2241,14 +2779,12 @@ export default function PlanningScreen() {
         visible={noteModal !== null}
         animationType="slide"
         transparent
-        onRequestClose={() => { setNoteModal(null); Keyboard.dismiss(); }}
+        onRequestClose={() => closeNoteModal()}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => { setNoteModal(null); Keyboard.dismiss(); }}>
-          <KeyboardAvoidingView
-            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-            style={styles.modalKAV}
-          >
-            <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <View style={{ flex: 0.08 }} />
+          <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 40, padding: 16 }}>
                 <View style={styles.modalHandle} />
                 <View style={styles.modalHeaderRow}>
                   <View style={{ flex: 1 }}>
@@ -2270,7 +2806,7 @@ export default function PlanningScreen() {
                       </Text>
                     )}
                   </View>
-                  <Pressable onPress={() => { setNoteModal(null); Keyboard.dismiss(); }} style={styles.modalXBtn}>
+                  <Pressable onPress={() => closeNoteModal()} style={styles.modalXBtn}>
                     <Text style={styles.modalXText}>✕</Text>
                   </Pressable>
                 </View>
@@ -2408,13 +2944,36 @@ export default function PlanningScreen() {
                       {!noteModal?.editingNote && !noteText && (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
                           {['Finitions à terminer', 'Attente livraison matériel', 'Nettoyage fin de chantier', 'Problème à signaler', 'RAS — Travail en cours'].map(tpl => (
-                            <Pressable key={tpl} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F2F4F7', borderWidth: 1, borderColor: '#E2E6EA' }}
+                            <Pressable key={tpl} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' }}
                               onPress={() => setNoteText(tpl)}>
                               <Text style={{ fontSize: 11, color: '#687076' }}>{tpl}</Text>
                             </Pressable>
                           ))}
                         </ScrollView>
                       )}
+                      {/* Sélecteur SAV (si tickets existent pour ce chantier) */}
+                      {noteModal && (() => {
+                        const savTickets = (data.ticketsSAV || []).filter(t => t.chantierId === noteModal.chantierId && t.statut !== 'clos');
+                        if (savTickets.length === 0) return null;
+                        return (
+                          <View style={{ marginBottom: 8 }}>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#687076', marginBottom: 4 }}>🔧 Lier à un SAV :</Text>
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+                              <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' }, !noteSavTicketId && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
+                                onPress={() => setNoteSavTicketId(null)}>
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: !noteSavTicketId ? '#fff' : '#687076' }}>Aucun</Text>
+                              </Pressable>
+                              {savTickets.map(t => (
+                                <Pressable key={t.id} style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' }, noteSavTicketId === t.id && { backgroundColor: '#E74C3C', borderColor: '#E74C3C' }]}
+                                  onPress={() => { setNoteSavTicketId(t.id); if (!noteText.trim()) setNoteText(`SAV: ${t.objet}`); }}>
+                                  <Text style={{ fontSize: 10, fontWeight: '600', color: noteSavTicketId === t.id ? '#fff' : '#687076' }} numberOfLines={1}>🔧 {t.objet}</Text>
+                                </Pressable>
+                              ))}
+                            </ScrollView>
+                          </View>
+                        );
+                      })()}
+
                       <View style={styles.noteInputRow}>
                         <TextInput
                           style={styles.noteInput}
@@ -2430,7 +2989,6 @@ export default function PlanningScreen() {
                           numberOfLines={4}
                           returnKeyType="done"
                           blurOnSubmit
-                          autoFocus
                         />
                         {/* Suggestions @mentions */}
                         {mentionQuery !== null && (() => {
@@ -2442,7 +3000,7 @@ export default function PlanningScreen() {
                           return (
                             <View style={{ backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, maxHeight: 150 }}>
                               {suggestions.map(emp => (
-                                <Pressable key={emp.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F2F4F7' }}
+                                <Pressable key={emp.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}
                                   onPress={() => {
                                     const before = noteText.replace(/@\w*$/, '');
                                     setNoteText(`${before}@${emp.prenom} `);
@@ -2546,7 +3104,14 @@ export default function PlanningScreen() {
                                   fait: false,
                                 };
                                 if (noteModal?.editingNote) {
-                                  // Note existante : ajouter dans editingNote.tasks
+                                  // Note existante : sauvegarder immédiatement dans les données
+                                  const affId = data.affectations.find(a =>
+                                    a.chantierId === noteModal.chantierId &&
+                                    a.dateDebut <= noteModal.date && a.dateFin >= noteModal.date &&
+                                    a.notes.some(n => n.id === noteModal.editingNote!.id)
+                                  )?.id;
+                                  if (affId) addTask(affId, noteModal.editingNote.id, newTask);
+                                  // Aussi mettre à jour le state local pour l'affichage
                                   setNoteModal(prev => prev && prev.editingNote ? {
                                     ...prev,
                                     editingNote: { ...prev.editingNote, tasks: [...(prev.editingNote.tasks || []), newTask] }
@@ -2620,7 +3185,7 @@ export default function PlanningScreen() {
                                     return (
                                       <Pressable
                                         key={a.id}
-                                        style={[styles.visibBtn, { backgroundColor: isSelected ? a.color : '#F2F4F7', borderColor: a.color, borderWidth: 1.5 }]}
+                                        style={[styles.visibBtn, { backgroundColor: isSelected ? a.color : '#F5EDE3', borderColor: a.color, borderWidth: 1.5 }]}
                                         onPress={() => {
                                           setNoteVisibleIds(prev =>
                                             prev.includes(a.id) ? prev.filter(x => x !== a.id) : [...prev, a.id]
@@ -2673,22 +3238,22 @@ export default function PlanningScreen() {
                   </Pressable>
                 )}
 
-                <Pressable style={styles.modalCloseBtn} onPress={() => { setNoteModal(null); Keyboard.dismiss(); }}>
+                <Pressable style={styles.modalCloseBtn} onPress={() => closeNoteModal()}>
                   <Text style={styles.modalCloseBtnText}>Fermer</Text>
                 </Pressable>
-            </Pressable>
-          </KeyboardAvoidingView>
-        </Pressable>
+            </ScrollView>
+          </View>
+        </View>
       </Modal>
       {/* ── Modal Intervention externe (admin) ── */}
-      <Modal
+      <ModalKeyboard
         visible={interventionModal !== null}
         animationType="slide"
         transparent
         onRequestClose={() => setInterventionModal(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setInterventionModal(null)}>
-          <Pressable style={styles.interventionSheet} onPress={e => e.stopPropagation()}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setInterventionModal(null)} />
+          <Pressable style={styles.interventionSheet} onPress={() => {}}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
               <Text style={styles.modalTitle}>⚡ {interventionModal?.editId ? 'Modifier' : 'Ajouter'} une intervention</Text>
@@ -2696,7 +3261,7 @@ export default function PlanningScreen() {
                 <Text style={styles.modalXText}>✕</Text>
               </Pressable>
             </View>
-            <ScrollView showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
               <Text style={styles.intervFormLabel}>Libellé *</Text>
               <TextInput
                 style={styles.intervFormInput}
@@ -2765,13 +3330,13 @@ export default function PlanningScreen() {
               </Pressable>
             </ScrollView>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </View>
+      </ModalKeyboard>
 
       {/* ── Modal retard planifié (employé) ── */}
-      <Modal visible={showRetardModal} transparent animationType="slide" onRequestClose={() => setShowRetardModal(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowRetardModal(false)}>
-          <Pressable style={styles.saisieSheet} onPress={e => e.stopPropagation()}>
+      <ModalKeyboard visible={showRetardModal} transparent animationType="slide" onRequestClose={() => setShowRetardModal(false)}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowRetardModal(false)} />
+          <Pressable style={styles.saisieSheet} onPress={() => {}}>
             <View style={styles.modalHandle} />
             <Text style={styles.saisieTitle}>⏰ Déclarer un retard à venir</Text>
             <Text style={styles.saisieSubtitle}>Informez votre responsable d'un retard prévu</Text>
@@ -2844,13 +3409,13 @@ export default function PlanningScreen() {
               </Pressable>
             </View>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </View>
+      </ModalKeyboard>
 
       {/* ── Modal saisie manuelle de pointage (admin/RH) ── */}
-      <Modal visible={showSaisiePointage} transparent animationType="slide" onRequestClose={() => setShowSaisiePointage(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowSaisiePointage(false)}>
-          <Pressable style={styles.saisieSheet} onPress={e => e.stopPropagation()}>
+      <ModalKeyboard visible={showSaisiePointage} transparent animationType="slide" onRequestClose={() => setShowSaisiePointage(false)}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowSaisiePointage(false)} />
+          <Pressable style={styles.saisieSheet} onPress={() => {}}>
             <View style={styles.modalHandle} />
             <Text style={styles.saisieTitle}>✏️ Saisie manuelle de pointage</Text>
             <Text style={styles.saisieSubtitle}>Correction ou saisie oubliée</Text>
@@ -2961,8 +3526,8 @@ export default function PlanningScreen() {
               </Pressable>
             </View>
           </Pressable>
-        </Pressable>
-      </Modal>
+        </View>
+      </ModalKeyboard>
 
       {/* Galerie photos globale */}
       <GaleriePhotos
@@ -2974,8 +3539,8 @@ export default function PlanningScreen() {
 
       {/* ── Modal Notes Chantier (Planning) ── */}
       <Modal visible={showNotesPlanning} animationType="slide" transparent onRequestClose={() => setShowNotesPlanning(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowNotesPlanning(false)}>
-          <Pressable style={[styles.modalSheet, { maxHeight: '80%' }]} onPress={e => e.stopPropagation()}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowNotesPlanning(false)} />
+          <Pressable style={[styles.modalSheet, { maxHeight: '80%' }]} onPress={() => {}}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
               <Text style={styles.modalTitle}>
@@ -2987,14 +3552,34 @@ export default function PlanningScreen() {
             </View>
 
             <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              {/* Liste des notes actives */}
+              {/* Liste des notes actives — regroupées pour l'admin */}
               {notesPlanningChantierId && getNotesActivesPlanning(notesPlanningChantierId).length === 0 && (
                 <Text style={{ textAlign: 'center', color: '#B0BEC5', marginVertical: 20 }}>Aucune note active pour ce chantier.</Text>
               )}
-              {notesPlanningChantierId && getNotesActivesPlanning(notesPlanningChantierId).map(note => (
+              {notesPlanningChantierId && (() => {
+                const allNotes = getNotesActivesPlanning(notesPlanningChantierId);
+                if (!isAdmin) return allNotes; // Employé/ST : simple liste
+                // Admin : regroupe en "Mes notes" vs "Notes des autres"
+                const mesNotes = allNotes.filter(n => n.auteurId === 'admin');
+                const autresNotes = allNotes.filter(n => n.auteurId !== 'admin');
+                const sections: any[] = [];
+                if (mesNotes.length > 0) {
+                  sections.push({ __header: true, label: `📝 Mes notes (${mesNotes.length})` });
+                  sections.push(...mesNotes);
+                }
+                if (autresNotes.length > 0) {
+                  sections.push({ __header: true, label: `👥 Notes des autres (${autresNotes.length})` });
+                  sections.push(...autresNotes);
+                }
+                return sections;
+              })().map((note: any) => note.__header ? (
+                <View key={`h_${note.label}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, marginBottom: 6, paddingHorizontal: 4, paddingVertical: 6, backgroundColor: '#F5EDE3', borderRadius: 6 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C' }}>{note.label}</Text>
+                </View>
+              ) : (
                 <View key={note.id} style={styles.notePlanningCard}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ fontWeight: '700', color: '#1A3A6B', fontSize: 13 }}>{note.auteurNom}</Text>
+                    <Text style={{ fontWeight: '700', color: '#2C2C2C', fontSize: 13 }}>{note.auteurNom}</Text>
                     <Text style={{ fontSize: 11, color: '#B0BEC5' }}>
                       {new Date(note.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     </Text>
@@ -3004,7 +3589,7 @@ export default function PlanningScreen() {
                   {/* Pièce jointe unique (pieceJointe) */}
                   {note.pieceJointe && (
                     <Pressable
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F2F4F7', borderRadius: 8, padding: 8, marginBottom: 8 }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F5EDE3', borderRadius: 8, padding: 8, marginBottom: 8 }}
                       onPress={() => {
                         if (Platform.OS === 'web' && typeof window !== 'undefined') {
                           const w = window.open();
@@ -3015,7 +3600,7 @@ export default function PlanningScreen() {
                       }}
                     >
                       <Text style={{ fontSize: 20 }}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
-                      <Text style={{ fontSize: 12, color: '#1A3A6B', fontWeight: '600', flex: 1 }} numberOfLines={1}>
+                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }} numberOfLines={1}>
                         {note.pieceJointeNom || (note.pieceJointeType === 'pdf' ? 'PDF' : 'Image')}
                       </Text>
                       <Text style={{ fontSize: 11, color: '#687076' }}>Ouvrir →</Text>
@@ -3167,11 +3752,11 @@ export default function PlanningScreen() {
                   </ScrollView>
                 )}
                 <Pressable
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F2F4F7', borderRadius: 8, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E6EA', borderStyle: 'dashed' }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5EDE3', borderRadius: 8, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E6EA', borderStyle: 'dashed' }}
                   onPress={handlePickNotePhotosPlanning}
                 >
                   <Text style={{ fontSize: 16 }}>📎</Text>
-                  <Text style={{ fontSize: 13, color: '#1A3A6B', fontWeight: '600' }}>Ajouter photo / PDF</Text>
+                  <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>Ajouter photo / PDF</Text>
                 </Pressable>
 
                 <Pressable
@@ -3184,13 +3769,13 @@ export default function PlanningScreen() {
               </View>
             </ScrollView>
           </Pressable>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* ── Modal Plans Planning ── */}
       <Modal visible={showPlansPlanning} animationType="slide" transparent onRequestClose={() => setShowPlansPlanning(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowPlansPlanning(false)}>
-          <Pressable style={[styles.modalSheet, { maxHeight: '90%' }]} onPress={e => e.stopPropagation()}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowPlansPlanning(false)} />
+          <View style={[styles.modalSheet, { maxHeight: '90%' }]}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
               <View>
@@ -3202,7 +3787,7 @@ export default function PlanningScreen() {
               </Pressable>
             </View>
 
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
               {plansPlanningChantierId && getPlansVisiblesPlanning(plansPlanningChantierId).length === 0 && (
                 <Text style={{ margin: 16, color: '#687076', fontSize: 14 }}>{t.chantiers.noPlans}</Text>
               )}
@@ -3211,21 +3796,23 @@ export default function PlanningScreen() {
                   <Pressable
                     style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }}
                     onPress={() => {
+                      const uri = plan.fichier;
+                      if (!uri) return;
                       if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                        const isPdf = plan.fichier.startsWith('data:application/pdf');
-                        const w = window.open();
-                        if (w) w.document.write(isPdf
-                          ? `<iframe src="${plan.fichier}" width="100%" height="100%"></iframe>`
-                          : `<img src="${plan.fichier}" style="max-width:100%;height:auto">`);
+                        if (uri.startsWith('http')) window.open(uri, '_blank');
+                        else { const w = window.open(); if (w) w.document.write(`<img src="${uri}" style="max-width:100%;height:auto">`); }
+                      } else if (uri.startsWith('http')) {
+                        const WebBrowser = require('expo-web-browser');
+                        WebBrowser.openBrowserAsync(uri).catch(() => Linking.openURL(uri));
                       }
                     }}
                   >
-                    <Text style={{ fontSize: 24 }}>{plan.fichier.startsWith('data:application/pdf') ? '📄' : '🖼️'}</Text>
+                    <Text style={{ fontSize: 24 }}>{(plan.fichier.endsWith('.pdf') || plan.fichier.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C', marginBottom: 2 }}>{plan.nom}</Text>
                       <Text style={{ fontSize: 12, color: '#687076' }}>{new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
                     </View>
-                    <Text style={{ fontSize: 13, color: '#1A3A6B', fontWeight: '600' }}>{t.chantiers.viewPlan} →</Text>
+                    <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>{t.chantiers.viewPlan} →</Text>
                   </Pressable>
                   {isAdmin && (
                     <Pressable
@@ -3248,7 +3835,7 @@ export default function PlanningScreen() {
               ))}
 
               {isAdmin && (
-                <View style={{ padding: 16, backgroundColor: '#F2F4F7', borderRadius: 12, marginTop: 8 }}>
+                <View style={{ padding: 16, backgroundColor: '#F5EDE3', borderRadius: 12, marginTop: 8 }}>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C', marginBottom: 10 }}>{t.chantiers.addPlan}</Text>
                   <TextInput
                     style={styles.noteInput}
@@ -3262,7 +3849,7 @@ export default function PlanningScreen() {
                       style={{ backgroundColor: '#E8EEF8', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#C5D0E6' }}
                       onPress={handlePickPlanPlanning}
                     >
-                      <Text style={{ fontSize: 13, color: '#1A3A6B', fontWeight: '600' }}>📎 {t.chantiers.addPlan}</Text>
+                      <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>📎 {t.chantiers.addPlan}</Text>
                     </Pressable>
                     {newPlanPlanningFichier && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
@@ -3325,58 +3912,185 @@ export default function PlanningScreen() {
                 </View>
               )}
             </ScrollView>
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
 
-      {/* Modal changement mot de passe admin */}
-      <Modal visible={showPwdModal} transparent animationType="fade" onRequestClose={() => setShowPwdModal(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
-          <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', maxWidth: 380 }} onPress={e => e.stopPropagation()}>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>🔒 Changer le mot de passe</Text>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Mot de passe actuel</Text>
-            <TextInput
-              style={{ backgroundColor: '#F2F4F7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
-              value={pwdActuel}
-              onChangeText={v => { setPwdActuel(v); setPwdError(''); }}
-              secureTextEntry
-              autoCapitalize="none"
-              placeholder="Mot de passe actuel"
-              placeholderTextColor="#687076"
-            />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Nouveau mot de passe</Text>
-            <TextInput
-              style={{ backgroundColor: '#F2F4F7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
-              value={pwdNouveau}
-              onChangeText={v => { setPwdNouveau(v); setPwdError(''); }}
-              secureTextEntry
-              autoCapitalize="none"
-              placeholder="Nouveau mot de passe"
-              placeholderTextColor="#687076"
-            />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Confirmer le mot de passe</Text>
-            <TextInput
-              style={{ backgroundColor: '#F2F4F7', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
-              value={pwdConfirm}
-              onChangeText={v => { setPwdConfirm(v); setPwdError(''); }}
-              secureTextEntry
-              autoCapitalize="none"
-              placeholder="Confirmer le mot de passe"
-              placeholderTextColor="#687076"
-            />
-            {pwdError !== '' && <Text style={{ color: '#E74C3C', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{pwdError}</Text>}
-            {pwdSuccess && <Text style={{ color: '#27AE60', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>Mot de passe modifié !</Text>}
-            <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-              <Pressable style={{ flex: 1, backgroundColor: '#F2F4F7', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
-                <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>Annuler</Text>
-              </Pressable>
-              <Pressable style={{ flex: 1, backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={handleChangePwd}>
-                <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Enregistrer</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      {/* Modal paramètres compte admin */}
+      <ModalKeyboard visible={showPwdModal} transparent animationType="fade" onRequestClose={() => setShowPwdModal(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', maxWidth: 420 }}>
+            <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>⚙️ Paramètres du compte admin</Text>
+
+              {/* Identifiant */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Identifiant de connexion</Text>
+              <TextInput
+                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                value={adminIdEdit}
+                onChangeText={v => { setAdminIdEdit(v); setPwdError(''); }}
+                autoCapitalize="none"
+                autoCorrect={false}
+                placeholder="Identifiant admin"
+                placeholderTextColor="#687076"
+              />
+
+              {/* Employé lié */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Employé associé au compte admin</Text>
+              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>Les autres utilisateurs verront ce nom et pourront vous envoyer des messages.</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  <Pressable
+                    style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: !adminEmployeIdEdit ? '#2C2C2C' : '#F5EDE3' }}
+                    onPress={() => setAdminEmployeIdEdit(undefined)}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: !adminEmployeIdEdit ? '#fff' : '#687076' }}>Aucun</Text>
+                  </Pressable>
+                  {data.employes.map(e => (
+                    <Pressable
+                      key={e.id}
+                      style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: adminEmployeIdEdit === e.id ? '#2C2C2C' : '#F5EDE3' }}
+                      onPress={() => setAdminEmployeIdEdit(e.id)}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: adminEmployeIdEdit === e.id ? '#fff' : '#11181C' }}>{e.prenom} {e.nom}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              </ScrollView>
+
+              {/* Magasin préféré */}
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6, marginTop: 8 }}>Magasin préféré (vérification dispo)</Text>
+              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>Utilisé pour vérifier la disponibilité des articles chez Leroy Merlin, etc.</Text>
+              <TextInput
+                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                value={magasinEdit}
+                onChangeText={setMagasinEdit}
+                placeholder="Ex: Leroy Merlin Ivry-sur-Seine"
+                placeholderTextColor="#687076"
+              />
+
+              {/* Séparateur */}
+              <View style={{ height: 1, backgroundColor: '#E2E6EA', marginVertical: 10 }} />
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#11181C', marginBottom: 12 }}>Changer le mot de passe (optionnel)</Text>
+
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Mot de passe actuel</Text>
+              <TextInput
+                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                value={pwdActuel}
+                onChangeText={v => { setPwdActuel(v); setPwdError(''); }}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="Mot de passe actuel"
+                placeholderTextColor="#687076"
+              />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Nouveau mot de passe</Text>
+              <TextInput
+                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                value={pwdNouveau}
+                onChangeText={v => { setPwdNouveau(v); setPwdError(''); }}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="Nouveau mot de passe"
+                placeholderTextColor="#687076"
+              />
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Confirmer le mot de passe</Text>
+              <TextInput
+                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                value={pwdConfirm}
+                onChangeText={v => { setPwdConfirm(v); setPwdError(''); }}
+                secureTextEntry
+                autoCapitalize="none"
+                placeholder="Confirmer le mot de passe"
+                placeholderTextColor="#687076"
+              />
+              {pwdError !== '' && <Text style={{ color: '#E74C3C', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{pwdError}</Text>}
+              {pwdSuccess && <Text style={{ color: '#27AE60', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>Paramètres enregistrés !</Text>}
+              <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
+                  <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>Annuler</Text>
+                </Pressable>
+                <Pressable style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={handleSaveAdminSettings}>
+                  <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Enregistrer</Text>
+                </Pressable>
+              </View>
+            </ScrollView>
+          </View>
+        </View>
+      </ModalKeyboard>
+      {/* ── Modal déplacer un employé ── */}
+      <ModalKeyboard visible={moveModal !== null} transparent animationType="fade" onRequestClose={() => setMoveModal(null)}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setMoveModal(null)} />
+          <View style={[styles.modalSheet, { maxHeight: 520 }]}>
+            {moveModal && (() => {
+              const emp = data.employes.find(e => e.id === moveModal.employeId);
+              const fromChantier = data.chantiers.find(c => c.id === moveModal.chantierId);
+              const availableChantiers = data.chantiers.filter(c => c.statut === 'actif' && c.id !== moveModal.chantierId);
+              // Générer 14 jours à partir d'aujourd'hui
+              const dateChoices: { label: string; value: string }[] = [];
+              for (let i = 0; i < 14; i++) {
+                const d = new Date(); d.setDate(d.getDate() + i);
+                dateChoices.push({
+                  value: toYMD(d),
+                  label: d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' }),
+                });
+              }
+              return (
+                <ScrollView keyboardShouldPersistTaps="handled">
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C', textAlign: 'center', marginBottom: 4 }}>
+                    Déplacer {emp?.prenom} {emp?.nom}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#687076', textAlign: 'center', marginBottom: 16 }}>
+                    Depuis : {fromChantier?.nom} — {new Date(moveModal.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                  </Text>
+
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 8 }}>Vers quel chantier ?</Text>
+                  <View style={{ gap: 4, marginBottom: 16 }}>
+                    {/* Même chantier (changer juste la date) */}
+                    <Pressable
+                      style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === moveModal.chantierId ? '#E8F0FE' : '#F5EDE3', borderWidth: moveTargetChantierId === moveModal.chantierId ? 1.5 : 0, borderColor: '#2C2C2C' }}
+                      onPress={() => setMoveTargetChantierId(moveModal.chantierId)}>
+                      <View style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: fromChantier?.couleur, marginRight: 8 }} />
+                      <Text style={{ fontSize: 13, color: '#11181C', fontWeight: moveTargetChantierId === moveModal.chantierId ? '700' : '400' }}>{fromChantier?.nom} (même)</Text>
+                    </Pressable>
+                    {availableChantiers.map(c => (
+                      <Pressable
+                        key={c.id}
+                        style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === c.id ? '#E8F0FE' : '#F5EDE3', borderWidth: moveTargetChantierId === c.id ? 1.5 : 0, borderColor: '#2C2C2C' }}
+                        onPress={() => setMoveTargetChantierId(c.id)}>
+                        <View style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: c.couleur, marginRight: 8 }} />
+                        <Text style={{ fontSize: 13, color: '#11181C', fontWeight: moveTargetChantierId === c.id ? '700' : '400' }}>{c.nom}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Date de destination</Text>
+                  <View style={{ gap: 3, marginBottom: 16 }}>
+                    {dateChoices.map(d => (
+                      <Pressable key={d.value} style={{ padding: 10, borderRadius: 8, backgroundColor: moveTargetDate === d.value ? '#2C2C2C' : '#F5EDE3' }}
+                        onPress={() => setMoveTargetDate(d.value)}>
+                        <Text style={{ fontSize: 13, fontWeight: moveTargetDate === d.value ? '700' : '400', color: moveTargetDate === d.value ? '#fff' : '#11181C', textTransform: 'capitalize' }}>{d.label}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 10 }}>
+                    <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setMoveModal(null)}>
+                      <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>Annuler</Text>
+                    </Pressable>
+                    <Pressable
+                      style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: moveTargetChantierId ? 1 : 0.5 }}
+                      onPress={handleMoveEmploye}
+                      disabled={!moveTargetChantierId}
+                    >
+                      <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Déplacer</Text>
+                    </Pressable>
+                  </View>
+                </ScrollView>
+              );
+            })()}
+          </View>
+        </View>
+      </ModalKeyboard>
       {/* ── Modal ordre affectations multi-chantiers ── */}
       <Modal
         visible={ordreModal !== null}
@@ -3384,8 +4098,8 @@ export default function PlanningScreen() {
         transparent
         onRequestClose={() => setOrdreModal(null)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setOrdreModal(null)}>
-          <Pressable style={[styles.modalSheet, { maxHeight: 400 }]} onPress={e => e.stopPropagation()}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setOrdreModal(null)} />
+          <Pressable style={[styles.modalSheet, { maxHeight: 400 }]} onPress={() => {}}>
             {ordreModal && (() => {
               const emp = data.employes.find(e => e.id === ordreModal.employeId);
               return (
@@ -3436,11 +4150,11 @@ export default function PlanningScreen() {
                     );
                   })}
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                    <Pressable style={{ flex: 1, backgroundColor: '#F2F4F7', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
+                    <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
                       <Text style={{ color: '#687076', fontWeight: '600' }}>Annuler</Text>
                     </Pressable>
                     <Pressable
-                      style={{ flex: 1, backgroundColor: '#1A3A6B', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
+                      style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
                       onPress={() => {
                         updateOrdreAffectation(ordreModal.employeId, ordreModal.date, ordreModal.chantierIds);
                         setOrdreModal(null);
@@ -3453,7 +4167,7 @@ export default function PlanningScreen() {
               );
             })()}
           </Pressable>
-        </Pressable>
+        </View>
       </Modal>
 
     </>
@@ -3470,7 +4184,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 6,
     paddingBottom: 4,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   headerLogoWrap: {
     flexDirection: 'row',
@@ -3519,7 +4233,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
   },
   todayBtn: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -3560,7 +4274,7 @@ const styles = StyleSheet.create({
   },
   gridScroll: {
     flex: 1,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   gridRow: {
     flexDirection: 'row',
@@ -3580,7 +4294,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   headerCell: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   colorDot: {
     width: 8,
@@ -3617,7 +4331,7 @@ const styles = StyleSheet.create({
     color: '#687076',
   },
   dayNameToday: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '700',
   },
   dayNum: {
@@ -3627,8 +4341,8 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   dayNumToday: {
-    color: '#1A3A6B',
-    fontWeight: '800',
+    color: '#2C2C2C',
+    fontWeight: '600',
   },
   chantierRow: {
     flexDirection: 'row',
@@ -3649,7 +4363,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EEF2F8',
   },
   cellOutOfRange: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   empBadge: {
     width: '100%',
@@ -3745,7 +4459,7 @@ const styles = StyleSheet.create({
   },
   stBadgeText: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     color: '#fff',
     textTransform: 'uppercase',
   },
@@ -3765,7 +4479,7 @@ const styles = StyleSheet.create({
   modalSectionTabActive: {
     backgroundColor: '#fff',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 1,
@@ -3776,7 +4490,7 @@ const styles = StyleSheet.create({
     color: '#687076',
   },
   modalSectionTabTextActive: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   emptyState: {
     padding: 40,
@@ -3789,12 +4503,12 @@ const styles = StyleSheet.create({
   legendSection: {
     margin: 16,
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 16,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 2,
     marginBottom: 24,
   },
@@ -3857,7 +4571,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     alignItems: 'flex-start',
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 12,
   },
   ficheRowIcon: {
@@ -3955,12 +4669,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     marginBottom: 6,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   modalEmpRowSelected: {
-    borderColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
     backgroundColor: '#EEF2F8',
   },
   modalAvatar: {
@@ -3987,7 +4701,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   modalCheck: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '700',
     fontSize: 16,
   },
@@ -3999,7 +4713,7 @@ const styles = StyleSheet.create({
   },
   modalCloseBtn: {
     marginTop: 16,
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -4023,7 +4737,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -4044,7 +4758,7 @@ const styles = StyleSheet.create({
   },
   noteCard: {
     backgroundColor: '#F8F9FA',
-    borderRadius: 12,
+    borderRadius: 14,
     padding: 14,
     borderWidth: 1,
     borderColor: '#E2E6EA',
@@ -4058,7 +4772,7 @@ const styles = StyleSheet.create({
   noteAuthor: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   noteDate: {
     fontSize: 11,
@@ -4092,7 +4806,7 @@ const styles = StyleSheet.create({
   noteActionBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   noNoteText: {
     color: '#687076',
@@ -4108,11 +4822,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
     borderStyle: 'dashed',
   },
   addNoteBtnText: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -4133,7 +4847,7 @@ const styles = StyleSheet.create({
   },
   noteInput: {
     flex: 1,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 10,
     padding: 12,
     fontSize: 14,
@@ -4198,7 +4912,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     marginRight: 8,
   },
   addPhotoBtnText: {
@@ -4221,7 +4935,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderWidth: 1,
     borderColor: '#E2E6EA',
   },
@@ -4232,7 +4946,7 @@ const styles = StyleSheet.create({
   },
   saveNoteBtn: {
     flex: 2,
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -4292,7 +5006,7 @@ const styles = StyleSheet.create({
     gap: 2,
     // Fond hachuré simulé par une ombre colorée
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 2,
     elevation: 3,
@@ -4326,7 +5040,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   intervFormInput: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -4358,7 +5072,7 @@ const styles = StyleSheet.create({
     transform: [{ scale: 1.2 }],
   },
   intervSaveBtn: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -4493,7 +5207,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   addTaskBtnText: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '600',
     fontSize: 14,
   },
@@ -4502,11 +5216,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 8,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
   },
   taskInput: {
     flex: 1,
@@ -4554,7 +5268,7 @@ const styles = StyleSheet.create({
   datePickerTodayText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   // ── Toggle vue semaine/mois ──
   viewToggle: {
@@ -4570,7 +5284,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   viewToggleBtnActive: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
   },
   viewToggleBtnText: {
     fontSize: 11,
@@ -4613,7 +5327,7 @@ const styles = StyleSheet.create({
   },
   monthCellToday: {
     backgroundColor: '#EEF2F8',
-    borderColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
     borderWidth: 1.5,
   },
   monthCellNum: {
@@ -4623,8 +5337,8 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   monthCellNumToday: {
-    color: '#1A3A6B',
-    fontWeight: '800',
+    color: '#2C2C2C',
+    fontWeight: '600',
   },
   monthChantierDot: {
     borderRadius: 3,
@@ -4702,7 +5416,7 @@ const styles = StyleSheet.create({
   materielBadgeCountText: {
     color: '#fff',
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '600',
     lineHeight: 14,
   },
   // Bouton saisie manuelle pointage
@@ -4874,9 +5588,9 @@ const styles = StyleSheet.create({
     borderLeftWidth: 4,
     borderLeftColor: '#F39C12',
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 1,
   },
   // Chips destinataires
@@ -4889,8 +5603,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   chipActive: {
-    backgroundColor: '#1A3A6B',
-    borderColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
+    borderColor: '#2C2C2C',
   },
   chipText: {
     fontSize: 12,

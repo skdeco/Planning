@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { View } from 'react-native';
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Platform } from "react-native";
@@ -13,16 +13,28 @@ import { useLanguage } from "@/app/context/LanguageContext";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { SyncIndicator } from "@/components/SyncIndicator";
 import { NotificationListener } from "@/components/NotificationListener";
+import { useNotifications } from "@/hooks/useNotifications";
 
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
   const tabBarHeight = 56 + bottomPadding;
-  const { currentUser, data } = useApp();
+  const { currentUser, data, updateSousTraitant } = useApp();
   const { t } = useLanguage();
+  const { pushToken } = useNotifications();
   const isAdmin = currentUser?.role === 'admin';
   const isST = currentUser?.role === 'soustraitant';
+  const isApporteur = currentUser?.role === 'apporteur';
+
+  // Enregistrer le push token du sous-traitant connecté
+  useEffect(() => {
+    if (!pushToken || !isST || !currentUser?.soustraitantId) return;
+    const st = data.sousTraitants.find(s => s.id === currentUser.soustraitantId);
+    if (st && st.pushToken !== pushToken) {
+      updateSousTraitant({ ...st, pushToken });
+    }
+  }, [pushToken, isST, currentUser?.soustraitantId]);
   const isEmploye = currentUser?.role === 'employe';
 
   // Employé courant
@@ -39,8 +51,8 @@ export default function TabLayout() {
   // Rôle RH : admin ou employé avec isRH = true
   const currentEmployeRH = data.employes.find(e => e.id === currentUser?.employeId);
   const isRH = isAdmin || currentEmployeRH?.isRH === true;
-  // Accès RH : admin, employé RH, ou employé normal (pour ses propres demandes)
-  const hasRHAccess = !isST;
+  // Accès RH : admin, employé RH, ou employé normal (pour ses propres demandes) — pas ST ni apporteur
+  const hasRHAccess = !isST && !isApporteur;
 
   // Badge RH : demandes en attente (visible admin/RH uniquement)
   const nbDemandesEnAttente = isRH ? (
@@ -76,13 +88,12 @@ export default function TabLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-    <NotificationBanner />
     <SyncIndicator />
     <NotificationListener />
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#1A3A6B',
-        tabBarInactiveTintColor: '#687076',
+        tabBarActiveTintColor: '#2C2C2C',
+        tabBarInactiveTintColor: '#B0A89E',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {
@@ -90,12 +101,18 @@ export default function TabLayout() {
           paddingBottom: bottomPadding,
           height: tabBarHeight,
           backgroundColor: '#FFFFFF',
-          borderTopColor: '#E2E6EA',
-          borderTopWidth: 0.5,
+          borderTopColor: '#F3F4F6',
+          borderTopWidth: 1,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 8,
         },
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
+          letterSpacing: -0.2,
         },
       }}
     >
@@ -104,14 +121,14 @@ export default function TabLayout() {
         name="index"
         options={{
           title: isAdmin ? 'Accueil' : 'Ma journée',
-          href: isST ? null : undefined,
+          href: (isST || isApporteur) ? null : undefined,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="house.fill" color={color} />
           ),
         }}
       />
 
-      {/* ═══ ONGLET 2 : Planning — visible pour tous ═══ */}
+      {/* ═══ ONGLET 2 : Planning — visible pour tous sauf rôles sans accès ═══ */}
       <Tabs.Screen
         name="planning"
         options={{
@@ -125,12 +142,12 @@ export default function TabLayout() {
       {/* Agenda caché (intégré dans Planning) */}
       <Tabs.Screen name="agenda" options={{ href: null }} />
 
-      {/* ═══ ONGLET 3 : Chantiers (admin) / Pointage (employé) ═══ */}
+      {/* ═══ ONGLET 3 : Chantiers (admin + apporteur read-only) / Pointage (employé) ═══ */}
       <Tabs.Screen
         name="chantiers"
         options={{
-          title: t.nav.chantiers,
-          href: isAdmin ? undefined : null,
+          title: isApporteur ? 'Mes chantiers' : t.nav.chantiers,
+          href: (isAdmin || isApporteur) ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="hammer.fill" color={color} />
           ),
@@ -162,7 +179,7 @@ export default function TabLayout() {
         name="materiel"
         options={{
           title: t.nav.materiel,
-          href: isST ? null : undefined,
+          href: (isST || isApporteur) ? null : undefined,
           tabBarBadge: isAcheteur && nbNonAchetes > 0 ? nbNonAchetes : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
           tabBarIcon: ({ color }) => (
@@ -183,7 +200,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ═══ ONGLET 6 : RH (tous sauf ST) ═══ */}
+      {/* ═══ ONGLET 6 : RH (tous sauf ST & apporteur) ═══ */}
       <Tabs.Screen
         name="rh"
         options={{
@@ -197,11 +214,12 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ═══ ONGLET 7 : Messages — avec badge ═══ */}
+      {/* ═══ ONGLET 7 : Messages — caché pour apporteur ═══ */}
       <Tabs.Screen
         name="messagerie"
         options={{
           title: t.nav.messages,
+          href: isApporteur ? null : undefined,
           tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
           tabBarIcon: ({ color }) => (

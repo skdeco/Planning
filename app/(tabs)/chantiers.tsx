@@ -1,10 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useRouter } from 'expo-router';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal,
-  TextInput, ScrollView, Alert, Platform, Image,
+  TextInput, ScrollView, Alert, Platform, Image, Linking,
 } from 'react-native';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { ScreenContainer } from '@/components/screen-container';
@@ -12,18 +14,68 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { BilanFinancierChantier } from '@/components/BilanFinancierChantier';
+import { GaleriePhotos } from '@/components/GaleriePhotos';
+import { MarchesChantier } from '@/components/MarchesChantier';
+import { PortailClient } from '@/components/PortailClient';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
-  type Chantier, type StatutChantier, type FicheChantier, type NoteChantier, type PlanChantier,
+  APPORTEUR_TYPE_LABELS,
+  type Chantier, type StatutChantier, type FicheChantier, type NoteChantier, type PlanChantier, type TicketSAV, type PrioriteSAV, type StatutSAV,
+  type Apporteur,
 } from '@/app/types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { compressImage } from '@/lib/imageUtils';
 
-const STATUTS: StatutChantier[] = ['actif', 'en_attente', 'termine', 'en_pause'];
+const STATUTS: StatutChantier[] = ['actif', 'en_attente', 'termine', 'en_pause', 'sav'];
 
 function genId(): string {
   return `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
+
+// ── "Y aller" : choix Waze / Google Maps / Apple Plans ─────────────────────
+const _openWithWaze = (encoded: string) => {
+  Linking.openURL(`waze://?q=${encoded}&navigate=yes`).catch(() => {
+    Linking.openURL(`https://waze.com/ul?q=${encoded}&navigate=yes`);
+  });
+};
+const _openWithGoogleMaps = (encoded: string) => {
+  if (Platform.OS === 'ios') {
+    Linking.openURL(`comgooglemaps://?daddr=${encoded}&directionsmode=driving`).catch(() => {
+      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`);
+    });
+  } else {
+    Linking.openURL(`google.navigation:q=${encoded}`).catch(() => {
+      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`);
+    });
+  }
+};
+const _openWithApplePlans = (encoded: string) => {
+  Linking.openURL(`maps://?daddr=${encoded}`);
+};
+
+const openDirectionsHelper = (adresse: string) => {
+  if (!adresse) return;
+  const encoded = encodeURIComponent(adresse);
+  if (Platform.OS === 'web') {
+    if (typeof window !== 'undefined') {
+      const choix = window.confirm('Ouvrir avec Google Maps ?\n(OK = Google Maps, Annuler = Waze)');
+      if (choix) window.open(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`, '_blank');
+      else window.open(`https://waze.com/ul?q=${encoded}&navigate=yes`, '_blank');
+    }
+    return;
+  }
+  const buttons: any[] = [
+    { text: 'Waze', onPress: () => _openWithWaze(encoded) },
+    { text: 'Google Maps', onPress: () => _openWithGoogleMaps(encoded) },
+  ];
+  if (Platform.OS === 'ios') {
+    buttons.push({ text: 'Apple Plans', onPress: () => _openWithApplePlans(encoded) });
+  }
+  buttons.push({ text: 'Annuler', style: 'cancel' });
+  Alert.alert('Avec quoi ouvrir ?', adresse, buttons, { cancelable: true });
+};
 
 const FICHE_VIDE: FicheChantier = {
   codeAcces: '',
@@ -37,36 +89,58 @@ const FICHE_VIDE: FicheChantier = {
 
 interface ChantierForm {
   nom: string;
-  adresse: string;
+  adresse: string;        // legacy — concaténation auto à la sauvegarde
+  rue: string;
+  codePostal: string;
+  ville: string;
+  pays: string;
   dateDebut: string;
   dateFin: string;
   statut: StatutChantier;
   couleur: string;
   employeIds: string[];
   visibleSurPlanning: boolean;
+  // Contacts externes
+  architecteId: string;
+  apporteurId: string;
+  contractantId: string;
+  clientApporteurId: string;
 }
+
+// Clé AsyncStorage pour préserver le formulaire chantier quand on va créer un Apporteur
+const PENDING_CHANTIER_FORM_KEY = 'sk_pending_chantier_form';
 
 const DEFAULT_FORM: ChantierForm = {
   nom: '',
   adresse: '',
+  rue: '',
+  codePostal: '',
+  ville: '',
+  pays: 'France',
   dateDebut: '',
   dateFin: '',
   statut: 'actif',
   couleur: CHANTIER_COLORS[0],
   employeIds: [],
   visibleSurPlanning: true,
+  architecteId: '',
+  apporteurId: '',
+  contractantId: '',
+  clientApporteurId: '',
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addPhotoChantier, deletePhotoChantier, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, updateBudgetChantier } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
+  const params = useLocalSearchParams<{ action?: string; chantierId?: string; apporteurId?: string; apporteurType?: string }>();
 
   useEffect(() => {
     if (isHydrated && !currentUser) router.replace('/login');
   }, [isHydrated, currentUser, router]);
 
   const isAdmin = currentUser?.role === 'admin';
+  const isApporteurUser = currentUser?.role === 'apporteur';
   const [exportingId, setExportingId] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
@@ -81,7 +155,38 @@ export default function ChantiersScreen() {
   const [showFiche, setShowFiche] = useState(false);
   const [ficheId, setFicheId] = useState<string | null>(null);
   const [fiche, setFiche] = useState<FicheChantier>(FICHE_VIDE);
-  const [ficheOnglet, setFicheOnglet] = useState<'fiche' | 'modifier'>('fiche');
+  const [ficheOnglet, setFicheOnglet] = useState<'fiche' | 'achats'>('fiche');
+  // Achats chantier
+  const [showAchatForm, setShowAchatForm] = useState(false);
+  const [showAchatFormFiche, setShowAchatFormFiche] = useState(false);
+  const [achatFichierUri, setAchatFichierUri] = useState<string | null>(null);
+  const [achatForm, setAchatForm] = useState({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
+  // Menu actions chantier
+  const [actionChantier, setActionChantier] = useState<Chantier | null>(null);
+  // Modal Achats séparé
+  const [achatsChantierId, setAchatsChantierId] = useState<string | null>(null);
+  // Modal Photos séparé
+  const [photosChantierId, setPhotosChantierId] = useState<string | null>(null);
+  const [showGalerie, setShowGalerie] = useState<string | null>(null);
+  const [viewPhotoUri, setViewPhotoUri] = useState<string | null>(null);
+  const [marchesChantierId, setMarchesChantierId] = useState<string | null>(null);
+  const [savChantierId, setSavChantierId] = useState<string | null>(null);
+  const [portailClientId, setPortailClientId] = useState<string | null>(null);
+  const [suiviChantierId, setSuiviChantierId] = useState<string | null>(null);
+  const [suiviFilterEmp, setSuiviFilterEmp] = useState<string>('all');
+  const [suiviFilterSemaine, setSuiviFilterSemaine] = useState<'tout' | 'semaine' | 'mois'>('semaine');
+  const [suiviShowForm, setSuiviShowForm] = useState(false);
+  const [suiviNoteText, setSuiviNoteText] = useState('');
+  const [suiviNoteEmpId, setSuiviNoteEmpId] = useState('');
+  const [vueChantiersTab, setVueChantiersTab] = useState<'chantiers' | 'sav'>('chantiers');
+  // Filtre par type de contact (architecte / apporteur / contractant / client)
+  const [filterContactType, setFilterContactType] = useState<'all' | 'architecte' | 'apporteur' | 'contractant' | 'client'>('all');
+  const [filterContactId, setFilterContactId] = useState<string>('all'); // 'all' ou id d'un apporteur
+  const [showSavForm, setShowSavForm] = useState(false);
+  const [editSavId, setEditSavId] = useState<string | null>(null);
+  const [savForm, setSavForm] = useState({ objet: '', description: '', priorite: 'normale' as PrioriteSAV, assigneA: '' });
+  const [savPhotos, setSavPhotos] = useState<string[]>([]);
+  const [savFichiers, setSavFichiers] = useState<{ uri: string; nom: string }[]>([]);
 
   const openFicheUnifiee = (chantier: Chantier) => {
     setFicheId(chantier.id);
@@ -89,16 +194,86 @@ export default function ChantiersScreen() {
     setEditId(chantier.id);
     setForm({
       nom: chantier.nom,
-      adresse: chantier.adresse,
+      adresse: chantier.adresse || '',
+      rue: chantier.rue || '',
+      codePostal: chantier.codePostal || '',
+      ville: chantier.ville || '',
+      pays: chantier.pays || 'France',
       dateDebut: chantier.dateDebut,
       dateFin: chantier.dateFin,
       statut: chantier.statut,
       couleur: chantier.couleur,
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
+      architecteId: chantier.architecteId || '',
+      apporteurId: chantier.apporteurId || '',
+      contractantId: chantier.contractantId || '',
+      clientApporteurId: chantier.clientApporteurId || '',
     });
     setFicheOnglet('fiche');
     setShowFiche(true);
+  };
+
+  // Auto-ouverture d'un modal via query params (depuis planning)
+  useEffect(() => {
+    if (!params.action) return;
+    // Action "new" : créer un chantier avec contact prérempli (depuis fiche apporteur)
+    if (params.action === 'new' && params.apporteurId) {
+      const type = params.apporteurType as string;
+      const field: keyof ChantierForm | null =
+        type === 'architecte'  ? 'architecteId'      :
+        type === 'apporteur'   ? 'apporteurId'       :
+        type === 'contractant' ? 'contractantId'     :
+        type === 'client'      ? 'clientApporteurId' : null;
+      if (field) {
+        setEditId(null);
+        setForm({ ...DEFAULT_FORM, [field]: String(params.apporteurId) });
+        setShowForm(true);
+      }
+      return;
+    }
+    if (!params.chantierId) return;
+    const id = String(params.chantierId);
+    const ch = data.chantiers.find(c => c.id === id);
+    if (!ch) return;
+    if (params.action === 'achats') setAchatsChantierId(id);
+    else if (params.action === 'sav') setSavChantierId(id);
+    else if (params.action === 'marches') setMarchesChantierId(id);
+    else if (params.action === 'budget') openFicheUnifiee(ch);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [params.action, params.chantierId, params.apporteurId, params.apporteurType]);
+
+  // Restauration du formulaire chantier après création d'un apporteur
+  // Utilise useFocusEffect pour se déclencher à chaque retour sur l'écran
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        try {
+          const raw = await AsyncStorage.getItem(PENDING_CHANTIER_FORM_KEY);
+          if (!raw) return;
+          const saved = JSON.parse(raw);
+          if (saved && saved.form) {
+            setEditId(saved.editId || null);
+            setForm(saved.form);
+            setShowForm(true);
+            await AsyncStorage.removeItem(PENDING_CHANTIER_FORM_KEY);
+          }
+        } catch {}
+      })();
+    }, [])
+  );
+
+  // Helper : sauvegarder le formulaire + rediriger vers Équipe pour créer un apporteur
+  const goCreateApporteur = async (type: 'architecte' | 'apporteur' | 'contractant' | 'client') => {
+    try {
+      await AsyncStorage.setItem(PENDING_CHANTIER_FORM_KEY, JSON.stringify({
+        editId,
+        form,
+        timestamp: Date.now(),
+      }));
+    } catch {}
+    setShowForm(false);
+    router.push({ pathname: '/(tabs)/equipe', params: { tab: 'apporteurs', newApporteurType: type, returnToChantier: '1' } });
   };
 
   // Plans chantier
@@ -118,7 +293,7 @@ export default function ChantiersScreen() {
     setShowPlans(true);
   };
 
-  const handlePickPlan = () => {
+  const handlePickPlan = async () => {
     if (Platform.OS === 'web') {
       const input = document.createElement('input');
       input.type = 'file';
@@ -132,16 +307,24 @@ export default function ChantiersScreen() {
           const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
           const chantierId = plansChantierId || 'general';
           const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
-          if (storageUrl) {
-            setNewPlanFichier(storageUrl);
-          } else {
-            if (Platform.OS === 'web') alert('Erreur lors de l\'upload du fichier. Veuillez réessayer.');
-            else Alert.alert('Erreur', 'Erreur lors de l\'upload du fichier. Veuillez réessayer.');
-          }
+          setNewPlanFichier(storageUrl || base64);
         };
         reader.readAsDataURL(file);
       };
-      input.click();
+      input.click(); setTimeout(() => input.remove(), 60000);
+    } else {
+      // Mobile natif — images + PDF
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['image/*', 'application/pdf'],
+        copyToCacheDirectory: true,
+      });
+      if (!result.canceled && result.assets?.[0]) {
+        const asset = result.assets[0];
+        const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+        const chantierId = plansChantierId || 'general';
+        const url = await uploadFileToStorage(asset.uri, `chantiers/${chantierId}/plans`, planId);
+        setNewPlanFichier(url || asset.uri);
+      }
     }
   };
 
@@ -167,6 +350,9 @@ export default function ChantiersScreen() {
     const plans = chantier?.fiche?.plans || [];
     if (isAdmin) return plans;
     const userId = currentUser?.employeId || currentUser?.soustraitantId || '';
+    // L'utilisateur doit être affecté au chantier pour voir les plans
+    const isAffected = data.affectations.some(a => a.chantierId === chantierId && (a.employeId === userId || a.soustraitantId === userId));
+    if (!isAffected) return [];
     const isST = !!currentUser?.soustraitantId;
     return plans.filter(p => {
       if (p.visiblePar === 'tous') return true;
@@ -195,7 +381,7 @@ export default function ChantiersScreen() {
     setShowNotes(true);
   };
 
-  const handlePickNotePJ = () => {
+  const handlePickNotePJ = async () => {
     if (Platform.OS === 'web') {
       const input = document.createElement('input');
       input.type = 'file';
@@ -210,16 +396,24 @@ export default function ChantiersScreen() {
           const pjId = `note_pj_${Date.now()}_${Math.random().toString(36).slice(2)}`;
           const chantierId = notesChantierId || 'general';
           const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/notes`, pjId);
-          if (storageUrl) {
-            setNotePieceJointe({ uri: storageUrl, nom: file.name, type });
-          } else {
-            if (Platform.OS === 'web') alert('Erreur lors de l\'upload. Veuillez réessayer.');
-            else Alert.alert('Erreur', 'Erreur lors de l\'upload. Veuillez réessayer.');
-          }
+          setNotePieceJointe({ uri: storageUrl || base64, nom: file.name, type });
         };
         reader.readAsDataURL(file);
       };
-      input.click();
+      input.click(); setTimeout(() => input.remove(), 60000);
+    } else {
+      // Mobile natif
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        base64: true,
+        quality: 0.8,
+      });
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const raw = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        const uri = await compressImage(raw);
+        setNotePieceJointe({ uri, nom: 'photo.jpg', type: 'image' as const });
+      }
     }
   };
 
@@ -303,13 +497,21 @@ export default function ChantiersScreen() {
     setEditId(chantier.id);
     setForm({
       nom: chantier.nom,
-      adresse: chantier.adresse,
+      adresse: chantier.adresse || '',
+      rue: chantier.rue || '',
+      codePostal: chantier.codePostal || '',
+      ville: chantier.ville || '',
+      pays: chantier.pays || 'France',
       dateDebut: chantier.dateDebut,
       dateFin: chantier.dateFin,
       statut: chantier.statut,
       couleur: chantier.couleur,
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
+      architecteId: chantier.architecteId || '',
+      apporteurId: chantier.apporteurId || '',
+      contractantId: chantier.contractantId || '',
+      clientApporteurId: chantier.clientApporteurId || '',
     });
     setShowForm(true);
   };
@@ -333,19 +535,59 @@ export default function ChantiersScreen() {
     return null;
   };
 
+  const normalizeAddr = (s: string) =>
+    s.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+
   const handleSave = async () => {
     if (!form.nom.trim()) return;
+
+    // Construit l'adresse complète depuis les champs structurés si remplis,
+    // sinon conserve l'adresse legacy saisie directement.
+    const rue = form.rue.trim();
+    const cp = form.codePostal.trim();
+    const ville = form.ville.trim();
+    const pays = form.pays.trim();
+    const adresseStructuree = [rue, [cp, ville].filter(Boolean).join(' '), pays]
+      .filter(Boolean)
+      .join(', ')
+      .trim();
+    const adresseComplete = adresseStructuree || form.adresse.trim();
+
+    // Duplicate address detection (only when creating)
+    if (!editId && adresseComplete) {
+      const normNew = normalizeAddr(adresseComplete);
+      const dup = data.chantiers.find(c => c.adresse && normalizeAddr(c.adresse) === normNew);
+      if (dup) {
+        const msg = `Un chantier à la même adresse existe déjà : ${dup.nom}. Créer quand même ?`;
+        if (Platform.OS === 'web') {
+          if (!window.confirm(msg)) return;
+        } else {
+          const confirmed = await new Promise<boolean>(resolve =>
+            Alert.alert('Doublon détecté', msg, [
+              { text: 'Annuler', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Créer', onPress: () => resolve(true) },
+            ], { cancelable: true, onDismiss: () => resolve(false) })
+          );
+          if (!confirmed) return;
+        }
+      }
+    }
+
     const existing = editId ? data.chantiers.find(c => c.id === editId) : null;
     // Géocoder l'adresse si elle a changé
     let coords = existing ? { latitude: existing.latitude, longitude: existing.longitude } : null;
-    if (form.adresse.trim() && (!existing || form.adresse.trim() !== existing.adresse)) {
-      coords = await geocodeAddress(form.adresse.trim());
+    if (adresseComplete && (!existing || adresseComplete !== existing.adresse)) {
+      coords = await geocodeAddress(adresseComplete);
     }
     if (editId) {
       updateChantier({
         id: editId,
         nom: form.nom.trim(),
-        adresse: form.adresse.trim(),
+        adresse: adresseComplete,
+        rue: rue || undefined,
+        codePostal: cp || undefined,
+        ville: ville || undefined,
+        pays: pays || undefined,
         dateDebut: form.dateDebut,
         dateFin: form.dateFin,
         statut: form.statut,
@@ -353,19 +595,33 @@ export default function ChantiersScreen() {
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
         fiche: existing?.fiche,
+        // Legacy client text conservé si existant
+        client: existing?.client,
+        architecteId: form.architecteId || undefined,
+        apporteurId: form.apporteurId || undefined,
+        contractantId: form.contractantId || undefined,
+        clientApporteurId: form.clientApporteurId || undefined,
         ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       });
     } else {
       addChantier({
         id: genId(),
         nom: form.nom.trim(),
-        adresse: form.adresse.trim(),
+        adresse: adresseComplete,
+        rue: rue || undefined,
+        codePostal: cp || undefined,
+        ville: ville || undefined,
+        pays: pays || undefined,
         dateDebut: form.dateDebut,
         dateFin: form.dateFin,
         statut: form.statut,
         couleur: form.couleur,
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
+        architecteId: form.architecteId || undefined,
+        apporteurId: form.apporteurId || undefined,
+        contractantId: form.contractantId || undefined,
+        clientApporteurId: form.clientApporteurId || undefined,
         ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       });
     }
@@ -687,7 +943,7 @@ export default function ChantiersScreen() {
         };
         reader.readAsDataURL(file);
       };
-      input.click();
+      input.click(); setTimeout(() => input.remove(), 60000);
     } else {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
@@ -696,10 +952,11 @@ export default function ChantiersScreen() {
       });
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        const uri = asset.base64
+        const raw = asset.base64
           ? `data:image/jpeg;base64,${asset.base64}`
           : asset.uri;
-        await uploadAndAddFichePhoto(uri);
+        const compressed = await compressImage(raw);
+        await uploadAndAddFichePhoto(compressed);
       }
     }
   };
@@ -708,18 +965,66 @@ export default function ChantiersScreen() {
     setFiche(f => ({ ...f, photos: f.photos.filter((_, i) => i !== idx) }));
   };
 
+  // Récupération d'un apporteur par id (utilitaire)
+  const apporteursAll = data.apporteurs || [];
+  const getApporteurById = (id?: string): Apporteur | undefined => id ? apporteursAll.find(a => a.id === id) : undefined;
+
+  // Liste filtrée des chantiers selon le filtre contact
+  const chantiersFiltered = useMemo(() => {
+    let list = data.chantiers;
+    // Apporteur : ne voit que ses chantiers liés
+    if (isApporteurUser && currentUser?.apporteurId) {
+      const myId = currentUser.apporteurId;
+      list = list.filter(c =>
+        c.architecteId === myId ||
+        c.apporteurId === myId ||
+        c.contractantId === myId ||
+        c.clientApporteurId === myId
+      );
+    }
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(c =>
+        c.nom.toLowerCase().includes(q) ||
+        (c.adresse || '').toLowerCase().includes(q) ||
+        (c.ville || '').toLowerCase().includes(q)
+      );
+    }
+    if (filterContactType !== 'all') {
+      const field: keyof Chantier =
+        filterContactType === 'architecte'  ? 'architecteId' :
+        filterContactType === 'apporteur'   ? 'apporteurId' :
+        filterContactType === 'contractant' ? 'contractantId' :
+                                               'clientApporteurId';
+      if (filterContactId === 'all') {
+        // Tous les chantiers liés à un contact de ce type (peu importe lequel)
+        list = list.filter(c => !!(c as any)[field]);
+      } else {
+        list = list.filter(c => (c as any)[field] === filterContactId);
+      }
+    }
+    return list;
+  }, [data.chantiers, searchQuery, filterContactType, filterContactId, isApporteurUser, currentUser?.apporteurId]);
+
   const renderChantier = ({ item }: { item: Chantier }) => {
     const statut = STATUT_COLORS[item.statut];
     const assignedEmps = data.employes.filter(e => item.employeIds.includes(e.id));
-    const hasFiche = item.fiche && (
-      item.fiche.codeAcces || item.fiche.emplacementCle || item.fiche.codeAlarme ||
-      item.fiche.contacts || item.fiche.notes || item.fiche.photos.length > 0
-    );
     const notesActives = getNotesActives(item.id);
-    const hasNotes = notesActives.length > 0;
+    const nbAchats = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === item.id).length;
+    const nbPlans = item.fiche?.plans?.length ?? 0;
+    const nbPhotos = (data.photosChantier || []).filter(p => p.chantierId === item.id).length;
+    // Contacts liés (4 types)
+    const archContact    = getApporteurById(item.architecteId);
+    const apContact      = getApporteurById(item.apporteurId);
+    const contractContact = getApporteurById(item.contractantId);
+    const clientContact  = getApporteurById(item.clientApporteurId);
+    const hasAnyContact = !!(archContact || apContact || contractContact || clientContact);
 
     return (
-      <View style={[styles.card, { borderLeftColor: item.couleur }]}>
+      <Pressable
+        style={[styles.card, { borderLeftColor: item.couleur }]}
+        onPress={() => { if (!isApporteurUser) setActionChantier(item); }}
+      >
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleRow}>
             <Text style={styles.cardName}>{item.nom}</Text>
@@ -729,61 +1034,50 @@ export default function ChantiersScreen() {
               </Text>
             </View>
           </View>
-          <View style={styles.cardActions}>
-            {/* Bouton notes avec badge */}
-            <Pressable style={styles.actionBtn} onPress={() => openNotes(item)}>
-              <View style={{ position: 'relative' }}>
-                <Text style={[styles.actionBtnNote, hasNotes && styles.actionBtnNoteActive]}>📝</Text>
-                {hasNotes && (
-                  <View style={styles.noteBadge}>
-                    <Text style={styles.noteBadgeText}>{notesActives.length}</Text>
-                  </View>
-                )}
-              </View>
-            </Pressable>
-            {/* Bouton Plans */}
-            <Pressable style={styles.actionBtn} onPress={() => openPlans(item)}>
-              <View style={{ position: 'relative' }}>
-                <Text style={[styles.actionBtnFiche, (item.fiche?.plans?.length ?? 0) > 0 && styles.actionBtnFicheActive]}>📍</Text>
-                {(item.fiche?.plans?.length ?? 0) > 0 && (
-                  <View style={styles.noteBadge}>
-                    <Text style={styles.noteBadgeText}>{item.fiche!.plans!.length}</Text>
-                  </View>
-                )}
-              </View>
-            </Pressable>
-            {/* Bouton Fiche Chantier unifié (fiche + modifier) */}
-            <Pressable style={styles.actionBtn} onPress={() => openFicheUnifiee(item)}>
-              <View style={{ alignItems: 'center' }}>
-                <Text style={[styles.actionBtnFiche, hasFiche && styles.actionBtnFicheActive]}>🪪</Text>
-              </View>
-            </Pressable>
-            {isAdmin && item.statut !== 'termine' && (
-              <Pressable
-                style={[styles.actionBtn, exportingId === item.id && { opacity: 0.5 }]}
-                onPress={() => handleClotureChantier(item)}
-                disabled={exportingId === item.id}
-              >
-                <Text style={{ fontSize: 18 }}>{exportingId === item.id ? '⏳' : '📦'}</Text>
-              </Pressable>
-            )}
-            {isAdmin && (
-              <Pressable style={styles.actionBtn} onPress={() => setBilanChantierId(item.id)}>
-                <Text style={{ fontSize: 18 }}>💰</Text>
-              </Pressable>
-            )}
-            {isAdmin && (
-              <Pressable style={styles.actionBtn} onPress={() => handleDelete(item.id, item.nom)}>
-                <Text style={styles.actionBtnDelete}>🗑</Text>
-              </Pressable>
-            )}
-          </View>
         </View>
 
         <View style={styles.cardMeta}>
-          <Text style={styles.cardMetaText}>📍 {item.adresse || '—'}</Text>
+          <Text style={styles.cardMetaText}>📍 {[item.rue, item.ville].filter(Boolean).join(', ') || item.adresse || '—'}</Text>
           <Text style={styles.cardMetaText}>🕐 {item.dateDebut} → {item.dateFin}</Text>
         </View>
+
+        {/* Badges contacts liés */}
+        {hasAnyContact && (
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
+            {archContact && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.architecte.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
+                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.architecte.emoji}</Text>
+                <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.architecte.couleur, fontWeight: '700' }} numberOfLines={1}>
+                  {archContact.prenom} {archContact.nom}
+                </Text>
+              </View>
+            )}
+            {apContact && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.apporteur.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
+                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.apporteur.emoji}</Text>
+                <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.apporteur.couleur, fontWeight: '700' }} numberOfLines={1}>
+                  {apContact.prenom} {apContact.nom}
+                </Text>
+              </View>
+            )}
+            {contractContact && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.contractant.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
+                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.contractant.emoji}</Text>
+                <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.contractant.couleur, fontWeight: '700' }} numberOfLines={1}>
+                  {contractContact.prenom} {contractContact.nom}
+                </Text>
+              </View>
+            )}
+            {clientContact && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.client.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
+                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.client.emoji}</Text>
+                <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.client.couleur, fontWeight: '700' }} numberOfLines={1}>
+                  {clientContact.prenom} {clientContact.nom}
+                </Text>
+              </View>
+            )}
+          </View>
+        )}
 
         {assignedEmps.length > 0 && (
           <View style={styles.empTags}>
@@ -798,17 +1092,39 @@ export default function ChantiersScreen() {
           </View>
         )}
 
-        {hasFiche && (
-          <Pressable style={styles.fichePreviewBtn} onPress={() => openFiche(item)}>
-            <Text style={styles.fichePreviewText}>{t.common.viewFiche}</Text>
-          </Pressable>
-        )}
-      </View>
+        {/* Indicateurs rapides */}
+        <View style={{ flexDirection: 'row', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
+          {notesActives.length > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Text style={{ fontSize: 12 }}>📝</Text>
+              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{notesActives.length}</Text>
+            </View>
+          )}
+          {nbPlans > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Text style={{ fontSize: 12 }}>📐</Text>
+              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbPlans}</Text>
+            </View>
+          )}
+          {nbPhotos > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Text style={{ fontSize: 12 }}>📸</Text>
+              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbPhotos}</Text>
+            </View>
+          )}
+          {nbAchats > 0 && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+              <Text style={{ fontSize: 12 }}>🛒</Text>
+              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbAchats}</Text>
+            </View>
+          )}
+        </View>
+      </Pressable>
     );
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#F2F4F7]">
+    <ScreenContainer containerClassName="bg-[#F5EDE3]">
       {/* En-tête */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.chantiers.title}</Text>
@@ -819,6 +1135,109 @@ export default function ChantiersScreen() {
         )}
       </View>
 
+      {/* Onglets Chantiers / SAV */}
+      {isAdmin && (data.ticketsSAV || []).length > 0 && (
+        <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, gap: 8 }}>
+          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#F5EDE3' }, vueChantiersTab === 'chantiers' && { borderColor: '#2C2C2C', backgroundColor: '#2C2C2C' }]}
+            onPress={() => setVueChantiersTab('chantiers')}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'chantiers' ? '#fff' : '#687076' }}>🏗 Chantiers</Text>
+          </Pressable>
+          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#F5EDE3' }, vueChantiersTab === 'sav' && { borderColor: '#E74C3C', backgroundColor: '#E74C3C' }]}
+            onPress={() => setVueChantiersTab('sav')}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'sav' ? '#fff' : '#687076' }}>
+              🔧 SAV ({(data.ticketsSAV || []).filter(t => t.statut !== 'clos').length})
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* ── Vue SAV globale ── */}
+      {vueChantiersTab === 'sav' && (
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+          {(() => {
+            const allTickets = (data.ticketsSAV || []).sort((a, b) => {
+              const statutOrdre: Record<string, number> = { ouvert: 0, en_cours: 1, resolu: 2, clos: 3 };
+              return (statutOrdre[a.statut] || 0) - (statutOrdre[b.statut] || 0) || b.createdAt.localeCompare(a.createdAt);
+            });
+            const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#2C2C2C', haute: '#F59E0B', urgente: '#E74C3C' };
+            const statutLabels: Record<string, { label: string; bg: string; text: string }> = {
+              ouvert: { label: '🔴 Ouvert', bg: '#FEF2F2', text: '#DC2626' },
+              en_cours: { label: '🟡 En cours', bg: '#FFF3CD', text: '#856404' },
+              resolu: { label: '🟢 Résolu', bg: '#D4EDDA', text: '#155724' },
+              clos: { label: '⚪ Clos', bg: '#F5EDE3', text: '#687076' },
+            };
+
+            if (allTickets.length === 0) return (
+              <View style={{ alignItems: 'center', paddingVertical: 40 }}>
+                <Text style={{ fontSize: 36, marginBottom: 8 }}>🔧</Text>
+                <Text style={{ fontSize: 15, color: '#687076' }}>Aucun ticket SAV</Text>
+              </View>
+            );
+
+            // Stats
+            const ouverts = allTickets.filter(t => t.statut === 'ouvert').length;
+            const enCours = allTickets.filter(t => t.statut === 'en_cours').length;
+            const resolus = allTickets.filter(t => t.statut === 'resolu').length;
+
+            return (
+              <>
+                {/* Résumé */}
+                <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+                  <View style={{ flex: 1, backgroundColor: '#FEF2F2', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#DC2626' }}>{ouverts}</Text>
+                    <Text style={{ fontSize: 10, color: '#DC2626', fontWeight: '600' }}>Ouverts</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: '#FFF3CD', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#856404' }}>{enCours}</Text>
+                    <Text style={{ fontSize: 10, color: '#856404', fontWeight: '600' }}>En cours</Text>
+                  </View>
+                  <View style={{ flex: 1, backgroundColor: '#D4EDDA', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#155724' }}>{resolus}</Text>
+                    <Text style={{ fontSize: 10, color: '#155724', fontWeight: '600' }}>Résolus</Text>
+                  </View>
+                </View>
+
+                {/* Liste */}
+                {allTickets.map(t => {
+                  const ch = data.chantiers.find(c => c.id === t.chantierId);
+                  const st = statutLabels[t.statut] || statutLabels.ouvert;
+                  const assigneEmp = t.assigneA ? data.employes.find(e => e.id === t.assigneA) : null;
+                  return (
+                    <Pressable key={t.id} style={{ backgroundColor: '#fff', borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E2E6EA', borderLeftWidth: 4, borderLeftColor: prioColors[t.priorite] || '#2C2C2C' }}
+                      onPress={() => { setSavChantierId(t.chantierId); }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{t.objet}</Text>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
+                            <View style={{ backgroundColor: ch?.couleur || '#2C2C2C', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                              <Text style={{ fontSize: 9, fontWeight: '700', color: '#fff' }}>{ch?.nom || '?'}</Text>
+                            </View>
+                            <View style={{ backgroundColor: st.bg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                              <Text style={{ fontSize: 9, fontWeight: '700', color: st.text }}>{st.label}</Text>
+                            </View>
+                            <Text style={{ fontSize: 9, color: '#B0BEC5' }}>Prio: {t.priorite}</Text>
+                          </View>
+                        </View>
+                      </View>
+                      {t.description && <Text style={{ fontSize: 11, color: '#687076', marginTop: 4 }} numberOfLines={2}>{t.description}</Text>}
+                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                        <Text style={{ fontSize: 10, color: '#B0BEC5' }}>📅 {t.dateOuverture}</Text>
+                        {assigneEmp && <Text style={{ fontSize: 10, color: '#2C2C2C' }}>👷 {assigneEmp.prenom} {assigneEmp.nom}</Text>}
+                        {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60' }}>✓ {t.resoluPar}</Text>}
+                        {t.photos && t.photos.length > 0 && <Text style={{ fontSize: 10, color: '#687076' }}>📷 {t.photos.length}</Text>}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </>
+            );
+          })()}
+        </ScrollView>
+      )}
+
+      {/* ── Vue Chantiers classique ── */}
+      {(vueChantiersTab === 'chantiers' || (data.ticketsSAV || []).length === 0) && (
+      <>
       {/* Barre de recherche */}
       <View style={styles.searchBar}>
         <TextInput
@@ -835,11 +1254,70 @@ export default function ChantiersScreen() {
         )}
       </View>
 
+      {/* Filtre par type de contact */}
+      {isAdmin && (
+        <View style={{ paddingHorizontal: 16, marginBottom: 6 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+            <Pressable
+              style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: filterContactType === 'all' ? '#2C2C2C' : '#E8DDD0', backgroundColor: filterContactType === 'all' ? '#2C2C2C' : '#F5EDE3' }}
+              onPress={() => { setFilterContactType('all'); setFilterContactId('all'); }}
+            >
+              <Text style={{ fontSize: 12, fontWeight: '700', color: filterContactType === 'all' ? '#fff' : '#687076' }}>Tous les chantiers</Text>
+            </Pressable>
+            {(['architecte', 'apporteur', 'contractant', 'client'] as const).map(ty => {
+              const meta = APPORTEUR_TYPE_LABELS[ty];
+              const active = filterContactType === ty;
+              return (
+                <Pressable
+                  key={ty}
+                  style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: active ? meta.couleur : '#E8DDD0', backgroundColor: active ? meta.couleur : '#F5EDE3' }}
+                  onPress={() => { setFilterContactType(ty); setFilterContactId('all'); }}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: active ? '#fff' : '#687076' }}>
+                    {meta.emoji} Par {meta.label.toLowerCase()}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+
+          {/* Sous-sélecteur : liste des contacts de ce type */}
+          {filterContactType !== 'all' && (() => {
+            const listOfThisType = apporteursAll.filter(a => a.type === filterContactType);
+            if (listOfThisType.length === 0) {
+              return (
+                <Text style={{ fontSize: 11, color: '#8C8077', marginTop: 8, fontStyle: 'italic' }}>
+                  Aucun {APPORTEUR_TYPE_LABELS[filterContactType].label.toLowerCase()} enregistré.
+                </Text>
+              );
+            }
+            return (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, marginTop: 8 }}>
+                <Pressable
+                  style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: filterContactId === 'all' ? '#2C2C2C' : '#E8DDD0', backgroundColor: filterContactId === 'all' ? '#E8DDD0' : '#fff' }}
+                  onPress={() => setFilterContactId('all')}
+                >
+                  <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Tous</Text>
+                </Pressable>
+                {listOfThisType.map(a => (
+                  <Pressable
+                    key={a.id}
+                    style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: filterContactId === a.id ? '#2C2C2C' : '#E8DDD0', backgroundColor: filterContactId === a.id ? '#2C2C2C' : '#fff' }}
+                    onPress={() => setFilterContactId(a.id)}
+                  >
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: filterContactId === a.id ? '#fff' : '#2C2C2C' }}>
+                      {a.prenom} {a.nom}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+            );
+          })()}
+        </View>
+      )}
+
       <FlatList
-        data={searchQuery.trim() ? data.chantiers.filter(c => {
-          const q = searchQuery.toLowerCase().trim();
-          return c.nom.toLowerCase().includes(q) || (c.adresse || '').toLowerCase().includes(q) || (c.ville || '').toLowerCase().includes(q);
-        }) : data.chantiers}
+        data={chantiersFiltered}
         keyExtractor={item => item.id}
         renderItem={renderChantier}
         contentContainerStyle={styles.list}
@@ -850,11 +1328,103 @@ export default function ChantiersScreen() {
           </View>
         }
       />
+      </>
+      )}
+
+      {/* ── Modal menu actions chantier ── */}
+      <Modal visible={actionChantier !== null} transparent animationType="fade" onRequestClose={() => setActionChantier(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }} onPress={() => setActionChantier(null)}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20, paddingHorizontal: 16 }}>
+            {actionChantier && (() => {
+              const ch = actionChantier;
+              const statut = STATUT_COLORS[ch.statut];
+              const notesCount = getNotesActives(ch.id).length;
+              const plansCount = ch.fiche?.plans?.length ?? 0;
+              const photosCount = (data.photosChantier || []).filter(p => p.chantierId === ch.id).length;
+              const achatsCount = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === ch.id).length;
+              const marchesCount = ((data.marchesChantier || []).filter(m => m.chantierId === ch.id).length)
+                + ((data.supplementsMarche || []).filter(s => s.chantierId === ch.id).length);
+
+              const notesPlanningCount = data.affectations.filter(a => a.chantierId === ch.id && (a.notes || []).length > 0).reduce((s, a) => s + a.notes.length, 0);
+
+              const actions = [
+                { icon: '🪪', label: 'Fiche', badge: 0, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => { openFicheUnifiee(c); }, 100); } },
+                { icon: '📐', label: 'Plans', badge: plansCount, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => openPlans(c), 100); } },
+                { icon: '📝', label: 'Notes', badge: notesCount, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => openNotes(c), 100); } },
+                { icon: '📋', label: 'Suivi', badge: notesPlanningCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setSuiviChantierId(id), 100); } },
+                { icon: '📸', label: 'Photos', badge: photosCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setShowGalerie(id), 100); } },
+                { icon: '📍', label: 'Y aller', badge: 0, onPress: () => { const adr = ch.adresse; setActionChantier(null); setTimeout(() => openDirectionsHelper(adr), 100); } },
+                ...(isAdmin ? [{ icon: '💼', label: 'Marchés', badge: marchesCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setMarchesChantierId(id), 100); } }] : []),
+                ...(isAdmin ? [{ icon: '🔧', label: 'SAV', badge: ((data.ticketsSAV || []).filter(t => t.chantierId === ch.id && t.statut !== 'clos').length), onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setSavChantierId(id), 100); } }] : []),
+                ...(isAdmin ? [{ icon: '🛒', label: 'Achats', badge: achatsCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setAchatsChantierId(id), 100); } }] : []),
+                ...(isAdmin ? [{ icon: '💰', label: 'Finances', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setBilanChantierId(id), 100); } }] : []),
+                ...(isAdmin ? [{ icon: '👤', label: 'Portail client', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setPortailClientId(id), 100); } }] : []),
+                ...(isAdmin && ch.statut !== 'termine' ? [{ icon: '✅', label: 'Clôturer', badge: 0, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => handleClotureChantier(c), 100); } }] : []),
+                ...(isAdmin ? [{ icon: '🗑', label: 'Supprimer', badge: 0, danger: true, onPress: () => { const id = ch.id; const nom = ch.nom; setActionChantier(null); setTimeout(() => handleDelete(id, nom), 100); } }] : []),
+              ];
+
+              return (
+                <>
+                  {/* En-tête chantier */}
+                  <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                    <View style={{ width: 40, height: 4, backgroundColor: '#E2E6EA', borderRadius: 2, marginBottom: 12 }} />
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: ch.couleur }} />
+                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>{ch.nom}</Text>
+                    </View>
+                    <View style={[styles.statutBadge, { backgroundColor: statut.bg, marginTop: 6 }]}>
+                      <Text style={[styles.statutText, { color: statut.text }]}>{STATUT_LABELS[ch.statut]}</Text>
+                    </View>
+                  </View>
+
+                  {/* Grille d'actions */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
+                    {actions.map((a, i) => (
+                      <Pressable
+                        key={i}
+                        style={{ width: 80, height: 80, borderRadius: 16, backgroundColor: (a as any).danger ? '#FEF2F2' : '#F5EDE3', alignItems: 'center', justifyContent: 'center', position: 'relative' }}
+                        onPress={a.onPress}
+                      >
+                        <Text style={{ fontSize: 28 }}>{a.icon}</Text>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: (a as any).danger ? '#E74C3C' : '#11181C', marginTop: 4 }}>{a.label}</Text>
+                        {a.badge > 0 && (
+                          <View style={{ position: 'absolute', top: 4, right: 4, backgroundColor: '#2C2C2C', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
+                            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{a.badge}</Text>
+                          </View>
+                        )}
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  {/* Changement rapide de statut */}
+                  {isAdmin && (
+                    <View style={{ marginTop: 16 }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#687076', textAlign: 'center', marginBottom: 6 }}>Changer le statut :</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, justifyContent: 'center', paddingHorizontal: 8 }}>
+                        {STATUTS.map(s => {
+                          const st = STATUT_COLORS[s];
+                          const active = ch.statut === s;
+                          return (
+                            <Pressable key={s} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: active ? st.bg : '#F5EDE3', borderWidth: 1.5, borderColor: active ? st.text : '#E2E6EA' }}
+                              onPress={() => { updateChantier({ ...ch, statut: s }); setActionChantier(null); }}>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: active ? st.text : '#687076' }}>{STATUT_LABELS[s]}</Text>
+                            </Pressable>
+                          );
+                        })}
+                      </ScrollView>
+                    </View>
+                  )}
+                </>
+              );
+            })()}
+          </View>
+        </Pressable>
+      </Modal>
 
       {/* ── Modal formulaire chantier (admin) ── */}
-      <Modal visible={showForm} animationType="slide" transparent onRequestClose={() => setShowForm(false)}>
+      <ModalKeyboard visible={showForm} animationType="slide" transparent onRequestClose={() => setShowForm(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowForm(false)}>
-          <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
+          <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editId ? t.chantiers.edit : t.chantiers.add}</Text>
@@ -875,16 +1445,70 @@ export default function ChantiersScreen() {
                 />
               </FormField>
 
-              <FormField label={t.common.address}>
+              <FormField label="Rue">
                 <TextInput
                   style={styles.input}
-                  value={form.adresse}
-                  onChangeText={v => setForm(f => ({ ...f, adresse: v }))}
-                  placeholder="Ex: 12 rue des Lilas, Paris"
+                  value={form.rue}
+                  onChangeText={v => setForm(f => ({ ...f, rue: v }))}
+                  placeholder="Ex: 45 avenue Foch"
                   placeholderTextColor="#B0BEC5"
                   returnKeyType="next"
                 />
               </FormField>
+
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <View style={{ width: 110 }}>
+                  <FormField label="Code Postal">
+                    <TextInput
+                      style={styles.input}
+                      value={form.codePostal}
+                      onChangeText={v => setForm(f => ({ ...f, codePostal: v }))}
+                      placeholder="75016"
+                      placeholderTextColor="#B0BEC5"
+                      keyboardType="number-pad"
+                      returnKeyType="next"
+                    />
+                  </FormField>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <FormField label="Ville">
+                    <TextInput
+                      style={styles.input}
+                      value={form.ville}
+                      onChangeText={v => setForm(f => ({ ...f, ville: v }))}
+                      placeholder="Paris"
+                      placeholderTextColor="#B0BEC5"
+                      returnKeyType="next"
+                    />
+                  </FormField>
+                </View>
+              </View>
+
+              <FormField label="Pays">
+                <TextInput
+                  style={styles.input}
+                  value={form.pays}
+                  onChangeText={v => setForm(f => ({ ...f, pays: v }))}
+                  placeholder="France"
+                  placeholderTextColor="#B0BEC5"
+                  returnKeyType="next"
+                />
+              </FormField>
+
+              {/* Ancienne adresse libre (fallback) : affichée uniquement si l'ancien chantier
+                  n'a QUE le champ legacy (rue/ville non renseignés) pour éviter la perte de données. */}
+              {!!form.adresse && !form.rue && !form.ville && (
+                <FormField label="Adresse (ancienne saisie)">
+                  <TextInput
+                    style={styles.input}
+                    value={form.adresse}
+                    onChangeText={v => setForm(f => ({ ...f, adresse: v }))}
+                    placeholder="Ex: 12 rue des Lilas, Paris"
+                    placeholderTextColor="#B0BEC5"
+                    returnKeyType="next"
+                  />
+                </FormField>
+              )}
 
               <View style={styles.dateRow}>
                 <View style={{ flex: 1, marginRight: 8 }}>
@@ -943,7 +1567,7 @@ export default function ChantiersScreen() {
                       onPress={() => toggleEmploye(emp.id)}
                     >
                       <View style={[styles.empAvatar, { backgroundColor: mc.color }]}>
-                        <Text style={[styles.empAvatarText, { color: mc.textColor }]}>{emp.prenom[0]}</Text>
+                        <Text style={[styles.empAvatarText, { color: mc.textColor }]}>{emp.prenom?.[0] || '?'}</Text>
                       </View>
                       <Text style={styles.empRowName}>{emp.prenom} {emp.nom}</Text>
                       <Text style={styles.empRowMetier}>{mc.label}</Text>
@@ -952,6 +1576,57 @@ export default function ChantiersScreen() {
                   );
                 })}
               </FormField>
+
+              {/* ═══ Section Contacts (4 types) ═══ */}
+              <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 10 }}>🤝 Contacts</Text>
+
+                {(['architecte', 'apporteur', 'contractant', 'client'] as const).map((ty) => {
+                  const meta = APPORTEUR_TYPE_LABELS[ty];
+                  const field: keyof ChantierForm =
+                    ty === 'architecte'  ? 'architecteId' :
+                    ty === 'apporteur'   ? 'apporteurId' :
+                    ty === 'contractant' ? 'contractantId' :
+                                            'clientApporteurId';
+                  const selectedId = form[field] as string;
+                  const listOfThisType = apporteursAll.filter(a => a.type === ty);
+                  return (
+                    <View key={ty} style={{ marginBottom: 10 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: meta.couleur, marginBottom: 6 }}>
+                        {meta.emoji} {meta.label}
+                      </Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                        <Pressable
+                          onPress={() => setForm(f => ({ ...f, [field]: '' }))}
+                          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: !selectedId ? '#2C2C2C' : '#E8DDD0', backgroundColor: !selectedId ? '#E8DDD0' : '#fff' }}
+                        >
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Aucun</Text>
+                        </Pressable>
+                        {listOfThisType.map(a => {
+                          const active = selectedId === a.id;
+                          return (
+                            <Pressable
+                              key={a.id}
+                              onPress={() => setForm(f => ({ ...f, [field]: a.id }))}
+                              style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: active ? meta.couleur : '#E8DDD0', backgroundColor: active ? meta.couleur : '#fff' }}
+                            >
+                              <Text style={{ fontSize: 11, fontWeight: '600', color: active ? '#fff' : '#2C2C2C' }}>
+                                {a.prenom} {a.nom}{a.societe ? ` · ${a.societe}` : ''}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                        <Pressable
+                          onPress={() => goCreateApporteur(ty)}
+                          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: meta.couleur, backgroundColor: '#fff' }}
+                        >
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: meta.couleur }}>+ Ajouter</Text>
+                        </Pressable>
+                      </ScrollView>
+                    </View>
+                  );
+                })}
+              </View>
 
               <FormField label={t.common.visibleOnPlanning}>
                 <Pressable
@@ -972,14 +1647,15 @@ export default function ChantiersScreen() {
             >
               <Text style={styles.saveBtnText}>{editId ? t.common.save : t.chantiers.add}</Text>
             </Pressable>
-          </Pressable>
+          </View>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Fiche Chantier Unifié (Fiche + Modifier) ── */}
-      <Modal visible={showFiche} animationType="slide" transparent onRequestClose={() => setShowFiche(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowFiche(false)}>
-          <Pressable style={styles.modalSheetFiche} onPress={e => e.stopPropagation()}>
+      <ModalKeyboard visible={showFiche} animationType="slide" transparent onRequestClose={() => setShowFiche(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setShowFiche(false)} />
+          <View style={styles.modalSheetFiche}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <View>
@@ -993,31 +1669,42 @@ export default function ChantiersScreen() {
               </Pressable>
             </View>
 
-            {/* Onglets Fiche / Modifier */}
-            <View style={styles.noteTabRow}>
-              <Pressable
-                style={[styles.noteTab, ficheOnglet === 'fiche' && styles.noteTabActive]}
-                onPress={() => setFicheOnglet('fiche')}
-              >
-                <Text style={[styles.noteTabText, ficheOnglet === 'fiche' && styles.noteTabTextActive]}>
-                  {t.chantiers.ficheTitle}
-                </Text>
-              </Pressable>
-              {isAdmin && (
-                <Pressable
-                  style={[styles.noteTab, ficheOnglet === 'modifier' && styles.noteTabActive]}
-                  onPress={() => setFicheOnglet('modifier')}
-                >
-                  <Text style={[styles.noteTabText, ficheOnglet === 'modifier' && styles.noteTabTextActive]}>
-                    {t.common.edit}
-                  </Text>
-                </Pressable>
-              )}
-            </View>
+            {/* Titre */}
 
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-              {ficheOnglet === 'fiche' ? (
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
+              {ficheOnglet === 'fiche' && (
                 <>
+              {/* ═══ FICHE CHANTIER REFONDÉE ═══ */}
+
+              {/* Adresse */}
+              <View style={styles.ficheSection}>
+                <Text style={styles.ficheSectionIcon}>📍</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.ficheSectionLabel}>Adresse</Text>
+                  {isAdmin ? (
+                    <TextInput style={styles.ficheInput} value={form.adresse} onChangeText={v => setForm(f => ({ ...f, adresse: v }))} placeholder="Rue" />
+                  ) : (
+                    <Text style={{ fontSize: 14, color: '#11181C' }}>{form.adresse || '—'}</Text>
+                  )}
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
+                    <View style={{ width: 80 }}>
+                      {isAdmin ? (
+                        <TextInput style={styles.ficheInput} value={(() => { const c = data.chantiers.find(c2 => c2.id === ficheId); return c?.codePostal || ''; })()} onChangeText={v => { if (!ficheId) return; const c = data.chantiers.find(c2 => c2.id === ficheId); if (c) updateChantier({ ...c, codePostal: v }); }} placeholder="CP" keyboardType="number-pad" />
+                      ) : (
+                        <Text style={{ fontSize: 14, color: '#11181C' }}>{data.chantiers.find(c => c.id === ficheId)?.codePostal || '—'}</Text>
+                      )}
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      {isAdmin ? (
+                        <TextInput style={styles.ficheInput} value={(() => { const c = data.chantiers.find(c2 => c2.id === ficheId); return c?.ville || ''; })()} onChangeText={v => { if (!ficheId) return; const c = data.chantiers.find(c2 => c2.id === ficheId); if (c) updateChantier({ ...c, ville: v }); }} placeholder="Ville" />
+                      ) : (
+                        <Text style={{ fontSize: 14, color: '#11181C' }}>{data.chantiers.find(c => c.id === ficheId)?.ville || '—'}</Text>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              </View>
+
               {/* Code accès */}
               <View style={styles.ficheSection}>
                 <Text style={styles.ficheSectionIcon}>🔢</Text>
@@ -1048,6 +1735,43 @@ export default function ChantiersScreen() {
                     multiline
                     editable={isAdmin}
                   />
+                  {/* Photo cachette clé */}
+                  {fiche.photoEmplacementCle && (
+                    <Pressable onPress={() => setViewPhotoUri(fiche.photoEmplacementCle || null)} style={{ marginTop: 8 }}>
+                      <View style={{ width: 100, height: 100, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F5EDE3' }}>
+                        <Image source={{ uri: fiche.photoEmplacementCle }} style={{ width: 100, height: 100 }} resizeMode="cover" />
+                      </View>
+                    </Pressable>
+                  )}
+                  {isAdmin && (
+                    <Pressable
+                      style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                      onPress={async () => {
+                        const saveCleUri = async (uri: string) => {
+                          const photoId = `cle_${ficheId || 'new'}_${Date.now()}`;
+                          const url = await uploadFileToStorage(uri, `chantiers/${ficheId || 'new'}/cle`, photoId);
+                          if (url) setFiche(f => ({ ...f, photoEmplacementCle: url }));
+                          else if (Platform.OS !== 'web') Alert.alert('Erreur', 'Impossible d\'uploader la photo');
+                        };
+                        if (Platform.OS === 'web') {
+                          const input = document.createElement('input');
+                          input.type = 'file'; input.accept = 'image/*';
+                          input.onchange = (e: Event) => {
+                            const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
+                            const reader = new FileReader();
+                            reader.onload = (ev) => saveCleUri(ev.target?.result as string);
+                            reader.readAsDataURL(file);
+                          };
+                          input.click(); setTimeout(() => input.remove(), 60000);
+                        } else {
+                          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
+                          if (!result.canceled && result.assets[0]) { const compressed = await compressImage(result.assets[0].uri); await saveCleUri(compressed); }
+                        }
+                      }}
+                    >
+                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 {fiche.photoEmplacementCle ? 'Changer la photo' : 'Ajouter photo cachette'}</Text>
+                    </Pressable>
+                  )}
                 </View>
               </View>
 
@@ -1142,104 +1866,335 @@ export default function ChantiersScreen() {
                 </View>
               </View>
 
+              {/* ═══ CONFIGURATION CHANTIER (admin) ═══ */}
+              {isAdmin && (
+                <>
+                  {/* Dates */}
+                  <View style={{ marginTop: 12 }}>
+                    <View style={styles.dateRow}>
+                      <View style={{ flex: 1, marginRight: 8 }}>
+                        <DatePicker label="Date de début" value={form.dateDebut} onChange={v => setForm(f => ({ ...f, dateDebut: v }))} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <DatePicker label="Date de fin" value={form.dateFin} onChange={v => setForm(f => ({ ...f, dateFin: v }))} minDate={form.dateDebut || undefined} />
+                      </View>
+                    </View>
+                  </View>
+
+                  {/* Statut */}
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={styles.ficheSectionLabel}>Statut</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, marginTop: 6 }}>
+                      {STATUTS.map(s => (
+                        <Pressable key={s} style={[styles.chip, form.statut === s && styles.chipActive]} onPress={() => setForm(f => ({ ...f, statut: s }))}>
+                          <Text style={[styles.chipText, form.statut === s && styles.chipTextActive]}>{STATUT_LABELS[s]}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
+                  </View>
+
+                  {/* Couleur — avec indication si déjà prise */}
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={styles.ficheSectionLabel}>Couleur associée</Text>
+                    <View style={styles.colorRow}>
+                      {CHANTIER_COLORS.map(c => {
+                        const usedBy = data.chantiers.find(ch => ch.couleur === c && ch.id !== ficheId && ch.statut !== 'termine');
+                        return (
+                          <Pressable key={c} style={[styles.colorSwatch, { backgroundColor: c }, form.couleur === c && styles.colorSwatchActive, usedBy && form.couleur !== c && { opacity: 0.3 }]} onPress={() => setForm(f => ({ ...f, couleur: c }))}>
+                            {usedBy && form.couleur !== c && <Text style={{ fontSize: 8, color: '#fff', fontWeight: '800' }}>✕</Text>}
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+
+                  {/* Visible sur le planning */}
+                  <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Text style={styles.ficheSectionLabel}>Visible sur le planning</Text>
+                    <Pressable style={[styles.toggleBtn, form.visibleSurPlanning && styles.toggleBtnActive]} onPress={() => setForm(f => ({ ...f, visibleSurPlanning: !f.visibleSurPlanning }))}>
+                      <Text style={[styles.toggleBtnText, form.visibleSurPlanning && styles.toggleBtnTextActive]}>{form.visibleSurPlanning ? 'Oui' : 'Non'}</Text>
+                    </Pressable>
+                  </View>
+
+                  {/* Employés et sous-traitants affiliés (via le planning) */}
+                  <View style={{ marginTop: 12 }}>
+                    <Text style={styles.ficheSectionLabel}>Équipe affiliée au chantier</Text>
+                    <View style={{ marginTop: 6, gap: 4 }}>
+                      {(() => {
+                        // Employés ayant une affectation sur ce chantier
+                        const empIds = [...new Set(data.affectations.filter(a => a.chantierId === ficheId && !a.soustraitantId).map(a => a.employeId))];
+                        const stIds = [...new Set(data.affectations.filter(a => a.chantierId === ficheId && a.soustraitantId).map(a => a.soustraitantId!))];
+                        const emps = empIds.map(id => data.employes.find(e => e.id === id)).filter(Boolean) as typeof data.employes;
+                        const sts = stIds.map(id => data.sousTraitants.find(s => s.id === id)).filter((s): s is NonNullable<typeof s> => !!s);
+                        if (emps.length === 0 && sts.length === 0) return <Text style={{ fontSize: 12, color: '#687076', fontStyle: 'italic' }}>Aucun employé affecté via le planning</Text>;
+                        return (
+                          <>
+                            {emps.map(emp => {
+                              const mc = METIER_COLORS[emp.metier];
+                              return (
+                                <View key={emp.id} style={[styles.empRow, styles.empRowSelected]}>
+                                  <View style={[styles.empAvatar, { backgroundColor: mc.color }]}>
+                                    <Text style={[styles.empAvatarText, { color: mc.textColor }]}>{emp.prenom?.[0] || '?'}</Text>
+                                  </View>
+                                  <Text style={styles.empRowName}>{emp.prenom} {emp.nom}</Text>
+                                  <Text style={styles.empRowMetier}>{mc.label}</Text>
+                                </View>
+                              );
+                            })}
+                            {sts.map(st => (
+                              <View key={st.id} style={[styles.empRow, { backgroundColor: '#E0F7FA' }]}>
+                                <View style={[styles.empAvatar, { backgroundColor: st.couleur || '#00BCD4' }]}>
+                                  <Text style={styles.empAvatarText}>{(st.prenom || st.societe || 'S')[0]}</Text>
+                                </View>
+                                <Text style={styles.empRowName}>{st.societe || `${st.prenom} ${st.nom}`}</Text>
+                                <Text style={styles.empRowMetier}>Sous-traitant</Text>
+                              </View>
+                            ))}
+                          </>
+                        );
+                      })()}
+                    </View>
+                  </View>
+                </>
+              )}
+
               {fiche.updatedAt ? (
                 <Text style={styles.ficheUpdated}>
                   Dernière mise à jour : {new Date(fiche.updatedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                 </Text>
               ) : null}
                 </>
-              ) : (
-                /* Onglet Modifier */
-                <>
-                  <FormField label={t.common.siteName}>
-                    <TextInput
-                      style={styles.input}
-                      value={form.nom}
-                      onChangeText={v => setForm(f => ({ ...f, nom: v }))}
-                      placeholder="Ex: Villa Dupont"
-                      placeholderTextColor="#B0BEC5"
-                    />
-                  </FormField>
-                  <FormField label={t.common.address}>
-                    <TextInput
-                      style={styles.input}
-                      value={form.adresse}
-                      onChangeText={v => setForm(f => ({ ...f, adresse: v }))}
-                      placeholder="Ex: 12 rue des Lilas, Paris"
-                      placeholderTextColor="#B0BEC5"
-                    />
-                  </FormField>
-                  <View style={styles.dateRow}>
-                    <View style={{ flex: 1, marginRight: 8 }}>
-                      <DatePicker label={t.common.startDate} value={form.dateDebut} onChange={v => setForm(f => ({ ...f, dateDebut: v }))} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <DatePicker label={t.common.endDate} value={form.dateFin} onChange={v => setForm(f => ({ ...f, dateFin: v }))} minDate={form.dateDebut || undefined} />
-                    </View>
-                  </View>
-                  <FormField label={t.common.status}>
-                    <View style={styles.chipRow}>
-                      {STATUTS.map(s => (
-                        <Pressable key={s} style={[styles.chip, form.statut === s && styles.chipActive]} onPress={() => setForm(f => ({ ...f, statut: s }))}>
-                          <Text style={[styles.chipText, form.statut === s && styles.chipTextActive]}>{STATUT_LABELS[s]}</Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </FormField>
-                  <FormField label={t.common.color}>
-                    <View style={styles.colorRow}>
-                      {CHANTIER_COLORS.map(c => (
-                        <Pressable key={c} style={[styles.colorSwatch, { backgroundColor: c }, form.couleur === c && styles.colorSwatchActive]} onPress={() => setForm(f => ({ ...f, couleur: c }))} />
-                      ))}
-                    </View>
-                  </FormField>
-                  <FormField label={t.common.assignedEmployees}>
-                    {data.employes.map(emp => {
-                      const mc = METIER_COLORS[emp.metier];
-                      const selected = form.employeIds.includes(emp.id);
-                      return (
-                        <Pressable key={emp.id} style={[styles.empRow, selected && styles.empRowSelected]} onPress={() => toggleEmploye(emp.id)}>
-                          <View style={[styles.empAvatar, { backgroundColor: mc.color }]}>
-                            <Text style={[styles.empAvatarText, { color: mc.textColor }]}>{emp.prenom[0]}</Text>
-                          </View>
-                          <Text style={styles.empRowName}>{emp.prenom} {emp.nom}</Text>
-                          <Text style={styles.empRowMetier}>{mc.label}</Text>
-                          {selected && <Text style={styles.empCheck}>✓</Text>}
-                        </Pressable>
-                      );
-                    })}
-                  </FormField>
-                  <FormField label={t.common.visibleOnPlanning}>
-                    <Pressable style={[styles.toggleBtn, form.visibleSurPlanning && styles.toggleBtnActive]} onPress={() => setForm(f => ({ ...f, visibleSurPlanning: !f.visibleSurPlanning }))}>
-                      <Text style={[styles.toggleBtnText, form.visibleSurPlanning && styles.toggleBtnTextActive]}>{form.visibleSurPlanning ? t.common.yes : t.common.no}</Text>
-                    </Pressable>
-                  </FormField>
-                </>
               )}
+
+              {/* Achats déplacés dans modal séparé via menu d'actions */}
+              {false && ficheId && (() => {
+                const achats = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === ficheId);
+                const totalAchats = achats.reduce((s, d) => s + (d.montant || 0), 0);
+                const todayStr2 = new Date().toISOString().slice(0, 10);
+
+                return (
+                  <>
+                    {/* Total */}
+                    <View style={{ backgroundColor: '#EEF2F8', borderRadius: 14, padding: 14, marginBottom: 12, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 22, fontWeight: '800', color: '#2C2C2C' }}>{totalAchats.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
+                      <Text style={{ fontSize: 12, color: '#687076' }}>Total achats ({achats.length} dépense{achats.length > 1 ? 's' : ''})</Text>
+                    </View>
+
+                    {/* Bouton ajouter */}
+                    <Pressable
+                      style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
+                      onPress={() => { setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr2, fournisseur: '', fichier: '', note: '' }); setShowAchatFormFiche(v => !v); }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{showAchatFormFiche ? '✕ Annuler' : '+ Ajouter un achat'}</Text>
+                    </Pressable>
+
+                    {/* Formulaire inline ajout achat */}
+                    {showAchatFormFiche && (
+                      <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>🧾 Nouvel achat</Text>
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé *" />
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                            value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
+                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                            value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
+                        </View>
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
+                        {/* Scan / photo document */}
+                        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                            onPress={async () => {
+                              const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
+                              if (!result.canceled && result.assets[0]) {
+                                const compressed = await compressImage(result.assets[0].uri);
+                                const url = await uploadFileToStorage(compressed, `chantiers/${ficheId}/achats`, `achat_${Date.now()}`);
+                                if (url) setAchatFichierUri(url);
+                              }
+                            }}>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Photo</Text>
+                          </Pressable>
+                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                            onPress={async () => {
+                              const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                              if (status !== 'granted') { Alert.alert('Permission', 'Accès caméra requis'); return; }
+                              const result = await ImagePicker.launchCameraAsync({ quality: 0.6 });
+                              if (!result.canceled && result.assets[0]) {
+                                const compressed = await compressImage(result.assets[0].uri);
+                                const url = await uploadFileToStorage(compressed, `chantiers/${ficheId}/achats`, `scan_${Date.now()}`);
+                                if (url) setAchatFichierUri(url);
+                              }
+                            }}>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📸 Scanner</Text>
+                          </Pressable>
+                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                            onPress={async () => {
+                              const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
+                              if (!result.canceled && result.assets?.[0]) {
+                                const url = await uploadFileToStorage(result.assets[0].uri, `chantiers/${ficheId}/achats`, `doc_${Date.now()}`);
+                                if (url) setAchatFichierUri(url);
+                              }
+                            }}>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📄 PDF</Text>
+                          </Pressable>
+                        </View>
+                        {achatFichierUri && (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                            <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint</Text>
+                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 11, color: '#E74C3C' }}>✕</Text></Pressable>
+                          </View>
+                        )}
+                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: achatForm.libelle.trim() ? 1 : 0.5 }}
+                          disabled={!achatForm.libelle.trim()}
+                          onPress={() => {
+                            if (!ficheId || !achatForm.libelle.trim()) return;
+                            addDepense({
+                              id: `dep_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                              chantierId: ficheId,
+                              libelle: achatForm.libelle.trim(),
+                              montant: parseFloat(achatForm.montantHT.replace(',', '.')) || 0,
+                              montantTTC: parseFloat(achatForm.montantTTC.replace(',', '.')) || 0,
+                              date: achatForm.date || new Date().toISOString().slice(0, 10),
+                              fournisseur: achatForm.fournisseur.trim() || undefined,
+                              note: achatForm.note.trim() || undefined,
+                              fichier: achatFichierUri || undefined,
+                              createdAt: new Date().toISOString(),
+                            });
+                            setShowAchatFormFiche(false);
+                            setAchatFichierUri(null);
+                          }}>
+                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Enregistrer</Text>
+                        </Pressable>
+                      </View>
+                    )}
+
+                    {/* Tableau des achats */}
+                    {achats.length > 0 && (
+                      <View style={{ borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 10, overflow: 'hidden' }}>
+                        <View style={{ flexDirection: 'row', backgroundColor: '#2C2C2C', paddingVertical: 8, paddingHorizontal: 6 }}>
+                          <Text style={{ flex: 1.5, fontSize: 10, fontWeight: '700', color: '#fff' }}>Libellé</Text>
+                          <Text style={{ flex: 1, fontSize: 10, fontWeight: '700', color: '#fff' }}>Fournisseur</Text>
+                          <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>H.T.</Text>
+                          <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>T.T.C.</Text>
+                          <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>Date</Text>
+                          <Text style={{ width: 30, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'center' }}>📄</Text>
+                        </View>
+                        {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
+                          <Pressable
+                            key={dep.id}
+                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: idx % 2 === 0 ? '#fff' : '#F8F9FA', borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            onLongPress={() => {
+                              if (Platform.OS === 'web') {
+                                if (window.confirm(`Supprimer "${dep.libelle}" (${dep.montant} €) ?`)) deleteDepense(dep.id);
+                              } else {
+                                Alert.alert('Supprimer', `Supprimer "${dep.libelle}" ?`, [
+                                  { text: 'Annuler', style: 'cancel' },
+                                  { text: 'Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) },
+                                ]);
+                              }
+                            }}
+                          >
+                            <Text style={{ flex: 1.5, fontSize: 11, color: '#11181C' }} numberOfLines={1}>{dep.libelle}</Text>
+                            <Text style={{ flex: 1, fontSize: 10, color: '#687076' }} numberOfLines={1}>{dep.fournisseur || '—'}</Text>
+                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '600', color: '#11181C', textAlign: 'right' }}>{dep.montant.toLocaleString('fr-FR')} €</Text>
+                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '700', color: '#E74C3C', textAlign: 'right' }}>{(dep.montantTTC || dep.montant).toLocaleString('fr-FR')} €</Text>
+                            <Text style={{ flex: 0.7, fontSize: 9, color: '#687076', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
+                            <View style={{ width: 30, alignItems: 'center' }}>
+                              {dep.fichier ? (
+                                <Pressable onPress={() => {
+                                  if (Platform.OS === 'web') {
+                                    const w = window.open();
+                                    if (w) {
+                                      if (dep.fichier!.startsWith('data:application/pdf') || dep.fichier!.includes('pdf')) {
+                                        w.document.write(`<iframe src="${dep.fichier}" width="100%" height="100%" style="border:none;"></iframe>`);
+                                      } else {
+                                        w.document.write(`<img src="${dep.fichier}" style="max-width:100%;"/>`);
+                                      }
+                                    }
+                                  }
+                                }}>
+                                  <Text style={{ fontSize: 16 }}>📄</Text>
+                                </Pressable>
+                              ) : (
+                                <Text style={{ fontSize: 10, color: '#B0BEC5' }}>—</Text>
+                              )}
+                            </View>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                    {achats.length === 0 && (
+                      <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                        <Text style={{ fontSize: 32, marginBottom: 8 }}>🧾</Text>
+                        <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
+                      </View>
+                    )}
+                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Appui long sur une ligne pour supprimer</Text>
+                  </>
+                );
+              })()}
             </ScrollView>
 
+
+            {/* Budget prévisionnel */}
+            {isAdmin && ficheOnglet === 'fiche' && ficheId && (
+              <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                  <Text style={{ fontSize: 14 }}>💰</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A1A1A' }}>Budget prévisionnel</Text>
+                </View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <TextInput
+                    style={{ flex: 1, backgroundColor: '#FBF8F4', borderWidth: 1, borderColor: '#E8DDD0', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: '#1A1A1A' }}
+                    placeholder="Ex: 25000"
+                    placeholderTextColor="#B0A89E"
+                    keyboardType="numeric"
+                    value={data.budgetsChantier?.[ficheId]?.toString() || ''}
+                    onChangeText={v => {
+                      const num = parseFloat(v.replace(',', '.'));
+                      updateBudgetChantier(ficheId, isNaN(num) ? undefined : num);
+                    }}
+                  />
+                  <Text style={{ fontSize: 14, color: '#8C8077', fontWeight: '600' }}>€ TTC</Text>
+                </View>
+                {data.budgetsChantier?.[ficheId] != null && (() => {
+                  const budget = data.budgetsChantier![ficheId];
+                  const depenses = (data.depensesChantier || []).filter(d => d.chantierId === ficheId).reduce((s, d) => s + (d.montant || 0), 0);
+                  const pct = budget > 0 ? Math.round((depenses / budget) * 100) : 0;
+                  const color = pct < 70 ? '#10B981' : pct < 90 ? '#E5A840' : '#D94F4F';
+                  return (
+                    <View style={{ marginTop: 8 }}>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                        <Text style={{ fontSize: 11, color: '#8C8077' }}>Dépensé : {depenses.toLocaleString('fr-FR')} €</Text>
+                        <Text style={{ fontSize: 11, color, fontWeight: '700' }}>{pct}%</Text>
+                      </View>
+                      <View style={{ height: 6, backgroundColor: '#E8DDD0', borderRadius: 3, overflow: 'hidden' }}>
+                        <View style={{ height: 6, backgroundColor: color, borderRadius: 3, width: `${Math.min(100, pct)}%` }} />
+                      </View>
+                      {pct >= 90 && <Text style={{ fontSize: 10, color: '#D94F4F', marginTop: 4, fontWeight: '600' }}>⚠️ Budget presque épuisé !</Text>}
+                    </View>
+                  );
+                })()}
+              </View>
+            )}
+
             {isAdmin && ficheOnglet === 'fiche' && (
-              <Pressable style={styles.saveBtn} onPress={handleSaveFiche}>
-                <Text style={styles.saveBtnText}>{t.chantiers.saveFiche}</Text>
+              <Pressable style={styles.saveBtn} onPress={() => { handleSaveFiche(); handleSave(); }}>
+                <Text style={styles.saveBtnText}>Enregistrer</Text>
               </Pressable>
             )}
-            {isAdmin && ficheOnglet === 'modifier' && (
-              <Pressable
-                style={[styles.saveBtn, !form.nom.trim() && styles.saveBtnDisabled]}
-                onPress={() => { handleSave(); setShowFiche(false); }}
-                disabled={!form.nom.trim()}
-              >
-                <Text style={styles.saveBtnText}>{t.common.save}</Text>
-              </Pressable>
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
+          </View>
+        </View>
+      </ModalKeyboard>
 
       {/* ── Modal Notes Chantier (enrichi) ── */}
-      <Modal visible={showNotes} animationType="slide" transparent onRequestClose={() => setShowNotes(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowNotes(false)}>
-          <Pressable style={[styles.modalSheet, { maxHeight: '90%' }]} onPress={e => e.stopPropagation()}>
+      <ModalKeyboard visible={showNotes} animationType="slide" transparent onRequestClose={() => setShowNotes(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setShowNotes(false)} />
+          <View style={[styles.modalSheet, { maxHeight: '90%' }]}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <View>
@@ -1273,7 +2228,7 @@ export default function ChantiersScreen() {
               )}
             </View>
 
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
               {notesOnglet === 'actives' ? (
                 <>
                   {/* Liste des notes actives */}
@@ -1574,14 +2529,343 @@ export default function ChantiersScreen() {
                 </>
               )}
             </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+          </View>
+        </View>
+      </ModalKeyboard>
 
       {/* ── Modal Plans Chantier ── */}
-      <Modal visible={showPlans} animationType="slide" transparent onRequestClose={() => setShowPlans(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowPlans(false)}>
-          <Pressable style={[styles.modalSheet, { maxHeight: '90%' }]} onPress={e => e.stopPropagation()}>
+      {/* ── Modal Achats séparé ── */}
+      <ModalKeyboard visible={achatsChantierId !== null} animationType="slide" transparent onRequestClose={() => setAchatsChantierId(null)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setAchatsChantierId(null)} />
+          <View style={[styles.modalSheet, { maxHeight: '92%' }]}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>🛒 Achats</Text>
+                <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === achatsChantierId)?.nom ?? ''}</Text>
+              </View>
+              <Pressable onPress={() => setAchatsChantierId(null)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+              {achatsChantierId && (() => {
+                const achats = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === achatsChantierId);
+                const totalHT = achats.reduce((s, d) => s + (d.montant || 0), 0);
+                const totalTTC = achats.reduce((s, d) => s + (d.montantTTC || d.montant || 0), 0);
+                const todayStr3 = new Date().toISOString().slice(0, 10);
+
+                return (
+                  <>
+                    {/* Totaux */}
+                    <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
+                      <View style={{ flex: 1, backgroundColor: '#EEF2F8', borderRadius: 14, padding: 12, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>{totalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
+                        <Text style={{ fontSize: 10, color: '#687076' }}>Total H.T.</Text>
+                      </View>
+                      <View style={{ flex: 1, backgroundColor: '#FDECEA', borderRadius: 14, padding: 12, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#E74C3C' }}>{totalTTC.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
+                        <Text style={{ fontSize: 10, color: '#687076' }}>Total T.T.C.</Text>
+                      </View>
+                    </View>
+
+                    {/* Bouton ajouter */}
+                    <Pressable
+                      style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
+                      onPress={() => { setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr3, fournisseur: '', fichier: '', note: '' }); setShowAchatForm(v => !v); }}
+                    >
+                      <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{showAchatForm ? '✕ Annuler' : '+ Ajouter un achat'}</Text>
+                    </Pressable>
+
+                    {/* Formulaire inline */}
+                    {showAchatForm && (
+                      <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>🧾 Nouvel achat</Text>
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé *" />
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                            value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
+                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                            value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
+                        </View>
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
+                        {/* Scan / photo / PDF */}
+                        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                            onPress={async () => {
+                              const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
+                              if (!result.canceled && result.assets[0]) {
+                                const compressed = await compressImage(result.assets[0].uri);
+                                const url = await uploadFileToStorage(compressed, `chantiers/${achatsChantierId}/achats`, `achat_${Date.now()}`);
+                                if (url) setAchatFichierUri(url);
+                              }
+                            }}>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Photo</Text>
+                          </Pressable>
+                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                            onPress={async () => {
+                              const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                              if (status !== 'granted') { Alert.alert('Permission', 'Accès caméra requis'); return; }
+                              const result = await ImagePicker.launchCameraAsync({ quality: 0.6 });
+                              if (!result.canceled && result.assets[0]) {
+                                const compressed = await compressImage(result.assets[0].uri);
+                                const url = await uploadFileToStorage(compressed, `chantiers/${achatsChantierId}/achats`, `scan_${Date.now()}`);
+                                if (url) setAchatFichierUri(url);
+                              }
+                            }}>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📸 Scanner</Text>
+                          </Pressable>
+                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                            onPress={async () => {
+                              const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
+                              if (!result.canceled && result.assets?.[0]) {
+                                const url = await uploadFileToStorage(result.assets[0].uri, `chantiers/${achatsChantierId}/achats`, `doc_${Date.now()}`);
+                                if (url) setAchatFichierUri(url);
+                              }
+                            }}>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📄 PDF</Text>
+                          </Pressable>
+                        </View>
+                        {achatFichierUri && (
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+                            <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint</Text>
+                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 11, color: '#E74C3C' }}>✕</Text></Pressable>
+                          </View>
+                        )}
+                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: achatForm.libelle.trim() && achatForm.montantHT ? 1 : 0.5 }}
+                          disabled={!achatForm.libelle.trim() || !achatForm.montantHT}
+                          onPress={() => {
+                            if (!achatsChantierId || !achatForm.libelle.trim() || !achatForm.montantHT) return;
+                            addDepense({
+                              id: `dep_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                              chantierId: achatsChantierId,
+                              libelle: achatForm.libelle.trim(),
+                              montant: parseFloat(achatForm.montantHT.replace(',', '.')) || 0,
+                              montantTTC: parseFloat(achatForm.montantTTC.replace(',', '.')) || undefined,
+                              date: achatForm.date || new Date().toISOString().slice(0, 10),
+                              fournisseur: achatForm.fournisseur.trim() || undefined,
+                              note: achatForm.note.trim() || undefined,
+                              fichier: achatFichierUri || undefined,
+                              createdAt: new Date().toISOString(),
+                            });
+                            setShowAchatForm(false);
+                            setAchatFichierUri(null);
+                          }}>
+                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Enregistrer</Text>
+                        </Pressable>
+                      </View>
+                    )}
+
+                    {/* Tableau */}
+                    {achats.length > 0 && (
+                      <View style={{ borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 10, overflow: 'hidden' }}>
+                        <View style={{ flexDirection: 'row', backgroundColor: '#2C2C2C', paddingVertical: 8, paddingHorizontal: 6 }}>
+                          <Text style={{ flex: 1.5, fontSize: 10, fontWeight: '700', color: '#fff' }}>Libellé</Text>
+                          <Text style={{ flex: 1, fontSize: 10, fontWeight: '700', color: '#fff' }}>Fournisseur</Text>
+                          <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>H.T.</Text>
+                          <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>T.T.C.</Text>
+                          <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>Date</Text>
+                          <Text style={{ width: 30, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'center' }}>📄</Text>
+                        </View>
+                        {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
+                          <Pressable
+                            key={dep.id}
+                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: idx % 2 === 0 ? '#fff' : '#F8F9FA', borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            onLongPress={() => {
+                              if (Platform.OS === 'web') {
+                                if (window.confirm(`Supprimer "${dep.libelle}" ?`)) deleteDepense(dep.id);
+                              } else {
+                                Alert.alert('Supprimer', `Supprimer "${dep.libelle}" ?`, [
+                                  { text: 'Annuler', style: 'cancel' },
+                                  { text: 'Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) },
+                                ]);
+                              }
+                            }}
+                          >
+                            <View style={{ flex: 1.5 }}>
+                              <Text style={{ fontSize: 11, color: '#11181C' }} numberOfLines={1}>{dep.libelle}</Text>
+                              {dep.note && <Text style={{ fontSize: 9, color: '#687076', fontStyle: 'italic' }} numberOfLines={1}>{dep.note}</Text>}
+                            </View>
+                            <Text style={{ flex: 1, fontSize: 10, color: '#687076' }} numberOfLines={1}>{dep.fournisseur || '—'}</Text>
+                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '600', color: '#11181C', textAlign: 'right' }}>{dep.montant.toLocaleString('fr-FR')} €</Text>
+                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '700', color: '#E74C3C', textAlign: 'right' }}>{(dep.montantTTC || dep.montant).toLocaleString('fr-FR')} €</Text>
+                            <Text style={{ flex: 0.7, fontSize: 9, color: '#687076', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
+                            <View style={{ width: 30, alignItems: 'center' }}>
+                              {dep.fichier ? (
+                                <Pressable onPress={() => {
+                                  if (Platform.OS === 'web') {
+                                    const w = window.open();
+                                    if (w) {
+                                      if (dep.fichier!.includes('pdf')) w.document.write(`<iframe src="${dep.fichier}" width="100%" height="100%" style="border:none;"></iframe>`);
+                                      else w.document.write(`<img src="${dep.fichier}" style="max-width:100%;"/>`);
+                                    }
+                                  }
+                                }}>
+                                  <Text style={{ fontSize: 14 }}>📄</Text>
+                                </Pressable>
+                              ) : <Text style={{ fontSize: 10, color: '#B0BEC5' }}>—</Text>}
+                            </View>
+                          </Pressable>
+                        ))}
+                      </View>
+                    )}
+                    {achats.length === 0 && (
+                      <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                        <Text style={{ fontSize: 32, marginBottom: 8 }}>🧾</Text>
+                        <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
+                      </View>
+                    )}
+                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Appui long pour supprimer</Text>
+                  </>
+                );
+              })()}
+            </ScrollView>
+          </View>
+        </View>
+      </ModalKeyboard>
+
+      {/* ── Modal Photos chantier (legacy, gardé pour compatibilité mais caché) ── */}
+      <ModalKeyboard visible={photosChantierId !== null} animationType="slide" transparent onRequestClose={() => setPhotosChantierId(null)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setPhotosChantierId(null)} />
+          <View style={[styles.modalSheet, { maxHeight: '92%' }]}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>📸 Photos</Text>
+                <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === photosChantierId)?.nom ?? ''}</Text>
+              </View>
+              <Pressable onPress={() => setPhotosChantierId(null)}>
+                <Text style={styles.modalClose}>✕</Text>
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
+              {/* Bouton upload */}
+              <Pressable
+                style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
+                onPress={async () => {
+                  if (!photosChantierId) return;
+                  const savePhoto = async (photoUri: string) => {
+                    const photoId = `photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                    const storageUrl = await uploadFileToStorage(photoUri, `chantiers/${photosChantierId}/photos`, photoId);
+                    if (!storageUrl) {
+                      if (Platform.OS !== 'web') Alert.alert('Erreur', 'Impossible d\'uploader la photo. Vérifiez votre connexion.');
+                      return;
+                    }
+                    addPhotoChantier({
+                      id: photoId,
+                      chantierId: photosChantierId!,
+                      employeId: currentUser?.employeId || 'admin',
+                      date: new Date().toISOString().slice(0, 10),
+                      uri: storageUrl,
+                      createdAt: new Date().toISOString(),
+                      source: 'manuel',
+                    });
+                  };
+                  if (Platform.OS === 'web') {
+                    const input = document.createElement('input');
+                    input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
+                    input.onchange = (e: Event) => {
+                      const files = Array.from((e.target as HTMLInputElement).files || []);
+                      files.forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = (ev) => savePhoto(ev.target?.result as string);
+                        reader.readAsDataURL(file);
+                      });
+                    };
+                    input.click(); setTimeout(() => input.remove(), 60000);
+                  } else {
+                    const result = await ImagePicker.launchImageLibraryAsync({
+                      mediaTypes: ['images'],
+                      quality: 0.5,
+                      allowsMultipleSelection: true,
+                    });
+                    if (!result.canceled) {
+                      for (const asset of result.assets) {
+                        const compressed = await compressImage(asset.uri);
+                        await savePhoto(compressed);
+                      }
+                    }
+                  }
+                }}
+              >
+                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>📷 Ajouter des photos</Text>
+              </Pressable>
+
+              {/* Affichage par utilisateur */}
+              {(() => {
+                if (!photosChantierId) return null;
+                const photos = (data.photosChantier || []).filter(p => p && p.chantierId === photosChantierId).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+                if (photos.length === 0) {
+                  return (
+                    <View style={{ alignItems: 'center', paddingVertical: 24 }}>
+                      <Text style={{ fontSize: 32, marginBottom: 8 }}>📸</Text>
+                      <Text style={{ fontSize: 14, color: '#687076' }}>Aucune photo</Text>
+                    </View>
+                  );
+                }
+                const byUser = new Map<string, typeof photos>();
+                photos.forEach(p => {
+                  const key = p.employeId || 'inconnu';
+                  if (!byUser.has(key)) byUser.set(key, []);
+                  byUser.get(key)!.push(p);
+                });
+                return [...byUser.entries()].map(([userId, userPhotos]) => {
+                  const emp = data.employes.find(e => e.id === userId);
+                  const nom = emp ? `${emp.prenom} ${emp.nom}` : (userId === 'admin' ? 'Admin' : userId);
+                  const byDate = new Map<string, typeof userPhotos>();
+                  userPhotos.forEach(p => {
+                    const date = (p.date || (p.createdAt ? p.createdAt.slice(0, 10) : ''));
+                    if (!byDate.has(date)) byDate.set(date, []);
+                    byDate.get(date)!.push(p);
+                  });
+                  return (
+                    <View key={userId} style={{ marginBottom: 16 }}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>👤 {nom}</Text>
+                      {[...byDate.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([date, datePhotos]) => (
+                        <View key={date} style={{ marginBottom: 8 }}>
+                          <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>{date ? new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}</Text>
+                          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                            {datePhotos.map(p => (
+                              <Pressable key={p.id} onPress={() => {
+                                  if (p.uri) setViewPhotoUri(p.uri);
+                                }}
+                                onLongPress={isAdmin ? () => {
+                                  if (Platform.OS === 'web') { if (window.confirm('Supprimer cette photo ?')) deletePhotoChantier(p.id); }
+                                  else Alert.alert('Supprimer', 'Supprimer cette photo ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deletePhotoChantier(p.id) }]);
+                                } : undefined}
+                              >
+                                <View style={{ width: 90, height: 90, borderRadius: 8, backgroundColor: '#F5EDE3', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                                  {p.uri ? (
+                                    <Image source={{ uri: p.uri }} style={{ width: 90, height: 90 }} resizeMode="cover" onError={() => {}} />
+                                  ) : (
+                                    <Text style={{ fontSize: 24 }}>📷</Text>
+                                  )}
+                                </View>
+                                <Text style={{ fontSize: 9, color: '#687076', textAlign: 'center', marginTop: 2 }} numberOfLines={1}>{p.nom || p.legende || ''}</Text>
+                              </Pressable>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                });
+              })()}
+            </ScrollView>
+          </View>
+        </View>
+      </ModalKeyboard>
+
+      <ModalKeyboard visible={showPlans} animationType="slide" transparent onRequestClose={() => setShowPlans(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setShowPlans(false)} />
+          <View style={[styles.modalSheet, { maxHeight: '90%' }]}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <View>
@@ -1593,7 +2877,7 @@ export default function ChantiersScreen() {
               </Pressable>
             </View>
 
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
               {/* Liste des plans */}
               {plansChantierId && getPlansVisibles(plansChantierId).length === 0 && (
                 <Text style={[styles.emptyText, { margin: 16 }]}>{t.chantiers.noPlans}</Text>
@@ -1603,16 +2887,28 @@ export default function ChantiersScreen() {
                   <Pressable
                     style={styles.planCardContent}
                     onPress={() => {
+                      const uri = plan.fichier;
+                      if (!uri) return;
+                      const isPdf = uri.endsWith('.pdf') || uri.includes('application/pdf');
                       if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                        const isPdf = plan.fichier.startsWith('data:application/pdf');
-                        const w = window.open();
-                        if (w) w.document.write(isPdf
-                          ? `<iframe src="${plan.fichier}" width="100%" height="100%"></iframe>`
-                          : `<img src="${plan.fichier}" style="max-width:100%;height:auto">`);
+                        if (uri.startsWith('http')) {
+                          window.open(uri, '_blank');
+                        } else {
+                          const w = window.open();
+                          if (w) w.document.write(isPdf
+                            ? `<iframe src="${uri}" width="100%" height="100%" style="border:none"></iframe>`
+                            : `<img src="${uri}" style="max-width:100%;height:auto">`);
+                        }
+                      } else if (isPdf || uri.startsWith('http')) {
+                        // PDF ou URL Storage : ouvrir dans le navigateur natif
+                        const WebBrowser = require('expo-web-browser');
+                        WebBrowser.openBrowserAsync(uri).catch(() => Linking.openURL(uri));
+                      } else {
+                        setViewPhotoUri(uri);
                       }
                     }}
                   >
-                    <Text style={styles.planIcon}>{plan.fichier.startsWith('data:application/pdf') ? '📄' : '🖼️'}</Text>
+                    <Text style={styles.planIcon}>{(plan.fichier.endsWith('.pdf') || plan.fichier.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.planNom}>{plan.nom}</Text>
                       <Text style={styles.planMeta}>
@@ -1673,7 +2969,7 @@ export default function ChantiersScreen() {
                   {/* Visibilité */}
                   <View style={{ marginTop: 8 }}>
                     <Text style={styles.fieldLabel}>{t.chantiers.planRecipients}</Text>
-                    <View style={styles.chipRow}>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
                       {(['tous', 'employes', 'soustraitants', 'specifique'] as const).map(v => (
                         <Pressable
                           key={v}
@@ -1681,11 +2977,11 @@ export default function ChantiersScreen() {
                           onPress={() => setNewPlanVisiblePar(v)}
                         >
                           <Text style={[styles.chipText, newPlanVisiblePar === v && styles.chipTextActive]}>
-                            {v === 'tous' ? t.chantiers.allRecipients : v === 'employes' ? '👷 Employés' : v === 'soustraitants' ? '👤 ST' : '👥 Sélection'}
+                            {v === 'tous' ? 'Tous' : v === 'employes' ? '👷 Employés' : v === 'soustraitants' ? '👤 Sous-traitants' : '👥 Par personne'}
                           </Text>
                         </Pressable>
                       ))}
-                    </View>
+                    </ScrollView>
                   </View>
 
                   {/* Sélection spécifique */}
@@ -1725,12 +3021,495 @@ export default function ChantiersScreen() {
                 </View>
               )}
             </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+          </View>
+        </View>
+      </ModalKeyboard>
       {bilanChantierId && (
         <BilanFinancierChantier visible={!!bilanChantierId} onClose={() => setBilanChantierId(null)} chantierId={bilanChantierId} />
       )}
+      <GaleriePhotos visible={showGalerie !== null} onClose={() => setShowGalerie(null)} chantierId={showGalerie || undefined} titre={`📷 Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
+      {marchesChantierId && (
+        <MarchesChantier visible={!!marchesChantierId} onClose={() => setMarchesChantierId(null)} chantierId={marchesChantierId} />
+      )}
+      {portailClientId && (
+        <PortailClient visible={!!portailClientId} onClose={() => setPortailClientId(null)} chantierId={portailClientId} />
+      )}
+      {/* ── Modal Suivi Planning (toutes les notes employes) ── */}
+      <ModalKeyboard visible={suiviChantierId !== null} animationType="slide" transparent onRequestClose={() => setSuiviChantierId(null)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setSuiviChantierId(null)} />
+          <View style={[styles.modalSheet, { maxHeight: '92%' }]}>
+            <View style={styles.modalHandle} />
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>📋 Suivi & Notes</Text>
+                <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === suiviChantierId)?.nom ?? ''}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {isAdmin && (
+                  <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
+                    onPress={() => { setSuiviShowForm(v => !v); setSuiviNoteText(''); setSuiviNoteEmpId(''); }}>
+                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{suiviShowForm ? '✕' : '+ Note'}</Text>
+                  </Pressable>
+                )}
+                <Pressable onPress={() => setSuiviChantierId(null)}>
+                  <Text style={styles.modalClose}>✕</Text>
+                </Pressable>
+              </View>
+            </View>
+
+            {/* Filtres */}
+            <View style={{ flexDirection: 'row', gap: 4, paddingHorizontal: 12, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
+              {/* Filtre période */}
+              {(['semaine', 'mois', 'tout'] as const).map(p => (
+                <Pressable key={p} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: suiviFilterSemaine === p ? '#2C2C2C' : '#F5EDE3' }}
+                  onPress={() => setSuiviFilterSemaine(p)}>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: suiviFilterSemaine === p ? '#fff' : '#687076' }}>{p === 'semaine' ? '7j' : p === 'mois' ? '30j' : 'Tout'}</Text>
+                </Pressable>
+              ))}
+              <View style={{ width: 1, backgroundColor: '#E2E6EA', marginHorizontal: 2 }} />
+              {/* Filtre employé */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+                <Pressable style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: suiviFilterEmp === 'all' ? '#2C2C2C' : '#F5EDE3' }}
+                  onPress={() => setSuiviFilterEmp('all')}>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: suiviFilterEmp === 'all' ? '#fff' : '#687076' }}>Tous</Text>
+                </Pressable>
+                {suiviChantierId && [...new Set(data.affectations.filter(a => a.chantierId === suiviChantierId).map(a => a.employeId))].map(eid => {
+                  const emp = data.employes.find(e => e.id === eid);
+                  if (!emp) return null;
+                  return (
+                    <Pressable key={eid} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, backgroundColor: suiviFilterEmp === eid ? '#2C2C2C' : '#F5EDE3' }}
+                      onPress={() => setSuiviFilterEmp(suiviFilterEmp === eid ? 'all' : eid)}>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: suiviFilterEmp === eid ? '#fff' : '#687076' }}>{emp.prenom}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 12, paddingBottom: 30 }} keyboardShouldPersistTaps="handled">
+              {/* Formulaire ajout note */}
+              {suiviShowForm && isAdmin && suiviChantierId && (
+                <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C', marginBottom: 6 }}>Nouvelle note</Text>
+                  <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>Pour :</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
+                    {data.employes.map(e => (
+                      <Pressable key={e.id} style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: suiviNoteEmpId === e.id ? '#2C2C2C' : '#fff', borderWidth: 1, borderColor: suiviNoteEmpId === e.id ? '#2C2C2C' : '#E2E6EA' }}
+                        onPress={() => setSuiviNoteEmpId(e.id)}>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: suiviNoteEmpId === e.id ? '#fff' : '#687076' }}>{e.prenom}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                  <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, color: '#11181C', minHeight: 50 }}
+                    value={suiviNoteText} onChangeText={setSuiviNoteText} placeholder="Consigne, tâche, remarque..." multiline />
+                  <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 10, alignItems: 'center', opacity: suiviNoteText.trim() && suiviNoteEmpId ? 1 : 0.5 }}
+                    disabled={!suiviNoteText.trim() || !suiviNoteEmpId}
+                    onPress={() => {
+                      const now = new Date().toISOString();
+                      const todayStr = now.slice(0, 10);
+                      upsertNote({
+                        chantierId: suiviChantierId!,
+                        employeId: suiviNoteEmpId,
+                        date: todayStr,
+                        note: { id: `n_${Date.now()}_${Math.random().toString(36).slice(2)}`, auteurId: 'admin', auteurNom: currentUser?.nom || 'Admin', date: todayStr, texte: suiviNoteText.trim(), photos: [], createdAt: now, updatedAt: now },
+                      });
+                      setSuiviNoteText('');
+                      setSuiviShowForm(false);
+                    }}>
+                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Ajouter</Text>
+                  </Pressable>
+                </View>
+              )}
+
+              {suiviChantierId && (() => {
+                const now = new Date();
+                const cutoffDate = suiviFilterSemaine === 'semaine' ? new Date(now.getTime() - 7 * 86400000).toISOString().slice(0, 10)
+                  : suiviFilterSemaine === 'mois' ? new Date(now.getTime() - 30 * 86400000).toISOString().slice(0, 10)
+                  : '2000-01-01';
+
+                const affs = data.affectations
+                  .filter(a => a.chantierId === suiviChantierId && (a.notes || []).length > 0 && (suiviFilterEmp === 'all' || a.employeId === suiviFilterEmp));
+
+                // Toutes les notes filtrées par date
+                const allNotes: { note: any; affId: string; date: string; empId: string; empNom: string }[] = [];
+                affs.forEach(a => {
+                  const emp = data.employes.find(e => e.id === a.employeId);
+                  const st = a.employeId.startsWith('st:') ? data.sousTraitants.find(s => s.id === a.employeId.replace('st:', '')) : null;
+                  const nom = emp ? `${emp.prenom} ${emp.nom}` : st ? `${st.prenom} ${st.nom} (ST)` : a.employeId;
+                  (a.notes || []).forEach(n => {
+                    const d = n.date || a.dateDebut;
+                    if (d >= cutoffDate) allNotes.push({ note: n, affId: a.id, date: d, empId: a.employeId, empNom: nom });
+                  });
+                });
+                allNotes.sort((a, b) => b.date.localeCompare(a.date));
+
+                if (allNotes.length === 0) return (
+                  <View style={{ alignItems: 'center', paddingVertical: 32 }}>
+                    <Text style={{ fontSize: 32, marginBottom: 8 }}>📋</Text>
+                    <Text style={{ fontSize: 14, color: '#687076' }}>Aucune note</Text>
+                  </View>
+                );
+
+                // Grouper par date
+                const byDate = new Map<string, typeof allNotes>();
+                allNotes.forEach(n => {
+                  if (!byDate.has(n.date)) byDate.set(n.date, []);
+                  byDate.get(n.date)!.push(n);
+                });
+
+                const adminNom = currentUser?.nom || 'Admin';
+
+                return [...byDate.entries()].map(([date, notes]) => (
+                  <View key={date} style={{ marginBottom: 12 }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginBottom: 6, backgroundColor: '#EBF0FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, alignSelf: 'flex-start' }}>
+                      📅 {new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                    </Text>
+                    {notes.map(({ note: n, affId, empNom }) => (
+                      <View key={n.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: '#E2E6EA', borderLeftWidth: 3, borderLeftColor: n.savTicketId ? '#E74C3C' : '#687076' }}>
+                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
+                          <Text style={{ fontSize: 10, color: '#687076' }}>👷 <Text style={{ fontWeight: '700' }}>{empNom}</Text> · par {n.auteurNom}</Text>
+                          {isAdmin && (
+                            <Pressable onPress={() => {
+                              if (Platform.OS === 'web') { if (window.confirm('Supprimer ?')) deleteNote(affId, n.id); }
+                              else Alert.alert('Supprimer', 'Supprimer cette note ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deleteNote(affId, n.id) }]);
+                            }}><Text style={{ fontSize: 11, color: '#E74C3C' }}>🗑</Text></Pressable>
+                          )}
+                        </View>
+                        {n.texte ? <Text style={{ fontSize: 12, color: '#11181C', lineHeight: 17 }}>{n.texte}</Text> : null}
+                        {n.tasks && n.tasks.length > 0 && (
+                          <View style={{ marginTop: 4, gap: 2 }}>
+                            {n.tasks.map((task: any) => (
+                              <View key={task.id}>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 2 }}>
+                                  <Pressable onPress={() => toggleTask(affId, n.id, task.id, adminNom)}
+                                    style={{ width: 16, height: 16, borderRadius: 3, borderWidth: 1.5, borderColor: task.fait ? '#27AE60' : '#B0BEC5', backgroundColor: task.fait ? '#D4EDDA' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                                    {task.fait && <Text style={{ color: '#27AE60', fontSize: 10, fontWeight: '700' }}>✓</Text>}
+                                  </Pressable>
+                                  <Text style={{ fontSize: 11, color: task.fait ? '#B0BEC5' : '#11181C', textDecorationLine: task.fait ? 'line-through' : 'none', flex: 1 }}>{task.texte}</Text>
+                                  {task.fait && task.faitPar && <Text style={{ fontSize: 9, color: '#27AE60', marginRight: 4 }}>{task.faitPar}</Text>}
+                                  <Pressable style={{ padding: 2 }} onPress={async () => {
+                                    if (Platform.OS === 'web') {
+                                      const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
+                                      input.onchange = async (ev: Event) => {
+                                        const files = Array.from((ev.target as HTMLInputElement).files || []);
+                                        for (const file of files) {
+                                          const b64: string = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result as string); rd.readAsDataURL(file); });
+                                          const url = await uploadFileToStorage(b64, 'tasks/photos', `task_${task.id}_${Date.now()}`);
+                                          if (url) addTaskPhoto(affId, n.id, task.id, url);
+                                        }
+                                      }; input.click(); setTimeout(() => input.remove(), 60000);
+                                    } else {
+                                      Alert.alert('Photo', 'Source ?', [
+                                        { text: 'Annuler', style: 'cancel' },
+                                        { text: '📷 Galerie', onPress: async () => {
+                                          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: true });
+                                          if (!result.canceled) { for (const asset of result.assets) { const compressed = await compressImage(asset.uri); const url = await uploadFileToStorage(compressed, 'tasks/photos', `task_${task.id}_${Date.now()}`); if (url) addTaskPhoto(affId, n.id, task.id, url); } }
+                                        }},
+                                        { text: '📸 Appareil', onPress: async () => {
+                                          const { status } = await ImagePicker.requestCameraPermissionsAsync(); if (status !== 'granted') return;
+                                          const result = await ImagePicker.launchCameraAsync({ quality: 0.5 });
+                                          if (!result.canceled && result.assets[0]) { const compressed = await compressImage(result.assets[0].uri); const url = await uploadFileToStorage(compressed, 'tasks/photos', `task_${task.id}_${Date.now()}`); if (url) addTaskPhoto(affId, n.id, task.id, url); }
+                                        }},
+                                      ]);
+                                    }
+                                  }}><Text style={{ fontSize: 12 }}>📷</Text></Pressable>
+                                </View>
+                                {task.photos && task.photos.length > 0 && (
+                                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 22, marginTop: 2, marginBottom: 4 }} contentContainerStyle={{ gap: 3 }}>
+                                    {task.photos.map((uri: string, pi: number) => (
+                                      <Pressable key={pi} onPress={() => { setSuiviChantierId(null); setTimeout(() => setViewPhotoUri(uri), 150); }}>
+                                        <Image source={{ uri }} style={{ width: 40, height: 40, borderRadius: 4 }} resizeMode="cover" />
+                                      </Pressable>
+                                    ))}
+                                  </ScrollView>
+                                )}
+                              </View>
+                            ))}
+                          </View>
+                        )}
+                        {n.photos && n.photos.length > 0 && (
+                          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }} contentContainerStyle={{ gap: 4 }}>
+                            {n.photos.map((uri: string, j: number) => (
+                              <Pressable key={j} onPress={() => { setSuiviChantierId(null); setTimeout(() => setViewPhotoUri(uri), 150); }}>
+                                <Image source={{ uri }} style={{ width: 50, height: 50, borderRadius: 6 }} resizeMode="cover" />
+                              </Pressable>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </View>
+                    ))}
+                  </View>
+                ));
+              })()}
+            </ScrollView>
+          </View>
+        </View>
+      </ModalKeyboard>
+
+      {/* ── Modal SAV ── */}
+      <ModalKeyboard visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => setSavChantierId(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+          <Pressable style={{ flex: 1 }} onPress={() => setSavChantierId(null)} />
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', flex: 1 }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
+              <View>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>🔧 SAV</Text>
+                <Text style={{ fontSize: 12, color: '#687076' }}>{data.chantiers.find(c => c.id === savChantierId)?.nom}</Text>
+              </View>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }} onPress={() => { setEditSavId(null); setSavForm({ objet: '', description: '', priorite: 'normale', assigneA: '' }); setSavPhotos([]); setSavFichiers([]); setShowSavForm(v => !v); }}>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{showSavForm ? '✕ Annuler' : '+ Ticket'}</Text>
+                </Pressable>
+                <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={() => setSavChantierId(null)}>
+                  <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
+                </Pressable>
+              </View>
+            </View>
+            <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 30 }}>
+              {savChantierId && (() => {
+                const tickets = (data.ticketsSAV || []).filter(t => t.chantierId === savChantierId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+                if (tickets.length === 0 && !showSavForm) return <Text style={{ textAlign: 'center', color: '#B0BEC5', paddingVertical: 24, fontSize: 13 }}>Aucun ticket SAV</Text>;
+                const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#2C2C2C', haute: '#F59E0B', urgente: '#E74C3C' };
+                const statutLabels: Record<string, string> = { ouvert: '🔴 Ouvert', en_cours: '🟡 En cours', resolu: '🟢 Résolu', clos: '⚪ Clos' };
+                return tickets.map(t => (
+                  <View key={t.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E2E6EA', borderLeftWidth: 4, borderLeftColor: prioColors[t.priorite] || '#2C2C2C' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{t.objet}</Text>
+                        <Text style={{ fontSize: 11, color: '#687076', marginTop: 2 }}>{statutLabels[t.statut] || t.statut} · Priorité {t.priorite}</Text>
+                        {t.description && <Text style={{ fontSize: 12, color: '#687076', marginTop: 4 }}>{t.description}</Text>}
+                        <Text style={{ fontSize: 10, color: '#B0BEC5', marginTop: 4 }}>Ouvert le {t.dateOuverture}</Text>
+                      </View>
+                    </View>
+                    {/* Commentaires */}
+                    {(t.commentaires || []).length > 0 && (
+                      <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F5EDE3' }}>
+                        {t.commentaires!.map(c => (
+                          <View key={c.id} style={{ marginBottom: 4 }}>
+                            <Text style={{ fontSize: 11, color: '#11181C' }}><Text style={{ fontWeight: '700' }}>{c.auteur}</Text> : {c.texte}</Text>
+                            <Text style={{ fontSize: 9, color: '#B0BEC5' }}>{new Date(c.date).toLocaleDateString('fr-FR')}</Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                    {/* Photos du problème */}
+                    {t.photos && t.photos.length > 0 && (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }} contentContainerStyle={{ gap: 4 }}>
+                        {t.photos.map((uri, i) => (
+                          <Pressable key={i} onPress={() => setViewPhotoUri(uri)}>
+                            <Image source={{ uri }} style={{ width: 60, height: 60, borderRadius: 6 }} resizeMode="cover" />
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    )}
+                    {/* Assigné à */}
+                    {t.assigneA && (
+                      <Text style={{ fontSize: 10, color: '#2C2C2C', marginTop: 4 }}>
+                        👷 Assigné à : {data.employes.find(e => e.id === t.assigneA)?.prenom || t.assigneA}
+                      </Text>
+                    )}
+                    {/* Infos résolution */}
+                    {t.statut === 'resolu' && (
+                      <View style={{ marginTop: 6, backgroundColor: '#D4EDDA', borderRadius: 6, padding: 8 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#155724' }}>✓ Résolu{t.resoluPar ? ` par ${t.resoluPar}` : ''}{t.dateResolution ? ` le ${t.dateResolution}` : ''}</Text>
+                        {t.photosResolution && t.photosResolution.length > 0 && (
+                          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }} contentContainerStyle={{ gap: 4 }}>
+                            {t.photosResolution.map((uri, i) => (
+                              <Pressable key={i} onPress={() => setViewPhotoUri(uri)}>
+                                <Image source={{ uri }} style={{ width: 50, height: 50, borderRadius: 4 }} resizeMode="cover" />
+                              </Pressable>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </View>
+                    )}
+                    {/* Actions */}
+                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+                      {t.statut !== 'resolu' && t.statut !== 'clos' && (
+                        <Pressable style={{ flex: 1, backgroundColor: '#D4EDDA', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
+                          onPress={async () => {
+                            const userName = currentUser?.nom || (isAdmin ? 'Admin' : 'Employé');
+                            // Proposer d'ajouter une photo de résolution
+                            const doResolve = async (photos?: string[]) => {
+                              updateTicketSAV({ ...t, statut: 'resolu', dateResolution: new Date().toISOString().slice(0, 10), resoluPar: userName, photosResolution: photos || t.photosResolution, updatedAt: new Date().toISOString() });
+                            };
+                            if (Platform.OS === 'web') { doResolve(); return; }
+                            Alert.alert('Résoudre le ticket', 'Ajouter une photo de la résolution ?', [
+                              { text: 'Annuler', style: 'cancel' },
+                              { text: 'Non, juste résoudre', onPress: () => doResolve() },
+                              { text: '📷 Ajouter photo', onPress: async () => {
+                                const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
+                                if (!result.canceled && result.assets[0]) {
+                                  const compressed = await compressImage(result.assets[0].uri);
+                                  const url = await uploadFileToStorage(compressed, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}`);
+                                  doResolve(url ? [...(t.photosResolution || []), url] : undefined);
+                                } else { doResolve(); }
+                              }},
+                            ]);
+                          }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#155724' }}>✓ Résolu</Text>
+                        </Pressable>
+                      )}
+                      {t.statut === 'ouvert' && (
+                        <Pressable style={{ flex: 1, backgroundColor: '#FFF3CD', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
+                          onPress={() => updateTicketSAV({ ...t, statut: 'en_cours', updatedAt: new Date().toISOString() })}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#856404' }}>→ En cours</Text>
+                        </Pressable>
+                      )}
+                      {isAdmin && (
+                        <Pressable style={{ flex: 1, backgroundColor: '#EBF0FF', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
+                          onPress={() => {
+                            setEditSavId(t.id);
+                            setSavForm({ objet: t.objet, description: t.description || '', priorite: t.priorite, assigneA: t.assigneA || '' });
+                            setSavPhotos(t.photos || []);
+                            setSavFichiers(t.fichiers || []);
+                            setShowSavForm(true);
+                          }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>✏️</Text>
+                        </Pressable>
+                      )}
+                      {isAdmin && (
+                        <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
+                          onPress={() => { if (Platform.OS === 'web') { if (window.confirm('Supprimer ce ticket ?')) deleteTicketSAV(t.id); } else Alert.alert('Supprimer', 'Supprimer ce ticket ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deleteTicketSAV(t.id) }]); }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#DC2626' }}>🗑</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                  </View>
+                ));
+              })()}
+
+              {/* Formulaire inline nouveau ticket */}
+              {showSavForm && (
+                <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#D0D8E8' }}>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>{editSavId ? 'Modifier le ticket' : 'Nouveau ticket'}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Objet *</Text>
+                  <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, color: '#11181C' }}
+                    value={savForm.objet} onChangeText={v => setSavForm(f => ({ ...f, objet: v }))} placeholder="Ex: Fuite robinet cuisine" />
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Description</Text>
+                  <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, color: '#11181C', minHeight: 50 }}
+                    value={savForm.description} onChangeText={v => setSavForm(f => ({ ...f, description: v }))} placeholder="Détails..." multiline />
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Priorité</Text>
+                  <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+                    {(['basse', 'normale', 'haute', 'urgente'] as PrioriteSAV[]).map(p => (
+                      <Pressable key={p} style={[{ flex: 1, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#fff' },
+                        savForm.priorite === p && { backgroundColor: p === 'urgente' ? '#FEF2F2' : p === 'haute' ? '#FFF3CD' : p === 'basse' ? '#D4EDDA' : '#EBF0FF', borderColor: p === 'urgente' ? '#E74C3C' : p === 'haute' ? '#F59E0B' : p === 'basse' ? '#27AE60' : '#2C2C2C' }]}
+                        onPress={() => setSavForm(f => ({ ...f, priorite: p }))}>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: savForm.priorite === p ? '#11181C' : '#687076' }}>{p.charAt(0).toUpperCase() + p.slice(1)}</Text>
+                      </Pressable>
+                    ))}
+                  </View>
+                  {/* Assigner à un employé */}
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Assigner à</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
+                    <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA' }, !savForm.assigneA && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
+                      onPress={() => setSavForm(f => ({ ...f, assigneA: '' }))}>
+                      <Text style={{ fontSize: 10, fontWeight: '600', color: !savForm.assigneA ? '#fff' : '#687076' }}>Non assigné</Text>
+                    </Pressable>
+                    {data.employes.map(e => (
+                      <Pressable key={e.id} style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA' }, savForm.assigneA === e.id && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
+                        onPress={() => setSavForm(f => ({ ...f, assigneA: e.id }))}>
+                        <Text style={{ fontSize: 10, fontWeight: '600', color: savForm.assigneA === e.id ? '#fff' : '#687076' }}>{e.prenom}</Text>
+                      </Pressable>
+                    ))}
+                  </ScrollView>
+                  {/* Photos / fichiers */}
+                  <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+                    <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                      onPress={async () => {
+                        const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
+                        if (!result.canceled && result.assets[0]) {
+                          const compressed = await compressImage(result.assets[0].uri);
+                          const url = await uploadFileToStorage(compressed, `chantiers/${savChantierId}/sav`, `sav_photo_${Date.now()}`);
+                          if (url) setSavPhotos(prev => [...prev, url]);
+                        }
+                      }}>
+                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Photo ({savPhotos.length})</Text>
+                    </Pressable>
+                    <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                      onPress={async () => {
+                        const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
+                        if (!result.canceled && result.assets?.[0]) {
+                          const asset = result.assets[0];
+                          const url = await uploadFileToStorage(asset.uri, `chantiers/${savChantierId}/sav`, `sav_doc_${Date.now()}`);
+                          if (url) setSavFichiers(prev => [...prev, { uri: url, nom: asset.name || 'Document' }]);
+                        }
+                      }}>
+                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📄 PDF ({savFichiers.length})</Text>
+                    </Pressable>
+                    <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                      onPress={async () => {
+                        const { status } = await ImagePicker.requestCameraPermissionsAsync();
+                        if (status !== 'granted') { Alert.alert('Permission refusée', 'L\'accès à la caméra est nécessaire pour scanner.'); return; }
+                        const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
+                        if (!result.canceled && result.assets[0]) {
+                          const compressed = await compressImage(result.assets[0].uri);
+                          const url = await uploadFileToStorage(compressed, `chantiers/${savChantierId}/sav`, `sav_scan_${Date.now()}`);
+                          if (url) setSavPhotos(prev => [...prev, url]);
+                        }
+                      }}>
+                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📸 Scanner</Text>
+                    </Pressable>
+                  </View>
+                  <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: savForm.objet.trim() ? 1 : 0.5 }}
+                    disabled={!savForm.objet.trim()}
+                    onPress={() => {
+                      if (!savChantierId) return;
+                      const now = new Date().toISOString();
+                      if (editSavId) {
+                        const existing = (data.ticketsSAV || []).find(t => t.id === editSavId);
+                        if (existing) {
+                          updateTicketSAV({
+                            ...existing,
+                            objet: savForm.objet.trim(),
+                            description: savForm.description.trim() || undefined,
+                            priorite: savForm.priorite,
+                            assigneA: savForm.assigneA || undefined,
+                            photos: savPhotos.length > 0 ? savPhotos : existing.photos,
+                            fichiers: savFichiers.length > 0 ? savFichiers : existing.fichiers,
+                            updatedAt: now,
+                          });
+                        }
+                      } else {
+                        addTicketSAV({
+                          id: `sav_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                          chantierId: savChantierId,
+                          objet: savForm.objet.trim(),
+                          description: savForm.description.trim() || undefined,
+                          priorite: savForm.priorite,
+                          statut: 'ouvert',
+                          dateOuverture: now.slice(0, 10),
+                          assigneA: savForm.assigneA || undefined,
+                          photos: savPhotos.length > 0 ? savPhotos : undefined,
+                          fichiers: savFichiers.length > 0 ? savFichiers : undefined,
+                          commentaires: [],
+                          createdAt: now,
+                          updatedAt: now,
+                        });
+                      }
+                      setShowSavForm(false);
+                      setEditSavId(null);
+                      setSavPhotos([]);
+                    }}>
+                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{editSavId ? 'Enregistrer' : 'Créer le ticket'}</Text>
+                  </Pressable>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </ModalKeyboard>
+
+      {/* Viewer photo plein écran (cachette clé, etc.) */}
+      <Modal visible={viewPhotoUri !== null} transparent animationType="fade" onRequestClose={() => setViewPhotoUri(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setViewPhotoUri(null)}>
+          {viewPhotoUri && <Image source={{ uri: viewPhotoUri }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />}
+          <Pressable style={{ position: 'absolute', top: 50, right: 20, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setViewPhotoUri(null)}>
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>✕</Text>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ScreenContainer>
   );
 }
@@ -1758,11 +3537,11 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#11181C',
   },
-  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F2F4F7', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA' },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F5EDE3', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA' },
   searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#11181C' },
   searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   newBtn: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 22,
@@ -1783,9 +3562,9 @@ const styles = StyleSheet.create({
     padding: 14,
     borderLeftWidth: 4,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
     elevation: 2,
   },
   cardHeader: {
@@ -1871,7 +3650,7 @@ const styles = StyleSheet.create({
   fichePreviewText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   emptyState: {
     padding: 40,
@@ -1947,7 +3726,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.4,
   },
   input: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -1970,11 +3749,11 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1.5,
     borderColor: '#E2E6EA',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   chipActive: {
-    borderColor: '#1A3A6B',
-    backgroundColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
+    backgroundColor: '#2C2C2C',
   },
   chipText: {
     fontSize: 13,
@@ -2007,12 +3786,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
     marginBottom: 6,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   empRowSelected: {
-    borderColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
     backgroundColor: '#EEF2F8',
   },
   empAvatar: {
@@ -2039,7 +3818,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   empCheck: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '700',
     fontSize: 15,
   },
@@ -2049,11 +3828,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderWidth: 1.5,
     borderColor: '#E2E6EA',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     alignSelf: 'flex-start',
   },
   toggleBtnActive: {
-    borderColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
     backgroundColor: '#EEF2F8',
   },
   toggleBtnText: {
@@ -2062,11 +3841,11 @@ const styles = StyleSheet.create({
     color: '#687076',
   },
   toggleBtnTextActive: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   saveBtn: {
     marginTop: 16,
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: 'center',
@@ -2101,7 +3880,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   ficheInput: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -2168,7 +3947,7 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#1A3A6B',
+    borderColor: '#2C2C2C',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2177,12 +3956,12 @@ const styles = StyleSheet.create({
   },
   photoAddIcon: {
     fontSize: 24,
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '700',
   },
   photoAddText: {
     fontSize: 11,
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '600',
   },
   ficheUpdated: {
@@ -2297,10 +4076,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
   },
   noteTabActive: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
   },
   noteTabText: {
     fontSize: 13,
@@ -2323,7 +4102,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   notePJPickBtn: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
@@ -2332,7 +4111,7 @@ const styles = StyleSheet.create({
   },
   notePJPickText: {
     fontSize: 13,
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '600',
   },
   notePJIcon: {
@@ -2340,7 +4119,7 @@ const styles = StyleSheet.create({
   },
   notePJText: {
     fontSize: 13,
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '500',
   },
   // Historique notes
@@ -2386,7 +4165,7 @@ const styles = StyleSheet.create({
   },
   planViewBtn: {
     fontSize: 13,
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '600',
   },
   planDeleteBtn: {

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Image,
-  TextInput, Modal, Platform, Alert,
+  TextInput, Modal, Platform, Alert, Linking,
 } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
@@ -116,7 +116,7 @@ function calcJoursOuvrablesMois(year: number, month: number): number {
 }
 
 export default function ReportingScreen() {
-  const { data, currentUser, isHydrated, addAcompte, deleteAcompte, addPointage, updatePointage, deletePointage } = useApp();
+  const { data, currentUser, isHydrated, addAcompte, deleteAcompte, addPointage, updatePointage, deletePointage, togglePresenceForcee } = useApp();
   const { t } = useLanguage();
   const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
@@ -231,6 +231,10 @@ export default function ReportingScreen() {
   /** Tous les employés avec leurs pointages du jour (présents ou non) */
   const pointagesJour = useMemo(() => {
     let employes = data.employes;
+    // Si employé non-admin : ne voir que ses propres pointages
+    if (!isAdmin && currentUser?.employeId) {
+      employes = employes.filter(e => e.id === currentUser.employeId);
+    }
     // Filtrer par chantier : ne montrer que les employés affectés à ce chantier ce jour-là
     if (filterChantierId !== 'all') {
       const affectedIds = new Set(
@@ -245,7 +249,7 @@ export default function ReportingScreen() {
         const pts = pointagesParEmpDate[emp.id]?.[selectedDate];
         return { emp, debut: pts?.debut, fin: pts?.fin };
       });
-  }, [data.employes, data.affectations, pointagesParEmpDate, selectedDate, filterChantierId]);
+  }, [data.employes, data.affectations, pointagesParEmpDate, selectedDate, filterChantierId, isAdmin, currentUser?.employeId]);
 
   /** Notes journalières (acomptes du jour) */
   const acomptesJour = useMemo(() =>
@@ -296,12 +300,15 @@ export default function ReportingScreen() {
       // Comptage fériés travaillés (employé a pointé un jour férié)
       if (isFerie && (debut || fin)) joursFeriesTravailles++;
 
-      // Comptage absences (jour théorique, non férié, non week-end, sans pointage)
+      // Présence forcée (admin a marqué présent sans pointage)
+      const isForcedPresent = (data.presencesForcees || []).some(pf => pf.employeId === empSelectionne.id && pf.date === dateStr);
+
+      // Comptage absences (jour théorique, non férié, non week-end, sans pointage, pas de présence forcée)
       // Les jours fériés ne sont PAS comptés comme absences, même si l'employé n'a pas pointé
-      if (travailleTheo && !isFerie && !isWeekendDay && !debut && !fin) joursAbsents++;
+      if (travailleTheo && !isFerie && !isWeekendDay && !debut && !fin && !isForcedPresent) joursAbsents++;
 
       // Comptage jours travaillés
-      if (debut || fin) joursOuvrablesTravailles++;
+      if (debut || fin || isForcedPresent) joursOuvrablesTravailles++;
 
       let ecartDebut: number | null = null;
       let ecartFin: number | null = null;
@@ -313,7 +320,7 @@ export default function ReportingScreen() {
         ecartFin = ecartMinutes(fin.heure, horairesJour.fin, 'fin');
       }
 
-      return { dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, joursFeriesTravaille: isFerie && (!!debut || !!fin) };
+      return { dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, isForcedPresent, joursFeriesTravaille: isFerie && (!!debut || !!fin) };
     });
 
     // Calcul du salaire selon le mode
@@ -346,7 +353,7 @@ export default function ReportingScreen() {
       modeSalaire: empSelectionne.modeSalaire ?? 'mensuel',
       tarifJournalier: empSelectionne.tarifJournalier ?? null,
     };
-  }, [empSelectionne, pointagesParEmpDate, joursDuMois, acomptesDuMois, selectedYear, selectedMonth]);
+  }, [empSelectionne, pointagesParEmpDate, joursDuMois, acomptesDuMois, selectedYear, selectedMonth, data.presencesForcees]);
 
   // ── Actions acompte ────────────────────────────────────────────────────────
 
@@ -374,7 +381,7 @@ export default function ReportingScreen() {
 
   const handleDeleteAcompte = (ac: Acompte) => {
     if (Platform.OS === 'web') {
-   if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.reporting.deleteDeposit} ${ac.montant} € ?`) : true)) deleteAcompte(ac.id);  } else {
+   if (typeof window !== 'undefined' && window.confirm(`${t.reporting.deleteDeposit} ${ac.montant} € ?`)) deleteAcompte(ac.id);  } else {
       Alert.alert(t.common.delete, `${t.reporting.deleteDeposit} ${ac.montant} € ?`, [
         { text: t.common.cancel, style: 'cancel' },
         { text: t.common.delete, style: 'destructive', onPress: () => deleteAcompte(ac.id) },
@@ -429,7 +436,7 @@ export default function ReportingScreen() {
   const handleExportPDF = () => {
     if (Platform.OS !== 'web') return;
     const moisLabel = `${MOIS_LONG[selectedMonth]} ${selectedYear}`;
-    let html = `<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;font-size:11px;color:#222;margin:20px}h1{color:#1A3A6B;font-size:16px}h2{color:#1A3A6B;font-size:13px;margin-top:24px;border-bottom:2px solid #1A3A6B;padding-bottom:4px}h3{color:#444;font-size:11px;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:8px}th{background:#1A3A6B;color:#fff;padding:5px 8px;text-align:left;font-size:10px}td{padding:4px 8px;border-bottom:1px solid #eee}tr:nth-child(even){background:#F8F9FA}.footer{margin-top:32px;font-size:9px;color:#999;text-align:center}</style></head><body>`;
+    let html = `<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;font-size:11px;color:#222;margin:20px}h1{color:#2C2C2C;font-size:16px}h2{color:#2C2C2C;font-size:13px;margin-top:24px;border-bottom:2px solid #2C2C2C;padding-bottom:4px}h3{color:#444;font-size:11px;margin-top:12px}table{width:100%;border-collapse:collapse;margin-top:8px}th{background:#2C2C2C;color:#fff;padding:5px 8px;text-align:left;font-size:10px}td{padding:4px 8px;border-bottom:1px solid #eee}tr:nth-child(even){background:#F8F9FA}.footer{margin-top:32px;font-size:9px;color:#999;text-align:center}</style></head><body>`;
     html += `<h1>SK DECO — Rapport ${moisLabel}</h1><p style="color:#687076;font-size:10px;">Généré le ${new Date().toLocaleDateString('fr-FR')}</p>`;
     html += `<h2>Horaires par employé</h2>`;
     data.employes.forEach(emp => {
@@ -539,7 +546,7 @@ export default function ReportingScreen() {
 
   if (!isAdmin) {
     return (
-      <ScreenContainer containerClassName="bg-[#F2F4F7]">
+      <ScreenContainer containerClassName="bg-[#F5EDE3]">
         <View style={styles.center}>
           <Text style={styles.noAccess}>{t.common.adminOnly}</Text>
         </View>
@@ -548,7 +555,7 @@ export default function ReportingScreen() {
   }
 
   return (
-    <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
       {/* En-tête */}
       <View style={styles.header}>
         <View style={styles.headerLogoWrap}>
@@ -585,7 +592,7 @@ export default function ReportingScreen() {
 
       {/* ── VUE JOURNALIÈRE ── */}
       {vue === 'journalier' && (
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* Navigation jour */}
           <View style={styles.navRow}>
             <Pressable style={styles.navBtn} onPress={prevDay}>
@@ -608,7 +615,7 @@ export default function ReportingScreen() {
             {data.chantiers.filter(c => c.statut === 'actif').map(c => (
               <Pressable
                 key={c.id}
-                style={[styles.filterChip, filterChantierId === c.id && { backgroundColor: c.couleur || '#1A3A6B', borderColor: c.couleur || '#1A3A6B' }]}
+                style={[styles.filterChip, filterChantierId === c.id && { backgroundColor: c.couleur || '#2C2C2C', borderColor: c.couleur || '#2C2C2C' }]}
                 onPress={() => setFilterChantierId(filterChantierId === c.id ? 'all' : c.id)}
               >
                 <Text style={[styles.filterChipText, filterChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
@@ -626,14 +633,15 @@ export default function ReportingScreen() {
               const ecartF = fin && horairesJour?.actif ? ecartMinutes(fin.heure, horairesJour.fin, 'fin') : null;
               const acomptesEmpJour = acomptesJour.filter(a => a.employeId === emp.id);
               const hasPointage = debut || fin;
-              const isAbsent = !hasPointage && horairesJour?.actif;
+              const isForcedPresent = (data.presencesForcees || []).some(pf => pf.employeId === emp.id && pf.date === selectedDate);
+              const isAbsent = !hasPointage && !isForcedPresent && horairesJour?.actif;
 
               return (
                 <View key={emp.id} style={[styles.empCard, isAbsent && styles.empCardAbsent]}>
                   <View style={styles.empCardHeader}>
-                    <View style={[styles.empAvatar, { backgroundColor: mc.color, opacity: hasPointage ? 1 : 0.5 }]}>
+                    <View style={[styles.empAvatar, { backgroundColor: mc.color, opacity: (hasPointage || isForcedPresent) ? 1 : 0.5 }]}>
                       <Text style={[styles.empAvatarText, { color: mc.textColor }]}>
-                        {emp.prenom[0]}
+                        {emp.prenom?.[0] || '?'}
                       </Text>
                     </View>
                     <View style={{ flex: 1 }}>
@@ -647,10 +655,18 @@ export default function ReportingScreen() {
                       <View style={styles.dureeBadge}>
                         <Text style={styles.dureeBadgeText}>{formatDuree(dureeMin)}</Text>
                       </View>
+                    ) : isForcedPresent ? (
+                      <Pressable onPress={() => isAdmin ? togglePresenceForcee(emp.id, selectedDate) : undefined}>
+                        <View style={[styles.dureeBadge, { backgroundColor: '#F0FFF4', borderColor: '#C6F6D5' }]}>
+                          <Text style={[styles.dureeBadgeText, { color: '#27AE60' }]}>Présent ✓</Text>
+                        </View>
+                      </Pressable>
                     ) : isAbsent ? (
-                      <View style={[styles.dureeBadge, styles.dureeBadgeAbsent]}>
-                        <Text style={[styles.dureeBadgeText, { color: '#E74C3C' }]}>{t.reporting.absent}</Text>
-                      </View>
+                      <Pressable onPress={() => isAdmin ? togglePresenceForcee(emp.id, selectedDate, currentUser?.nom || 'Admin') : undefined}>
+                        <View style={[styles.dureeBadge, styles.dureeBadgeAbsent]}>
+                          <Text style={[styles.dureeBadgeText, { color: '#E74C3C' }]}>{t.reporting.absent}</Text>
+                        </View>
+                      </Pressable>
                     ) : null}
                   </View>
 
@@ -752,7 +768,7 @@ export default function ReportingScreen() {
 
       {/* ── VUE PAR EMPLOYÉ ── */}
       {vue === 'employe' && (
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           {/* Navigation mois */}
           <View style={styles.navRow}>
             <Pressable style={styles.navBtn} onPress={prevMonth}>
@@ -766,7 +782,7 @@ export default function ReportingScreen() {
 
           {/* Sélecteur employé */}
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.empSelector} contentContainerStyle={styles.empSelectorContent}>
-            {data.employes.map(emp => {
+            {(isAdmin ? data.employes : data.employes.filter(e => e.id === currentUser?.employeId)).map(emp => {
               const mc = METIER_COLORS[emp.metier];
               const active = selectedEmployeId === emp.id;
               return (
@@ -868,7 +884,7 @@ export default function ReportingScreen() {
                 {rapportEmploye.resteAPayer != null && (
                   <View style={[styles.resumeMensuelRow, styles.resumeMensuelTotal]}>
                     <Text style={styles.resumeMensuelTotalLabel}>{t.reporting.remaining}</Text>
-                    <Text style={[styles.resumeMensuelTotalValue, { color: rapportEmploye.resteAPayer >= 0 ? '#1A3A6B' : '#E74C3C' }]}>
+                    <Text style={[styles.resumeMensuelTotalValue, { color: rapportEmploye.resteAPayer >= 0 ? '#2C2C2C' : '#E74C3C' }]}>
                       {rapportEmploye.resteAPayer.toLocaleString('fr-FR')} €
                     </Text>
                   </View>
@@ -878,6 +894,61 @@ export default function ReportingScreen() {
                   <Text style={styles.addAcompteBtnLargeText}>+ {t.reporting.addDeposit}</Text>
                 </Pressable>
               </View>
+
+              {/* Export fiche de paie */}
+              {isAdmin && rapportEmploye.salaireBase != null && (
+                <Pressable style={{ backgroundColor: '#EBF0FF', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}
+                  onPress={async () => {
+                    const r = rapportEmploye;
+                    const mois = `${MOIS_LONG[selectedMonth]} ${selectedYear}`;
+                    let html = `<html><head><meta charset="utf-8"><style>body{font-family:Arial,sans-serif;margin:30px;color:#222}h1{color:#2C2C2C;font-size:18px;margin-bottom:4px}h2{font-size:14px;color:#2C2C2C;border-bottom:2px solid #2C2C2C;padding-bottom:4px;margin-top:24px}table{width:100%;border-collapse:collapse;margin-top:8px}th{background:#2C2C2C;color:#fff;padding:6px 10px;text-align:left;font-size:11px}td{padding:5px 10px;border-bottom:1px solid #eee;font-size:11px}tr:nth-child(even){background:#F8F9FA}.total{font-weight:bold;font-size:13px;color:#2C2C2C}.footer{margin-top:40px;font-size:9px;color:#999;text-align:center;border-top:1px solid #eee;padding-top:8px}.sig{margin-top:40px;display:flex;justify-content:space-between}.sig div{width:45%;border-top:1px solid #222;padding-top:6px;font-size:10px}</style></head><body>`;
+                    html += `<h1>FICHE DE PAIE — ${mois}</h1>`;
+                    html += `<p><strong>${empSelectionne.prenom} ${empSelectionne.nom}</strong> — ${empSelectionne.metier}</p>`;
+                    html += `<p style="color:#687076;font-size:10px;">Générée le ${new Date().toLocaleDateString('fr-FR')}</p>`;
+                    html += `<h2>Détail du mois</h2><table><tr><th>Élément</th><th style="text-align:right">Valeur</th></tr>`;
+                    html += `<tr><td>Heures travaillées</td><td style="text-align:right">${formatDuree(r.totalMinutes)}</td></tr>`;
+                    html += `<tr><td>Jours ouvrables</td><td style="text-align:right">${r.joursOuvrablesMois} j</td></tr>`;
+                    html += `<tr><td>Jours travaillés</td><td style="text-align:right">${r.joursOuvrablesTravailles} j</td></tr>`;
+                    if (r.joursAbsents > 0) html += `<tr><td style="color:#E74C3C">Absences</td><td style="text-align:right;color:#E74C3C">${r.joursAbsents} j</td></tr>`;
+                    if (r.joursFeriesTravailles > 0) html += `<tr><td style="color:#27AE60">Fériés travaillés</td><td style="text-align:right;color:#27AE60">+${r.joursFeriesTravailles} j</td></tr>`;
+                    if (r.totalRetardMinutes > 0) html += `<tr><td style="color:#E67E22">Retards cumulés</td><td style="text-align:right;color:#E67E22">${formatDuree(r.totalRetardMinutes)}</td></tr>`;
+                    html += `</table>`;
+                    html += `<h2>Rémunération</h2><table><tr><th>Élément</th><th style="text-align:right">Montant</th></tr>`;
+                    if (r.modeSalaire === 'journalier' && r.tarifJournalier) {
+                      html += `<tr><td>Tarif journalier</td><td style="text-align:right">${r.tarifJournalier} €/j</td></tr>`;
+                      html += `<tr><td>Salaire de base (${r.joursOuvrablesMois}j × ${r.tarifJournalier}€)</td><td style="text-align:right">${(r.salaireBase ?? 0).toLocaleString('fr-FR')} €</td></tr>`;
+                      if (r.joursFeriesTravailles > 0) html += `<tr><td style="color:#27AE60">Bonus fériés (${r.joursFeriesTravailles}j)</td><td style="text-align:right;color:#27AE60">+${(r.joursFeriesTravailles * r.tarifJournalier).toLocaleString('fr-FR')} €</td></tr>`;
+                      if (r.joursAbsents > 0) html += `<tr><td style="color:#E74C3C">Déductions absences (${r.joursAbsents}j)</td><td style="text-align:right;color:#E74C3C">-${(r.joursAbsents * r.tarifJournalier).toLocaleString('fr-FR')} €</td></tr>`;
+                    } else {
+                      html += `<tr><td>Salaire mensuel net</td><td style="text-align:right">${(r.salaireBase ?? 0).toLocaleString('fr-FR')} €</td></tr>`;
+                    }
+                    html += `<tr><td>Salaire avant acomptes</td><td style="text-align:right"><strong>${(r.salaireAvantAcompte ?? 0).toLocaleString('fr-FR')} €</strong></td></tr>`;
+                    if (r.totalAcomptes > 0) html += `<tr><td style="color:#E74C3C">Acomptes versés</td><td style="text-align:right;color:#E74C3C">-${r.totalAcomptes.toLocaleString('fr-FR')} €</td></tr>`;
+                    const reste = (r.salaireAvantAcompte ?? 0) - r.totalAcomptes;
+                    html += `<tr style="background:#EBF0FF"><td class="total">RESTE À PAYER</td><td style="text-align:right" class="total">${reste.toLocaleString('fr-FR')} €</td></tr>`;
+                    html += `</table>`;
+                    html += `<div class="sig"><div>Signature employeur</div><div>Signature employé</div></div>`;
+                    html += `<div class="footer">SK DECO — Fiche de paie ${mois} — ${empSelectionne.prenom} ${empSelectionne.nom}</div>`;
+                    html += `</body></html>`;
+                    if (Platform.OS === 'web') {
+                      const w = window.open();
+                      if (w) { w.document.write(html); w.document.close(); setTimeout(() => w.print(), 500); }
+                    } else {
+                      // Mobile : écrire un fichier HTML temporaire puis l'ouvrir
+                      try {
+                        const FileSystem = require('expo-file-system');
+                        const WebBrowser = require('expo-web-browser');
+                        const path = `${FileSystem.cacheDirectory}fiche_paie_${empSelectionne.prenom}_${mois.replace(/ /g, '_')}.html`;
+                        await FileSystem.writeAsStringAsync(path, html, { encoding: FileSystem.EncodingType.UTF8 });
+                        await WebBrowser.openBrowserAsync(path);
+                      } catch {
+                        Alert.alert('Erreur', 'Impossible d\'ouvrir la fiche de paie');
+                      }
+                    }
+                  }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>📄 Exporter fiche de paie</Text>
+                </Pressable>
+              )}
 
               {/* Acomptes du mois */}
               {rapportEmploye.acomptesMois.length > 0 && (
@@ -906,21 +977,31 @@ export default function ReportingScreen() {
                   <Text style={[styles.tableauCell, { flex: 1.5 }, styles.tableauHeaderText]}>Chantier</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.arrival}</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.departure}</Text>
-                  <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.pointedBy}</Text>
+                  {isAdmin && <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.pointedBy}</Text>}
                 </View>
-                {rapportEmploye.lignes.map(({ dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, joursFeriesTravaille }) => {
+                {rapportEmploye.lignes.map(({ dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, isForcedPresent, joursFeriesTravaille }) => {
                   const isWeekend = [0, 6].includes(new Date(dateStr + 'T12:00:00').getDay());
                   const hasAnomalie = (ecartDebut !== null && ecartDebut > 15) || (ecartFin !== null && ecartFin > 15);
                   const hasPointage = debut || fin;
+                  const isAbsentLine = !hasPointage && !isForcedPresent && travailleTheo && !isWeekend;
 
                   return (
-                    <View
+                    <Pressable
                       key={dateStr}
+                      onPress={() => {
+                        if (hasPointage && isAdmin && empSelectionne) {
+                          openEditPointage(empSelectionne.id, dateStr);
+                        } else if (!hasPointage && isAdmin && empSelectionne) {
+                          // Toggle présence forcée (absent, weekend, ou déjà forcé)
+                          togglePresenceForcee(empSelectionne.id, dateStr, currentUser?.nom || 'Admin');
+                        }
+                      }}
                       style={[
                         styles.tableauRow,
                         isWeekend && styles.tableauRowWeekend,
                         hasAnomalie && styles.tableauRowAnomalie,
                         joursFeriesTravaille && { backgroundColor: '#E8F5E9' },
+                        isForcedPresent && !hasPointage && { backgroundColor: '#F0FFF4' },
                       ]}
                     >
                       <View style={[styles.tableauCell, styles.tableauCellDate]}>
@@ -938,7 +1019,7 @@ export default function ReportingScreen() {
                           const chId = debut?.chantierId || fin?.chantierId;
                           if (chId) {
                             const ch = data.chantiers.find(c => c.id === chId);
-                            return <Text style={{ fontSize: 10, color: '#1A3A6B', fontWeight: '600' }} numberOfLines={2}>{ch?.nom || '—'}</Text>;
+                            return <Text style={{ fontSize: 10, color: '#2C2C2C', fontWeight: '600' }} numberOfLines={2}>{ch?.nom || '—'}</Text>;
                           }
                           const affs = data.affectations
                             .filter(a => a.employeId === empSelectionne.id && a.dateDebut <= dateStr && a.dateFin >= dateStr)
@@ -969,8 +1050,8 @@ export default function ReportingScreen() {
                             )}
                           </>
                         ) : (
-                          <Text style={[styles.tableauAbsent, travailleTheo && !hasPointage && { color: '#E74C3C' }]}>
-                            {travailleTheo && !hasPointage ? 'Abs.' : '—'}
+                          <Text style={[styles.tableauAbsent, isAbsentLine && { color: '#E74C3C', fontWeight: '700' }, isForcedPresent && { color: '#27AE60', fontWeight: '700' }]}>
+                            {isAbsentLine ? 'Abs.' : isForcedPresent ? 'Prés.' : '—'}
                           </Text>
                         )}
                       </View>
@@ -999,19 +1080,18 @@ export default function ReportingScreen() {
                           <Text style={styles.tableauAbsent}>—</Text>
                         )}
                       </View>
+                      {isAdmin && (
                       <View style={[styles.tableauCell, styles.tableauCellDuree]}>
                         {(() => {
-                          // Détermine qui a pointé (début ou fin, selon saisieManuelle)
                           const isManuDebut = debut?.saisieManuelle;
                           const isManuFin = fin?.saisieManuelle;
                           const isManu = isManuDebut || isManuFin;
-                          if (!debut && !fin) return <Text style={styles.tableauDureeText}>—</Text>;
+                          if (!debut && !fin && !isForcedPresent) return <Text style={styles.tableauDureeText}>—</Text>;
+                          if (isForcedPresent && !debut && !fin) return <Text style={[styles.tableauDureeText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]}>Admin</Text>;
                           if (!isManu) {
-                            // Pointé par l'employé lui-même
                             const nom = empSelectionne ? empSelectionne.prenom : '';
                             return <Text style={[styles.tableauDureeText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{nom}</Text>;
                           } else {
-                            // Modifié par un admin/autre
                             const modifieurId = (isManuDebut ? debut?.saisieParId : fin?.saisieParId) || 'admin';
                             const modifieur = data.employes.find(e => e.id === modifieurId);
                             const nomModif = modifieur ? modifieur.prenom : 'Admin';
@@ -1019,7 +1099,8 @@ export default function ReportingScreen() {
                           }
                         })()}
                       </View>
-                    </View>
+                      )}
+                    </Pressable>
                   );
                 })}
               </View>
@@ -1030,9 +1111,9 @@ export default function ReportingScreen() {
         </ScrollView>
       )}
 
-      {/* ── VUE SAISIE MANUELLE ── */}
-      {vue === 'saisie' && (
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      {/* ── VUE SAISIE MANUELLE (admin/RH uniquement) ── */}
+      {vue === 'saisie' && isAdmin && (
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
           <View style={styles.navRow}>
             <Pressable style={styles.navBtn} onPress={prevMonth}>
               <Text style={styles.navArrow}>‹</Text>
@@ -1052,12 +1133,12 @@ export default function ReportingScreen() {
               <View key={emp.id} style={styles.saisieEmpBlock}>
                 <View style={[styles.saisieEmpHeader, { borderLeftColor: mc.color }]}>
                   <View style={[styles.saisieEmpAvatar, { backgroundColor: mc.color }]}>
-                    <Text style={{ color: mc.textColor, fontWeight: '800', fontSize: 14 }}>{emp.prenom[0]}</Text>
+                    <Text style={{ color: mc.textColor, fontWeight: '800', fontSize: 14 }}>{emp.prenom?.[0] || '?'}</Text>
                   </View>
                   <Text style={styles.saisieEmpName}>{emp.prenom} {emp.nom}</Text>
                   <Text style={[styles.saisieEmpMetier, { color: mc.color }]}>{mc.label}</Text>
                 </View>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                   <View>
                     <View style={styles.saisieTableHeader}>
                       <Text style={[styles.saisieCellDate, styles.saisieHeaderText]}>{t.common.date}</Text>
@@ -1076,7 +1157,8 @@ export default function ReportingScreen() {
                       const horairesJour = emp.horaires?.[jourSemaine];
                       const travailleTheo = horairesJour?.actif ?? false;
                       const hasPointage = debut || fin;
-                      const isAbsent = !hasPointage && travailleTheo && !isWeekend;
+                      const isForcedPres = (data.presencesForcees || []).some(pf => pf.employeId === emp.id && pf.date === dateStr);
+                      const isAbsent = !hasPointage && !isForcedPres && travailleTheo && !isWeekend;
                       return (
                         <Pressable
                           key={dateStr}
@@ -1084,15 +1166,22 @@ export default function ReportingScreen() {
                             styles.saisieTableRow,
                             isWeekend && { backgroundColor: '#F8F9FA' },
                             isAbsent && { backgroundColor: '#FFF5F5' },
+                            isForcedPres && !hasPointage && { backgroundColor: '#F0FFF4' },
                           ]}
-                          onPress={() => openEditPointage(emp.id, dateStr)}
+                          onPress={() => {
+                            if (!hasPointage && (isAbsent || isForcedPres) && isAdmin) {
+                              togglePresenceForcee(emp.id, dateStr, currentUser?.nom || 'Admin');
+                            } else {
+                              openEditPointage(emp.id, dateStr);
+                            }
+                          }}
                         >
                           <Text style={[styles.saisieCellDate, styles.saisieDateText, isWeekend && { color: '#B0BEC5' }]}>
                             {formatDateFr(dateStr)}
                           </Text>
                           <View style={[styles.saisieCellHeure, debut?.saisieManuelle && styles.saisieCellManuelle]}>
-                            <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : '#B0BEC5' }]}>
-                              {debut ? debut.heure : isAbsent ? t.reporting.absent : '—'}
+                            <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : isForcedPres ? '#27AE60' : '#B0BEC5', fontWeight: (isAbsent || isForcedPres) ? '700' : '400' }]}>
+                              {debut ? debut.heure : isAbsent ? t.reporting.absent : isForcedPres ? 'Présent' : '—'}
                             </Text>
                             {debut?.saisieManuelle && <Text style={styles.saisieManuelleIcon}>✏️</Text>}
                           </View>
@@ -1107,7 +1196,8 @@ export default function ReportingScreen() {
                               const isManuDebut = debut?.saisieManuelle;
                               const isManuFin = fin?.saisieManuelle;
                               const isManu = isManuDebut || isManuFin;
-                              if (!debut && !fin) return <Text style={[styles.saisieCellText, { color: '#B0BEC5' }]}>—</Text>;
+                              if (!debut && !fin && !isForcedPres) return <Text style={[styles.saisieCellText, { color: '#B0BEC5' }]}>—</Text>;
+                              if (isForcedPres && !debut && !fin) return <Text style={[styles.saisieCellText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]}>Admin</Text>;
                               if (!isManu) {
                                 return <Text style={[styles.saisieCellText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{emp.prenom}</Text>;
                               } else {
@@ -1140,7 +1230,7 @@ export default function ReportingScreen() {
         transparent
         onRequestClose={() => setEditPointageModal(false)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setEditPointageModal(false)}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setEditPointageModal(false)} />
           <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>✏️ {t.reporting.editTimesheet}</Text>
@@ -1180,6 +1270,26 @@ export default function ReportingScreen() {
                 />
               </>
             )}
+            {/* Bouton supprimer pointage existant */}
+            {(isAdmin || (currentUser as any)?.isRH) && editEmpId && (() => {
+              const existingPts = data.pointages.filter(p => p.employeId === editEmpId && p.date === editDate);
+              if (existingPts.length === 0) return null;
+              return (
+                <Pressable
+                  style={{ backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 8 }}
+                  onPress={() => {
+                    const doDelete = () => {
+                      existingPts.forEach(p => deletePointage(p.id));
+                      setEditPointageModal(false);
+                    };
+                    if (Platform.OS === 'web') { if (window.confirm('Supprimer le pointage de ce jour ?')) doDelete(); }
+                    else Alert.alert('Supprimer le pointage', 'Supprimer le pointage de ce jour ? Cette action est irréversible.', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
+                  }}
+                >
+                  <Text style={{ color: '#DC2626', fontWeight: '700', fontSize: 13 }}>🗑 Supprimer le pointage</Text>
+                </Pressable>
+              );
+            })()}
             <View style={styles.modalActions}>
               <Pressable style={styles.modalCancelBtn} onPress={() => setEditPointageModal(false)}>
                 <Text style={styles.modalCancelBtnText}>{t.common.cancel}</Text>
@@ -1189,7 +1299,7 @@ export default function ReportingScreen() {
               </Pressable>
             </View>
           </Pressable>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* ── Modal Acompte ── */}
@@ -1199,7 +1309,7 @@ export default function ReportingScreen() {
         transparent
         onRequestClose={() => setShowAcompteModal(false)}
       >
-        <Pressable style={styles.modalOverlay} onPress={() => setShowAcompteModal(false)}>
+        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowAcompteModal(false)} />
           <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>{t.reporting.addDeposit}</Text>
@@ -1250,15 +1360,15 @@ export default function ReportingScreen() {
               </Pressable>
             </View>
           </Pressable>
-        </Pressable>
+        </View>
       </Modal>
     </ScreenContainer>
   );
 }
 
 const styles = StyleSheet.create({
-  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F2F4F7' },
-  filterChipActive: { backgroundColor: '#1A3A6B', borderColor: '#1A3A6B' },
+  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#E2E6EA', backgroundColor: '#F5EDE3' },
+  filterChipActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
   filterChipText: { fontSize: 12, fontWeight: '600', color: '#687076', maxWidth: 120 },
   filterChipTextActive: { color: '#fff' },
   header: {
@@ -1288,7 +1398,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   exportBtn: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
     paddingHorizontal: 12,
     paddingVertical: 7,
     borderRadius: 8,
@@ -1338,7 +1448,7 @@ const styles = StyleSheet.create({
     color: '#687076',
   },
   vueBtnTextActive: {
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   scroll: {
     flex: 1,
@@ -1366,7 +1476,7 @@ const styles = StyleSheet.create({
   },
   navArrow: {
     fontSize: 22,
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     fontWeight: '700',
   },
   navLabel: {
@@ -1447,7 +1557,7 @@ const styles = StyleSheet.create({
   dureeBadgeText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#1A3A6B',
+    color: '#2C2C2C',
   },
   pointageRow: {
     flexDirection: 'row',
@@ -1641,7 +1751,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F4F7',
+    borderBottomColor: '#F5EDE3',
   },
   resumeMensuelLabel: {
     fontSize: 14,
@@ -1689,7 +1799,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F4F7',
+    borderBottomColor: '#F5EDE3',
     paddingVertical: 8,
     paddingHorizontal: 10,
   },
@@ -1753,7 +1863,7 @@ const styles = StyleSheet.create({
   tableauDureeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1A3A6B',
+    color: '#2C2C2C',
     textAlign: 'right',
   },
   // Modal acompte
@@ -1798,7 +1908,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   modalInput: {
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -1817,7 +1927,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderWidth: 1,
     borderColor: '#E2E6EA',
   },
@@ -1831,7 +1941,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#2C2C2C',
   },
   modalSaveBtnDisabled: {
     backgroundColor: '#B0BEC5',
@@ -1896,7 +2006,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F2F4F7',
+    borderBottomColor: '#F5EDE3',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
@@ -1943,7 +2053,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#F5EDE3',
     borderWidth: 1.5,
     borderColor: '#E2E6EA',
   },
