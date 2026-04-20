@@ -1036,15 +1036,64 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </View>
             )}
 
-            {/* ── Avancement par corps de métier ── */}
+            {/* ── Suivi financier & Avancement (fusionné) ── */}
             <View style={styles.card}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <Text style={styles.sectionTitle}>🛠 Avancement par corps de métier</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={styles.sectionTitle}>💰 Suivi financier & Avancement</Text>
                 {avancementGlobalCorps != null && (
                   <View style={{ backgroundColor: '#C9A96E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
                     <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
                   </View>
                 )}
+              </View>
+              <Text style={styles.pfsSubtitle}>Lots, avancement, situation financière et historique</Text>
+
+              {/* Résumé financier global — toujours visible */}
+              {totalChantierHT > 0 && (
+                <View style={styles.pfsResumeBox}>
+                  <View style={styles.pfsResumeRow}>
+                    <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
+                    <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT)} €</Text>
+                  </View>
+                  {tvaBreakdown.length > 0 ? (
+                    tvaBreakdown.map((t, i) => (
+                      <View key={i} style={styles.pfsResumeRow}>
+                        <Text style={styles.pfsResumeLabel}>+ TVA {t.taux.toString().replace('.', ',')}%</Text>
+                        <Text style={styles.pfsResumeValue}>{fmt(t.montant)} €</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <View style={styles.pfsResumeRow}>
+                      <Text style={styles.pfsResumeLabel}>+ TVA 20% (par défaut)</Text>
+                      <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT * TVA_RATE_DEFAULT)} €</Text>
+                    </View>
+                  )}
+                  <View style={[styles.pfsResumeRow, { borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 6, marginTop: 2 }]}>
+                    <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>= Total chantier TTC</Text>
+                    <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
+                  </View>
+                  {dejaPayeAcompte > 0 && (
+                    <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
+                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Acompte(s) client</Text>
+                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(dejaPayeAcompte)} €</Text>
+                    </View>
+                  )}
+                  {totalPayeSituations > 0 && (
+                    <View style={styles.pfsResumeRow}>
+                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Situations payées</Text>
+                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(totalPayeSituations)} €</Text>
+                    </View>
+                  )}
+                  <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
+                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Restant à payer TTC</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
+                  </View>
+                </View>
+              )}
+
+              {/* ── Sous-section : Lots et avancement ── */}
+              <View style={styles.subSectionHeader}>
+                <Text style={styles.subSectionTitle}>🛠 Lots du chantier</Text>
               </View>
 
               {/* Auto-extraction en cours */}
@@ -1177,54 +1226,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   )}
                 </>
               )}
-            </View>
 
-            {/* ── Point financier de situation ── */}
+            {/* ── Point financier de situation (dans le même card) ── */}
             {(situation.lignes.length > 0 || situationsHistorique.length > 0) && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>💰 Point financier de situation</Text>
-                <Text style={styles.pfsSubtitle}>Avant émission de facture</Text>
-
-                {/* Résumé chantier — clair et lisible */}
-                <View style={styles.pfsResumeBox}>
-                  <View style={styles.pfsResumeRow}>
-                    <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
-                    <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT)} €</Text>
-                  </View>
-                  {tvaBreakdown.length > 0 ? (
-                    tvaBreakdown.map((t, i) => (
-                      <View key={i} style={styles.pfsResumeRow}>
-                        <Text style={styles.pfsResumeLabel}>+ TVA {t.taux.toString().replace('.', ',')}%</Text>
-                        <Text style={styles.pfsResumeValue}>{fmt(t.montant)} €</Text>
-                      </View>
-                    ))
-                  ) : (
-                    <View style={styles.pfsResumeRow}>
-                      <Text style={styles.pfsResumeLabel}>+ TVA 20% (par défaut)</Text>
-                      <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT * TVA_RATE_DEFAULT)} €</Text>
-                    </View>
-                  )}
-                  <View style={[styles.pfsResumeRow, { borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 6, marginTop: 2 }]}>
-                    <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>= Total chantier TTC</Text>
-                    <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
-                  </View>
-                  {dejaPayeAcompte > 0 && (
-                    <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
-                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Acompte(s) client</Text>
-                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(dejaPayeAcompte)} €</Text>
-                    </View>
-                  )}
-                  {totalPayeSituations > 0 && (
-                    <View style={styles.pfsResumeRow}>
-                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Situations payées</Text>
-                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(totalPayeSituations)} €</Text>
-                    </View>
-                  )}
-                  <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
-                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Restant à payer TTC</Text>
-                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
-                  </View>
+              <>
+                <View style={styles.subSectionHeader}>
+                  <Text style={styles.subSectionTitle}>📸 Point financier de situation</Text>
                 </View>
+                <Text style={styles.pfsSubtitle}>Avant émission de facture</Text>
 
                 {/* Détail du point financier actuel (si avancement > 0) */}
                 {situation.lignes.length > 0 && (
@@ -1363,8 +1372,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     })}
                   </>
                 )}
-              </View>
+              </>
             )}
+            </View>
 
             {/* ── Photos portail client ── */}
             <View style={styles.card}>
@@ -2553,6 +2563,22 @@ const styles = StyleSheet.create({
     color: '#8C6D2F',
     fontWeight: '600',
     lineHeight: 18,
+  },
+  subSectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 18,
+    marginBottom: 10,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E8DDD0',
+  },
+  subSectionTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#2C2C2C',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   lotEnCoursCard: {
     backgroundColor: '#FFF8E1',
