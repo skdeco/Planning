@@ -212,6 +212,10 @@ export interface Chantier {
   avancementCorps?: { id: string; nom: string; pourcentage: number; montant?: number }[];
   // Historique des points financiers de situation figés (avant émission facture)
   situationsHistorique?: SituationFigee[];
+  // Décomposition TVA extraite du devis (ex : [{taux:5.5, montant:55}, {taux:20, montant:16000}])
+  devisTVABreakdown?: { taux: number; montant: number }[];
+  // Total TTC extrait du devis (utilisé comme vérité pour calculer la part TTC de chaque situation)
+  devisTotalTTC?: number;
 }
 
 /** Snapshot figé d'un point financier de situation (avant émission d'une facture). */

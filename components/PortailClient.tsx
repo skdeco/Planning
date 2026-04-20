@@ -6,7 +6,14 @@ import {
 import { useApp } from '@/app/context/AppContext';
 import { APPORTEUR_TYPE_LABELS } from '@/app/types';
 import type { Chantier } from '@/app/types';
-import { extraireLotsDuTexte, extraireLotsAvecRemise, parseSaisieManuelle, type LotExtrait } from '@/lib/devisParser';
+import {
+  extraireLotsDuTexte,
+  extraireLotsAvecRemise,
+  extraireTVAsDuTexte,
+  extraireTotalTTC,
+  parseSaisieManuelle,
+  type LotExtrait,
+} from '@/lib/devisParser';
 
 interface PortailClientProps {
   visible: boolean;
@@ -171,19 +178,32 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   }, [avancementCorps]);
 
   // ── Point financier de situation ──
-  const TVA_RATE = 0.20; // 20% par défaut
+  const TVA_RATE_DEFAULT = 0.20;
   const situationsHistorique = useMemo(() => chantier?.situationsHistorique || [], [chantier?.situationsHistorique]);
   const totalPayeSituations = useMemo(
     () => situationsHistorique.filter(s => s.statut === 'payee').reduce((s, x) => s + x.montantSituation, 0),
     [situationsHistorique]
   );
-  // Total chantier TTC = somme montants lots HT × 1.20
+  // Déjà payé initial = tous les acomptes encaissés sur marchés + suppléments (hors situations)
+  const dejaPayeAcompte = financials.totalPaye;
+  const dejaPayeTotal = dejaPayeAcompte + totalPayeSituations;
+
+  // TVA extraite du devis — sinon fallback 20% uniforme
+  const tvaBreakdown = chantier?.devisTVABreakdown || [];
   const totalChantierHT = useMemo(
     () => avancementCorps.reduce((s, c) => s + (c.montant || 0), 0),
     [avancementCorps]
   );
-  const totalChantierTTC = totalChantierHT * (1 + TVA_RATE);
-  const resteAPayerChantier = Math.max(0, totalChantierTTC - totalPayeSituations);
+  // Si on a le TTC du devis, on l'utilise directement → sinon on reconstruit
+  const totalTVAFromDevis = tvaBreakdown.reduce((s, t) => s + t.montant, 0);
+  const totalChantierTTC = chantier?.devisTotalTTC
+    ? chantier.devisTotalTTC
+    : totalTVAFromDevis > 0
+    ? totalChantierHT + totalTVAFromDevis
+    : totalChantierHT * (1 + TVA_RATE_DEFAULT);
+  // Ratio TVA effectif : appliqué proportionnellement à l'avancement
+  const tvaRatioEffectif = totalChantierHT > 0 ? (totalChantierTTC - totalChantierHT) / totalChantierHT : TVA_RATE_DEFAULT;
+  const resteAPayerChantier = Math.max(0, totalChantierTTC - dejaPayeTotal);
 
   const situation = useMemo(() => {
     const lignes = avancementCorps
@@ -193,11 +213,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         return { id: c.id, nom: c.nom, montantLotHT: c.montant || 0, pourcentage: c.pourcentage, montantFactureHT: ht };
       });
     const totalHT = lignes.reduce((s, l) => s + l.montantFactureHT, 0);
-    const tva = totalHT * TVA_RATE;
+    const tva = totalHT * tvaRatioEffectif;
     const totalTTC = totalHT + tva;
-    const montantSituation = Math.max(0, totalTTC - totalPayeSituations);
-    return { lignes, totalHT, tva, totalTTC, montantSituation };
-  }, [avancementCorps, totalPayeSituations]);
+    const montantSituation = Math.max(0, totalTTC - dejaPayeTotal);
+    const peutFiger = totalTTC > dejaPayeTotal + 0.01;
+    return { lignes, totalHT, tva, totalTTC, montantSituation, peutFiger };
+  }, [avancementCorps, dejaPayeTotal, tvaRatioEffectif]);
 
   // ── Contact principal (priorité Client > Architecte > Apporteur > Contractant) ──
   const getApp = (id?: string) => id ? apporteurs.find(a => a.id === id) : undefined;
@@ -412,6 +433,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         return;
       }
       const { lots, remiseHT } = extraireLotsAvecRemise(texte);
+      const tvaBreak = extraireTVAsDuTexte(texte);
+      const ttcDevis = extraireTotalTTC(texte);
       if (lots.length === 0) {
         if (!silent && Platform.OS === 'web') window.alert('Aucun lot détecté dans le devis.');
         return;
@@ -426,19 +449,19 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           montant: l.montantHT,
           pourcentage: 0,
         }));
-      if (nouveaux.length === 0) {
+      if (nouveaux.length === 0 && tvaBreak.length === 0 && !ttcDevis) {
         if (!silent && Platform.OS === 'web') window.alert('Aucun nouveau lot à ajouter (tous déjà présents).');
         return;
       }
-      if (remiseHT > 0) {
-        setAutoExtractToast(`${nouveaux.length} lots importés — remise ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée`);
-      } else {
-        setAutoExtractToast(`${nouveaux.length} lots importés automatiquement`);
-      }
-      setTimeout(() => setAutoExtractToast(null), 5000);
-      updateChantier({ ...chantier, avancementCorps: [...existing, ...nouveaux] });
-      setAutoExtractToast(`✓ ${nouveaux.length} lot(s) détecté(s) depuis le devis`);
-      setTimeout(() => setAutoExtractToast(null), 4000);
+      const patch: Partial<Chantier> = { avancementCorps: [...existing, ...nouveaux] };
+      if (tvaBreak.length > 0) patch.devisTVABreakdown = tvaBreak;
+      if (ttcDevis && ttcDevis > 0) patch.devisTotalTTC = ttcDevis;
+      updateChantier({ ...chantier, ...patch });
+      let toastMsg = `${nouveaux.length} lot(s) importé(s)`;
+      if (remiseHT > 0) toastMsg += ` — remise ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € ventilée`;
+      if (tvaBreak.length > 0) toastMsg += ` — TVA ${tvaBreak.map(t => t.taux + '%').join(' + ')} détectée`;
+      setAutoExtractToast(toastMsg);
+      setTimeout(() => setAutoExtractToast(null), 6000);
     } catch {
       // Silent fallback — admin peut utiliser le bouton manuel
     } finally {
@@ -729,19 +752,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // ── Figer un nouveau point financier (snapshot immuable dans l'historique) ──
   const handleFigerSituation = async () => {
     if (!chantier) return;
-    if (situation.lignes.length === 0) {
-      const msg = 'Aucun lot avec montant saisi. Ajoutez des montants aux corps de métier pour figer un point financier.';
-      if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Point financier', msg);
-      return;
-    }
-    const confirmMsg = `Figer un point financier de situation au montant de ${fmt(situation.montantSituation)} € TTC ?\n\nCe snapshot sera conservé en historique (non modifiable) et servira de base pour créer la facture correspondante dans votre logiciel.`;
-    const ok = Platform.OS === 'web' ? window.confirm(confirmMsg) : await new Promise<boolean>(r => {
-      Alert.alert('Figer le point financier', confirmMsg, [
-        { text: 'Annuler', style: 'cancel', onPress: () => r(false) },
-        { text: 'Figer', onPress: () => r(true) },
-      ]);
-    });
-    if (!ok) return;
+    if (situation.lignes.length === 0 || !situation.peutFiger) return;
 
     const year = new Date().getFullYear();
     const existingYear = situationsHistorique.filter(s => s.numero.includes(`PFS-${year}-`));
@@ -755,12 +766,27 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       totalHT: situation.totalHT,
       tva: situation.tva,
       totalTTC: situation.totalTTC,
-      dejaPayeAvant: totalPayeSituations,
+      dejaPayeAvant: dejaPayeTotal,
       montantSituation: situation.montantSituation,
       statut: 'en_attente' as const,
     };
-    updateChantier({ ...chantier, situationsHistorique: [...situationsHistorique, snap] });
-    await openHtmlForPrint(buildSituationHTML(snap), `point_financier_${snap.numero}`);
+
+    // 1. Enregistrer d'abord (opération rapide, locale)
+    try {
+      updateChantier({ ...chantier, situationsHistorique: [...situationsHistorique, snap] });
+    } catch (e) {
+      const msg = `Erreur enregistrement : ${(e as Error)?.message || 'inconnue'}`;
+      if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Erreur', msg);
+      return;
+    }
+
+    // 2. Générer le PDF dans un second temps — ne doit pas bloquer ni crasher
+    setTimeout(() => {
+      openHtmlForPrint(buildSituationHTML(snap), `point_financier_${snap.numero}`).catch(() => {
+        const msg = `Point financier ${snap.numero} enregistré. Le PDF n'a pas pu être généré — utilisez le bouton 📄 PDF dans l'historique.`;
+        if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Info', msg);
+      });
+    }, 200);
   };
 
   const handleReimprimerSituation = async (id: string) => {
@@ -897,15 +923,54 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </View>
             )}
 
-            {/* ── Avancement ── */}
-            <View style={styles.card}>
-              <Text style={styles.sectionTitle}>Avancement</Text>
-              <Text style={styles.progressLabel}>{avancement.done} / {avancement.total} taches terminees</Text>
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `${avancement.pct}%` }]} />
+            {/* ── Marchés (déplacé ici, juste sous "Lié à") ── */}
+            {(marches.length > 0 || supplements.length > 0) && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Marchés</Text>
+                {marches.map(m => {
+                  const paye = (m.paiements || []).reduce((s, p) => s + p.montant, 0);
+                  const estPaye = paye >= m.montantTTC;
+                  return (
+                    <View key={m.id} style={styles.marcheRow}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.marcheLabel}>{m.libelle}</Text>
+                        <Text style={styles.marcheMontant}>HT : {fmt(m.montantHT)} €  |  TTC : {fmt(m.montantTTC)} €</Text>
+                      </View>
+                      <View style={[styles.marcheStatut, { backgroundColor: estPaye ? '#D4EDDA' : '#FFF3CD' }]}>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: estPaye ? '#155724' : '#856404' }}>
+                          {estPaye ? 'Soldé' : `Reste ${fmt(m.montantTTC - paye)} €`}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+                {supplements.map(s => {
+                  const paye = (s.paiements || []).reduce((sum, p) => sum + p.montant, 0);
+                  const estPaye = paye >= s.montantTTC;
+                  return (
+                    <View key={s.id} style={[styles.marcheRow, { backgroundColor: '#FAFAFA' }]}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[styles.marcheLabel, { fontStyle: 'italic' }]}>+ {s.libelle}</Text>
+                        <Text style={styles.marcheMontant}>HT : {fmt(s.montantHT)} €  |  TTC : {fmt(s.montantTTC)} €</Text>
+                      </View>
+                      <View style={[styles.marcheStatut, { backgroundColor: estPaye ? '#D4EDDA' : '#FFF3CD' }]}>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: estPaye ? '#155724' : '#856404' }}>
+                          {estPaye ? 'Soldé' : `Reste ${fmt(s.montantTTC - paye)} €`}
+                        </Text>
+                      </View>
+                    </View>
+                  );
+                })}
+                <View style={styles.totalRow}>
+                  <Text style={styles.totalLabel}>Total TTC</Text>
+                  <Text style={styles.totalValue}>{fmt(financials.totalTTC)} €</Text>
+                </View>
+                <View style={[styles.totalRow, { backgroundColor: '#2C2C2C' }]}>
+                  <Text style={[styles.totalLabel, { color: '#C9A96E' }]}>Déjà encaissé</Text>
+                  <Text style={[styles.totalValue, { color: '#C9A96E' }]}>{fmt(financials.totalPaye)} €</Text>
+                </View>
               </View>
-              <Text style={styles.progressPct}>{avancement.pct}%</Text>
-            </View>
+            )}
 
             {/* ── Avancement par corps de métier ── */}
             <View style={styles.card}>
@@ -1038,18 +1103,35 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
                     <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT)} €</Text>
                   </View>
-                  <View style={styles.pfsResumeRow}>
-                    <Text style={styles.pfsResumeLabel}>+ TVA 20%</Text>
-                    <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT * TVA_RATE)} €</Text>
-                  </View>
+                  {tvaBreakdown.length > 0 ? (
+                    tvaBreakdown.map((t, i) => (
+                      <View key={i} style={styles.pfsResumeRow}>
+                        <Text style={styles.pfsResumeLabel}>+ TVA {t.taux.toString().replace('.', ',')}%</Text>
+                        <Text style={styles.pfsResumeValue}>{fmt(t.montant)} €</Text>
+                      </View>
+                    ))
+                  ) : (
+                    <View style={styles.pfsResumeRow}>
+                      <Text style={styles.pfsResumeLabel}>+ TVA 20% (par défaut)</Text>
+                      <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT * TVA_RATE_DEFAULT)} €</Text>
+                    </View>
+                  )}
                   <View style={[styles.pfsResumeRow, { borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 6, marginTop: 2 }]}>
                     <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>= Total chantier TTC</Text>
                     <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
                   </View>
-                  <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
-                    <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Déjà payé (situations)</Text>
-                    <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(totalPayeSituations)} €</Text>
-                  </View>
+                  {dejaPayeAcompte > 0 && (
+                    <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
+                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Acompte(s) client</Text>
+                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(dejaPayeAcompte)} €</Text>
+                    </View>
+                  )}
+                  {totalPayeSituations > 0 && (
+                    <View style={styles.pfsResumeRow}>
+                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Situations payées</Text>
+                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(totalPayeSituations)} €</Text>
+                    </View>
+                  )}
                   <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
                     <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Restant à payer TTC</Text>
                     <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
@@ -1081,17 +1163,25 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         <Text style={styles.situationTotalValue}>{fmt(situation.totalHT)} €</Text>
                       </View>
                       <View style={styles.situationTotalRow}>
-                        <Text style={styles.situationTotalLabel}>TVA 20%</Text>
+                        <Text style={styles.situationTotalLabel}>TVA (ratio devis {(tvaRatioEffectif * 100).toFixed(1)}%)</Text>
                         <Text style={styles.situationTotalValue}>{fmt(situation.tva)} €</Text>
                       </View>
                       <View style={[styles.situationTotalRow, styles.situationTotalTTC]}>
                         <Text style={[styles.situationTotalLabel, { color: '#C9A96E' }]}>Cumulé TTC</Text>
                         <Text style={[styles.situationTotalValue, { color: '#C9A96E' }]}>{fmt(situation.totalTTC)} €</Text>
                       </View>
-                      <View style={styles.situationTotalRow}>
-                        <Text style={styles.situationTotalLabel}>− Situations déjà payées</Text>
-                        <Text style={styles.situationTotalValue}>{fmt(totalPayeSituations)} €</Text>
-                      </View>
+                      {dejaPayeAcompte > 0 && (
+                        <View style={styles.situationTotalRow}>
+                          <Text style={styles.situationTotalLabel}>− Acompte(s) client</Text>
+                          <Text style={styles.situationTotalValue}>{fmt(dejaPayeAcompte)} €</Text>
+                        </View>
+                      )}
+                      {totalPayeSituations > 0 && (
+                        <View style={styles.situationTotalRow}>
+                          <Text style={styles.situationTotalLabel}>− Situations déjà payées</Text>
+                          <Text style={styles.situationTotalValue}>{fmt(totalPayeSituations)} €</Text>
+                        </View>
+                      )}
                       <View style={[styles.situationTotalRow, { backgroundColor: '#F5EDE3', borderRadius: 8 }]}>
                         <Text style={[styles.situationTotalLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Montant de cette situation</Text>
                         <Text style={[styles.situationTotalValue, { color: '#8C6D2F', fontWeight: '800' }]}>
@@ -1101,9 +1191,17 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </View>
 
                     {isAdmin && (
-                      <Pressable style={styles.factureBtn} onPress={handleFigerSituation}>
-                        <Text style={styles.factureBtnText}>📸 Figer ce point financier + PDF</Text>
-                      </Pressable>
+                      situation.peutFiger ? (
+                        <Pressable style={styles.factureBtn} onPress={handleFigerSituation}>
+                          <Text style={styles.factureBtnText}>📸 Figer ce point financier + PDF</Text>
+                        </Pressable>
+                      ) : (
+                        <View style={styles.pfsBlockedBox}>
+                          <Text style={styles.pfsBlockedText}>
+                            ⏳ L'avancement cumulé ({fmt(situation.totalTTC)} € TTC) ne dépasse pas encore le(s) acompte(s) déjà encaissé(s) ({fmt(dejaPayeTotal)} € TTC).{"\n"}Aucune demande au client possible pour l'instant.
+                          </Text>
+                        </View>
+                      )
                     )}
                   </>
                 )}
@@ -1222,55 +1320,6 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               )}
             </View>
-
-            {/* ── Marches ── */}
-            {(marches.length > 0 || supplements.length > 0) && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Marches</Text>
-                {marches.map(m => {
-                  const paye = (m.paiements || []).reduce((s, p) => s + p.montant, 0);
-                  const estPaye = paye >= m.montantTTC;
-                  return (
-                    <View key={m.id} style={styles.marcheRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.marcheLabel}>{m.libelle}</Text>
-                        <Text style={styles.marcheMontant}>HT : {fmt(m.montantHT)} EUR  |  TTC : {fmt(m.montantTTC)} EUR</Text>
-                      </View>
-                      <View style={[styles.marcheStatut, { backgroundColor: estPaye ? '#D4EDDA' : '#FFF3CD' }]}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: estPaye ? '#155724' : '#856404' }}>
-                          {estPaye ? 'Solde' : `Reste ${fmt(m.montantTTC - paye)} EUR`}
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-                {supplements.map(s => {
-                  const paye = (s.paiements || []).reduce((sum, p) => sum + p.montant, 0);
-                  const estPaye = paye >= s.montantTTC;
-                  return (
-                    <View key={s.id} style={[styles.marcheRow, { backgroundColor: '#FAFAFA' }]}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.marcheLabel, { fontStyle: 'italic' }]}>+ {s.libelle}</Text>
-                        <Text style={styles.marcheMontant}>HT : {fmt(s.montantHT)} EUR  |  TTC : {fmt(s.montantTTC)} EUR</Text>
-                      </View>
-                      <View style={[styles.marcheStatut, { backgroundColor: estPaye ? '#D4EDDA' : '#FFF3CD' }]}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: estPaye ? '#155724' : '#856404' }}>
-                          {estPaye ? 'Solde' : `Reste ${fmt(s.montantTTC - paye)} EUR`}
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Total TTC</Text>
-                  <Text style={styles.totalValue}>{fmt(financials.totalTTC)} EUR</Text>
-                </View>
-                <View style={[styles.totalRow, { backgroundColor: '#2C2C2C' }]}>
-                  <Text style={[styles.totalLabel, { color: '#C9A96E' }]}>Reste a payer</Text>
-                  <Text style={[styles.totalValue, { color: '#C9A96E' }]}>{fmt(financials.reste)} EUR</Text>
-                </View>
-              </View>
-            )}
 
             {/* ── SAV ── */}
             {ticketsSAV.length > 0 && (
@@ -2339,5 +2388,19 @@ const styles = StyleSheet.create({
   },
   pfsActionBtnDel: {
     backgroundColor: '#B83A2E',
+  },
+  pfsBlockedBox: {
+    backgroundColor: '#FFF8E1',
+    borderWidth: 1,
+    borderColor: '#F5EDE3',
+    borderRadius: 10,
+    padding: 12,
+    marginTop: 10,
+  },
+  pfsBlockedText: {
+    fontSize: 12,
+    color: '#8C6D2F',
+    fontWeight: '600',
+    lineHeight: 18,
   },
 });

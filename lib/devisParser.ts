@@ -170,6 +170,60 @@ export function extraireLotsAvecRemise(texte: string): { lots: LotExtrait[]; rem
 }
 
 /**
+ * Détecte les lignes "TVA X% ... montant" d'un devis et retourne la décomposition.
+ * Gère les taux multi-TVA (5.5%, 10%, 20%...).
+ */
+export function extraireTVAsDuTexte(texte: string): { taux: number; montant: number }[] {
+  if (!texte) return [];
+  const t = texte.replace(/\s+/g, ' ');
+  const out: { taux: number; montant: number }[] = [];
+  const seen = new Set<string>();
+
+  // "TVA 5,5%" ... "55,00 €"  — on prend le dernier montant € de la fenêtre
+  const pattern = new RegExp('\\btva\\b[^\\n]{0,12}?(\\d{1,2}(?:[,.]\\d{1,2})?)\\s*%([^\\n]{0,80})', 'gi');
+  let m: RegExpExecArray | null;
+  while ((m = pattern.exec(t)) !== null) {
+    const taux = parseFloat(m[1].replace(',', '.'));
+    if (isNaN(taux) || taux <= 0 || taux >= 40) continue;
+    const after = m[2] || '';
+    const amounts = Array.from(after.matchAll(new RegExp('(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'g')));
+    if (amounts.length === 0) continue;
+    // Prendre le dernier (c'est usuellement le montant TVA, pas la base)
+    const last = amounts[amounts.length - 1][1];
+    const montant = parseMontant(last);
+    if (isNaN(montant) || montant <= 0) continue;
+    const key = `${taux}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ taux, montant });
+  }
+  return out.sort((a, b) => a.taux - b.taux);
+}
+
+/**
+ * Cherche le "Total TTC" / "Net à payer TTC" dans le texte.
+ */
+export function extraireTotalTTC(texte: string): number | null {
+  if (!texte) return null;
+  const t = texte.replace(/\s+/g, ' ');
+  const candidates = [
+    'total(?:\\s+g[eé]n[eé]ral)?\\s*ttc',
+    'ttc\\s*(?:total|final|g[eé]n[eé]ral)',
+    'net\\s*[àa]\\s*payer\\s*ttc',
+    'net\\s*[àa]\\s*payer',
+  ];
+  for (const c of candidates) {
+    const re = new RegExp(c + '[^\\n]{0,40}?(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€', 'i');
+    const m = t.match(re);
+    if (m) {
+      const amt = parseMontant(m[1]);
+      if (!isNaN(amt) && amt > 0) return amt;
+    }
+  }
+  return null;
+}
+
+/**
  * Parse une saisie manuelle rapide (un lot par ligne).
  */
 export function parseSaisieManuelle(texte: string): LotExtrait[] {
