@@ -901,14 +901,32 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
     // 1. Enregistrer d'abord (opération rapide, locale)
     try {
-      updateChantier({ ...chantier, situationsHistorique: [...situationsHistorique, snap] });
+      updateChantier({ ...chantier, situationsHistorique: [...situationsHistorique, snap], derniereMajContenu: new Date().toISOString() });
     } catch (e) {
       const msg = `Erreur enregistrement : ${(e as Error)?.message || 'inconnue'}`;
       if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Erreur', msg);
       return;
     }
 
-    // 2. Générer le PDF dans un second temps — ne doit pas bloquer ni crasher
+    // 2. Notifier le client par email (si email renseigné) — silencieux en cas d'échec
+    const client = getApp(chantier.clientApporteurId);
+    if (client?.email) {
+      (async () => {
+        try {
+          const { envoyerEmail, emailFigerSituation } = await import('@/lib/emailClient');
+          const payload = emailFigerSituation({
+            chantierNom: chantier.nom,
+            clientPrenom: client.prenom,
+            numeroSituation: snap.numero,
+            montantTTC: snap.montantSituation,
+            lien: 'https://sk-deco-planning.vercel.app',
+          });
+          await envoyerEmail({ to: client.email!, ...payload });
+        } catch {}
+      })();
+    }
+
+    // 3. Générer le PDF dans un second temps — ne doit pas bloquer ni crasher
     setTimeout(() => {
       openHtmlForPrint(buildSituationHTML(snap), `point_financier_${snap.numero}`).catch(() => {
         const msg = `Point financier ${snap.numero} enregistré. Le PDF n'a pas pu être généré — utilisez le bouton 📄 PDF dans l'historique.`;
