@@ -259,6 +259,22 @@ export interface Chantier {
     note?: string;
     createdAt: string;
   }>;
+  // Procès-verbal de réception
+  pvReception?: {
+    dateReception?: string;             // YYYY-MM-DD
+    items: Array<{
+      id: string;
+      libelle: string;                  // ex : "Plomberie — WC master"
+      categorie?: string;               // ex : "Plomberie", "Électricité"
+      conforme: boolean | null;         // null = non contrôlé
+      reserve?: string;                 // description de la réserve
+      photos?: string[];
+    }>;
+    signatureClientUri?: string;        // image signature
+    signatureClientDate?: string;       // ISO datetime
+    nomSignataire?: string;
+    clotureLe?: string;                 // ISO datetime de clôture
+  };
 }
 
 /** Snapshot figé d'un point financier de situation (avant émission d'une facture). */
