@@ -941,6 +941,30 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     await openHtmlForPrint(buildSituationHTML(snap), `point_financier_${snap.numero}`);
   };
 
+  const handleRelancerClient = async (id: string) => {
+    const snap = situationsHistorique.find(s => s.id === id);
+    if (!snap || !chantier) return;
+    const client = getApp(chantier.clientApporteurId);
+    if (!client?.email) {
+      const m = 'Aucun email client renseigné dans la fiche Apporteur.';
+      if (Platform.OS === 'web') window.alert(m); else Alert.alert('Relance', m);
+      return;
+    }
+    try {
+      const { envoyerEmail } = await import('@/lib/emailClient');
+      const dateSit = new Date(snap.date).toLocaleDateString('fr-FR');
+      const montant = snap.montantSituation.toLocaleString('fr-FR', { maximumFractionDigits: 2 });
+      const subject = `SK DECO — Relance paiement situation ${snap.numero}`;
+      const text = `Bonjour ${client.prenom},\n\nNous souhaitons vous rappeler que la situation ${snap.numero} du ${dateSit} d'un montant de ${montant} € TTC est en attente de règlement.\n\nAccès à votre espace : https://sk-deco-planning.vercel.app\n\nCordialement,\nSK DECO`;
+      const r = await envoyerEmail({ to: client.email, subject, text });
+      const m = r.ok ? `Relance envoyée à ${client.email}.` : `Envoi échoué : ${r.error || 'erreur'}`;
+      if (Platform.OS === 'web') window.alert(m); else Alert.alert('Relance', m);
+    } catch (e: any) {
+      const m = `Erreur : ${e?.message || 'inconnue'}`;
+      if (Platform.OS === 'web') window.alert(m); else Alert.alert('Relance', m);
+    }
+  };
+
   const handleToggleSituationPayee = (id: string) => {
     if (!chantier) return;
     const next = situationsHistorique.map(s => {
@@ -1494,6 +1518,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             </Pressable>
                             {isAdmin && (
                               <>
+                                {!isPayee && (
+                                  <Pressable style={styles.pfsActionBtn} onPress={() => handleRelancerClient(s.id)}>
+                                    <Text style={styles.pfsActionBtnText}>📧 Relancer</Text>
+                                  </Pressable>
+                                )}
                                 <Pressable style={styles.pfsActionBtn} onPress={() => handleEditNumFacture(s.id)}>
                                   <Text style={styles.pfsActionBtnText}>🧾 N° facture</Text>
                                 </Pressable>
