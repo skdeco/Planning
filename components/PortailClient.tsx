@@ -85,6 +85,54 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     dateDebutPrevue: '',
     dateFinPrevue: '',
   });
+  // ── Commentaires client ──
+  const [commentaireLotId, setCommentaireLotId] = useState<string | null>(null);
+  const [commentaireTexte, setCommentaireTexte] = useState('');
+
+  const openCommentaireClient = (lotId: string) => {
+    setCommentaireLotId(lotId);
+    setCommentaireTexte('');
+    // Marquer tous les commentaires existants du lot comme "lus" par l'admin
+    if (isAdmin && chantier) {
+      const lots = chantier.avancementCorps || [];
+      const next = lots.map(l => {
+        if (l.id !== lotId) return l;
+        const updated = (l.commentairesClient || []).map(cc => cc.luParAdmin ? cc : { ...cc, luParAdmin: true });
+        return { ...l, commentairesClient: updated };
+      });
+      updateChantier({ ...chantier, avancementCorps: next });
+    }
+  };
+  const saveCommentaireClient = () => {
+    if (!chantier || !commentaireLotId || !commentaireTexte.trim()) return;
+    const lots = chantier.avancementCorps || [];
+    const auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' =
+      isAdmin ? 'admin' : (externAp?.type || 'client');
+    const next = lots.map(l => {
+      if (l.id !== commentaireLotId) return l;
+      const commentaires = l.commentairesClient || [];
+      return {
+        ...l,
+        commentairesClient: [
+          ...commentaires,
+          {
+            id: genId('cm'),
+            auteurId: isAdmin ? 'admin' : (externAp?.id || 'unknown'),
+            auteurNom: currentUser?.nom || (externAp ? `${externAp.prenom} ${externAp.nom}` : 'Utilisateur'),
+            auteurType,
+            texte: commentaireTexte.trim(),
+            createdAt: new Date().toISOString(),
+            luParAdmin: isAdmin,
+            luParExternes: [],
+          },
+        ],
+        updatedAt: new Date().toISOString(),
+      };
+    });
+    updateChantier({ ...chantier, avancementCorps: next, derniereMajContenu: new Date().toISOString() });
+    setCommentaireLotId(null);
+    setCommentaireTexte('');
+  };
   // ── Import depuis devis ──
   const [showImportDevis, setShowImportDevis] = useState(false);
   const [importMode, setImportMode] = useState<'pdf' | 'coller' | 'rapide'>('pdf');
@@ -291,6 +339,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const openNewCorps = () => {
     setEditCorpsId(null);
     setCorpsForm({ nom: '', montant: '', pourcentage: 0, commentaire: '', photos: [], dateDebutPrevue: '', dateFinPrevue: '' });
+    setLotPhotosAvant([]);
+    setLotPhotosApres([]);
     setShowCorpsForm(true);
   };
   const openEditCorps = (c: NonNullable<Chantier['avancementCorps']>[number]) => {
@@ -304,6 +354,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       dateDebutPrevue: c.dateDebutPrevue || '',
       dateFinPrevue: c.dateFinPrevue || '',
     });
+    setLotPhotosAvant(c.photosAvant || []);
+    setLotPhotosApres(c.photosApres || []);
     setShowCorpsForm(true);
   };
   const saveCorps = () => {
@@ -318,6 +370,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       photos: corpsForm.photos.length > 0 ? corpsForm.photos : undefined,
       dateDebutPrevue: corpsForm.dateDebutPrevue || undefined,
       dateFinPrevue: corpsForm.dateFinPrevue || undefined,
+      photosAvant: lotPhotosAvant.length > 0 ? lotPhotosAvant : undefined,
+      photosApres: lotPhotosApres.length > 0 ? lotPhotosApres : undefined,
+      updatedAt: new Date().toISOString(),
     };
     const next = editCorpsId
       ? existing.map(c => c.id === editCorpsId ? entry : c)
@@ -325,7 +380,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     updateChantier({ ...chantier, avancementCorps: next });
     setShowCorpsForm(false);
   };
-  const pickPhotoForLot = async () => {
+  const pickPhotoForLot = async (slot: 'generic' | 'avant' | 'apres' = 'generic') => {
     try {
       const ImagePicker = require('expo-image-picker');
       const res = await ImagePicker.launchImageLibraryAsync({
@@ -335,14 +390,21 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       });
       if (res.canceled) return;
       const uris: string[] = (res.assets || []).map((a: any) => a.uri).filter(Boolean);
-      if (uris.length > 0) setCorpsForm(f => ({ ...f, photos: [...f.photos, ...uris] }));
+      if (uris.length === 0) return;
+      if (slot === 'avant') setLotPhotosAvant(prev => [...prev, ...uris]);
+      else if (slot === 'apres') setLotPhotosApres(prev => [...prev, ...uris]);
+      else setCorpsForm(f => ({ ...f, photos: [...f.photos, ...uris] }));
     } catch {
       Alert.alert('Erreur', "Impossible d'ouvrir la bibliothèque photos.");
     }
   };
-  const removeLotPhoto = (uri: string) => {
-    setCorpsForm(f => ({ ...f, photos: f.photos.filter(p => p !== uri) }));
+  const removeLotPhoto = (uri: string, slot: 'generic' | 'avant' | 'apres' = 'generic') => {
+    if (slot === 'avant') setLotPhotosAvant(prev => prev.filter(p => p !== uri));
+    else if (slot === 'apres') setLotPhotosApres(prev => prev.filter(p => p !== uri));
+    else setCorpsForm(f => ({ ...f, photos: f.photos.filter(p => p !== uri) }));
   };
+  const [lotPhotosAvant, setLotPhotosAvant] = useState<string[]>([]);
+  const [lotPhotosApres, setLotPhotosApres] = useState<string[]>([]);
   const deleteCorps = (id: string) => {
     if (!chantier) return;
     const doDel = () => updateChantier({ ...chantier, avancementCorps: (chantier.avancementCorps || []).filter(c => c.id !== id) });
@@ -1168,6 +1230,63 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           ))}
                         </View>
                       )}
+                      {/* Photos avant / après */}
+                      {(c.photosAvant && c.photosAvant.length > 0) || (c.photosApres && c.photosApres.length > 0) ? (
+                        <View style={{ marginTop: 8 }}>
+                          {c.photosAvant && c.photosAvant.length > 0 && (
+                            <View style={{ marginBottom: 6 }}>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C8077', marginBottom: 4 }}>📸 AVANT</Text>
+                              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                                {c.photosAvant.map((p, i) => (
+                                  <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#8C8077' }} />
+                                ))}
+                              </View>
+                            </View>
+                          )}
+                          {c.photosApres && c.photosApres.length > 0 && (
+                            <View>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#2E7D32', marginBottom: 4 }}>✨ APRÈS</Text>
+                              <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+                                {c.photosApres.map((p, i) => (
+                                  <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#2E7D32' }} />
+                                ))}
+                              </View>
+                            </View>
+                          )}
+                        </View>
+                      ) : null}
+                      {/* Commentaires client/externes */}
+                      {c.commentairesClient && c.commentairesClient.length > 0 && (
+                        <View style={{ marginTop: 8, gap: 6 }}>
+                          {c.commentairesClient.map(cc => {
+                            const isMine = cc.auteurType === (isExterne ? externAp?.type : 'admin');
+                            const unreadByAdmin = isAdmin && cc.auteurType !== 'admin' && !cc.luParAdmin;
+                            return (
+                              <View key={cc.id} style={{
+                                padding: 8, borderRadius: 8,
+                                backgroundColor: isMine ? '#E8DDD0' : '#F1F8F2',
+                                borderLeftWidth: 3,
+                                borderLeftColor: unreadByAdmin ? '#E74C3C' : (isMine ? '#8C8077' : '#2E7D32'),
+                              }}>
+                                <Text style={{ fontSize: 10, color: '#8C8077', fontWeight: '700' }}>
+                                  {cc.auteurNom} ({cc.auteurType}) · {new Date(cc.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                                  {unreadByAdmin ? '  🔴 Non lu' : ''}
+                                </Text>
+                                <Text style={{ fontSize: 12, color: '#2C2C2C', marginTop: 3 }}>{cc.texte}</Text>
+                              </View>
+                            );
+                          })}
+                        </View>
+                      )}
+                      {/* Bouton "ajouter commentaire" pour externes et admin */}
+                      {(isExterne || isAdmin) && (
+                        <Pressable
+                          onPress={() => openCommentaireClient(c.id)}
+                          style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#FAF7F3', borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' }}
+                        >
+                          <Text style={{ fontSize: 11, color: '#8C6D2F', fontWeight: '700' }}>💬 Ajouter un commentaire</Text>
+                        </Pressable>
+                      )}
                     </View>
                   ))}
                   {/* Totaux lots */}
@@ -1664,11 +1783,48 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </View>
             )}
             <Pressable
-              onPress={pickPhotoForLot}
+              onPress={() => pickPhotoForLot('generic')}
               style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' }}
             >
               <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>+ Ajouter une photo</Text>
             </Pressable>
+
+            {/* Photos avant / après */}
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>📸 Comparatif Avant / Après</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <View style={{ flex: 1, backgroundColor: '#FAF7F3', borderRadius: 10, padding: 8 }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#8C8077', marginBottom: 6 }}>AVANT ({lotPhotosAvant.length})</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
+                  {lotPhotosAvant.map(uri => (
+                    <View key={uri} style={{ position: 'relative' }}>
+                      <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
+                      <Pressable onPress={() => removeLotPhoto(uri, 'avant')} style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>✕</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+                <Pressable onPress={() => pickPhotoForLot('avant')} style={{ backgroundColor: '#fff', borderRadius: 8, paddingVertical: 6, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#8C8077' }}>
+                  <Text style={{ fontSize: 11, color: '#8C8077', fontWeight: '700' }}>+ Avant</Text>
+                </Pressable>
+              </View>
+              <View style={{ flex: 1, backgroundColor: '#F1F8F2', borderRadius: 10, padding: 8 }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#2E7D32', marginBottom: 6 }}>APRÈS ({lotPhotosApres.length})</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
+                  {lotPhotosApres.map(uri => (
+                    <View key={uri} style={{ position: 'relative' }}>
+                      <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
+                      <Pressable onPress={() => removeLotPhoto(uri, 'apres')} style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>✕</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+                <Pressable onPress={() => pickPhotoForLot('apres')} style={{ backgroundColor: '#fff', borderRadius: 8, paddingVertical: 6, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#2E7D32' }}>
+                  <Text style={{ fontSize: 11, color: '#2E7D32', fontWeight: '700' }}>+ Après</Text>
+                </Pressable>
+              </View>
+            </View>
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
               <Pressable onPress={() => setShowCorpsForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
@@ -1684,6 +1840,38 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
           </View>
           </ScrollView>
+        </View>
+      </Modal>
+
+      {/* ── Modal commentaire client ── */}
+      <Modal visible={!!commentaireLotId} animationType="fade" transparent onRequestClose={() => setCommentaireLotId(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 4 }}>💬 Nouveau commentaire</Text>
+            <Text style={{ fontSize: 12, color: '#8C8077', marginBottom: 12 }}>
+              Visible par l'admin et les autres intervenants de ce chantier.
+            </Text>
+            <TextInput
+              style={{
+                backgroundColor: '#FAF7F3', borderRadius: 10, borderWidth: 1.5, borderColor: '#E8DDD0',
+                paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#2C2C2C',
+                minHeight: 120, textAlignVertical: 'top',
+              }}
+              value={commentaireTexte}
+              onChangeText={setCommentaireTexte}
+              placeholder="Votre message..."
+              multiline
+              autoFocus
+            />
+            <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
+              <Pressable onPress={() => setCommentaireLotId(null)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+              </Pressable>
+              <Pressable onPress={saveCommentaireClient} disabled={!commentaireTexte.trim()} style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !commentaireTexte.trim() ? 0.5 : 1 }}>
+                <Text style={{ color: '#C9A96E', fontWeight: '800' }}>Envoyer</Text>
+              </Pressable>
+            </View>
+          </View>
         </View>
       </Modal>
 

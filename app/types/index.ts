@@ -216,9 +216,22 @@ export interface Chantier {
     montant?: number;
     commentaire?: string;                 // note admin visible par externes
     photos?: string[];                    // URIs des photos attachées au lot
+    photosAvant?: string[];               // photos "avant travaux"
+    photosApres?: string[];               // photos "après travaux"
     dateDebutPrevue?: string;             // YYYY-MM-DD
     dateFinPrevue?: string;               // YYYY-MM-DD
     enCours?: boolean;                    // marqué "en cours de réalisation"
+    commentairesClient?: Array<{
+      id: string;
+      auteurId: string;                   // apporteurId ou 'admin'
+      auteurNom: string;
+      auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+      texte: string;
+      createdAt: string;                  // ISO datetime
+      luParAdmin?: boolean;
+      luParExternes?: string[];           // ids apporteurs qui ont lu
+    }>;
+    updatedAt?: string;                   // ISO datetime — pour détecter "nouveau"
   }[];
   // Historique des points financiers de situation figés (avant émission facture)
   situationsHistorique?: SituationFigee[];
@@ -230,6 +243,10 @@ export interface Chantier {
   statutChantier?: 'actif' | 'cloture';
   // Option admin : afficher ou masquer le planning approximatif du chantier aux externes (clients notamment)
   afficherPlanningAuClient?: boolean;  // par défaut true pour architectes/apporteurs, à confirmer pour client
+  // Dernière vue du chantier par utilisateur externe (pour détecter "nouveau")
+  dernieresVuesParApporteur?: Record<string, string>;  // apporteurId → ISO datetime
+  // Dernière mise à jour "significative" (lot modifié, commentaire, situation figée)
+  derniereMajContenu?: string;          // ISO datetime
 }
 
 /** Snapshot figé d'un point financier de situation (avant émission d'une facture). */
