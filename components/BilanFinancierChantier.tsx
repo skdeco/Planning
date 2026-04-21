@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { View, Text, ScrollView, Pressable, Modal } from 'react-native';
+import { View, Text, ScrollView, Pressable, Modal, Platform, Alert } from 'react-native';
+import * as XLSX from 'xlsx';
 import { useApp } from '@/app/context/AppContext';
 
 interface Props {
@@ -142,6 +143,86 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
 
   const fmt = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
 
+  const exportExcel = () => {
+    try {
+      const wb = XLSX.utils.book_new();
+      // Feuille 1 : Résumé
+      const resume = [
+        ['Bilan financier chantier', chantier.nom],
+        ['Date export', new Date().toLocaleString('fr-FR')],
+        [],
+        ['Poste', 'Montant (€)'],
+        ['Main d\'oeuvre', bilan.totalMainOeuvre],
+        ['Dépenses / achats', bilan.totalDepenses],
+        ['Sous-traitance', bilan.totalSousTraitants],
+        ['TOTAL GÉNÉRAL', bilan.totalGeneral],
+        [],
+        ['Suppléments acceptés', bilan.totalSupplements],
+      ];
+      const wsResume = XLSX.utils.aoa_to_sheet(resume);
+      XLSX.utils.book_append_sheet(wb, wsResume, 'Résumé');
+
+      // Feuille 2 : Main d'oeuvre
+      const moData: any[][] = [['Employé', 'Jours', 'Heures', 'Coût (€)']];
+      bilan.mainOeuvre.forEach((m: any) => moData.push([m.empNom, m.jours, m.heures, m.cout]));
+      moData.push(['', '', 'TOTAL', bilan.totalMainOeuvre]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(moData), 'Main d\'oeuvre');
+
+      // Feuille 3 : Dépenses
+      const depData: any[][] = [['Date', 'Libellé', 'Fournisseur', 'Montant (€)']];
+      (bilan.depenses || []).forEach((d: any) => depData.push([d.date, d.libelle, d.fournisseur || '', d.montant]));
+      depData.push(['', '', 'TOTAL', bilan.totalDepenses]);
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(depData), 'Dépenses');
+
+      // Feuille 4 : Sous-traitants
+      if (bilan.sousTraitants && bilan.sousTraitants.length > 0) {
+        const stData: any[][] = [['Sous-traitant', 'Coût (€)']];
+        bilan.sousTraitants.forEach((s: any) => stData.push([s.nom, s.cout]));
+        stData.push(['TOTAL', bilan.totalSousTraitants]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stData), 'Sous-traitants');
+      }
+
+      // Feuille 5 : Lots / avancement
+      if (chantier.avancementCorps && chantier.avancementCorps.length > 0) {
+        const lotsData: any[][] = [['Lot', 'Montant HT', '% Avancement', 'Cumulé HT']];
+        chantier.avancementCorps.forEach(l => {
+          lotsData.push([l.nom, l.montant || 0, `${l.pourcentage}%`, ((l.montant || 0) * l.pourcentage / 100)]);
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(lotsData), 'Lots');
+      }
+
+      // Feuille 6 : Situations figées
+      if (chantier.situationsHistorique && chantier.situationsHistorique.length > 0) {
+        const sitData: any[][] = [['N°', 'Date', 'Cumulé TTC', 'Montant (€)', 'Statut', 'N° facture']];
+        chantier.situationsHistorique.forEach(s => {
+          sitData.push([
+            s.numero,
+            new Date(s.date).toLocaleDateString('fr-FR'),
+            s.totalTTC,
+            s.montantSituation,
+            s.statut === 'payee' ? 'Payée' : 'En attente',
+            s.numeroFacture || '',
+          ]);
+        });
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sitData), 'Situations');
+      }
+
+      const filename = `bilan_${chantier.nom.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      if (Platform.OS === 'web') {
+        XLSX.writeFile(wb, filename);
+      } else {
+        // Mobile : génère base64, utilise Share / Print
+        const b64 = XLSX.write(wb, { type: 'base64', bookType: 'xlsx' });
+        Alert.alert(
+          'Export Excel',
+          `Fichier généré.\n\nSur mobile, utilisez la version web pour le télécharger : sk-deco-planning.vercel.app`,
+        );
+      }
+    } catch (e: any) {
+      Alert.alert('Erreur export', e?.message || 'Impossible de générer le fichier.');
+    }
+  };
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
@@ -152,9 +233,14 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
               <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C' }}>💰 Bilan financier</Text>
               <Text style={{ fontSize: 13, color: '#687076' }}>{chantier.nom}</Text>
             </View>
-            <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
-              <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
-            </Pressable>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <Pressable style={{ backgroundColor: '#2E7D32', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' }} onPress={exportExcel}>
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 11 }}>📊 Excel</Text>
+              </Pressable>
+              <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
+                <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
+              </Pressable>
+            </View>
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
