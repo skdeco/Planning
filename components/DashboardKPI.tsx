@@ -1,10 +1,11 @@
 /**
  * Tableau de bord admin : chiffres clés financiers et opérationnels.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
+import { GanttGlobal } from '@/components/GanttGlobal';
 
 function fmt(n: number) {
   return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
@@ -16,6 +17,7 @@ function daysSince(iso: string): number {
 export function DashboardKPI() {
   const { data } = useApp();
   const router = useRouter();
+  const [showGantt, setShowGantt] = useState(false);
 
   const stats = useMemo(() => {
     const chantiers = data.chantiers || [];
@@ -97,7 +99,12 @@ export function DashboardKPI() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>📊 Tableau de bord</Text>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+        <Text style={styles.title}>📊 Tableau de bord</Text>
+        <Pressable onPress={() => setShowGantt(true)} style={{ backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+          <Text style={{ color: '#C9A96E', fontSize: 11, fontWeight: '800' }}>📅 Planning Gantt</Text>
+        </Pressable>
+      </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 2 }}>
         <KpiCard
           label="Chantiers actifs"
@@ -131,6 +138,8 @@ export function DashboardKPI() {
           icon="⏳"
         />
       </ScrollView>
+
+      <GanttGlobal visible={showGantt} onClose={() => setShowGantt(false)} />
 
       {stats.retardsPaiement.length > 0 && (
         <View style={styles.retardsBox}>
