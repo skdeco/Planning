@@ -14,6 +14,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { useRefresh } from '@/hooks/useRefresh';
 import { useNotifications } from '@/hooks/useNotifications';
 import { Onboarding } from '@/components/Onboarding';
+import { DashboardKPI } from '@/components/DashboardKPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 function toYMD(d: Date): string {
@@ -842,6 +843,13 @@ export default function DashboardScreen() {
             </View>
           </View>
         </FadeInView>
+
+        {/* Tableau de bord admin */}
+        {isAdmin && (
+          <FadeInView delay={50}>
+            <DashboardKPI />
+          </FadeInView>
+        )}
 
         {/* Recherche globale */}
         <FadeInView delay={100}>
