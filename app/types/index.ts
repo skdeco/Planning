@@ -685,6 +685,43 @@ export interface DocumentRHEmploye {
   uploadedBy?: string;      // nom de l'admin/RH qui a uploadé
 }
 
+/** Catégories de documents société */
+export type DocSocieteCategorie =
+  | 'juridique'       // Kbis, statuts, RCS, SIRENE
+  | 'fiscal'          // liasses, TVA, IS
+  | 'social'          // DPAE, URSSAF, Pôle emploi, contrats de travail
+  | 'assurances'      // décennale, RC Pro, multirisque, flotte
+  | 'bancaire'        // RIB, IBAN, garanties
+  | 'certifications'  // Qualibat, RGE, Qualit'EnR, Handibat
+  | 'fournisseurs'    // RIB ST, contrats cadres
+  | 'divers';         // procurations, PV AG, bail
+
+export const DOC_SOCIETE_CATEGORIES: { key: DocSocieteCategorie; label: string; emoji: string; suggestions: string[] }[] = [
+  { key: 'juridique',      label: 'Juridique',      emoji: '⚖️', suggestions: ['Kbis', 'Statuts', 'Certificat RCS', 'Registre SIRENE'] },
+  { key: 'fiscal',         label: 'Fiscal',         emoji: '📊', suggestions: ['Liasse fiscale', 'Déclaration TVA', 'Déclaration IS'] },
+  { key: 'social',         label: 'Social',         emoji: '👷', suggestions: ['DPAE', 'Attestation URSSAF', 'Bordereau Pôle emploi', 'Contrat de travail'] },
+  { key: 'assurances',     label: 'Assurances',     emoji: '🛡️', suggestions: ['Décennale', 'RC Pro', 'Multirisque entreprise', 'Flotte auto'] },
+  { key: 'bancaire',       label: 'Bancaire',       emoji: '🏦', suggestions: ['RIB', 'IBAN', 'Garantie bancaire'] },
+  { key: 'certifications', label: 'Certifications', emoji: '🏅', suggestions: ['Qualibat', 'RGE', "Qualit'EnR", 'Handibat'] },
+  { key: 'fournisseurs',   label: 'Fournisseurs',   emoji: '🤝', suggestions: ['RIB sous-traitant', 'Contrat cadre'] },
+  { key: 'divers',         label: 'Divers',         emoji: '📁', suggestions: ['Procuration', "PV d'AG", 'Bail commercial'] },
+];
+
+/** Document officiel de la société */
+export interface DocumentSociete {
+  id: string;
+  categorie: DocSocieteCategorie;
+  nom: string;                  // libellé libre (ex : "Décennale AXA 2026")
+  fichierUri: string;           // URL Supabase ou base64
+  fichierNom?: string;          // nom original du fichier
+  fichierType?: 'image' | 'pdf';
+  dateEmission?: string;        // YYYY-MM-DD
+  dateExpiration?: string;      // YYYY-MM-DD — déclenche un rappel
+  note?: string;                // texte libre
+  uploadedAt: string;
+  uploadedBy?: string;
+}
+
 /** Note/rappel sur un chantier, visible jusqu'à archivage */
 export interface NoteChantier {
   id: string;
@@ -934,6 +971,7 @@ export interface AppData {
   photosChantier?: PhotoChantier[];
   // Documents RH par employé
   documentsRH?: DocumentRHEmploye[];
+  documentsSociete?: DocumentSociete[];
   // Notes chantier (rappels/notifications)
   notesChantier?: NoteChantier[];
   // Historique des notes supprimées (admin uniquement)

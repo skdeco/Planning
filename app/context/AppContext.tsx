@@ -73,6 +73,7 @@ import type {
   DepenseChantier, SupplementChantier, DocSuiviChantier, NoteSuiviChantier,
   PhotoChantier,
   DocumentRHEmploye,
+  DocumentSociete,
   NoteChantier,
   PlanChantier,
   ActivityLog,
@@ -168,6 +169,9 @@ interface AppContextType {
   // Documents RH employé
   addDocumentRH: (d: DocumentRHEmploye) => void;
   deleteDocumentRH: (id: string) => void;
+  addDocumentSociete: (d: DocumentSociete) => void;
+  updateDocumentSociete: (d: DocumentSociete) => void;
+  deleteDocumentSociete: (id: string) => void;
   // Notes chantier
   addNoteChantier: (n: NoteChantier) => void;
   updateNoteChantier: (n: NoteChantier) => void;
@@ -1342,6 +1346,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, documentsRH: (p.documentsRH || []).filter(x => x.id !== id) }));
   };
 
+  // ── Documents société ──
+  const addDocumentSociete = (d: DocumentSociete) =>
+    setData(p => ({ ...p, documentsSociete: [...(p.documentsSociete || []), d] }));
+  const updateDocumentSociete = (d: DocumentSociete) =>
+    setData(p => ({ ...p, documentsSociete: (p.documentsSociete || []).map(x => x.id === d.id ? d : x) }));
+  const deleteDocumentSociete = (id: string) => {
+    trackGenericDeletion(id);
+    const doc = data.documentsSociete?.find(d => d.id === id);
+    if (doc?.fichierUri?.startsWith('http')) deleteFileFromStorage(doc.fichierUri).catch(() => {});
+    setData(p => ({ ...p, documentsSociete: (p.documentsSociete || []).filter(x => x.id !== id) }));
+  };
+
   // ── Messagerie privée ──
   const addMessagePrive = (m: MessagePrive) =>
     setData(p => ({ ...p, messagesPrive: [...(p.messagesPrive || []), m] }));
@@ -1677,6 +1693,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addNoteSuivi, updateNoteSuivi, deleteNoteSuivi,
       addPhotoChantier, addPhotosChantier, deletePhotoChantier,
       addDocumentRH, deleteDocumentRH,
+      addDocumentSociete, updateDocumentSociete, deleteDocumentSociete,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,

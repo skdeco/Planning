@@ -248,6 +248,18 @@ export default function TabLayout() {
           ),
         }}
       />
+
+      {/* Société : admin uniquement */}
+      <Tabs.Screen
+        name="societe"
+        options={{
+          title: 'Société',
+          href: isAdmin ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="doc.text.fill" color={color} />
+          ),
+        }}
+      />
     </Tabs>
     </View>
   );
