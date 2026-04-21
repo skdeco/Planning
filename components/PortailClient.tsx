@@ -17,6 +17,7 @@ import {
 } from '@/lib/devisParser';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
+import { MoodboardChantier } from '@/components/MoodboardChantier';
 
 interface PortailClientProps {
   visible: boolean;
@@ -69,6 +70,15 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   const chantier = chantierForPlanning;
   const apporteurs = data.apporteurs || [];
+
+  // Marquer le chantier comme "vu" par l'externe à l'ouverture
+  useEffect(() => {
+    if (!visible || !chantier || !isExterne || !externAp) return;
+    const vuesById = { ...(chantier.dernieresVuesParApporteur || {}) };
+    vuesById[externAp.id] = new Date().toISOString();
+    if (chantier.dernieresVuesParApporteur?.[externAp.id] === vuesById[externAp.id]) return;
+    updateChantier({ ...chantier, dernieresVuesParApporteur: vuesById });
+  }, [visible, chantier?.id, isExterne, externAp?.id]);
 
   // ── UI state ──
   const [pickerType, setPickerType] = useState<'architecte' | 'apporteur' | 'contractant' | 'client' | null>(null);
@@ -1498,6 +1508,13 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               isAdmin={isAdmin}
               externRole={isExterne ? externAp?.type : undefined}
               createdByNom={currentUser?.nom}
+            />
+
+            {/* ── Moodboard inspirations ── */}
+            <MoodboardChantier
+              chantier={chantier}
+              isAdmin={isAdmin}
+              externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
             />
 
             {/* ── Photos portail client ── */}

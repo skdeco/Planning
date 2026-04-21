@@ -247,6 +247,18 @@ export interface Chantier {
   dernieresVuesParApporteur?: Record<string, string>;  // apporteurId → ISO datetime
   // Dernière mise à jour "significative" (lot modifié, commentaire, situation figée)
   derniereMajContenu?: string;          // ISO datetime
+  // Moodboard : images d'inspiration ajoutées par le client ou l'admin
+  inspirations?: Array<{
+    id: string;
+    uri: string;
+    titre?: string;
+    ajoutParId: string;                 // apporteurId ou 'admin'
+    ajoutParNom?: string;
+    ajoutParType?: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+    lotId?: string;                     // lié à un lot (optionnel)
+    note?: string;
+    createdAt: string;
+  }>;
 }
 
 /** Snapshot figé d'un point financier de situation (avant émission d'une facture). */

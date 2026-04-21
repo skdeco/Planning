@@ -40,22 +40,34 @@ export default function MesChantiersExterne() {
     return { actifs, clos };
   }, [mesChantiers]);
 
-  const renderCard = (c: typeof mesChantiers[number]) => (
-    <Pressable key={c.id} style={styles.card} onPress={() => setOpenChantier(c.id)}>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.cardTitle}>{c.nom}</Text>
-        <Text style={styles.cardAddress}>
-          {[c.rue, c.codePostal, c.ville].filter(Boolean).join(', ') || c.adresse || '—'}
-        </Text>
-        {c.avancementCorps && c.avancementCorps.length > 0 && (
-          <Text style={styles.cardMeta}>
-            {c.avancementCorps.length} lot(s) · {c.avancementCorps.filter(l => l.enCours).length} en cours
+  const renderCard = (c: typeof mesChantiers[number]) => {
+    const derniereVue = apporteurId ? c.dernieresVuesParApporteur?.[apporteurId] : undefined;
+    const derniereMaj = c.derniereMajContenu;
+    const isNew = derniereMaj && (!derniereVue || derniereMaj > derniereVue);
+    return (
+      <Pressable key={c.id} style={styles.card} onPress={() => setOpenChantier(c.id)}>
+        <View style={{ flex: 1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <Text style={styles.cardTitle}>{c.nom}</Text>
+            {isNew && (
+              <View style={{ backgroundColor: '#E74C3C', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 }}>
+                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>NOUVEAU</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.cardAddress}>
+            {[c.rue, c.codePostal, c.ville].filter(Boolean).join(', ') || c.adresse || '—'}
           </Text>
-        )}
-      </View>
-      <Text style={styles.cardArrow}>›</Text>
-    </Pressable>
-  );
+          {c.avancementCorps && c.avancementCorps.length > 0 && (
+            <Text style={styles.cardMeta}>
+              {c.avancementCorps.length} lot(s)
+            </Text>
+          )}
+        </View>
+        <Text style={styles.cardArrow}>›</Text>
+      </Pressable>
+    );
+  };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
