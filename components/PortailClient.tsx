@@ -19,6 +19,7 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { MoodboardChantier } from '@/components/MoodboardChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
+import { ChatChantier } from '@/components/ChatChantier';
 
 interface PortailClientProps {
   visible: boolean;
@@ -1570,6 +1571,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               chantier={chantier}
               isAdmin={isAdmin}
               externAp={isExterne && externAp ? { type: externAp.type, prenom: externAp.prenom, nom: externAp.nom } : undefined}
+            />
+
+            {/* ── Chat chantier ── */}
+            <ChatChantier
+              chantier={chantier}
+              isAdmin={isAdmin}
+              externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
+              currentUserNom={currentUser?.nom}
             />
 
             {/* ── Photos portail client ── */}

@@ -259,6 +259,18 @@ export interface Chantier {
     note?: string;
     createdAt: string;
   }>;
+  // Messages chat (thread par chantier)
+  messagesChantier?: Array<{
+    id: string;
+    auteurId: string;                   // 'admin' ou apporteurId
+    auteurNom: string;
+    auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+    texte: string;
+    createdAt: string;                  // ISO datetime
+    luPar: string[];                    // ids qui ont lu (admin + apporteurIds)
+    pieceJointe?: string;               // URI photo/PDF
+    pieceJointeNom?: string;
+  }>;
   // Procès-verbal de réception
   pvReception?: {
     dateReception?: string;             // YYYY-MM-DD
