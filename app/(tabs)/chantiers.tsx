@@ -16,6 +16,7 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { BilanFinancierChantier } from '@/components/BilanFinancierChantier';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { MarchesChantier } from '@/components/MarchesChantier';
+import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PortailClient } from '@/components/PortailClient';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,

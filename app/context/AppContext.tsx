@@ -74,6 +74,8 @@ import type {
   PhotoChantier,
   DocumentRHEmploye,
   DocumentSociete,
+  LivraisonChantier,
+  RdvChantier,
   NoteChantier,
   PlanChantier,
   ActivityLog,
@@ -172,6 +174,12 @@ interface AppContextType {
   addDocumentSociete: (d: DocumentSociete) => void;
   updateDocumentSociete: (d: DocumentSociete) => void;
   deleteDocumentSociete: (id: string) => void;
+  addLivraison: (l: LivraisonChantier) => void;
+  updateLivraison: (l: LivraisonChantier) => void;
+  deleteLivraison: (id: string) => void;
+  addRdvChantier: (r: RdvChantier) => void;
+  updateRdvChantier: (r: RdvChantier) => void;
+  deleteRdvChantier: (id: string) => void;
   // Notes chantier
   addNoteChantier: (n: NoteChantier) => void;
   updateNoteChantier: (n: NoteChantier) => void;
@@ -1358,6 +1366,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, documentsSociete: (p.documentsSociete || []).filter(x => x.id !== id) }));
   };
 
+  // ── Livraisons ──
+  const addLivraison = (l: LivraisonChantier) =>
+    setData(p => ({ ...p, livraisons: [...(p.livraisons || []), l] }));
+  const updateLivraison = (l: LivraisonChantier) =>
+    setData(p => ({ ...p, livraisons: (p.livraisons || []).map(x => x.id === l.id ? l : x) }));
+  const deleteLivraison = (id: string) => {
+    trackGenericDeletion(id);
+    setData(p => ({ ...p, livraisons: (p.livraisons || []).filter(x => x.id !== id) }));
+  };
+
+  // ── RDV de chantier récurrents ──
+  const addRdvChantier = (r: RdvChantier) =>
+    setData(p => ({ ...p, rdvChantiers: [...(p.rdvChantiers || []), r] }));
+  const updateRdvChantier = (r: RdvChantier) =>
+    setData(p => ({ ...p, rdvChantiers: (p.rdvChantiers || []).map(x => x.id === r.id ? r : x) }));
+  const deleteRdvChantier = (id: string) => {
+    trackGenericDeletion(id);
+    setData(p => ({ ...p, rdvChantiers: (p.rdvChantiers || []).filter(x => x.id !== id) }));
+  };
+
   // ── Messagerie privée ──
   const addMessagePrive = (m: MessagePrive) =>
     setData(p => ({ ...p, messagesPrive: [...(p.messagesPrive || []), m] }));
@@ -1694,6 +1722,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPhotoChantier, addPhotosChantier, deletePhotoChantier,
       addDocumentRH, deleteDocumentRH,
       addDocumentSociete, updateDocumentSociete, deleteDocumentSociete,
+      addLivraison, updateLivraison, deleteLivraison,
+      addRdvChantier, updateRdvChantier, deleteRdvChantier,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,

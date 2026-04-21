@@ -722,6 +722,67 @@ export interface DocumentSociete {
   uploadedBy?: string;
 }
 
+/** Livraison attendue sur un chantier */
+export interface LivraisonChantier {
+  id: string;
+  chantierId: string;
+  titre: string;
+  dateLivraison: string;          // YYYY-MM-DD
+  heure?: string;                 // HH:MM
+  numeroColis?: string;
+  transporteur?: string;
+  numeroTransporteur?: string;    // n° suivi
+  nomContact?: string;
+  telephoneContact?: string;
+  adresseLivraison?: string;
+  note?: string;
+  photoEtiquetteUri?: string;
+  recue: boolean;
+  recueAt?: string;                // ISO datetime
+  recuePhotoUri?: string;
+  createdBy: string;               // admin | apporteurId | employeId
+  createdByNom?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/** Fréquence d'un RDV de chantier récurrent */
+export type FrequenceRdv = 'hebdomadaire' | 'bimensuel' | 'mensuel' | 'ponctuel';
+
+/** Remplacement ponctuel pour une occurrence donnée */
+export interface RemplacementRdv {
+  dateOccurrence: string;         // YYYY-MM-DD du RDV concerné
+  remplacantId: string;           // id employé OU 'apporteur:id'
+  remplacantNom: string;
+  motif?: string;
+}
+
+/** RDV de chantier (hebdo, bi-mensuel, mensuel, ponctuel) */
+export interface RdvChantier {
+  id: string;
+  chantierId: string;
+  titre: string;
+  dateDebut: string;              // YYYY-MM-DD de la première occurrence
+  heureDebut?: string;            // HH:MM (défaut 09:00)
+  dureeMinutes: number;           // défaut 90 (1h30)
+  frequence: FrequenceRdv;
+  jourSemaine?: number;           // 0=lundi ... 6=dimanche (pour hebdo/bimensuel)
+  dateFinRecurrence?: string;     // YYYY-MM-DD — s'arrête à cette date
+  /** Assigné par défaut : 'admin' ou id employé */
+  assigneA: string;
+  assigneNom: string;
+  /** Participants supplémentaires : architectes, apporteurs, client (visibles chez eux) */
+  participants?: string[];        // ids apporteurs
+  /** Remplacements ponctuels pour certaines occurrences */
+  remplacements?: RemplacementRdv[];
+  /** Annulations ponctuelles (dates YYYY-MM-DD annulées) */
+  annulations?: string[];
+  lieu?: 'chantier' | 'visio' | 'bureau';
+  note?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Note/rappel sur un chantier, visible jusqu'à archivage */
 export interface NoteChantier {
   id: string;
@@ -972,6 +1033,8 @@ export interface AppData {
   // Documents RH par employé
   documentsRH?: DocumentRHEmploye[];
   documentsSociete?: DocumentSociete[];
+  livraisons?: LivraisonChantier[];
+  rdvChantiers?: RdvChantier[];
   // Notes chantier (rappels/notifications)
   notesChantier?: NoteChantier[];
   // Historique des notes supprimées (admin uniquement)

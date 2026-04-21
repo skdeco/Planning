@@ -16,6 +16,7 @@ import {
   type LotExtrait,
 } from '@/lib/devisParser';
 import { DatePickerField } from '@/components/ui/DatePickerField';
+import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 
 interface PortailClientProps {
   visible: boolean;
@@ -1371,6 +1372,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </>
             )}
             </View>
+
+            {/* ── Livraisons & RDV de chantier ── */}
+            <LivraisonsRdvChantier
+              chantierId={chantierId}
+              isAdmin={isAdmin}
+              externRole={isExterne ? externAp?.type : undefined}
+              createdByNom={currentUser?.nom}
+            />
 
             {/* ── Photos portail client ── */}
             <View style={styles.card}>
