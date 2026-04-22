@@ -1,0 +1,47 @@
+# REFACTOR_NOTES.md — Erreurs TypeScript pré-existantes
+
+Identifiées lors du `pnpm check` de la Phase 1 (étape 1.1).
+À corriger quand on touchera ces fichiers en Phase 2/3.
+
+---
+
+## 1. `app/(tabs)/planning.tsx` — ligne 3643
+
+```
+error TS7006: Parameter 'uri' implicitly has an 'any' type.
+error TS7006: Parameter 'idx' implicitly has an 'any' type.
+```
+
+**À corriger en Phase 2** lors du découpage de `planning.tsx`.
+
+---
+
+## 2. `app/context/AppContext.tsx` — lignes 820–823
+
+```
+error TS2345: Argument of type '{}' is not assignable to parameter of type '{ id: string; }[]'.
+  Type '{}' is missing the following properties from type '{ id: string; }[]': length, pop, push, concat, and 35 more.
+```
+
+4 occurrences consécutives (lignes 820, 821, 822, 823).
+
+**À corriger en Phase 2** si AppContext est touché, sinon Phase 3.
+
+---
+
+## 3. `components/BilanFinancierChantier.tsx` — lignes 157, 178–181
+
+```
+error TS2339: Property 'totalSousTraitants' does not exist on type '{...}'.
+error TS2339: Property 'sousTraitants' does not exist on type '{...}'.
+```
+
+5 occurrences — propriétés `sousTraitants` et `totalSousTraitants` absentes du type de retour calculé.
+
+**À corriger en Phase 3** lors du refactor de `chantiers.tsx` / `BilanFinancierChantier`.
+
+---
+
+## 4. Naming du statut `actif` (UX)
+
+Type `StatutChantier` utilise `'actif'` comme valeur principale. À évaluer en Phase 2 si `'en_cours'` serait plus intuitif pour l'UX (rename potentiel à piloter avec l'équipe métier).
