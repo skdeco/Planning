@@ -18,8 +18,8 @@ import { useNotifications } from "@/hooks/useNotifications";
 export default function TabLayout() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Platform.OS === "web" ? 12 : Math.max(insets.bottom, 8);
-  const tabBarHeight = 56 + bottomPadding;
+  const bottomPadding = Platform.OS === "web" ? 16 : Math.max(insets.bottom, 8);
+  const tabBarHeight = Platform.OS === "web" ? 80 : 56 + bottomPadding;
   const { currentUser, data, updateSousTraitant } = useApp();
   const { t } = useLanguage();
   const { pushToken } = useNotifications();
@@ -108,12 +108,15 @@ export default function TabLayout() {
           shadowOpacity: 0.06,
           shadowRadius: 8,
           elevation: 8,
+          // Sur web : scroll horizontal si trop d'onglets pour la largeur d'écran
+          ...(Platform.OS === 'web' ? { overflowX: 'auto' } as any : {}),
         },
         tabBarLabelStyle: {
-          fontSize: 11,
+          fontSize: Platform.OS === 'web' ? 10 : 11,
           fontWeight: '600',
           letterSpacing: -0.2,
         },
+        tabBarItemStyle: Platform.OS === 'web' ? { minWidth: 80 } : undefined,
       }}
     >
       {/* ═══ ONGLET 1 : Accueil / Ma journée — en premier ═══ */}

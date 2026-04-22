@@ -2001,8 +2001,20 @@ export default function PlanningScreen() {
         const NAME_W = 120;
         const todayStr = toYMD(ganttToday);
 
+        const ganttSortedChantiers = ganttChantiers
+          .filter(c => c.dateDebut)
+          .sort((a, b) => a.dateDebut.localeCompare(b.dateDebut));
+
+        const MONTH_H = 28;
+        const DAY_ROW_H = 18;
+        const HEADER_H = MONTH_H + DAY_ROW_H;
+        const ROW_H = 36;
+        // Hauteur explicite pour éviter overflow-y:hidden du ScrollView horizontal sur web
+        const timelineH = HEADER_H + ganttSortedChantiers.length * ROW_H + 4;
+
         return (
-          <View style={{ flex: 1 }}>
+          <View style={{ flex: 1, minHeight: 200 }}>
+            {/* Navigation mois */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 }}>
               <Pressable onPress={() => setMonthOffset(m => m - 3)} style={{ padding: 6 }}>
                 <Text style={{ fontSize: 18, color: '#2C2C2C' }}>‹‹</Text>
@@ -2014,75 +2026,93 @@ export default function PlanningScreen() {
                 <Text style={{ fontSize: 18, color: '#2C2C2C' }}>››</Text>
               </Pressable>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={true}>
-              <View>
-                {/* En-tête mois */}
-                <View style={{ flexDirection: 'row', marginLeft: NAME_W }}>
-                  {ganttMonths.map((m, i) => (
-                    <View key={i} style={{ width: m.days * DAY_W, borderRightWidth: 1, borderRightColor: '#E2E6EA', alignItems: 'center', paddingVertical: 4 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: '#2C2C2C' }}>{m.label}</Text>
+
+            {/* Grille : colonne gauche figée + timeline scrollable */}
+            <View style={{ flexDirection: 'row', flex: 1 }}>
+
+              {/* Colonne gauche figée (hors du ScrollView horizontal) */}
+              <View style={{ width: NAME_W, borderRightWidth: 1, borderRightColor: '#E2E6EA', zIndex: 2, backgroundColor: '#FAFAF9' }}>
+                {/* Espaceur aligné avec les en-têtes mois + jours */}
+                <View style={{ height: HEADER_H, borderBottomWidth: 1, borderBottomColor: '#E2E6EA', justifyContent: 'flex-end', paddingBottom: 2, paddingHorizontal: 6 }}>
+                  <Text style={{ fontSize: 10, color: '#9CA3AF', fontWeight: '600' }}>CHANTIER</Text>
+                </View>
+                {ganttSortedChantiers.map(c => {
+                  const empAffectes = data.employes.filter(e =>
+                    data.affectations.some(a => a.chantierId === c.id && a.employeId === e.id)
+                  );
+                  return (
+                    <View key={c.id} style={{ height: ROW_H, justifyContent: 'center', paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{c.nom}</Text>
+                      <Text style={{ fontSize: 9, color: '#9CA3AF' }}>{empAffectes.length} pers.</Text>
                     </View>
-                  ))}
-                </View>
-                {/* En-tête jours */}
-                <View style={{ flexDirection: 'row', marginLeft: NAME_W }}>
-                  {Array.from({ length: ganttTotalDays }, (_, i) => {
-                    const d = new Date(ganttStart);
-                    d.setDate(d.getDate() + i);
-                    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
-                    const isT = toYMD(d) === todayStr;
-                    return (
-                      <View key={i} style={{ width: DAY_W, alignItems: 'center', paddingVertical: 2, backgroundColor: isT ? '#E8F0FE' : isWeekend ? '#F8F9FA' : 'transparent', borderRightWidth: d.getDate() === 1 ? 1 : 0, borderRightColor: '#E2E6EA' }}>
-                        <Text style={{ fontSize: 8, color: isT ? '#2C2C2C' : '#9CA3AF' }}>{d.getDate()}</Text>
+                  );
+                })}
+              </View>
+
+              {/* Timeline scrollable horizontalement */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={true} style={{ flex: 1, height: timelineH }}>
+                <View>
+                  {/* En-tête mois */}
+                  <View style={{ flexDirection: 'row', height: MONTH_H }}>
+                    {ganttMonths.map((m, i) => (
+                      <View key={i} style={{ width: m.days * DAY_W, borderRightWidth: 1, borderRightColor: '#E2E6EA', alignItems: 'center', justifyContent: 'center' }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#2C2C2C' }}>{m.label}</Text>
                       </View>
-                    );
-                  })}
-                </View>
-                {/* Barres chantiers */}
-                <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 500 }}>
-                  {ganttChantiers.sort((a, b) => a.dateDebut.localeCompare(b.dateDebut)).map(c => {
-                    const cStart = new Date(c.dateDebut + 'T12:00:00');
-                    const cEnd = new Date(c.dateFin + 'T12:00:00');
-                    const startOffset = Math.max(0, Math.ceil((cStart.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24)));
-                    const endOffset = Math.min(ganttTotalDays - 1, Math.ceil((cEnd.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24)));
-                    const barWidth = Math.max(DAY_W, (endOffset - startOffset + 1) * DAY_W);
-                    const barLeft = startOffset * DAY_W;
-                    const isEnRetard = c.statut === 'actif' && c.dateFin < todayStr;
-                    const empAffectes = data.employes.filter(e =>
-                      data.affectations.some(a => a.chantierId === c.id && a.employeId === e.id)
-                    );
-                    return (
-                      <View key={c.id} style={{ flexDirection: 'row', height: 36, alignItems: 'center', borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
-                        <View style={{ width: NAME_W, paddingHorizontal: 8, justifyContent: 'center' }}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{c.nom}</Text>
-                          <Text style={{ fontSize: 9, color: '#9CA3AF' }}>{empAffectes.length} pers.</Text>
+                    ))}
+                  </View>
+                  {/* En-tête jours */}
+                  <View style={{ flexDirection: 'row', height: DAY_ROW_H, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
+                    {Array.from({ length: ganttTotalDays }, (_, i) => {
+                      const d = new Date(ganttStart);
+                      d.setDate(d.getDate() + i);
+                      const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+                      const isT = toYMD(d) === todayStr;
+                      return (
+                        <View key={i} style={{ width: DAY_W, alignItems: 'center', justifyContent: 'center', backgroundColor: isT ? '#E8F0FE' : isWeekend ? '#F8F9FA' : 'transparent', borderRightWidth: d.getDate() === 1 ? 1 : 0, borderRightColor: '#E2E6EA' }}>
+                          <Text style={{ fontSize: 8, color: isT ? '#2C2C2C' : '#9CA3AF' }}>{d.getDate()}</Text>
                         </View>
-                        <View style={{ width: ganttTotalDays * DAY_W, height: 28, position: 'relative' }}>
-                          {/* Ligne today */}
-                          {(() => {
-                            const tOff = Math.ceil((ganttToday.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24));
-                            if (tOff >= 0 && tOff < ganttTotalDays) {
-                              return <View style={{ position: 'absolute', left: tOff * DAY_W, top: 0, bottom: 0, width: 1.5, backgroundColor: '#2C2C2C', opacity: 0.3, zIndex: 1 }} />;
-                            }
-                            return null;
-                          })()}
-                          <View style={{
-                            position: 'absolute', left: barLeft, top: 4, width: barWidth, height: 20,
-                            backgroundColor: c.couleur, borderRadius: 4, opacity: c.statut === 'termine' ? 0.4 : 0.9,
-                            borderWidth: isEnRetard ? 2 : 0, borderColor: '#E74C3C',
-                            justifyContent: 'center', paddingHorizontal: 4,
-                          }}>
-                            <Text style={{ fontSize: 9, color: '#fff', fontWeight: '600' }} numberOfLines={1}>
-                              {c.nom}{isEnRetard ? ' ⚠️' : ''}
-                            </Text>
+                      );
+                    })}
+                  </View>
+                  {/* Barres chantiers */}
+                  <View>
+                    {ganttSortedChantiers.map(c => {
+                      const cStart = new Date(c.dateDebut + 'T12:00:00');
+                      const cEnd = c.dateFin ? new Date(c.dateFin + 'T12:00:00') : cStart;
+                      const startOffset = Math.max(0, Math.ceil((cStart.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24)));
+                      const endOffset = Math.min(ganttTotalDays - 1, Math.ceil((cEnd.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24)));
+                      const barWidth = Math.max(DAY_W, (endOffset - startOffset + 1) * DAY_W);
+                      const barLeft = startOffset * DAY_W;
+                      const isEnRetard = c.statut === 'actif' && c.dateFin < todayStr;
+                      return (
+                        <View key={c.id} style={{ height: ROW_H, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
+                          <View style={{ width: ganttTotalDays * DAY_W, height: ROW_H, position: 'relative' }}>
+                            {/* Ligne aujourd'hui */}
+                            {(() => {
+                              const tOff = Math.ceil((ganttToday.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24));
+                              if (tOff >= 0 && tOff < ganttTotalDays) {
+                                return <View style={{ position: 'absolute', left: tOff * DAY_W, top: 0, bottom: 0, width: 1.5, backgroundColor: '#2C2C2C', opacity: 0.2, zIndex: 1 }} />;
+                              }
+                              return null;
+                            })()}
+                            <View style={{
+                              position: 'absolute', left: barLeft, top: 8, width: barWidth, height: 20,
+                              backgroundColor: c.couleur, borderRadius: 4, opacity: c.statut === 'termine' ? 0.4 : 0.9,
+                              borderWidth: isEnRetard ? 2 : 0, borderColor: '#E74C3C',
+                              justifyContent: 'center', paddingHorizontal: 4,
+                            }}>
+                              <Text style={{ fontSize: 9, color: '#fff', fontWeight: '600' }} numberOfLines={1}>
+                                {c.nom}{isEnRetard ? ' ⚠️' : ''}
+                              </Text>
+                            </View>
                           </View>
                         </View>
-                      </View>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            </ScrollView>
+                      );
+                    })}
+                  </View>
+                </View>
+              </ScrollView>
+            </View>
           </View>
         );
       })()}

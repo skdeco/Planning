@@ -324,9 +324,7 @@ export function PlanningDirection() {
                     <Pressable key={evt.id}
                       style={{ position: 'absolute', top, left: 1, right: 1, height, backgroundColor: evt.couleur, borderRadius: 4, padding: 2, overflow: 'hidden' }}
                       onPress={(e) => { e.stopPropagation(); openEdit(evt); }}>
-                      <Text style={{ fontSize: 9, fontWeight: '700', color: '#fff' }} numberOfLines={1}>{evt.titre}</Text>
-                      <Text style={{ fontSize: 8, color: 'rgba(255,255,255,0.8)' }}>{evt.heureDebut}{evt.heureFin ? `-${evt.heureFin}` : ''}</Text>
-                      {ch && <Text style={{ fontSize: 7, color: 'rgba(255,255,255,0.7)' }} numberOfLines={1}>{ch.nom}</Text>}
+                      <Text style={{ fontSize: 9, fontWeight: '700', color: '#fff' }} numberOfLines={2}>{evt.titre}</Text>
                     </Pressable>
                   );
                 })}
