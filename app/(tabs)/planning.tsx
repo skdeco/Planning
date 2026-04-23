@@ -19,9 +19,10 @@ import {
   AdminPlanningModeSwitcher,
   type PlanningMode,
 } from '@/components/planning/AdminPlanningModeSwitcher';
+import { ModalRetardPlanifie } from '@/components/planning/ModalRetardPlanifie';
 import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
-  type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem, type RetardPlanifie,
+  type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem,
   type NoteChantier,
   type PlanChantier,
 } from '@/app/types';
@@ -383,10 +384,6 @@ export default function PlanningScreen() {
 
   // Retard planifié (employé)
   const [showRetardModal, setShowRetardModal] = useState(false);
-  const [retardDate, setRetardDate] = useState('');
-  const [retardHeure, setRetardHeure] = useState('');
-  const [retardMotif, setRetardMotif] = useState('');
-  const [editRetardId, setEditRetardId] = useState<string | null>(null);
 
   const isAdmin = currentUser?.role === 'admin';
   const isST = currentUser?.role === 'soustraitant';
@@ -1227,31 +1224,6 @@ export default function PlanningScreen() {
 
     Keyboard.dismiss();
     setShowNoteEditor(false);
-  };
-
-  /** Sauvegarde un retard planifié */
-  const handleSaveRetardPlanifie = () => {
-    if (!retardDate || !retardHeure || !retardMotif.trim()) return;
-    const now = new Date().toISOString();
-    const empId = currentUser?.employeId || '';
-    const newRetard: RetardPlanifie = {
-      id: `retard_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      employeId: empId,
-      date: retardDate,
-      heureArrivee: retardHeure,
-      motif: retardMotif.trim(),
-      createdAt: now,
-      lu: false,
-    };
-    if (editRetardId) {
-      deleteRetardPlanifie(editRetardId);
-    }
-    addRetardPlanifie(newRetard);
-    setShowRetardModal(false);
-    setRetardDate('');
-    setRetardHeure('');
-    setRetardMotif('');
-    setEditRetardId(null);
   };
 
   /** Supprime une note */
@@ -3009,83 +2981,21 @@ export default function PlanningScreen() {
       </ModalKeyboard>
 
       {/* ── Modal retard planifié (employé) ── */}
-      <ModalKeyboard visible={showRetardModal} transparent animationType="slide" onRequestClose={() => setShowRetardModal(false)}>
-        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowRetardModal(false)} />
-          <Pressable style={styles.saisieSheet} onPress={() => {}}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.saisieTitle}>⏰ Déclarer un retard à venir</Text>
-            <Text style={styles.saisieSubtitle}>Informez votre responsable d'un retard prévu</Text>
-
-            <Text style={styles.saisieLabel}>Date du retard prévu *</Text>
-            <DatePicker
-              value={retardDate}
-              onChange={setRetardDate}
-              minDate={toYMD(new Date())}
-              placeholder="Sélectionner la date"
-            />
-
-            <Text style={[styles.saisieLabel, { marginTop: 12 }]}>Heure d'arrivée prévue *</Text>
-            <TextInput
-              style={styles.saisieInput}
-              value={retardHeure}
-              onChangeText={setRetardHeure}
-              placeholder="Ex: 10:00"
-              placeholderTextColor="#B0BEC5"
-              keyboardType="numbers-and-punctuation"
-            />
-
-            <Text style={[styles.saisieLabel, { marginTop: 12 }]}>Motif *</Text>
-            <TextInput
-              style={[styles.saisieInput, { minHeight: 80, textAlignVertical: 'top' }]}
-              value={retardMotif}
-              onChangeText={setRetardMotif}
-              placeholder="Ex: Rendez-vous médical, travaux sur la route..."
-              placeholderTextColor="#B0BEC5"
-              multiline
-            />
-
-            {/* Liste des retards planifiés existants */}
-            {(() => {
-              const empId = currentUser?.employeId || '';
-              const retards = (data.retardsPlanifies || []).filter(r => r.employeId === empId);
-              if (retards.length === 0) return null;
-              return (
-                <View style={{ marginTop: 16 }}>
-                  <Text style={[styles.saisieLabel, { marginBottom: 8 }]}>Retards planifiés</Text>
-                  {retards.map(r => (
-                    <View key={r.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF3CD', borderRadius: 8, padding: 10, marginBottom: 6 }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: '600', color: '#856404', fontSize: 13 }}>{r.date} — {r.heureArrivee}</Text>
-                        <Text style={{ color: '#856404', fontSize: 12, marginTop: 2 }}>{r.motif}</Text>
-                        {r.lu && <Text style={{ color: '#27AE60', fontSize: 11, marginTop: 2 }}>✓ Lu par l'admin</Text>}
-                      </View>
-                      <Pressable
-                        onPress={() => deleteRetardPlanifie(r.id)}
-                        style={{ padding: 6 }}
-                      >
-                        <Text style={{ color: '#E74C3C', fontSize: 14 }}>✕</Text>
-                      </Pressable>
-                    </View>
-                  ))}
-                </View>
-              );
-            })()}
-
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
-              <Pressable style={styles.saisieCancel} onPress={() => { setShowRetardModal(false); setRetardDate(''); setRetardHeure(''); setRetardMotif(''); setEditRetardId(null); }}>
-                <Text style={styles.saisieCancelText}>Annuler</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.saisieConfirm, (!retardDate || !retardHeure || !retardMotif.trim()) && styles.saisieConfirmDisabled]}
-                onPress={handleSaveRetardPlanifie}
-                disabled={!retardDate || !retardHeure || !retardMotif.trim()}
-              >
-                <Text style={styles.saisieConfirmText}>Enregistrer</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </View>
-      </ModalKeyboard>
+      <ModalRetardPlanifie
+        visible={showRetardModal}
+        onClose={() => setShowRetardModal(false)}
+        retardsPlanifies={(data.retardsPlanifies || []).filter(r => r.employeId === currentUser?.employeId)}
+        onSave={(values) => {
+          addRetardPlanifie({
+            ...values,
+            id: `retard_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+            employeId: currentUser?.employeId || '',
+            createdAt: new Date().toISOString(),
+            lu: false,
+          });
+        }}
+        onDelete={deleteRetardPlanifie}
+      />
 
       {/* Galerie photos globale */}
       <GaleriePhotos
@@ -4991,71 +4901,6 @@ const styles = StyleSheet.create({
   },
   saisieBtnText: {
     fontSize: 16,
-  },
-  // Modal saisie (utilisé par ModalRetardPlanifie)
-  saisieSheet: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    paddingBottom: 36,
-    maxHeight: '90%',
-  },
-  saisieTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#1A1A2E',
-    marginBottom: 2,
-  },
-  saisieSubtitle: {
-    fontSize: 13,
-    color: '#687076',
-    marginBottom: 16,
-  },
-  saisieLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4A5568',
-    marginBottom: 6,
-    marginTop: 4,
-  },
-  saisieInput: {
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    fontSize: 15,
-    color: '#1A1A2E',
-    backgroundColor: '#F8FAFC',
-    marginBottom: 12,
-  },
-  saisieCancel: {
-    flex: 1,
-    paddingVertical: 13,
-    borderRadius: 12,
-    backgroundColor: '#F0F4F8',
-    alignItems: 'center',
-  },
-  saisieCancelText: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#687076',
-  },
-  saisieConfirm: {
-    flex: 2,
-    paddingVertical: 13,
-    borderRadius: 12,
-    backgroundColor: '#2980B9',
-    alignItems: 'center',
-  },
-  saisieConfirmDisabled: {
-    backgroundColor: '#B0C4D8',
-  },
-  saisieConfirmText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#fff',
   },
   // Options visibilité / répétition dans l'éditeur de note
   visibBtn: {

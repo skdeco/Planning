@@ -45,3 +45,21 @@ error TS2339: Property 'sousTraitants' does not exist on type '{...}'.
 ## 4. Naming du statut `actif` (UX)
 
 Type `StatutChantier` utilise `'actif'` comme valeur principale. À évaluer en Phase 2 si `'en_cours'` serait plus intuitif pour l'UX (rename potentiel à piloter avec l'équipe métier).
+
+---
+
+## Bugs pré-existants détectés en Phase 2
+
+### Retards planifiés — découverts lors de l'extraction 2.4
+
+Bug 1 : aucune notification n'est envoyée au moment de la création
+d'un retard planifié côté employé. Ni push, ni toast, ni badge admin.
+
+Bug 2 : les retards planifiés ne sont pas visibles côté admin — pas
+de section dédiée dans le planning admin, pas d'indicateur.
+
+Statut : pré-existants (vérifiés avant l'extraction 2.4).
+Localisation probable : `addRetardPlanifie` dans AppContext.tsx
++ absence de composant d'affichage admin.
+À traiter : hors scope refactor structurel, à planifier en tâche
+séparée "Fix retards planifiés — notif + visibilité admin".
