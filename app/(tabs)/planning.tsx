@@ -14,6 +14,11 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { useRefresh } from '@/hooks/useRefresh';
 import { PlanningDirection } from '@/components/PlanningDirection';
+import { AlertesChantiersRetard } from '@/components/planning/AlertesChantiersRetard';
+import {
+  AdminPlanningModeSwitcher,
+  type PlanningMode,
+} from '@/components/planning/AdminPlanningModeSwitcher';
 import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
   type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem, type RetardPlanifie,
@@ -176,7 +181,7 @@ export default function PlanningScreen() {
   const dayCol = Math.floor((windowWidth - NAME_COL) / 7);
   const needsHorizontalScroll = false; // Plus jamais de scroll horizontal
   // Mode planning : Équipe (grille) ou Direction (agenda)
-  const [planningMode, setPlanningMode] = useState<'equipe' | 'direction'>('equipe');
+  const [planningMode, setPlanningMode] = useState<PlanningMode>('equipe');
   // Weekend (samedi/dimanche) : afficher par défaut la semaine suivante
   const [weekOffset, setWeekOffset] = useState(() => {
     const dow = new Date().getDay(); // 0=dim, 6=sam
@@ -423,7 +428,6 @@ export default function PlanningScreen() {
 
   // Modal paramètres compte admin (identifiant + mot de passe + employé lié)
   const [showPwdModal, setShowPwdModal] = useState(false);
-  const [alertsExpanded, setAlertsExpanded] = useState(false);
   const [adminIdEdit, setAdminIdEdit] = useState('');
   const [adminEmployeIdEdit, setAdminEmployeIdEdit] = useState<string | undefined>(undefined);
   const [magasinEdit, setMagasinEdit] = useState('');
@@ -1510,69 +1514,10 @@ export default function PlanningScreen() {
       </View>
 
       {/* Sélecteur Planning Équipe / Direction (admin) */}
-      {isAdmin && (
-        <View style={{ flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', paddingHorizontal: 12, paddingVertical: 6, gap: 6 }}>
-          <Pressable
-            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'equipe' ? '#2C2C2C' : '#F5EDE3' }}
-            onPress={() => setPlanningMode('equipe')}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: planningMode === 'equipe' ? '#fff' : '#687076' }}>👷 Planning Équipe</Text>
-          </Pressable>
-          <Pressable
-            style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: planningMode === 'direction' ? '#2C2C2C' : '#F5EDE3' }}
-            onPress={() => setPlanningMode('direction')}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: planningMode === 'direction' ? '#fff' : '#687076' }}>📅 Planning Direction</Text>
-          </Pressable>
-        </View>
-      )}
+      {isAdmin && <AdminPlanningModeSwitcher value={planningMode} onChange={setPlanningMode} />}
 
       {/* ═══ ALERTES RETARD CHANTIERS — bannière pliable (admin) ═══ */}
-      {isAdmin && (() => {
-        const today = toYMD(new Date());
-        const chantiersEnRetard = data.chantiers.filter(c =>
-          c.statut === 'actif' && c.dateFin && /^\d{4}-\d{2}-\d{2}$/.test(c.dateFin) && c.dateFin < today
-        );
-        const chantiersProches = data.chantiers.filter(c => {
-          if (c.statut !== 'actif' || !c.dateFin || !/^\d{4}-\d{2}-\d{2}$/.test(c.dateFin) || c.dateFin < today) return false;
-          const diff = Math.ceil((new Date(c.dateFin + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
-          return diff <= 7;
-        });
-        const totalAlertes = chantiersEnRetard.length + chantiersProches.length;
-        if (totalAlertes === 0) return null;
-        return (
-          <Pressable
-            style={{ marginHorizontal: 12, marginTop: 8, backgroundColor: chantiersEnRetard.length > 0 ? '#FDECEA' : '#FFF8E1', borderRadius: 10, padding: 10, borderLeftWidth: 4, borderLeftColor: chantiersEnRetard.length > 0 ? '#E74C3C' : '#F59E0B' }}
-            onPress={() => setAlertsExpanded(v => !v)}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontWeight: '700', color: chantiersEnRetard.length > 0 ? '#B71C1C' : '#856404', fontSize: 13 }}>
-                ⚠️ {totalAlertes} alerte{totalAlertes > 1 ? 's' : ''} chantier{totalAlertes > 1 ? 's' : ''}
-                {chantiersEnRetard.length > 0 ? ` (${chantiersEnRetard.length} en retard)` : ''}
-              </Text>
-              <Text style={{ fontSize: 14, color: '#687076' }}>{alertsExpanded ? '▲' : '▼'}</Text>
-            </View>
-            {alertsExpanded && (
-              <View style={{ marginTop: 8, gap: 6 }}>
-                {chantiersEnRetard.map(c => {
-                  const jours = Math.ceil((new Date(today + 'T12:00:00').getTime() - new Date(c.dateFin + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
-                  return (
-                    <Text key={c.id} style={{ fontSize: 12, color: '#B71C1C', marginLeft: 8 }}>
-                      • {c.nom} — fin prévue le {new Date(c.dateFin + 'T12:00:00').toLocaleDateString('fr-FR')} ({jours}j de retard)
-                    </Text>
-                  );
-                })}
-                {chantiersProches.map(c => {
-                  const jours = Math.ceil((new Date(c.dateFin + 'T12:00:00').getTime() - new Date(today + 'T12:00:00').getTime()) / (1000 * 60 * 60 * 24));
-                  return (
-                    <Text key={c.id} style={{ fontSize: 12, color: '#856404', marginLeft: 8 }}>
-                      • {c.nom} — fin le {new Date(c.dateFin + 'T12:00:00').toLocaleDateString('fr-FR')} ({jours}j restant{jours > 1 ? 's' : ''})
-                    </Text>
-                  );
-                })}
-              </View>
-            )}
-          </Pressable>
-        );
-      })()}
+      {isAdmin && <AlertesChantiersRetard chantiers={data.chantiers} />}
 
       {/* ═══ PLANNING DIRECTION ═══ */}
       {planningMode === 'direction' && isAdmin && <PlanningDirection />}
