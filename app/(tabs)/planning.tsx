@@ -172,7 +172,7 @@ interface NoteModalState {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addPointage, deletePointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, updateChantierOrderPlanning, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, deletePointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, updateChantierOrderPlanning, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const { width: windowWidth } = useWindowDimensions();
@@ -219,13 +219,6 @@ export default function PlanningScreen() {
   const [noteRepeatDays, setNoteRepeatDays] = useState(0); // 0 = pas de répétition
   const [noteVisiblePar, setNoteVisiblePar] = useState<'tous' | 'employes' | 'soustraitants'>('tous');
   const [noteSavTicketId, setNoteSavTicketId] = useState<string | null>(null);
-  // Saisie manuelle de pointage (admin/RH)
-  const [showSaisiePointage, setShowSaisiePointage] = useState(false);
-  const [saisiePointageEmployeId, setSaisiePointageEmployeId] = useState('');
-  const [saisiePointageDate, setSaisiePointageDate] = useState('');
-  const [saisieArrivee, setSaisieArrivee] = useState('');
-  const [saisieDepart, setSaisieDepart] = useState('');
-  const [saisieNote, setSaisieNote] = useState('');
   // Affectation par plage de jours (admin)
   const [affectationDateFin, setAffectationDateFin] = useState<string | null>(null);
   // Visibilité de note : sélection spécifique d'acteurs
@@ -1234,45 +1227,6 @@ export default function PlanningScreen() {
 
     Keyboard.dismiss();
     setShowNoteEditor(false);
-  };
-
-  /** Saisie manuelle de pointage par admin ou RH */
-  const handleSaisiePointage = () => {
-    if (!saisiePointageEmployeId || !saisiePointageDate || !saisieArrivee) return;
-    const now = new Date().toISOString();
-    const baseId = `manual_${saisiePointageDate}_${saisiePointageEmployeId}_${Date.now()}`;
-    addPointage({
-      id: `${baseId}_debut`,
-      employeId: saisiePointageEmployeId,
-      type: 'debut',
-      date: saisiePointageDate,
-      heure: saisieArrivee,
-      timestamp: now,
-      note: saisieNote || undefined,
-      saisieManuelle: true,
-      saisieParId: currentUser?.employeId || 'admin',
-      latitude: null, longitude: null, adresse: null,
-    });
-    if (saisieDepart) {
-      addPointage({
-        id: `${baseId}_fin`,
-        employeId: saisiePointageEmployeId,
-        type: 'fin',
-        date: saisiePointageDate,
-        heure: saisieDepart,
-        timestamp: now,
-        note: saisieNote || undefined,
-        saisieManuelle: true,
-        saisieParId: currentUser?.employeId || 'admin',
-        latitude: null, longitude: null, adresse: null,
-      });
-    }
-    setShowSaisiePointage(false);
-    setSaisieArrivee('');
-    setSaisieDepart('');
-    setSaisieNote('');
-    setSaisiePointageEmployeId('');
-    setSaisiePointageDate('');
   };
 
   /** Sauvegarde un retard planifié */
@@ -3125,123 +3079,6 @@ export default function PlanningScreen() {
                 style={[styles.saisieConfirm, (!retardDate || !retardHeure || !retardMotif.trim()) && styles.saisieConfirmDisabled]}
                 onPress={handleSaveRetardPlanifie}
                 disabled={!retardDate || !retardHeure || !retardMotif.trim()}
-              >
-                <Text style={styles.saisieConfirmText}>Enregistrer</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </View>
-      </ModalKeyboard>
-
-      {/* ── Modal saisie manuelle de pointage (admin/RH) ── */}
-      <ModalKeyboard visible={showSaisiePointage} transparent animationType="slide" onRequestClose={() => setShowSaisiePointage(false)}>
-        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowSaisiePointage(false)} />
-          <Pressable style={styles.saisieSheet} onPress={() => {}}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.saisieTitle}>✏️ Saisie manuelle de pointage</Text>
-            <Text style={styles.saisieSubtitle}>Correction ou saisie oubliée</Text>
-
-            {/* Retards planifiés non lus */}
-            {(data.retardsPlanifies || []).filter(r => !r.lu).length > 0 && (
-              <View style={{ backgroundColor: '#FFF3CD', borderRadius: 8, padding: 10, marginBottom: 12 }}>
-                <Text style={{ fontWeight: '700', color: '#856404', fontSize: 13, marginBottom: 6 }}>
-                  ⏰ Retards planifiés par les employés
-                </Text>
-                {(data.retardsPlanifies || []).filter(r => !r.lu).map(r => {
-                  const emp = data.employes.find(e => e.id === r.employeId);
-                  return (
-                    <View key={r.id} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8, gap: 8 }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontWeight: '600', color: '#856404', fontSize: 12 }}>
-                          {emp ? `${emp.prenom} ${emp.nom}` : 'Employé'} — {r.date} à {r.heureArrivee}
-                        </Text>
-                        <Text style={{ color: '#856404', fontSize: 11 }}>{r.motif}</Text>
-                      </View>
-                      <Pressable
-                        style={{ backgroundColor: '#27AE60', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}
-                        onPress={() => {
-                          // Marquer comme lu via deleteRetardPlanifie + addRetardPlanifie
-                          deleteRetardPlanifie(r.id);
-                          addRetardPlanifie({ ...r, lu: true });
-                        }}
-                      >
-                        <Text style={{ color: '#fff', fontSize: 11 }}>✓ Lu</Text>
-                      </Pressable>
-                    </View>
-                  );
-                })}
-              </View>
-            )}
-
-            <Text style={styles.saisieLabel}>Employé</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 12 }}>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                {data.employes.map(emp => (
-                  <Pressable
-                    key={emp.id}
-                    style={[styles.saisieEmpChip, saisiePointageEmployeId === emp.id && styles.saisieEmpChipActive]}
-                    onPress={() => setSaisiePointageEmployeId(emp.id)}
-                  >
-                    <Text style={[styles.saisieEmpChipText, saisiePointageEmployeId === emp.id && styles.saisieEmpChipTextActive]}>
-                      {emp.prenom} {emp.nom}
-                    </Text>
-                  </Pressable>
-                ))}
-              </View>
-            </ScrollView>
-
-            <Text style={styles.saisieLabel}>Date</Text>
-            <TextInput
-              style={styles.saisieInput}
-              value={saisiePointageDate}
-              onChangeText={setSaisiePointageDate}
-              placeholder="YYYY-MM-DD (ex: 2026-03-25)"
-              placeholderTextColor="#B0BEC5"
-            />
-
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.saisieLabel}>Heure arrivée *</Text>
-                <TextInput
-                  style={styles.saisieInput}
-                  value={saisieArrivee}
-                  onChangeText={setSaisieArrivee}
-                  placeholder="08:00"
-                  placeholderTextColor="#B0BEC5"
-                  keyboardType="numbers-and-punctuation"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.saisieLabel}>Heure départ</Text>
-                <TextInput
-                  style={styles.saisieInput}
-                  value={saisieDepart}
-                  onChangeText={setSaisieDepart}
-                  placeholder="17:00"
-                  placeholderTextColor="#B0BEC5"
-                  keyboardType="numbers-and-punctuation"
-                />
-              </View>
-            </View>
-
-            <Text style={styles.saisieLabel}>Note / Motif</Text>
-            <TextInput
-              style={[styles.saisieInput, { minHeight: 60, textAlignVertical: 'top' }]}
-              value={saisieNote}
-              onChangeText={setSaisieNote}
-              placeholder="Ex: Oubli de pointage, retard justifié..."
-              placeholderTextColor="#B0BEC5"
-              multiline
-            />
-
-            <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
-              <Pressable style={styles.saisieCancel} onPress={() => setShowSaisiePointage(false)}>
-                <Text style={styles.saisieCancelText}>Annuler</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.saisieConfirm, (!saisiePointageEmployeId || !saisiePointageDate || !saisieArrivee) && styles.saisieConfirmDisabled]}
-                onPress={handleSaisiePointage}
-                disabled={!saisiePointageEmployeId || !saisiePointageDate || !saisieArrivee}
               >
                 <Text style={styles.saisieConfirmText}>Enregistrer</Text>
               </Pressable>
@@ -5155,7 +4992,7 @@ const styles = StyleSheet.create({
   saisieBtnText: {
     fontSize: 16,
   },
-  // Modal saisie manuelle
+  // Modal saisie (utilisé par ModalRetardPlanifie)
   saisieSheet: {
     backgroundColor: '#fff',
     borderTopLeftRadius: 20,
@@ -5192,27 +5029,6 @@ const styles = StyleSheet.create({
     color: '#1A1A2E',
     backgroundColor: '#F8FAFC',
     marginBottom: 12,
-  },
-  saisieEmpChip: {
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 20,
-    backgroundColor: '#F0F4F8',
-    borderWidth: 1,
-    borderColor: '#CBD5E0',
-  },
-  saisieEmpChipActive: {
-    backgroundColor: '#2980B9',
-    borderColor: '#2980B9',
-  },
-  saisieEmpChipText: {
-    fontSize: 13,
-    color: '#4A5568',
-    fontWeight: '500',
-  },
-  saisieEmpChipTextActive: {
-    color: '#fff',
-    fontWeight: '700',
   },
   saisieCancel: {
     flex: 1,
