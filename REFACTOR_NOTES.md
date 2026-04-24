@@ -63,3 +63,20 @@ Localisation probable : `addRetardPlanifie` dans AppContext.tsx
 + absence de composant d'affichage admin.
 À traiter : hors scope refactor structurel, à planifier en tâche
 séparée "Fix retards planifiés — notif + visibilité admin".
+
+### Plans chantier — picker web-only (découvert lors de l'extraction 2.6)
+
+`handlePickPlanFile` dans planning.tsx (et précédemment
+`handlePickPlanPlanning`) est strictement web-only :
+`if (Platform.OS !== 'web') return null;`
+
+Sur mobile (iOS/Android), le bouton "📎 Ajouter plan" dans la modale
+ModalPlansChantier est silencieusement non-fonctionnel — le callback
+retourne null, aucun feedback utilisateur.
+
+Statut : pré-existant (confirmé dans le commit 8622383 du 2026-04-20).
+Origine probable : migration web-first sans porter le file picker
+mobile (devrait utiliser expo-document-picker + expo-image-picker).
+Comportement préservé à l'identique lors de l'extraction 2.6.
+À traiter : hors scope refactor structurel, à planifier en tâche
+séparée "Fix picker plans chantier mobile".

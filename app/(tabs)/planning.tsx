@@ -25,6 +25,12 @@ import {
   type MonthGridCell,
 } from '@/components/planning/MonthViewGrid';
 import {
+  ModalPlansChantier,
+  type PlanChantierEntry,
+  type PlanParticipant,
+  type PlanChantierValues,
+} from '@/components/planning/ModalPlansChantier';
+import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
   type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem,
   type NoteChantier,
@@ -267,73 +273,79 @@ export default function PlanningScreen() {
   // Plans chantier (modal dans planning)
   const [showPlansPlanning, setShowPlansPlanning] = useState(false);
   const [plansPlanningChantierId, setPlansPlanningChantierId] = useState<string | null>(null);
-  const [newPlanPlanningNom, setNewPlanPlanningNom] = useState('');
-  const [newPlanPlanningFichier, setNewPlanPlanningFichier] = useState<string | null>(null);
-  const [newPlanPlanningVisiblePar, setNewPlanPlanningVisiblePar] = useState<'tous' | 'employes' | 'soustraitants' | 'specifique'>('tous');
-  const [newPlanPlanningVisibleIds, setNewPlanPlanningVisibleIds] = useState<string[]>([]);
 
-  const openPlansPlanning = (chantierId: string) => {
-    setPlansPlanningChantierId(chantierId);
-    setNewPlanPlanningNom('');
-    setNewPlanPlanningFichier(null);
-    setNewPlanPlanningVisiblePar('tous');
-    setNewPlanPlanningVisibleIds([]);
-    setShowPlansPlanning(true);
-  };
+  const chantierNomPlans = useMemo(() => {
+    if (!plansPlanningChantierId) return '';
+    return data.chantiers.find(c => c.id === plansPlanningChantierId)?.nom ?? '';
+  }, [plansPlanningChantierId, data.chantiers]);
 
-  const handlePickPlanPlanning = () => {
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,application/pdf';
-      input.onchange = async (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64 = reader.result as string;
-          // Upload immédiat vers Supabase Storage
-          const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-          const chantierId = plansPlanningChantierId || 'general';
-          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
-          setNewPlanPlanningFichier(storageUrl || base64);
-        };
-        reader.readAsDataURL(file);
-      };
-      input.click(); setTimeout(() => input.remove(), 60000);
-    }
-  };
-
-  const handleAddPlanPlanning = () => {
-    if (!newPlanPlanningNom.trim() || !newPlanPlanningFichier || !plansPlanningChantierId) return;
-    const plan: PlanChantier = {
-      id: `pl_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      nom: newPlanPlanningNom.trim(),
-      fichier: newPlanPlanningFichier,
-      visiblePar: newPlanPlanningVisiblePar,
-      visibleIds: newPlanPlanningVisiblePar === 'specifique' ? newPlanPlanningVisibleIds : undefined,
-      uploadedAt: new Date().toISOString(),
-    };
-    addPlanChantier(plansPlanningChantierId, plan);
-    setNewPlanPlanningNom('');
-    setNewPlanPlanningFichier(null);
-    setNewPlanPlanningVisiblePar('tous');
-    setNewPlanPlanningVisibleIds([]);
-  };
-
-  const getPlansVisiblesPlanning = (chantierId: string) => {
-    const chantier = data.chantiers.find(c => c.id === chantierId);
-    const plans = chantier?.fiche?.plans || [];
-    if (isAdmin) return plans;
-    const userId = currentUser?.employeId || currentUser?.soustraitantId || '';
-    const isST = !!currentUser?.soustraitantId;
-    return plans.filter(p => {
+  const plansVisibles = useMemo<PlanChantierEntry[]>(() => {
+    if (!plansPlanningChantierId) return [];
+    const chantier = data.chantiers.find(c => c.id === plansPlanningChantierId);
+    const allPlans = chantier?.fiche?.plans || [];
+    const isAdminUser = currentUser?.role === 'admin';
+    const filtered = isAdminUser ? allPlans : allPlans.filter(p => {
+      const userId = currentUser?.employeId || currentUser?.soustraitantId || '';
+      const isSTUser = !!currentUser?.soustraitantId;
       if (p.visiblePar === 'tous') return true;
-      if (p.visiblePar === 'employes' && !isST) return true;
-      if (p.visiblePar === 'soustraitants' && isST) return true;
+      if (p.visiblePar === 'employes' && !isSTUser) return true;
+      if (p.visiblePar === 'soustraitants' && isSTUser) return true;
       if (p.visiblePar === 'specifique') return (p.visibleIds || []).includes(userId);
       return false;
     });
+    return filtered.map(p => ({
+      id:         p.id,
+      nom:        p.nom,
+      fichier:    p.fichier,
+      uploadedAt: p.uploadedAt,
+    }));
+  }, [plansPlanningChantierId, data.chantiers, currentUser]);
+
+  const participantsForPlans = useMemo<PlanParticipant[]>(() => [
+    ...data.employes.map(e => ({ id: e.id, label: e.prenom, kind: 'employe' as const })),
+    ...(data.sousTraitants || []).map(s => ({ id: s.id, label: s.nom, kind: 'soustraitant' as const })),
+  ], [data.employes, data.sousTraitants]);
+
+  const handlePickPlanFile = async (): Promise<string | null> => {
+    if (Platform.OS !== 'web') return null;
+    return new Promise((resolve) => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*,application/pdf';
+      input.onchange = (e: Event) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (!file) { resolve(null); return; }
+        const reader = new FileReader();
+        reader.onload = async () => {
+          const base64 = reader.result as string;
+          const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+          const chantierId = plansPlanningChantierId || 'general';
+          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
+          resolve(storageUrl || base64);
+        };
+        reader.readAsDataURL(file);
+      };
+      input.click();
+      setTimeout(() => input.remove(), 60000);
+    });
+  };
+
+  const handleAddPlan = (values: PlanChantierValues): void => {
+    if (!plansPlanningChantierId) return;
+    const plan: PlanChantier = {
+      id:         `pl_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      nom:        values.nom,
+      fichier:    values.fichier,
+      visiblePar: values.visiblePar,
+      visibleIds: values.visibleIds,
+      uploadedAt: new Date().toISOString(),
+    };
+    addPlanChantier(plansPlanningChantierId, plan);
+  };
+
+  const handleDeletePlan = (planId: string): void => {
+    if (!plansPlanningChantierId) return;
+    deletePlanChantier(plansPlanningChantierId, planId);
   };
 
   const getNotesActivesPlanning = (chantierId: string) => {
@@ -2014,7 +2026,7 @@ export default function PlanningScreen() {
         chantierId={actionsChantierId}
         role={isAdmin ? 'admin' : (isST ? 'soustraitant' : 'employe')}
         onOpenNotes={(id) => openNotesPlanning(id)}
-        onOpenPlans={(id) => openPlansPlanning(id)}
+        onOpenPlans={(id) => { setPlansPlanningChantierId(id); setShowPlansPlanning(true); }}
         onOpenPhotos={(id) => { setGalerieChantierId(id); setShowGalerieGlobale(true); }}
         onOpenFiche={(id) => {
           const ch = data.chantiers.find(c => c.id === id);
@@ -3223,148 +3235,17 @@ export default function PlanningScreen() {
       </Modal>
 
       {/* ── Modal Plans Planning ── */}
-      <Modal visible={showPlansPlanning} animationType="slide" transparent onRequestClose={() => setShowPlansPlanning(false)}>
-        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowPlansPlanning(false)} />
-          <View style={[styles.modalSheet, { maxHeight: '90%' }]}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeaderRow}>
-              <View>
-                <Text style={styles.modalTitle}>{t.chantiers.plansTitle}</Text>
-                <Text style={{ fontSize: 13, color: '#687076' }}>{data.chantiers.find(c => c.id === plansPlanningChantierId)?.nom ?? ''}</Text>
-              </View>
-              <Pressable style={styles.modalXBtn} onPress={() => setShowPlansPlanning(false)}>
-                <Text style={styles.modalXBtnText}>✕</Text>
-              </Pressable>
-            </View>
-
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 20 }}>
-              {plansPlanningChantierId && getPlansVisiblesPlanning(plansPlanningChantierId).length === 0 && (
-                <Text style={{ margin: 16, color: '#687076', fontSize: 14 }}>{t.chantiers.noPlans}</Text>
-              )}
-              {plansPlanningChantierId && getPlansVisiblesPlanning(plansPlanningChantierId).map(plan => (
-                <View key={plan.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FB', borderRadius: 10, marginBottom: 8, borderWidth: 1, borderColor: '#E2E6EA', overflow: 'hidden' }}>
-                  <Pressable
-                    style={{ flex: 1, flexDirection: 'row', alignItems: 'center', padding: 12, gap: 10 }}
-                    onPress={() => {
-                      const uri = plan.fichier;
-                      if (!uri) return;
-                      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                        if (uri.startsWith('http')) window.open(uri, '_blank');
-                        else { const w = window.open(); if (w) w.document.write(`<img src="${uri}" style="max-width:100%;height:auto">`); }
-                      } else if (uri.startsWith('http')) {
-                        const WebBrowser = require('expo-web-browser');
-                        WebBrowser.openBrowserAsync(uri).catch(() => Linking.openURL(uri));
-                      }
-                    }}
-                  >
-                    <Text style={{ fontSize: 24 }}>{(plan.fichier.endsWith('.pdf') || plan.fichier.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C', marginBottom: 2 }}>{plan.nom}</Text>
-                      <Text style={{ fontSize: 12, color: '#687076' }}>{new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}</Text>
-                    </View>
-                    <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>{t.chantiers.viewPlan} →</Text>
-                  </Pressable>
-                  {isAdmin && (
-                    <Pressable
-                      style={{ paddingHorizontal: 12, paddingVertical: 12, backgroundColor: '#FFF0F0', borderLeftWidth: 1, borderLeftColor: '#E2E6EA' }}
-                      onPress={() => {
-                        if (Platform.OS === 'web') {
-                          if (window.confirm(t.chantiers.deletePlan)) deletePlanChantier(plansPlanningChantierId!, plan.id);
-                        } else {
-                          Alert.alert(t.common.delete, t.chantiers.deletePlan, [
-                            { text: t.common.cancel, style: 'cancel' },
-                            { text: t.common.delete, style: 'destructive', onPress: () => deletePlanChantier(plansPlanningChantierId!, plan.id) },
-                          ]);
-                        }
-                      }}
-                    >
-                      <Text style={{ fontSize: 16 }}>🗑</Text>
-                    </Pressable>
-                  )}
-                </View>
-              ))}
-
-              {isAdmin && (
-                <View style={{ padding: 16, backgroundColor: '#F5EDE3', borderRadius: 12, marginTop: 8 }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C', marginBottom: 10 }}>{t.chantiers.addPlan}</Text>
-                  <TextInput
-                    style={styles.noteInput}
-                    value={newPlanPlanningNom}
-                    onChangeText={setNewPlanPlanningNom}
-                    placeholder={t.chantiers.planName}
-                    placeholderTextColor="#B0BEC5"
-                  />
-                  <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Pressable
-                      style={{ backgroundColor: '#E8EEF8', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, borderWidth: 1, borderColor: '#C5D0E6' }}
-                      onPress={handlePickPlanPlanning}
-                    >
-                      <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>📎 {t.chantiers.addPlan}</Text>
-                    </Pressable>
-                    {newPlanPlanningFichier && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                        <Text>{newPlanPlanningFichier.startsWith('data:application/pdf') ? '📄' : '🖼️'}</Text>
-                        <Text style={{ flex: 1, fontSize: 12, color: '#687076' }} numberOfLines={1}>{t.common.fileSelected}</Text>
-                        <Pressable onPress={() => setNewPlanPlanningFichier(null)}>
-                          <Text style={{ color: '#E74C3C', fontWeight: '700' }}>✕</Text>
-                        </Pressable>
-                      </View>
-                    )}
-                  </View>
-                  <View style={{ marginTop: 8 }}>
-                    <Text style={{ fontSize: 12, color: '#687076', marginBottom: 6 }}>{t.chantiers.planRecipients}</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {(['tous', 'employes', 'soustraitants', 'specifique'] as const).map(v => (
-                        <Pressable
-                          key={v}
-                          style={[styles.chip, newPlanPlanningVisiblePar === v && styles.chipActive]}
-                          onPress={() => setNewPlanPlanningVisiblePar(v)}
-                        >
-                          <Text style={[styles.chipText, newPlanPlanningVisiblePar === v && styles.chipTextActive]}>
-                            {v === 'tous' ? t.chantiers.allRecipients : v === 'employes' ? '👷 Employés' : v === 'soustraitants' ? '👤 ST' : '👥 Sélection'}
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                  {newPlanPlanningVisiblePar === 'specifique' && (
-                    <View style={{ marginTop: 8 }}>
-                      <Text style={{ fontSize: 12, color: '#687076', marginBottom: 6 }}>{t.chantiers.recipients}</Text>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                        {data.employes.map(emp => (
-                          <Pressable
-                            key={emp.id}
-                            style={[styles.chip, newPlanPlanningVisibleIds.includes(emp.id) && styles.chipActive]}
-                            onPress={() => setNewPlanPlanningVisibleIds(prev => prev.includes(emp.id) ? prev.filter(x => x !== emp.id) : [...prev, emp.id])}
-                          >
-                            <Text style={[styles.chipText, newPlanPlanningVisibleIds.includes(emp.id) && styles.chipTextActive]}>{emp.prenom}</Text>
-                          </Pressable>
-                        ))}
-                        {(data.sousTraitants || []).map(st => (
-                          <Pressable
-                            key={st.id}
-                            style={[styles.chip, newPlanPlanningVisibleIds.includes(st.id) && styles.chipActive]}
-                            onPress={() => setNewPlanPlanningVisibleIds(prev => prev.includes(st.id) ? prev.filter(x => x !== st.id) : [...prev, st.id])}
-                          >
-                            <Text style={[styles.chipText, newPlanPlanningVisibleIds.includes(st.id) && styles.chipTextActive]}>{st.nom} (ST)</Text>
-                          </Pressable>
-                        ))}
-                      </View>
-                    </View>
-                  )}
-                  <Pressable
-                    style={[styles.modalCloseBtn, { marginTop: 12, opacity: (newPlanPlanningNom.trim() && newPlanPlanningFichier) ? 1 : 0.5 }]}
-                    onPress={handleAddPlanPlanning}
-                    disabled={!newPlanPlanningNom.trim() || !newPlanPlanningFichier}
-                  >
-                    <Text style={styles.modalCloseBtnText}>{t.common.add}</Text>
-                  </Pressable>
-                </View>
-              )}
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      <ModalPlansChantier
+        visible={showPlansPlanning}
+        onClose={() => setShowPlansPlanning(false)}
+        chantierNom={chantierNomPlans}
+        plans={plansVisibles}
+        participants={participantsForPlans}
+        isAdmin={isAdmin}
+        onPickFile={handlePickPlanFile}
+        onAddPlan={handleAddPlan}
+        onDeletePlan={handleDeletePlan}
+      />
 
       {/* Modal paramètres compte admin */}
       <ModalKeyboard visible={showPwdModal} transparent animationType="fade" onRequestClose={() => setShowPwdModal(false)}>
