@@ -21,6 +21,10 @@ import {
 } from '@/components/planning/AdminPlanningModeSwitcher';
 import { ModalRetardPlanifie } from '@/components/planning/ModalRetardPlanifie';
 import {
+  MonthViewGrid,
+  type MonthGridCell,
+} from '@/components/planning/MonthViewGrid';
+import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
   type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem,
   type NoteChantier,
@@ -730,6 +734,32 @@ export default function PlanningScreen() {
       )
     ));
   }, [data, isAdmin, isST, currentUser]);
+
+  // ─── Précalcul pour la vue mensuelle ──────────────────────────────────────
+  const monthCells = useMemo<MonthGridCell[]>(() =>
+    monthData.cells.map(day => {
+      if (!day) return { day: null, chantiers: [] };
+      const active = visibleChantiers.filter(c =>
+        dateInRange(day, c.dateDebut, c.dateFin) &&
+        data.affectations.some(a =>
+          a.chantierId === c.id &&
+          dateInRange(day, a.dateDebut, a.dateFin) &&
+          !a.soustraitantId &&
+          (isAdmin || a.employeId === currentUser?.employeId)
+        )
+      );
+      return {
+        day,
+        chantiers: active.map(c => ({ id: c.id, nom: c.nom, couleur: c.couleur })),
+      };
+    }),
+    [monthData, visibleChantiers, data.affectations, isAdmin, currentUser?.employeId],
+  );
+
+  const chantiersLegend = useMemo(() =>
+    visibleChantiers.map(c => ({ id: c.id, nom: c.nom, couleur: c.couleur })),
+    [visibleChantiers],
+  );
 
   // ─── Réorganisation des chantiers sur le Planning (admin) ─────────────────
   // L'ordre de référence part de visibleChantiers pour que les nouveaux chantiers
@@ -1529,72 +1559,24 @@ export default function PlanningScreen() {
 
       {/* Vue mensuelle */}
       {viewMode === 'mois' && (
-        <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2C2C2C']} tintColor="#2C2C2C" />}>
-          {/* En-tête jours semaine */}
-          <View style={styles.monthHeaderRow}>
-            {CAL_JOURS.map(j => (
-              <View key={j} style={styles.monthHeaderCell}>
-                <Text style={styles.monthHeaderText}>{j}</Text>
-              </View>
-            ))}
-          </View>
-          {/* Grille des jours */}
-          <View style={styles.monthGrid}>
-            {monthData.cells.map((day, idx) => {
-              if (!day) return <View key={idx} style={styles.monthCell} />;
-              const dateStr = toYMD(day);
-              const tod = isToday(day);
-              // Chantiers actifs ce jour
-              const chantiersActifs = visibleChantiers.filter(c =>
-                dateInRange(day, c.dateDebut, c.dateFin) &&
-                data.affectations.some(a =>
-                  a.chantierId === c.id &&
-                  dateInRange(day, a.dateDebut, a.dateFin) &&
-                  (!a.soustraitantId) &&
-                  (isAdmin || a.employeId === currentUser?.employeId)
-                )
-              );
-              return (
-                <Pressable
-                  key={idx}
-                  style={[styles.monthCell, tod && styles.monthCellToday]}
-                  onPress={() => {
-                    // Passer en vue semaine sur ce jour
-                    const today2 = new Date();
-                    const dow = today2.getDay();
-                    const mondayOffset = dow === 0 ? -6 : 1 - dow;
-                    const thisMonday = addDays(today2, mondayOffset);
-                    const pickedDow = day.getDay();
-                    const pickedMondayOff = pickedDow === 0 ? -6 : 1 - pickedDow;
-                    const pickedMonday = addDays(day, pickedMondayOff);
-                    const diffDays = Math.round((pickedMonday.getTime() - thisMonday.getTime()) / (1000 * 60 * 60 * 24));
-                    setWeekOffset(Math.round(diffDays / 7));
-                    setViewMode('semaine');
-                  }}
-                >
-                  <Text style={[styles.monthCellNum, tod && styles.monthCellNumToday]}>{day.getDate()}</Text>
-                  {chantiersActifs.slice(0, 3).map(c => (
-                    <View key={c.id} style={[styles.monthChantierDot, { backgroundColor: c.couleur }]}>
-                      <Text style={styles.monthChantierDotText} numberOfLines={1}>{c.nom}</Text>
-                    </View>
-                  ))}
-                  {chantiersActifs.length > 3 && (
-                    <Text style={styles.monthMoreText}>+{chantiersActifs.length - 3}</Text>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-          {/* Légende couleurs chantiers */}
-          <View style={styles.monthLegend}>
-            {visibleChantiers.map(c => (
-              <View key={c.id} style={styles.monthLegendItem}>
-                <View style={[styles.monthLegendDot, { backgroundColor: c.couleur }]} />
-                <Text style={styles.monthLegendText} numberOfLines={1}>{c.nom}</Text>
-              </View>
-            ))}
-          </View>
-        </ScrollView>
+        <MonthViewGrid
+          cells={monthCells}
+          chantiersLegend={chantiersLegend}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          onDayPress={(day) => {
+            const today2 = new Date();
+            const dow = today2.getDay();
+            const mondayOffset = dow === 0 ? -6 : 1 - dow;
+            const thisMonday = addDays(today2, mondayOffset);
+            const pickedDow = day.getDay();
+            const pickedMondayOff = pickedDow === 0 ? -6 : 1 - pickedDow;
+            const pickedMonday = addDays(day, pickedMondayOff);
+            const diffDays = Math.round((pickedMonday.getTime() - thisMonday.getTime()) / (1000 * 60 * 60 * 24));
+            setWeekOffset(Math.round(diffDays / 7));
+            setViewMode('semaine');
+          }}
+        />
       )}
 
       {/* ═══ VUE GANTT ═══ */}
@@ -4761,95 +4743,6 @@ const styles = StyleSheet.create({
   },
   viewToggleBtnTextActive: {
     color: '#fff',
-  },
-  // ── Vue mensuelle ──
-  monthHeaderRow: {
-    flexDirection: 'row',
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
-    paddingVertical: 6,
-  },
-  monthHeaderCell: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  monthHeaderText: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: '#687076',
-    textTransform: 'uppercase',
-  },
-  monthGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 4,
-  },
-  monthCell: {
-    width: '14.28%',
-    minHeight: 70,
-    padding: 3,
-    borderWidth: 0.5,
-    borderColor: '#E2E6EA',
-    backgroundColor: '#fff',
-  },
-  monthCellToday: {
-    backgroundColor: '#EEF2F8',
-    borderColor: '#2C2C2C',
-    borderWidth: 1.5,
-  },
-  monthCellNum: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#11181C',
-    marginBottom: 2,
-  },
-  monthCellNumToday: {
-    color: '#2C2C2C',
-    fontWeight: '600',
-  },
-  monthChantierDot: {
-    borderRadius: 3,
-    paddingHorizontal: 3,
-    paddingVertical: 1,
-    marginBottom: 1,
-  },
-  monthChantierDotText: {
-    fontSize: 8,
-    color: '#fff',
-    fontWeight: '700',
-  },
-  monthMoreText: {
-    fontSize: 9,
-    color: '#687076',
-    fontStyle: 'italic',
-  },
-  monthLegend: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 12,
-    gap: 8,
-    backgroundColor: '#fff',
-    marginTop: 8,
-    borderRadius: 10,
-    margin: 8,
-  },
-  monthLegendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    width: '45%',
-  },
-  monthLegendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 3,
-  },
-  monthLegendText: {
-    fontSize: 11,
-    color: '#11181C',
-    fontWeight: '500',
-    flex: 1,
   },
   // ── Badge matériel non acheté ──
   materielBadge: {
