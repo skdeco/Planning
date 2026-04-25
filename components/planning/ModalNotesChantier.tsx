@@ -14,6 +14,7 @@ import {
 import { DS, font, radius, space } from '../../constants/design';
 import { useLanguage } from '../../app/context/LanguageContext';
 import { EmptyState } from '../ui/EmptyState';
+import { SectionHeader } from '../ui/SectionHeader';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -133,7 +134,7 @@ export interface ModalNotesChantierProps {
 // ─── Types internes (list items avec headers admin) ───────────────────────────
 
 type ListItem =
-  | { kind: 'header'; label: string }
+  | { kind: 'header'; title: string; count: number }
   | { kind: 'note'; note: NoteChantierEntry };
 
 // ─── Constantes internes ──────────────────────────────────────────────────────
@@ -235,18 +236,6 @@ const REMOVE_PHOTO_OFFSET = -4;
 /** marginBottom de la ligne destinataires. */
 const NOTE_DEST_MB = 6;
 
-/** Border-radius du bandeau section header (admin). */
-const SECTION_HEADER_RADIUS = 6;
-
-/** Padding-vertical du bandeau section header. */
-const SECTION_HEADER_PV = 6;
-
-/** Top margin du bandeau section header. */
-const SECTION_HEADER_MT = 10;
-
-/** Bottom margin du bandeau section header. */
-const SECTION_HEADER_MB = 6;
-
 /** Shadow offset height (carte note). */
 const SHADOW_OFFSET_Y = 2;
 
@@ -268,11 +257,11 @@ function buildListItems(notes: NoteChantierEntry[], admin: boolean): ListItem[] 
   const autresNotes = notes.filter(n => n.auteurId !== 'admin');
   const items: ListItem[] = [];
   if (mesNotes.length > 0) {
-    items.push({ kind: 'header', label: `📝 Mes notes (${mesNotes.length})` });
+    items.push({ kind: 'header', title: '📝 Mes notes', count: mesNotes.length });
     mesNotes.forEach(n => items.push({ kind: 'note', note: n }));
   }
   if (autresNotes.length > 0) {
-    items.push({ kind: 'header', label: `👥 Notes des autres (${autresNotes.length})` });
+    items.push({ kind: 'header', title: '👥 Notes des autres', count: autresNotes.length });
     autresNotes.forEach(n => items.push({ kind: 'note', note: n }));
   }
   return items;
@@ -401,9 +390,7 @@ export function ModalNotesChantier({
             )}
 
             {listItems.map(item => item.kind === 'header' ? (
-              <View key={`h_${item.label}`} style={styles.sectionHeader}>
-                <Text style={styles.sectionHeaderText}>{item.label}</Text>
-              </View>
+              <SectionHeader key={`h_${item.title}`} title={item.title} count={item.count} size="sm" />
             ) : (
               <NoteCard
                 key={item.note.id}
@@ -703,25 +690,6 @@ const styles = StyleSheet.create({
   // — Scroll body —
   scrollBody: {
     flex: 1,
-  },
-
-  // — Section headers (admin groupement) —
-  sectionHeader: {
-    flexDirection:     'row',
-    alignItems:        'center',
-    gap:               space.xs + 2,           // 6, fine
-    marginTop:         SECTION_HEADER_MT,      // 10
-    marginBottom:      SECTION_HEADER_MB,      // 6
-    paddingHorizontal: space.xs,      // 4
-    paddingVertical:   SECTION_HEADER_PV,      // 6
-    backgroundColor:   DS.background,
-    borderRadius:      SECTION_HEADER_RADIUS,  // 6
-  },
-
-  sectionHeaderText: {
-    fontSize:   font.sm,                       // 12
-    fontWeight: font.bold,
-    color:      DS.primary,
   },
 
   // — Note card —

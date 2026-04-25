@@ -7,6 +7,7 @@ import {
 } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { LanguageFlag } from '@/components/LanguageFlag';
@@ -1280,7 +1281,7 @@ export default function PlanningScreen() {
           {/* Légende employés */}
           {visibleEmps.length > 0 && (
             <>
-              <Text style={styles.legendTitle}>EMPLOYÉS</Text>
+              <SectionHeader title="Employés" size="sm" uppercase />
               <View style={styles.legendGrid}>
                 {visibleEmps.map(emp => {
                   const empColor = getEmployeColor(emp);
@@ -1301,7 +1302,7 @@ export default function PlanningScreen() {
           {/* Légende sous-traitants */}
           {visibleSTs.length > 0 && (
             <>
-              <Text style={[styles.legendTitle, { marginTop: 12 }]}>SOUS-TRAITANTS</Text>
+              <SectionHeader title="Sous-traitants" size="sm" uppercase style={{ marginTop: 12 }} />
               <View style={styles.legendGrid}>
                 {visibleSTs.map(st => (
                   <View key={st.id} style={styles.legendItem}>
@@ -2165,13 +2166,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
     marginBottom: 24,
-  },
-  legendTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#11181C',
-    letterSpacing: 0.5,
-    marginBottom: 12,
   },
   legendGrid: {
     flexDirection: 'row',
