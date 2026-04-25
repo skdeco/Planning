@@ -62,7 +62,7 @@ export function GanttTimelineAdmin({
   monthOffset,
   onPrevMonths,
   onNextMonths,
-}: GanttTimelineAdminProps): JSX.Element {
+}: GanttTimelineAdminProps): React.ReactElement {
   const { data } = useApp();
 
   // Calcul de la plage Gantt : 3 mois glissants
