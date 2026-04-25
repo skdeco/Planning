@@ -213,17 +213,11 @@ const CHIP_PV = 5;
 /** Taille du carré photo preview dans la note. */
 const PHOTO_THUMB_SIZE = 60;
 
-/** Border-radius des photos thumb. */
-const PHOTO_THUMB_RADIUS = 8;
-
 /** Marge-right entre photos thumb. */
 const PHOTO_THUMB_MR = 6;
 
 /** fontSize du PDF placeholder. */
 const PDF_EMOJI_FS = 22;
-
-/** fontSize du PDF emoji dans les pieces jointes. */
-const ATTACHMENT_EMOJI_FS = 20;
 
 /** Taille du carré photo dans le form preview. */
 const FORM_PHOTO_SIZE = 56;
@@ -234,29 +228,14 @@ const FORM_PHOTO_WRAP = 64;
 /** Border-radius des photos form. */
 const FORM_PHOTO_RADIUS = 6;
 
-/** Taille du bouton supprimer photo (×). */
-const REMOVE_PHOTO_BTN_SIZE = 16;
-
-/** fontSize du bouton × photo. */
-const REMOVE_PHOTO_FS = 9;
-
 /** Position top/right offset du bouton × photo. */
 const REMOVE_PHOTO_OFFSET = -4;
-
-/** marginBottom entre le titre et le sous-bloc d'une note. */
-const NOTE_HEADER_MB = 4;
-
-/** marginBottom du texte de note avant les pièces jointes. */
-const NOTE_TEXTE_MB = 8;
 
 /** marginBottom de la ligne destinataires. */
 const NOTE_DEST_MB = 6;
 
 /** Border-radius du bandeau section header (admin). */
 const SECTION_HEADER_RADIUS = 6;
-
-/** Padding-horizontal du bandeau section header. */
-const SECTION_HEADER_PH = 4;
 
 /** Padding-vertical du bandeau section header. */
 const SECTION_HEADER_PV = 6;
@@ -278,9 +257,6 @@ const SHADOW_RADIUS = 8;
 
 /** Shadow elevation Android. */
 const SHADOW_ELEVATION = 1;
-
-/** X button size + radius pour le bouton fermer de la modale. */
-const X_BTN_SIZE = 32; // = space.xxxl
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -743,7 +719,7 @@ const styles = StyleSheet.create({
     gap:               space.xs + 2,           // 6, fine
     marginTop:         SECTION_HEADER_MT,      // 10
     marginBottom:      SECTION_HEADER_MB,      // 6
-    paddingHorizontal: SECTION_HEADER_PH,      // 4
+    paddingHorizontal: space.xs,      // 4
     paddingVertical:   SECTION_HEADER_PV,      // 6
     backgroundColor:   DS.background,
     borderRadius:      SECTION_HEADER_RADIUS,  // 6
@@ -774,7 +750,7 @@ const styles = StyleSheet.create({
   noteHeader: {
     flexDirection:  'row',
     justifyContent: 'space-between',
-    marginBottom:   NOTE_HEADER_MB,            // 4
+    marginBottom:   space.xs,            // 4
   },
 
   noteAuteur: {
@@ -791,7 +767,7 @@ const styles = StyleSheet.create({
   noteTexte: {
     fontSize:     font.md,                     // 14
     color:        DS.textStrong,
-    marginBottom: NOTE_TEXTE_MB,               // 8
+    marginBottom: space.sm,               // 8
   },
 
   attachmentBox: {
@@ -801,11 +777,11 @@ const styles = StyleSheet.create({
     backgroundColor: DS.background,
     borderRadius:    radius.sm,                // 8
     padding:         space.sm,                 // 8
-    marginBottom:    NOTE_TEXTE_MB,            // 8
+    marginBottom:    space.sm,            // 8
   },
 
   attachmentEmoji: {
-    fontSize: ATTACHMENT_EMOJI_FS,             // 20
+    fontSize: font.xl,             // 20
   },
 
   attachmentName: {
@@ -821,13 +797,13 @@ const styles = StyleSheet.create({
   },
 
   notePhotosRow: {
-    marginBottom: NOTE_TEXTE_MB,               // 8
+    marginBottom: space.sm,               // 8
   },
 
   notePhoto: {
     width:        PHOTO_THUMB_SIZE,            // 60
     height:       PHOTO_THUMB_SIZE,            // 60
-    borderRadius: PHOTO_THUMB_RADIUS,          // 8
+    borderRadius: radius.sm,          // 8
     marginRight:  PHOTO_THUMB_MR,              // 6
   },
 
@@ -980,15 +956,15 @@ const styles = StyleSheet.create({
     right:           REMOVE_PHOTO_OFFSET,      // -4
     backgroundColor: DS.error,
     borderRadius:    radius.sm,                // 8
-    width:           REMOVE_PHOTO_BTN_SIZE,    // 16
-    height:          REMOVE_PHOTO_BTN_SIZE,    // 16
+    width:           space.lg,    // 16
+    height:          space.lg,    // 16
     alignItems:      'center',
     justifyContent:  'center',
   },
 
   removePhotoText: {
     color:      DS.textInverse,
-    fontSize:   REMOVE_PHOTO_FS,               // 9
+    fontSize:   font.tiny,               // 9
     fontWeight: font.bold,
   },
 
@@ -1006,7 +982,7 @@ const styles = StyleSheet.create({
   },
 
   pickPhotosEmoji: {
-    fontSize: radius.lg,                       // 16
+    fontSize: font.lg,                         // 16
   },
 
   pickPhotosText: {
@@ -1034,5 +1010,3 @@ const styles = StyleSheet.create({
   },
 });
 
-// Suppress unused warning for X_BTN_SIZE (documentation only — replaced by space.xxxl)
-void X_BTN_SIZE;

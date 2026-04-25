@@ -80,3 +80,30 @@ mobile (devrait utiliser expo-document-picker + expo-image-picker).
 Comportement préservé à l'identique lors de l'extraction 2.6.
 À traiter : hors scope refactor structurel, à planifier en tâche
 séparée "Fix picker plans chantier mobile".
+
+### Notes chantier — picker photos web-only (découvert lors de l'extraction 2.7)
+
+`handlePickNotePhotos` dans planning.tsx (anciennement
+`handlePickNotePhotosPlanning`) est strictement web-only :
+`if (Platform.OS !== 'web') return [];`
+
+Sur mobile (iOS/Android), le bouton "📎 Ajouter photo / PDF" dans la
+modale ModalNotesChantier est silencieusement non-fonctionnel — le
+callback retourne `[]`, aucun feedback utilisateur.
+
+Statut : pré-existant (même pattern que les plans chantier).
+Comportement préservé à l'identique lors de l'extraction 2.7.
+À traiter : hors scope refactor structurel, à regrouper avec le fix
+picker plans chantier mobile.
+
+### Notes chantier — strings FR hardcodées dans la confirmation de suppression (2.7)
+
+`confirmDelete` dans `components/planning/ModalNotesChantier.tsx`
+utilise des strings FR en dur (`'Supprimer'`, `'Supprimer cette note ?'`,
+`'Annuler'`) au lieu de passer par `useLanguage()`.
+
+Statut : pré-existant (déjà présent dans `handleDeleteNotePlanning`
+de planning.tsx avant l'extraction).
+Comportement préservé à l'identique lors de l'extraction 2.7.
+À traiter : i18n complet de la modale en passe finale (Phase 2.16
+cleanup) ou hors scope refactor structurel.

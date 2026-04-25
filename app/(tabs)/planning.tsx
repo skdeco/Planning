@@ -31,6 +31,12 @@ import {
   type PlanChantierValues,
 } from '@/components/planning/ModalPlansChantier';
 import {
+  ModalNotesChantier,
+  type NoteChantierEntry,
+  type NoteChantierFormValues,
+  type NoteParticipant,
+} from '@/components/planning/ModalNotesChantier';
+import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
   type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem,
   type NoteChantier,
@@ -240,34 +246,99 @@ export default function PlanningScreen() {
   // Notes chantier (modal dans planning)
   const [showNotesPlanning, setShowNotesPlanning] = useState(false);
   const [notesPlanningChantierId, setNotesPlanningChantierId] = useState<string | null>(null);
-  const [newNotePlanningTexte, setNewNotePlanningTexte] = useState('');
-  const [notePlanningDestinataires, setNotePlanningDestinataires] = useState<'tous' | string[]>('tous');
-  const [notePlanningPhotos, setNotePlanningPhotos] = useState<string[]>([]);
 
-  const openNotesPlanning = (chantierId: string) => {
-    setNotesPlanningChantierId(chantierId);
-    setNewNotePlanningTexte('');
-    setNotePlanningDestinataires('tous');
-    setNotePlanningPhotos([]);
-    setShowNotesPlanning(true);
-  };
+  const chantierNomNotes = useMemo(() => {
+    if (!notesPlanningChantierId) return '';
+    return data.chantiers.find(c => c.id === notesPlanningChantierId)?.nom ?? '';
+  }, [notesPlanningChantierId, data.chantiers]);
 
-  const handlePickNotePhotosPlanning = () => {
-    if (Platform.OS === 'web') {
+  const notesVisibles = useMemo<NoteChantierEntry[]>(() => {
+    if (!notesPlanningChantierId) return [];
+    const isAdminUser = currentUser?.role === 'admin';
+    const userId = isAdminUser ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || '');
+    return (data.notesChantier || [])
+      .filter(n => {
+        if (n.chantierId !== notesPlanningChantierId) return false;
+        if (n.archivedBy.includes(userId)) return false;
+        if (n.destinataires === 'tous') return true;
+        if (isAdminUser) return true;
+        return (n.destinataires as string[]).includes(userId);
+      })
+      .map(n => ({
+        id:              n.id,
+        auteurId:        n.auteurId,
+        auteurNom:       n.auteurNom,
+        texte:           n.texte,
+        createdAt:       n.createdAt,
+        destinataires:   n.destinataires,
+        photos:          n.photos,
+        pieceJointe:     n.pieceJointe,
+        pieceJointeType: n.pieceJointeType,
+        pieceJointeNom:  n.pieceJointeNom,
+      }));
+  }, [notesPlanningChantierId, data.notesChantier, currentUser]);
+
+  const participantsForNotes = useMemo<NoteParticipant[]>(() => [
+    ...data.employes.map(e => ({ id: e.id, label: e.prenom, kind: 'employe' as const })),
+    ...(data.sousTraitants || []).map(s => ({ id: s.id, label: s.nom, kind: 'soustraitant' as const })),
+  ], [data.employes, data.sousTraitants]);
+
+  const handlePickNotePhotos = async (): Promise<string[]> => {
+    if (Platform.OS !== 'web') return [];
+    return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*,application/pdf';
       input.multiple = true;
+      const collected: string[] = [];
+      let pending = 0;
       input.onchange = (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || []);
+        if (files.length === 0) { resolve([]); return; }
+        pending = files.length;
         files.forEach(file => {
           const reader = new FileReader();
-          reader.onload = () => setNotePlanningPhotos(prev => [...prev, reader.result as string]);
+          const finalize = () => { pending -= 1; if (pending === 0) resolve(collected); };
+          reader.onload  = () => { collected.push(reader.result as string); finalize(); };
+          reader.onerror = finalize;
           reader.readAsDataURL(file);
         });
       };
-      input.click(); setTimeout(() => input.remove(), 60000);
-    }
+      input.click();
+      setTimeout(() => input.remove(), 60000);
+    });
+  };
+
+  const handleAddNote = (values: NoteChantierFormValues): void => {
+    if (!notesPlanningChantierId) return;
+    const isAdminUser = currentUser?.role === 'admin';
+    const userId = isAdminUser ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
+    const nom = isAdminUser
+      ? 'Admin'
+      : (data.employes.find(e => e.id === userId)?.prenom
+        || (data.sousTraitants || []).find(s => s.id === userId)?.nom
+        || 'Inconnu');
+    addNoteChantier({
+      id:            `nc_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      chantierId:    notesPlanningChantierId,
+      auteurId:      userId,
+      auteurNom:     nom,
+      texte:         values.texte.trim(),
+      createdAt:     new Date().toISOString(),
+      destinataires: isAdminUser ? values.destinataires : 'tous',
+      archivedBy:    [],
+      photos:        values.photos.length > 0 ? values.photos : undefined,
+    });
+  };
+
+  const handleArchiveNote = (noteId: string): void => {
+    const isAdminUser = currentUser?.role === 'admin';
+    const userId = isAdminUser ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
+    archiveNoteChantier(noteId, userId);
+  };
+
+  const handleDeleteNote = (noteId: string): void => {
+    deleteNoteChantier(noteId);
   };
 
   // Plans chantier (modal dans planning)
@@ -346,56 +417,6 @@ export default function PlanningScreen() {
   const handleDeletePlan = (planId: string): void => {
     if (!plansPlanningChantierId) return;
     deletePlanChantier(plansPlanningChantierId, planId);
-  };
-
-  const getNotesActivesPlanning = (chantierId: string) => {
-    const userId = currentUser?.role === 'admin' ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || '');
-    return (data.notesChantier || []).filter(n => {
-      if (n.chantierId !== chantierId) return false;
-      if (n.archivedBy.includes(userId)) return false;
-      if (n.destinataires === 'tous') return true;
-      if (currentUser?.role === 'admin') return true;
-      return (n.destinataires as string[]).includes(userId);
-    });
-  };
-
-  const handleAddNotePlanning = () => {
-    // Valider si texte OU photo(s) présents
-    const hasPhotos = notePlanningPhotos.length > 0;
-    if (!hasPhotos && !newNotePlanningTexte.trim()) return;
-    if (!notesPlanningChantierId) return;
-    const userId = currentUser?.role === 'admin' ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
-    const nom = currentUser?.role === 'admin' ? 'Admin' : (data.employes.find(e => e.id === userId)?.prenom || (data.sousTraitants || []).find(s => s.id === userId)?.nom || 'Inconnu');
-    addNoteChantier({
-      id: `nc_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      chantierId: notesPlanningChantierId,
-      auteurId: userId,
-      auteurNom: nom,
-      texte: newNotePlanningTexte.trim(),
-      createdAt: new Date().toISOString(),
-      destinataires: isAdmin ? notePlanningDestinataires : 'tous',
-      archivedBy: [],
-      photos: notePlanningPhotos.length > 0 ? notePlanningPhotos : undefined,
-    });
-    setNewNotePlanningTexte('');
-    setNotePlanningDestinataires('tous');
-    setNotePlanningPhotos([]);
-  };
-
-  const handleArchiveNotePlanning = (noteId: string) => {
-    const userId = currentUser?.role === 'admin' ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
-    archiveNoteChantier(noteId, userId);
-  };
-
-  const handleDeleteNotePlanning = (noteId: string) => {
-    if (Platform.OS === 'web') {
-      if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer cette note ?')) deleteNoteChantier(noteId);
-    } else {
-      Alert.alert('Supprimer', 'Supprimer cette note ?', [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => deleteNoteChantier(noteId) },
-      ]);
-    }
   };
 
   // Retard planifié (employé)
@@ -2025,7 +2046,7 @@ export default function PlanningScreen() {
         onClose={() => setActionsChantierId(null)}
         chantierId={actionsChantierId}
         role={isAdmin ? 'admin' : (isST ? 'soustraitant' : 'employe')}
-        onOpenNotes={(id) => openNotesPlanning(id)}
+        onOpenNotes={(id) => { setNotesPlanningChantierId(id); setShowNotesPlanning(true); }}
         onOpenPlans={(id) => { setPlansPlanningChantierId(id); setShowPlansPlanning(true); }}
         onOpenPhotos={(id) => { setGalerieChantierId(id); setShowGalerieGlobale(true); }}
         onOpenFiche={(id) => {
@@ -3000,239 +3021,18 @@ export default function PlanningScreen() {
       />
 
       {/* ── Modal Notes Chantier (Planning) ── */}
-      <Modal visible={showNotesPlanning} animationType="slide" transparent onRequestClose={() => setShowNotesPlanning(false)}>
-        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowNotesPlanning(false)} />
-          <Pressable style={[styles.modalSheet, { maxHeight: '80%' }]} onPress={() => {}}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>
-                📝 Notes — {notesPlanningChantierId ? (data.chantiers.find(c => c.id === notesPlanningChantierId)?.nom || '') : ''}
-              </Text>
-              <Pressable onPress={() => setShowNotesPlanning(false)} style={styles.modalXBtn}>
-                <Text style={styles.modalXText}>✕</Text>
-              </Pressable>
-            </View>
-
-            <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
-              {/* Liste des notes actives — regroupées pour l'admin */}
-              {notesPlanningChantierId && getNotesActivesPlanning(notesPlanningChantierId).length === 0 && (
-                <Text style={{ textAlign: 'center', color: '#B0BEC5', marginVertical: 20 }}>Aucune note active pour ce chantier.</Text>
-              )}
-              {notesPlanningChantierId && (() => {
-                const allNotes = getNotesActivesPlanning(notesPlanningChantierId);
-                if (!isAdmin) return allNotes; // Employé/ST : simple liste
-                // Admin : regroupe en "Mes notes" vs "Notes des autres"
-                const mesNotes = allNotes.filter(n => n.auteurId === 'admin');
-                const autresNotes = allNotes.filter(n => n.auteurId !== 'admin');
-                const sections: any[] = [];
-                if (mesNotes.length > 0) {
-                  sections.push({ __header: true, label: `📝 Mes notes (${mesNotes.length})` });
-                  sections.push(...mesNotes);
-                }
-                if (autresNotes.length > 0) {
-                  sections.push({ __header: true, label: `👥 Notes des autres (${autresNotes.length})` });
-                  sections.push(...autresNotes);
-                }
-                return sections;
-              })().map((note: any) => note.__header ? (
-                <View key={`h_${note.label}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, marginBottom: 6, paddingHorizontal: 4, paddingVertical: 6, backgroundColor: '#F5EDE3', borderRadius: 6 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C' }}>{note.label}</Text>
-                </View>
-              ) : (
-                <View key={note.id} style={styles.notePlanningCard}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                    <Text style={{ fontWeight: '700', color: '#2C2C2C', fontSize: 13 }}>{note.auteurNom}</Text>
-                    <Text style={{ fontSize: 11, color: '#B0BEC5' }}>
-                      {new Date(note.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  </View>
-                  <Text style={{ fontSize: 14, color: '#11181C', marginBottom: 8 }}>{note.texte}</Text>
-
-                  {/* Pièce jointe unique (pieceJointe) */}
-                  {note.pieceJointe && (
-                    <Pressable
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F5EDE3', borderRadius: 8, padding: 8, marginBottom: 8 }}
-                      onPress={() => {
-                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                          const w = window.open();
-                          if (w) w.document.write(note.pieceJointeType === 'pdf'
-                            ? `<iframe src="${note.pieceJointe}" style="width:100%;height:100vh;border:none"></iframe>`
-                            : `<img src="${note.pieceJointe}" style="max-width:100%;height:auto">`);
-                        }
-                      }}
-                    >
-                      <Text style={{ fontSize: 20 }}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
-                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }} numberOfLines={1}>
-                        {note.pieceJointeNom || (note.pieceJointeType === 'pdf' ? 'PDF' : 'Image')}
-                      </Text>
-                      <Text style={{ fontSize: 11, color: '#687076' }}>Ouvrir →</Text>
-                    </Pressable>
-                  )}
-
-                  {/* Photos multiples (photos[]) */}
-                  {note.photos && note.photos.length > 0 && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-                      {note.photos.map((uri, idx) => {
-                        const isPdf = uri.startsWith('data:application/pdf');
-                        if (isPdf) {
-                          return (
-                            <Pressable
-                              key={idx}
-                              style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
-                              onPress={() => {
-                                if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                                  const w = window.open();
-                                  if (w) w.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`);
-                                }
-                              }}
-                            >
-                              <Text style={{ fontSize: 22 }}>📄</Text>
-                            </Pressable>
-                          );
-                        }
-                        return (
-                          <Image
-                            key={idx}
-                            source={{ uri }}
-                            style={{ width: 60, height: 60, borderRadius: 8, marginRight: 6 }}
-                            resizeMode="cover"
-                          />
-                        );
-                      })}
-                    </ScrollView>
-                  )}
-
-                  {note.destinataires !== 'tous' && isAdmin && (
-                    <Text style={{ fontSize: 11, color: '#687076', marginBottom: 6 }}>
-                      👤 Pour : {(note.destinataires as string[]).map(id => {
-                        const emp = data.employes.find(e => e.id === id);
-                        const st = (data.sousTraitants || []).find(s => s.id === id);
-                        return emp ? emp.prenom : (st ? st.nom : id);
-                      }).join(', ')}
-                    </Text>
-                  )}
-                  <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <Pressable
-                      style={{ backgroundColor: '#27AE60', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
-                      onPress={() => handleArchiveNotePlanning(note.id)}
-                    >
-                      <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>✓ Archiver</Text>
-                    </Pressable>
-                    {isAdmin && (
-                      <Pressable
-                        style={{ backgroundColor: '#E74C3C', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
-                        onPress={() => handleDeleteNotePlanning(note.id)}
-                      >
-                        <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12 }}>🗑 Supprimer</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                </View>
-              ))}
-
-              {/* Formulaire ajout note */}
-              <View style={{ padding: 16, borderTopWidth: 1, borderTopColor: '#E8ECEF', marginTop: 8 }}>
-                <Text style={{ fontWeight: '700', color: '#11181C', marginBottom: 8 }}>{t.planning.notes}</Text>
-                <TextInput
-                  style={[styles.noteInput, { minHeight: 80 }]}
-                  value={newNotePlanningTexte}
-                  onChangeText={setNewNotePlanningTexte}
-                  placeholder="Écrivez votre note ici..."
-                  placeholderTextColor="#B0BEC5"
-                  multiline
-                />
-
-                {/* Sélection des destinataires (admin seulement) */}
-                {isAdmin && (
-                  <View style={{ marginTop: 8 }}>
-                    <Text style={{ fontWeight: '600', color: '#687076', fontSize: 13, marginBottom: 6 }}>Destinataires</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      <Pressable
-                        style={[styles.chip, notePlanningDestinataires === 'tous' && styles.chipActive]}
-                        onPress={() => setNotePlanningDestinataires('tous')}
-                      >
-                        <Text style={[styles.chipText, notePlanningDestinataires === 'tous' && styles.chipTextActive]}>Tous</Text>
-                      </Pressable>
-                      {data.employes.map(emp => (
-                        <Pressable
-                          key={emp.id}
-                          style={[styles.chip, Array.isArray(notePlanningDestinataires) && notePlanningDestinataires.includes(emp.id) && styles.chipActive]}
-                          onPress={() => {
-                            setNotePlanningDestinataires(prev => {
-                              if (prev === 'tous') return [emp.id];
-                              const arr = prev as string[];
-                              return arr.includes(emp.id) ? arr.filter(x => x !== emp.id) : [...arr, emp.id];
-                            });
-                          }}
-                        >
-                          <Text style={[styles.chipText, Array.isArray(notePlanningDestinataires) && notePlanningDestinataires.includes(emp.id) && styles.chipTextActive]}>
-                            {emp.prenom}
-                          </Text>
-                        </Pressable>
-                      ))}
-                      {(data.sousTraitants || []).map(st => (
-                        <Pressable
-                          key={st.id}
-                          style={[styles.chip, Array.isArray(notePlanningDestinataires) && notePlanningDestinataires.includes(st.id) && styles.chipActive]}
-                          onPress={() => {
-                            setNotePlanningDestinataires(prev => {
-                              if (prev === 'tous') return [st.id];
-                              const arr = prev as string[];
-                              return arr.includes(st.id) ? arr.filter(x => x !== st.id) : [...arr, st.id];
-                            });
-                          }}
-                        >
-                          <Text style={[styles.chipText, Array.isArray(notePlanningDestinataires) && notePlanningDestinataires.includes(st.id) && styles.chipTextActive]}>
-                            {st.nom} (ST)
-                          </Text>
-                        </Pressable>
-                      ))}
-                    </View>
-                  </View>
-                )}
-
-                {/* Pièces jointes */}
-                {notePlanningPhotos.length > 0 && (
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8, marginBottom: 4 }}>
-                    {notePlanningPhotos.map((uri, idx) => (
-                      <View key={idx} style={{ width: 64, marginRight: 8, alignItems: 'center' }}>
-                        {uri.startsWith('data:image') ? (
-                          <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
-                        ) : (
-                          <View style={{ width: 56, height: 56, borderRadius: 6, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center' }}>
-                            <Text style={{ fontSize: 22 }}>📄</Text>
-                          </View>
-                        )}
-                        <Pressable
-                          style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#E74C3C', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
-                          onPress={() => setNotePlanningPhotos(prev => prev.filter((_, i) => i !== idx))}
-                        >
-                          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
-                        </Pressable>
-                      </View>
-                    ))}
-                  </ScrollView>
-                )}
-                <Pressable
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F5EDE3', borderRadius: 8, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E2E6EA', borderStyle: 'dashed' }}
-                  onPress={handlePickNotePhotosPlanning}
-                >
-                  <Text style={{ fontSize: 16 }}>📎</Text>
-                  <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '600' }}>Ajouter photo / PDF</Text>
-                </Pressable>
-
-                <Pressable
-                  style={[styles.modalCloseBtn, { marginTop: 12, opacity: (newNotePlanningTexte.trim() || notePlanningPhotos.length > 0) ? 1 : 0.5 }]}
-                  onPress={handleAddNotePlanning}
-                  disabled={!newNotePlanningTexte.trim() && notePlanningPhotos.length === 0}
-                >
-                  <Text style={styles.modalCloseBtnText}>{t.common.add}</Text>
-                </Pressable>
-              </View>
-            </ScrollView>
-          </Pressable>
-        </View>
-      </Modal>
+      <ModalNotesChantier
+        visible={showNotesPlanning}
+        onClose={() => setShowNotesPlanning(false)}
+        chantierNom={chantierNomNotes}
+        notes={notesVisibles}
+        participants={participantsForNotes}
+        isAdmin={isAdmin}
+        onPickPhotos={handlePickNotePhotos}
+        onAddNote={handleAddNote}
+        onArchiveNote={handleArchiveNote}
+        onDeleteNote={handleDeleteNote}
+      />
 
       {/* ── Modal Plans Planning ── */}
       <ModalPlansChantier
