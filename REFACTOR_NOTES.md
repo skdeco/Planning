@@ -141,3 +141,30 @@ cohérence garantie sur les calculs de date.
 En attendant, le pattern Phase 2 reste : duplication locale dans
 les composants/hooks extraits, cohérent avec l'existant
 (ex : `hooks/usePlanningWeekData.ts` en 2.9).
+
+### Réorganisation chantiers admin — menu invisible sur web
+
+Découverte : étape 2.9 (test contradictoire pré-2.9 vs post-2.9).
+
+Sur Planning vue Semaine en admin, le long press sur la cellule
+"nom du chantier" (première colonne) doit afficher un menu
+Alert.alert avec 4 boutons (En premier / Monter / Descendre /
+En dernier) qui appellent moveChantierInPlanning().
+
+Sur web, le menu n'apparaît PAS. La fonction
+moveChantierInPlanning() est correctement implémentée et la
+mutation updateChantierOrderPlanning() fonctionnerait — mais
+le trigger UI ne fonctionne pas.
+
+Cause racine probable : Alert.alert avec >2 boutons est mal
+supporté par React Native Web (fallback window.confirm/prompt
+limité, ou pas d'affichage). Ce pattern est connu pour ne pas
+bien fonctionner sur web.
+
+Statut : pré-existant (vérifié par test contradictoire sur
+commit 09b1bd3, code de moveChantierInPlanning et showReorderMenu
+identique caractère par caractère pré/post 2.9).
+
+À traiter : remplacer Alert.alert par une modale custom React
+(ActionSheet ou similaire) pour le menu de réorganisation.
+Hors scope refactor structurel Phase 2. À faire en Phase 5.

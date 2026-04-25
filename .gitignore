@@ -30,6 +30,12 @@ yarn-error.*
 .DS_Store
 *.pem
 
+# macOS Finder duplicates / iCloud sync artifacts
+* 2
+* 2.*
+* copy
+* copy.*
+
 # local env files
 .env*.local
 
