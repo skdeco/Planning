@@ -14,6 +14,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { useRefresh } from '@/hooks/useRefresh';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
+import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
 import { PlanningDirection } from '@/components/PlanningDirection';
 import { AlertesChantiersRetard } from '@/components/planning/AlertesChantiersRetard';
 import {
@@ -195,7 +196,7 @@ interface NoteModalState {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, updateAffectation, removeAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, deletePointage, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, updateChantierOrderPlanning, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, upsertNote, deleteNote, toggleTask, addTask, deleteTask, addIntervention, updateIntervention, deleteIntervention, logout, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, updateChantierOrderPlanning, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const { width: windowWidth } = useWindowDimensions();
@@ -442,33 +443,18 @@ export default function PlanningScreen() {
     getOrdreNum,
   } = usePlanningWeekData(weekOffset);
 
+  // ─── Mutations cellule (hook useCellAffectationManager) ───────────────────
+  const {
+    moveEmploye,
+    toggleLieuTravail,
+    removeEmployeFromCell,
+    removeSTFromCell,
+  } = useCellAffectationManager();
+
   // Modal déplacer un employé (drag & drop simplifié)
   const [moveModal, setMoveModal] = useState<{ employeId: string; chantierId: string; date: string } | null>(null);
   const [moveTargetChantierId, setMoveTargetChantierId] = useState<string | null>(null);
   const [moveTargetDate, setMoveTargetDate] = useState<string>('');
-  const handleMoveEmploye = () => {
-    if (!moveModal || !moveTargetChantierId || !moveTargetDate) return;
-    // Récupérer les notes de l'ancienne affectation AVANT suppression
-    const oldAff = data.affectations.find(a =>
-      a.chantierId === moveModal.chantierId && a.employeId === moveModal.employeId &&
-      a.dateDebut <= moveModal.date && a.dateFin >= moveModal.date
-    );
-    const notesToKeep = (oldAff?.notes || []).filter(n => n.date === moveModal.date || !n.date);
-    // Mettre à jour la date des notes pour la nouvelle date
-    const migratedNotes = notesToKeep.map(n => ({ ...n, date: moveTargetDate }));
-    // Supprimer l'ancienne affectation pour ce jour
-    removeAffectation(moveModal.chantierId, moveModal.employeId, moveModal.date);
-    // Créer la nouvelle affectation avec les notes conservées
-    addAffectation({
-      id: `aff_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-      chantierId: moveTargetChantierId,
-      employeId: moveModal.employeId,
-      dateDebut: moveTargetDate,
-      dateFin: moveTargetDate,
-      notes: migratedNotes,
-    });
-    setMoveModal(null);
-  };
 
   // Modal paramètres compte admin (identifiant + mot de passe + employé lié)
   const [showPwdModal, setShowPwdModal] = useState(false);
@@ -807,16 +793,6 @@ export default function PlanningScreen() {
       });
     }
     setInterventionModal(null);
-  };
-
-  const toggleLieuTravail = (chantierId: string, employeId: string, dateStr: string) => {
-    const aff = data.affectations.find(a =>
-      a.chantierId === chantierId && a.employeId === employeId &&
-      a.dateDebut <= dateStr && a.dateFin >= dateStr
-    );
-    if (!aff) return;
-    const newLieu = aff.lieu === 'atelier' ? 'chantier' : 'atelier';
-    updateAffectation({ ...aff, lieu: newLieu });
   };
 
   /** Ouvre le modal de notes pour une cellule, associé à un employé spécifique */
@@ -1454,8 +1430,7 @@ export default function PlanningScreen() {
                               const hasNotes = aff && (aff.notes || []).some(n => (n.date === dateStr || !n.date) && (n.texte?.trim() || (n.tasks && n.tasks.length > 0)));
 
                               const doRemove = (deletePointages?: boolean) => {
-                                if (deletePointages) data.pointages.filter(p => p.employeId === emp.id && p.date === dateStr).forEach(p => deletePointage(p.id));
-                                removeAffectation(chantier.id, emp.id, dateStr);
+                                removeEmployeFromCell(chantier.id, emp.id, dateStr, { deletePointages });
                               };
 
                               if (hasNotes || hasPointage) {
@@ -1477,7 +1452,7 @@ export default function PlanningScreen() {
                                   ]
                                 );
                               } else {
-                                removeAffectation(chantier.id, emp.id, dateStr);
+                                removeEmployeFromCell(chantier.id, emp.id, dateStr);
                               }
                             }}
                           >
@@ -1509,7 +1484,7 @@ export default function PlanningScreen() {
                         {isAdmin && (
                           <Pressable
                             style={styles.removeBadgeBtn}
-                            onPress={() => removeAffectation(chantier.id, `st:${st.id}`, dateStr)}
+                            onPress={() => removeSTFromCell(chantier.id, st.id, dateStr)}
                           >
                             <Text style={styles.removeBadgeBtnText}>✕</Text>
                           </Pressable>
@@ -2518,7 +2493,17 @@ export default function PlanningScreen() {
                     </Pressable>
                     <Pressable
                       style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: moveTargetChantierId ? 1 : 0.5 }}
-                      onPress={handleMoveEmploye}
+                      onPress={() => {
+                        if (!moveModal || !moveTargetChantierId || !moveTargetDate) return;
+                        moveEmploye({
+                          fromChantierId: moveModal.chantierId,
+                          fromDate:       moveModal.date,
+                          toChantierId:   moveTargetChantierId,
+                          toDate:         moveTargetDate,
+                          employeId:      moveModal.employeId,
+                        });
+                        setMoveModal(null);
+                      }}
                       disabled={!moveTargetChantierId}
                     >
                       <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Déplacer</Text>
