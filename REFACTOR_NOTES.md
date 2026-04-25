@@ -168,3 +168,37 @@ identique caractère par caractère pré/post 2.9).
 À traiter : remplacer Alert.alert par une modale custom React
 (ActionSheet ou similaire) pour le menu de réorganisation.
 Hors scope refactor structurel Phase 2. À faire en Phase 5.
+
+### Gantt admin — colonne CHANTIER pas figée sur web (fix échoué)
+
+Bug pré-existant déjà documenté (commit wip 7cb9565). Tentative
+de fix lors de l'étape 2.10 (commit 56c58d6 'freeze chantier
+column on web Gantt view') : ajout de minWidth:0 sur le container
+row + sur la ScrollView horizontale.
+
+Résultat : fix ÉCHOUÉ. Le minWidth:0 ne suffit pas pour ce layout.
+La colonne CHANTIER continue de scroller avec la timeline horizontale.
+
+Commit revert : 9ccd4ca
+
+Hypothèses pour fix futur (Phase 5) :
+1. Pattern à 2 ScrollView synchronisés :
+   - ScrollView 1 horizontal pour la timeline (headers mois/jours
+     + body barres)
+   - ScrollView 2 vertical pour la liste des chantiers à gauche
+   - Synchronisation via onScroll handlers + scrollTo
+   Solution standard pour les Gantt cross-platform.
+
+2. Position absolute custom :
+   - Colonne CHANTIER en position:'absolute' left:0 zIndex:10
+   - Timeline avec marginLeft = NAME_W
+   Plus simple mais moins flexible (taille fixe colonne).
+
+3. CSS sticky web-only :
+   - Web : position:'sticky' + top:0 / left:0
+   - Mobile : pattern différent (RN ne supporte pas sticky)
+   Nécessite Platform-specific styling.
+
+Statut : reporté en Phase 5 avec ces 3 pistes documentées.
+Investigation DOM/inspector nécessaire pour identifier la cause
+exacte du problème de propagation flex.
