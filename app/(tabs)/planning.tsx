@@ -309,7 +309,7 @@ export default function PlanningScreen() {
     });
   };
 
-  const handleAddNote = (values: NoteChantierFormValues): void => {
+  const handleAddNoteChantier = (values: NoteChantierFormValues): void => {
     if (!notesPlanningChantierId) return;
     const isAdminUser = currentUser?.role === 'admin';
     const userId = isAdminUser ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
@@ -331,13 +331,13 @@ export default function PlanningScreen() {
     });
   };
 
-  const handleArchiveNote = (noteId: string): void => {
+  const handleArchiveNoteChantier = (noteId: string): void => {
     const isAdminUser = currentUser?.role === 'admin';
     const userId = isAdminUser ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
     archiveNoteChantier(noteId, userId);
   };
 
-  const handleDeleteNote = (noteId: string): void => {
+  const handleDeleteNoteChantier = (noteId: string): void => {
     deleteNoteChantier(noteId);
   };
 
@@ -3029,9 +3029,9 @@ export default function PlanningScreen() {
         participants={participantsForNotes}
         isAdmin={isAdmin}
         onPickPhotos={handlePickNotePhotos}
-        onAddNote={handleAddNote}
-        onArchiveNote={handleArchiveNote}
-        onDeleteNote={handleDeleteNote}
+        onAddNote={handleAddNoteChantier}
+        onArchiveNote={handleArchiveNoteChantier}
+        onDeleteNote={handleDeleteNoteChantier}
       />
 
       {/* ── Modal Plans Planning ── */}
