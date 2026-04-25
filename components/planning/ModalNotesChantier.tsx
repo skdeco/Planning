@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { DS, font, radius, space } from '../../constants/design';
 import { useLanguage } from '../../app/context/LanguageContext';
+import { EmptyState } from '../ui/EmptyState';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -396,9 +397,7 @@ export function ModalNotesChantier({
 
           <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
             {notes.length === 0 && (
-              <Text style={styles.emptyText}>
-                Aucune note active pour ce chantier.
-              </Text>
+              <EmptyState size="sm" title="Aucune note active pour ce chantier." />
             )}
 
             {listItems.map(item => item.kind === 'header' ? (
@@ -704,12 +703,6 @@ const styles = StyleSheet.create({
   // — Scroll body —
   scrollBody: {
     flex: 1,
-  },
-
-  emptyText: {
-    textAlign:     'center',
-    color:         COLOR_PLACEHOLDER,
-    marginVertical: space.xl,                  // 20
   },
 
   // — Section headers (admin groupement) —

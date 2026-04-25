@@ -202,3 +202,29 @@ Hypothèses pour fix futur (Phase 5) :
 Statut : reporté en Phase 5 avec ces 3 pistes documentées.
 Investigation DOM/inspector nécessaire pour identifier la cause
 exacte du problème de propagation flex.
+
+---
+
+## Phase 3 — Composants Phase 1 non migrés (skip volontaire)
+
+### StatusBadge — pas de site dans le scope planning
+
+Audit 3.1 (2026-04-25) : aucun pattern dans planning.tsx + 9 composants
+extraits ne correspond au cas d'usage de StatusBadge.
+
+Les "badges" du planning sont tous spécialisés :
+- `empBadge` / `stBadge` (planning.tsx) : Pressable composite avec
+  ordreBadge overlay + note dot — UI cell complexe
+- `ordreBadge` (planning.tsx) : cercle absolute-positionné numéroté
+- `materielBadgeCount` (planning.tsx) : count overlay corner
+- `modalAvatar` (ModalAjoutEmployesST) : avatar circulaire avec initiale
+- `chantierDot` (MonthViewGrid) : pill avec layout grid spécifique
+
+→ StatusBadge sera utile en Phase 3 broader scope :
+  - chantiers.tsx (statut chantier : actif / terminé / en retard)
+    → utilisera `statutBadgeProps()` helper exporté
+  - equipe.tsx (statut employé : actif / inactif)
+  - rh.tsx (statut administratif)
+  - autres écrans non-planning
+
+À traiter dans une étape Phase 3 ultérieure dédiée à ces écrans.

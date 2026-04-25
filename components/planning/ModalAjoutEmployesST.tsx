@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import { DatePicker } from '@/components/DatePicker';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { METIER_COLORS, INTERVENTION_COLORS, type Affectation } from '@/app/types';
 
 // ─── Helpers de date locaux ───────────────────────────────────────────────────
@@ -399,7 +400,7 @@ export function ModalAjoutEmployesST({
                   );
                 }}
                 ListEmptyComponent={
-                  <Text style={styles.modalEmpty}>Aucun employé disponible.</Text>
+                  <EmptyState size="sm" title="Aucun employé disponible." />
                 }
                 style={{ maxHeight: 280 }}
               />
@@ -432,7 +433,7 @@ export function ModalAjoutEmployesST({
                   );
                 }}
                 ListEmptyComponent={
-                  <Text style={styles.modalEmpty}>Aucun sous-traitant. Créez-en dans l'onglet dédié.</Text>
+                  <EmptyState size="sm" title="Aucun sous-traitant. Créez-en dans l'onglet dédié." />
                 }
                 style={{ maxHeight: 280 }}
               />
@@ -694,12 +695,6 @@ const styles = StyleSheet.create({
     color: '#2C2C2C',
     fontWeight: '700',
     fontSize: 16,
-  },
-  modalEmpty: {
-    color: '#687076',
-    textAlign: 'center',
-    padding: 20,
-    fontSize: 13,
   },
 
   // — Intervention quick-add —

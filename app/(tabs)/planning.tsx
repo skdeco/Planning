@@ -6,6 +6,7 @@ import {
   TouchableWithoutFeedback, Image, Alert, RefreshControl, Linking,
 } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
+import { EmptyState } from '@/components/ui/EmptyState';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { LanguageFlag } from '@/components/LanguageFlag';
@@ -1257,9 +1258,7 @@ export default function PlanningScreen() {
         ))}
 
         {visibleChantiers.length === 0 && (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Aucun chantier sur cette semaine</Text>
-          </View>
+          <EmptyState size="md" title="Aucun chantier sur cette semaine" />
         )}
 
         {/* Légende : visible uniquement pour l'admin, filtrée sur la semaine visible */}
@@ -2154,14 +2153,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
     textTransform: 'uppercase',
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: '#687076',
-    fontSize: 14,
   },
   legendSection: {
     margin: 16,

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { DS, font, radius, space } from '../../constants/design';
 import { useLanguage } from '../../app/context/LanguageContext';
+import { EmptyState } from '../ui/EmptyState';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -346,7 +347,7 @@ export function ModalPlansChantier({
           >
             {/* Liste plans existants */}
             {plans.length === 0 && (
-              <Text style={styles.emptyText}>{t.chantiers.noPlans}</Text>
+              <EmptyState size="sm" title={t.chantiers.noPlans} />
             )}
             {plans.map(plan => (
               <View key={plan.id} style={styles.listItem}>
@@ -578,12 +579,6 @@ const styles = StyleSheet.create({
   // — Scroll content —
   scrollContent: {
     paddingBottom: space.xl, // 20
-  },
-
-  emptyText: {
-    margin:   space.lg, // 16
-    color:    DS.textAlt,
-    fontSize: font.md, // 14
   },
 
   // — List item (plan existant) —

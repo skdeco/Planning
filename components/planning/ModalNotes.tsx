@@ -14,6 +14,7 @@ import {
 import { useApp } from '@/app/context/AppContext';
 import { useNotesModalLogic, type NoteModalState } from '@/hooks/useNotesModalLogic';
 import { getEmployeColor, type TaskItem } from '@/app/types';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -217,7 +218,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
 
               {/* Message si aucune note */}
               {noteModal && noteModal.allNotes.length === 0 && !ui.showEditor && (
-                <Text style={styles.noNoteText}>Aucune note pour ce jour.</Text>
+                <EmptyState size="sm" title="Aucune note pour ce jour." />
               )}
 
               {/* Éditeur de note */}
@@ -659,12 +660,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '600',
     color: '#2C2C2C',
-  },
-  noNoteText: {
-    color: '#687076',
-    fontSize: 13,
-    textAlign: 'center',
-    paddingVertical: 16,
   },
   addNoteBtn: {
     marginTop: 12,
