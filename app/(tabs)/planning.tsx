@@ -13,6 +13,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { useRefresh } from '@/hooks/useRefresh';
+import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
 import { PlanningDirection } from '@/components/PlanningDirection';
 import { AlertesChantiersRetard } from '@/components/planning/AlertesChantiersRetard';
 import {
@@ -38,7 +39,7 @@ import {
 } from '@/components/planning/ModalNotesChantier';
 import {
   METIER_COLORS, METIERS_LIST, EMPLOYE_COLORS, INTERVENTION_COLORS, getEmployeColor,
-  type Employe, type Affectation, type Note, type FicheChantier, type SousTraitant, type Intervention, type TaskItem,
+  type Affectation, type Note, type TaskItem,
   type NoteChantier,
   type PlanChantier,
 } from '@/app/types';
@@ -425,6 +426,20 @@ export default function PlanningScreen() {
   const isAdmin = currentUser?.role === 'admin';
   const isST = currentUser?.role === 'soustraitant';
 
+  // ─── Données dérivées de la vue Semaine (hook usePlanningWeekData) ────────
+  const {
+    days,
+    weekLabel,
+    visibleChantiers,
+    getEmployesForCell,
+    getInterventionsForCell,
+    getSTForCell,
+    getAllNotesForCell,
+    cellHasNotes,
+    getOrdreChantiers,
+    getOrdreNum,
+  } = usePlanningWeekData(weekOffset);
+
   // Modal déplacer un employé (drag & drop simplifié)
   const [moveModal, setMoveModal] = useState<{ employeId: string; chantierId: string; date: string } | null>(null);
   const [moveTargetChantierId, setMoveTargetChantierId] = useState<string | null>(null);
@@ -503,30 +518,6 @@ export default function PlanningScreen() {
   // ── Ordre affectations multi-chantiers ────────────────────────────────────
   const [ordreModal, setOrdreModal] = useState<{ employeId: string; date: string; chantierIds: string[] } | null>(null);
 
-  /** Retourne la liste ordonnée de chantierId pour un employé un jour donné */
-  const getOrdreChantiers = (employeId: string, date: string): string[] => {
-    const key = `${employeId}_${date}`;
-    const stored = data.ordreAffectations?.[key];
-    // Chantiers réellement affectés ce jour — dédupliqués
-    const affectedIds = [...new Set(
-      data.affectations
-        .filter(a => a.employeId === employeId && a.dateDebut <= date && a.dateFin >= date)
-        .map(a => a.chantierId)
-    )];
-    if (!stored) return affectedIds;
-    // Garder uniquement les chantiers encore affectés, dans l'ordre stocké, puis ajouter les nouveaux
-    const ordered = stored.filter(id => affectedIds.includes(id));
-    const extra = affectedIds.filter(id => !ordered.includes(id));
-    return [...ordered, ...extra];
-  };
-
-  /** Numéro d'ordre (1-based) d'un chantier pour un employé un jour donné, ou 0 si employé sur 1 seul chantier */
-  const getOrdreNum = (employeId: string, chantierId: string, date: string): number => {
-    const list = getOrdreChantiers(employeId, date);
-    if (list.length < 2) return 0;
-    return list.indexOf(chantierId) + 1;
-  };
-
   const currentEmployePlanning = data.employes.find(e => e.id === currentUser?.employeId);
   const isAcheteurPlanning = isAdmin || (currentEmployePlanning?.isAcheteur === true);
 
@@ -601,15 +592,6 @@ export default function PlanningScreen() {
       Alert.alert('Erreur', 'Impossible d\'exporter les données.');
     }
   };
-
-  // Calcul des 7 jours de la semaine
-  const days = useMemo(() => {
-    const today = new Date();
-    const dow = today.getDay();
-    const mondayOffset = dow === 0 ? -6 : 1 - dow;
-    const monday = addDays(today, mondayOffset + weekOffset * 7);
-    return Array.from({ length: 7 }, (_, i) => addDays(monday, i));
-  }, [weekOffset]);
 
   // ── Export PDF planning de la semaine ────────────────────────────────────
   const handleExportPDF = async () => {
@@ -718,56 +700,6 @@ export default function PlanningScreen() {
     return { cells, year: y, month: m, label: `${CAL_MOIS[m]} ${y}` };
   }, [monthOffset]);
 
-  // Chantiers visibles sur le planning
-  const visibleChantiers = useMemo(() => {
-    const customOrder = data.chantierOrderPlanning || [];
-    const sortByOrdre = (arr: typeof data.chantiers) => {
-      // Tri par défaut (champ "ordre")
-      const base = [...arr].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
-      // Si un ordre personnalisé existe, on le superpose : les chantiers listés
-      // dans customOrder passent en premier dans l'ordre indiqué, les autres à la suite.
-      if (customOrder.length === 0) return base;
-      return base.sort((a, b) => {
-        const ia = customOrder.indexOf(a.id);
-        const ib = customOrder.indexOf(b.id);
-        if (ia === -1 && ib === -1) return 0;
-        if (ia === -1) return 1;
-        if (ib === -1) return -1;
-        return ia - ib;
-      });
-    };
-    if (isAdmin) {
-      return sortByOrdre(data.chantiers.filter(c => c.visibleSurPlanning));
-    }
-    if (isST) {
-      // Sous-traitant : chantiers où il a au moins une affectation
-      const stAffChantierIds = data.affectations
-        .filter(a => a.soustraitantId === currentUser?.soustraitantId)
-        .map(a => a.chantierId);
-      return sortByOrdre(data.chantiers.filter(c => c.visibleSurPlanning && stAffChantierIds.includes(c.id)));
-    }
-    // Apporteur (architecte / apporteur / contractant / client) : uniquement ses chantiers liés
-    if (currentUser?.role === 'apporteur' && currentUser?.apporteurId) {
-      const myId = currentUser.apporteurId;
-      return sortByOrdre(data.chantiers.filter(c =>
-        c.visibleSurPlanning && (
-          c.architecteId === myId ||
-          c.apporteurId === myId ||
-          c.contractantId === myId ||
-          c.clientApporteurId === myId
-        )
-      ));
-    }
-    // Employé : uniquement les chantiers où il est affecté
-    return sortByOrdre(data.chantiers.filter(c =>
-      c.visibleSurPlanning &&
-      data.affectations.some(a =>
-        a.chantierId === c.id &&
-        a.employeId === currentUser?.employeId
-      )
-    ));
-  }, [data, isAdmin, isST, currentUser]);
-
   // ─── Précalcul pour la vue mensuelle ──────────────────────────────────────
   const monthCells = useMemo<MonthGridCell[]>(() =>
     monthData.cells.map(day => {
@@ -841,33 +773,6 @@ export default function PlanningScreen() {
     );
   }, [isAdmin, data.chantiers, moveChantierInPlanning]);
 
-  // Employés affectés à un chantier pour un jour donné (excluant les affectations ST)
-  const getEmployesForCell = useCallback((chantierId: string, day: Date): Employe[] => {
-    const affectations = data.affectations.filter(a =>
-      a.chantierId === chantierId &&
-      !a.soustraitantId &&   // exclure les affectations sous-traitants
-      dateInRange(day, a.dateDebut, a.dateFin)
-    );
-    if (!isAdmin && !isST) {
-      const myAff = affectations.find(a => a.employeId === currentUser?.employeId);
-      if (!myAff) return [];
-      const emp = data.employes.find(e => e.id === myAff.employeId);
-      return emp ? [emp] : [];
-    }
-    // Dédupliquer : un employé ne doit apparaître qu'une seule fois par case
-    const seen = new Set<string>();
-    return affectations
-      .map(a => data.employes.find(e => e.id === a.employeId))
-      .filter((e): e is Employe => !!e && !seen.has(e.id) && (seen.add(e.id), true));
-  }, [data, isAdmin, isST, currentUser]);
-
-  /** Interventions externes pour un chantier et un jour donné */
-  const getInterventionsForCell = useCallback((chantierId: string, day: Date): Intervention[] => {
-    return (data.interventions || []).filter(i =>
-      i.chantierId === chantierId && dateInRange(day, i.dateDebut, i.dateFin)
-    );
-  }, [data]);
-
   /** Ouvre le modal de création/édition d'intervention */
   const openInterventionModal = (chantierId: string, dateStr: string, editId: string | null = null) => {
     if (editId) {
@@ -901,58 +806,6 @@ export default function PlanningScreen() {
     }
     setInterventionModal(null);
   };
-
-  /** Sous-traitants placés dans une cellule (via affectations ST) */
-  const getSTForCell = useCallback((chantierId: string, day: Date): SousTraitant[] => {
-    const stIds = data.affectations
-      .filter(a =>
-        a.chantierId === chantierId &&
-        a.soustraitantId &&
-        dateInRange(day, a.dateDebut, a.dateFin)
-      )
-      .map(a => a.soustraitantId!);
-    // Sous-traitant connecté : ne voir que soi-même
-    if (isST) {
-      return data.sousTraitants.filter(s => stIds.includes(s.id) && s.id === currentUser?.soustraitantId);
-    }
-    return data.sousTraitants.filter(s => stIds.includes(s.id));
-  }, [data, isST, currentUser]);
-
-  /** Récupère toutes les notes d'une cellule (chantier + jour), tous auteurs confondus.
-   * IMPORTANT : compare les dates en string (YYYY-MM-DD) pour éviter les bugs de timezone.
-   */
-  const getAllNotesForCell = useCallback((chantierId: string, dateStr: string) => {
-    return data.affectations
-      .filter(a =>
-        a.chantierId === chantierId &&
-        // Comparaison string pour éviter le bug de timezone avec new Date()
-        a.dateDebut <= dateStr && a.dateFin >= dateStr
-      )
-      .flatMap(a => (a.notes || [])
-        // Filtrer par date exacte de la note (si le champ date est présent)
-        .filter(n => !n.date || n.date === dateStr)
-        .map(n => ({
-          ...n,
-          affectationId: a.id,
-          affectationEmployeId: a.employeId,
-        }))
-      );
-  }, [data]);
-
-  /** Vérifie si la cellule a des notes */
-  const cellHasNotes = useCallback((chantierId: string, dateStr: string): boolean => {
-    return getAllNotesForCell(chantierId, dateStr).length > 0;
-  }, [getAllNotesForCell]);
-
-  // Plage de la semaine affichée
-  const weekLabel = useMemo(() => {
-    const first = days[0];
-    const last = days[6];
-    if (first.getMonth() === last.getMonth()) {
-      return `${first.getDate()} – ${last.getDate()} ${MOIS[first.getMonth()]}`;
-    }
-    return `${first.getDate()} ${MOIS[first.getMonth()]} – ${last.getDate()} ${MOIS[last.getMonth()]}`;
-  }, [days]);
 
   // Modal admin : tous les employés disponibles
   const modalEmployes = useMemo(() => {

@@ -126,3 +126,18 @@ de planning.tsx avant l'extraction).
 Comportement préservé à l'identique lors de l'extraction 2.7.
 À traiter : i18n complet de la modale en passe finale (Phase 2.16
 cleanup) ou hors scope refactor structurel.
+
+### Dette technique — Helpers de date dupliqués
+
+`addDays`, `dateInRange` et `MOIS` (abbr 3-lettres) sont définis
+inline dans 6+ fichiers du repo (planning.tsx, pointage.tsx,
+reporting.tsx, rh.tsx, GaleriePhotos.tsx, GanttGlobal.tsx, et
+tests). Pas de `lib/dateUtils` centralisée.
+
+À extraire dans `lib/dateUtils.ts` dans une étape dédiée (Phase 3
+ou cleanup post-Phase 2). Gain estimé : ~6 duplications éliminées,
+cohérence garantie sur les calculs de date.
+
+En attendant, le pattern Phase 2 reste : duplication locale dans
+les composants/hooks extraits, cohérent avec l'existant
+(ex : `hooks/usePlanningWeekData.ts` en 2.9).
