@@ -111,7 +111,7 @@ export function GanttTimelineAdmin({
       </View>
 
       {/* Grille : colonne gauche figée + timeline scrollable */}
-      <View style={{ flexDirection: 'row', flex: 1 }}>
+      <View style={{ flexDirection: 'row', flex: 1, minWidth: 0 }}>
 
         {/* Colonne gauche figée (hors du ScrollView horizontal) */}
         <View style={{ width: NAME_W, borderRightWidth: 1, borderRightColor: '#E2E6EA', zIndex: 2, backgroundColor: '#FAFAF9' }}>
@@ -133,7 +133,7 @@ export function GanttTimelineAdmin({
         </View>
 
         {/* Timeline scrollable horizontalement */}
-        <ScrollView horizontal showsHorizontalScrollIndicator={true} style={{ flex: 1, height: timelineH }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={true} style={{ flex: 1, minWidth: 0, height: timelineH }}>
           <View>
             {/* En-tête mois */}
             <View style={{ flexDirection: 'row', height: MONTH_H }}>
