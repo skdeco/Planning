@@ -5,6 +5,25 @@ Identifiées lors du `pnpm check` de la Phase 1 (étape 1.1).
 
 ---
 
+## Décisions architecturales
+
+### 2.8 SKIP — Pas d'extraction préventive de EmployeeBadge
+
+Audit 2.8.a (2026-04-25) a identifié que le pattern "badge employé"
+n'apparaît qu'une seule fois dans planning.tsx (cellule WeekGrid,
+L1827-1944). Avec 2 sous-variantes (employé vs sous-traitant) qui
+divergent fortement sur les comportements (onLongPress, onRemove
+conditionnels).
+
+Décision : skip 2.8. Le badge sera factorisé naturellement en 2.11
+lors de l'extraction de WeekGridCell, avec un contexte concret
+d'usage. Évite la sur-ingénierie d'une API polymorphe à 8-10 props.
+
+Pattern YAGNI cohérent avec NoteCard (2.7) : inline tant que couplage
+fort, extrait quand découplage évident.
+
+---
+
 ## 1. `app/(tabs)/planning.tsx` — ligne 3643
 
 ```
