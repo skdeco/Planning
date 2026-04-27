@@ -131,23 +131,17 @@ const config: ExpoConfig = {
       },
     ],
     [
-      "expo-share-intent",
+      "expo-share-extension",
       {
-        iosActivationRules: {
-          NSExtensionActivationSupportsImageWithMaxCount: 10,
-          NSExtensionActivationSupportsMovieWithMaxCount: 0,
-          NSExtensionActivationSupportsWebURLWithMaxCount: 0,
-          NSExtensionActivationSupportsWebPageWithMaxCount: 0,
-          NSExtensionActivationSupportsFileWithMaxCount: 10,
-        },
-        androidIntentFilters: [
-          "text/*",
-          "image/*",
-          "application/pdf",
-          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        // Réduit la taille du bundle de la share extension iOS
+        // (recommandé par la doc upstream — évite crash expo-updates
+        // dans l'extension et allège le binaire).
+        excludedPackages: [
+          "expo-dev-client",
+          "expo-splash-screen",
+          "expo-updates",
+          "expo-font",
         ],
-        disableExperimental: true,
       },
     ],
   ],
