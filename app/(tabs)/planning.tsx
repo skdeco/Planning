@@ -38,6 +38,7 @@ import {
   type NoteParticipant,
 } from '@/components/planning/ModalNotesChantier';
 import { GanttTimelineAdmin } from '@/components/planning/GanttTimelineAdmin';
+import { WeekGridView } from '@/components/planning/WeekGridView';
 import {
   ModalAjoutEmployesST,
   type InterventionFormValues,
@@ -145,7 +146,6 @@ const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
 const NAME_COL_DEFAULT = 70;
 const DAY_COL = 80; // fallback pour les styles statiques
 
-const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 function addDays(date: Date, n: number): Date {
@@ -409,22 +409,11 @@ export default function PlanningScreen() {
     days,
     weekLabel,
     visibleChantiers,
-    getEmployesForCell,
-    getInterventionsForCell,
-    getSTForCell,
     getAllNotesForCell,
-    cellHasNotes,
-    getOrdreChantiers,
-    getOrdreNum,
   } = usePlanningWeekData(weekOffset);
 
   // ─── Mutations cellule (hook useCellAffectationManager) ───────────────────
-  const {
-    moveEmploye,
-    toggleLieuTravail,
-    removeEmployeFromCell,
-    removeSTFromCell,
-  } = useCellAffectationManager();
+  const { moveEmploye } = useCellAffectationManager();
 
   // Modal déplacer un employé (drag & drop simplifié)
   const [moveModal, setMoveModal] = useState<{ employeId: string; chantierId: string; date: string } | null>(null);
@@ -1038,288 +1027,28 @@ export default function PlanningScreen() {
 
       {/* Grille hebdomadaire */}
       {viewMode === 'semaine' && (
-      <ScrollView style={styles.gridScroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2C2C2C']} tintColor="#2C2C2C" />}>
-        {/* En-tête des jours */}
-        <View style={styles.gridRow}>
-          <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL }]} />
-          {days.map((day, i) => {
-            const today = isToday(day);
-            return (
-              <View
-                key={i}
-                style={[
-                  styles.dayHeaderCell,
-                  { width: dayCol },
-                  today && styles.dayHeaderCellToday,
-                ]}
-              >
-                <Text style={[styles.dayName, today && styles.dayNameToday]}>
-                  {JOURS[i]}
-                </Text>
-                <Text style={[styles.dayNum, today && styles.dayNumToday]}>
-                  {day.getDate()}
-                </Text>
-              </View>
-            );
-          })}
-        </View>
-
-        {/* Lignes des chantiers */}
-        {visibleChantiers.map(chantier => (
-          <View key={chantier.id} style={styles.chantierRow}>
-            {/* Colonne nom — clic = ouvrir le menu d'actions chantier
-                Appui long (admin) = menu de réorganisation */}
-            <Pressable
-              style={[styles.nameCell, { width: NAME_COL }]}
-              onPress={() => setActionsChantierId(chantier.id)}
-              onLongPress={isAdmin ? () => showReorderMenu(chantier.id) : undefined}
-              delayLongPress={400}
-            >
-              <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
-              <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
-              {/* Les Notes sont désormais accessibles depuis le menu Actions */}
-            </Pressable>
-
-            {/* Cellules des jours */}
-            {days.map((day, i) => {
-              const inRange = dateInRange(day, chantier.dateDebut, chantier.dateFin);
-              const employes = getEmployesForCell(chantier.id, day);
-              const today = isToday(day);
-              const dateStr = toYMD(day);
-              const hasNotes = cellHasNotes(chantier.id, dateStr);
-              // Vérifie si l'employé courant est affecté à ce chantier ce jour (même hors plage chantier)
-              const currentEmpInCell = !isAdmin && data.affectations.some(
-                a => a.chantierId === chantier.id &&
-                  a.employeId === currentUser?.employeId &&
-                  dateInRange(day, a.dateDebut, a.dateFin)
-              );
-
-              return (
-                <Pressable
-                  key={i}
-                  style={[
-                    styles.cell,
-                    { width: dayCol },
-                    today && styles.cellToday,
-                    !inRange && styles.cellOutOfRange,
-                    hasNotes && !today && { backgroundColor: '#FFF9E6' },
-                  ]}
-                  onPress={isAdmin ? () => {
-                    setInterventionForm({ libelle: '', description: '', dateDebut: dateStr, dateFin: dateStr, couleur: INTERVENTION_COLORS[0] });
-                    setModal({ chantierId: chantier.id, date: dateStr });
-                  } : undefined}
-                >
-                  {/* Badges employés : couleur personnalisée, masqués pour le sous-traitant connecté */}
-                  {!isST && employes.map(emp => {
-                    const empColor = getEmployeColor(emp);
-                    const empAff = data.affectations.find(a =>
-                      a.chantierId === chantier.id && a.employeId === emp.id &&
-                      a.dateDebut <= dateStr && a.dateFin >= dateStr
-                    );
-                    const empHasNotes = empAff && (empAff.notes || []).some(n => !n.date || n.date === dateStr);
-                    const ordreNum = getOrdreNum(emp.id, chantier.id, dateStr);
-                    const isAtelier = empAff?.lieu === 'atelier';
-                    return (
-                      <View key={emp.id} style={styles.badgeWrapper}>
-                        <Pressable
-                          style={[styles.empBadge, { backgroundColor: empColor }, isAtelier && { borderWidth: 2, borderColor: '#F59E0B', borderStyle: 'dashed' }]}
-                          onPress={() => openNoteModal(chantier.id, dateStr, emp.id)}
-                          onLongPress={isAdmin ? () => {
-                            if (Platform.OS === 'web') {
-                              const choice = window.prompt(`${emp.prenom} — Choisir :\n1 = Déplacer\n2 = ${isAtelier ? 'Remettre sur chantier' : 'Mettre en atelier 🏭'}`);
-                              if (choice === '2') toggleLieuTravail(chantier.id, emp.id, dateStr);
-                              else if (choice === '1') {
-                                const ids = getOrdreChantiers(emp.id, dateStr);
-                                if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
-                                else { setMoveTargetChantierId(null); setMoveTargetDate(dateStr); setMoveModal({ employeId: emp.id, chantierId: chantier.id, date: dateStr }); }
-                              }
-                            } else {
-                              Alert.alert(emp.prenom, 'Que voulez-vous faire ?', [
-                                { text: 'Annuler', style: 'cancel' },
-                                { text: isAtelier ? '🏗 Remettre sur chantier' : '🏭 Mettre en atelier', onPress: () => toggleLieuTravail(chantier.id, emp.id, dateStr) },
-                                { text: '↔ Déplacer', onPress: () => {
-                                  const ids = getOrdreChantiers(emp.id, dateStr);
-                                  if (ids.length >= 2) setOrdreModal({ employeId: emp.id, date: dateStr, chantierIds: ids });
-                                  else { setMoveTargetChantierId(null); setMoveTargetDate(dateStr); setMoveModal({ employeId: emp.id, chantierId: chantier.id, date: dateStr }); }
-                                }},
-                              ]);
-                            }
-                          } : undefined}
-                        >
-                          <Text style={[styles.empBadgeText, { color: '#fff' }]} numberOfLines={1}>
-                            {isAtelier ? '🏭' : ''}{emp.prenom.slice(0, 3) + '.'}
-                          </Text>
-                          {empHasNotes && <View style={styles.noteDot} />}
-                          {ordreNum > 0 && (
-                            <View style={styles.ordreBadge}>
-                              <Text style={styles.ordreBadgeText}>{ordreNum}</Text>
-                            </View>
-                          )}
-                        </Pressable>
-                        {isAdmin && (
-                          <Pressable
-                            style={styles.removeBadgeBtn}
-                            onPress={() => {
-                              const hasPointage = data.pointages.some(p => p.employeId === emp.id && p.date === dateStr);
-                              const aff = data.affectations.find(a => a.chantierId === chantier.id && a.employeId === emp.id && a.dateDebut <= dateStr && a.dateFin >= dateStr);
-                              const hasNotes = aff && (aff.notes || []).some(n => (n.date === dateStr || !n.date) && (n.texte?.trim() || (n.tasks && n.tasks.length > 0)));
-
-                              const doRemove = (deletePointages?: boolean) => {
-                                removeEmployeFromCell(chantier.id, emp.id, dateStr, { deletePointages });
-                              };
-
-                              if (hasNotes || hasPointage) {
-                                const messages: string[] = [];
-                                if (hasNotes) messages.push('des notes/tâches');
-                                if (hasPointage) messages.push('un pointage');
-                                Alert.alert(
-                                  `Retirer ${emp.prenom}`,
-                                  `${emp.prenom} a ${messages.join(' et ')} ce jour. Que faire ?`,
-                                  [
-                                    { text: 'Annuler', style: 'cancel' },
-                                    { text: '↔ Déplacer', onPress: () => {
-                                      setMoveTargetChantierId(null);
-                                      setMoveTargetDate(dateStr);
-                                      setMoveModal({ employeId: emp.id, chantierId: chantier.id, date: dateStr });
-                                    }},
-                                    { text: 'Retirer du planning', onPress: () => doRemove(false) },
-                                    ...(hasPointage ? [{ text: 'Retirer + suppr. pointage', style: 'destructive' as const, onPress: () => doRemove(true) }] : []),
-                                  ]
-                                );
-                              } else {
-                                removeEmployeFromCell(chantier.id, emp.id, dateStr);
-                              }
-                            }}
-                          >
-                            <Text style={styles.removeBadgeBtnText}>✕</Text>
-                          </Pressable>
-                        )}
-                      </View>
-                    );
-                  })}
-                  {/* Badges sous-traitants : cliquables pour ouvrir les notes */}
-                  {(isAdmin || isST) && getSTForCell(chantier.id, day).map(st => {
-                    const stHasNotes = data.affectations.some(a =>
-                      a.chantierId === chantier.id &&
-                      a.soustraitantId === st.id &&
-                      a.dateDebut <= dateStr && a.dateFin >= dateStr &&
-                      (a.notes || []).some(n => !n.date || n.date === dateStr)
-                    );
-                    return (
-                      <View key={st.id} style={styles.badgeWrapper}>
-                        <Pressable
-                          style={[styles.stBadge, { backgroundColor: st.couleur }]}
-                          onPress={() => openSTNoteModal(chantier.id, dateStr, st.id)}
-                        >
-                          <Text style={styles.stBadgeText} numberOfLines={1}>
-                            {(st.prenom || st.nom).slice(0, 3) + '.'}
-                          </Text>
-                          {stHasNotes && <View style={styles.noteDot} />}
-                        </Pressable>
-                        {isAdmin && (
-                          <Pressable
-                            style={styles.removeBadgeBtn}
-                            onPress={() => removeSTFromCell(chantier.id, st.id, dateStr)}
-                          >
-                            <Text style={styles.removeBadgeBtnText}>✕</Text>
-                          </Pressable>
-                        )}
-                      </View>
-                    );
-                  })}
-                  {/* Bandeaux interventions externes (visibles par tous) */}
-                  {getInterventionsForCell(chantier.id, day).map(interv => (
-                    <Pressable
-                      key={interv.id}
-                      style={[styles.intervBandeau, { backgroundColor: interv.couleur }]}
-                      onPress={() => isAdmin ? openInterventionModal(chantier.id, dateStr, interv.id) : undefined}
-                    >
-                      <Text style={styles.intervBandeauIcon}>⚡</Text>
-                      <Text style={styles.intervBandeauText} numberOfLines={1}>
-                        {interv.libelle.length > 5 ? interv.libelle.slice(0, 4) + '…' : interv.libelle}
-                      </Text>
-                    </Pressable>
-                  ))}
-                  {/* Bouton + pour admin (ajout/suppression employés + externe) */}
-                  {isAdmin && (
-                    <Pressable
-                      style={styles.addBtn}
-                      onPress={() => {
-                        setInterventionForm({ libelle: '', description: '', dateDebut: dateStr, dateFin: dateStr, couleur: INTERVENTION_COLORS[0] });
-                        setModal({ chantierId: chantier.id, date: dateStr });
-                      }}
-                    >
-                      <Text style={styles.addBtnText}>+</Text>
-                    </Pressable>
-                  )}
-                </Pressable>
-              );
-            })}
-          </View>
-        ))}
-
-        {visibleChantiers.length === 0 && (
-          <EmptyState size="md" title="Aucun chantier sur cette semaine" />
-        )}
-
-        {/* Légende : visible uniquement pour l'admin, filtrée sur la semaine visible */}
-        {isAdmin && (() => {
-          // Calculer les IDs des employés et ST présents dans la semaine affichée
-          const weekDayStrings = days.map(d => toYMD(d));
-          const weekStart = weekDayStrings[0];
-          const weekEnd = weekDayStrings[weekDayStrings.length - 1];
-          const weekAffectations = data.affectations.filter(a =>
-            a.dateDebut <= weekEnd && a.dateFin >= weekStart
-          );
-          const empIdsThisWeek = new Set(weekAffectations.filter(a => !a.soustraitantId).map(a => a.employeId));
-          const stIdsThisWeek = new Set(weekAffectations.filter(a => a.soustraitantId).map(a => a.soustraitantId!));
-          const visibleEmps = data.employes.filter(e => empIdsThisWeek.has(e.id));
-          const visibleSTs = (data.sousTraitants || []).filter(s => stIdsThisWeek.has(s.id));
-          if (visibleEmps.length === 0 && visibleSTs.length === 0) return null;
-          return (
-          <View style={styles.legendSection}>
-          {/* Légende employés */}
-          {visibleEmps.length > 0 && (
-            <>
-              <SectionHeader title="Employés" size="sm" uppercase />
-              <View style={styles.legendGrid}>
-                {visibleEmps.map(emp => {
-                  const empColor = getEmployeColor(emp);
-                  const metierLabel = METIER_COLORS[emp.metier]?.label || '';
-                  return (
-                    <View key={emp.id} style={styles.legendItem}>
-                      <View style={[styles.legendDot, { backgroundColor: empColor }]} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.legendLabel}>{emp.prenom} {emp.nom}</Text>
-                        <Text style={styles.legendSub}>{metierLabel}</Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </View>
-            </>
-          )}
-          {/* Légende sous-traitants */}
-          {visibleSTs.length > 0 && (
-            <>
-              <SectionHeader title="Sous-traitants" size="sm" uppercase style={{ marginTop: 12 }} />
-              <View style={styles.legendGrid}>
-                {visibleSTs.map(st => (
-                  <View key={st.id} style={styles.legendItem}>
-                    <View style={[styles.legendDotST, { backgroundColor: st.couleur }]} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.legendLabel}>{st.prenom} {st.nom}</Text>
-                      {st.societe ? <Text style={styles.legendSub}>{st.societe}</Text> : null}
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
-        </View>
-          );
-        })()}
-      </ScrollView>
+        <WeekGridView
+          NAME_COL={NAME_COL}
+          dayCol={dayCol}
+          weekOffset={weekOffset}
+          onOpenChantierActions={(id) => setActionsChantierId(id)}
+          onLongPressChantier={showReorderMenu}
+          onOpenEmpNote={openNoteModal}
+          onOpenSTNote={openSTNoteModal}
+          onOpenIntervention={openInterventionModal}
+          onOpenAjoutModal={(chantierId, dateStr) => {
+            setInterventionForm({ libelle: '', description: '', dateDebut: dateStr, dateFin: dateStr, couleur: INTERVENTION_COLORS[0] });
+            setModal({ chantierId, date: dateStr });
+          }}
+          onOpenMoveModal={(employeId, chantierId, dateStr) => {
+            setMoveTargetChantierId(null);
+            setMoveTargetDate(dateStr);
+            setMoveModal({ employeId, chantierId, date: dateStr });
+          }}
+          onOpenOrdreModal={(employeId, dateStr, chantierIds) => {
+            setOrdreModal({ employeId, date: dateStr, chantierIds });
+          }}
+        />
       )}
 
       {/* ── Modal Actions chantier (menu rôle-based) ── */}
@@ -1964,122 +1693,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#687076',
   },
-  gridScroll: {
-    flex: 1,
-    backgroundColor: '#F5EDE3',
-  },
-  gridRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
-  },
-  nameCell: {
-    width: NAME_COL_DEFAULT, // overridé dynamiquement en inline
-    minHeight: 50,
-    paddingHorizontal: 4,
-    paddingVertical: 4,
-    paddingLeft: 6,
-    justifyContent: 'center',
-    borderRightWidth: 1,
-    borderRightColor: '#E2E6EA',
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  headerCell: {
-    backgroundColor: '#F5EDE3',
-  },
-  colorDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginBottom: 4,
-  },
-  chantierName: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: '#11181C',
-    lineHeight: 14,
-  },
-  colorBar: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 3,
-  },
-  dayHeaderCell: {
-    width: DAY_COL,
-    alignItems: 'center',
-    paddingVertical: 6,
-    borderRightWidth: 0.5,
-    borderRightColor: '#E2E6EA',
-  },
-  dayHeaderCellToday: {
-    backgroundColor: '#EEF2F8',
-  },
-  dayName: {
-    fontSize: 11,
-    fontWeight: '500',
-    color: '#687076',
-  },
-  dayNameToday: {
-    color: '#2C2C2C',
-    fontWeight: '700',
-  },
-  dayNum: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#11181C',
-    marginTop: 2,
-  },
-  dayNumToday: {
-    color: '#2C2C2C',
-    fontWeight: '600',
-  },
-  chantierRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
-    minHeight: 70,
-  },
-  cell: {
-    width: DAY_COL, // overridé dynamiquement en inline
-    paddingVertical: 3,
-    paddingHorizontal: 0,
-    gap: 1,
-    borderRightWidth: 0.5,
-    borderRightColor: '#E2E6EA',
-    alignItems: 'stretch',
-  },
-  cellToday: {
-    backgroundColor: '#EEF2F8',
-  },
-  cellOutOfRange: {
-    backgroundColor: '#F5EDE3',
-  },
-  empBadge: {
-    width: '100%',
-    paddingVertical: 4,
-    paddingHorizontal: 0,
-    borderRadius: 3,
-    alignItems: 'center',
-    position: 'relative',
-  },
-  empBadgeText: {
-    fontSize: 11,
-    fontWeight: '700',
-  },
-  noteDot: {
-    position: 'absolute',
-    top: 1,
-    right: 1,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: 'rgba(0,0,0,0.3)',
-  },
   ordreBadge: {
     position: 'absolute',
     bottom: 1,
@@ -2096,109 +1709,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#fff',
     lineHeight: 10,
-  },
-  badgeWrapper: {
-    position: 'relative',
-  },
-  removeBadgeBtn: {
-    position: 'absolute',
-    top: -4,
-    right: 2,
-    width: 14,
-    height: 14,
-    borderRadius: 7,
-    backgroundColor: '#E74C3C',
-    alignItems: 'center',
-    justifyContent: 'center',
-    zIndex: 10,
-    borderWidth: 1,
-    borderColor: '#fff',
-  },
-  removeBadgeBtnText: {
-    color: '#fff',
-    fontSize: 7,
-    fontWeight: '900',
-    lineHeight: 12,
-  },
-  addBtn: {
-    width: '100%',
-    paddingVertical: 3,
-    alignItems: 'center',
-  },
-  addBtnText: {
-    fontSize: 16,
-    color: '#687076',
-    fontWeight: '400',
-  },
-  noteBtn: {
-    width: '100%',
-    paddingVertical: 2,
-    alignItems: 'center',
-  },
-  noteBtnText: {
-    fontSize: 12,
-    color: '#687076',
-  },
-  stBadge: {
-    width: '100%',
-    paddingVertical: 4,
-    paddingHorizontal: 0,
-    borderRadius: 3,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.6)',
-    borderStyle: 'dashed',
-  },
-  stBadgeText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#fff',
-    textTransform: 'uppercase',
-  },
-  legendSection: {
-    margin: 16,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
-    elevation: 2,
-    marginBottom: 24,
-  },
-  legendGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '45%',
-    gap: 6,
-  },
-  legendDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-  },
-  legendLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#11181C',
-  },
-  legendSub: {
-    fontSize: 10,
-    color: '#687076',
-    marginTop: 1,
-  },
-  legendDotST: {
-    width: 10,
-    height: 10,
-    borderRadius: 2,
-    borderWidth: 1.5,
-    borderColor: 'rgba(0,0,0,0.2)',
   },
   // Fiche chantier dans le planning
   ficheIndicator: {
@@ -2349,36 +1859,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#687076',
     fontWeight: '700',
-  },
-  // ── Interventions externes ──
-  intervBandeau: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 4,
-    paddingHorizontal: 4,
-    borderRadius: 3,
-    borderWidth: 2,
-    borderColor: 'rgba(255,255,255,0.8)',
-    gap: 2,
-    // Fond hachuré simulé par une ombre colorée
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 2,
-    elevation: 3,
-  },
-  intervBandeauIcon: {
-    fontSize: 9,
-    color: '#fff',
-  },
-  intervBandeauText: {
-    fontSize: 8,
-    fontWeight: '900',
-    color: '#fff',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    flex: 1,
   },
   interventionSheet: {
     backgroundColor: '#fff',
