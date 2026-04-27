@@ -130,6 +130,26 @@ const config: ExpoConfig = {
         },
       },
     ],
+    [
+      "expo-share-intent",
+      {
+        iosActivationRules: {
+          NSExtensionActivationSupportsImageWithMaxCount: 10,
+          NSExtensionActivationSupportsMovieWithMaxCount: 0,
+          NSExtensionActivationSupportsWebURLWithMaxCount: 0,
+          NSExtensionActivationSupportsWebPageWithMaxCount: 0,
+          NSExtensionActivationSupportsFileWithMaxCount: 10,
+        },
+        androidIntentFilters: [
+          "text/*",
+          "image/*",
+          "application/pdf",
+          "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ],
+        disableExperimental: true,
+      },
+    ],
   ],
   updates: {
     url: "https://u.expo.dev/55f7c535-968c-46a3-9873-36f7d61c54ab",
