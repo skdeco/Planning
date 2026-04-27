@@ -15,6 +15,7 @@ import { DS, font, radius, space } from '../../constants/design';
 import { useLanguage } from '../../app/context/LanguageContext';
 import { EmptyState } from '../ui/EmptyState';
 import { SectionHeader } from '../ui/SectionHeader';
+import { FilterChip } from '../ui/FilterChip';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -147,15 +148,6 @@ const MODAL_OVERLAY_BG = 'rgba(0,0,0,0.4)';
 /** Gris très clair pour placeholder + empty text. Pas de token DS équivalent. */
 const COLOR_PLACEHOLDER = '#B0BEC5';
 
-/** Fond des chips destinataires. Pas de token DS équivalent. */
-const CHIP_BG_COLOR = '#F8FAFC';
-
-/** Border des chips. Pas de token DS équivalent. */
-const CHIP_BORDER_COLOR = '#CBD5E1';
-
-/** Couleur du texte des chips. Pas de token DS équivalent. */
-const CHIP_TEXT_COLOR = '#4A5568';
-
 /**
  * Fond de la carte note (jaune post-it pâle).
  * Pas de token DS équivalent.
@@ -205,12 +197,6 @@ const NOTE_INPUT_MIN_HEIGHT = 100;
 
 /** Hauteur minimale du TextInput note dans la modale (override). */
 const NOTE_INPUT_FORM_MIN_HEIGHT = 80;
-
-/** Padding-horizontal des chips (entre `space.sm=8` et `space.md=12`). */
-const CHIP_PH = 10;
-
-/** Padding-vertical des chips (entre `space.xs=4` et `space.sm=8`). */
-const CHIP_PV = 5;
 
 /** Taille du carré photo preview dans la note. */
 const PHOTO_THUMB_SIZE = 60;
@@ -420,31 +406,21 @@ export function ModalNotesChantier({
                 <View style={styles.recipientsBlock}>
                   <Text style={styles.recipientsLabel}>Destinataires</Text>
                   <View style={styles.chipsRow}>
-                    <Pressable
-                      style={[styles.chip, destinataires === 'tous' && styles.chipActive]}
+                    <FilterChip
+                      label="Tous"
+                      active={destinataires === 'tous'}
                       onPress={() => setDestinataires('tous')}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected: destinataires === 'tous' }}
-                    >
-                      <Text style={[styles.chipText, destinataires === 'tous' && styles.chipTextActive]}>
-                        Tous
-                      </Text>
-                    </Pressable>
+                    />
                     {participants.map(p => {
                       const selected = isRecipientSelected(p.id);
                       const suffix = p.kind === 'soustraitant' ? ' (ST)' : '';
                       return (
-                        <Pressable
+                        <FilterChip
                           key={p.id}
-                          style={[styles.chip, selected && styles.chipActive]}
+                          label={`${p.label}${suffix}`}
+                          active={selected}
                           onPress={() => toggleRecipient(p.id)}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected }}
-                        >
-                          <Text style={[styles.chipText, selected && styles.chipTextActive]}>
-                            {p.label}{suffix}
-                          </Text>
-                        </Pressable>
+                        />
                       );
                     })}
                   </View>
@@ -861,31 +837,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap:      'wrap',
     gap:           NOTE_DEST_MB,               // 6
-  },
-
-  chip: {
-    paddingHorizontal: CHIP_PH,                // 10
-    paddingVertical:   CHIP_PV,                // 5
-    borderRadius:      radius.lg,              // 16
-    borderWidth:       1,
-    borderColor:       CHIP_BORDER_COLOR,
-    backgroundColor:   CHIP_BG_COLOR,
-  },
-
-  chipActive: {
-    backgroundColor: DS.primary,
-    borderColor:     DS.primary,
-  },
-
-  chipText: {
-    fontSize:   font.sm,                       // 12
-    color:      CHIP_TEXT_COLOR,
-    fontWeight: font.medium,
-  },
-
-  chipTextActive: {
-    color:      DS.textInverse,
-    fontWeight: font.bold,
   },
 
   formPhotosRow: {

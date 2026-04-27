@@ -46,6 +46,14 @@ export interface FilterChipProps {
   activeTextColor?: string;
 
   /**
+   * Couleur de bordure quand le chip est inactif. Utile pour conserver
+   * une identité visuelle (ex : couleur métier d'un acteur) même quand
+   * le chip n'est pas sélectionné.
+   * Par défaut : `DS.border` (neutre).
+   */
+  inactiveBorderColor?: string;
+
+  /**
    * Gabarit de taille.
    * - `'md'` → font.body (13), ph space.md (12), pv space.sm (8) *(défaut)*
    * - `'sm'` → font.compact (11), ph space.sm (8), pv space.xs (4)
@@ -107,6 +115,7 @@ export function FilterChip({
   icon,
   activeColor,
   activeTextColor,
+  inactiveBorderColor,
   size = 'md',
   disabled = false,
   style,
@@ -146,6 +155,7 @@ export function FilterChip({
           : isActive
             ? activeBgStyle
             : styles.stateInactive,
+        !disabled && !isActive && inactiveBorderColor !== undefined && { borderColor: inactiveBorderColor },
         pressed && !disabled && styles.pressed,
         style,
       ]}

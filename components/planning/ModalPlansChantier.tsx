@@ -14,6 +14,7 @@ import {
 import { DS, font, radius, space } from '../../constants/design';
 import { useLanguage } from '../../app/context/LanguageContext';
 import { EmptyState } from '../ui/EmptyState';
+import { FilterChip } from '../ui/FilterChip';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -144,15 +145,6 @@ const EMOJI = {
 /** Overlay modale (rgba noire 0.4). Original préservé. */
 const MODAL_OVERLAY_BG = 'rgba(0,0,0,0.4)';
 
-/** Border des chips destinataires. Pas de token DS équivalent. */
-const CHIP_BORDER_COLOR = '#CBD5E1';
-
-/** Fond des chips destinataires. Pas de token DS équivalent. */
-const CHIP_BG_COLOR = '#F8FAFC';
-
-/** Couleur du texte des chips (sombre). Pas de token DS équivalent. */
-const CHIP_TEXT_COLOR = '#4A5568';
-
 /** Fond des items de liste plans (quasi-blanc). Pas de token DS équivalent. */
 const LIST_ITEM_BG = '#F8F9FB';
 
@@ -193,12 +185,6 @@ const NOTE_INPUT_RADIUS = 10;
 
 /** Hauteur minimale du TextInput nom du plan. */
 const NOTE_INPUT_MIN_HEIGHT = 100;
-
-/** Padding-horizontal des chips (entre `space.sm=8` et `space.md=12`). */
-const CHIP_PH = 10;
-
-/** Padding-vertical des chips (entre `space.xs=4` et `space.sm=8`). */
-const CHIP_PV = 5;
 
 /** Border-radius des items de liste (entre `radius.sm=8` et `radius.md=12`). */
 const LIST_ITEM_RADIUS = 10;
@@ -439,17 +425,12 @@ export function ModalPlansChantier({
                         : v === 'soustraitants' ? EMOJI.soustraits
                         :                         EMOJI.specifique;
                       return (
-                        <Pressable
+                        <FilterChip
                           key={v}
+                          label={label}
+                          active={active}
                           onPress={() => setVisiblePar(v)}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected: active }}
-                          style={[styles.chip, active && styles.chipActive]}
-                        >
-                          <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                            {label}
-                          </Text>
-                        </Pressable>
+                        />
                       );
                     })}
                   </View>
@@ -464,17 +445,12 @@ export function ModalPlansChantier({
                         const active = visibleIds.includes(p.id);
                         const suffix = p.kind === 'soustraitant' ? ' (ST)' : '';
                         return (
-                          <Pressable
+                          <FilterChip
                             key={p.id}
+                            label={`${p.label}${suffix}`}
+                            active={active}
                             onPress={() => toggleVisibleId(p.id)}
-                            accessibilityRole="button"
-                            accessibilityState={{ selected: active }}
-                            style={[styles.chip, active && styles.chipActive]}
-                          >
-                            <Text style={[styles.chipText, active && styles.chipTextActive]}>
-                              {p.label}{suffix}
-                            </Text>
-                          </Pressable>
+                          />
                         );
                       })}
                     </View>
@@ -726,31 +702,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap:      'wrap',
     gap:           LIST_ITEM_MB, // 6
-  },
-
-  chip: {
-    paddingHorizontal: CHIP_PH, // 10
-    paddingVertical:   CHIP_PV, // 5
-    borderRadius:      radius.lg, // 16
-    borderWidth:       1,
-    borderColor:       CHIP_BORDER_COLOR,
-    backgroundColor:   CHIP_BG_COLOR,
-  },
-
-  chipActive: {
-    backgroundColor: DS.primary,
-    borderColor:     DS.primary,
-  },
-
-  chipText: {
-    fontSize:   font.sm, // 12
-    color:      CHIP_TEXT_COLOR,
-    fontWeight: font.medium,
-  },
-
-  chipTextActive: {
-    color:      DS.textInverse,
-    fontWeight: font.bold,
   },
 
   // — Submit button —

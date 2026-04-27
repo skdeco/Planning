@@ -15,6 +15,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useNotesModalLogic, type NoteModalState } from '@/hooks/useNotesModalLogic';
 import { getEmployeColor, type TaskItem } from '@/app/types';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { FilterChip } from '@/components/ui/FilterChip';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -428,17 +429,17 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     <View style={{ marginTop: 12, gap: 10 }}>
                       <Text style={styles.noteLabel}>Visible par</Text>
                       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                        {(['tous', 'employes', 'soustraitants'] as const).map(v => (
-                          <Pressable
-                            key={v}
-                            style={[styles.visibBtn, draft.visiblePar === v && draft.visibleIds.length === 0 && styles.visibBtnActive]}
-                            onPress={() => setDraft({ visiblePar: v, visibleIds: [] })}
-                          >
-                            <Text style={[styles.visibBtnText, draft.visiblePar === v && draft.visibleIds.length === 0 && styles.visibBtnTextActive]}>
-                              {v === 'tous' ? 'Tous' : v === 'employes' ? 'Employés' : 'Sous-traitants'}
-                            </Text>
-                          </Pressable>
-                        ))}
+                        {(['tous', 'employes', 'soustraitants'] as const).map(v => {
+                          const active = draft.visiblePar === v && draft.visibleIds.length === 0;
+                          return (
+                            <FilterChip
+                              key={v}
+                              label={v === 'tous' ? 'Tous' : v === 'employes' ? 'Employés' : 'Sous-traitants'}
+                              active={active}
+                              onPress={() => setDraft({ visiblePar: v, visibleIds: [] })}
+                            />
+                          );
+                        })}
                       </View>
                       {/* Sélection spécifique d'acteurs présents sur le chantier */}
                       {(draft.visiblePar === 'employes' || draft.visiblePar === 'soustraitants') && noteModal && (() => {
@@ -471,9 +472,12 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                               {acteurs.map(a => {
                                 const isSelected = draft.visibleIds.includes(a.id);
                                 return (
-                                  <Pressable
+                                  <FilterChip
                                     key={a.id}
-                                    style={[styles.visibBtn, { backgroundColor: isSelected ? a.color : '#F5EDE3', borderColor: a.color, borderWidth: 1.5 }]}
+                                    label={a.label}
+                                    active={isSelected}
+                                    activeColor={a.color}
+                                    inactiveBorderColor={a.color}
                                     onPress={() => {
                                       setDraft({
                                         visibleIds: draft.visibleIds.includes(a.id)
@@ -481,11 +485,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                           : [...draft.visibleIds, a.id],
                                       });
                                     }}
-                                  >
-                                    <Text style={[styles.visibBtnText, { color: isSelected ? '#fff' : a.color }]}>
-                                      {a.label}
-                                    </Text>
-                                  </Pressable>
+                                  />
                                 );
                               })}
                             </View>
@@ -495,15 +495,12 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                       <Text style={styles.noteLabel}>Répéter sur</Text>
                       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                         {[0, 1, 2, 3, 5, 7, 14].map(d => (
-                          <Pressable
+                          <FilterChip
                             key={d}
-                            style={[styles.visibBtn, draft.repeatDays === d && styles.visibBtnActive]}
+                            label={d === 0 ? 'Non' : d === 1 ? '+1 j' : `+${d} j`}
+                            active={draft.repeatDays === d}
                             onPress={() => setDraft({ repeatDays: d })}
-                          >
-                            <Text style={[styles.visibBtnText, draft.repeatDays === d && styles.visibBtnTextActive]}>
-                              {d === 0 ? 'Non' : d === 1 ? '+1 j' : `+${d} j`}
-                            </Text>
-                          </Pressable>
+                          />
                         ))}
                       </View>
                     </View>
@@ -959,26 +956,4 @@ const styles = StyleSheet.create({
     padding: 8,
   },
 
-  // — Options visibilité / répétition admin —
-  visibBtn: {
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: '#F0F4F8',
-    borderWidth: 1,
-    borderColor: '#CBD5E0',
-  },
-  visibBtnActive: {
-    backgroundColor: '#2980B9',
-    borderColor: '#2980B9',
-  },
-  visibBtnText: {
-    fontSize: 12,
-    color: '#4A5568',
-    fontWeight: '500',
-  },
-  visibBtnTextActive: {
-    color: '#fff',
-    fontWeight: '700',
-  },
 });
