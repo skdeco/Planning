@@ -62,6 +62,16 @@ const config: ExpoConfig = {
       // Schémes d'URL que l'app peut ouvrir (obligatoire iOS pour canOpenURL)
       LSApplicationQueriesSchemes: ["waze", "comgooglemaps", "maps"],
     },
+    // Requis par expo-share-extension pour activer le partage d'images
+    // (cf. README upstream — section activationRules / privacyManifests).
+    privacyManifests: {
+      NSPrivacyAccessedAPITypes: [
+        {
+          NSPrivacyAccessedAPIType: "NSPrivacyAccessedAPICategoryFileTimestamp",
+          NSPrivacyAccessedAPITypeReasons: ["C617.1"],
+        },
+      ],
+    },
   },
   android: {
     adaptiveIcon: {
@@ -141,6 +151,20 @@ const config: ExpoConfig = {
           "expo-splash-screen",
           "expo-updates",
           "expo-font",
+        ],
+        // Types de partage acceptés depuis le Share Sheet iOS.
+        // Sans cette option, défaut = url + text seulement (J1 OK Safari
+        // mais pas Mail / Photos / Files). Cf. README upstream.
+        // - file  : PDF Mail, DOCX, XLSX, etc. (max 10)
+        // - image : Photos app (max 10)
+        // - url   : Safari (max 1, défaut)
+        // - text  : sélection texte WhatsApp/web
+        // (video volontairement omis : pas dans le use case actuel)
+        activationRules: [
+          { type: "file",  max: 10 },
+          { type: "image", max: 10 },
+          { type: "url",   max: 1 },
+          { type: "text" },
         ],
       },
     ],
