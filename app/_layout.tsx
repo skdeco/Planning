@@ -6,7 +6,6 @@ import { useCallback, useEffect, useMemo, useState, type ReactElement, type Reac
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
-import { Paths } from "expo-file-system";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
@@ -53,19 +52,6 @@ export default function RootLayout() {
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
     initManusRuntime();
-  }, []);
-
-  // [TEMP — diag AppGroup entitlements pour Share Extension iOS]
-  // À retirer une fois validé. Vérifie que group.fr.skdeco.planning est
-  // bien enregistré dans les containers partagés (entitlement iOS).
-  useEffect(() => {
-    const containers = (Paths as unknown as { appleSharedContainers?: Record<string, unknown> })
-      .appleSharedContainers;
-    console.log("[AppGroup diag]", {
-      platform: Platform.OS,
-      containers,
-      target: containers?.["group.fr.skdeco.planning"],
-    });
   }, []);
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {

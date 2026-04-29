@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, Text, View } from 'react-native';
-import { Paths } from 'expo-file-system';
+import { Text, View } from 'react-native';
 import { close, type InitialProps } from 'expo-share-extension';
 
 import { DS, font, radius, space } from '@/constants/design';
@@ -40,31 +39,11 @@ export default function ShareExtension(props: InitialProps): React.ReactElement 
   const { files, images, videos, text, url } = props;
   const [cacheResult, setCacheResult] = useState<LoadResult | null>(null);
 
-  // [TEMP — diag AppGroup côté extension iOS]
-  // À retirer une fois validé. Confirme que l'extension a accès au
-  // container partagé group.fr.skdeco.planning.
+  // Lit le cache chantiers écrit par l'app principale (via
+  // useChantiersCacheSync) pour alimenter l'UI compteur ci-dessous.
+  // Sera utilisé en J2.B comme source du sélecteur de chantier.
   useEffect(() => {
-    const containers = (Paths as unknown as { appleSharedContainers?: Record<string, unknown> })
-      .appleSharedContainers;
-    console.log('[AppGroup diag EXTENSION]', {
-      platform: Platform.OS,
-      containers,
-      target: containers?.['group.fr.skdeco.planning'],
-    });
-  }, []);
-
-  // [TEMP — diag cache chantiers J2.A]
-  // Lit le cache écrit par l'app principale et logue le résultat.
-  // Sera remplacé par la vraie UI ShareIntakeModal en J2.B.
-  useEffect(() => {
-    const result = loadChantiersCache();
-    setCacheResult(result);
-    console.log('[ChantiersCache diag]', {
-      status: result.status,
-      count: result.chantiers.length,
-      ageMs: result.ageMs,
-      error: result.error,
-    });
+    setCacheResult(loadChantiersCache());
   }, []);
 
   return (
