@@ -11,6 +11,13 @@ import type { Pointage, PhotoChantier, Chantier } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { Image } from 'react-native';
 import Svg, { Path, Circle, Polyline, Line } from 'react-native-svg';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+
+// Filtre mime utilisé par l'InboxPickerButton de cet écran
+// (photos pointage fin journée). Aligné avec equipe.tsx + financier-st.tsx.
+const inboxMimeFilterImagePdf = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -483,6 +490,35 @@ export default function PointageScreen() {
     }
   };
 
+  // P1 — Inbox flow équivalent de handlePickPhotos + handleSavePhotos
+  // (mobile-compat). Direct upload Supabase + addPhotosChantier sans
+  // staging : si on staguait, l'item Inbox serait retiré avant save
+  // → tap "Passer" perdrait le fichier. Date recalculée au moment de
+  // l'upload (l'écran tick chaque seconde, on prend la date fraîche).
+  const addFromInboxPhotoPointage = useCallback(
+    async (item: InboxItem): Promise<boolean> => {
+      if (!photosChantierId) return false;
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const photoId = `inbox_${item.id}`;
+      const folder = `chantiers/${photosChantierId}/photos`;
+      const url = await uploadFileToStorage(fileURI, folder, photoId);
+      if (!url) return false;
+      addPhotosChantier([{
+        id: photoId,
+        chantierId: photosChantierId,
+        employeId,
+        date: toYMD(new Date()),
+        uri: url,
+        nom: item.filename,
+        createdAt: new Date().toISOString(),
+        source: 'fin_journee' as const,
+      }]);
+      return true;
+    },
+    [photosChantierId, employeId, addPhotosChantier],
+  );
+
   const handleRemovePhoto = (index: number) => {
     setPhotosEnAttente(prev => prev.filter((_, i) => i !== index));
   };
@@ -914,6 +950,12 @@ export default function PointageScreen() {
             <Pressable style={styles.pickPhotosBtn} onPress={handlePickPhotos}>
               <Text style={styles.pickPhotosBtnText}>📎 Ajouter des photos / PDF</Text>
             </Pressable>
+            <View style={{ marginTop: 4 }}>
+              <InboxPickerButton
+                onPick={addFromInboxPhotoPointage}
+                mimeFilter={inboxMimeFilterImagePdf}
+              />
+            </View>
 
             <View style={styles.modalActions}>
               <Pressable style={styles.skipBtn} onPress={() => setShowPhotosModal(false)}>
