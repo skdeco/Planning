@@ -5,6 +5,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { compressImage } from '@/lib/imageUtils';
+import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import type { Note, TaskItem } from '@/app/types';
 import type { CellNote } from '@/hooks/usePlanningWeekData';
 
@@ -79,6 +80,12 @@ export interface NoteActions {
   addDoc:      () => Promise<void>;
   /** Retire une photo du brouillon par index. */
   removePhoto: (idx: number) => void;
+  /**
+   * Importe un fichier depuis l'Inbox AppGroup (share extension iOS) :
+   * upload Supabase + ajout au draft.photos. Retourne `true` si succès,
+   * `false` si erreur (le caller doit garder l'item dans l'Inbox).
+   */
+  addFromInbox: (item: InboxItem) => Promise<boolean>;
 }
 
 /** API du hook regroupée en 5 returns top-level (cf. décision audit Option B). */
@@ -365,6 +372,34 @@ export function useNotesModalLogic(
     setDraftState(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }));
   }, []);
 
+  // Import depuis l'Inbox AppGroup (share extension iOS).
+  // Réutilise uploadFileToStorage (mobile-compat REST API) ; pas de
+  // duplication du pipeline web/mobile d'addPhoto. Le fichier source
+  // reste dans l'Inbox tant que l'upload n'a pas réussi (caller fait
+  // removeInboxItem côté InboxPickerButton).
+  const addFromInbox = useCallback(async (item: InboxItem): Promise<boolean> => {
+    try {
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) {
+        console.warn('[notes] inbox file path missing', item.id);
+        return false;
+      }
+      const chantierId = noteModal?.chantierId || 'general';
+      const folder = `chantiers/${chantierId}/notes`;
+      const photoId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, folder, photoId);
+      if (!url) {
+        console.warn('[notes] upload failed', item.id);
+        return false;
+      }
+      setDraftState(prev => ({ ...prev, photos: [...prev.photos, url] }));
+      return true;
+    } catch (err) {
+      console.warn('[notes] addFromInbox failed', err);
+      return false;
+    }
+  }, [noteModal]);
+
   // ─── Référence (toggleTask + deleteTask + addTask) ────────────────────────
   // Note : ces mutations sont aussi nécessaires côté composant (callbacks
   // inline dans le JSX checklist). Elles ne passent pas par le hook —
@@ -385,6 +420,7 @@ export function useNotesModalLogic(
       addPhoto,
       addDoc,
       removePhoto,
+      addFromInbox,
     },
   };
 }

@@ -16,6 +16,7 @@ import { useNotesModalLogic, type NoteModalState } from '@/hooks/useNotesModalLo
 import { getEmployeColor, type TaskItem } from '@/app/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterChip } from '@/components/ui/FilterChip';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -340,6 +341,10 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                       </Pressable>
                     )}
                   </ScrollView>
+
+                  <View style={{ marginTop: 8 }}>
+                    <InboxPickerButton onPick={actions.addFromInbox} />
+                  </View>
 
                   {/* Section checklist */}
                   <Text style={[styles.noteLabel, { marginTop: 12 }]}>📋 Tâches à faire</Text>
