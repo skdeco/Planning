@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal, Image,
-  TextInput, ScrollView, Alert, Platform, Switch,
+  TextInput, ScrollView, Alert, Platform, Switch, Linking,
 } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
@@ -535,10 +535,32 @@ export default function EquipeScreen() {
   const currentDocsST = docsSTId ? data.sousTraitants.find(s => s.id === docsSTId) || null : null;
   const currentActiveST = currentFinancesST || currentDocsST;
 
-  const openDocPreview = (fichier: string) => {
+  const openDocPreview = async (fichier: string): Promise<void> => {
     if (Platform.OS === 'web') {
       const w = window.open();
       if (w) w.document.write(`<iframe src="${fichier}" width="100%" height="100%"></iframe>`);
+      return;
+    }
+    // iOS/Android : data URIs (legacy ModalNotesChantier) ne peuvent
+    // pas être ouvertes via Linking — on informe l'utilisateur plutôt
+    // que de tap silencieux.
+    if (fichier.startsWith('data:')) {
+      Alert.alert(
+        'Aperçu indisponible',
+        "Ce document est dans un format ancien qui ne peut pas être ouvert sur mobile. Ouvrez-le depuis le navigateur web pour le visualiser.",
+      );
+      return;
+    }
+    try {
+      const ok = await Linking.canOpenURL(fichier);
+      if (ok) {
+        await Linking.openURL(fichier);
+      } else {
+        Alert.alert('Impossible', "Impossible d'ouvrir ce document.");
+      }
+    } catch (err) {
+      console.warn('[openDocPreview] failed', err);
+      Alert.alert('Erreur', "Impossible d'ouvrir ce document.");
     }
   };
 
