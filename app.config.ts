@@ -159,10 +159,11 @@ const config: ExpoConfig = {
         // - image : Photos app (max 10)
         // - url   : Safari (max 1, défaut)
         // - text  : sélection texte WhatsApp/web
-        // (video volontairement omis : pas dans le use case actuel)
+        // - video : Photos app (vidéos, max 10)
         activationRules: [
           { type: "file",  max: 10 },
           { type: "image", max: 10 },
+          { type: "video", max: 10 },
           { type: "url",   max: 1 },
           { type: "text" },
         ],
