@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
-  TextInput, Platform, Alert,
+  TextInput, Platform, Alert, Linking,
 } from 'react-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
@@ -262,6 +262,37 @@ export default function RHScreen() {
     setReponseTarget(null);
   };
 
+  // ─── Preview document (justificatif arrêt maladie, fiche paie) ───────────
+  // Pattern aligné sur equipe.tsx commit 63e9f71. Web : window.open + iframe.
+  // iOS/Android : data: URIs (cas majoritaire ici, paies stockées en base64
+  // legacy) ne peuvent pas s'ouvrir via Linking → Alert explicite. URLs https
+  // (rares dans cet écran mais possibles) → Linking.canOpenURL + openURL.
+  const openDocPreview = async (fichier: string): Promise<void> => {
+    if (Platform.OS === 'web') {
+      const w = window.open();
+      if (w) w.document.write(`<iframe src="${fichier}" style="width:100%;height:100%;border:none;"/>`);
+      return;
+    }
+    if (fichier.startsWith('data:')) {
+      Alert.alert(
+        'Aperçu indisponible',
+        "Aperçu indisponible pour ce format. Une mise à jour à venir permettra l'aperçu natif.",
+      );
+      return;
+    }
+    try {
+      const ok = await Linking.canOpenURL(fichier);
+      if (ok) {
+        await Linking.openURL(fichier);
+      } else {
+        Alert.alert('Impossible', "Impossible d'ouvrir ce document.");
+      }
+    } catch (err) {
+      console.warn('[rh openDocPreview] failed', err);
+      Alert.alert('Erreur', "Impossible d'ouvrir ce document.");
+    }
+  };
+
   // ─── Upload fiche de paie avec sélecteur mois/année ──────────────────────────────────────────────────────────
   const handleUploadPaie = (employeId: string) => {
     // Ouvrir le modal de sélection mois/année
@@ -464,12 +495,7 @@ export default function RHScreen() {
                     {isRH && <Text style={styles.cardEmploye}>{getEmployeNom(d.employeId)}</Text>}
                     <Text style={styles.cardTitle}>{t.rh.start}: {formatDate(d.dateDebut)}{d.dateFin ? ` → ${formatDate(d.dateFin)}` : ` (${t.rh.ongoing})`}</Text>
                   {(d as any).justificatif && (
-                    <Pressable onPress={() => {
-                      if (Platform.OS === 'web') {
-                        const win = window.open();
-                        if (win) win.document.write(`<iframe src="${(d as any).justificatif}" style="width:100%;height:100%;border:none;"/>`);
-                      }
-                    }}>
+                    <Pressable onPress={() => openDocPreview((d as any).justificatif)}>
                       <Text style={styles.justificatifLink}>{t.rh.viewProof}</Text>
                     </Pressable>
                   )}
@@ -604,15 +630,10 @@ export default function RHScreen() {
                     <Text style={styles.cardSub}>Déposée le {new Date(f.uploadedAt).toLocaleDateString('fr-FR')}</Text>
                     <View style={styles.cardActions}>
                       {/* Voir le document */}
-                      <Pressable style={styles.voirBtn} onPress={() => {
-                        if (Platform.OS === 'web') {
-                          const win = window.open();
-                          if (win) { win.document.write(`<iframe src="${f.fichier}" style="width:100%;height:100%;border:none;"/>`); }
-                        }
-                      }}>
+                      <Pressable style={styles.voirBtn} onPress={() => openDocPreview(f.fichier)}>
                         <Text style={styles.voirBtnText}>{t.common.view}</Text>
                       </Pressable>
-                      {/* Télécharger */}
+                      {/* Télécharger — TODO web-only ; iOS port via expo-file-system + expo-sharing prévu post-Tier 1 */}
                       <Pressable style={[styles.voirBtn, { backgroundColor: '#EFF6FF' }]} onPress={() => {
                         if (Platform.OS === 'web') {
                           const a = document.createElement('a');
