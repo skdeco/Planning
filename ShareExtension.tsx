@@ -1,6 +1,21 @@
-import React from 'react';
-import { Text, View } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Platform, Text, View } from 'react-native';
+import { Paths } from 'expo-file-system';
 import { close, type InitialProps } from 'expo-share-extension';
+
+import { DS, font, radius, space } from '@/constants/design';
+import { loadChantiersCache, type LoadResult } from '@/lib/share/chantiersCache';
+
+function formatAge(ms?: number): string {
+  if (ms === undefined) return '?';
+  const minutes = Math.floor(ms / 60000);
+  if (minutes < 1) return '< 1 min';
+  if (minutes < 60) return `${minutes} min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} h`;
+  const days = Math.floor(hours / 24);
+  return `${days} j`;
+}
 
 /**
  * Composant racine de la Share Extension iOS.
@@ -23,12 +38,70 @@ import { close, type InitialProps } from 'expo-share-extension';
  */
 export default function ShareExtension(props: InitialProps): React.ReactElement {
   const { files, images, videos, text, url } = props;
+  const [cacheResult, setCacheResult] = useState<LoadResult | null>(null);
+
+  // [TEMP — diag AppGroup côté extension iOS]
+  // À retirer une fois validé. Confirme que l'extension a accès au
+  // container partagé group.fr.skdeco.planning.
+  useEffect(() => {
+    const containers = (Paths as unknown as { appleSharedContainers?: Record<string, unknown> })
+      .appleSharedContainers;
+    console.log('[AppGroup diag EXTENSION]', {
+      platform: Platform.OS,
+      containers,
+      target: containers?.['group.fr.skdeco.planning'],
+    });
+  }, []);
+
+  // [TEMP — diag cache chantiers J2.A]
+  // Lit le cache écrit par l'app principale et logue le résultat.
+  // Sera remplacé par la vraie UI ShareIntakeModal en J2.B.
+  useEffect(() => {
+    const result = loadChantiersCache();
+    setCacheResult(result);
+    console.log('[ChantiersCache diag]', {
+      status: result.status,
+      count: result.chantiers.length,
+      ageMs: result.ageMs,
+      error: result.error,
+    });
+  }, []);
 
   return (
     <View style={{ flex: 1, padding: 16, backgroundColor: '#FAFAF9' }}>
       <Text style={{ fontSize: 18, fontWeight: '700', marginBottom: 12, color: '#11181C' }}>
         📎 Share reçu (J1 hello world)
       </Text>
+
+      {cacheResult !== null && (
+        <View
+          style={{
+            padding: space.md,
+            backgroundColor: DS.surface,
+            borderRadius: radius.md,
+            borderWidth: 1,
+            borderColor: DS.border,
+            marginBottom: space.md,
+          }}
+        >
+          <Text style={{ color: DS.text, fontSize: font.md, fontWeight: '600' }}>
+            📋 {cacheResult.chantiers.length} chantiers chargés
+          </Text>
+          <Text
+            style={{
+              color: DS.textSecondary,
+              fontSize: font.compact,
+              marginTop: 2,
+            }}
+          >
+            {cacheResult.status === 'missing'
+              ? `Cache absent${cacheResult.error ? ` (${cacheResult.error})` : ''}`
+              : cacheResult.status === 'stale'
+                ? `Cache périmé (${formatAge(cacheResult.ageMs)})`
+                : `Frais (${formatAge(cacheResult.ageMs)})`}
+          </Text>
+        </View>
+      )}
 
       {files !== undefined && files.length > 0 && (
         <Text style={{ marginBottom: 8, color: '#11181C' }}>

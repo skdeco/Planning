@@ -2,10 +2,11 @@ import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
 import { Platform } from "react-native";
+import { Paths } from "expo-file-system";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
@@ -21,6 +22,7 @@ import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-run
 import { AppProvider } from "@/app/context/AppContext";
 import { LanguageProvider } from "@/app/context/LanguageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { useChantiersCacheSync } from "@/hooks/useChantiersCacheSync";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -28,6 +30,18 @@ const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
 export const unstable_settings = {
   anchor: "index",
 };
+
+// Wrapper qui appelle `useChantiersCacheSync` (lecture du context
+// AppProvider), placé entre AppProvider et le reste de l'arbre pour
+// avoir accès à `useApp()`. iOS-only, no-op ailleurs.
+function ChantiersCacheSyncMounter({
+  children,
+}: {
+  children: ReactNode;
+}): ReactElement {
+  useChantiersCacheSync();
+  return <>{children}</>;
+}
 
 export default function RootLayout() {
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
@@ -39,6 +53,19 @@ export default function RootLayout() {
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
     initManusRuntime();
+  }, []);
+
+  // [TEMP — diag AppGroup entitlements pour Share Extension iOS]
+  // À retirer une fois validé. Vérifie que group.fr.skdeco.planning est
+  // bien enregistré dans les containers partagés (entitlement iOS).
+  useEffect(() => {
+    const containers = (Paths as unknown as { appleSharedContainers?: Record<string, unknown> })
+      .appleSharedContainers;
+    console.log("[AppGroup diag]", {
+      platform: Platform.OS,
+      containers,
+      target: containers?.["group.fr.skdeco.planning"],
+    });
   }, []);
 
   const handleSafeAreaUpdate = useCallback((metrics: Metrics) => {
@@ -85,6 +112,7 @@ export default function RootLayout() {
     <ErrorBoundary>
     <LanguageProvider>
     <AppProvider>
+    <ChantiersCacheSyncMounter>
     <GestureHandlerRootView style={{ flex: 1 }}>
       <trpc.Provider client={trpcClient} queryClient={queryClient}>
         <QueryClientProvider client={queryClient}>
@@ -103,6 +131,7 @@ export default function RootLayout() {
         </QueryClientProvider>
       </trpc.Provider>
     </GestureHandlerRootView>
+    </ChantiersCacheSyncMounter>
     </AppProvider>
     </LanguageProvider>
     </ErrorBoundary>
