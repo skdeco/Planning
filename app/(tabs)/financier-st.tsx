@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Platform,
@@ -6,6 +6,13 @@ import {
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+
+// Filtre mime utilisé par tous les InboxPickerButton de cet écran
+// (devis, factures, documents légaux ST). Aligné avec equipe.tsx.
+const inboxMimeFilterImagePdf = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 function fmt(n: number) {
   return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
@@ -77,6 +84,22 @@ export default function FinancierSTScreen() {
     input.click(); setTimeout(() => input.remove(), 60000);
   };
 
+  // F1 — Inbox flow équivalent de handleUploadDevisFichier (mobile-compat).
+  const addFromInboxDevisFichier = useCallback(
+    async (devisId: string, item: InboxItem): Promise<boolean> => {
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const fileId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${stId}/devis`, fileId);
+      if (!url) return false;
+      const existing = data.devis.find(d => d.id === devisId);
+      if (!existing) return false;
+      updateDevis({ ...existing, devisFichier: url });
+      return true;
+    },
+    [stId, data.devis, updateDevis],
+  );
+
   // ── Upload facture par le ST pour un acompte ──
   const handleUploadFacture = (acompteId: string) => {
     if (Platform.OS !== 'web') return;
@@ -98,6 +121,22 @@ export default function FinancierSTScreen() {
     };
     input.click(); setTimeout(() => input.remove(), 60000);
   };
+
+  // F2 — Inbox flow équivalent de handleUploadFacture (mobile-compat).
+  const addFromInboxFacture = useCallback(
+    async (acompteId: string, item: InboxItem): Promise<boolean> => {
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const fileId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${stId}/factures`, fileId);
+      if (!url) return false;
+      const existing = data.acomptesst.find(a => a.id === acompteId);
+      if (!existing) return false;
+      updateAcompteST({ ...existing, facture: url });
+      return true;
+    },
+    [stId, data.acomptesst, updateAcompteST],
+  );
 
   const openDoc = (uri: string) => {
     if (Platform.OS === 'web') {
@@ -139,6 +178,33 @@ export default function FinancierSTScreen() {
     input.click(); setTimeout(() => input.remove(), 60000);
   };
 
+  // F3 — Inbox flow équivalent de handleUploadDocLegal (mobile-compat).
+  // Préserve la logique upsert par typeLabel via findDocForType :
+  // si un doc du même type existe → remplacement ; sinon push.
+  const addFromInboxDocLegal = useCallback(
+    async (typeLabel: string, item: InboxItem): Promise<boolean> => {
+      if (!monST) return false;
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const docId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${stId}/documents`, docId);
+      if (!url) return false;
+      const newDoc = {
+        id: docId,
+        libelle: typeLabel,
+        fichier: url,
+        uploadedAt: new Date().toISOString(),
+      };
+      const existing = findDocForType(monST.documents || [], typeLabel);
+      const newDocs = existing
+        ? (monST.documents || []).map(d => d.id === existing.id ? newDoc : d)
+        : [...(monST.documents || []), newDoc];
+      updateSousTraitant({ ...monST, documents: newDocs });
+      return true;
+    },
+    [monST, stId, updateSousTraitant],
+  );
+
   const handleDeleteDocLegal = (docId: string) => {
     if (!monST) return;
     const newDocs = (monST.documents || []).filter(d => d.id !== docId);
@@ -172,26 +238,36 @@ export default function FinancierSTScreen() {
               {DOCUMENTS_LEGAUX_TYPES.map(t => {
                 const doc = findDocForType(monST.documents || [], t.label);
                 return (
-                  <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F0E8DE' }}>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A1A1A' }}>{t.label}</Text>
-                      <Text style={{ fontSize: 10, color: doc ? '#10B981' : '#C9A96E', marginTop: 2 }}>
-                        {doc ? `✅ Fourni le ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : '⚠️ Manquant'}
-                      </Text>
-                    </View>
-                    {doc ? (
-                      <View style={{ flexDirection: 'row', gap: 6 }}>
-                        <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#F5EDE3' }} onPress={() => openDoc(doc.fichier)}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Voir</Text>
-                        </Pressable>
-                        <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#FEE2E2' }} onPress={() => handleDeleteDocLegal(doc.id)}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#D94F4F' }}>Suppr.</Text>
-                        </Pressable>
+                  <View key={t.id} style={{ borderBottomWidth: 0.5, borderBottomColor: '#F0E8DE' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A1A1A' }}>{t.label}</Text>
+                        <Text style={{ fontSize: 10, color: doc ? '#10B981' : '#C9A96E', marginTop: 2 }}>
+                          {doc ? `✅ Fourni le ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : '⚠️ Manquant'}
+                        </Text>
                       </View>
-                    ) : (
-                      <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2C2C2C' }} onPress={() => handleUploadDocLegal(t.label)}>
-                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>⬆ Charger</Text>
-                      </Pressable>
+                      {doc ? (
+                        <View style={{ flexDirection: 'row', gap: 6 }}>
+                          <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#F5EDE3' }} onPress={() => openDoc(doc.fichier)}>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Voir</Text>
+                          </Pressable>
+                          <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#FEE2E2' }} onPress={() => handleDeleteDocLegal(doc.id)}>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#D94F4F' }}>Suppr.</Text>
+                          </Pressable>
+                        </View>
+                      ) : (
+                        <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2C2C2C' }} onPress={() => handleUploadDocLegal(t.label)}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>⬆ Charger</Text>
+                        </Pressable>
+                      )}
+                    </View>
+                    {!doc && (
+                      <View style={{ marginTop: 4, marginBottom: 8 }}>
+                        <InboxPickerButton
+                          onPick={(item) => addFromInboxDocLegal(t.label, item)}
+                          mimeFilter={inboxMimeFilterImagePdf}
+                        />
+                      </View>
                     )}
                   </View>
                 );
@@ -280,6 +356,15 @@ export default function FinancierSTScreen() {
                           </View>
                         )}
                       </View>
+                      {!devis.devisFichier && (
+                        <View style={{ marginTop: 4 }}>
+                          <InboxPickerButton
+                            onPick={(item) => addFromInboxDevisFichier(devis.id, item)}
+                            mimeFilter={inboxMimeFilterImagePdf}
+                            label="📥 Importer mon devis depuis Inbox"
+                          />
+                        </View>
+                      )}
 
                       {/* Acomptes reçus */}
                       {acomptes.length > 0 && (
@@ -298,9 +383,17 @@ export default function FinancierSTScreen() {
                                     <Text style={styles.factureLink}>📄 Ma facture</Text>
                                   </Pressable>
                                 ) : (
-                                  <Pressable onPress={() => handleUploadFacture(a.id)}>
-                                    <Text style={styles.factureUpload}>⬆ Joindre ma facture</Text>
-                                  </Pressable>
+                                  <>
+                                    <Pressable onPress={() => handleUploadFacture(a.id)}>
+                                      <Text style={styles.factureUpload}>⬆ Joindre ma facture</Text>
+                                    </Pressable>
+                                    <View style={{ marginTop: 4 }}>
+                                      <InboxPickerButton
+                                        onPick={(item) => addFromInboxFacture(a.id, item)}
+                                        mimeFilter={inboxMimeFilterImagePdf}
+                                      />
+                                    </View>
+                                  </>
                                 )}
                               </View>
                             </View>
