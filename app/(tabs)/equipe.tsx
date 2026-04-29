@@ -595,7 +595,21 @@ export default function EquipeScreen() {
   const handleDeleteDocST = (docId: string) => {
     const st = currentDocsST;
     if (!st) return;
-    updateSousTraitant({ ...st, documents: st.documents.filter(d => d.id !== docId) });
+    const doc = st.documents.find(d => d.id === docId);
+    const label = doc?.libelle || '';
+    const doDelete = () =>
+      updateSousTraitant({ ...st, documents: st.documents.filter(d => d.id !== docId) });
+    if (Platform.OS === 'web') {
+      const msg = label
+        ? `Supprimer "${label}" ?\nCette action est irréversible.`
+        : 'Supprimer ce document ?\nCette action est irréversible.';
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(msg) : true)) doDelete();
+    } else {
+      Alert.alert('Supprimer ce document ?', label, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+      ]);
+    }
   };
 
   // ── Document libre (hors checklist) ──
