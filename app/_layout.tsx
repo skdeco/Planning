@@ -5,7 +5,7 @@ import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import "react-native-reanimated";
-import { Platform } from "react-native";
+import { Platform, View } from "react-native";
 import "@/lib/_core/nativewind-pressable";
 import { ThemeProvider } from "@/lib/theme-provider";
 import {
@@ -21,6 +21,7 @@ import { initManusRuntime, subscribeSafeAreaInsets } from "@/lib/_core/manus-run
 import { AppProvider } from "@/app/context/AppContext";
 import { LanguageProvider } from "@/app/context/LanguageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { InboxBanner } from "@/components/InboxBanner";
 import { useChantiersCacheSync } from "@/hooks/useChantiersCacheSync";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
@@ -105,14 +106,18 @@ export default function RootLayout() {
           {/* Default to hiding native headers so raw route segments don't appear (e.g. "(tabs)", "products/[id]"). */}
           {/* If a screen needs the native header, explicitly enable it and set a human title via Stack.Screen options. */}
           {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
-          <Stack screenOptions={{ headerShown: false }}>
-            <Stack.Screen name="index" />
-            <Stack.Screen name="login" />
-            <Stack.Screen name="language-select" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="(externe)" />
-            <Stack.Screen name="oauth/callback" />
-          </Stack>
+          <View style={{ flex: 1 }}>
+            <InboxBanner />
+            <Stack screenOptions={{ headerShown: false }}>
+              <Stack.Screen name="index" />
+              <Stack.Screen name="login" />
+              <Stack.Screen name="language-select" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="(externe)" />
+              <Stack.Screen name="oauth/callback" />
+              <Stack.Screen name="inbox" />
+            </Stack>
+          </View>
           <StatusBar style="auto" />
         </QueryClientProvider>
       </trpc.Provider>
