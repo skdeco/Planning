@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal, Image,
@@ -21,6 +21,13 @@ import {
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePicker } from '@/components/DatePicker';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+
+// Filtre mime utilisé par tous les InboxPickerButton de cet écran
+// (documents RH employés, docs ST, devis, factures).
+const inboxMimeFilterImagePdf = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 // ─── Documents légaux requis pour un sous-traitant (checklist) ───────────────
 const DOCUMENTS_LEGAUX_TYPES: { id: string; label: string }[] = [
@@ -436,6 +443,33 @@ export default function EquipeScreen() {
     input.click(); setTimeout(() => input.remove(), 60000);
   };
 
+  // Z1 — Inbox flow équivalent de handleUploadDoc (mobile-compat).
+  const addFromInboxRH = useCallback(
+    async (
+      employeId: string,
+      type: DocumentRHEmploye['type'],
+      label: string,
+      item: InboxItem,
+    ): Promise<boolean> => {
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const docId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, `employes/${employeId}/documents`, docId);
+      if (!url) return false;
+      addDocumentRH({
+        id: docId,
+        employeId,
+        type,
+        libelle: label,
+        fichier: url,
+        uploadedAt: new Date().toISOString(),
+        uploadedBy: currentUser?.employeId || 'admin',
+      });
+      return true;
+    },
+    [addDocumentRH, currentUser],
+  );
+
   const handleDeleteDoc = (docId: string, label: string) => {
     const doDelete = () => deleteDocumentRH(docId);
     if (Platform.OS === 'web') {
@@ -536,6 +570,28 @@ export default function EquipeScreen() {
     input.click(); setTimeout(() => input.remove(), 60000);
   };
 
+  // Z2 — Inbox flow équivalent de handleUploadDocForType (mobile-compat).
+  const addFromInboxDocST = useCallback(
+    async (typeLabel: string, item: InboxItem): Promise<boolean> => {
+      const st = currentDocsST;
+      if (!st) return false;
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const docId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${st.id}/documents`, docId);
+      if (!url) return false;
+      const doc: DocumentST = {
+        id: docId,
+        libelle: typeLabel,
+        fichier: url,
+        uploadedAt: new Date().toISOString(),
+      };
+      updateSousTraitant({ ...st, documents: [...st.documents, doc] });
+      return true;
+    },
+    [currentDocsST, updateSousTraitant],
+  );
+
   const handleDeleteDocST = (docId: string) => {
     const st = currentDocsST;
     if (!st) return;
@@ -564,6 +620,24 @@ export default function EquipeScreen() {
     };
     input.click(); setTimeout(() => input.remove(), 60000);
   };
+
+  // Z3 — Inbox flow équivalent de handlePickDocLibre (mobile-compat).
+  // Comme l'original, alimente uniquement docFichier ; le save est
+  // déclenché ensuite par handleSaveDocLibre quand l'utilisateur valide.
+  const addFromInboxDocLibre = useCallback(
+    async (item: InboxItem): Promise<boolean> => {
+      const st = currentDocsST;
+      if (!st) return false;
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const docId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${st.id}/documents`, docId);
+      if (!url) return false;
+      setDocFichier(url);
+      return true;
+    },
+    [currentDocsST],
+  );
 
   const handleSaveDocLibre = () => {
     const st = currentDocsST;
@@ -637,6 +711,23 @@ export default function EquipeScreen() {
     input.click(); setTimeout(() => input.remove(), 60000);
   };
 
+  // Z4 — Inbox flow équivalent de handleUploadDevisFichier (mobile-compat).
+  const addFromInboxDevisFichier = useCallback(
+    async (devisId: string, item: InboxItem): Promise<boolean> => {
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const fileId = `inbox_${item.id}`;
+      const stId = currentFinancesST?.id || 'general';
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${stId}/devis`, fileId);
+      if (!url) return false;
+      const existing = data.devis.find(d => d.id === devisId);
+      if (!existing) return false;
+      updateDevis({ ...existing, devisFichier: url });
+      return true;
+    },
+    [currentFinancesST, data.devis, updateDevis],
+  );
+
   const handleUploadDevisSigne = (devisId: string) => {
     if (Platform.OS !== 'web') return;
     const input = document.createElement('input');
@@ -659,6 +750,23 @@ export default function EquipeScreen() {
     };
     input.click(); setTimeout(() => input.remove(), 60000);
   };
+
+  // Z5 — Inbox flow équivalent de handleUploadDevisSigne (mobile-compat).
+  const addFromInboxDevisSigne = useCallback(
+    async (devisId: string, item: InboxItem): Promise<boolean> => {
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const fileId = `inbox_${item.id}`;
+      const stId = currentFinancesST?.id || 'general';
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${stId}/devis`, fileId);
+      if (!url) return false;
+      const existing = data.devis.find(d => d.id === devisId);
+      if (!existing) return false;
+      updateDevis({ ...existing, devisSigne: url });
+      return true;
+    },
+    [currentFinancesST, data.devis, updateDevis],
+  );
 
   // ── Acomptes ST ──
   const openNewAcompte = (devisId: string) => {
@@ -703,6 +811,23 @@ export default function EquipeScreen() {
     };
     input.click(); setTimeout(() => input.remove(), 60000);
   };
+
+  // Z6 — Inbox flow équivalent de handleUploadFacture (mobile-compat).
+  const addFromInboxFacture = useCallback(
+    async (acompteId: string, item: InboxItem): Promise<boolean> => {
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const fileId = `inbox_${item.id}`;
+      const stId = currentFinancesST?.id || 'general';
+      const url = await uploadFileToStorage(fileURI, `sous-traitants/${stId}/factures`, fileId);
+      if (!url) return false;
+      const existing = data.acomptesst.find(a => a.id === acompteId);
+      if (!existing) return false;
+      updateAcompteST({ ...existing, facture: url });
+      return true;
+    },
+    [currentFinancesST, data.acomptesst, updateAcompteST],
+  );
 
   // ── Apporteurs CRUD ──
   const apporteurs = data.apporteurs || [];
@@ -1646,6 +1771,14 @@ export default function EquipeScreen() {
                         </Pressable>
                       )}
                     </View>
+                    {(isAdmin || isRH) && docsEmployeId && (
+                      <View style={{ marginTop: 4 }}>
+                        <InboxPickerButton
+                          onPick={(item) => addFromInboxRH(docsEmployeId, type, DOC_RH_LABELS[type], item)}
+                          mimeFilter={inboxMimeFilterImagePdf}
+                        />
+                      </View>
+                    )}
                     {docs.length === 0 ? (
                       <Text style={docStyles.emptyDoc}>{t.equipe.noDocument}</Text>
                     ) : (
@@ -1840,6 +1973,24 @@ export default function EquipeScreen() {
                                 </Pressable>
                               )}
                             </View>
+                            {!devis.devisFichier && (
+                              <View style={{ marginTop: 4 }}>
+                                <InboxPickerButton
+                                  onPick={(item) => addFromInboxDevisFichier(devis.id, item)}
+                                  mimeFilter={inboxMimeFilterImagePdf}
+                                  label="📥 Importer devis depuis Inbox"
+                                />
+                              </View>
+                            )}
+                            {!devis.devisSigne && (
+                              <View style={{ marginTop: 4 }}>
+                                <InboxPickerButton
+                                  onPick={(item) => addFromInboxDevisSigne(devis.id, item)}
+                                  mimeFilter={inboxMimeFilterImagePdf}
+                                  label="📥 Importer devis signé depuis Inbox"
+                                />
+                              </View>
+                            )}
                             <View style={stStyles.acomptesSection}>
                               <View style={stStyles.acomptesSectionHeader}>
                                 <Text style={stStyles.acomptesSectionTitle}>Acomptes</Text>
@@ -1860,9 +2011,17 @@ export default function EquipeScreen() {
                                           <Text style={stStyles.factureLink}>📄 Facture</Text>
                                         </Pressable>
                                       ) : (
-                                        <Pressable onPress={() => handleUploadFacture(a.id)}>
-                                          <Text style={stStyles.factureUpload}>⬆ Facture</Text>
-                                        </Pressable>
+                                        <>
+                                          <Pressable onPress={() => handleUploadFacture(a.id)}>
+                                            <Text style={stStyles.factureUpload}>⬆ Facture</Text>
+                                          </Pressable>
+                                          <View style={{ marginTop: 4 }}>
+                                            <InboxPickerButton
+                                              onPick={(item) => addFromInboxFacture(a.id, item)}
+                                              mimeFilter={inboxMimeFilterImagePdf}
+                                            />
+                                          </View>
+                                        </>
                                       )}
                                     </View>
                                     <Pressable onPress={async () => {
@@ -1904,26 +2063,36 @@ export default function EquipeScreen() {
                   {DOCUMENTS_LEGAUX_TYPES.map(td => {
                     const existing = findDocForType(currentDocsST.documents || [], td.id, td.label);
                     return (
-                      <View key={td.id} style={stStyles.docTypeRow}>
-                        <View style={{ flex: 1, marginRight: 10 }}>
-                          <Text style={stStyles.docTypeLabel}>{td.label}</Text>
-                          <Text style={[stStyles.docTypeStatus, { color: existing ? '#27AE60' : '#E67E22' }]}>
-                            {existing ? `✅ Fourni le ${new Date(existing.uploadedAt).toLocaleDateString('fr-FR')}` : '⚠️ Manquant'}
-                          </Text>
-                        </View>
-                        {existing ? (
-                          <View style={{ flexDirection: 'row', gap: 6 }}>
-                            <Pressable style={stStyles.docMiniBtn} onPress={() => openDocPreview(existing.fichier)}>
-                              <Text style={stStyles.docMiniBtnText}>Voir</Text>
-                            </Pressable>
-                            <Pressable style={[stStyles.docMiniBtn, stStyles.docMiniBtnDanger]} onPress={() => handleDeleteDocST(existing.id)}>
-                              <Text style={[stStyles.docMiniBtnText, { color: '#E74C3C' }]}>Suppr.</Text>
-                            </Pressable>
+                      <View key={td.id}>
+                        <View style={stStyles.docTypeRow}>
+                          <View style={{ flex: 1, marginRight: 10 }}>
+                            <Text style={stStyles.docTypeLabel}>{td.label}</Text>
+                            <Text style={[stStyles.docTypeStatus, { color: existing ? '#27AE60' : '#E67E22' }]}>
+                              {existing ? `✅ Fourni le ${new Date(existing.uploadedAt).toLocaleDateString('fr-FR')}` : '⚠️ Manquant'}
+                            </Text>
                           </View>
-                        ) : (
-                          <Pressable style={[stStyles.docMiniBtn, stStyles.docMiniBtnUpload]} onPress={() => handleUploadDocForType(td.label)}>
-                            <Text style={[stStyles.docMiniBtnText, { color: '#fff' }]}>⬆ Charger</Text>
-                          </Pressable>
+                          {existing ? (
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                              <Pressable style={stStyles.docMiniBtn} onPress={() => openDocPreview(existing.fichier)}>
+                                <Text style={stStyles.docMiniBtnText}>Voir</Text>
+                              </Pressable>
+                              <Pressable style={[stStyles.docMiniBtn, stStyles.docMiniBtnDanger]} onPress={() => handleDeleteDocST(existing.id)}>
+                                <Text style={[stStyles.docMiniBtnText, { color: '#E74C3C' }]}>Suppr.</Text>
+                              </Pressable>
+                            </View>
+                          ) : (
+                            <Pressable style={[stStyles.docMiniBtn, stStyles.docMiniBtnUpload]} onPress={() => handleUploadDocForType(td.label)}>
+                              <Text style={[stStyles.docMiniBtnText, { color: '#fff' }]}>⬆ Charger</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                        {!existing && (
+                          <View style={{ marginTop: 4 }}>
+                            <InboxPickerButton
+                              onPick={(item) => addFromInboxDocST(td.label, item)}
+                              mimeFilter={inboxMimeFilterImagePdf}
+                            />
+                          </View>
                         )}
                       </View>
                     );
@@ -2032,6 +2201,12 @@ export default function EquipeScreen() {
             <Pressable style={stStyles.uploadBtn} onPress={handlePickDocLibre}>
               <Text style={stStyles.uploadBtnText}>{docFichier ? '✅ Fichier sélectionné' : '⬆ Choisir un fichier'}</Text>
             </Pressable>
+            <View style={{ marginTop: 4 }}>
+              <InboxPickerButton
+                onPick={addFromInboxDocLibre}
+                mimeFilter={inboxMimeFilterImagePdf}
+              />
+            </View>
             <Pressable style={[stStyles.saveBtn, (!docLibelle.trim() || !docFichier) && stStyles.saveBtnDisabled]} onPress={handleSaveDocLibre} disabled={!docLibelle.trim() || !docFichier}>
               <Text style={stStyles.saveBtnText}>{t.common.add}</Text>
             </Pressable>
