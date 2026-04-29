@@ -1,4 +1,4 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   TextInput, Platform, Alert, FlatList, KeyboardAvoidingView, Linking,
@@ -9,6 +9,15 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useRouter } from 'expo-router';
 import type { MessagePrive } from '@/app/types/messages';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { inboxItemToDataUri } from '@/lib/share/inboxToDataUri';
+import type { InboxItem } from '@/lib/share/inboxStore';
+
+// Filtre mime utilisé par l'InboxPickerButton de cet écran (messagerie =
+// photos/vidéos uniquement). Diffère de inboxMimeFilterImagePdf utilisé
+// par les autres écrans de J2.B.4.a — consolidation prévue fin Tier 1.
+const inboxMimeFilterImageVideo = (m: string): boolean =>
+  m.startsWith('image/') || m.startsWith('video/');
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function genId() { return `msg_${Date.now()}_${Math.random().toString(36).slice(2)}`; }
@@ -295,6 +304,47 @@ export default function MessagerieScreen() {
     };
     input.click(); setTimeout(() => input.remove(), 60000);
   };
+
+  // M1 — Inbox flow équivalent de handleUploadPhoto (mobile-compat).
+  // Legacy data URI flow : le payload base64 est stocké directement dans
+  // MessagePrive.fichiers[]. 2e consommateur runtime de inboxItemToDataUri
+  // (1er = rh.tsx fiche paie). Détection vidéo vs image via item.mimeType
+  // pour aligner le contenu sur le pattern handleUploadPhoto existant.
+  // Pas de staging : message envoyé via addMessagePrive directement après
+  // construction de la data URI ; InboxPickerButton supprime ensuite l'item
+  // de l'Inbox seulement après que onPick a retourné true.
+  const addFromInboxMessageMedia = useCallback(
+    async (item: InboxItem): Promise<boolean> => {
+      if (!convId) return false;
+      const dataUri = await inboxItemToDataUri(item);
+      if (!dataUri) return false;
+      const isVideo = item.mimeType.startsWith('video/');
+      let expediteurNom = adminDisplayName;
+      if (isEmploye) {
+        const emp = data.employes.find(e => e.id === currentUser?.employeId);
+        expediteurNom = emp ? `${emp.prenom} ${emp.nom}` : t.messagerie.employee;
+      } else if (isST) {
+        const st = data.sousTraitants.find(s => s.id === currentUser?.soustraitantId);
+        expediteurNom = st ? (st.societe || `${st.prenom} ${st.nom}`) : t.messagerie.subcontractor;
+      }
+      const msg: MessagePrive = {
+        id: `inbox_${item.id}`,
+        conversationId: convId,
+        expediteurRole: myRole as 'admin' | 'employe' | 'soustraitant',
+        expediteurId: myConvId,
+        expediteurNom,
+        contenu: isVideo ? '🎥 Vidéo' : '📷 Photo',
+        chantierId: selectedChantierId || undefined,
+        fichiers: [dataUri],
+        createdAt: now(),
+        lu: false,
+        archive: false,
+      };
+      addMessagePrive(msg);
+      return true;
+    },
+    [convId, isEmploye, isST, data.employes, data.sousTraitants, currentUser, t, adminDisplayName, myRole, myConvId, selectedChantierId, addMessagePrive],
+  );
 
   // ─── Enregistrement vocal (web) ─────────────────────────────────────────────
   const startRecording = async () => {
@@ -1056,6 +1106,16 @@ export default function MessagerieScreen() {
             <Pressable onPress={() => setReplyTo(null)} style={{ padding: 6 }}>
               <Text style={{ fontSize: 16, color: '#687076' }}>✕</Text>
             </Pressable>
+          </View>
+        )}
+
+        {/* Inbox picker (iOS share extension fallback pour photo/vidéo) */}
+        {!showArchive && (
+          <View style={{ paddingHorizontal: 12, paddingTop: 8 }}>
+            <InboxPickerButton
+              onPick={addFromInboxMessageMedia}
+              mimeFilter={inboxMimeFilterImageVideo}
+            />
           </View>
         )}
 
