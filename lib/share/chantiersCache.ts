@@ -41,6 +41,7 @@ export interface LoadResult {
   status: LoadStatus;
   ageMs?: number;
   error?: string;
+  userId?: string;
 }
 
 function getCacheDirectory(): Directory | null {
@@ -105,7 +106,7 @@ export function loadChantiersCache(): LoadResult {
     const ageMs = Date.now() - parsed.updatedAt;
     const status: LoadStatus = ageMs <= CACHE_MAX_AGE_MS ? 'fresh' : 'stale';
 
-    return { chantiers: parsed.chantiers, status, ageMs };
+    return { chantiers: parsed.chantiers, status, ageMs, userId: parsed.userId };
   } catch (err) {
     return {
       chantiers: [],
