@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   TextInput, Platform, Alert,
@@ -16,6 +16,15 @@ import {
   STATUT_DEMANDE_LABELS, STATUT_DEMANDE_COLORS,
 } from '@/app/types';
 import { DateField } from '@/components/DatePickerModal';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { inboxItemToDataUri } from '@/lib/share/inboxToDataUri';
+import type { InboxItem } from '@/lib/share/inboxStore';
+
+// Filtre mime utilisé par l'InboxPickerButton de cet écran
+// (fiches de paie). Aligné avec equipe.tsx + financier-st.tsx + pointage.tsx.
+// Note : à consolider en helper partagé fin Tier 1.
+const inboxMimeFilterImagePdf = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function genId() { return `rh_${Date.now()}_${Math.random().toString(36).slice(2)}`; }
@@ -286,6 +295,31 @@ export default function RHScreen() {
     };
     input.click(); setTimeout(() => input.remove(), 60000);
   };
+
+  // R1 — Inbox flow équivalent de handleConfirmPaieUpload (mobile-compat).
+  // Même flow legacy data URI : lit le fichier de l'Inbox en base64,
+  // construit la data URI et l'enregistre directement dans FichePaie.fichier
+  // (pas de Supabase Storage, le record stocke le payload en DB comme
+  // l'existant). Premier consommateur runtime du helper inboxItemToDataUri.
+  const addFromInboxPaie = useCallback(
+    async (item: InboxItem): Promise<boolean> => {
+      if (!paieEmployeId || !paieMois || !paieAnnee) return false;
+      const dataUri = await inboxItemToDataUri(item);
+      if (!dataUri) return false;
+      const moisNum = (MOIS_LABELS.indexOf(paieMois) + 1).toString().padStart(2, '0');
+      const moisKey = `${paieAnnee}-${moisNum}`;
+      addFichePaie({
+        id: `inbox_${item.id}`,
+        employeId: paieEmployeId,
+        mois: moisKey,
+        fichier: dataUri,
+        uploadedAt: now(),
+      });
+      setShowPaieModal(false);
+      return true;
+    },
+    [paieEmployeId, paieMois, paieAnnee, addFichePaie],
+  );
 
   // ─── Statut badge ────────────────────────────────────────────────────────────────────
   const StatutBadge = ({ statut }: { statut: string }) => {
@@ -821,6 +855,14 @@ export default function RHScreen() {
             >
               <Text style={styles.saveBtnText}>Choisir le fichier</Text>
             </Pressable>
+            {paieMois && paieAnnee && (
+              <View style={{ marginTop: 4 }}>
+                <InboxPickerButton
+                  onPick={addFromInboxPaie}
+                  mimeFilter={inboxMimeFilterImagePdf}
+                />
+              </View>
+            )}
           </Pressable>
         </Pressable>
       </Modal>
