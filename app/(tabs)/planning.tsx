@@ -55,6 +55,7 @@ import {
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+import type { PickedFile } from '@/lib/share/pickNativeFile';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ChantierActionsModal } from '@/components/ChantierActionsModal';
@@ -263,52 +264,10 @@ export default function PlanningScreen() {
     ...(data.sousTraitants || []).map(s => ({ id: s.id, label: s.nom, kind: 'soustraitant' as const })),
   ], [data.employes, data.sousTraitants]);
 
-  const handlePickNotePhotos = async (): Promise<string[]> => {
-    if (Platform.OS !== 'web') {
-      Alert.alert(
-        'Ajouter une photo ou PDF',
-        "Sur iPhone, partagez la photo/PDF depuis l'app Photos ou Fichiers → bouton Partager → SK DECO Planning. Le bouton 'Importer depuis Inbox' apparaîtra ensuite ici.",
-      );
-      return [];
-    }
-    if (!notesPlanningChantierId) return [];
-    const chantierId = notesPlanningChantierId;
-    return new Promise((resolve) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,application/pdf';
-      input.multiple = true;
-      const collected: string[] = [];
-      let pending = 0;
-      let hadError = false;
-      input.onchange = (e: Event) => {
-        const files = Array.from((e.target as HTMLInputElement).files || []);
-        if (files.length === 0) { resolve([]); return; }
-        pending = files.length;
-        files.forEach(file => {
-          const reader = new FileReader();
-          const finalize = () => {
-            pending -= 1;
-            if (pending === 0) {
-              if (hadError) Alert.alert('Erreur', "Certaines photos/PDF n'ont pas pu être uploadées.");
-              resolve(collected);
-            }
-          };
-          reader.onload = async () => {
-            const base64 = reader.result as string;
-            const photoId = `note_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-            const url = await uploadFileToStorage(base64, `chantiers/${chantierId}/notes`, photoId);
-            if (url) collected.push(url);
-            else hadError = true;
-            finalize();
-          };
-          reader.onerror = () => { hadError = true; finalize(); };
-          reader.readAsDataURL(file);
-        });
-      };
-      input.click();
-      setTimeout(() => input.remove(), 60000);
-    });
+  const handleNotePickNative = async (file: PickedFile): Promise<string | null> => {
+    if (!notesPlanningChantierId) return null;
+    const photoId = `native_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return await uploadFileToStorage(file.uri, `chantiers/${notesPlanningChantierId}/notes`, photoId);
   };
 
   const handleNoteFromInbox = async (item: InboxItem): Promise<string | null> => {
@@ -1339,7 +1298,7 @@ export default function PlanningScreen() {
         notes={notesVisibles}
         participants={participantsForNotes}
         isAdmin={isAdmin}
-        onPickPhotos={handlePickNotePhotos}
+        onPickNativeFile={handleNotePickNative}
         onPickFromInbox={handleNoteFromInbox}
         onAddNote={handleAddNoteChantier}
         onArchiveNote={handleArchiveNoteChantier}

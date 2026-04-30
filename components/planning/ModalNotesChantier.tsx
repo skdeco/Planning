@@ -17,8 +17,10 @@ import { EmptyState } from '../ui/EmptyState';
 import { SectionHeader } from '../ui/SectionHeader';
 import { FilterChip } from '../ui/FilterChip';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import type { InboxItem } from '@/lib/share/inboxStore';
+import type { PickedFile } from '@/lib/share/pickNativeFile';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -114,8 +116,8 @@ export interface ModalNotesChantierProps {
   participants: NoteParticipant[];
   /** Gate le selector destinataires + sections admin + bouton supprimer. */
   isAdmin: boolean;
-  /** Picker photos/PDF multi-fichier (retourne les URLs Supabase Storage). */
-  onPickPhotos: () => Promise<string[]>;
+  /** Picker natif (web input / iOS ActionSheet Photos+Fichiers). Upload + retour URL Storage. */
+  onPickNativeFile?: (file: PickedFile) => Promise<string | null>;
   /** Picker depuis l'Inbox iOS (Share Extension). Upload + retour URL Storage. */
   onPickFromInbox?: (item: InboxItem) => Promise<string | null>;
   /** Callback submit. Le parent construit l'objet métier complet. */
@@ -283,7 +285,7 @@ export function ModalNotesChantier({
   notes,
   participants,
   isAdmin,
-  onPickPhotos,
+  onPickNativeFile,
   onPickFromInbox,
   onAddNote,
   onArchiveNote,
@@ -320,11 +322,6 @@ export function ModalNotesChantier({
     setTexte('');
     setDestinataires('tous');
     setPhotos([]);
-  };
-
-  const handlePick = async (): Promise<void> => {
-    const newPhotos = await onPickPhotos();
-    if (newPhotos.length > 0) setPhotos(prev => [...prev, ...newPhotos]);
   };
 
   const toggleRecipient = (id: string): void => {
@@ -454,14 +451,19 @@ export function ModalNotesChantier({
                 </ScrollView>
               )}
 
-              <Pressable
-                style={styles.pickPhotosBtn}
-                onPress={handlePick}
-                accessibilityRole="button"
-              >
-                <Text style={styles.pickPhotosEmoji}>📎</Text>
-                <Text style={styles.pickPhotosText}>Ajouter photo / PDF</Text>
-              </Pressable>
+              {onPickNativeFile && (
+                <NativeFilePickerButton
+                  onPick={async (file) => {
+                    const url = await onPickNativeFile(file);
+                    if (!url) return false;
+                    setPhotos(prev => [...prev, url]);
+                    return true;
+                  }}
+                  acceptImages
+                  acceptPdf
+                  multiple
+                />
+              )}
 
               {onPickFromInbox && (
                 <View style={{ marginTop: 4 }}>
@@ -888,29 +890,6 @@ const styles = StyleSheet.create({
     color:      DS.textInverse,
     fontSize:   font.tiny,               // 9
     fontWeight: font.bold,
-  },
-
-  pickPhotosBtn: {
-    flexDirection:   'row',
-    alignItems:      'center',
-    gap:             space.xs + 2,             // 6, fine
-    backgroundColor: DS.background,
-    borderRadius:    radius.sm,                // 8
-    padding:         space.sm + 2,             // 10, fine
-    marginTop:       space.sm,                 // 8
-    borderWidth:     1,
-    borderColor:     DS.borderAlt,
-    borderStyle:     'dashed',
-  },
-
-  pickPhotosEmoji: {
-    fontSize: font.lg,                         // 16
-  },
-
-  pickPhotosText: {
-    fontSize:   font.body,                     // 13
-    color:      DS.primary,
-    fontWeight: font.semibold,
   },
 
   submitBtn: {
