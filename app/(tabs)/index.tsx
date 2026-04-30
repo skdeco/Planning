@@ -8,6 +8,8 @@ import { ImportExcel } from '@/components/ImportExcel';
 import { FadeInView, ScaleButton, StaggeredList, ProgressBar } from '@/components/ui/animated';
 import * as ImagePicker from 'expo-image-picker';
 import { compressImage } from '@/lib/imageUtils';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { uploadFileToStorage } from '@/lib/supabase';
 import { BADGE_TYPES } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -407,18 +409,11 @@ export default function DashboardScreen() {
                             <Text style={{ fontSize: 13, color: task.fait ? '#B0BEC5' : '#11181C', textDecorationLine: task.fait ? 'line-through' : 'none', flex: 1 }}>{task.texte}</Text>
                             {task.fait && task.faitPar && <Text style={{ fontSize: 9, color: '#27AE60', marginRight: 4 }}>{task.faitPar}</Text>}
                             <Pressable style={{ padding: 2 }} onPress={async () => {
-                              Alert.alert('Photo', 'Source ?', [
-                                { text: 'Annuler', style: 'cancel' },
-                                { text: '📷 Galerie', onPress: async () => {
-                                  const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: true });
-                                  if (!result.canceled) { const { uploadFileToStorage } = require('@/lib/supabase'); for (const asset of result.assets) { const compressed = await compressImage(asset.uri); const url = await uploadFileToStorage(compressed, 'tasks/photos', `task_${task.id}_${Date.now()}`); if (url) addTaskPhoto(note.affectationId, note.noteId, task.id, url); } }
-                                }},
-                                { text: '📸 Appareil', onPress: async () => {
-                                  const { status } = await ImagePicker.requestCameraPermissionsAsync(); if (status !== 'granted') return;
-                                  const result = await ImagePicker.launchCameraAsync({ quality: 0.5 });
-                                  if (!result.canceled && result.assets[0]) { const { uploadFileToStorage } = require('@/lib/supabase'); const compressed = await compressImage(result.assets[0].uri); const url = await uploadFileToStorage(compressed, 'tasks/photos', `task_${task.id}_${Date.now()}`); if (url) addTaskPhoto(note.affectationId, note.noteId, task.id, url); }
-                                }},
-                              ]);
+                              const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: true, compressImages: true });
+                              for (const file of files) {
+                                const url = await uploadFileToStorage(file.uri, 'tasks/photos', `task_${task.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+                                if (url) addTaskPhoto(note.affectationId, note.noteId, task.id, url);
+                              }
                             }}><Text style={{ fontSize: 14 }}>📷</Text></Pressable>
                           </View>
                           {task.photos && task.photos.length > 0 && (

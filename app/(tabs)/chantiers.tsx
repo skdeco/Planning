@@ -32,7 +32,7 @@ import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButto
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
-import type { PickedFile } from '@/lib/share/pickNativeFile';
+import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
 
 // Filtre mime utilisé par les pickers Notes Chantier + Plans Chantier (photos + PDF).
 const inboxMimeFilterImagePdf = (m: string): boolean =>
@@ -937,6 +937,19 @@ export default function ChantiersScreen() {
         ? f.employeIds.filter(e => e !== id)
         : [...f.employeIds, id],
     }));
+  };
+
+  // Zone 2 — Photo cachette clé (single, remplace fiche.photoEmplacementCle).
+  const handleClePickNative = async (file: PickedFile): Promise<boolean> => {
+    const fid = ficheId || 'new';
+    const photoId = `cle_${fid}_${Date.now()}`;
+    const url = await uploadFileToStorage(file.uri, `chantiers/${fid}/cle`, photoId);
+    if (!url) {
+      if (Platform.OS !== 'web') Alert.alert('Erreur', "Impossible d'uploader la photo");
+      return false;
+    }
+    setFiche(f => ({ ...f, photoEmplacementCle: url }));
+    return true;
   };
 
   const handlePickPhoto = async () => {
@@ -1903,33 +1916,17 @@ export default function ChantiersScreen() {
                     </Pressable>
                   )}
                   {isAdmin && (
-                    <Pressable
-                      style={{ marginTop: 6, flexDirection: 'row', alignItems: 'center', gap: 6 }}
-                      onPress={async () => {
-                        const saveCleUri = async (uri: string) => {
-                          const photoId = `cle_${ficheId || 'new'}_${Date.now()}`;
-                          const url = await uploadFileToStorage(uri, `chantiers/${ficheId || 'new'}/cle`, photoId);
-                          if (url) setFiche(f => ({ ...f, photoEmplacementCle: url }));
-                          else if (Platform.OS !== 'web') Alert.alert('Erreur', 'Impossible d\'uploader la photo');
-                        };
-                        if (Platform.OS === 'web') {
-                          const input = document.createElement('input');
-                          input.type = 'file'; input.accept = 'image/*';
-                          input.onchange = (e: Event) => {
-                            const file = (e.target as HTMLInputElement).files?.[0]; if (!file) return;
-                            const reader = new FileReader();
-                            reader.onload = (ev) => saveCleUri(ev.target?.result as string);
-                            reader.readAsDataURL(file);
-                          };
-                          input.click(); setTimeout(() => input.remove(), 60000);
-                        } else {
-                          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                          if (!result.canceled && result.assets[0]) { const compressed = await compressImage(result.assets[0].uri); await saveCleUri(compressed); }
-                        }
-                      }}
-                    >
-                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 {fiche.photoEmplacementCle ? 'Changer la photo' : 'Ajouter photo cachette'}</Text>
-                    </Pressable>
+                    <View style={{ marginTop: 6 }}>
+                      <NativeFilePickerButton
+                        onPick={handleClePickNative}
+                        acceptImages
+                        acceptCamera
+                        acceptPdf={false}
+                        multiple={false}
+                        compressImages
+                        label={fiche.photoEmplacementCle ? '📷 Changer la photo' : '📷 Ajouter photo cachette'}
+                      />
+                    </View>
                   )}
                 </View>
               </View>
@@ -3282,29 +3279,10 @@ export default function ChantiersScreen() {
                                   <Text style={{ fontSize: 11, color: task.fait ? '#B0BEC5' : '#11181C', textDecorationLine: task.fait ? 'line-through' : 'none', flex: 1 }}>{task.texte}</Text>
                                   {task.fait && task.faitPar && <Text style={{ fontSize: 9, color: '#27AE60', marginRight: 4 }}>{task.faitPar}</Text>}
                                   <Pressable style={{ padding: 2 }} onPress={async () => {
-                                    if (Platform.OS === 'web') {
-                                      const input = document.createElement('input'); input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
-                                      input.onchange = async (ev: Event) => {
-                                        const files = Array.from((ev.target as HTMLInputElement).files || []);
-                                        for (const file of files) {
-                                          const b64: string = await new Promise(r => { const rd = new FileReader(); rd.onload = () => r(rd.result as string); rd.readAsDataURL(file); });
-                                          const url = await uploadFileToStorage(b64, 'tasks/photos', `task_${task.id}_${Date.now()}`);
-                                          if (url) addTaskPhoto(affId, n.id, task.id, url);
-                                        }
-                                      }; input.click(); setTimeout(() => input.remove(), 60000);
-                                    } else {
-                                      Alert.alert('Photo', 'Source ?', [
-                                        { text: 'Annuler', style: 'cancel' },
-                                        { text: '📷 Galerie', onPress: async () => {
-                                          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5, allowsMultipleSelection: true });
-                                          if (!result.canceled) { for (const asset of result.assets) { const compressed = await compressImage(asset.uri); const url = await uploadFileToStorage(compressed, 'tasks/photos', `task_${task.id}_${Date.now()}`); if (url) addTaskPhoto(affId, n.id, task.id, url); } }
-                                        }},
-                                        { text: '📸 Appareil', onPress: async () => {
-                                          const { status } = await ImagePicker.requestCameraPermissionsAsync(); if (status !== 'granted') return;
-                                          const result = await ImagePicker.launchCameraAsync({ quality: 0.5 });
-                                          if (!result.canceled && result.assets[0]) { const compressed = await compressImage(result.assets[0].uri); const url = await uploadFileToStorage(compressed, 'tasks/photos', `task_${task.id}_${Date.now()}`); if (url) addTaskPhoto(affId, n.id, task.id, url); }
-                                        }},
-                                      ]);
+                                    const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: true, compressImages: true });
+                                    for (const file of files) {
+                                      const url = await uploadFileToStorage(file.uri, 'tasks/photos', `task_${task.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+                                      if (url) addTaskPhoto(affId, n.id, task.id, url);
                                     }
                                   }}><Text style={{ fontSize: 12 }}>📷</Text></Pressable>
                                 </View>
@@ -3432,12 +3410,10 @@ export default function ChantiersScreen() {
                               { text: 'Annuler', style: 'cancel' },
                               { text: 'Non, juste résoudre', onPress: () => doResolve() },
                               { text: '📷 Ajouter photo', onPress: async () => {
-                                const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                                if (!result.canceled && result.assets[0]) {
-                                  const compressed = await compressImage(result.assets[0].uri);
-                                  const url = await uploadFileToStorage(compressed, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}`);
-                                  doResolve(url ? [...(t.photosResolution || []), url] : undefined);
-                                } else { doResolve(); }
+                                const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
+                                if (files.length === 0) { doResolve(); return; }
+                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}_${Date.now()}`);
+                                doResolve(url ? [...(t.photosResolution || []), url] : undefined);
                               }},
                             ]);
                           }}>
