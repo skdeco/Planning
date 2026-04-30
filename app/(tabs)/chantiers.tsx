@@ -376,6 +376,28 @@ export default function ChantiersScreen() {
     return await uploadFileToStorage(fileURI, `chantiers/${plansChantierId}/plans`, planId);
   };
 
+  // Photos Chantier galerie : upload + dispatch addPhotoChantier (objet complet
+  // avec employeId, date, source, etc.). Cohérent avec le pattern legacy.
+  const handlePhotoChantierPickNative = async (file: PickedFile): Promise<boolean> => {
+    if (!photosChantierId) return false;
+    const photoId = `photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const storageUrl = await uploadFileToStorage(file.uri, `chantiers/${photosChantierId}/photos`, photoId);
+    if (!storageUrl) {
+      if (Platform.OS !== 'web') Alert.alert('Erreur', "Impossible d'uploader la photo. Vérifiez votre connexion.");
+      return false;
+    }
+    addPhotoChantier({
+      id: photoId,
+      chantierId: photosChantierId,
+      employeId: currentUser?.employeId || 'admin',
+      date: new Date().toISOString().slice(0, 10),
+      uri: storageUrl,
+      createdAt: new Date().toISOString(),
+      source: 'manuel',
+    });
+    return true;
+  };
+
   const handleAddPlan = () => {
     if (!newPlanNom.trim() || !newPlanFichier || !plansChantierId) return;
     const plan: PlanChantier = {
@@ -2966,57 +2988,18 @@ export default function ChantiersScreen() {
               </Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
-              {/* Bouton upload */}
-              <Pressable
-                style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
-                onPress={async () => {
-                  if (!photosChantierId) return;
-                  const savePhoto = async (photoUri: string) => {
-                    const photoId = `photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-                    const storageUrl = await uploadFileToStorage(photoUri, `chantiers/${photosChantierId}/photos`, photoId);
-                    if (!storageUrl) {
-                      if (Platform.OS !== 'web') Alert.alert('Erreur', 'Impossible d\'uploader la photo. Vérifiez votre connexion.');
-                      return;
-                    }
-                    addPhotoChantier({
-                      id: photoId,
-                      chantierId: photosChantierId!,
-                      employeId: currentUser?.employeId || 'admin',
-                      date: new Date().toISOString().slice(0, 10),
-                      uri: storageUrl,
-                      createdAt: new Date().toISOString(),
-                      source: 'manuel',
-                    });
-                  };
-                  if (Platform.OS === 'web') {
-                    const input = document.createElement('input');
-                    input.type = 'file'; input.accept = 'image/*'; input.multiple = true;
-                    input.onchange = (e: Event) => {
-                      const files = Array.from((e.target as HTMLInputElement).files || []);
-                      files.forEach(file => {
-                        const reader = new FileReader();
-                        reader.onload = (ev) => savePhoto(ev.target?.result as string);
-                        reader.readAsDataURL(file);
-                      });
-                    };
-                    input.click(); setTimeout(() => input.remove(), 60000);
-                  } else {
-                    const result = await ImagePicker.launchImageLibraryAsync({
-                      mediaTypes: ['images'],
-                      quality: 0.5,
-                      allowsMultipleSelection: true,
-                    });
-                    if (!result.canceled) {
-                      for (const asset of result.assets) {
-                        const compressed = await compressImage(asset.uri);
-                        await savePhoto(compressed);
-                      }
-                    }
-                  }
-                }}
-              >
-                <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>📷 Ajouter des photos</Text>
-              </Pressable>
+              {/* Bouton upload (Photothèque + Appareil photo via ActionSheet iOS) */}
+              <View style={{ marginBottom: 12 }}>
+                <NativeFilePickerButton
+                  onPick={handlePhotoChantierPickNative}
+                  acceptImages
+                  acceptCamera
+                  acceptPdf={false}
+                  multiple
+                  compressImages
+                  label="📷 Ajouter des photos"
+                />
+              </View>
 
               {/* Affichage par utilisateur */}
               {(() => {
