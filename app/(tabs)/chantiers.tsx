@@ -2338,7 +2338,7 @@ export default function ChantiersScreen() {
             )}
 
             {isAdmin && ficheOnglet === 'fiche' && (
-              <Pressable style={styles.saveBtn} onPress={() => { handleSaveFiche(); handleSave(); }}>
+              <Pressable style={styles.saveBtn} onPress={handleSaveFiche}>
                 <Text style={styles.saveBtnText}>Enregistrer</Text>
               </Pressable>
             )}
