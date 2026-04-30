@@ -28,6 +28,15 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { compressImage } from '@/lib/imageUtils';
+import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { openDocPreview } from '@/lib/share/openDocPreview';
+import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+import type { PickedFile } from '@/lib/share/pickNativeFile';
+
+// Filtre mime utilisé par les pickers Notes Chantier (photos + PDF).
+const inboxMimeFilterNoteChantier = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 const STATUTS: StatutChantier[] = ['actif', 'en_attente', 'termine', 'en_pause', 'sav'];
 
@@ -430,62 +439,37 @@ export default function ChantiersScreen() {
   const [noteDestinataires, setNoteDestinataires] = useState<'tous' | string[]>('tous');
   const [showDestPicker, setShowDestPicker] = useState(false);
   const [notesOnglet, setNotesOnglet] = useState<'actives' | 'historique'>('actives');
-  const [notePieceJointe, setNotePieceJointe] = useState<{ uri: string; nom: string; type: 'image' | 'pdf' } | null>(null);
+  const [notePhotos, setNotePhotos] = useState<string[]>([]);
 
   const openNotes = (chantier: Chantier) => {
     setNotesChantierId(chantier.id);
     setNewNoteTexte('');
     setNoteDestinataires('tous');
     setNotesOnglet('actives');
-    setNotePieceJointe(null);
+    setNotePhotos([]);
     setShowNotes(true);
   };
 
-  const handlePickNotePJ = async () => {
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,application/pdf';
-      input.onchange = async (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64 = reader.result as string;
-          const type = file.type.startsWith('image') ? 'image' : 'pdf';
-          const pjId = `note_pj_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-          const chantierId = notesChantierId || 'general';
-          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/notes`, pjId);
-          setNotePieceJointe({ uri: storageUrl || base64, nom: file.name, type });
-        };
-        reader.readAsDataURL(file);
-      };
-      input.click(); setTimeout(() => input.remove(), 60000);
-    } else {
-      // Mobile natif
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        base64: true,
-        quality: 0.8,
-      });
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        const raw = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
-        const uri = await compressImage(raw);
-        setNotePieceJointe({ uri, nom: 'photo.jpg', type: 'image' as const });
-      }
-    }
+  const handleNoteChantierPickNative = async (file: PickedFile): Promise<string | null> => {
+    if (!notesChantierId) return null;
+    const photoId = `native_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return await uploadFileToStorage(file.uri, `chantiers/${notesChantierId}/notes`, photoId);
+  };
+
+  const handleNoteChantierFromInbox = async (item: InboxItem): Promise<string | null> => {
+    if (!notesChantierId) return null;
+    const fileURI = getInboxItemPath(item);
+    if (!fileURI) return null;
+    const photoId = `inbox_${item.id}`;
+    return await uploadFileToStorage(fileURI, `chantiers/${notesChantierId}/notes`, photoId);
   };
 
   const handleAddNote = () => {
-    // Valider si texte OU photo(s) présents
-    const hasPhotos = notePieceJointe !== null;
+    const hasPhotos = notePhotos.length > 0;
     if (!hasPhotos && !newNoteTexte.trim()) return;
     if (!notesChantierId) return;
     const userId = currentUser?.role === 'admin' ? 'admin' : (currentUser?.employeId || currentUser?.soustraitantId || 'inconnu');
     const nom = currentUser?.role === 'admin' ? 'Admin' : (data.employes.find(e => e.id === userId)?.prenom || data.sousTraitants?.find(s => s.id === userId)?.nom || 'Inconnu');
-    // Convertir notePieceJointe en photos[] pour qu'elle soit stockée dans la note ET dans la galerie
-    const photosNote: string[] = notePieceJointe ? [notePieceJointe.uri] : [];
     addNoteChantier({
       id: `nc_${Date.now()}_${Math.random().toString(36).slice(2)}`,
       chantierId: notesChantierId,
@@ -495,16 +479,12 @@ export default function ChantiersScreen() {
       createdAt: new Date().toISOString(),
       destinataires: isAdmin ? noteDestinataires : 'tous',
       archivedBy: [],
-      photos: photosNote.length > 0 ? photosNote : undefined,
-      ...(notePieceJointe ? {
-        pieceJointe: notePieceJointe.uri,
-        pieceJointeNom: notePieceJointe.nom,
-        pieceJointeType: notePieceJointe.type,
-      } : {}),
+      photos: hasPhotos ? notePhotos : undefined,
+      // pieceJointe* legacy non écrit pour les nouvelles notes (rendu lit toujours pieceJointe pour rétrocompat).
     });
     setNewNoteTexte('');
     setNoteDestinataires('tous');
-    setNotePieceJointe(null);
+    setNotePhotos([]);
   };
 
   const handleArchiveNote = (noteId: string) => {
@@ -2444,18 +2424,13 @@ export default function ChantiersScreen() {
                         </Text>
                       </View>
                       <Text style={styles.noteTexte}>{note.texte}</Text>
-                      {/* Pièce jointe unique */}
+                      {/* Pièce jointe legacy (lecture seule, plus écrite par les nouvelles notes) */}
                       {note.pieceJointe && (
                         <Pressable
                           style={styles.notePJBtn}
-                          onPress={() => {
-                            if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                              const w = window.open();
-                              if (w) w.document.write(note.pieceJointeType === 'pdf'
-                                ? `<iframe src="${note.pieceJointe}" width="100%" height="100%"></iframe>`
-                                : `<img src="${note.pieceJointe}" style="max-width:100%">`);
-                            }
-                          }}
+                          onPress={() => openDocPreview(note.pieceJointe)}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'la pièce jointe'}`}
                         >
                           <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
                           <Text style={styles.notePJText}>{note.pieceJointeNom || (note.pieceJointeType === 'pdf' ? 'PDF' : 'Image')}</Text>
@@ -2465,30 +2440,33 @@ export default function ChantiersScreen() {
                       {note.photos && note.photos.length > 0 && (
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6, marginBottom: 6 }}>
                           {note.photos.map((uri, idx) => {
-                            const isPdf = uri.startsWith('data:application/pdf');
+                            const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
                             if (isPdf) {
                               return (
                                 <Pressable
                                   key={idx}
                                   style={{ width: 60, height: 60, borderRadius: 8, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
-                                  onPress={() => {
-                                    if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                                      const w = window.open();
-                                      if (w) w.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`);
-                                    }
-                                  }}
+                                  onPress={() => openDocPreview(uri)}
+                                  accessibilityRole="button"
+                                  accessibilityLabel="Ouvrir le PDF"
                                 >
                                   <Text style={{ fontSize: 22 }}>📄</Text>
                                 </Pressable>
                               );
                             }
                             return (
-                              <Image
+                              <Pressable
                                 key={idx}
-                                source={{ uri }}
-                                style={{ width: 60, height: 60, borderRadius: 8, marginRight: 6 }}
-                                resizeMode="cover"
-                              />
+                                onPress={() => openDocPreview(uri)}
+                                accessibilityRole="button"
+                                accessibilityLabel="Ouvrir la photo"
+                              >
+                                <Image
+                                  source={{ uri }}
+                                  style={{ width: 60, height: 60, borderRadius: 8, marginRight: 6 }}
+                                  resizeMode="cover"
+                                />
+                              </Pressable>
                             );
                           })}
                         </ScrollView>
@@ -2527,20 +2505,56 @@ export default function ChantiersScreen() {
                       multiline
                     />
 
-                    {/* Pièce jointe */}
-                    <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <Pressable style={styles.notePJPickBtn} onPress={handlePickNotePJ}>
-                        <Text style={styles.notePJPickText}>📎 {t.common.attachFile}</Text>
-                      </Pressable>
-                      {notePieceJointe && (
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                          <Text style={styles.notePJIcon}>{notePieceJointe.type === 'pdf' ? '📄' : '🖼️'}</Text>
-                          <Text style={[styles.notePJText, { flex: 1 }]} numberOfLines={1}>{notePieceJointe.nom}</Text>
-                          <Pressable onPress={() => setNotePieceJointe(null)}>
-                            <Text style={{ color: '#E74C3C', fontWeight: '700' }}>✕</Text>
-                          </Pressable>
-                        </View>
-                      )}
+                    {/* Preview multi-photos sélectionnées (aligné planning.tsx ModalNotesChantier) */}
+                    {notePhotos.length > 0 && (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8, marginBottom: 4 }}>
+                        {notePhotos.map((uri, idx) => {
+                          const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                          return (
+                            <View key={idx} style={{ marginRight: 8, position: 'relative' }}>
+                              {isPdf ? (
+                                <View style={{ width: 56, height: 56, borderRadius: 6, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Text style={{ fontSize: 22 }}>📄</Text>
+                                </View>
+                              ) : (
+                                <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
+                              )}
+                              <Pressable
+                                onPress={() => setNotePhotos(prev => prev.filter((_, i) => i !== idx))}
+                                style={{ position: 'absolute', top: -4, right: -4, backgroundColor: '#E74C3C', borderRadius: 8, width: 16, height: 16, alignItems: 'center', justifyContent: 'center' }}
+                                accessibilityRole="button"
+                                accessibilityLabel="Retirer la photo"
+                              >
+                                <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
+                              </Pressable>
+                            </View>
+                          );
+                        })}
+                      </ScrollView>
+                    )}
+
+                    {/* Pickers (web input / iOS ActionSheet + Inbox iOS Share Extension) */}
+                    <View style={{ marginTop: 8, gap: 4 }}>
+                      <NativeFilePickerButton
+                        onPick={async (file) => {
+                          const url = await handleNoteChantierPickNative(file);
+                          if (!url) return false;
+                          setNotePhotos(prev => [...prev, url]);
+                          return true;
+                        }}
+                        acceptImages
+                        acceptPdf
+                        multiple
+                      />
+                      <InboxPickerButton
+                        onPick={async (item) => {
+                          const url = await handleNoteChantierFromInbox(item);
+                          if (!url) return false;
+                          setNotePhotos(prev => [...prev, url]);
+                          return true;
+                        }}
+                        mimeFilter={inboxMimeFilterNoteChantier}
+                      />
                     </View>
 
                     {/* Sélection des destinataires (admin seulement) */}
@@ -2593,9 +2607,9 @@ export default function ChantiersScreen() {
                     )}
 
                     <Pressable
-                      style={[styles.saveBtn, { marginTop: 12, opacity: (newNoteTexte.trim() || notePieceJointe !== null) ? 1 : 0.5 }]}
+                      style={[styles.saveBtn, { marginTop: 12, opacity: (newNoteTexte.trim() || notePhotos.length > 0) ? 1 : 0.5 }]}
                       onPress={handleAddNote}
-                      disabled={!newNoteTexte.trim() && notePieceJointe === null}
+                      disabled={!newNoteTexte.trim() && notePhotos.length === 0}
                     >
                       <Text style={styles.saveBtnText}>{t.common.add}</Text>
                     </Pressable>
@@ -2617,18 +2631,13 @@ export default function ChantiersScreen() {
                             </Text>
                           </View>
                           <Text style={styles.noteTexte}>{note.texte}</Text>
-                          {/* Pièce jointe */}
+                          {/* Pièce jointe legacy */}
                           {note.pieceJointe && (
                             <Pressable
                               style={styles.notePJBtn}
-                              onPress={() => {
-                                if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                                  const w = window.open();
-                                  if (w) w.document.write(note.pieceJointeType === 'pdf'
-                                    ? `<iframe src="${note.pieceJointe}" width="100%" height="100%"></iframe>`
-                                    : `<img src="${note.pieceJointe}" style="max-width:100%">`);
-                                }
-                              }}
+                              onPress={() => openDocPreview(note.pieceJointe)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'la pièce jointe'}`}
                             >
                               <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
                               <Text style={styles.notePJText}>{note.pieceJointeNom || 'Fichier'}</Text>
@@ -2638,30 +2647,33 @@ export default function ChantiersScreen() {
                           {note.photos && note.photos.length > 0 && (
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6, marginBottom: 6 }}>
                               {note.photos.map((uri, idx) => {
-                                const isPdf = uri.startsWith('data:application/pdf');
+                                const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
                                 if (isPdf) {
                                   return (
                                     <Pressable
                                       key={idx}
                                       style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
-                                      onPress={() => {
-                                        if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                                          const w = window.open();
-                                          if (w) w.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`);
-                                        }
-                                      }}
+                                      onPress={() => openDocPreview(uri)}
+                                      accessibilityRole="button"
+                                      accessibilityLabel="Ouvrir le PDF"
                                     >
                                       <Text style={{ fontSize: 20 }}>📄</Text>
                                     </Pressable>
                                   );
                                 }
                                 return (
-                                  <Image
+                                  <Pressable
                                     key={idx}
-                                    source={{ uri }}
-                                    style={{ width: 56, height: 56, borderRadius: 8, marginRight: 6 }}
-                                    resizeMode="cover"
-                                  />
+                                    onPress={() => openDocPreview(uri)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Ouvrir la photo"
+                                  >
+                                    <Image
+                                      source={{ uri }}
+                                      style={{ width: 56, height: 56, borderRadius: 8, marginRight: 6 }}
+                                      resizeMode="cover"
+                                    />
+                                  </Pressable>
                                 );
                               })}
                             </ScrollView>
@@ -2706,18 +2718,48 @@ export default function ChantiersScreen() {
                           {note.pieceJointe && (
                             <Pressable
                               style={styles.notePJBtn}
-                              onPress={() => {
-                                if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                                  const w = window.open();
-                                  if (w) w.document.write(note.pieceJointeType === 'pdf'
-                                    ? `<iframe src="${note.pieceJointe}" width="100%" height="100%"></iframe>`
-                                    : `<img src="${note.pieceJointe}" style="max-width:100%">`);
-                                }
-                              }}
+                              onPress={() => openDocPreview(note.pieceJointe)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'la pièce jointe'}`}
                             >
                               <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
                               <Text style={styles.notePJText}>{note.pieceJointeNom || 'Fichier'}</Text>
                             </Pressable>
+                          )}
+                          {/* Photos multiples */}
+                          {note.photos && note.photos.length > 0 && (
+                            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6, marginBottom: 6 }}>
+                              {note.photos.map((uri, idx) => {
+                                const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                                if (isPdf) {
+                                  return (
+                                    <Pressable
+                                      key={idx}
+                                      style={{ width: 56, height: 56, borderRadius: 8, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
+                                      onPress={() => openDocPreview(uri)}
+                                      accessibilityRole="button"
+                                      accessibilityLabel="Ouvrir le PDF"
+                                    >
+                                      <Text style={{ fontSize: 20 }}>📄</Text>
+                                    </Pressable>
+                                  );
+                                }
+                                return (
+                                  <Pressable
+                                    key={idx}
+                                    onPress={() => openDocPreview(uri)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Ouvrir la photo"
+                                  >
+                                    <Image
+                                      source={{ uri }}
+                                      style={{ width: 56, height: 56, borderRadius: 8, marginRight: 6 }}
+                                      resizeMode="cover"
+                                    />
+                                  </Pressable>
+                                );
+                              })}
+                            </ScrollView>
                           )}
                         </View>
                       ))}
