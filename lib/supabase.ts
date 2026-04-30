@@ -188,39 +188,45 @@ function stripPhotosForSupabase(appData: Record<string, unknown>): Record<string
     });
   }
 
-  // Notes chantier : retirer les photos des pièces jointes
-  // IMPORTANT : les photos peuvent être soit des objets {id, nom, type} soit des strings base64
-  // Dans les deux cas, on les supprime du payload Supabase
+  // Notes chantier : préserver les URLs Supabase Storage, retirer les
+  // data: URIs base64 legacy (payload bloat). Pattern aligné sur
+  // photosChantier ci-dessus.
+  const isStorageUrl = (u: unknown): u is string =>
+    typeof u === 'string' && (u.startsWith('http://') || u.startsWith('https://'));
   if (Array.isArray(stripped.notesChantier)) {
-    stripped.notesChantier = (stripped.notesChantier as Record<string, unknown>[]).map(n => ({
-      ...n,
-      pieceJointe: undefined,  // Supprimer la pièce jointe (base64)
-      photos: [],               // Supprimer TOUTES les photos (base64 ou métadonnées)
-    }));
+    stripped.notesChantier = (stripped.notesChantier as Record<string, unknown>[]).map(n => {
+      const pieceJointe = n.pieceJointe;
+      const photos = (n.photos as unknown[] | undefined) || [];
+      return {
+        ...n,
+        pieceJointe: isStorageUrl(pieceJointe) ? pieceJointe : undefined,
+        photos: photos.filter(isStorageUrl),
+      };
+    });
   }
 
   // Notes supprimées : idem
   if (Array.isArray(stripped.notesChantierSupprimees)) {
-    stripped.notesChantierSupprimees = (stripped.notesChantierSupprimees as Record<string, unknown>[]).map(n => ({
-      ...n,
-      pieceJointe: undefined,
-      photos: [],
-    }));
+    stripped.notesChantierSupprimees = (stripped.notesChantierSupprimees as Record<string, unknown>[]).map(n => {
+      const pieceJointe = n.pieceJointe;
+      const photos = (n.photos as unknown[] | undefined) || [];
+      return {
+        ...n,
+        pieceJointe: isStorageUrl(pieceJointe) ? pieceJointe : undefined,
+        photos: photos.filter(isStorageUrl),
+      };
+    });
   }
 
-  // Plans chantier : retirer les URIs base64 des plans
+  // Plans chantier : préserver les URLs Supabase Storage dans `fichier`,
+  // retirer les data: URIs base64 legacy. Pattern aligné sur notesChantier.
   if (typeof stripped.plansChantier === 'object' && stripped.plansChantier !== null) {
     const plans = stripped.plansChantier as Record<string, unknown[]>;
     const strippedPlans: Record<string, unknown[]> = {};
     for (const [chantierId, planList] of Object.entries(plans)) {
       strippedPlans[chantierId] = (planList as Record<string, unknown>[]).map(p => ({
-        id: p.id,
-        nom: p.nom,
-        type: p.type,
-        date: p.date,
-        addedBy: p.addedBy,
-        visiblePour: p.visiblePour,
-        // uri omis
+        ...p,
+        fichier: isStorageUrl(p.fichier) ? p.fichier : undefined,
       }));
     }
     stripped.plansChantier = strippedPlans;
