@@ -8,37 +8,23 @@ import {
   TextInput,
   Alert,
   Platform,
-  Linking,
   StyleSheet,
 } from 'react-native';
 import { DS, font, radius, space } from '../../constants/design';
 import { useLanguage } from '../../app/context/LanguageContext';
 import { EmptyState } from '../ui/EmptyState';
 import { FilterChip } from '../ui/FilterChip';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
+import { openDocPreview } from '@/lib/share/openDocPreview';
+import type { InboxItem } from '@/lib/share/inboxStore';
+import type { PickedFile } from '@/lib/share/pickNativeFile';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Ouvre le fichier d'un plan en preview.
- * Web : `window.open` pour les URLs, `document.write` pour les data-URIs image.
- * Natif : `expo-web-browser` avec fallback `Linking.openURL`.
- */
-function openPlanFile(uri: string): void {
-  if (!uri) return;
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    if (uri.startsWith('http')) {
-      window.open(uri, '_blank');
-    } else {
-      const w = window.open();
-      if (w) w.document.write(`<img src="${uri}" style="max-width:100%;height:auto">`);
-    }
-  } else if (uri.startsWith('http')) {
-    // Import dynamique pour éviter d'embarquer expo-web-browser sur web
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const WebBrowser = require('expo-web-browser');
-    WebBrowser.openBrowserAsync(uri).catch(() => Linking.openURL(uri));
-  }
-}
+/** Filtre mime pour l'InboxPickerButton : photos + PDF. */
+const inboxMimeFilterImagePdf = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 /** Format FR court "JJ mmm AAAA" depuis un ISO timestamp. */
 function formatUploadDate(iso: string): string {
@@ -111,8 +97,10 @@ export interface ModalPlansChantierProps {
   participants: PlanParticipant[];
   /** Gate la section "ajouter un plan" + bouton 🗑 suppression. */
   isAdmin: boolean;
-  /** Picker fichier + upload Supabase fourni par le parent. Retourne URL ou `null`. */
-  onPickFile: () => Promise<string | null>;
+  /** Picker natif (web input / iOS ActionSheet Photos+Fichiers). Upload + retour URL Storage. */
+  onPickNativeFile?: (file: PickedFile) => Promise<string | null>;
+  /** Picker depuis l'Inbox iOS (Share Extension). Upload + retour URL Storage. */
+  onPickFromInbox?: (item: InboxItem) => Promise<string | null>;
   /** Callback submit — le parent construit l'objet métier complet. */
   onAddPlan: (values: PlanChantierValues) => void;
   /** Callback suppression d'un plan existant (admin only). */
@@ -128,8 +116,6 @@ export interface ModalPlansChantierProps {
 const EMOJI = {
   /** Bouton supprimer un plan. */
   trash:  '🗑',
-  /** Bouton picker fichier. */
-  paperclip: '📎',
   /** Bouton fermer (✕). */
   close: '✕',
   /** Radios de visibilité. */
@@ -150,12 +136,6 @@ const LIST_ITEM_BG = '#F8F9FB';
 
 /** Fond du bouton supprimer (rouge pâle). Pas de token DS équivalent. */
 const DELETE_BTN_BG = '#FFF0F0';
-
-/** Fond du bouton picker fichier (bleu pâle). Pas de token DS équivalent. */
-const PICKER_BTN_BG = '#E8EEF8';
-
-/** Border du bouton picker fichier (bleu moyen). Pas de token DS équivalent. */
-const PICKER_BTN_BORDER = '#C5D0E6';
 
 /** Couleur des placeholders TextInput. Pas de token DS équivalent. */
 const PLACEHOLDER_COLOR = '#B0BEC5';
@@ -213,7 +193,8 @@ const LIST_ITEM_GAP = 10;
  * chaque ouverture.
  *
  * Le picker de fichier (+ upload Supabase) est déporté au parent via
- * `onPickFile` — ce composant reste agnostique du backend.
+ * `onPickNativeFile` (web input / iOS ActionSheet) et `onPickFromInbox`
+ * (iOS Share Extension) — ce composant reste agnostique du backend.
  *
  * @example
  * ```tsx
@@ -224,7 +205,8 @@ const LIST_ITEM_GAP = 10;
  *   plans={plansVisibles}
  *   participants={participants}
  *   isAdmin={isAdmin}
- *   onPickFile={handlePickPlanFile}
+ *   onPickNativeFile={handlePlanPickNative}
+ *   onPickFromInbox={handlePlanFromInbox}
  *   onAddPlan={(values) => addPlanChantier(chantierId, { ...values, id, uploadedAt })}
  *   onDeletePlan={(planId) => deletePlanChantier(chantierId, planId)}
  * />
@@ -237,7 +219,8 @@ export function ModalPlansChantier({
   plans,
   participants,
   isAdmin,
-  onPickFile,
+  onPickNativeFile,
+  onPickFromInbox,
   onAddPlan,
   onDeletePlan,
 }: ModalPlansChantierProps): React.ReactElement {
@@ -259,11 +242,6 @@ export function ModalPlansChantier({
   }, [visible]);
 
   const isValid = nom.trim().length > 0 && fichier !== null;
-
-  const handlePick = async (): Promise<void> => {
-    const url = await onPickFile();
-    if (url) setFichier(url);
-  };
 
   const handleAdd = (): void => {
     if (!isValid) return;
@@ -339,7 +317,7 @@ export function ModalPlansChantier({
               <View key={plan.id} style={styles.listItem}>
                 <Pressable
                   style={styles.listItemMain}
-                  onPress={() => openPlanFile(plan.fichier)}
+                  onPress={() => openDocPreview(plan.fichier)}
                   accessibilityRole="button"
                   accessibilityLabel={`Ouvrir ${plan.nom}`}
                 >
@@ -380,36 +358,52 @@ export function ModalPlansChantier({
                   placeholderTextColor={PLACEHOLDER_COLOR}
                 />
 
-                <View style={styles.pickerRow}>
-                  <Pressable
-                    style={styles.pickerBtn}
-                    onPress={handlePick}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.pickerBtnText}>
-                      {EMOJI.paperclip} {t.chantiers.addPlan}
+                {fichier && (
+                  <View style={styles.fileSelectedRow}>
+                    <Text style={styles.fileSelectedEmoji}>
+                      {(fichier.startsWith('data:application/pdf') || fichier.toLowerCase().endsWith('.pdf')) ? '📄' : '🖼️'}
                     </Text>
-                  </Pressable>
-                  {fichier && (
-                    <View style={styles.fileSelectedRow}>
-                      <Text style={styles.fileSelectedEmoji}>
-                        {fichier.startsWith('data:application/pdf') ? '📄' : '🖼️'}
-                      </Text>
-                      <Text
-                        style={styles.fileSelectedLabel}
-                        numberOfLines={1}
-                      >
-                        {t.common.fileSelected}
-                      </Text>
-                      <Pressable
-                        onPress={() => setFichier(null)}
-                        hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
-                        accessibilityRole="button"
-                        accessibilityLabel="Retirer le fichier"
-                      >
-                        <Text style={styles.fileRemoveText}>{EMOJI.close}</Text>
-                      </Pressable>
-                    </View>
+                    <Text
+                      style={styles.fileSelectedLabel}
+                      numberOfLines={1}
+                    >
+                      {t.common.fileSelected}
+                    </Text>
+                    <Pressable
+                      onPress={() => setFichier(null)}
+                      hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Retirer le fichier"
+                    >
+                      <Text style={styles.fileRemoveText}>{EMOJI.close}</Text>
+                    </Pressable>
+                  </View>
+                )}
+
+                <View style={{ gap: 4, marginTop: space.sm }}>
+                  {onPickNativeFile && (
+                    <NativeFilePickerButton
+                      onPick={async (file) => {
+                        const url = await onPickNativeFile(file);
+                        if (!url) return false;
+                        setFichier(url);
+                        return true;
+                      }}
+                      acceptImages
+                      acceptPdf
+                      multiple={false}
+                    />
+                  )}
+                  {onPickFromInbox && (
+                    <InboxPickerButton
+                      onPick={async (item) => {
+                        const url = await onPickFromInbox(item);
+                        if (!url) return false;
+                        setFichier(url);
+                        return true;
+                      }}
+                      mimeFilter={inboxMimeFilterImagePdf}
+                    />
                   )}
                 </View>
 
@@ -641,28 +635,6 @@ const styles = StyleSheet.create({
     borderColor:     DS.borderAlt,
     minHeight:       NOTE_INPUT_MIN_HEIGHT, // 100
     textAlignVertical: 'top',
-  },
-
-  pickerRow: {
-    marginTop:     space.sm, // 8
-    flexDirection: 'row',
-    alignItems:    'center',
-    gap:           space.sm, // 8
-  },
-
-  pickerBtn: {
-    backgroundColor:   PICKER_BTN_BG,
-    borderRadius:      radius.sm, // 8
-    paddingHorizontal: space.md, // 12
-    paddingVertical:   space.sm, // 8
-    borderWidth:       1,
-    borderColor:       PICKER_BTN_BORDER,
-  },
-
-  pickerBtnText: {
-    fontSize:   font.body, // 13
-    color:      DS.primary,
-    fontWeight: font.semibold,
   },
 
   fileSelectedRow: {

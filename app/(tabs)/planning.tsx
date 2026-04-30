@@ -346,28 +346,18 @@ export default function PlanningScreen() {
     ...(data.sousTraitants || []).map(s => ({ id: s.id, label: s.nom, kind: 'soustraitant' as const })),
   ], [data.employes, data.sousTraitants]);
 
-  const handlePickPlanFile = async (): Promise<string | null> => {
-    if (Platform.OS !== 'web') return null;
-    return new Promise((resolve) => {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,application/pdf';
-      input.onchange = (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) { resolve(null); return; }
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64 = reader.result as string;
-          const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-          const chantierId = plansPlanningChantierId || 'general';
-          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
-          resolve(storageUrl || base64);
-        };
-        reader.readAsDataURL(file);
-      };
-      input.click();
-      setTimeout(() => input.remove(), 60000);
-    });
+  const handlePlanPickNative = async (file: PickedFile): Promise<string | null> => {
+    if (!plansPlanningChantierId) return null;
+    const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return await uploadFileToStorage(file.uri, `chantiers/${plansPlanningChantierId}/plans`, planId);
+  };
+
+  const handlePlanFromInbox = async (item: InboxItem): Promise<string | null> => {
+    if (!plansPlanningChantierId) return null;
+    const fileURI = getInboxItemPath(item);
+    if (!fileURI) return null;
+    const planId = `inbox_${item.id}`;
+    return await uploadFileToStorage(fileURI, `chantiers/${plansPlanningChantierId}/plans`, planId);
   };
 
   const handleAddPlan = (values: PlanChantierValues): void => {
@@ -1313,7 +1303,8 @@ export default function PlanningScreen() {
         plans={plansVisibles}
         participants={participantsForPlans}
         isAdmin={isAdmin}
-        onPickFile={handlePickPlanFile}
+        onPickNativeFile={handlePlanPickNative}
+        onPickFromInbox={handlePlanFromInbox}
         onAddPlan={handleAddPlan}
         onDeletePlan={handleDeletePlan}
       />
