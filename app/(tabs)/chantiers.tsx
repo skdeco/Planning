@@ -34,8 +34,8 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import type { PickedFile } from '@/lib/share/pickNativeFile';
 
-// Filtre mime utilisé par les pickers Notes Chantier (photos + PDF).
-const inboxMimeFilterNoteChantier = (m: string): boolean =>
+// Filtre mime utilisé par les pickers Notes Chantier + Plans Chantier (photos + PDF).
+const inboxMimeFilterImagePdf = (m: string): boolean =>
   m.startsWith('image/') || m === 'application/pdf';
 
 const STATUTS: StatutChantier[] = ['actif', 'en_attente', 'termine', 'en_pause', 'sav'];
@@ -362,39 +362,18 @@ export default function ChantiersScreen() {
     setShowPlans(true);
   };
 
-  const handlePickPlan = async () => {
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,application/pdf';
-      input.onchange = async (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async () => {
-          const base64 = reader.result as string;
-          const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-          const chantierId = plansChantierId || 'general';
-          const storageUrl = await uploadFileToStorage(base64, `chantiers/${chantierId}/plans`, planId);
-          setNewPlanFichier(storageUrl || base64);
-        };
-        reader.readAsDataURL(file);
-      };
-      input.click(); setTimeout(() => input.remove(), 60000);
-    } else {
-      // Mobile natif — images + PDF
-      const result = await DocumentPicker.getDocumentAsync({
-        type: ['image/*', 'application/pdf'],
-        copyToCacheDirectory: true,
-      });
-      if (!result.canceled && result.assets?.[0]) {
-        const asset = result.assets[0];
-        const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-        const chantierId = plansChantierId || 'general';
-        const url = await uploadFileToStorage(asset.uri, `chantiers/${chantierId}/plans`, planId);
-        setNewPlanFichier(url || asset.uri);
-      }
-    }
+  const handlePlanChantierPickNative = async (file: PickedFile): Promise<string | null> => {
+    if (!plansChantierId) return null;
+    const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    return await uploadFileToStorage(file.uri, `chantiers/${plansChantierId}/plans`, planId);
+  };
+
+  const handlePlanChantierFromInbox = async (item: InboxItem): Promise<string | null> => {
+    if (!plansChantierId) return null;
+    const fileURI = getInboxItemPath(item);
+    if (!fileURI) return null;
+    const planId = `inbox_${item.id}`;
+    return await uploadFileToStorage(fileURI, `chantiers/${plansChantierId}/plans`, planId);
   };
 
   const handleAddPlan = () => {
@@ -2553,7 +2532,7 @@ export default function ChantiersScreen() {
                           setNotePhotos(prev => [...prev, url]);
                           return true;
                         }}
-                        mimeFilter={inboxMimeFilterNoteChantier}
+                        mimeFilter={inboxMimeFilterImagePdf}
                       />
                     </View>
 
@@ -3128,29 +3107,11 @@ export default function ChantiersScreen() {
                 <View key={plan.id} style={styles.planCard}>
                   <Pressable
                     style={styles.planCardContent}
-                    onPress={() => {
-                      const uri = plan.fichier;
-                      if (!uri) return;
-                      const isPdf = uri.endsWith('.pdf') || uri.includes('application/pdf');
-                      if (Platform.OS === 'web' && typeof window !== 'undefined') {
-                        if (uri.startsWith('http')) {
-                          window.open(uri, '_blank');
-                        } else {
-                          const w = window.open();
-                          if (w) w.document.write(isPdf
-                            ? `<iframe src="${uri}" width="100%" height="100%" style="border:none"></iframe>`
-                            : `<img src="${uri}" style="max-width:100%;height:auto">`);
-                        }
-                      } else if (isPdf || uri.startsWith('http')) {
-                        // PDF ou URL Storage : ouvrir dans le navigateur natif
-                        const WebBrowser = require('expo-web-browser');
-                        WebBrowser.openBrowserAsync(uri).catch(() => Linking.openURL(uri));
-                      } else {
-                        setViewPhotoUri(uri);
-                      }
-                    }}
+                    onPress={() => openDocPreview(plan.fichier)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ouvrir ${plan.nom}`}
                   >
-                    <Text style={styles.planIcon}>{(plan.fichier.endsWith('.pdf') || plan.fichier.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
+                    <Text style={styles.planIcon}>{(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.planNom}>{plan.nom}</Text>
                       <Text style={styles.planMeta}>
@@ -3192,20 +3153,41 @@ export default function ChantiersScreen() {
                     placeholderTextColor="#B0BEC5"
                   />
 
-                  {/* Sélection du fichier */}
-                  <View style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Pressable style={styles.notePJPickBtn} onPress={handlePickPlan}>
-                      <Text style={styles.notePJPickText}>📎 {t.chantiers.addPlan}</Text>
-                    </Pressable>
-                    {newPlanFichier && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                        <Text style={styles.notePJIcon}>{newPlanFichier.startsWith('data:application/pdf') ? '📄' : '🖼️'}</Text>
-                        <Text style={[styles.notePJText, { flex: 1 }]} numberOfLines={1}>{t.common.fileSelected}</Text>
-                        <Pressable onPress={() => setNewPlanFichier(null)}>
-                          <Text style={{ color: '#E74C3C', fontWeight: '700' }}>✕</Text>
-                        </Pressable>
-                      </View>
-                    )}
+                  {/* Preview fichier sélectionné */}
+                  {newPlanFichier && (
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                      <Text style={styles.notePJIcon}>
+                        {(newPlanFichier.startsWith('data:application/pdf') || newPlanFichier.toLowerCase().endsWith('.pdf')) ? '📄' : '🖼️'}
+                      </Text>
+                      <Text style={[styles.notePJText, { flex: 1 }]} numberOfLines={1}>{t.common.fileSelected}</Text>
+                      <Pressable onPress={() => setNewPlanFichier(null)}>
+                        <Text style={{ color: '#E74C3C', fontWeight: '700' }}>✕</Text>
+                      </Pressable>
+                    </View>
+                  )}
+
+                  {/* Pickers (web/iOS native + Inbox iOS Share Extension) */}
+                  <View style={{ marginTop: 8, gap: 4 }}>
+                    <NativeFilePickerButton
+                      onPick={async (file) => {
+                        const url = await handlePlanChantierPickNative(file);
+                        if (!url) return false;
+                        setNewPlanFichier(url);
+                        return true;
+                      }}
+                      acceptImages
+                      acceptPdf
+                      multiple={false}
+                    />
+                    <InboxPickerButton
+                      onPick={async (item) => {
+                        const url = await handlePlanChantierFromInbox(item);
+                        if (!url) return false;
+                        setNewPlanFichier(url);
+                        return true;
+                      }}
+                      mimeFilter={inboxMimeFilterImagePdf}
+                    />
                   </View>
 
                   {/* Visibilité */}
