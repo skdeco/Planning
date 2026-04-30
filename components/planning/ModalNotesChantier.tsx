@@ -347,7 +347,7 @@ export function ModalNotesChantier({
     >
       <View style={styles.overlay}>
         <Pressable style={styles.overlayTap} onPress={onClose} />
-        <Pressable style={styles.sheet} onPress={() => { /* bloque le tap-through */ }}>
+        <View style={[styles.sheet, styles.sheetMaxHeight]}>
           <View style={styles.handle} />
 
           {/* Header */}
@@ -365,7 +365,7 @@ export function ModalNotesChantier({
             </Pressable>
           </View>
 
-          <ScrollView style={styles.scrollBody} showsVerticalScrollIndicator={false}>
+          <ScrollView showsVerticalScrollIndicator={false}>
             {notes.length === 0 && (
               <EmptyState size="sm" title="Aucune note active pour ce chantier." />
             )}
@@ -429,14 +429,16 @@ export function ModalNotesChantier({
                   showsHorizontalScrollIndicator={false}
                   style={styles.formPhotosRow}
                 >
-                  {photos.map((uri, idx) => (
+                  {photos.map((uri, idx) => {
+                    const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                    return (
                     <View key={idx} style={styles.formPhotoWrap}>
-                      {uri.startsWith('data:image') ? (
-                        <Image source={{ uri }} style={styles.formPhoto} />
-                      ) : (
+                      {isPdf ? (
                         <View style={[styles.formPhoto, styles.formPhotoPdf]}>
                           <Text style={styles.pdfEmoji}>📄</Text>
                         </View>
+                      ) : (
+                        <Image source={{ uri }} style={styles.formPhoto} />
                       )}
                       <Pressable
                         style={styles.removePhotoBtn}
@@ -447,7 +449,8 @@ export function ModalNotesChantier({
                         <Text style={styles.removePhotoText}>✕</Text>
                       </Pressable>
                     </View>
-                  ))}
+                    );
+                  })}
                 </ScrollView>
               )}
 
@@ -485,7 +488,7 @@ export function ModalNotesChantier({
               </Pressable>
             </View>
           </ScrollView>
-        </Pressable>
+        </View>
       </View>
     </Modal>
   );
@@ -629,7 +632,10 @@ const styles = StyleSheet.create({
     borderTopRightRadius: radius.xl,           // 20
     padding:              space.xl,            // 20
     paddingBottom:        Platform.OS === 'ios' ? SHEET_PB_IOS : space.xl,
-    maxHeight:            '80%',
+  },
+
+  sheetMaxHeight: {
+    maxHeight: '80%',
   },
 
   handle: {
@@ -670,11 +676,6 @@ const styles = StyleSheet.create({
     fontSize:   font.md,                       // 14
     color:      DS.textAlt,
     fontWeight: font.bold,
-  },
-
-  // — Scroll body —
-  scrollBody: {
-    flex: 1,
   },
 
   // — Note card —
