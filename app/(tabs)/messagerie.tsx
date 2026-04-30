@@ -1,7 +1,7 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
-  TextInput, Platform, Alert, FlatList, KeyboardAvoidingView, Linking,
+  TextInput, Platform, Alert, FlatList, KeyboardAvoidingView,
 } from 'react-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
@@ -12,6 +12,7 @@ import type { MessagePrive } from '@/app/types/messages';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { inboxItemToDataUri } from '@/lib/share/inboxToDataUri';
 import type { InboxItem } from '@/lib/share/inboxStore';
+import { openDocPreview } from '@/lib/share/openDocPreview';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran (messagerie =
 // photos/vidéos uniquement). Diffère de inboxMimeFilterImagePdf utilisé
@@ -444,38 +445,6 @@ export default function MessagerieScreen() {
   // ─── Archiver un message individuel ───────────────────────────────────────
   const handleArchive = (msg: MessagePrive) => {
     updateMessagePrive({ ...msg, archive: !msg.archive });
-  };
-
-  // ─── Preview d'un fichier média de message ───────────────────────────────
-  // Pattern aligné sur equipe.tsx (63e9f71) + rh.tsx (9368878). Web :
-  // window.open + iframe. iOS/Android : data: URIs (cas majoritaire ici, les
-  // photos/vidéos messages sont stockées en base64 legacy dans
-  // MessagePrive.fichiers[]) ne peuvent pas s'ouvrir via Linking → Alert
-  // explicite. URLs https → Linking.canOpenURL + openURL.
-  const openDocPreview = async (fichier: string): Promise<void> => {
-    if (Platform.OS === 'web') {
-      const w = window.open();
-      if (w) w.document.write(`<iframe src="${fichier}" style="width:100%;height:100%;border:none;"/>`);
-      return;
-    }
-    if (fichier.startsWith('data:')) {
-      Alert.alert(
-        'Aperçu indisponible',
-        "Aperçu indisponible pour ce format. Une mise à jour à venir permettra l'aperçu natif.",
-      );
-      return;
-    }
-    try {
-      const ok = await Linking.canOpenURL(fichier);
-      if (ok) {
-        await Linking.openURL(fichier);
-      } else {
-        Alert.alert('Impossible', "Impossible d'ouvrir ce document.");
-      }
-    } catch (err) {
-      console.warn('[messagerie openDocPreview] failed', err);
-      Alert.alert('Erreur', "Impossible d'ouvrir ce document.");
-    }
   };
 
   // ─── Supprimer un message ──────────────────────────────────────────────────
