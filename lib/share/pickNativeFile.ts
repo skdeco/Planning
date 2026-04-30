@@ -1,15 +1,21 @@
 /**
  * Helper bas-niveau pour ouvrir un sélecteur de fichier natif.
  *
- * Sur iOS / Android : ActionSheet "Photos / Fichiers / Annuler" qui dispatche
- * vers `expo-image-picker` (Photos) ou `expo-document-picker` (Fichiers).
+ * Sur iOS / Android : ActionSheet dynamique selon les options activées :
+ * "Photothèque" (acceptImages), "Appareil photo" (acceptCamera),
+ * "Fichiers" (acceptPdf), "Annuler". Dispatche vers `expo-image-picker`
+ * (Photothèque/Caméra) ou `expo-document-picker` (Fichiers).
+ *
  * Sur web : `<input type="file">` dynamique avec lecture en data URI.
+ * `acceptCamera` est ignoré sur web (input file ne supporte pas la
+ * caméra de manière fiable cross-browser).
  *
  * Complément à InboxPickerButton (Share Extension iOS) : trois voies
  * d'upload coexistent (web input / native ActionSheet / Inbox).
  *
- * Permission UX : si l'utilisateur refuse l'accès photothèque, Alert
- * explicite avec bouton "Ouvrir les Réglages" via `Linking.openSettings()`.
+ * Permission UX : si l'utilisateur refuse l'accès photothèque ou
+ * appareil photo, Alert explicite avec bouton "Ouvrir les Réglages"
+ * via `Linking.openSettings()`.
  */
 import { ActionSheetIOS, Alert, Linking, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -31,13 +37,19 @@ export interface PickNativeFileOptions {
   acceptImages?: boolean;
   /** Autoriser les PDF. Default: true. */
   acceptPdf?: boolean;
+  /**
+   * Autoriser la prise de photo via la caméra (iOS/Android only).
+   * Ajoute "Appareil photo" à l'ActionSheet. Ignoré sur web.
+   * Default: false.
+   */
+  acceptCamera?: boolean;
   /** Autoriser la sélection multiple. Default: true. */
   multiple?: boolean;
   /** Compresser les images via lib/imageUtils. Default: false (opt-in). */
   compressImages?: boolean;
 }
 
-type Source = 'photos' | 'files';
+type Source = 'photos' | 'camera' | 'files';
 
 function inferMimeFromUri(uri: string, fallback = 'application/octet-stream'): string {
   const lower = uri.toLowerCase().split('?')[0];
@@ -94,6 +106,47 @@ async function pickFromPhotos(opts: Required<PickNativeFileOptions>): Promise<Pi
       uri,
       mimeType: asset.mimeType ?? inferMimeFromUri(uri, 'image/jpeg'),
       filename: asset.fileName ?? undefined,
+      size: asset.fileSize ?? undefined,
+    });
+  }
+  return out;
+}
+
+async function pickFromCamera(opts: Required<PickNativeFileOptions>): Promise<PickedFile[]> {
+  const perm = await ImagePicker.requestCameraPermissionsAsync();
+  if (!perm.granted) {
+    Alert.alert(
+      'Accès appareil photo requis',
+      "SK DECO Planning a besoin d'accéder à votre appareil photo pour prendre des photos. Vous pouvez l'autoriser dans les Réglages.",
+      [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Ouvrir les Réglages', onPress: () => { Linking.openSettings().catch(() => {}); } },
+      ],
+    );
+    return [];
+  }
+  const result = await ImagePicker.launchCameraAsync({
+    mediaTypes: ['images'],
+    quality: opts.compressImages ? 0.7 : 1,
+  });
+  if (result.canceled) return [];
+
+  const out: PickedFile[] = [];
+  for (const asset of result.assets) {
+    let uri = asset.uri;
+    if (opts.compressImages) {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const { compressImage } = require('@/lib/imageUtils');
+        uri = await compressImage(uri);
+      } catch {
+        // compressImage indisponible → URI brut
+      }
+    }
+    out.push({
+      uri,
+      mimeType: asset.mimeType ?? inferMimeFromUri(uri, 'image/jpeg'),
+      filename: asset.fileName ?? 'photo.jpg',
       size: asset.fileSize ?? undefined,
     });
   }
@@ -165,36 +218,44 @@ function pickFromWeb(opts: Required<PickNativeFileOptions>): Promise<PickedFile[
 }
 
 async function chooseSource(opts: Required<PickNativeFileOptions>): Promise<Source | null> {
-  // Si une seule source est autorisée, pas de choix.
-  if (opts.acceptImages && !opts.acceptPdf) return 'photos';
-  if (opts.acceptPdf && !opts.acceptImages) return 'files';
+  // Construit dynamiquement la liste des sources autorisées dans l'ordre :
+  // Photothèque, Appareil photo, Fichiers.
+  const labels: string[] = [];
+  const sources: Source[] = [];
+  if (opts.acceptImages) { labels.push('Photothèque'); sources.push('photos'); }
+  if (opts.acceptCamera) { labels.push('Appareil photo'); sources.push('camera'); }
+  if (opts.acceptPdf) { labels.push('Fichiers'); sources.push('files'); }
+
+  // Aucune ou une seule source : pas de choix.
+  if (sources.length === 0) return null;
+  if (sources.length === 1) return sources[0];
 
   if (Platform.OS === 'ios') {
+    const options = [...labels, 'Annuler'];
+    const cancelButtonIndex = options.length - 1;
     return new Promise((resolve) => {
       ActionSheetIOS.showActionSheetWithOptions(
-        {
-          title: 'Ajouter un fichier',
-          options: ['Photos', 'Fichiers', 'Annuler'],
-          cancelButtonIndex: 2,
-        },
+        { title: 'Ajouter un fichier', options, cancelButtonIndex },
         (buttonIndex) => {
-          if (buttonIndex === 0) resolve('photos');
-          else if (buttonIndex === 1) resolve('files');
-          else resolve(null);
+          if (buttonIndex === cancelButtonIndex) resolve(null);
+          else resolve(sources[buttonIndex] ?? null);
         },
       );
     });
   }
 
-  // Android : Alert avec 3 boutons (pas d'ActionSheet natif disponible sans lib tierce).
+  // Android : Alert avec n+1 boutons (pas d'ActionSheet natif disponible sans lib tierce).
   return new Promise((resolve) => {
+    const buttons = labels.map((label, idx) => ({
+      text: label,
+      onPress: () => resolve(sources[idx]),
+    }));
     Alert.alert(
       'Ajouter un fichier',
       'Choisissez une source',
       [
-        { text: 'Photos', onPress: () => resolve('photos') },
-        { text: 'Fichiers', onPress: () => resolve('files') },
-        { text: 'Annuler', style: 'cancel', onPress: () => resolve(null) },
+        ...buttons,
+        { text: 'Annuler', style: 'cancel' as const, onPress: () => resolve(null) },
       ],
       { cancelable: true, onDismiss: () => resolve(null) },
     );
@@ -207,12 +268,13 @@ export async function pickNativeFile(
   const resolved: Required<PickNativeFileOptions> = {
     acceptImages: opts.acceptImages ?? true,
     acceptPdf: opts.acceptPdf ?? true,
+    acceptCamera: opts.acceptCamera ?? false,
     multiple: opts.multiple ?? true,
     compressImages: opts.compressImages ?? false,
   };
 
-  if (!resolved.acceptImages && !resolved.acceptPdf) {
-    console.warn('pickNativeFile: at least one of acceptImages/acceptPdf must be true');
+  if (!resolved.acceptImages && !resolved.acceptPdf && !resolved.acceptCamera) {
+    console.warn('pickNativeFile: at least one of acceptImages/acceptPdf/acceptCamera must be true');
     return [];
   }
 
@@ -222,6 +284,7 @@ export async function pickNativeFile(
     const source = await chooseSource(resolved);
     if (source === null) return [];
     if (source === 'photos') return await pickFromPhotos(resolved);
+    if (source === 'camera') return await pickFromCamera(resolved);
     return await pickFromFiles(resolved);
   } catch (err) {
     console.warn('pickNativeFile:', err);

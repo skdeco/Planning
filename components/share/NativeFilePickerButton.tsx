@@ -29,24 +29,39 @@ export interface NativeFilePickerButtonProps {
   onPick: (file: PickedFile) => Promise<boolean>;
   acceptImages?: boolean;
   acceptPdf?: boolean;
+  /**
+   * Ajoute "Appareil photo" à l'ActionSheet iOS/Android. Ignoré sur web.
+   * Default: false.
+   */
+  acceptCamera?: boolean;
   multiple?: boolean;
   compressImages?: boolean;
-  /** Label personnalisé. Default: '📷 Ajouter photo / PDF'. */
+  /** Label personnalisé. Default: déduit des options activées. */
   label?: string;
   buttonStyle?: ViewStyle;
   disabled?: boolean;
 }
 
-function defaultLabel(opts: Pick<NativeFilePickerButtonProps, 'acceptImages' | 'acceptPdf'>): string {
-  if (opts.acceptImages && !opts.acceptPdf) return '📷 Ajouter une photo';
-  if (opts.acceptPdf && !opts.acceptImages) return '📄 Ajouter un PDF';
-  return '📷 Ajouter photo / PDF';
+function defaultLabel(
+  opts: Pick<NativeFilePickerButtonProps, 'acceptImages' | 'acceptPdf' | 'acceptCamera'>,
+): string {
+  // Combinaisons single
+  if (opts.acceptCamera && !opts.acceptImages && !opts.acceptPdf) return '📸 Prendre une photo';
+  if (opts.acceptImages && !opts.acceptPdf && !opts.acceptCamera) return '📷 Ajouter une photo';
+  if (opts.acceptPdf && !opts.acceptImages && !opts.acceptCamera) return '📄 Ajouter un PDF';
+  // Combinaisons multi
+  if (opts.acceptImages && opts.acceptPdf && !opts.acceptCamera) return '📷 Ajouter photo / PDF';
+  if (opts.acceptImages && opts.acceptCamera && !opts.acceptPdf) return '📷 Photo / 📸 Caméra';
+  if (opts.acceptPdf && opts.acceptCamera && !opts.acceptImages) return '📄 PDF / 📸 Caméra';
+  if (opts.acceptImages && opts.acceptPdf && opts.acceptCamera) return '📎 Ajouter (photo / caméra / PDF)';
+  return '📎 Ajouter';
 }
 
 export function NativeFilePickerButton({
   onPick,
   acceptImages = true,
   acceptPdf = true,
+  acceptCamera = false,
   multiple = true,
   compressImages = false,
   label,
@@ -59,7 +74,7 @@ export function NativeFilePickerButton({
     if (disabled || busy) return;
     setBusy(true);
     try {
-      const opts: PickNativeFileOptions = { acceptImages, acceptPdf, multiple, compressImages };
+      const opts: PickNativeFileOptions = { acceptImages, acceptPdf, acceptCamera, multiple, compressImages };
       const files = await pickNativeFile(opts);
       for (const file of files) {
         try {
@@ -74,7 +89,7 @@ export function NativeFilePickerButton({
   };
 
   const isDisabled = disabled || busy;
-  const text = busy ? 'Importation…' : (label ?? defaultLabel({ acceptImages, acceptPdf }));
+  const text = busy ? 'Importation…' : (label ?? defaultLabel({ acceptImages, acceptPdf, acceptCamera }));
 
   return (
     <Pressable
