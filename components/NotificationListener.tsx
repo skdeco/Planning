@@ -78,8 +78,9 @@ export function NotificationListener() {
   const prevArretsMaladieCount = useRef(-1);
   const prevNotesPlanningCount = useRef(-1);
 
-  // ── Messages privés ────────────────────────────────────────────────────────
+  // ── Messages privés — DÉSACTIVÉ (messagerie cachée côté UI, plus de notif) ──
   useEffect(() => {
+    if (true) return; // Messagerie désactivée — réversible : retirer cette ligne
     const msgs = data.messagesPrive || [];
     const nonLus = isAdmin
       ? msgs.filter(m => !m.lu && m.expediteurRole !== 'admin').length

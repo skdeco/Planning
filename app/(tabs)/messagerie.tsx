@@ -47,6 +47,12 @@ export default function MessagerieScreen() {
   const { t } = useLanguage();
   const router = useRouter();
 
+  // Messagerie désactivée côté UI — redirect vers home si user atteint cette route
+  // (vieille notif, deep link, etc.). Data layer intact pour réactivation future.
+  useEffect(() => {
+    router.replace('/' as any);
+  }, [router]);
+
   useEffect(() => {
     if (isHydrated && !currentUser) router.replace('/login' as any);
   }, [isHydrated, currentUser, router]);

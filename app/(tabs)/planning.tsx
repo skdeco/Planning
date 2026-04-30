@@ -1348,7 +1348,7 @@ export default function PlanningScreen() {
 
               {/* Employé lié */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Employé associé au compte admin</Text>
-              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>Les autres utilisateurs verront ce nom et pourront vous envoyer des messages.</Text>
+              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>Les autres utilisateurs verront ce nom.</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   <Pressable

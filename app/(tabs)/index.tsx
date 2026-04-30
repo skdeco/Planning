@@ -110,7 +110,8 @@ export default function DashboardScreen() {
     const nbArrivees = pointagesAujourdhui.filter(p => p.type === 'debut').length;
     const nbDeparts = pointagesAujourdhui.filter(p => p.type === 'fin').length;
 
-    const msgsNonLus = (data.messagesPrive || []).filter(m => !m.lu && m.expediteurRole !== 'admin').length;
+    // Messagerie désactivée côté UI (data layer intact). Forcer 0 pour masquer alertes.
+    const msgsNonLus = 0;
 
     const demandesRH = (
       (data.demandesConge || []).filter(d => d.statut === 'en_attente').length +
@@ -287,7 +288,8 @@ export default function DashboardScreen() {
   if (isEmploye && currentUser) {
     const emp = data.employes.find(e => e.id === myId);
     if (!emp) return null;
-    const nbMsgsNonLus = (data.messagesPrive || []).filter(m => !m.lu && m.expediteurRole !== 'employe').length;
+    // Messagerie désactivée côté UI (data layer intact). Forcer 0 pour masquer carte.
+    const nbMsgsNonLus = 0;
     const mesSavTickets = (data.ticketsSAV || []).filter(t => t.assigneA === myId && t.statut !== 'clos');
     return (
       <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
@@ -347,7 +349,8 @@ export default function DashboardScreen() {
                 </Text>
               </View>
             </Pressable>
-            {nbMsgsNonLus > 0 && (
+            {/* Messagerie désactivée côté UI — bloc neutralisé (réversible : retirer false &&) */}
+            {false && nbMsgsNonLus > 0 && (
               <Pressable style={{ flex: 1, backgroundColor: '#EBF0FF', borderRadius: 14, padding: 14, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => router.push('/(tabs)/messagerie' as any)}>
                 <Text style={{ fontSize: 20 }}>💬</Text>
@@ -1241,7 +1244,8 @@ export default function DashboardScreen() {
           <>
             <Text style={styles.sectionTitle}>Alertes</Text>
             <View style={styles.alertsContainer}>
-              {stats.msgsNonLus > 0 && (
+              {/* Messagerie désactivée côté UI — bloc neutralisé (réversible : retirer false &&) */}
+              {false && stats.msgsNonLus > 0 && (
                 <Pressable style={styles.alertCard} onPress={() => router.push('/(tabs)/messagerie' as any)}>
                   <Text style={styles.alertIcon}>💬</Text>
                   <Text style={styles.alertText}>{stats.msgsNonLus} message{stats.msgsNonLus > 1 ? 's' : ''} non lu{stats.msgsNonLus > 1 ? 's' : ''}</Text>
