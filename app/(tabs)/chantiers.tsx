@@ -142,7 +142,7 @@ const DEFAULT_FORM: ChantierForm = {
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addPhotoChantier, deletePhotoChantier, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
   const params = useLocalSearchParams<{ action?: string; chantierId?: string; apporteurId?: string; apporteurType?: string }>();
@@ -234,7 +234,6 @@ export default function ChantiersScreen() {
   // Modal Achats séparé
   const [achatsChantierId, setAchatsChantierId] = useState<string | null>(null);
   // Modal Photos séparé
-  const [photosChantierId, setPhotosChantierId] = useState<string | null>(null);
   const [showGalerie, setShowGalerie] = useState<string | null>(null);
   const [viewPhotoUri, setViewPhotoUri] = useState<string | null>(null);
   const [marchesChantierId, setMarchesChantierId] = useState<string | null>(null);
@@ -374,28 +373,6 @@ export default function ChantiersScreen() {
     if (!fileURI) return null;
     const planId = `inbox_${item.id}`;
     return await uploadFileToStorage(fileURI, `chantiers/${plansChantierId}/plans`, planId);
-  };
-
-  // Photos Chantier galerie : upload + dispatch addPhotoChantier (objet complet
-  // avec employeId, date, source, etc.). Cohérent avec le pattern legacy.
-  const handlePhotoChantierPickNative = async (file: PickedFile): Promise<boolean> => {
-    if (!photosChantierId) return false;
-    const photoId = `photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const storageUrl = await uploadFileToStorage(file.uri, `chantiers/${photosChantierId}/photos`, photoId);
-    if (!storageUrl) {
-      if (Platform.OS !== 'web') Alert.alert('Erreur', "Impossible d'uploader la photo. Vérifiez votre connexion.");
-      return false;
-    }
-    addPhotoChantier({
-      id: photoId,
-      chantierId: photosChantierId,
-      employeId: currentUser?.employeId || 'admin',
-      date: new Date().toISOString().slice(0, 10),
-      uri: storageUrl,
-      createdAt: new Date().toISOString(),
-      source: 'manuel',
-    });
-    return true;
   };
 
   const handleAddPlan = () => {
@@ -2972,99 +2949,7 @@ export default function ChantiersScreen() {
         </View>
       </ModalKeyboard>
 
-      {/* ── Modal Photos chantier (legacy, gardé pour compatibilité mais caché) ── */}
-      <ModalKeyboard visible={photosChantierId !== null} animationType="slide" transparent onRequestClose={() => setPhotosChantierId(null)}>
-        <View style={styles.modalOverlay}>
-          <Pressable style={{ flex: 0.05 }} onPress={() => setPhotosChantierId(null)} />
-          <View style={[styles.modalSheet, { maxHeight: '92%' }]}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeader}>
-              <View>
-                <Text style={styles.modalTitle}>📸 Photos</Text>
-                <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === photosChantierId)?.nom ?? ''}</Text>
-              </View>
-              <Pressable onPress={() => setPhotosChantierId(null)}>
-                <Text style={styles.modalClose}>✕</Text>
-              </Pressable>
-            </View>
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
-              {/* Bouton upload (Photothèque + Appareil photo via ActionSheet iOS) */}
-              <View style={{ marginBottom: 12 }}>
-                <NativeFilePickerButton
-                  onPick={handlePhotoChantierPickNative}
-                  acceptImages
-                  acceptCamera
-                  acceptPdf={false}
-                  multiple
-                  compressImages
-                  label="📷 Ajouter des photos"
-                />
-              </View>
-
-              {/* Affichage par utilisateur */}
-              {(() => {
-                if (!photosChantierId) return null;
-                const photos = (data.photosChantier || []).filter(p => p && p.chantierId === photosChantierId).sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
-                if (photos.length === 0) {
-                  return (
-                    <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-                      <Text style={{ fontSize: 32, marginBottom: 8 }}>📸</Text>
-                      <Text style={{ fontSize: 14, color: '#687076' }}>Aucune photo</Text>
-                    </View>
-                  );
-                }
-                const byUser = new Map<string, typeof photos>();
-                photos.forEach(p => {
-                  const key = p.employeId || 'inconnu';
-                  if (!byUser.has(key)) byUser.set(key, []);
-                  byUser.get(key)!.push(p);
-                });
-                return [...byUser.entries()].map(([userId, userPhotos]) => {
-                  const emp = data.employes.find(e => e.id === userId);
-                  const nom = emp ? `${emp.prenom} ${emp.nom}` : (userId === 'admin' ? 'Admin' : userId);
-                  const byDate = new Map<string, typeof userPhotos>();
-                  userPhotos.forEach(p => {
-                    const date = (p.date || (p.createdAt ? p.createdAt.slice(0, 10) : ''));
-                    if (!byDate.has(date)) byDate.set(date, []);
-                    byDate.get(date)!.push(p);
-                  });
-                  return (
-                    <View key={userId} style={{ marginBottom: 16 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>👤 {nom}</Text>
-                      {[...byDate.entries()].sort(([a], [b]) => b.localeCompare(a)).map(([date, datePhotos]) => (
-                        <View key={date} style={{ marginBottom: 8 }}>
-                          <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>{date ? new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }) : ''}</Text>
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-                            {datePhotos.map(p => (
-                              <Pressable key={p.id} onPress={() => {
-                                  if (p.uri) setViewPhotoUri(p.uri);
-                                }}
-                                onLongPress={isAdmin ? () => {
-                                  if (Platform.OS === 'web') { if (window.confirm('Supprimer cette photo ?')) deletePhotoChantier(p.id); }
-                                  else Alert.alert('Supprimer', 'Supprimer cette photo ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deletePhotoChantier(p.id) }]);
-                                } : undefined}
-                              >
-                                <View style={{ width: 90, height: 90, borderRadius: 8, backgroundColor: '#F5EDE3', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
-                                  {p.uri ? (
-                                    <Image source={{ uri: p.uri }} style={{ width: 90, height: 90 }} resizeMode="cover" onError={() => {}} />
-                                  ) : (
-                                    <Text style={{ fontSize: 24 }}>📷</Text>
-                                  )}
-                                </View>
-                                <Text style={{ fontSize: 9, color: '#687076', textAlign: 'center', marginTop: 2 }} numberOfLines={1}>{p.nom || p.legende || ''}</Text>
-                              </Pressable>
-                            ))}
-                          </ScrollView>
-                        </View>
-                      ))}
-                    </View>
-                  );
-                });
-              })()}
-            </ScrollView>
-          </View>
-        </View>
-      </ModalKeyboard>
+      {/* Modal Photos chantier legacy retirée (commit C8.1bis) — la galerie réelle est <GaleriePhotos> rendu plus bas */}
 
       <ModalKeyboard visible={showPlans} animationType="slide" transparent onRequestClose={() => setShowPlans(false)}>
         <View style={styles.modalOverlay}>

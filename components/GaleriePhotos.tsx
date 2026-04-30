@@ -3,10 +3,10 @@ import {
   View, Text, StyleSheet, Modal, Pressable, ScrollView,
   Image, Platform, TextInput, Alert, useWindowDimensions,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
-import { compressImage } from '@/lib/imageUtils';
+import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
+import type { PickedFile } from '@/lib/share/pickNativeFile';
 import type { PhotoChantier } from '@/app/types';
 
 type TriMode = 'chantier' | 'employe' | 'semaine';
@@ -56,7 +56,6 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   const [filterEmployeId, setFilterEmployeId] = useState<string | 'all'>('all');
   const [expandedGroup, setExpandedGroup] = useState<string | null>(null);
   // Upload
-  const [uploading, setUploading] = useState(false);
   const [uploadLegende, setUploadLegende] = useState('');
   const [uploadChantierId, setUploadChantierId] = useState<string>(chantierId || '');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -112,73 +111,32 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   const numCols = screenW > 900 ? 8 : screenW > 600 ? 6 : 4;
   const itemSize = Math.floor((screenW - 32 - (numCols - 1) * 4) / numCols);
 
-  // Upload photos
-  const handleUploadPhotos = useCallback(async () => {
+  // Upload photo unique (1 fichier par appel — itération multi gérée par NativeFilePickerButton)
+  const handlePickNative = useCallback(async (file: PickedFile): Promise<boolean> => {
     const targetChantierId = uploadChantierId || chantierId || data.chantiers.find(c => c.statut === 'actif')?.id;
     if (!targetChantierId) {
       if (Platform.OS === 'web') alert('Veuillez sélectionner un chantier');
       else Alert.alert('Sélection requise', 'Veuillez sélectionner un chantier');
-      return;
+      return false;
     }
-
-    const savePhoto = async (uri: string, nom?: string) => {
-      const photoId = `ph_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const compressed = await compressImage(uri);
-      const storageUrl = await uploadFileToStorage(compressed, `chantiers/${targetChantierId}/photos`, photoId);
-      if (!storageUrl) return false;
-      addPhotoChantier({
-        id: photoId,
-        chantierId: targetChantierId,
-        employeId: myId,
-        date: new Date().toISOString().slice(0, 10),
-        uri: storageUrl,
-        nom,
-        legende: uploadLegende.trim() || undefined,
-        createdAt: new Date().toISOString(),
-        source: 'manuel',
-      });
-      return true;
-    };
-
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      input.multiple = true;
-      input.onchange = async (e: Event) => {
-        const files = (e.target as HTMLInputElement).files;
-        if (!files || files.length === 0) return;
-        setUploading(true);
-        let ok = 0;
-        for (const file of Array.from(files)) {
-          const reader = new FileReader();
-          const base64: string = await new Promise(resolve => {
-            reader.onload = () => resolve(reader.result as string);
-            reader.readAsDataURL(file);
-          });
-          if (await savePhoto(base64, file.name)) ok++;
-        }
-        setUploading(false);
-        setUploadLegende('');
-        if (ok > 0) alert(`${ok} photo(s) ajoutée(s)`);
-      };
-      input.click(); setTimeout(() => input.remove(), 60000);
-    } else {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ['images'],
-        quality: 0.5,
-        allowsMultipleSelection: true,
-      });
-      if (result.canceled) return;
-      setUploading(true);
-      let ok = 0;
-      for (const asset of result.assets) {
-        if (await savePhoto(asset.uri, asset.fileName || undefined)) ok++;
-      }
-      setUploading(false);
-      setUploadLegende('');
-      if (ok === 0) Alert.alert('Erreur', 'Impossible d\'uploader les photos. Vérifiez votre connexion.');
+    const photoId = `ph_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const storageUrl = await uploadFileToStorage(file.uri, `chantiers/${targetChantierId}/photos`, photoId);
+    if (!storageUrl) {
+      if (Platform.OS !== 'web') Alert.alert('Erreur', "Impossible d'uploader la photo. Vérifiez votre connexion.");
+      return false;
     }
+    addPhotoChantier({
+      id: photoId,
+      chantierId: targetChantierId,
+      employeId: myId,
+      date: new Date().toISOString().slice(0, 10),
+      uri: storageUrl,
+      nom: file.filename,
+      legende: uploadLegende.trim() || undefined,
+      createdAt: new Date().toISOString(),
+      source: 'manuel',
+    });
+    return true;
   }, [chantierId, uploadChantierId, data.chantiers, myId, uploadLegende, addPhotoChantier]);
 
   // Télécharger une photo
@@ -230,21 +188,23 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
                 ))}
               </ScrollView>
             )}
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <TextInput
-                style={[styles.legendeInput, { flex: 1 }]}
-                placeholder="Légende (optionnel)..."
-                placeholderTextColor="#999"
-                value={uploadLegende}
-                onChangeText={setUploadLegende}
-              />
-              <Pressable
-                style={[styles.uploadBtn, (uploading || (!chantierId && !uploadChantierId)) && { opacity: 0.5 }]}
-                onPress={handleUploadPhotos}
-                disabled={uploading || (!chantierId && !uploadChantierId)}>
-                <Text style={styles.uploadBtnText}>{uploading ? '...' : '📸 Ajouter'}</Text>
-              </Pressable>
-            </View>
+            <TextInput
+              style={[styles.legendeInput, { marginBottom: 6 }]}
+              placeholder="Légende (optionnel)..."
+              placeholderTextColor="#999"
+              value={uploadLegende}
+              onChangeText={setUploadLegende}
+            />
+            <NativeFilePickerButton
+              onPick={handlePickNative}
+              acceptImages
+              acceptCamera
+              acceptPdf={false}
+              multiple
+              compressImages
+              label="📸 Ajouter"
+              disabled={!chantierId && !uploadChantierId}
+            />
           </View>
 
           {/* Barre de tri + filtre employé */}
