@@ -1444,7 +1444,8 @@ export default function ChantiersScreen() {
 
       {/* ── Modal formulaire chantier (admin) ── */}
       <ModalKeyboard visible={showForm} animationType="slide" transparent onRequestClose={() => setShowForm(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowForm(false)}>
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 1 }} onPress={() => setShowForm(false)} />
           <View style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
@@ -1693,7 +1694,7 @@ export default function ChantiersScreen() {
               <Text style={styles.saveBtnText}>{editId ? t.common.save : t.chantiers.add}</Text>
             </Pressable>
           </View>
-        </Pressable>
+        </View>
       </ModalKeyboard>
 
       {/* ── Modal Création rapide client + espace client ── */}
