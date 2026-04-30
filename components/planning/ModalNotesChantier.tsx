@@ -16,6 +16,9 @@ import { useLanguage } from '../../app/context/LanguageContext';
 import { EmptyState } from '../ui/EmptyState';
 import { SectionHeader } from '../ui/SectionHeader';
 import { FilterChip } from '../ui/FilterChip';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { openDocPreview } from '@/lib/share/openDocPreview';
+import type { InboxItem } from '@/lib/share/inboxStore';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -33,20 +36,9 @@ function formatNoteDate(iso: string): string {
   });
 }
 
-/**
- * Ouvre une pièce jointe en preview web-only via `window.open`.
- * PDF → iframe plein écran. Image → balise `<img>`.
- */
-function openAttachment(uri: string, type: 'pdf' | 'image'): void {
-  if (Platform.OS !== 'web' || typeof window === 'undefined') return;
-  const w = window.open();
-  if (!w) return;
-  if (type === 'pdf') {
-    w.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`);
-  } else {
-    w.document.write(`<img src="${uri}" style="max-width:100%;height:auto">`);
-  }
-}
+/** Filtre mime pour l'InboxPickerButton : photos + PDF. */
+const inboxMimeFilterImagePdf = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 /**
  * Confirmation de suppression — Alert natif sur mobile, `window.confirm` sur web.
@@ -122,8 +114,10 @@ export interface ModalNotesChantierProps {
   participants: NoteParticipant[];
   /** Gate le selector destinataires + sections admin + bouton supprimer. */
   isAdmin: boolean;
-  /** Picker photos/PDF multi-fichier (retourne les data URIs). */
+  /** Picker photos/PDF multi-fichier (retourne les URLs Supabase Storage). */
   onPickPhotos: () => Promise<string[]>;
+  /** Picker depuis l'Inbox iOS (Share Extension). Upload + retour URL Storage. */
+  onPickFromInbox?: (item: InboxItem) => Promise<string | null>;
   /** Callback submit. Le parent construit l'objet métier complet. */
   onAddNote: (values: NoteChantierFormValues) => void;
   /** Archivage (parent résout `userId` interne). */
@@ -290,6 +284,7 @@ export function ModalNotesChantier({
   participants,
   isAdmin,
   onPickPhotos,
+  onPickFromInbox,
   onAddNote,
   onArchiveNote,
   onDeleteNote,
@@ -465,6 +460,20 @@ export function ModalNotesChantier({
                 <Text style={styles.pickPhotosText}>Ajouter photo / PDF</Text>
               </Pressable>
 
+              {onPickFromInbox && (
+                <View style={{ marginTop: 4 }}>
+                  <InboxPickerButton
+                    onPick={async (item) => {
+                      const url = await onPickFromInbox(item);
+                      if (!url) return false;
+                      setPhotos(prev => [...prev, url]);
+                      return true;
+                    }}
+                    mimeFilter={inboxMimeFilterImagePdf}
+                  />
+                </View>
+              )}
+
               <Pressable
                 style={[styles.submitBtn, !isValid && styles.submitBtnDisabled]}
                 onPress={handleSubmit}
@@ -522,7 +531,7 @@ function NoteCard({
       {note.pieceJointe && note.pieceJointeType && (
         <Pressable
           style={styles.attachmentBox}
-          onPress={() => openAttachment(note.pieceJointe as string, note.pieceJointeType as 'pdf' | 'image')}
+          onPress={() => openDocPreview(note.pieceJointe)}
           accessibilityRole="button"
           accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'pièce jointe'}`}
         >
@@ -544,13 +553,13 @@ function NoteCard({
           style={styles.notePhotosRow}
         >
           {note.photos.map((uri, idx) => {
-            const isPdf = uri.startsWith('data:application/pdf');
+            const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
             if (isPdf) {
               return (
                 <Pressable
                   key={idx}
                   style={[styles.notePhoto, styles.notePhotoPdf]}
-                  onPress={() => openAttachment(uri, 'pdf')}
+                  onPress={() => openDocPreview(uri)}
                   accessibilityRole="button"
                   accessibilityLabel="Ouvrir le PDF"
                 >

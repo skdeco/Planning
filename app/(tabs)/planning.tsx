@@ -54,6 +54,7 @@ import {
 } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ChantierActionsModal } from '@/components/ChantierActionsModal';
@@ -263,7 +264,15 @@ export default function PlanningScreen() {
   ], [data.employes, data.sousTraitants]);
 
   const handlePickNotePhotos = async (): Promise<string[]> => {
-    if (Platform.OS !== 'web') return [];
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Ajouter une photo ou PDF',
+        "Sur iPhone, partagez la photo/PDF depuis l'app Photos ou Fichiers → bouton Partager → SK DECO Planning. Le bouton 'Importer depuis Inbox' apparaîtra ensuite ici.",
+      );
+      return [];
+    }
+    if (!notesPlanningChantierId) return [];
+    const chantierId = notesPlanningChantierId;
     return new Promise((resolve) => {
       const input = document.createElement('input');
       input.type = 'file';
@@ -271,21 +280,43 @@ export default function PlanningScreen() {
       input.multiple = true;
       const collected: string[] = [];
       let pending = 0;
+      let hadError = false;
       input.onchange = (e: Event) => {
         const files = Array.from((e.target as HTMLInputElement).files || []);
         if (files.length === 0) { resolve([]); return; }
         pending = files.length;
         files.forEach(file => {
           const reader = new FileReader();
-          const finalize = () => { pending -= 1; if (pending === 0) resolve(collected); };
-          reader.onload  = () => { collected.push(reader.result as string); finalize(); };
-          reader.onerror = finalize;
+          const finalize = () => {
+            pending -= 1;
+            if (pending === 0) {
+              if (hadError) Alert.alert('Erreur', "Certaines photos/PDF n'ont pas pu être uploadées.");
+              resolve(collected);
+            }
+          };
+          reader.onload = async () => {
+            const base64 = reader.result as string;
+            const photoId = `note_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+            const url = await uploadFileToStorage(base64, `chantiers/${chantierId}/notes`, photoId);
+            if (url) collected.push(url);
+            else hadError = true;
+            finalize();
+          };
+          reader.onerror = () => { hadError = true; finalize(); };
           reader.readAsDataURL(file);
         });
       };
       input.click();
       setTimeout(() => input.remove(), 60000);
     });
+  };
+
+  const handleNoteFromInbox = async (item: InboxItem): Promise<string | null> => {
+    if (!notesPlanningChantierId) return null;
+    const fileURI = getInboxItemPath(item);
+    if (!fileURI) return null;
+    const photoId = `inbox_${item.id}`;
+    return await uploadFileToStorage(fileURI, `chantiers/${notesPlanningChantierId}/notes`, photoId);
   };
 
   const handleAddNoteChantier = (values: NoteChantierFormValues): void => {
@@ -1309,6 +1340,7 @@ export default function PlanningScreen() {
         participants={participantsForNotes}
         isAdmin={isAdmin}
         onPickPhotos={handlePickNotePhotos}
+        onPickFromInbox={handleNoteFromInbox}
         onAddNote={handleAddNoteChantier}
         onArchiveNote={handleArchiveNoteChantier}
         onDeleteNote={handleDeleteNoteChantier}
