@@ -17,9 +17,9 @@ import {
 } from '@/app/types';
 import { DateField } from '@/components/DatePickerModal';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
-import { inboxItemToDataUri } from '@/lib/share/inboxToDataUri';
 import { openDocPreview } from '@/lib/share/openDocPreview';
-import type { InboxItem } from '@/lib/share/inboxStore';
+import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+import { uploadFileToStorage } from '@/lib/supabase';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (fiches de paie). Aligné avec equipe.tsx + financier-st.tsx + pointage.tsx.
@@ -286,9 +286,15 @@ export default function RHScreen() {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (!file) { document.body.removeChild(input); return; }
       const reader = new FileReader();
-      reader.onload = (ev) => {
-        const uri = ev.target?.result as string;
-        addFichePaie({ id: genId(), employeId: paieEmployeId, mois: moisKey, fichier: uri, uploadedAt: now() });
+      reader.onload = async (ev) => {
+        const base64 = ev.target?.result as string;
+        const docId = genId();
+        const url = await uploadFileToStorage(base64, `employes/${paieEmployeId}/paies`, docId);
+        if (!url) {
+          Alert.alert('Erreur', "Impossible d'uploader la fiche de paie.");
+          return;
+        }
+        addFichePaie({ id: docId, employeId: paieEmployeId, mois: moisKey, fichier: url, uploadedAt: now() });
         setShowPaieModal(false);
       };
       reader.readAsDataURL(file);
@@ -298,22 +304,24 @@ export default function RHScreen() {
   };
 
   // R1 — Inbox flow équivalent de handleConfirmPaieUpload (mobile-compat).
-  // Même flow legacy data URI : lit le fichier de l'Inbox en base64,
-  // construit la data URI et l'enregistre directement dans FichePaie.fichier
-  // (pas de Supabase Storage, le record stocke le payload en DB comme
-  // l'existant). Premier consommateur runtime du helper inboxItemToDataUri.
+  // Pattern aligné sur addFromInboxRH (equipe.tsx) : upload vers Supabase
+  // Storage à `employes/${employeId}/paies/${id}`, l'URL https est stockée
+  // dans FichePaie.fichier. Échec strict (pas de fallback data URI).
   const addFromInboxPaie = useCallback(
     async (item: InboxItem): Promise<boolean> => {
       if (!paieEmployeId || !paieMois || !paieAnnee) return false;
-      const dataUri = await inboxItemToDataUri(item);
-      if (!dataUri) return false;
+      const fileURI = getInboxItemPath(item);
+      if (!fileURI) return false;
+      const docId = `inbox_${item.id}`;
+      const url = await uploadFileToStorage(fileURI, `employes/${paieEmployeId}/paies`, docId);
+      if (!url) return false;
       const moisNum = (MOIS_LABELS.indexOf(paieMois) + 1).toString().padStart(2, '0');
       const moisKey = `${paieAnnee}-${moisNum}`;
       addFichePaie({
-        id: `inbox_${item.id}`,
+        id: docId,
         employeId: paieEmployeId,
         mois: moisKey,
-        fichier: dataUri,
+        fichier: url,
         uploadedAt: now(),
       });
       setShowPaieModal(false);
