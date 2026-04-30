@@ -17,6 +17,7 @@ import { getEmployeColor, type TaskItem } from '@/app/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterChip } from '@/components/ui/FilterChip';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { openDocPreview } from '@/lib/share/openDocPreview';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -124,19 +125,25 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                   <Pressable
                                     key={idx}
                                     style={styles.pdfThumb}
-                                    onPress={() => {
-                                      if (Platform.OS === 'web') {
-                                        const win = window.open();
-                                        if (win) { win.document.write(`<iframe src="${uri}" style="width:100%;height:100vh;border:none"></iframe>`); }
-                                      }
-                                    }}
+                                    onPress={() => openDocPreview(uri)}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Ouvrir le PDF"
                                   >
                                     <Text style={styles.pdfThumbIcon}>📄</Text>
                                     <Text style={styles.pdfThumbLabel}>PDF</Text>
                                   </Pressable>
                                 );
                               }
-                              return <Image key={idx} source={{ uri }} style={styles.noteCardPhoto} />;
+                              return (
+                                <Pressable
+                                  key={idx}
+                                  onPress={() => openDocPreview(uri)}
+                                  accessibilityRole="button"
+                                  accessibilityLabel="Ouvrir la photo"
+                                >
+                                  <Image source={{ uri }} style={styles.noteCardPhoto} />
+                                </Pressable>
+                              );
                             })}
                           </ScrollView>
                         )}

@@ -431,11 +431,22 @@ export function ModalNotesChantier({
                     return (
                     <View key={idx} style={styles.formPhotoWrap}>
                       {isPdf ? (
-                        <View style={[styles.formPhoto, styles.formPhotoPdf]}>
+                        <Pressable
+                          onPress={() => openDocPreview(uri)}
+                          style={[styles.formPhoto, styles.formPhotoPdf]}
+                          accessibilityRole="button"
+                          accessibilityLabel="Aperçu du PDF"
+                        >
                           <Text style={styles.pdfEmoji}>📄</Text>
-                        </View>
+                        </Pressable>
                       ) : (
-                        <Image source={{ uri }} style={styles.formPhoto} />
+                        <Pressable
+                          onPress={() => openDocPreview(uri)}
+                          accessibilityRole="button"
+                          accessibilityLabel="Aperçu de la photo"
+                        >
+                          <Image source={{ uri }} style={styles.formPhoto} />
+                        </Pressable>
                       )}
                       <Pressable
                         style={styles.removePhotoBtn}
@@ -573,12 +584,18 @@ function NoteCard({
               );
             }
             return (
-              <Image
+              <Pressable
                 key={idx}
-                source={{ uri }}
-                style={styles.notePhoto}
-                resizeMode="cover"
-              />
+                onPress={() => openDocPreview(uri)}
+                accessibilityRole="button"
+                accessibilityLabel="Ouvrir la photo"
+              >
+                <Image
+                  source={{ uri }}
+                  style={styles.notePhoto}
+                  resizeMode="cover"
+                />
+              </Pressable>
             );
           })}
         </ScrollView>
