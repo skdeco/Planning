@@ -274,7 +274,13 @@ export default function RHScreen() {
 
   const handleConfirmPaieUpload = () => {
     if (!paieMois || !paieAnnee || !paieEmployeId) return;
-    if (Platform.OS !== 'web') { setShowPaieModal(false); return; }
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Importer une fiche de paie',
+        "Sur iPhone, partagez le PDF depuis l'app Fichiers → bouton Partager → SK DECO Planning. Le bouton 'Importer depuis Inbox' apparaîtra ensuite ici.",
+      );
+      return;
+    }
     const moisNum = (MOIS_LABELS.indexOf(paieMois) + 1).toString().padStart(2, '0');
     const moisKey = `${paieAnnee}-${moisNum}`;
     const input = document.createElement('input');
