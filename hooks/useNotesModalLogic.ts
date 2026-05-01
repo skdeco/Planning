@@ -6,6 +6,7 @@ import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { compressImage } from '@/lib/imageUtils';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+import type { PickedFile } from '@/lib/share/pickNativeFile';
 import type { Note, TaskItem } from '@/app/types';
 import type { CellNote } from '@/hooks/usePlanningWeekData';
 
@@ -86,6 +87,11 @@ export interface NoteActions {
    * `false` si erreur (le caller doit garder l'item dans l'Inbox).
    */
   addFromInbox: (item: InboxItem) => Promise<boolean>;
+  /**
+   * Upload + ajout au draft.photos d'un fichier pické via `pickNativeFile`
+   * ou `<NativeFilePickerButton onPicked={...}>`. Retourne `true` si succès.
+   */
+  addPhotoFromFile: (file: PickedFile) => Promise<boolean>;
 }
 
 /** API du hook regroupée en 5 returns top-level (cf. décision audit Option B). */
@@ -400,6 +406,26 @@ export function useNotesModalLogic(
     }
   }, [noteModal]);
 
+  // Upload d'un PickedFile (NativeFilePickerButton / pickNativeFile helper).
+  // Pipeline aligné sur addFromInbox : upload Supabase + push URL dans draft.
+  const addPhotoFromFile = useCallback(async (file: PickedFile): Promise<boolean> => {
+    try {
+      const chantierId = noteModal?.chantierId || 'general';
+      const folder = `chantiers/${chantierId}/notes`;
+      const photoId = `note_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const url = await uploadFileToStorage(file.uri, folder, photoId);
+      if (!url) {
+        console.warn('[notes] upload failed', file.filename);
+        return false;
+      }
+      setDraftState(prev => ({ ...prev, photos: [...prev.photos, url] }));
+      return true;
+    } catch (err) {
+      console.warn('[notes] addPhotoFromFile failed', err);
+      return false;
+    }
+  }, [noteModal]);
+
   // ─── Référence (toggleTask + deleteTask + addTask) ────────────────────────
   // Note : ces mutations sont aussi nécessaires côté composant (callbacks
   // inline dans le JSX checklist). Elles ne passent pas par le hook —
@@ -421,6 +447,7 @@ export function useNotesModalLogic(
       addDoc,
       removePhoto,
       addFromInbox,
+      addPhotoFromFile,
     },
   };
 }

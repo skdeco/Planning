@@ -8,7 +8,7 @@ import {
   TextInput,
   Image,
   Keyboard,
-  Platform,
+  Alert,
   StyleSheet,
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
@@ -17,6 +17,9 @@ import { getEmployeColor, type TaskItem } from '@/app/types';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { FilterChip } from '@/components/ui/FilterChip';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
@@ -59,7 +62,7 @@ export interface ModalNotesProps {
  * (préservation 1:1).
  */
 export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.ReactElement {
-  const { data, currentUser, toggleTask, addTask, deleteTask } = useApp();
+  const { data, currentUser, toggleTask, addTask, deleteTask, addTaskPhoto, removeTaskPhoto } = useApp();
   const isAdmin = currentUser?.role === 'admin';
 
   const { draft, setDraft, ui, setUi, actions } = useNotesModalLogic(noteModal, setNoteModal);
@@ -72,11 +75,10 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
       onRequestClose={actions.close}
     >
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
-        <View style={{ flex: 0.08 }} />
-        <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20 }}>
-          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 40, padding: 16 }}>
-            <View style={styles.modalHandle} />
-            <View style={styles.modalHeaderRow}>
+        <Pressable style={{ flex: 0.08 }} onPress={actions.close} />
+        <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+          <View style={styles.modalHandle} />
+          <View style={styles.modalHeaderRow}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.modalTitle}>
                   {(() => {
@@ -101,7 +103,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
               </Pressable>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 420 }}>
+          <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 16 }}>
               {/* Liste des notes existantes */}
               {noteModal && noteModal.allNotes.length > 0 && !ui.showEditor && (
                 <View style={styles.notesList}>
@@ -317,40 +319,45 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     </Pressable>
                   </View>
 
-                  <Text style={[styles.noteLabel, { marginTop: 12 }]}>Photos</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosRow}>
-                    {draft.photos.map((uri, idx) => {
-                      const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
-                      return (
-                        <View key={idx} style={styles.photoThumb}>
-                          {isPdf ? (
-                            <View style={[styles.photoImg, styles.pdfPreview]}>
-                              <Text style={styles.pdfPreviewIcon}>📄</Text>
-                              <Text style={styles.pdfPreviewLabel}>PDF</Text>
-                            </View>
-                          ) : (
-                            <Image source={{ uri }} style={styles.photoImg} />
-                          )}
-                          <Pressable style={styles.photoRemove} onPress={() => actions.removePhoto(idx)}>
-                            <Text style={styles.photoRemoveText}>✕</Text>
+                  <Text style={[styles.noteLabel, { marginTop: 12 }]}>Photos & PDF</Text>
+                  {draft.photos.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosRow}>
+                      {draft.photos.map((uri, idx) => {
+                        const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                        return (
+                          <Pressable
+                            key={idx}
+                            style={styles.photoThumb}
+                            onPress={() => openDocPreview(uri)}
+                            accessibilityRole="button"
+                            accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
+                          >
+                            {isPdf ? (
+                              <View style={[styles.photoImg, styles.pdfPreview]}>
+                                <Text style={styles.pdfPreviewIcon}>📄</Text>
+                                <Text style={styles.pdfPreviewLabel}>PDF</Text>
+                              </View>
+                            ) : (
+                              <Image source={{ uri }} style={styles.photoImg} />
+                            )}
+                            <Pressable style={styles.photoRemove} onPress={() => actions.removePhoto(idx)}>
+                              <Text style={styles.photoRemoveText}>✕</Text>
+                            </Pressable>
                           </Pressable>
-                        </View>
-                      );
-                    })}
-                    <Pressable style={styles.addPhotoBtn} onPress={actions.addPhoto}>
-                      <Text style={styles.addPhotoBtnText}>+</Text>
-                      <Text style={styles.addPhotoBtnLabel}>Photo/PDF</Text>
-                    </Pressable>
-                    {Platform.OS !== 'web' && (
-                      <Pressable style={styles.addPhotoBtn} onPress={actions.addDoc}>
-                        <Text style={styles.addPhotoBtnText}>+</Text>
-                        <Text style={styles.addPhotoBtnLabel}>PDF</Text>
-                      </Pressable>
-                    )}
-                  </ScrollView>
-
-                  <View style={{ marginTop: 8 }}>
-                    <InboxPickerButton onPick={actions.addFromInbox} />
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
+                    <NativeFilePickerButton
+                      acceptImages
+                      acceptPdf
+                      acceptCamera
+                      multiple
+                      compressImages
+                      onPick={actions.addPhotoFromFile}
+                    />
+                    <InboxPickerButton onPick={actions.addFromInbox} mimeFilter={(m) => m.startsWith('image/') || m === 'application/pdf'} />
                   </View>
 
                   {/* Section checklist */}
@@ -361,33 +368,127 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     if (editorTasks.length === 0) return null;
                     return (
                       <View style={{ marginBottom: 8 }}>
-                        {editorTasks.map(task => (
-                          <View key={task.id} style={styles.taskRow}>
-                            <View style={[styles.taskCheckbox, task.fait && styles.taskCheckboxDone]}>
-                              <Text style={styles.taskCheckboxText}>{task.fait ? '✓' : ''}</Text>
-                            </View>
-                            <Text style={[styles.taskText, task.fait && styles.taskTextDone, { flex: 1 }]}>{task.texte}</Text>
-                            <Pressable
-                              onPress={() => {
-                                if (noteModal?.editingNote) {
-                                  const updatedTasks = (noteModal.editingNote.tasks || []).filter(t => t.id !== task.id);
+                        {editorTasks.map(task => {
+                          const findAffId = (): string | undefined => data.affectations.find(a =>
+                            a.chantierId === noteModal?.chantierId &&
+                            a.dateDebut <= (noteModal?.date || '') && a.dateFin >= (noteModal?.date || '') &&
+                            a.notes.some(n => n.id === noteModal?.editingNote?.id)
+                          )?.id;
+
+                          const handleAddPhoto = async () => {
+                            const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: true, compressImages: true });
+                            for (const f of files) {
+                              const chantierId = noteModal?.chantierId || 'general';
+                              const folder = `chantiers/${chantierId}/notes/tasks`;
+                              const photoId = `task_${task.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                              const url = await uploadFileToStorage(f.uri, folder, photoId);
+                              if (!url) continue;
+                              if (noteModal?.editingNote) {
+                                const affId = findAffId();
+                                if (affId) {
+                                  addTaskPhoto(affId, noteModal.editingNote.id, task.id, url);
                                   setNoteModal(prev => prev && prev.editingNote ? {
                                     ...prev,
-                                    editingNote: { ...prev.editingNote, tasks: updatedTasks }
+                                    editingNote: { ...prev.editingNote, tasks: (prev.editingNote.tasks || []).map(t =>
+                                      t.id === task.id ? { ...t, photos: [...(t.photos || []), url] } : t
+                                    ) }
                                   } : prev);
-                                } else {
-                                  setDraft({ tasks: draft.tasks.filter(t => t.id !== task.id) });
                                 }
-                              }}
-                              style={{ padding: 4 }}
-                            >
-                              <Text style={{ color: '#E74C3C', fontSize: 12 }}>✕</Text>
-                            </Pressable>
-                          </View>
-                        ))}
+                              } else {
+                                setDraft({ tasks: draft.tasks.map(t =>
+                                  t.id === task.id ? { ...t, photos: [...(t.photos || []), url] } : t
+                                ) });
+                              }
+                            }
+                          };
+
+                          const handleRemovePhoto = (uri: string) => {
+                            Alert.alert('Supprimer la photo', 'Voulez-vous supprimer cette photo de la tâche ?', [
+                              { text: 'Annuler', style: 'cancel' },
+                              { text: 'Supprimer', style: 'destructive', onPress: () => {
+                                if (noteModal?.editingNote) {
+                                  const affId = findAffId();
+                                  if (affId) {
+                                    removeTaskPhoto(affId, noteModal.editingNote.id, task.id, uri);
+                                    setNoteModal(prev => prev && prev.editingNote ? {
+                                      ...prev,
+                                      editingNote: { ...prev.editingNote, tasks: (prev.editingNote.tasks || []).map(t =>
+                                        t.id === task.id ? { ...t, photos: (t.photos || []).filter(p => p !== uri) } : t
+                                      ) }
+                                    } : prev);
+                                  }
+                                } else {
+                                  setDraft({ tasks: draft.tasks.map(t =>
+                                    t.id === task.id ? { ...t, photos: (t.photos || []).filter(p => p !== uri) } : t
+                                  ) });
+                                }
+                              } },
+                            ]);
+                          };
+
+                          return (
+                            <View key={task.id} style={{ marginBottom: 6 }}>
+                              <View style={styles.taskRow}>
+                                <View style={[styles.taskCheckbox, task.fait && styles.taskCheckboxDone]}>
+                                  <Text style={styles.taskCheckboxText}>{task.fait ? '✓' : ''}</Text>
+                                </View>
+                                <Text style={[styles.taskText, task.fait && styles.taskTextDone, { flex: 1 }]}>{task.texte}</Text>
+                                <Pressable onPress={handleAddPhoto} style={{ paddingHorizontal: 6, paddingVertical: 4 }} accessibilityRole="button" accessibilityLabel="Ajouter une photo à la tâche">
+                                  <Text style={{ color: '#2C2C2C', fontSize: 16 }}>➕</Text>
+                                </Pressable>
+                                <Pressable
+                                  onPress={() => {
+                                    if (noteModal?.editingNote) {
+                                      const updatedTasks = (noteModal.editingNote.tasks || []).filter(t => t.id !== task.id);
+                                      setNoteModal(prev => prev && prev.editingNote ? {
+                                        ...prev,
+                                        editingNote: { ...prev.editingNote, tasks: updatedTasks }
+                                      } : prev);
+                                    } else {
+                                      setDraft({ tasks: draft.tasks.filter(t => t.id !== task.id) });
+                                    }
+                                  }}
+                                  style={{ padding: 4 }}
+                                >
+                                  <Text style={{ color: '#E74C3C', fontSize: 12 }}>✕</Text>
+                                </Pressable>
+                              </View>
+                              {task.photos && task.photos.length > 0 && (
+                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4, marginLeft: 32 }}>
+                                  {task.photos.map((uri, idx) => {
+                                    const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                                    return (
+                                      <View key={idx} style={{ marginRight: 6 }}>
+                                        <Pressable onPress={() => openDocPreview(uri)} accessibilityRole="button" accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}>
+                                          {isPdf ? (
+                                            <View style={{ width: 48, height: 48, borderRadius: 6, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
+                                              <Text style={{ fontSize: 18 }}>📄</Text>
+                                            </View>
+                                          ) : (
+                                            <Image source={{ uri }} style={{ width: 48, height: 48, borderRadius: 6 }} />
+                                          )}
+                                        </Pressable>
+                                        <Pressable
+                                          onPress={() => handleRemovePhoto(uri)}
+                                          style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: 7, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
+                                          accessibilityRole="button"
+                                          accessibilityLabel="Supprimer la photo"
+                                        >
+                                          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
+                                        </Pressable>
+                                      </View>
+                                    );
+                                  })}
+                                </ScrollView>
+                              )}
+                            </View>
+                          );
+                        })}
                       </View>
                     );
                   })()}
+                  {/* "+ Ajouter une tâche" inconditionnel : si showTaskInput,
+                      input affiché ; sinon bouton always visible (pas de toggle). */}
                   {ui.showTaskInput ? (
                     <View style={styles.taskInputRow}>
                       <TextInput
@@ -534,7 +635,6 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                   </View>
                 </View>
               )}
-            </ScrollView>
 
             {/* Bouton ajouter une note (si pas en mode édition) */}
             {!ui.showEditor && (
@@ -542,11 +642,11 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                 <Text style={styles.addNoteBtnText}>+ Ajouter une note</Text>
               </Pressable>
             )}
-
-            <Pressable style={styles.modalCloseBtn} onPress={actions.close}>
-              <Text style={styles.modalCloseBtnText}>Fermer</Text>
-            </Pressable>
           </ScrollView>
+
+          <Pressable style={styles.modalCloseBtn} onPress={actions.close}>
+            <Text style={styles.modalCloseBtnText}>Fermer</Text>
+          </Pressable>
         </View>
       </View>
     </Modal>

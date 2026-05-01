@@ -3340,16 +3340,16 @@ export default function ChantiersScreen() {
                                   <Text style={{ fontSize: 11, color: task.fait ? '#B0BEC5' : '#11181C', textDecorationLine: task.fait ? 'line-through' : 'none', flex: 1 }}>{task.texte}</Text>
                                   {task.fait && task.faitPar && <Text style={{ fontSize: 9, color: '#27AE60', marginRight: 4 }}>{task.faitPar}</Text>}
                                   <Pressable style={{ padding: 2 }} onPress={async () => {
-                                    const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: true, compressImages: true });
+                                    const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: true, compressImages: true });
                                     for (const file of files) {
                                       const url = await uploadFileToStorage(file.uri, 'tasks/photos', `task_${task.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
                                       if (url) addTaskPhoto(affId, n.id, task.id, url);
                                     }
-                                  }}><Text style={{ fontSize: 12 }}>📷</Text></Pressable>
+                                  }}><Text style={{ fontSize: 12 }}>➕</Text></Pressable>
                                   <InboxPickerButton
                                     label="📥"
                                     buttonStyle={{ padding: 2, paddingHorizontal: 4, backgroundColor: 'transparent', borderWidth: 0 }}
-                                    mimeFilter={(m) => m.startsWith('image/')}
+                                    mimeFilter={(m) => m.startsWith('image/') || m === 'application/pdf'}
                                     onPick={async (item) => {
                                       const fileURI = getInboxItemPath(item);
                                       if (!fileURI) return false;
@@ -3362,25 +3362,48 @@ export default function ChantiersScreen() {
                                 </View>
                                 {task.photos && task.photos.length > 0 && (
                                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 22, marginTop: 2, marginBottom: 4 }} contentContainerStyle={{ gap: 3 }}>
-                                    {task.photos.map((uri: string, pi: number) => (
-                                      <Pressable
-                                        key={pi}
-                                        onPress={() => { setSuiviChantierId(null); setTimeout(() => setViewPhotoUri(uri), 150); }}
-                                        onLongPress={() => {
-                                          const doDelete = () => removeTaskPhoto(affId, n.id, task.id, uri);
-                                          if (Platform.OS === 'web') {
-                                            if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer cette photo ?')) doDelete();
-                                          } else {
-                                            Alert.alert('Supprimer la photo ?', 'Cette action est irréversible.', [
-                                              { text: 'Annuler', style: 'cancel' },
-                                              { text: 'Supprimer', style: 'destructive', onPress: doDelete },
-                                            ]);
-                                          }
-                                        }}
-                                      >
-                                        <Image source={{ uri }} style={{ width: 40, height: 40, borderRadius: 4 }} resizeMode="cover" />
-                                      </Pressable>
-                                    ))}
+                                    {task.photos.map((uri: string, pi: number) => {
+                                      const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                                      return (
+                                        <View key={pi} style={{ marginRight: 3 }}>
+                                          <Pressable
+                                            onPress={() => {
+                                              if (isPdf) { openDocPreview(uri); return; }
+                                              setSuiviChantierId(null);
+                                              setTimeout(() => setViewPhotoUri(uri), 150);
+                                            }}
+                                            accessibilityRole="button"
+                                            accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
+                                          >
+                                            {isPdf ? (
+                                              <View style={{ width: 40, height: 40, borderRadius: 4, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
+                                                <Text style={{ fontSize: 16 }}>📄</Text>
+                                              </View>
+                                            ) : (
+                                              <Image source={{ uri }} style={{ width: 40, height: 40, borderRadius: 4 }} resizeMode="cover" />
+                                            )}
+                                          </Pressable>
+                                          <Pressable
+                                            onPress={() => {
+                                              const doDelete = () => removeTaskPhoto(affId, n.id, task.id, uri);
+                                              if (Platform.OS === 'web') {
+                                                if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer cette photo ?')) doDelete();
+                                              } else {
+                                                Alert.alert('Supprimer la photo ?', 'Cette action est irréversible.', [
+                                                  { text: 'Annuler', style: 'cancel' },
+                                                  { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                                                ]);
+                                              }
+                                            }}
+                                            style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: 7, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
+                                            accessibilityRole="button"
+                                            accessibilityLabel="Supprimer la photo"
+                                          >
+                                            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
+                                          </Pressable>
+                                        </View>
+                                      );
+                                    })}
                                   </ScrollView>
                                 )}
                               </View>
