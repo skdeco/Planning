@@ -952,6 +952,21 @@ export default function ChantiersScreen() {
     return true;
   };
 
+  // Zone 2 — Photo cachette clé via Inbox (Share Extension iOS).
+  const handleClePickFromInbox = async (item: InboxItem): Promise<boolean> => {
+    const fid = ficheId || 'new';
+    const fileURI = getInboxItemPath(item);
+    if (!fileURI) return false;
+    const photoId = `cle_inbox_${item.id}`;
+    const url = await uploadFileToStorage(fileURI, `chantiers/${fid}/cle`, photoId);
+    if (!url) {
+      if (Platform.OS !== 'web') Alert.alert('Erreur', "Impossible d'uploader la photo");
+      return false;
+    }
+    setFiche(f => ({ ...f, photoEmplacementCle: url }));
+    return true;
+  };
+
   const handlePickPhoto = async () => {
     const uploadAndAddFichePhoto = async (base64Uri: string) => {
       const photoId = `fiche_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -1921,7 +1936,7 @@ export default function ChantiersScreen() {
                     </Pressable>
                   )}
                   {isAdmin && (
-                    <View style={{ marginTop: 6 }}>
+                    <View style={{ marginTop: 6, gap: 4 }}>
                       <NativeFilePickerButton
                         onPick={handleClePickNative}
                         acceptImages
@@ -1930,6 +1945,10 @@ export default function ChantiersScreen() {
                         multiple={false}
                         compressImages
                         label={fiche.photoEmplacementCle ? '📷 Changer la photo' : '📷 Ajouter photo cachette'}
+                      />
+                      <InboxPickerButton
+                        onPick={handleClePickFromInbox}
+                        mimeFilter={(m) => m.startsWith('image/')}
                       />
                     </View>
                   )}
