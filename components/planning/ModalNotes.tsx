@@ -325,25 +325,32 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                       {draft.photos.map((uri, idx) => {
                         const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
                         return (
-                          <Pressable
-                            key={idx}
-                            style={styles.photoThumb}
-                            onPress={() => openDocPreview(uri)}
-                            accessibilityRole="button"
-                            accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
-                          >
-                            {isPdf ? (
-                              <View style={[styles.photoImg, styles.pdfPreview]}>
-                                <Text style={styles.pdfPreviewIcon}>📄</Text>
-                                <Text style={styles.pdfPreviewLabel}>PDF</Text>
-                              </View>
-                            ) : (
-                              <Image source={{ uri }} style={styles.photoImg} />
-                            )}
+                          <View key={idx} style={styles.photoThumb}>
+                            <Pressable
+                              onPress={() => {
+                                // Bug B fix : fermer la modal note AVANT openDocPreview pour éviter
+                                // le conflit Modal native iOS qui ferme la modal note quand l'utilisateur
+                                // ferme Safari in-app. Pattern emprunté à Suivi chantier (chantiers.tsx).
+                                actions.close();
+                                setTimeout(() => openDocPreview(uri), 150);
+                              }}
+                              style={{ width: '100%', height: '100%' }}
+                              accessibilityRole="button"
+                              accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
+                            >
+                              {isPdf ? (
+                                <View style={[styles.photoImg, styles.pdfPreview]}>
+                                  <Text style={styles.pdfPreviewIcon}>📄</Text>
+                                  <Text style={styles.pdfPreviewLabel}>PDF</Text>
+                                </View>
+                              ) : (
+                                <Image source={{ uri }} style={styles.photoImg} />
+                              )}
+                            </Pressable>
                             <Pressable style={styles.photoRemove} onPress={() => actions.removePhoto(idx)}>
                               <Text style={styles.photoRemoveText}>✕</Text>
                             </Pressable>
-                          </Pressable>
+                          </View>
                         );
                       })}
                     </ScrollView>
