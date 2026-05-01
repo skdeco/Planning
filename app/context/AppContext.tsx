@@ -103,6 +103,7 @@ interface AppContextType {
   deleteNote: (affectationId: string, noteId: string) => void;
   toggleTask: (affectationId: string, noteId: string, taskId: string, faitPar: string) => void;
   addTaskPhoto: (affectationId: string, noteId: string, taskId: string, photoUri: string) => void;
+  removeTaskPhoto: (affectationId: string, noteId: string, taskId: string, photoUri: string) => void;
   addTask: (affectationId: string, noteId: string, task: TaskItem) => void;
   deleteTask: (affectationId: string, noteId: string, taskId: string) => void;
   addPointage: (pointage: Pointage) => void;
@@ -1053,6 +1054,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }),
     }));
 
+  const removeTaskPhoto = (affectationId: string, noteId: string, taskId: string, photoUri: string) =>
+    setData(p => ({
+      ...p,
+      affectations: p.affectations.map(a => {
+        if (a.id !== affectationId) return a;
+        return { ...a, notes: a.notes.map(n => {
+          if (n.id !== noteId) return n;
+          return { ...n, updatedAt: new Date().toISOString(), tasks: (n.tasks || []).map(t => t.id === taskId ? { ...t, photos: (t.photos || []).filter(p => p !== photoUri) } : t) };
+        }) };
+      }),
+    }));
+
   const addTask = (affectationId: string, noteId: string, task: TaskItem) =>
     setData(p => ({
       ...p,
@@ -1699,7 +1712,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addChantier, updateChantier, deleteChantier,
       addEmploye, updateEmploye, deleteEmploye,
       addAffectation, updateAffectation, removeAffectation,
-      upsertNote, deleteNote, toggleTask, addTaskPhoto, addTask, deleteTask,
+      upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, addTask, deleteTask,
       addPointage, updatePointage, deletePointage,
       addAcompte, deleteAcompte,
       upsertFicheChantier,

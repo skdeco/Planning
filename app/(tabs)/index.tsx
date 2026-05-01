@@ -10,6 +10,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { compressImage } from '@/lib/imageUtils';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { getInboxItemPath } from '@/lib/share/inboxStore';
+import { openDocPreview } from '@/lib/share/openDocPreview';
 import { BADGE_TYPES } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -24,7 +27,7 @@ function toYMD(d: Date): string {
 }
 
 export default function DashboardScreen() {
-  const { data, currentUser, isHydrated, logout, toggleTask, addTaskPhoto, addRetardPlanifie, updateTicketSAV, upsertNote, updateEmploye, addBadgeEmploye } = useApp();
+  const { data, currentUser, isHydrated, logout, toggleTask, addTaskPhoto, removeTaskPhoto, addRetardPlanifie, updateTicketSAV, upsertNote, updateEmploye, addBadgeEmploye } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
   const { pushToken } = useNotifications();
@@ -415,11 +418,40 @@ export default function DashboardScreen() {
                                 if (url) addTaskPhoto(note.affectationId, note.noteId, task.id, url);
                               }
                             }}><Text style={{ fontSize: 14 }}>📷</Text></Pressable>
+                            <InboxPickerButton
+                              label="📥"
+                              buttonStyle={{ padding: 2, paddingHorizontal: 4, backgroundColor: 'transparent', borderWidth: 0 }}
+                              mimeFilter={(m) => m.startsWith('image/')}
+                              onPick={async (item) => {
+                                const fileURI = getInboxItemPath(item);
+                                if (!fileURI) return false;
+                                const url = await uploadFileToStorage(fileURI, 'tasks/photos', `task_inbox_${task.id}_${item.id}`);
+                                if (!url) return false;
+                                addTaskPhoto(note.affectationId, note.noteId, task.id, url);
+                                return true;
+                              }}
+                            />
                           </View>
                           {task.photos && task.photos.length > 0 && (
                             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 28, marginBottom: 4 }} contentContainerStyle={{ gap: 3 }}>
                               {task.photos.map((uri: string, pi: number) => (
-                                <Image key={pi} source={{ uri }} style={{ width: 44, height: 44, borderRadius: 4 }} resizeMode="cover" />
+                                <Pressable
+                                  key={pi}
+                                  onPress={() => openDocPreview(uri)}
+                                  onLongPress={() => {
+                                    const doDelete = () => removeTaskPhoto(note.affectationId, note.noteId, task.id, uri);
+                                    if (Platform.OS === 'web') {
+                                      if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer cette photo ?')) doDelete();
+                                    } else {
+                                      Alert.alert('Supprimer la photo ?', 'Cette action est irréversible.', [
+                                        { text: 'Annuler', style: 'cancel' },
+                                        { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                                      ]);
+                                    }
+                                  }}
+                                >
+                                  <Image source={{ uri }} style={{ width: 44, height: 44, borderRadius: 4 }} resizeMode="cover" />
+                                </Pressable>
                               ))}
                             </ScrollView>
                           )}

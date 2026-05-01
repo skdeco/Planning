@@ -142,7 +142,7 @@ const DEFAULT_FORM: ChantierForm = {
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
   const params = useLocalSearchParams<{ action?: string; chantierId?: string; apporteurId?: string; apporteurType?: string }>();
@@ -3346,11 +3346,38 @@ export default function ChantiersScreen() {
                                       if (url) addTaskPhoto(affId, n.id, task.id, url);
                                     }
                                   }}><Text style={{ fontSize: 12 }}>📷</Text></Pressable>
+                                  <InboxPickerButton
+                                    label="📥"
+                                    buttonStyle={{ padding: 2, paddingHorizontal: 4, backgroundColor: 'transparent', borderWidth: 0 }}
+                                    mimeFilter={(m) => m.startsWith('image/')}
+                                    onPick={async (item) => {
+                                      const fileURI = getInboxItemPath(item);
+                                      if (!fileURI) return false;
+                                      const url = await uploadFileToStorage(fileURI, 'tasks/photos', `task_inbox_${task.id}_${item.id}`);
+                                      if (!url) return false;
+                                      addTaskPhoto(affId, n.id, task.id, url);
+                                      return true;
+                                    }}
+                                  />
                                 </View>
                                 {task.photos && task.photos.length > 0 && (
                                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginLeft: 22, marginTop: 2, marginBottom: 4 }} contentContainerStyle={{ gap: 3 }}>
                                     {task.photos.map((uri: string, pi: number) => (
-                                      <Pressable key={pi} onPress={() => { setSuiviChantierId(null); setTimeout(() => setViewPhotoUri(uri), 150); }}>
+                                      <Pressable
+                                        key={pi}
+                                        onPress={() => { setSuiviChantierId(null); setTimeout(() => setViewPhotoUri(uri), 150); }}
+                                        onLongPress={() => {
+                                          const doDelete = () => removeTaskPhoto(affId, n.id, task.id, uri);
+                                          if (Platform.OS === 'web') {
+                                            if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer cette photo ?')) doDelete();
+                                          } else {
+                                            Alert.alert('Supprimer la photo ?', 'Cette action est irréversible.', [
+                                              { text: 'Annuler', style: 'cancel' },
+                                              { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                                            ]);
+                                          }
+                                        }}
+                                      >
                                         <Image source={{ uri }} style={{ width: 40, height: 40, borderRadius: 4 }} resizeMode="cover" />
                                       </Pressable>
                                     ))}
