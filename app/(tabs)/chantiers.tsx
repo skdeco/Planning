@@ -1909,7 +1909,12 @@ export default function ChantiersScreen() {
                   />
                   {/* Photo cachette clé */}
                   {fiche.photoEmplacementCle && (
-                    <Pressable onPress={() => setViewPhotoUri(fiche.photoEmplacementCle || null)} style={{ marginTop: 8 }}>
+                    <Pressable
+                      onPress={() => openDocPreview(fiche.photoEmplacementCle!)}
+                      style={{ marginTop: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Ouvrir la photo cachette"
+                    >
                       <View style={{ width: 100, height: 100, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F5EDE3' }}>
                         <Image source={{ uri: fiche.photoEmplacementCle }} style={{ width: 100, height: 100 }} resizeMode="cover" />
                       </View>
