@@ -1924,16 +1924,37 @@ export default function ChantiersScreen() {
                   />
                   {/* Photo cachette clé */}
                   {fiche.photoEmplacementCle && (
-                    <Pressable
-                      onPress={() => openDocPreview(fiche.photoEmplacementCle!)}
-                      style={{ marginTop: 8 }}
-                      accessibilityRole="button"
-                      accessibilityLabel="Ouvrir la photo cachette"
-                    >
-                      <View style={{ width: 100, height: 100, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F5EDE3' }}>
-                        <Image source={{ uri: fiche.photoEmplacementCle }} style={{ width: 100, height: 100 }} resizeMode="cover" />
-                      </View>
-                    </Pressable>
+                    <View style={{ marginTop: 8, position: 'relative', alignSelf: 'flex-start' }}>
+                      <Pressable
+                        onPress={() => openDocPreview(fiche.photoEmplacementCle!)}
+                        accessibilityRole="button"
+                        accessibilityLabel="Ouvrir la photo cachette"
+                      >
+                        <View style={{ width: 100, height: 100, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F5EDE3' }}>
+                          <Image source={{ uri: fiche.photoEmplacementCle }} style={{ width: 100, height: 100 }} resizeMode="cover" />
+                        </View>
+                      </Pressable>
+                      {isAdmin && (
+                        <Pressable
+                          style={styles.photoRemove}
+                          onPress={() => {
+                            const doDelete = () => setFiche(f => ({ ...f, photoEmplacementCle: '' }));
+                            if (Platform.OS === 'web') {
+                              if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer la photo cachette ?')) doDelete();
+                            } else {
+                              Alert.alert('Supprimer la photo ?', 'La photo cachette sera retirée de la fiche.', [
+                                { text: 'Annuler', style: 'cancel' },
+                                { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                              ]);
+                            }
+                          }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Supprimer la photo cachette"
+                        >
+                          <Text style={styles.photoRemoveText}>✕</Text>
+                        </Pressable>
+                      )}
+                    </View>
                   )}
                   {isAdmin && (
                     <View style={{ marginTop: 6, gap: 4 }}>
