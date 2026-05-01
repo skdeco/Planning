@@ -967,47 +967,31 @@ export default function ChantiersScreen() {
     return true;
   };
 
-  const handlePickPhoto = async () => {
-    const uploadAndAddFichePhoto = async (base64Uri: string) => {
-      const photoId = `fiche_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      // On ne connaît pas encore le chantierId ici (création en cours), on utilise 'fiche'
-      const storageUrl = await uploadFileToStorage(base64Uri, 'chantiers/fiche/photos', photoId);
-      if (storageUrl) {
-        setFiche(f => ({ ...f, photos: [...f.photos, storageUrl] }));
-      } else {
-        if (Platform.OS === 'web') alert('Erreur lors de l\'upload de la photo. Veuillez réessayer.');
-        else Alert.alert('Erreur', 'Erreur lors de l\'upload de la photo. Veuillez réessayer.');
-      }
-    };
-    if (Platform.OS === 'web') {
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*,application/pdf';
-      input.onchange = async (e: Event) => {
-        const file = (e.target as HTMLInputElement).files?.[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = async () => {
-          await uploadAndAddFichePhoto(reader.result as string);
-        };
-        reader.readAsDataURL(file);
-      };
-      input.click(); setTimeout(() => input.remove(), 60000);
-    } else {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        base64: true,
-        quality: 0.7,
-      });
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        const raw = asset.base64
-          ? `data:image/jpeg;base64,${asset.base64}`
-          : asset.uri;
-        const compressed = await compressImage(raw);
-        await uploadAndAddFichePhoto(compressed);
-      }
+  // Zone 1 — Photo Fiche Chantier (multi photos + PDF, push dans fiche.photos[]).
+  // Path Storage 'chantiers/fiche/photos' — chantierId non utilisé (création en cours possible).
+  const handleFichePickNative = async (file: PickedFile): Promise<boolean> => {
+    const photoId = `fiche_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const storageUrl = await uploadFileToStorage(file.uri, 'chantiers/fiche/photos', photoId);
+    if (!storageUrl) {
+      if (Platform.OS !== 'web') Alert.alert('Erreur', "Erreur lors de l'upload de la photo. Veuillez réessayer.");
+      return false;
     }
+    setFiche(f => ({ ...f, photos: [...f.photos, storageUrl] }));
+    return true;
+  };
+
+  // Zone 1 — Photos Fiche Chantier via Inbox iOS (Share Extension).
+  const handleFichePickFromInbox = async (item: InboxItem): Promise<boolean> => {
+    const fileURI = getInboxItemPath(item);
+    if (!fileURI) return false;
+    const photoId = `fiche_inbox_${item.id}`;
+    const storageUrl = await uploadFileToStorage(fileURI, 'chantiers/fiche/photos', photoId);
+    if (!storageUrl) {
+      if (Platform.OS !== 'web') Alert.alert('Erreur', "Impossible d'uploader le fichier");
+      return false;
+    }
+    setFiche(f => ({ ...f, photos: [...f.photos, storageUrl] }));
+    return true;
   };
 
   const removePhoto = (idx: number) => {
@@ -2031,27 +2015,45 @@ export default function ChantiersScreen() {
                 <Text style={styles.ficheSectionLabel}>{t.common.photosPlans}</Text>
                 <View style={styles.photosGrid}>
                   {fiche.photos.map((uri, idx) => {
-                    const isPdf = uri.startsWith('data:application/pdf');
+                    const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
                     return (
                       <View key={idx} style={styles.photoWrap}>
                         {isPdf ? (
                           <Pressable
                             style={styles.pdfThumb}
-                            onPress={() => {
-                              if (Platform.OS === 'web') {
-                                const w = window.open();
-                                if (w) { w.document.write(`<iframe src="${uri}" width="100%" height="100%"></iframe>`); }
-                              }
-                            }}
+                            onPress={() => openDocPreview(uri)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Ouvrir le PDF"
                           >
                             <Text style={styles.pdfThumbIcon}>📄</Text>
                             <Text style={styles.pdfThumbText}>PDF</Text>
                           </Pressable>
                         ) : (
-                          <Image source={{ uri }} style={styles.photoThumb} resizeMode="cover" />
+                          <Pressable
+                            onPress={() => openDocPreview(uri)}
+                            accessibilityRole="button"
+                            accessibilityLabel="Ouvrir la photo"
+                          >
+                            <Image source={{ uri }} style={styles.photoThumb} resizeMode="cover" />
+                          </Pressable>
                         )}
                         {isAdmin && (
-                          <Pressable style={styles.photoRemove} onPress={() => removePhoto(idx)}>
+                          <Pressable
+                            style={styles.photoRemove}
+                            onPress={() => {
+                              const doDelete = () => removePhoto(idx);
+                              if (Platform.OS === 'web') {
+                                if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer ce fichier ?')) doDelete();
+                              } else {
+                                Alert.alert('Supprimer le fichier ?', 'Cette action est irréversible.', [
+                                  { text: 'Annuler', style: 'cancel' },
+                                  { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                                ]);
+                              }
+                            }}
+                            accessibilityRole="button"
+                            accessibilityLabel="Supprimer le fichier"
+                          >
                             <Text style={styles.photoRemoveText}>✕</Text>
                           </Pressable>
                         )}
@@ -2059,12 +2061,26 @@ export default function ChantiersScreen() {
                     );
                   })}
                   {isAdmin && (
-                    <Pressable style={styles.photoAdd} onPress={handlePickPhoto}>
-                      <Text style={styles.photoAddIcon}>+</Text>
-                      <Text style={styles.photoAddText}>{t.common.add}</Text>
-                    </Pressable>
+                    <NativeFilePickerButton
+                      onPick={handleFichePickNative}
+                      acceptImages
+                      acceptCamera
+                      acceptPdf
+                      multiple
+                      compressImages
+                      buttonStyle={styles.photoAdd}
+                      label={`+ ${t.common.add}`}
+                    />
                   )}
                 </View>
+                {isAdmin && (
+                  <View style={{ marginTop: 8 }}>
+                    <InboxPickerButton
+                      onPick={handleFichePickFromInbox}
+                      mimeFilter={inboxMimeFilterImagePdf}
+                    />
+                  </View>
+                )}
               </View>
 
               {/* ═══ CONFIGURATION CHANTIER (admin) ═══ */}
