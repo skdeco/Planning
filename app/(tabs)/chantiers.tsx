@@ -22,7 +22,7 @@ import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
   type Chantier, type StatutChantier, type FicheChantier, type NoteChantier, type PlanChantier, type TicketSAV, type PrioriteSAV, type StatutSAV,
-  type Apporteur,
+  type Apporteur, type Note, type TaskItem,
 } from '@/app/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DatePicker } from '@/components/DatePicker';
@@ -245,6 +245,13 @@ export default function ChantiersScreen() {
   const [suiviShowForm, setSuiviShowForm] = useState(false);
   const [suiviNoteText, setSuiviNoteText] = useState('');
   const [suiviNoteEmpId, setSuiviNoteEmpId] = useState('');
+  // Brouillon enrichi du form Suivi (photos/tasks/savTicketId/visiblePar).
+  // Reset à chaque toggle "+ Note" et après chaque save réussi.
+  // DETTE-NOTE-EDITOR-001 : duplique partiellement useNotesModalLogic.
+  const [suiviDraft, setSuiviDraft] = useState<{ tasks: TaskItem[]; photos: string[]; savTicketId: string | null; visiblePar: 'tous' | 'employes' | 'soustraitants' }>({ tasks: [], photos: [], savTicketId: null, visiblePar: 'tous' });
+  const [suiviShowTaskInput, setSuiviShowTaskInput] = useState(false);
+  const [suiviNewTaskText, setSuiviNewTaskText] = useState('');
+  const [suiviEditingNote, setSuiviEditingNote] = useState<{ affId: string; note: Note } | null>(null);
   const [vueChantiersTab, setVueChantiersTab] = useState<'chantiers' | 'sav'>('chantiers');
   // Filtre par type de contact (architecte / apporteur / contractant / client)
   const [filterContactType, setFilterContactType] = useState<'all' | 'architecte' | 'apporteur' | 'contractant' | 'client'>('all');
@@ -3186,6 +3193,11 @@ export default function ChantiersScreen() {
         <PortailClient visible={!!portailClientId} onClose={() => setPortailClientId(null)} chantierId={portailClientId} />
       )}
       {/* ── Modal Suivi Planning (toutes les notes employes) ── */}
+      {/* DETTE-NOTE-EDITOR-001 : ce form duplique partiellement le contenu de
+          <ModalNotes> (Planning). Extraction <NoteEditor> reportée à une session
+          dédiée pour réduire le risque de refacto. Quand on factorise, garder
+          les filtres période/employé Suivi (utiles métier) et plugger NoteEditor
+          pour le formulaire de création/édition uniquement. */}
       <ModalKeyboard visible={suiviChantierId !== null} animationType="slide" transparent onRequestClose={() => setSuiviChantierId(null)}>
         <View style={styles.modalOverlay}>
           <Pressable style={{ flex: 0.05 }} onPress={() => setSuiviChantierId(null)} />
@@ -3199,7 +3211,15 @@ export default function ChantiersScreen() {
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 {isAdmin && (
                   <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
-                    onPress={() => { setSuiviShowForm(v => !v); setSuiviNoteText(''); setSuiviNoteEmpId(''); }}>
+                    onPress={() => {
+                      setSuiviShowForm(v => !v);
+                      setSuiviNoteText('');
+                      setSuiviNoteEmpId('');
+                      setSuiviDraft({ tasks: [], photos: [], savTicketId: null, visiblePar: 'tous' });
+                      setSuiviShowTaskInput(false);
+                      setSuiviNewTaskText('');
+                      setSuiviEditingNote(null);
+                    }}>
                     <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{suiviShowForm ? '✕' : '+ Note'}</Text>
                   </Pressable>
                 )}
@@ -3240,9 +3260,21 @@ export default function ChantiersScreen() {
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 12, paddingBottom: 30 }} keyboardShouldPersistTaps="handled">
               {/* Formulaire ajout note */}
-              {suiviShowForm && isAdmin && suiviChantierId && (
+              {suiviShowForm && isAdmin && suiviChantierId && (() => {
+                const isEdit = suiviEditingNote !== null;
+                const openTickets = (data.ticketsSAV || []).filter(t => t.chantierId === suiviChantierId && t.statut !== 'clos');
+                const resetDraft = () => {
+                  setSuiviNoteText('');
+                  setSuiviNoteEmpId('');
+                  setSuiviDraft({ tasks: [], photos: [], savTicketId: null, visiblePar: 'tous' });
+                  setSuiviShowTaskInput(false);
+                  setSuiviNewTaskText('');
+                  setSuiviEditingNote(null);
+                  setSuiviShowForm(false);
+                };
+                return (
                 <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C', marginBottom: 6 }}>Nouvelle note</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C', marginBottom: 6 }}>{isEdit ? 'Modifier la note' : 'Nouvelle note'}</Text>
                   <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>Pour :</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
                     {data.employes.map(e => (
@@ -3254,24 +3286,266 @@ export default function ChantiersScreen() {
                   </ScrollView>
                   <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, color: '#11181C', minHeight: 50 }}
                     value={suiviNoteText} onChangeText={setSuiviNoteText} placeholder="Consigne, tâche, remarque..." multiline />
-                  <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 10, alignItems: 'center', opacity: suiviNoteText.trim() && suiviNoteEmpId ? 1 : 0.5 }}
-                    disabled={!suiviNoteText.trim() || !suiviNoteEmpId}
-                    onPress={() => {
-                      const now = new Date().toISOString();
-                      const todayStr = now.slice(0, 10);
-                      upsertNote({
-                        chantierId: suiviChantierId!,
-                        employeId: suiviNoteEmpId,
-                        date: todayStr,
-                        note: { id: `n_${Date.now()}_${Math.random().toString(36).slice(2)}`, auteurId: 'admin', auteurNom: currentUser?.nom || 'Admin', date: todayStr, texte: suiviNoteText.trim(), photos: [], createdAt: now, updatedAt: now },
-                      });
-                      setSuiviNoteText('');
-                      setSuiviShowForm(false);
-                    }}>
-                    <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>Ajouter</Text>
-                  </Pressable>
+
+                  {/* ── Photos & PDF ── */}
+                  <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4, marginTop: 4 }}>Photos & PDF</Text>
+                  {suiviDraft.photos.length > 0 && (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 6 }}>
+                      {suiviDraft.photos.map((uri, idx) => {
+                        const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                        return (
+                          <View key={idx} style={{ width: 56, height: 56 }}>
+                            <Pressable
+                              onPress={() => {
+                                if (isPdf) { openDocPreview(uri); return; }
+                                setSuiviChantierId(null);
+                                setTimeout(() => setViewPhotoUri(uri), 150);
+                              }}
+                              style={{ width: '100%', height: '100%' }}
+                              accessibilityRole="button"
+                              accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
+                            >
+                              {isPdf ? (
+                                <View style={{ width: 56, height: 56, borderRadius: 6, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
+                                  <Text style={{ fontSize: 22 }}>📄</Text>
+                                </View>
+                              ) : (
+                                <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} resizeMode="cover" />
+                              )}
+                            </Pressable>
+                            <Pressable
+                              onPress={() => setSuiviDraft(prev => ({ ...prev, photos: prev.photos.filter((_, i) => i !== idx) }))}
+                              style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: 8, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
+                              accessibilityRole="button"
+                              accessibilityLabel="Retirer"
+                            >
+                              <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>✕</Text>
+                            </Pressable>
+                          </View>
+                        );
+                      })}
+                    </ScrollView>
+                  )}
+                  <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10, flexWrap: 'wrap' }}>
+                    <NativeFilePickerButton
+                      acceptImages
+                      acceptPdf
+                      acceptCamera
+                      multiple
+                      compressImages
+                      onPick={async (file: PickedFile) => {
+                        const folder = `chantiers/${suiviChantierId}/notes`;
+                        const photoId = `note_photo_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                        const url = await uploadFileToStorage(file.uri, folder, photoId);
+                        if (!url) return false;
+                        setSuiviDraft(prev => ({ ...prev, photos: [...prev.photos, url] }));
+                        return true;
+                      }}
+                    />
+                    <InboxPickerButton
+                      mimeFilter={(m) => m.startsWith('image/') || m === 'application/pdf'}
+                      onPick={async (item) => {
+                        const fileURI = getInboxItemPath(item);
+                        if (!fileURI) return false;
+                        const folder = `chantiers/${suiviChantierId}/notes`;
+                        const url = await uploadFileToStorage(fileURI, folder, `inbox_${item.id}`);
+                        if (!url) return false;
+                        setSuiviDraft(prev => ({ ...prev, photos: [...prev.photos, url] }));
+                        return true;
+                      }}
+                    />
+                  </View>
+
+                  {/* ── Tâches ── */}
+                  <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>📋 Tâches</Text>
+                  {suiviDraft.tasks.length > 0 && (
+                    <View style={{ marginBottom: 6 }}>
+                      {suiviDraft.tasks.map(task => {
+                        const handleAddTaskPhoto = async () => {
+                          const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: true, compressImages: true });
+                          for (const f of files) {
+                            const folder = `chantiers/${suiviChantierId}/notes/tasks`;
+                            const photoId = `task_${task.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                            const url = await uploadFileToStorage(f.uri, folder, photoId);
+                            if (!url) continue;
+                            setSuiviDraft(prev => ({ ...prev, tasks: prev.tasks.map(t => t.id === task.id ? { ...t, photos: [...(t.photos || []), url] } : t) }));
+                          }
+                        };
+                        const handleRemoveTaskPhoto = (uri: string) => {
+                          Alert.alert('Supprimer la photo', 'Voulez-vous supprimer cette photo de la tâche ?', [
+                            { text: 'Annuler', style: 'cancel' },
+                            { text: 'Supprimer', style: 'destructive', onPress: () => {
+                              setSuiviDraft(prev => ({ ...prev, tasks: prev.tasks.map(t => t.id === task.id ? { ...t, photos: (t.photos || []).filter(p => p !== uri) } : t) }));
+                            } },
+                          ]);
+                        };
+                        return (
+                          <View key={task.id} style={{ marginBottom: 6 }}>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <View style={{ width: 16, height: 16, borderRadius: 3, borderWidth: 1.5, borderColor: task.fait ? '#27AE60' : '#B0BEC5', backgroundColor: task.fait ? '#D4EDDA' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                                {task.fait && <Text style={{ color: '#27AE60', fontSize: 10, fontWeight: '700' }}>✓</Text>}
+                              </View>
+                              <Text style={{ fontSize: 12, color: task.fait ? '#B0BEC5' : '#11181C', textDecorationLine: task.fait ? 'line-through' : 'none', flex: 1 }}>{task.texte}</Text>
+                              <Pressable onPress={handleAddTaskPhoto} style={{ paddingHorizontal: 6, paddingVertical: 4 }} accessibilityRole="button" accessibilityLabel="Ajouter photo à la tâche">
+                                <Text style={{ fontSize: 14, color: '#2C2C2C' }}>➕</Text>
+                              </Pressable>
+                              <Pressable
+                                onPress={() => setSuiviDraft(prev => ({ ...prev, tasks: prev.tasks.filter(t => t.id !== task.id) }))}
+                                style={{ padding: 4 }}
+                              >
+                                <Text style={{ color: '#E74C3C', fontSize: 12 }}>✕</Text>
+                              </Pressable>
+                            </View>
+                            {task.photos && task.photos.length > 0 && (
+                              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4, marginLeft: 24 }} contentContainerStyle={{ gap: 4 }}>
+                                {task.photos.map((uri, idx) => {
+                                  const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                                  return (
+                                    <View key={idx} style={{ width: 44, height: 44 }}>
+                                      <Pressable
+                                        onPress={() => {
+                                          if (isPdf) { openDocPreview(uri); return; }
+                                          setSuiviChantierId(null);
+                                          setTimeout(() => setViewPhotoUri(uri), 150);
+                                        }}
+                                        accessibilityRole="button"
+                                        accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
+                                      >
+                                        {isPdf ? (
+                                          <View style={{ width: 44, height: 44, borderRadius: 4, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
+                                            <Text style={{ fontSize: 18 }}>📄</Text>
+                                          </View>
+                                        ) : (
+                                          <Image source={{ uri }} style={{ width: 44, height: 44, borderRadius: 4 }} resizeMode="cover" />
+                                        )}
+                                      </Pressable>
+                                      <Pressable
+                                        onPress={() => handleRemoveTaskPhoto(uri)}
+                                        style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: 7, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
+                                        accessibilityRole="button"
+                                        accessibilityLabel="Supprimer la photo"
+                                      >
+                                        <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
+                                      </Pressable>
+                                    </View>
+                                  );
+                                })}
+                              </ScrollView>
+                            )}
+                          </View>
+                        );
+                      })}
+                    </View>
+                  )}
+                  {suiviShowTaskInput ? (
+                    <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
+                      <TextInput
+                        style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, borderWidth: 1, borderColor: '#E2E6EA', color: '#11181C' }}
+                        value={suiviNewTaskText}
+                        onChangeText={setSuiviNewTaskText}
+                        placeholder="Décrire la tâche..."
+                        placeholderTextColor="#B0BEC5"
+                        autoFocus
+                        returnKeyType="done"
+                        onSubmitEditing={() => {
+                          const txt = suiviNewTaskText.trim();
+                          if (!txt) return;
+                          const newTask: TaskItem = { id: `t_${Date.now()}_${Math.random().toString(36).slice(2)}`, texte: txt, fait: false };
+                          setSuiviDraft(prev => ({ ...prev, tasks: [...prev.tasks, newTask] }));
+                          setSuiviNewTaskText('');
+                          setSuiviShowTaskInput(false);
+                        }}
+                      />
+                      <Pressable onPress={() => { setSuiviShowTaskInput(false); setSuiviNewTaskText(''); }} style={{ paddingHorizontal: 10, justifyContent: 'center' }}>
+                        <Text style={{ color: '#687076' }}>✕</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Pressable onPress={() => setSuiviShowTaskInput(true)} style={{ alignSelf: 'flex-start', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8 }}>
+                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>+ Ajouter une tâche</Text>
+                    </Pressable>
+                  )}
+
+                  {/* ── Lier à un SAV ── */}
+                  {openTickets.length > 0 && (
+                    <>
+                      <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>🔧 Lier à un SAV</Text>
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
+                        <Pressable
+                          onPress={() => setSuiviDraft(prev => ({ ...prev, savTicketId: null }))}
+                          style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: suiviDraft.savTicketId === null ? '#2C2C2C' : '#fff', borderWidth: 1, borderColor: suiviDraft.savTicketId === null ? '#2C2C2C' : '#E2E6EA' }}
+                        >
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: suiviDraft.savTicketId === null ? '#fff' : '#687076' }}>Aucun</Text>
+                        </Pressable>
+                        {openTickets.map(t => (
+                          <Pressable
+                            key={t.id}
+                            onPress={() => setSuiviDraft(prev => ({ ...prev, savTicketId: t.id }))}
+                            style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: suiviDraft.savTicketId === t.id ? '#E74C3C' : '#fff', borderWidth: 1, borderColor: suiviDraft.savTicketId === t.id ? '#E74C3C' : '#E2E6EA' }}
+                          >
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: suiviDraft.savTicketId === t.id ? '#fff' : '#687076' }}>{t.objet}</Text>
+                          </Pressable>
+                        ))}
+                      </ScrollView>
+                    </>
+                  )}
+
+                  {/* ── Visible par ── */}
+                  <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>👁 Visible par</Text>
+                  <View style={{ flexDirection: 'row', gap: 4, marginBottom: 10 }}>
+                    {(['tous', 'employes', 'soustraitants'] as const).map(v => (
+                      <Pressable
+                        key={v}
+                        onPress={() => setSuiviDraft(prev => ({ ...prev, visiblePar: v }))}
+                        style={{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: suiviDraft.visiblePar === v ? '#2C2C2C' : '#fff', borderWidth: 1, borderColor: suiviDraft.visiblePar === v ? '#2C2C2C' : '#E2E6EA' }}
+                      >
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: suiviDraft.visiblePar === v ? '#fff' : '#687076' }}>
+                          {v === 'tous' ? 'Tous' : v === 'employes' ? 'Employés' : 'Sous-traitants'}
+                        </Text>
+                      </Pressable>
+                    ))}
+                  </View>
+
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    {isEdit && (
+                      <Pressable style={{ flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+                        onPress={resetDraft}>
+                        <Text style={{ color: '#687076', fontSize: 13, fontWeight: '700' }}>Annuler</Text>
+                      </Pressable>
+                    )}
+                    <Pressable style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 10, alignItems: 'center', opacity: suiviNoteText.trim() && suiviNoteEmpId ? 1 : 0.5 }}
+                      disabled={!suiviNoteText.trim() || !suiviNoteEmpId}
+                      onPress={() => {
+                        const now = new Date().toISOString();
+                        const targetDate = isEdit ? (suiviEditingNote!.note.date || now.slice(0, 10)) : now.slice(0, 10);
+                        const noteId = isEdit ? suiviEditingNote!.note.id : `n_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+                        const createdAt = isEdit ? (suiviEditingNote!.note.createdAt || now) : now;
+                        upsertNote({
+                          chantierId: suiviChantierId!,
+                          employeId: suiviNoteEmpId,
+                          date: targetDate,
+                          note: {
+                            id: noteId,
+                            auteurId: 'admin',
+                            auteurNom: currentUser?.nom || 'Admin',
+                            date: targetDate,
+                            texte: suiviNoteText.trim(),
+                            photos: suiviDraft.photos,
+                            tasks: suiviDraft.tasks,
+                            savTicketId: suiviDraft.savTicketId || undefined,
+                            visiblePar: suiviDraft.visiblePar,
+                            createdAt,
+                            updatedAt: now,
+                          },
+                        });
+                        resetDraft();
+                      }}>
+                      <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{isEdit ? 'Enregistrer' : 'Ajouter'}</Text>
+                    </Pressable>
+                  </View>
                 </View>
-              )}
+                );
+              })()}
 
               {suiviChantierId && (() => {
                 const now = new Date();
@@ -3316,15 +3590,29 @@ export default function ChantiersScreen() {
                     <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginBottom: 6, backgroundColor: '#EBF0FF', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, alignSelf: 'flex-start' }}>
                       📅 {new Date(date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                     </Text>
-                    {notes.map(({ note: n, affId, empNom }) => (
+                    {notes.map(({ note: n, affId, empNom, empId, date: noteDate }) => (
                       <View key={n.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 10, marginBottom: 4, borderWidth: 1, borderColor: '#E2E6EA', borderLeftWidth: 3, borderLeftColor: n.savTicketId ? '#E74C3C' : '#687076' }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 3 }}>
-                          <Text style={{ fontSize: 10, color: '#687076' }}>👷 <Text style={{ fontWeight: '700' }}>{empNom}</Text> · par {n.auteurNom}</Text>
+                          <Text style={{ fontSize: 10, color: '#687076', flex: 1 }}>👷 <Text style={{ fontWeight: '700' }}>{empNom}</Text> · par {n.auteurNom}</Text>
                           {isAdmin && (
-                            <Pressable onPress={() => {
-                              if (Platform.OS === 'web') { if (window.confirm('Supprimer ?')) deleteNote(affId, n.id); }
-                              else Alert.alert('Supprimer', 'Supprimer cette note ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deleteNote(affId, n.id) }]);
-                            }}><Text style={{ fontSize: 11, color: '#E74C3C' }}>🗑</Text></Pressable>
+                            <View style={{ flexDirection: 'row', gap: 8 }}>
+                              <Pressable onPress={() => {
+                                setSuiviEditingNote({ affId, note: n });
+                                setSuiviNoteEmpId(empId);
+                                setSuiviNoteText(n.texte || '');
+                                setSuiviDraft({
+                                  photos: n.photos || [],
+                                  tasks: n.tasks || [],
+                                  savTicketId: n.savTicketId || null,
+                                  visiblePar: (typeof n.visiblePar === 'string' && (n.visiblePar === 'tous' || n.visiblePar === 'employes' || n.visiblePar === 'soustraitants')) ? n.visiblePar : 'tous',
+                                });
+                                setSuiviShowForm(true);
+                              }}><Text style={{ fontSize: 11 }}>✏️</Text></Pressable>
+                              <Pressable onPress={() => {
+                                if (Platform.OS === 'web') { if (window.confirm('Supprimer ?')) deleteNote(affId, n.id); }
+                                else Alert.alert('Supprimer', 'Supprimer cette note ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deleteNote(affId, n.id) }]);
+                              }}><Text style={{ fontSize: 11, color: '#E74C3C' }}>🗑</Text></Pressable>
+                            </View>
                           )}
                         </View>
                         {n.texte ? <Text style={{ fontSize: 12, color: '#11181C', lineHeight: 17 }}>{n.texte}</Text> : null}
@@ -3411,12 +3699,60 @@ export default function ChantiersScreen() {
                           </View>
                         )}
                         {n.photos && n.photos.length > 0 && (
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }} contentContainerStyle={{ gap: 4 }}>
-                            {n.photos.map((uri: string, j: number) => (
-                              <Pressable key={j} onPress={() => { setSuiviChantierId(null); setTimeout(() => setViewPhotoUri(uri), 150); }}>
-                                <Image source={{ uri }} style={{ width: 50, height: 50, borderRadius: 6 }} resizeMode="cover" />
-                              </Pressable>
-                            ))}
+                          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }} contentContainerStyle={{ gap: 6 }}>
+                            {n.photos.map((uri: string, j: number) => {
+                              const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                              return (
+                                <View key={j} style={{ width: 50, height: 50 }}>
+                                  <Pressable
+                                    onPress={() => {
+                                      if (isPdf) { openDocPreview(uri); return; }
+                                      setSuiviChantierId(null);
+                                      setTimeout(() => setViewPhotoUri(uri), 150);
+                                    }}
+                                    style={{ width: '100%', height: '100%' }}
+                                    accessibilityRole="button"
+                                    accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
+                                  >
+                                    {isPdf ? (
+                                      <View style={{ width: 50, height: 50, borderRadius: 6, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Text style={{ fontSize: 20 }}>📄</Text>
+                                      </View>
+                                    ) : (
+                                      <Image source={{ uri }} style={{ width: 50, height: 50, borderRadius: 6 }} resizeMode="cover" />
+                                    )}
+                                  </Pressable>
+                                  {isAdmin && (
+                                    <Pressable
+                                      onPress={() => {
+                                        const doDelete = () => {
+                                          const now = new Date().toISOString();
+                                          upsertNote({
+                                            chantierId: suiviChantierId!,
+                                            employeId: empId,
+                                            date: noteDate,
+                                            note: { ...n, photos: (n.photos || []).filter((_: string, k: number) => k !== j), updatedAt: now },
+                                          });
+                                        };
+                                        if (Platform.OS === 'web') {
+                                          if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer cette photo ?')) doDelete();
+                                        } else {
+                                          Alert.alert('Supprimer la photo ?', 'Cette action est irréversible.', [
+                                            { text: 'Annuler', style: 'cancel' },
+                                            { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                                          ]);
+                                        }
+                                      }}
+                                      style={{ position: 'absolute', top: -6, right: -6, width: 16, height: 16, borderRadius: 8, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
+                                      accessibilityRole="button"
+                                      accessibilityLabel="Supprimer la photo"
+                                    >
+                                      <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>✕</Text>
+                                    </Pressable>
+                                  )}
+                                </View>
+                              );
+                            })}
                           </ScrollView>
                         )}
                       </View>
