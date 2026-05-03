@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { todayYMD } from '@/lib/date/today';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import type { PickedFile } from '@/lib/share/pickNativeFile';
 import type { PhotoChantier } from '@/app/types';
@@ -129,7 +130,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
       id: photoId,
       chantierId: targetChantierId,
       employeId: myId,
-      date: new Date().toISOString().slice(0, 10),
+      date: todayYMD(),
       uri: storageUrl,
       nom: file.filename,
       legende: uploadLegende.trim() || undefined,

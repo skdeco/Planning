@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, ScrollView, Pressable, Modal, Platform, Alert } from 'react-native';
 import * as XLSX from 'xlsx';
 import { useApp } from '@/app/context/AppContext';
+import { todayYMD } from '@/lib/date/today';
 
 interface Props {
   visible: boolean;
@@ -207,7 +208,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(sitData), 'Situations');
       }
 
-      const filename = `bilan_${chantier.nom.replace(/[^a-zA-Z0-9]/g, '_')}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      const filename = `bilan_${chantier.nom.replace(/[^a-zA-Z0-9]/g, '_')}_${todayYMD()}.xlsx`;
       if (Platform.OS === 'web') {
         XLSX.writeFile(wb, filename);
       } else {

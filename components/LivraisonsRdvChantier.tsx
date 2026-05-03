@@ -11,6 +11,7 @@ import { useApp } from '@/app/context/AppContext';
 import type { LivraisonChantier, RdvChantier, FrequenceRdv } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
+import { todayYMD } from '@/lib/date/today';
 
 interface Props {
   chantierId: string;
@@ -29,7 +30,6 @@ const FREQ_LABELS: Record<FrequenceRdv, string> = {
 const JOURS_FR = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
-function todayIso() { return new Date().toISOString().slice(0, 10); }
 function formatFR(iso?: string) {
   if (!iso) return '—';
   return new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -52,7 +52,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
   const [editLivId, setEditLivId] = useState<string | null>(null);
   const [livForm, setLivForm] = useState({
     titre: '',
-    dateLivraison: todayIso(),
+    dateLivraison: todayYMD(),
     heure: '',
     numeroColis: '',
     transporteur: '',
@@ -66,7 +66,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
 
   const openNewLiv = () => {
     setEditLivId(null);
-    setLivForm({ titre: '', dateLivraison: todayIso(), heure: '', numeroColis: '', transporteur: '', numeroTransporteur: '', nomContact: '', telephoneContact: '', adresseLivraison: '', note: '', photoEtiquetteUri: '' });
+    setLivForm({ titre: '', dateLivraison: todayYMD(), heure: '', numeroColis: '', transporteur: '', numeroTransporteur: '', nomContact: '', telephoneContact: '', adresseLivraison: '', note: '', photoEtiquetteUri: '' });
     setShowLivForm(true);
   };
   const openEditLiv = (l: LivraisonChantier) => {
@@ -166,7 +166,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
   const [editRdvId, setEditRdvId] = useState<string | null>(null);
   const [rdvForm, setRdvForm] = useState({
     titre: '',
-    dateDebut: todayIso(),
+    dateDebut: todayYMD(),
     heureDebut: '09:00',
     dureeMinutes: 90,
     frequence: 'hebdomadaire' as FrequenceRdv,
@@ -181,7 +181,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
     setEditRdvId(null);
     setRdvForm({
       titre: 'Point chantier hebdomadaire',
-      dateDebut: todayIso(), heureDebut: '09:00', dureeMinutes: 90,
+      dateDebut: todayYMD(), heureDebut: '09:00', dureeMinutes: 90,
       frequence: 'hebdomadaire', jourSemaine: 0, dateFinRecurrence: '',
       assigneA: 'admin', assigneNom: 'Admin',
       lieu: 'chantier', note: '',

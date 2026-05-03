@@ -24,6 +24,7 @@ import {
   type Chantier, type StatutChantier, type FicheChantier, type NoteChantier, type PlanChantier, type TicketSAV, type PrioriteSAV, type StatutSAV,
   type Apporteur, type Note, type TaskItem,
 } from '@/app/types';
+import { todayYMD } from '@/lib/date/today';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -677,7 +678,7 @@ export default function ChantiersScreen() {
   const handleExportChantier = async (chantier: Chantier) => {
     setExportingId(chantier.id);
     const slug = chantier.nom.replace(/[^a-z0-9]/gi, '_');
-    const dateStr = new Date().toISOString().slice(0, 10);
+    const dateStr = todayYMD();
 
     // ── Données liées au chantier ──────────────────────────────────────────
     const affectations = data.affectations.filter(a => a.chantierId === chantier.id);
@@ -2194,7 +2195,7 @@ export default function ChantiersScreen() {
               {false && ficheId && (() => {
                 const achats = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === ficheId);
                 const totalAchats = achats.reduce((s, d) => s + (d.montant || 0), 0);
-                const todayStr2 = new Date().toISOString().slice(0, 10);
+                const todayStr2 = todayYMD();
 
                 return (
                   <>
@@ -2281,7 +2282,7 @@ export default function ChantiersScreen() {
                               libelle: achatForm.libelle.trim(),
                               montant: parseFloat(achatForm.montantHT.replace(',', '.')) || 0,
                               montantTTC: parseFloat(achatForm.montantTTC.replace(',', '.')) || 0,
-                              date: achatForm.date || new Date().toISOString().slice(0, 10),
+                              date: achatForm.date || todayYMD(),
                               fournisseur: achatForm.fournisseur.trim() || undefined,
                               note: achatForm.note.trim() || undefined,
                               fichier: achatFichierUri || undefined,
@@ -2840,7 +2841,7 @@ export default function ChantiersScreen() {
                 const achats = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === achatsChantierId);
                 const totalHT = achats.reduce((s, d) => s + (d.montant || 0), 0);
                 const totalTTC = achats.reduce((s, d) => s + (d.montantTTC || d.montant || 0), 0);
-                const todayStr3 = new Date().toISOString().slice(0, 10);
+                const todayStr3 = todayYMD();
 
                 return (
                   <>
@@ -2933,7 +2934,7 @@ export default function ChantiersScreen() {
                               libelle: achatForm.libelle.trim(),
                               montant: parseFloat(achatForm.montantHT.replace(',', '.')) || 0,
                               montantTTC: parseFloat(achatForm.montantTTC.replace(',', '.')) || undefined,
-                              date: achatForm.date || new Date().toISOString().slice(0, 10),
+                              date: achatForm.date || todayYMD(),
                               fournisseur: achatForm.fournisseur.trim() || undefined,
                               note: achatForm.note.trim() || undefined,
                               fichier: achatFichierUri || undefined,
@@ -3850,7 +3851,7 @@ export default function ChantiersScreen() {
                             const userName = currentUser?.nom || (isAdmin ? 'Admin' : 'Employé');
                             // Proposer d'ajouter une photo de résolution
                             const doResolve = async (photos?: string[]) => {
-                              updateTicketSAV({ ...t, statut: 'resolu', dateResolution: new Date().toISOString().slice(0, 10), resoluPar: userName, photosResolution: photos || t.photosResolution, updatedAt: new Date().toISOString() });
+                              updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, photosResolution: photos || t.photosResolution, updatedAt: new Date().toISOString() });
                             };
                             if (Platform.OS === 'web') { doResolve(); return; }
                             Alert.alert('Résoudre le ticket', 'Ajouter une photo de la résolution ?', [

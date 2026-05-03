@@ -20,6 +20,7 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { MoodboardChantier } from '@/components/MoodboardChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { ChatChantier } from '@/components/ChatChantier';
+import { todayYMD } from '@/lib/date/today';
 
 interface PortailClientProps {
   visible: boolean;
@@ -29,10 +30,9 @@ interface PortailClientProps {
 
 function fmt(n: number) { return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
-function todayIso(): string { return new Date().toISOString().slice(0, 10); }
 function isLotEnCours(l: { dateDebutPrevue?: string; dateFinPrevue?: string }): boolean {
   if (!l.dateDebutPrevue || !l.dateFinPrevue) return false;
-  const t = todayIso();
+  const t = todayYMD();
   return t >= l.dateDebutPrevue && t <= l.dateFinPrevue;
 }
 
@@ -279,9 +279,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     () => avancementCorps.reduce((s, c) => s + (c.montant || 0), 0),
     [avancementCorps]
   );
-  // Si on a le TTC du devis, on l'utilise directement → sinon on reconstruit
+  // Somme des TTC des marchés signés (alignée sur le bandeau "Marchés").
+  // Source de vérité prioritaire si elle existe : évite la divergence
+  // d'affichage entre "Marchés" et "Suivi financier" sur les chantiers
+  // sans devisTVABreakdown (ancien stockage).
+  const marcheTTC = useMemo(() => marches.reduce((s, m) => s + (m.montantTTC || 0), 0), [marches]);
+  // Cascade priorité : marcheTTC > devisTotalTTC > tvaBreakdown > fallback 20%
   const totalTVAFromDevis = tvaBreakdown.reduce((s, t) => s + t.montant, 0);
-  const totalChantierTTC = chantier?.devisTotalTTC
+  const totalChantierTTC = marcheTTC > 0
+    ? marcheTTC
+    : chantier?.devisTotalTTC
     ? chantier.devisTotalTTC
     : totalTVAFromDevis > 0
     ? totalChantierHT + totalTVAFromDevis
@@ -1163,27 +1170,45 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
                     <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT)} €</Text>
                   </View>
-                  {tvaBreakdown.length > 0 ? (
-                    tvaBreakdown.map((t, i) => (
-                      <View key={i} style={styles.pfsResumeRow}>
-                        <Text style={styles.pfsResumeLabel}>+ TVA {t.taux.toString().replace('.', ',')}%</Text>
-                        <Text style={styles.pfsResumeValue}>{fmt(t.montant)} €</Text>
+                  {(() => {
+                    const tauxEffectif = totalChantierHT > 0
+                      ? Math.round(((totalChantierTTC - totalChantierHT) / totalChantierHT) * 1000) / 10
+                      : 0;
+                    if (marcheTTC > 0 && totalChantierHT > 0) {
+                      return (
+                        <View style={styles.pfsResumeRow}>
+                          <Text style={styles.pfsResumeLabel}>
+                            + TVA (devis, taux effectif {tauxEffectif.toFixed(1).replace('.', ',')}%)
+                          </Text>
+                          <Text style={styles.pfsResumeValue}>{fmt(totalChantierTTC - totalChantierHT)} €</Text>
+                        </View>
+                      );
+                    }
+                    if (tvaBreakdown.length > 0) {
+                      return tvaBreakdown.map((t, i) => (
+                        <View key={i} style={styles.pfsResumeRow}>
+                          <Text style={styles.pfsResumeLabel}>+ TVA {t.taux.toString().replace('.', ',')}%</Text>
+                          <Text style={styles.pfsResumeValue}>{fmt(t.montant)} €</Text>
+                        </View>
+                      ));
+                    }
+                    if (chantier?.devisTotalTTC && totalChantierHT > 0) {
+                      return (
+                        <View style={styles.pfsResumeRow}>
+                          <Text style={styles.pfsResumeLabel}>
+                            + TVA (taux effectif {(tvaRatioEffectif * 100).toFixed(1).replace('.', ',')}%)
+                          </Text>
+                          <Text style={styles.pfsResumeValue}>{fmt(totalChantierTTC - totalChantierHT)} €</Text>
+                        </View>
+                      );
+                    }
+                    return (
+                      <View style={styles.pfsResumeRow}>
+                        <Text style={styles.pfsResumeLabel}>+ TVA 20% (par défaut)</Text>
+                        <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT * TVA_RATE_DEFAULT)} €</Text>
                       </View>
-                    ))
-                  ) : chantier?.devisTotalTTC && totalChantierHT > 0 ? (
-                    // Pas de split, mais TTC du devis connu → calcul effectif
-                    <View style={styles.pfsResumeRow}>
-                      <Text style={styles.pfsResumeLabel}>
-                        + TVA (taux effectif {(tvaRatioEffectif * 100).toFixed(1).replace('.', ',')}%)
-                      </Text>
-                      <Text style={styles.pfsResumeValue}>{fmt(totalChantierTTC - totalChantierHT)} €</Text>
-                    </View>
-                  ) : (
-                    <View style={styles.pfsResumeRow}>
-                      <Text style={styles.pfsResumeLabel}>+ TVA 20% (par défaut)</Text>
-                      <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT * TVA_RATE_DEFAULT)} €</Text>
-                    </View>
-                  )}
+                    );
+                  })()}
                   <View style={[styles.pfsResumeRow, { borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 6, marginTop: 2 }]}>
                     <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>= Total chantier TTC</Text>
                     <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>

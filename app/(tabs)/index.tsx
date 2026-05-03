@@ -13,6 +13,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { todayYMD } from '@/lib/date/today';
 import { BADGE_TYPES } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -583,18 +584,18 @@ export default function DashboardScreen() {
                                   onPress={async () => {
                                     const userName = currentUser?.nom || emp?.prenom || 'Employé';
                                     if (Platform.OS === 'web') {
-                                      data.ticketsSAV && updateTicketSAV({ ...t, statut: 'resolu', dateResolution: new Date().toISOString().slice(0, 10), resoluPar: userName, updatedAt: new Date().toISOString() });
+                                      data.ticketsSAV && updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() });
                                     } else {
                                       Alert.alert('Résoudre le SAV', 'Ajouter une photo/document ?', [
                                         { text: 'Annuler', style: 'cancel' },
-                                        { text: 'Résoudre sans photo', onPress: () => updateTicketSAV({ ...t, statut: 'resolu', dateResolution: new Date().toISOString().slice(0, 10), resoluPar: userName, updatedAt: new Date().toISOString() }) },
+                                        { text: 'Résoudre sans photo', onPress: () => updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() }) },
                                         { text: '📷 Ajouter photo', onPress: async () => {
                                           const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
                                           if (!result.canceled && result.assets[0]) {
                                             const { uploadFileToStorage } = require('@/lib/supabase');
                                             const compressed = await compressImage(result.assets[0].uri);
                                             const url = await uploadFileToStorage(compressed, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}_${Date.now()}`);
-                                            updateTicketSAV({ ...t, statut: 'resolu', dateResolution: new Date().toISOString().slice(0, 10), resoluPar: userName, photosResolution: [...(t.photosResolution || []), ...(url ? [url] : [])], updatedAt: new Date().toISOString() });
+                                            updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, photosResolution: [...(t.photosResolution || []), ...(url ? [url] : [])], updatedAt: new Date().toISOString() });
                                           }
                                         }},
                                       ]);

@@ -12,6 +12,7 @@ import { SignaturePad } from '@/components/SignaturePad';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { todayYMD } from '@/lib/date/today';
 import {
   MODES_PAIEMENT,
   type MarcheChantier, type SupplementMarche, type PaiementRecu,
@@ -26,7 +27,6 @@ interface Props {
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 function fmt(n: number) { return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
-function todayYMD() { return new Date().toISOString().slice(0, 10); }
 
 export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   const { data, addMarcheChantier, updateMarcheChantier, deleteMarcheChantier, addSupplementMarche, updateSupplementMarche, deleteSupplementMarche } = useApp();

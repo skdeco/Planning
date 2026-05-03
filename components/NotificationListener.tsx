@@ -1,6 +1,7 @@
 import { useEffect, useRef, useMemo } from 'react';
 import { useApp } from '@/app/context/AppContext';
 import { useNotifications, sendPushNotification } from '@/hooks/useNotifications';
+import { todayYMD } from '@/lib/date/today';
 
 /**
  * Récupère les push tokens de l'admin (employés avec role 'admin' ou lié via adminEmployeId).
@@ -25,7 +26,7 @@ function getAdminPushTokens(employes: any[], adminEmployeId?: string): string[] 
  * Récupère les push tokens des employés affectés à un chantier (sauf l'expéditeur).
  */
 function getChantierEmployeeTokens(chantierId: string, excludeId: string, affectations: any[], employes: any[]): string[] {
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayYMD();
   const employeIds = new Set(
     affectations
       .filter(a => a.chantierId === chantierId && a.employeId !== excludeId && a.dateDebut <= todayStr && a.dateFin >= todayStr)
@@ -440,7 +441,7 @@ export function NotificationListener() {
   useEffect(() => {
     if (!isAdmin || absenceCheckRef.current) return;
     absenceCheckRef.current = true;
-    const todayStr = new Date().toISOString().slice(0, 10);
+    const todayStr = todayYMD();
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 

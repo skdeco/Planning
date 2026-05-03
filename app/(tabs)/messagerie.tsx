@@ -13,6 +13,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { inboxItemToDataUri } from '@/lib/share/inboxToDataUri';
 import type { InboxItem } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { todayYMD } from '@/lib/date/today';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran (messagerie =
 // photos/vidéos uniquement). Diffère de inboxMimeFilterImagePdf utilisé
@@ -93,7 +94,7 @@ export default function MessagerieScreen() {
   const scrollRef = useRef<ScrollView>(null);
 
   // Chantiers de l'employé : tous les chantiers actifs où il est affecté (pas seulement aujourd'hui)
-  const todayStr = new Date().toISOString().slice(0, 10);
+  const todayStr = todayYMD();
   const mesChantiers = useMemo(() => {
     const empId = currentUser?.employeId || currentUser?.soustraitantId;
     if (!empId || isAdmin) return data.chantiers.filter(c => c.statut === 'actif');
@@ -1021,7 +1022,7 @@ export default function MessagerieScreen() {
 
         {/* Panneau programmation (admin) */}
         {showSchedule && isAdmin && (() => {
-          const todayYmd = new Date().toISOString().slice(0, 10);
+          const todayYmd = todayYMD();
           const demainYmd = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); })();
           const apresDemainYmd = (() => { const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().slice(0, 10); })();
           const lundiYmd = (() => { const d = new Date(); const dow = d.getDay(); d.setDate(d.getDate() + (dow === 0 ? 1 : 8 - dow)); return d.toISOString().slice(0, 10); })();

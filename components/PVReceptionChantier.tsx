@@ -11,6 +11,7 @@ import type { Chantier } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { SignaturePad } from '@/components/SignaturePad';
+import { todayYMD } from '@/lib/date/today';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -34,7 +35,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
   const pv = chantier.pvReception;
   const [show, setShow] = useState(false);
   const [items, setItems] = useState(pv?.items || []);
-  const [dateReception, setDateReception] = useState(pv?.dateReception || new Date().toISOString().slice(0, 10));
+  const [dateReception, setDateReception] = useState(pv?.dateReception || todayYMD());
   const [signaturePadVisible, setSignaturePadVisible] = useState(false);
 
   const hasPv = !!pv;
@@ -55,7 +56,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
       CHECKLIST_DEFAUT.forEach(g => g.items.forEach(lib => init.push({ id: genId('pv'), libelle: lib, categorie: g.cat, conforme: null })));
       setItems(init);
     }
-    setDateReception(pv?.dateReception || new Date().toISOString().slice(0, 10));
+    setDateReception(pv?.dateReception || todayYMD());
     setShow(true);
   };
 

@@ -8,9 +8,9 @@ import { useApp } from '@/app/context/AppContext';
 import { DOC_SOCIETE_CATEGORIES, type DocSocieteCategorie, type DocumentSociete } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
+import { todayYMD } from '@/lib/date/today';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
-function todayIso() { return new Date().toISOString().slice(0, 10); }
 function daysBetween(a: string, b: string): number {
   return Math.round((new Date(b + 'T12:00:00').getTime() - new Date(a + 'T12:00:00').getTime()) / 86400000);
 }
@@ -54,7 +54,7 @@ export default function SocieteScreen() {
   // Docs qui expirent bientôt (toutes catégories)
   const alertes = useMemo(() => {
     const all = data.documentsSociete || [];
-    const today = todayIso();
+    const today = todayYMD();
     return all
       .filter(d => d.dateExpiration)
       .map(d => ({ doc: d, jours: daysBetween(today, d.dateExpiration!) }))
@@ -278,7 +278,7 @@ export default function SocieteScreen() {
         ) : (
           docs.map(d => {
             const cat = DOC_SOCIETE_CATEGORIES.find(c => c.key === d.categorie);
-            const exp = d.dateExpiration ? daysBetween(todayIso(), d.dateExpiration) : null;
+            const exp = d.dateExpiration ? daysBetween(todayYMD(), d.dateExpiration) : null;
             const expExpired = exp !== null && exp < 0;
             const expSoon = exp !== null && exp >= 0 && exp <= 60;
             return (
