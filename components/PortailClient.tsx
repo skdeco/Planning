@@ -21,6 +21,7 @@ import { MoodboardChantier } from '@/components/MoodboardChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { ChatChantier } from '@/components/ChatChantier';
 import { todayYMD } from '@/lib/date/today';
+import { canVoirOnglet, type OngletPortail } from '@/lib/portail/permissions';
 
 interface PortailClientProps {
   visible: boolean;
@@ -83,6 +84,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   }, [visible, chantier?.id, isExterne, externAp?.id]);
 
   // ── UI state ──
+  const [ongletActif, setOngletActif] = useState<OngletPortail>('projet');
+  // Revert au premier onglet visible si l'actif disparaît (changement permissions).
+  useEffect(() => {
+    if (!chantier) return;
+    const keys: OngletPortail[] = ['projet', 'chiffres', 'planning', 'finChantier', 'messages'];
+    const visibles = keys.filter(k => canVoirOnglet(k, externAp, chantier, isAdmin));
+    if (visibles.length > 0 && !visibles.includes(ongletActif)) {
+      setOngletActif(visibles[0]);
+    }
+  }, [chantier, externAp, isAdmin, ongletActif]);
   const [pickerType, setPickerType] = useState<'architecte' | 'apporteur' | 'contractant' | 'client' | null>(null);
   const [showPhotosPicker, setShowPhotosPicker] = useState(false);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
@@ -1034,6 +1045,24 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Apporteurs filtrés pour le picker
   const apporteursDuType = pickerType ? apporteurs.filter(a => a.type === pickerType) : [];
 
+  // ── KPI : jours restants jusqu'à dateFin ──
+  const joursRestants = (() => {
+    if (!chantier.dateFin) return null;
+    const fin = new Date(chantier.dateFin + 'T12:00:00');
+    const today = new Date();
+    return Math.round((fin.getTime() - today.getTime()) / 86400000);
+  })();
+
+  // ── Onglets : config + filtre permissions ──
+  const ongletsConfig: { key: OngletPortail; label: string; icon: string }[] = [
+    { key: 'projet', label: 'Projet', icon: '🎨' },
+    { key: 'chiffres', label: 'Chiffres', icon: '💰' },
+    { key: 'planning', label: 'Planning', icon: '📅' },
+    { key: 'finChantier', label: 'Fin de chantier', icon: '🏁' },
+    { key: 'messages', label: 'Messages', icon: '💬' },
+  ];
+  const ongletsVisibles = ongletsConfig.filter(o => canVoirOnglet(o.key, externAp, chantier, isAdmin));
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -1048,6 +1077,44 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
           </View>
+
+          {/* ── KPI bar ── */}
+          <View style={styles.kpiBar}>
+            <View style={styles.kpiCell}>
+              <Text style={styles.kpiLabel}>Avancement</Text>
+              <Text style={styles.kpiValue}>{avancementGlobalCorps != null ? `${avancementGlobalCorps}%` : '—'}</Text>
+            </View>
+            <View style={styles.kpiCell}>
+              <Text style={styles.kpiLabel}>Budget</Text>
+              <Text style={styles.kpiValue} numberOfLines={1}>{fmt(dejaPayeTotal)} / {fmt(totalChantierTTC)} €</Text>
+            </View>
+            <View style={styles.kpiCell}>
+              <Text style={styles.kpiLabel}>Reste</Text>
+              <Text style={styles.kpiValue}>
+                {joursRestants === null ? '—' : joursRestants >= 0 ? `J-${joursRestants}` : `J+${Math.abs(joursRestants)}`}
+              </Text>
+            </View>
+          </View>
+
+          {/* ── Tab bar (scroll horizontal) ── */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.tabBarContent}
+            style={styles.tabBar}
+          >
+            {ongletsVisibles.map(o => (
+              <Pressable
+                key={o.key}
+                onPress={() => setOngletActif(o.key)}
+                style={[styles.tab, ongletActif === o.key && styles.tabActive]}
+              >
+                <Text style={[styles.tabText, ongletActif === o.key && styles.tabTextActive]}>
+                  {o.icon} {o.label}
+                </Text>
+              </Pressable>
+            ))}
+          </ScrollView>
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
@@ -1102,7 +1169,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </View>
             )}
 
-            {/* ── Marchés (déplacé ici, juste sous "Lié à") ── */}
+            {/* ─────────────── ONGLET CHIFFRES ─────────────── */}
+            {ongletActif === 'chiffres' && (<>
+            {/* ── Marchés ── */}
             {(marches.length > 0 || supplements.length > 0) && (
               <View style={styles.card}>
                 <Text style={styles.sectionTitle}>Marchés</Text>
@@ -1575,7 +1644,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </>
             )}
             </View>
+            </>)}
+            {/* ─────────────── /ONGLET CHIFFRES ─────────────── */}
 
+            {/* ─────────────── ONGLET PLANNING ─────────────── */}
+            {ongletActif === 'planning' && (<>
             {/* ── Livraisons & RDV de chantier ── */}
             <LivraisonsRdvChantier
               chantierId={chantierId}
@@ -1583,7 +1656,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               externRole={isExterne ? externAp?.type : undefined}
               createdByNom={currentUser?.nom}
             />
+            </>)}
+            {/* ─────────────── /ONGLET PLANNING ─────────────── */}
 
+            {/* ─────────────── ONGLET PROJET ─────────────── */}
+            {ongletActif === 'projet' && (<>
             {/* ── Moodboard inspirations ── */}
             <MoodboardChantier
               chantier={chantier}
@@ -1591,13 +1668,26 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
             />
 
+            {/* ── Plans : placeholder C2 ── */}
+            <View style={{ padding: 12, backgroundColor: '#F5EDE3', borderRadius: 8, marginVertical: 8 }}>
+              <Text style={{ fontStyle: 'italic', color: '#687076' }}>📐 Plans — section à implémenter (C2)</Text>
+            </View>
+            </>)}
+            {/* ─────────────── /ONGLET PROJET ─────────────── */}
+
+            {/* ─────────────── ONGLET FIN DE CHANTIER ─────────────── */}
+            {ongletActif === 'finChantier' && (<>
             {/* ── PV de réception ── */}
             <PVReceptionChantier
               chantier={chantier}
               isAdmin={isAdmin}
               externAp={isExterne && externAp ? { type: externAp.type, prenom: externAp.prenom, nom: externAp.nom } : undefined}
             />
+            </>)}
+            {/* ─────────────── /ONGLET FIN DE CHANTIER (partiel — SAV plus bas) ─────────────── */}
 
+            {/* ─────────────── ONGLET MESSAGES ─────────────── */}
+            {ongletActif === 'messages' && (<>
             {/* ── Chat chantier ── */}
             <ChatChantier
               chantier={chantier}
@@ -1605,7 +1695,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
               currentUserNom={currentUser?.nom}
             />
+            </>)}
+            {/* ─────────────── /ONGLET MESSAGES ─────────────── */}
 
+            {/* ─────────────── ONGLET PROJET (suite : Photos) ─────────────── */}
+            {ongletActif === 'projet' && (<>
             {/* ── Photos portail client ── */}
             <View style={styles.card}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -1649,7 +1743,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               )}
             </View>
+            </>)}
+            {/* ─────────────── /ONGLET PROJET (suite Photos) ─────────────── */}
 
+            {/* ─────────────── ONGLET FIN DE CHANTIER (suite : SAV) ─────────────── */}
+            {ongletActif === 'finChantier' && (<>
             {/* ── SAV ── */}
             {ticketsSAV.length > 0 && (
               <View style={styles.card}>
@@ -1670,33 +1768,23 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 })}
               </View>
             )}
+            </>)}
+            {/* ─────────────── /ONGLET FIN DE CHANTIER ─────────────── */}
 
-            {/* ── Timeline ── */}
-            {timeline.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Dernieres activites</Text>
-                {timeline.map((n, i) => (
-                  <View key={i} style={styles.timelineRow}>
-                    <View style={styles.timelineDot} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.timelineDate}>{formatDate(n.date)}</Text>
-                      <Text style={styles.timelineText}>{n.texte}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            )}
-
-            {/* ── Boutons ── */}
-            <View style={styles.buttonsRow}>
-              <Pressable style={styles.partagerBtn} onPress={handlePartager}>
-                <Text style={styles.partagerBtnText}>📄 Partager le rapport</Text>
-              </Pressable>
-              <Pressable style={styles.fermerBtn} onPress={onClose}>
-                <Text style={styles.fermerBtnText}>Fermer</Text>
-              </Pressable>
-            </View>
+            {/* Section "Dernières activités" (timeline) supprimée du rendu C1.
+                La fonction `timeline` reste calculée pour usage potentiel futur
+                (ex: timelineHtml export PDF, voir handlePartager). */}
           </ScrollView>
+
+          {/* ── Boutons sticky bottom (hors ScrollView, toujours visibles) ── */}
+          <View style={styles.buttonsRow}>
+            <Pressable style={styles.partagerBtn} onPress={handlePartager}>
+              <Text style={styles.partagerBtnText}>📄 Partager le rapport</Text>
+            </Pressable>
+            <Pressable style={styles.fermerBtn} onPress={onClose}>
+              <Text style={styles.fermerBtnText}>Fermer</Text>
+            </Pressable>
+          </View>
         </View>
       </View>
 
@@ -2910,4 +2998,52 @@ const styles = StyleSheet.create({
     color: '#2C2C2C',
     lineHeight: 17,
   },
+
+  // ── Refonte C1 : KPI bar + tabs ──
+  kpiBar: {
+    flexDirection: 'row',
+    backgroundColor: '#F5EDE3',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8DDD0',
+  },
+  kpiCell: { flex: 1 },
+  kpiLabel: {
+    fontSize: 9,
+    color: '#687076',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 3,
+    fontWeight: '600',
+  },
+  kpiValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#2C2C2C',
+  },
+  tabBar: {
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E8DDD0',
+    maxHeight: 56,
+  },
+  tabBarContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 6,
+  },
+  tab: {
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 18,
+    backgroundColor: '#F5EDE3',
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tabActive: { backgroundColor: '#2C2C2C' },
+  tabText: { fontSize: 12, fontWeight: '600', color: '#687076' },
+  tabTextActive: { color: '#fff', fontWeight: '700' },
 });

@@ -287,6 +287,14 @@ export interface Chantier {
     nomSignataire?: string;
     clotureLe?: string;                 // ISO datetime de clôture
   };
+  /** Override des permissions portail par contact (clé = apporteur.id) */
+  portailOverrides?: Record<string, {
+    voirProjet?: boolean;
+    voirChiffres?: boolean;
+    voirPlanning?: boolean;
+    voirFinChantier?: boolean;
+    voirMessages?: boolean;
+  }>;
 }
 
 /** Snapshot figé d'un point financier de situation (avant émission d'une facture). */
@@ -457,6 +465,14 @@ export interface Apporteur {
   motDePasseVisible?: string;  // copie visible côté admin seulement (masquée par défaut avec œil)
   accesApp?: boolean;          // true si l'admin a activé l'accès à l'app
   derniereConnexion?: string;  // ISO datetime
+  /** Permissions par défaut sur le portail client (override possible par chantier) */
+  portailDefaut?: {
+    voirProjet?: boolean;
+    voirChiffres?: boolean;
+    voirPlanning?: boolean;
+    voirFinChantier?: boolean;
+    voirMessages?: boolean;
+  };
   createdAt: string;
   updatedAt: string;
 }
