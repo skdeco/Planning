@@ -27,7 +27,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { getInboxItemPath } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
-import { todayYMD } from '@/lib/date/today';
+import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 import { canVoirOnglet, type OngletPortail } from '@/lib/portail/permissions';
 
 /** Filtre mime pour InboxPickerButton : photos + PDF (réutilisé d'autres écrans). */
@@ -1603,6 +1603,65 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET PLANNING ─────────────── */}
             {ongletActif === 'planning' && (<>
+            {/* ── Équipe sur place J+0 / J+1 ── */}
+            {(() => {
+              const today = todayYMD();
+              const tomorrow = dateOffsetYMD(1);
+              type Person = { id: string; label: string; isST: boolean };
+              const personsForDate = (target: string): Person[] => {
+                const affs = data.affectations.filter(
+                  a => a.chantierId === chantierId && a.dateDebut <= target && a.dateFin >= target,
+                );
+                const persons: Person[] = [];
+                const seen = new Set<string>();
+                affs.forEach(a => {
+                  if (seen.has(a.employeId)) return;
+                  seen.add(a.employeId);
+                  if (a.employeId.startsWith('st:')) {
+                    const stId = a.employeId.replace('st:', '');
+                    const st = data.sousTraitants.find(s => s.id === stId);
+                    if (st) {
+                      persons.push({ id: a.employeId, label: `ST ${st.societe || `${st.prenom} ${st.nom}`}`, isST: true });
+                    }
+                  } else {
+                    const emp = data.employes.find(e => e.id === a.employeId);
+                    if (emp) persons.push({ id: a.employeId, label: emp.prenom, isST: false });
+                  }
+                });
+                return persons;
+              };
+              const equipeJ0 = personsForDate(today);
+              const equipeJ1 = personsForDate(tomorrow);
+              const formatDateShort = (ymd: string) => {
+                const d = new Date(ymd + 'T12:00:00');
+                return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short' });
+              };
+              const renderRow = (label: string, dateStr: string, persons: Person[]) => (
+                <View style={styles.equipeRow}>
+                  <Text style={styles.equipeJourLabel}>{label}</Text>
+                  <Text style={styles.equipeJourDate}>{formatDateShort(dateStr)}</Text>
+                  {persons.length === 0 ? (
+                    <View style={[styles.equipeBadge, styles.equipeBadgeRouge]}>
+                      <Text style={styles.equipeBadgeRougeText}>🔴 Personne prévu</Text>
+                    </View>
+                  ) : (
+                    <View style={[styles.equipeBadge, styles.equipeBadgeVert]}>
+                      <Text style={styles.equipeBadgeVertText} numberOfLines={2}>
+                        🟢 {persons.map(p => p.label).join(' · ')} ({persons.length})
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              );
+              return (
+                <View style={styles.card}>
+                  <Text style={styles.sectionTitle}>👷 Équipe sur place</Text>
+                  {renderRow("AUJOURD'HUI", today, equipeJ0)}
+                  {renderRow('DEMAIN', tomorrow, equipeJ1)}
+                </View>
+              );
+            })()}
+
             {/* ── Livraisons & RDV de chantier ── */}
             <LivraisonsRdvChantier
               chantierId={chantierId}
@@ -3111,6 +3170,39 @@ const styles = StyleSheet.create({
     color: '#2C2C2C',
     lineHeight: 17,
   },
+
+  // ── C3c : bloc Équipe sur place J/J+1 ──
+  equipeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 6,
+    borderTopWidth: 1,
+    borderTopColor: '#F5EDE3',
+  },
+  equipeJourLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#687076',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    width: 80,
+  },
+  equipeJourDate: {
+    fontSize: 11,
+    color: '#687076',
+    width: 60,
+  },
+  equipeBadge: {
+    flex: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  equipeBadgeVert: { backgroundColor: '#E8F5E9' },
+  equipeBadgeVertText: { color: '#2E7D32', fontSize: 12, fontWeight: '600' },
+  equipeBadgeRouge: { backgroundColor: '#FFEBEE' },
+  equipeBadgeRougeText: { color: '#C62828', fontSize: 12, fontWeight: '700' },
 
   // ── Refonte C3a : SAV cliquable ──
   savRowClickable: {

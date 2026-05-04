@@ -22,6 +22,23 @@ export function todayYMD(): string {
   return `${y}-${m}-${day}`;
 }
 
+/**
+ * Retourne YYYY-MM-DD pour aujourd'hui + `daysOffset` jours, en heure locale.
+ * Utilise getFullYear/Month/Date (jamais toISOString().slice) pour éviter
+ * le décalage UTC J-1 entre 00h et 02h locale (CEST = UTC+2).
+ *
+ * Exemples : `dateOffsetYMD(0) === todayYMD()`, `dateOffsetYMD(1)` = demain,
+ * `dateOffsetYMD(7)` = dans une semaine, `dateOffsetYMD(-1)` = hier.
+ */
+export function dateOffsetYMD(daysOffset: number): string {
+  const d = new Date();
+  d.setDate(d.getDate() + daysOffset);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
 export function nowISO(): string {
   return new Date().toISOString();
 }

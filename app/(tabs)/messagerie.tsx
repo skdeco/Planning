@@ -13,7 +13,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { inboxItemToDataUri } from '@/lib/share/inboxToDataUri';
 import type { InboxItem } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
-import { todayYMD } from '@/lib/date/today';
+import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran (messagerie =
 // photos/vidéos uniquement). Diffère de inboxMimeFilterImagePdf utilisé
@@ -1023,9 +1023,19 @@ export default function MessagerieScreen() {
         {/* Panneau programmation (admin) */}
         {showSchedule && isAdmin && (() => {
           const todayYmd = todayYMD();
-          const demainYmd = (() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().slice(0, 10); })();
-          const apresDemainYmd = (() => { const d = new Date(); d.setDate(d.getDate() + 2); return d.toISOString().slice(0, 10); })();
-          const lundiYmd = (() => { const d = new Date(); const dow = d.getDay(); d.setDate(d.getDate() + (dow === 0 ? 1 : 8 - dow)); return d.toISOString().slice(0, 10); })();
+          const demainYmd = dateOffsetYMD(1);
+          const apresDemainYmd = dateOffsetYMD(2);
+          // Prochain lundi (offset variable selon getDay()) : calcul inline avec
+          // getFullYear/Month/Date pour éviter le bug UTC J-1.
+          const lundiYmd = (() => {
+            const d = new Date();
+            const dow = d.getDay();
+            d.setDate(d.getDate() + (dow === 0 ? 1 : 8 - dow));
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            return `${y}-${m}-${day}`;
+          })();
           const formatFr = (ymd: string) => { const d = new Date(ymd + 'T12:00:00'); return `${d.getDate()}/${d.getMonth() + 1}`; };
           const heures = ['06:00', '07:00', '08:00', '09:00', '10:00', '12:00', '14:00', '16:00', '18:00', '20:00'];
           return (

@@ -11,7 +11,7 @@ import { useApp } from '@/app/context/AppContext';
 import type { LivraisonChantier, RdvChantier, FrequenceRdv } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
-import { todayYMD } from '@/lib/date/today';
+import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 
 interface Props {
   chantierId: string;
@@ -38,13 +38,40 @@ function formatFR(iso?: string) {
 export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, createdByNom }: Props) {
   const { data, addLivraison, updateLivraison, deleteLivraison, addRdvChantier, updateRdvChantier, deleteRdvChantier, currentUser } = useApp();
 
-  const livraisons = useMemo(
+  const allLivraisons = useMemo(
     () => (data.livraisons || []).filter(l => l.chantierId === chantierId).sort((a, b) => a.dateLivraison.localeCompare(b.dateLivraison)),
     [data.livraisons, chantierId]
   );
-  const rdvs = useMemo(
+  const allRdvs = useMemo(
     () => (data.rdvChantiers || []).filter(r => r.chantierId === chantierId).sort((a, b) => a.dateDebut.localeCompare(b.dateDebut)),
     [data.rdvChantiers, chantierId]
+  );
+
+  // C3c Bug 11 : filtre horizon J+0 → J+7 pour client/apporteur/architecte/contractant.
+  // Admin voit tout (pas de filtre). Le contractant voit comme client.
+  const today = useMemo(() => todayYMD(), []);
+  const horizonFin = useMemo(() => dateOffsetYMD(7), []);
+  const filtreHorizon = (date: string): boolean => {
+    if (isAdmin) return true;
+    return date >= today && date <= horizonFin;
+  };
+  const livraisons = useMemo(
+    () => allLivraisons.filter(l => filtreHorizon(l.dateLivraison)),
+    [allLivraisons, isAdmin, today, horizonFin],
+  );
+  const rdvs = useMemo(
+    () => allRdvs.filter(r => filtreHorizon(r.dateDebut)),
+    [allRdvs, isAdmin, today, horizonFin],
+  );
+
+  // Prochain item futur hors horizon (pour message indicatif si liste filtrée vide).
+  const prochaineLivraisonHorsHorizon = useMemo(
+    () => allLivraisons.find(l => l.dateLivraison > horizonFin),
+    [allLivraisons, horizonFin],
+  );
+  const prochainRdvHorsHorizon = useMemo(
+    () => allRdvs.find(r => r.dateDebut > horizonFin),
+    [allRdvs, horizonFin],
   );
 
   // ── Livraison form ──
@@ -264,7 +291,13 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
     <View style={styles.card}>
       <Text style={styles.sectionTitle}>🚚 Livraisons ({livraisons.length})</Text>
       {livraisons.length === 0 ? (
-        <Text style={styles.empty}>Aucune livraison prévue.</Text>
+        !isAdmin && prochaineLivraisonHorsHorizon ? (
+          <Text style={styles.empty}>
+            Aucune livraison cette semaine. Prochaine : {formatFR(prochaineLivraisonHorsHorizon.dateLivraison)} ({prochaineLivraisonHorsHorizon.titre})
+          </Text>
+        ) : (
+          <Text style={styles.empty}>{isAdmin ? 'Aucune livraison prévue.' : 'Aucune livraison prévue cette semaine.'}</Text>
+        )
       ) : (
         livraisons.map(l => (
           <View key={l.id} style={[styles.livCard, l.recue && styles.livCardDone]}>
@@ -316,7 +349,13 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
           <View style={styles.divider} />
           <Text style={styles.sectionTitle}>📅 RDV de chantier ({rdvs.length})</Text>
           {rdvs.length === 0 ? (
-            <Text style={styles.empty}>Aucun RDV programmé.</Text>
+            !isAdmin && prochainRdvHorsHorizon ? (
+              <Text style={styles.empty}>
+                Aucun RDV cette semaine. Prochain : {formatFR(prochainRdvHorsHorizon.dateDebut)} ({prochainRdvHorsHorizon.titre})
+              </Text>
+            ) : (
+              <Text style={styles.empty}>{isAdmin ? 'Aucun RDV programmé.' : 'Aucun RDV cette semaine.'}</Text>
+            )
           ) : (
             rdvs.map(r => (
               <View key={r.id} style={styles.rdvCard}>
