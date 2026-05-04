@@ -20,6 +20,8 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { MoodboardChantier } from '@/components/MoodboardChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { ChatChantier } from '@/components/ChatChantier';
+import { ModalSAVDetail } from '@/components/ModalSAVDetail';
+import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -100,6 +102,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   // ── UI state ──
   const [ongletActif, setOngletActif] = useState<OngletPortail>('projet');
+  const [savDetailId, setSavDetailId] = useState<string | null>(null);
+  const [showNouveauSav, setShowNouveauSav] = useState(false);
   // Revert au premier onglet visible si l'actif disparaît (changement permissions).
   useEffect(() => {
     if (!chantier) return;
@@ -1809,25 +1813,46 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ─────────────── ONGLET FIN DE CHANTIER (suite : SAV) ─────────────── */}
             {ongletActif === 'finChantier' && (<>
             {/* ── SAV ── */}
-            {ticketsSAV.length > 0 && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>SAV</Text>
-                {ticketsSAV.map(t => {
-                  const sc = SAV_STATUT_COLORS[t.statut] || SAV_STATUT_COLORS.ouvert;
-                  return (
-                    <View key={t.id} style={styles.savRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.savObjet}>{t.objet}</Text>
-                        {t.description ? <Text style={styles.savDesc}>{t.description}</Text> : null}
-                      </View>
-                      <View style={[styles.savBadge, { backgroundColor: sc.bg }]}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: sc.text }}>{SAV_STATUT_LABELS[t.statut] || t.statut}</Text>
-                      </View>
-                    </View>
-                  );
-                })}
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+                <Text style={styles.sectionTitle}>🔧 SAV ({ticketsSAV.length})</Text>
+                <Pressable onPress={() => setShowNouveauSav(true)} style={styles.savCreerBtn}>
+                  <Text style={styles.savCreerBtnText}>+ Signaler</Text>
+                </Pressable>
               </View>
-            )}
+              {ticketsSAV.length === 0 ? (
+                <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
+                  Aucun ticket SAV pour ce chantier
+                </Text>
+              ) : (
+                <View style={{ gap: 6 }}>
+                  {ticketsSAV.map(t => {
+                    const sc = SAV_STATUT_COLORS[t.statut] || SAV_STATUT_COLORS.ouvert;
+                    return (
+                      <Pressable
+                        key={t.id}
+                        onPress={() => setSavDetailId(t.id)}
+                        style={styles.savRowClickable}
+                      >
+                        <View style={{ flex: 1, minWidth: 0 }}>
+                          <Text style={styles.savObjet} numberOfLines={1}>{t.objet}</Text>
+                          {t.creePar && t.creePar.type !== 'admin' && (
+                            <Text style={styles.savCreeparBadge}>Signalé par {t.creePar.nom}</Text>
+                          )}
+                          {!t.creePar && t.description ? (
+                            <Text style={styles.savDesc} numberOfLines={1}>{t.description}</Text>
+                          ) : null}
+                        </View>
+                        <View style={[styles.savBadge, { backgroundColor: sc.bg }]}>
+                          <Text style={{ fontSize: 10, fontWeight: '700', color: sc.text }}>{SAV_STATUT_LABELS[t.statut] || t.statut}</Text>
+                        </View>
+                        <Text style={styles.savChevron}>›</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              )}
+            </View>
             </>)}
             {/* ─────────────── /ONGLET FIN DE CHANTIER ─────────────── */}
 
@@ -2272,6 +2297,33 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           </View>
         </View>
       </Modal>
+
+      {/* ── Modal SAV Détail (édition selon mode admin/lecture-commentaire) ── */}
+      {savDetailId && (
+        <ModalSAVDetail
+          visible={!!savDetailId}
+          ticketId={savDetailId}
+          chantierId={chantierId}
+          currentAuthorNom={currentUser?.nom || (externAp ? `${externAp.prenom} ${externAp.nom}` : 'Utilisateur')}
+          mode={isAdmin ? 'admin' : 'lecture-commentaire'}
+          onClose={() => setSavDetailId(null)}
+        />
+      )}
+
+      {/* ── Modal Création SAV (tous rôles, push notif aux admins si non-admin) ── */}
+      {showNouveauSav && (
+        <ModalNouveauTicketSAV
+          visible={showNouveauSav}
+          chantierId={chantierId}
+          chantierNom={chantier.nom}
+          creePar={{
+            type: isAdmin ? 'admin' : (externAp?.type || 'client'),
+            id: isAdmin ? 'admin' : (externAp?.id || 'unknown'),
+            nom: currentUser?.nom || (externAp ? `${externAp.prenom} ${externAp.nom}` : 'Utilisateur'),
+          }}
+          onClose={() => setShowNouveauSav(false)}
+        />
+      )}
     </Modal>
   );
 }
@@ -3058,6 +3110,42 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#2C2C2C',
     lineHeight: 17,
+  },
+
+  // ── Refonte C3a : SAV cliquable ──
+  savRowClickable: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    backgroundColor: '#FAF7F3',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  savCreeparBadge: {
+    fontSize: 10,
+    color: '#C9A96E',
+    marginTop: 2,
+    fontStyle: 'italic',
+    fontWeight: '600',
+  },
+  savChevron: {
+    fontSize: 18,
+    color: '#C9A96E',
+    fontWeight: '600',
+  },
+  savCreerBtn: {
+    backgroundColor: '#2C2C2C',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  savCreerBtnText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
   },
 
   // ── Refonte C2 : Lié à compact + Plans rows ──

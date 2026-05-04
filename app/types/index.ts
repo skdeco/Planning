@@ -997,7 +997,14 @@ export interface TicketSAV {
   photos?: string[];       // URIs (photos du problème)
   photosResolution?: string[]; // URIs (photos de la résolution)
   fichiers?: { uri: string; nom: string }[]; // PDF/documents joints
-  commentaires?: { id: string; auteur: string; texte: string; date: string }[];
+  commentaires?: { id: string; auteur: string; texte: string; date: string; photo?: string }[];
+  /** Origine de création du ticket (pour traçabilité et badge "Signalé par"). */
+  creePar?: {
+    type: 'admin' | 'apporteur' | 'architecte' | 'contractant' | 'client';
+    id: string;        // id de l'apporteur ou 'admin'
+    nom: string;       // nom affiché
+    createdAt: string; // ISO datetime
+  };
   createdAt: string;
   updatedAt: string;
 }

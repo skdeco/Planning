@@ -2,25 +2,7 @@ import { useEffect, useRef, useMemo } from 'react';
 import { useApp } from '@/app/context/AppContext';
 import { useNotifications, sendPushNotification } from '@/hooks/useNotifications';
 import { todayYMD } from '@/lib/date/today';
-
-/**
- * Récupère les push tokens de l'admin (employés avec role 'admin' ou lié via adminEmployeId).
- */
-function getAdminPushTokens(employes: any[], adminEmployeId?: string): string[] {
-  const tokens: string[] = [];
-  // Admin lié à un employé
-  if (adminEmployeId) {
-    const emp = employes.find(e => e.id === adminEmployeId);
-    if (emp?.pushToken) tokens.push(emp.pushToken);
-  }
-  // Tous les employés avec role 'admin'
-  employes.forEach(e => {
-    if (e.role === 'admin' && e.pushToken && !tokens.includes(e.pushToken)) {
-      tokens.push(e.pushToken);
-    }
-  });
-  return tokens;
-}
+import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 
 /**
  * Récupère les push tokens des employés affectés à un chantier (sauf l'expéditeur).
