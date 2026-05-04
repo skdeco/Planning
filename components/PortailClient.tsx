@@ -20,8 +20,17 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { MoodboardChantier } from '@/components/MoodboardChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { ChatChantier } from '@/components/ChatChantier';
+import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
+import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { uploadFileToStorage } from '@/lib/supabase';
+import { getInboxItemPath } from '@/lib/share/inboxStore';
+import { openDocPreview } from '@/lib/share/openDocPreview';
 import { todayYMD } from '@/lib/date/today';
 import { canVoirOnglet, type OngletPortail } from '@/lib/portail/permissions';
+
+/** Filtre mime pour InboxPickerButton : photos + PDF (réutilisé d'autres écrans). */
+const inboxMimeFilterImagePdf = (m: string): boolean =>
+  m.startsWith('image/') || m === 'application/pdf';
 
 interface PortailClientProps {
   visible: boolean;
@@ -30,6 +39,12 @@ interface PortailClientProps {
 }
 
 function fmt(n: number) { return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
+/** Format compact pour KPI : 695483 → "695 k", 1234567 → "1,2 M" */
+function fmtCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.', ',')} M`;
+  if (n >= 10_000) return `${Math.round(n / 1000)} k`;
+  return Math.round(n).toString();
+}
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 function isLotEnCours(l: { dateDebutPrevue?: string; dateFinPrevue?: string }): boolean {
   if (!l.dateDebutPrevue || !l.dateFinPrevue) return false;
@@ -60,7 +75,7 @@ const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contract
 ];
 
 export function PortailClient({ visible, onClose, chantierId }: PortailClientProps) {
-  const { data, currentUser, updateChantier } = useApp();
+  const { data, currentUser, updateChantier, addPlanChantier, deletePlanChantier } = useApp();
   const isAdmin = currentUser?.role === 'admin';
   const isExterne = currentUser?.role === 'apporteur';
   const externAp = isExterne ? (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId) : undefined;
@@ -1069,10 +1084,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         <View style={styles.container}>
           {/* ── Header ── */}
           <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>{chantier.nom}</Text>
-              <Text style={styles.headerAddress}>{adresseComplete}</Text>
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={styles.headerTitle} numberOfLines={1}>{chantier.nom}</Text>
+              <Text style={styles.headerAddress} numberOfLines={1}>{adresseComplete}</Text>
             </View>
+            {contactPrincipal && (
+              <View style={styles.headerDestinataire}>
+                <Text style={styles.headerDestinataireLabel}>
+                  {APPORTEUR_TYPE_LABELS[contactPrincipal.type].label}
+                </Text>
+                <Text style={styles.headerDestinataireName} numberOfLines={1}>
+                  {contactPrincipal.apporteur.prenom} {contactPrincipal.apporteur.nom}
+                </Text>
+              </View>
+            )}
             <Pressable onPress={onClose} style={styles.closeBtn}>
               <Text style={styles.closeBtnText}>✕</Text>
             </Pressable>
@@ -1086,7 +1111,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
             <View style={styles.kpiCell}>
               <Text style={styles.kpiLabel}>Budget</Text>
-              <Text style={styles.kpiValue} numberOfLines={1}>{fmt(dejaPayeTotal)} / {fmt(totalChantierTTC)} €</Text>
+              <Text style={styles.kpiValue} numberOfLines={1}>{fmtCompact(dejaPayeTotal)} / {fmtCompact(totalChantierTTC)} €</Text>
             </View>
             <View style={styles.kpiCell}>
               <Text style={styles.kpiLabel}>Reste</Text>
@@ -1116,121 +1141,32 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             ))}
           </ScrollView>
 
+          {/* C2 : Mode plein écran pour Messages (hors ScrollView) */}
+          {ongletActif === 'messages' ? (
+            <View style={{ flex: 1, padding: 12 }}>
+              <ChatChantier
+                chantier={chantier}
+                isAdmin={isAdmin}
+                externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
+                currentUserNom={currentUser?.nom}
+                fullScreen
+              />
+            </View>
+          ) : (
           <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
 
-            {/* ── Contact principal (destinataire) ── */}
-            {contactPrincipal && (
-              <View style={styles.contactPrincipalCard}>
-                <Text style={styles.contactPrincipalLabel}>
-                  {APPORTEUR_TYPE_LABELS[contactPrincipal.type].emoji} Destinataire — {APPORTEUR_TYPE_LABELS[contactPrincipal.type].label}
-                </Text>
-                <Text style={styles.contactPrincipalName}>
-                  {contactPrincipal.apporteur.prenom} {contactPrincipal.apporteur.nom}
-                </Text>
-                {contactPrincipal.apporteur.societe && (
-                  <Text style={styles.contactPrincipalMeta}>{contactPrincipal.apporteur.societe}</Text>
-                )}
-                {(contactPrincipal.apporteur.telephone || contactPrincipal.apporteur.email) && (
-                  <View style={{ flexDirection: 'row', gap: 12, marginTop: 4 }}>
-                    {contactPrincipal.apporteur.telephone && (
-                      <Text style={styles.contactPrincipalMeta}>📞 {contactPrincipal.apporteur.telephone}</Text>
-                    )}
-                    {contactPrincipal.apporteur.email && (
-                      <Text style={styles.contactPrincipalMeta} numberOfLines={1}>✉️ {contactPrincipal.apporteur.email}</Text>
-                    )}
-                  </View>
-                )}
-              </View>
-            )}
-
-            {/* ── Chips "Lié à" (admin seulement) ── */}
-            {isAdmin && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Lié à</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-                  {LIEN_TYPES.map(({ key, field }) => {
-                    const id = chantier[field] as string | undefined;
-                    const app = getApp(id);
-                    const meta = APPORTEUR_TYPE_LABELS[key];
-                    return (
-                      <Pressable
-                        key={key}
-                        onPress={() => setPickerType(key)}
-                        style={[styles.lienChip, app && { borderColor: meta.couleur, backgroundColor: meta.couleur + '18' }]}
-                      >
-                        <Text style={styles.lienChipLabel}>{meta.emoji} {meta.label}</Text>
-                        <Text style={[styles.lienChipValue, app && { color: '#2C2C2C', fontWeight: '700' }]} numberOfLines={1}>
-                          {app ? `${app.prenom} ${app.nom}` : 'Aucun'}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-              </View>
-            )}
+            {/* C2 : "Contact principal (destinataire)" supprimé — désormais dans le header noir.
+                "Lié à" déplacé dans l'onglet Projet (format compact). */}
 
             {/* ─────────────── ONGLET CHIFFRES ─────────────── */}
             {ongletActif === 'chiffres' && (<>
-            {/* ── Marchés ── */}
-            {(marches.length > 0 || supplements.length > 0) && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Marchés</Text>
-                {marches.map(m => {
-                  const paye = (m.paiements || []).reduce((s, p) => s + p.montant, 0);
-                  const estPaye = paye >= m.montantTTC;
-                  return (
-                    <View key={m.id} style={styles.marcheRow}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.marcheLabel}>{m.libelle}</Text>
-                        <Text style={styles.marcheMontant}>HT : {fmt(m.montantHT)} €  |  TTC : {fmt(m.montantTTC)} €</Text>
-                      </View>
-                      <View style={[styles.marcheStatut, { backgroundColor: estPaye ? '#D4EDDA' : '#FFF3CD' }]}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: estPaye ? '#155724' : '#856404' }}>
-                          {estPaye ? 'Soldé' : `Reste ${fmt(m.montantTTC - paye)} €`}
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-                {supplements.map(s => {
-                  const paye = (s.paiements || []).reduce((sum, p) => sum + p.montant, 0);
-                  const estPaye = paye >= s.montantTTC;
-                  return (
-                    <View key={s.id} style={[styles.marcheRow, { backgroundColor: '#FAFAFA' }]}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={[styles.marcheLabel, { fontStyle: 'italic' }]}>+ {s.libelle}</Text>
-                        <Text style={styles.marcheMontant}>HT : {fmt(s.montantHT)} €  |  TTC : {fmt(s.montantTTC)} €</Text>
-                      </View>
-                      <View style={[styles.marcheStatut, { backgroundColor: estPaye ? '#D4EDDA' : '#FFF3CD' }]}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: estPaye ? '#155724' : '#856404' }}>
-                          {estPaye ? 'Soldé' : `Reste ${fmt(s.montantTTC - paye)} €`}
-                        </Text>
-                      </View>
-                    </View>
-                  );
-                })}
-                <View style={styles.totalRow}>
-                  <Text style={styles.totalLabel}>Total TTC</Text>
-                  <Text style={styles.totalValue}>{fmt(financials.totalTTC)} €</Text>
-                </View>
-                <View style={[styles.totalRow, { backgroundColor: '#2C2C2C' }]}>
-                  <Text style={[styles.totalLabel, { color: '#C9A96E' }]}>Déjà encaissé</Text>
-                  <Text style={[styles.totalValue, { color: '#C9A96E' }]}>{fmt(financials.totalPaye)} €</Text>
-                </View>
-              </View>
-            )}
+            {/* C2 : bannière "Marchés" supprimée — info redondante avec "Budget".
+                Détails marché restent dans Marchés (admin) hors portail. */}
 
-            {/* ── Suivi financier & Avancement (fusionné) ── */}
+            {/* ── Budget ── */}
             <View style={styles.card}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={styles.sectionTitle}>💰 Suivi financier & Avancement</Text>
-                {avancementGlobalCorps != null && (
-                  <View style={{ backgroundColor: '#C9A96E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
-                  </View>
-                )}
-              </View>
-              <Text style={styles.pfsSubtitle}>Lots, avancement, situation financière et historique</Text>
+              <Text style={styles.sectionTitle}>💰 Budget</Text>
+              <Text style={styles.pfsSubtitle}>Total chantier, règlements perçus et restant à payer</Text>
 
               {/* Résumé financier global — toujours visible */}
               {totalChantierHT > 0 && (
@@ -1282,16 +1218,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>= Total chantier TTC</Text>
                     <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
                   </View>
+                  <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
+                    <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontWeight: '700' }]}>Règlements perçus</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontWeight: '700' }]}>{fmt(dejaPayeTotal)} €</Text>
+                  </View>
                   {dejaPayeAcompte > 0 && (
-                    <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
-                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Acompte(s) client</Text>
-                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(dejaPayeAcompte)} €</Text>
+                    <View style={styles.pfsResumeRow}>
+                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontSize: 11 }]}>   ↳ dont acompte(s) client</Text>
+                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontSize: 11 }]}>{fmt(dejaPayeAcompte)} €</Text>
                     </View>
                   )}
                   {totalPayeSituations > 0 && (
                     <View style={styles.pfsResumeRow}>
-                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32' }]}>− Situations payées</Text>
-                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32' }]}>{fmt(totalPayeSituations)} €</Text>
+                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontSize: 11 }]}>   ↳ dont situations payées</Text>
+                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontSize: 11 }]}>{fmt(totalPayeSituations)} €</Text>
                     </View>
                   )}
                   <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
@@ -1301,10 +1241,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               )}
 
-              {/* ── Sous-section : Lots et avancement ── */}
-              <View style={styles.subSectionHeader}>
-                <Text style={styles.subSectionTitle}>🛠 Lots du chantier</Text>
+            </View>
+            {/* ── /Bannière Budget ── */}
+
+            {/* ── Avancement (extrait en bannière séparée) ── */}
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <Text style={styles.sectionTitle}>🏗 Avancement</Text>
+                {avancementGlobalCorps != null && (
+                  <View style={{ backgroundColor: '#C9A96E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
+                  </View>
+                )}
               </View>
+              <Text style={styles.pfsSubtitle}>Lots du chantier et situation financière</Text>
 
               {/* Auto-extraction en cours */}
               {autoExtractLoading && (
@@ -1661,6 +1611,35 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET PROJET ─────────────── */}
             {ongletActif === 'projet' && (<>
+            {/* ── Lié à (admin only, format compact) ── */}
+            {isAdmin && (
+              <View style={styles.lieAcompact}>
+                <Text style={styles.lieAcompactTitle}>Lié à</Text>
+                <View style={styles.lieAcompactRows}>
+                  {LIEN_TYPES.map(({ key, field }) => {
+                    const id = chantier[field] as string | undefined;
+                    const app = getApp(id);
+                    const meta = APPORTEUR_TYPE_LABELS[key];
+                    return (
+                      <Pressable
+                        key={key}
+                        style={styles.lieAcompactRow}
+                        onPress={() => setPickerType(key)}
+                      >
+                        <Text style={styles.lieAcompactType}>
+                          {meta.emoji} {meta.label}
+                        </Text>
+                        <Text style={styles.lieAcompactNom} numberOfLines={1}>
+                          {app ? `${app.prenom} ${app.nom}` : '— Non défini'}
+                        </Text>
+                        <Text style={styles.lieAcompactChevron}>›</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
+
             {/* ── Moodboard inspirations ── */}
             <MoodboardChantier
               chantier={chantier}
@@ -1668,9 +1647,97 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
             />
 
-            {/* ── Plans : placeholder C2 ── */}
-            <View style={{ padding: 12, backgroundColor: '#F5EDE3', borderRadius: 8, marginVertical: 8 }}>
-              <Text style={{ fontStyle: 'italic', color: '#687076' }}>📐 Plans — section à implémenter (C2)</Text>
+            {/* ── Plans ── */}
+            <View style={styles.card}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+                <Text style={styles.sectionTitle}>📐 Plans</Text>
+                <Text style={{ fontSize: 11, color: '#8C8077' }}>
+                  {(chantier.fiche?.plans || []).length} plan{(chantier.fiche?.plans || []).length > 1 ? 's' : ''}
+                </Text>
+              </View>
+
+              {(chantier.fiche?.plans || []).length === 0 ? (
+                <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
+                  Aucun plan ajouté
+                </Text>
+              ) : (
+                <View style={{ gap: 8, marginBottom: 8 }}>
+                  {(chantier.fiche?.plans || []).map(plan => (
+                    <Pressable
+                      key={plan.id}
+                      style={styles.planRow}
+                      onPress={() => openDocPreview(plan.fichier)}
+                    >
+                      <Text style={{ fontSize: 18 }}>📄</Text>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.planNom} numberOfLines={1}>{plan.nom || 'Plan sans nom'}</Text>
+                        <Text style={styles.planMeta}>
+                          Ajouté le {new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        </Text>
+                      </View>
+                      {isAdmin && (
+                        <Pressable
+                          onPress={() => {
+                            const doDel = () => deletePlanChantier(chantierId, plan.id);
+                            if (Platform.OS === 'web') {
+                              if (window.confirm(`Supprimer le plan "${plan.nom}" ?`)) doDel();
+                            } else {
+                              Alert.alert('Supprimer ce plan ?', plan.nom, [
+                                { text: 'Annuler', style: 'cancel' },
+                                { text: 'Supprimer', style: 'destructive', onPress: doDel },
+                              ]);
+                            }
+                          }}
+                          style={{ padding: 6 }}
+                        >
+                          <Text style={{ fontSize: 14 }}>🗑</Text>
+                        </Pressable>
+                      )}
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+
+              <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                <NativeFilePickerButton
+                  acceptImages
+                  acceptPdf
+                  acceptCamera={false}
+                  multiple={false}
+                  compressImages
+                  onPick={async (file) => {
+                    const planId = `plan_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+                    const url = await uploadFileToStorage(file.uri, `chantiers/${chantierId}/plans`, planId);
+                    if (!url) return false;
+                    addPlanChantier(chantierId, {
+                      id: planId,
+                      nom: file.filename || 'Plan',
+                      fichier: url,
+                      visiblePar: 'tous',
+                      uploadedAt: new Date().toISOString(),
+                    });
+                    return true;
+                  }}
+                />
+                <InboxPickerButton
+                  mimeFilter={inboxMimeFilterImagePdf}
+                  onPick={async (item) => {
+                    const fileURI = getInboxItemPath(item);
+                    if (!fileURI) return false;
+                    const planId = `plan_inbox_${item.id}`;
+                    const url = await uploadFileToStorage(fileURI, `chantiers/${chantierId}/plans`, planId);
+                    if (!url) return false;
+                    addPlanChantier(chantierId, {
+                      id: planId,
+                      nom: item.filename || 'Plan',
+                      fichier: url,
+                      visiblePar: 'tous',
+                      uploadedAt: new Date().toISOString(),
+                    });
+                    return true;
+                  }}
+                />
+              </View>
             </View>
             </>)}
             {/* ─────────────── /ONGLET PROJET ─────────────── */}
@@ -1687,15 +1754,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ─────────────── /ONGLET FIN DE CHANTIER (partiel — SAV plus bas) ─────────────── */}
 
             {/* ─────────────── ONGLET MESSAGES ─────────────── */}
-            {ongletActif === 'messages' && (<>
-            {/* ── Chat chantier ── */}
-            <ChatChantier
-              chantier={chantier}
-              isAdmin={isAdmin}
-              externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
-              currentUserNom={currentUser?.nom}
-            />
-            </>)}
+            {/* C2 : ChatChantier rendu en plein écran HORS ScrollView (voir plus bas).
+                Aucun contenu dans la ScrollView pour cet onglet. */}
             {/* ─────────────── /ONGLET MESSAGES ─────────────── */}
 
             {/* ─────────────── ONGLET PROJET (suite : Photos) ─────────────── */}
@@ -1775,6 +1835,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 La fonction `timeline` reste calculée pour usage potentiel futur
                 (ex: timelineHtml export PDF, voir handlePartager). */}
           </ScrollView>
+          )}
 
           {/* ── Boutons sticky bottom (hors ScrollView, toujours visibles) ── */}
           <View style={styles.buttonsRow}>
@@ -2997,6 +3058,87 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#2C2C2C',
     lineHeight: 17,
+  },
+
+  // ── Refonte C2 : Lié à compact + Plans rows ──
+  lieAcompact: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  lieAcompactTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2C2C2C',
+    marginBottom: 8,
+  },
+  lieAcompactRows: { gap: 4 },
+  lieAcompactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 8,
+    borderRadius: 6,
+    backgroundColor: '#F5EDE3',
+  },
+  lieAcompactType: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#687076',
+    width: 130,
+  },
+  lieAcompactNom: {
+    flex: 1,
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#2C2C2C',
+  },
+  lieAcompactChevron: {
+    fontSize: 18,
+    color: '#C9A96E',
+    marginLeft: 8,
+  },
+  planRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    backgroundColor: '#F5EDE3',
+  },
+  planNom: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#2C2C2C',
+  },
+  planMeta: {
+    fontSize: 10,
+    color: '#8C8077',
+    marginTop: 2,
+  },
+
+  // ── Refonte C2 : header destinataire ──
+  headerDestinataire: {
+    alignItems: 'flex-end',
+    marginRight: 12,
+    maxWidth: 140,
+  },
+  headerDestinataireLabel: {
+    color: '#C9A96E',
+    fontSize: 9,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
+  },
+  headerDestinataireName: {
+    color: '#fff',
+    fontSize: 12,
+    fontWeight: '600',
   },
 
   // ── Refonte C1 : KPI bar + tabs ──

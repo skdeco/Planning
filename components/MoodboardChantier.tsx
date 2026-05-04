@@ -6,9 +6,10 @@ import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, Pressable, Image, Modal, TextInput, Platform, Alert, ScrollView,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { openDocPreview } from '@/lib/share/openDocPreview';
 import type { Chantier } from '@/app/types';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
@@ -32,17 +33,19 @@ export function MoodboardChantier({ chantier, isAdmin, externAp }: Props) {
 
   const pickImage = async () => {
     try {
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.7,
-        allowsMultipleSelection: false,
+      const files = await pickNativeFile({
+        acceptImages: true,
+        acceptPdf: true,
+        acceptCamera: true,
+        multiple: false,
+        compressImages: true,
       });
-      if (res.canceled || !res.assets?.[0]) return;
-      setPickedUri(res.assets[0].uri);
+      if (files.length === 0) return;
+      setPickedUri(files[0].uri);
       setNoteForm('');
       setShowModal(true);
     } catch {
-      Alert.alert('Erreur', "Impossible d'ouvrir la bibliothèque.");
+      Alert.alert('Erreur', "Impossible d'ouvrir le sélecteur.");
     }
   };
 
@@ -95,24 +98,38 @@ export function MoodboardChantier({ chantier, isAdmin, externAp }: Props) {
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {inspirations.map(i => {
             const canDelete = isAdmin || i.ajoutParId === externAp?.id;
+            const isPdf = i.uri.toLowerCase().endsWith('.pdf') || i.uri.startsWith('data:application/pdf');
             return (
-              <Pressable key={i.id} onPress={() => setPreview(i.uri)} style={{ width: 100, position: 'relative' }}>
-                <Image source={{ uri: i.uri }} style={{ width: '100%', height: 100, borderRadius: 8 }} resizeMode="cover" />
-                {i.titre && (
-                  <Text numberOfLines={1} style={{ fontSize: 10, color: '#2C2C2C', marginTop: 3 }}>{i.titre}</Text>
-                )}
-                {i.ajoutParNom && (
-                  <Text numberOfLines={1} style={{ fontSize: 9, color: '#8C8077' }}>{i.ajoutParNom}</Text>
-                )}
+              <View key={i.id} style={{ width: 100, position: 'relative' }}>
+                <Pressable
+                  onPress={() => { if (isPdf) { openDocPreview(i.uri); } else { setPreview(i.uri); } }}
+                  accessibilityRole="button"
+                  accessibilityLabel={isPdf ? "Ouvrir le PDF" : "Aperçu inspiration"}
+                >
+                  {isPdf ? (
+                    <View style={{ width: '100%', height: 100, borderRadius: 8, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
+                      <Text style={{ fontSize: 32 }}>📄</Text>
+                      <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700', marginTop: 2 }}>PDF</Text>
+                    </View>
+                  ) : (
+                    <Image source={{ uri: i.uri }} style={{ width: '100%', height: 100, borderRadius: 8 }} resizeMode="cover" />
+                  )}
+                  {i.titre && (
+                    <Text numberOfLines={1} style={{ fontSize: 10, color: '#2C2C2C', marginTop: 3 }}>{i.titre}</Text>
+                  )}
+                  {i.ajoutParNom && (
+                    <Text numberOfLines={1} style={{ fontSize: 9, color: '#8C8077' }}>{i.ajoutParNom}</Text>
+                  )}
+                </Pressable>
                 {canDelete && (
                   <Pressable
-                    onPress={(e) => { e.stopPropagation?.(); remove(i.id); }}
+                    onPress={() => remove(i.id)}
                     style={{ position: 'absolute', top: -4, right: -4, width: 20, height: 20, borderRadius: 10, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
                   >
                     <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>✕</Text>
                   </Pressable>
                 )}
-              </Pressable>
+              </View>
             );
           })}
         </View>
@@ -129,7 +146,13 @@ export function MoodboardChantier({ chantier, isAdmin, externAp }: Props) {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 }}>🎨 Nouvelle inspiration</Text>
-            {pickedUri && <Image source={{ uri: pickedUri }} style={{ width: '100%', height: 180, borderRadius: 10, marginBottom: 12 }} resizeMode="cover" />}
+            {pickedUri && (pickedUri.toLowerCase().endsWith('.pdf') || pickedUri.startsWith('data:application/pdf')
+              ? <View style={{ width: '100%', height: 180, borderRadius: 10, marginBottom: 12, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 48 }}>📄</Text>
+                  <Text style={{ fontSize: 12, color: '#8C6D2F', fontWeight: '700', marginTop: 4 }}>PDF prêt à être ajouté</Text>
+                </View>
+              : <Image source={{ uri: pickedUri }} style={{ width: '100%', height: 180, borderRadius: 10, marginBottom: 12 }} resizeMode="cover" />
+            )}
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginBottom: 4 }}>Titre / note (optionnel)</Text>
             <TextInput
               style={{ backgroundColor: '#FAF7F3', borderRadius: 10, borderWidth: 1.5, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#2C2C2C' }}

@@ -15,9 +15,11 @@ interface Props {
   isAdmin: boolean;
   externAp?: { id: string; prenom: string; nom: string; type: 'client' | 'architecte' | 'apporteur' | 'contractant' };
   currentUserNom?: string;
+  /** Si true, occupe toute la hauteur disponible (flex:1) au lieu de maxHeight 360. */
+  fullScreen?: boolean;
 }
 
-export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom }: Props) {
+export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, fullScreen = false }: Props) {
   const { updateChantier } = useApp();
   const messages = chantier.messagesChantier || [];
   const [texte, setTexte] = useState('');
@@ -70,7 +72,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom }: Pr
   const nbNonLus = messages.filter(m => !m.luPar?.includes(monId)).length;
 
   return (
-    <View style={styles.card}>
+    <View style={[styles.card, fullScreen && styles.cardFull]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={styles.title}>💬 Messagerie du chantier</Text>
         {nbNonLus > 0 && (
@@ -83,7 +85,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom }: Pr
 
       <ScrollView
         ref={scrollRef}
-        style={styles.list}
+        style={[styles.list, fullScreen && styles.listFull]}
         contentContainerStyle={{ paddingVertical: 10 }}
         showsVerticalScrollIndicator={false}
       >
@@ -125,9 +127,11 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom }: Pr
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12 },
+  cardFull: { flex: 1, marginBottom: 0 },
   title: { fontSize: 14, fontWeight: '800', color: '#2C2C2C' },
   subtitle: { fontSize: 11, color: '#8C8077', marginBottom: 8 },
   list: { maxHeight: 360, backgroundColor: '#FAF7F3', borderRadius: 10, paddingHorizontal: 10 },
+  listFull: { flex: 1, maxHeight: undefined },
   empty: { fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 },
   msgRow: { marginBottom: 6, flexDirection: 'row' },
   msgRowMine: { justifyContent: 'flex-end' },
