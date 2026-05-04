@@ -18,6 +18,8 @@ import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { MarchesChantier } from '@/components/MarchesChantier';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PortailClient } from '@/components/PortailClient';
+import { ModalSAVDetail } from '@/components/ModalSAVDetail';
+import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
@@ -257,11 +259,10 @@ export default function ChantiersScreen() {
   // Filtre par type de contact (architecte / apporteur / contractant / client)
   const [filterContactType, setFilterContactType] = useState<'all' | 'architecte' | 'apporteur' | 'contractant' | 'client'>('all');
   const [filterContactId, setFilterContactId] = useState<string>('all'); // 'all' ou id d'un apporteur
-  const [showSavForm, setShowSavForm] = useState(false);
-  const [editSavId, setEditSavId] = useState<string | null>(null);
-  const [savForm, setSavForm] = useState({ objet: '', description: '', priorite: 'normale' as PrioriteSAV, assigneA: '' });
-  const [savPhotos, setSavPhotos] = useState<string[]>([]);
-  const [savFichiers, setSavFichiers] = useState<{ uri: string; nom: string }[]>([]);
+  // C3b : refacto SAV vers ModalSAVDetail / ModalNouveauTicketSAV.
+  // Plus d'état inline (savForm/showSavForm/editSavId/savPhotos/savFichiers).
+  const [savDetailId, setSavDetailId] = useState<string | null>(null);
+  const [showNouveauSavChantierId, setShowNouveauSavChantierId] = useState<string | null>(null);
 
   const openFicheUnifiee = (chantier: Chantier) => {
     setFicheId(chantier.id);
@@ -1162,6 +1163,21 @@ export default function ChantiersScreen() {
         </View>
       </Pressable>
     );
+  };
+
+  // Pattern close + timeout 150ms : iOS bloque 2 <Modal> frères ouverts.
+  // On ferme la liste avant d'ouvrir le modal cible. Cohérent règle #13
+  // (DETTE-MODAL-CLOSE-PATTERN).
+  const openSavDetailFromListe = (ticketId: string) => {
+    setSavChantierId(null);
+    setTimeout(() => setSavDetailId(ticketId), 150);
+  };
+
+  const openNouveauSavFromListe = () => {
+    const chantierId = savChantierId;
+    if (!chantierId) return;
+    setSavChantierId(null);
+    setTimeout(() => setShowNouveauSavChantierId(chantierId), 150);
   };
 
   return (
@@ -3766,257 +3782,140 @@ export default function ChantiersScreen() {
         </View>
       </ModalKeyboard>
 
-      {/* ── Modal SAV ── */}
-      <ModalKeyboard visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => setSavChantierId(null)}>
+      {/* ── Modal SAV (refacto C3b : utilise ModalSAVDetail + ModalNouveauTicketSAV) ── */}
+      <Modal visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => setSavChantierId(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setSavChantierId(null)} />
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', flex: 1 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
-              <View>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>🔧 SAV</Text>
-                <Text style={{ fontSize: 12, color: '#687076' }}>{data.chantiers.find(c => c.id === savChantierId)?.nom}</Text>
+          <View style={savListeStyles.container}>
+            <View style={savListeStyles.header}>
+              <View style={{ flex: 1 }}>
+                <Text style={savListeStyles.title}>🔧 SAV</Text>
+                <Text style={savListeStyles.chantierNom}>{data.chantiers.find(c => c.id === savChantierId)?.nom}</Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }} onPress={() => { setEditSavId(null); setSavForm({ objet: '', description: '', priorite: 'normale', assigneA: '' }); setSavPhotos([]); setSavFichiers([]); setShowSavForm(v => !v); }}>
-                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{showSavForm ? '✕ Annuler' : '+ Ticket'}</Text>
-                </Pressable>
-                <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={() => setSavChantierId(null)}>
-                  <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
-                </Pressable>
-              </View>
+              <Pressable
+                onPress={openNouveauSavFromListe}
+                style={savListeStyles.nouveauBtn}
+              >
+                <Text style={savListeStyles.nouveauBtnText}>+ Nouveau</Text>
+              </Pressable>
+              <Pressable onPress={() => setSavChantierId(null)} style={savListeStyles.closeBtn}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>✕</Text>
+              </Pressable>
             </View>
-            <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 30 }}>
-              {savChantierId && (() => {
-                const tickets = (data.ticketsSAV || []).filter(t => t.chantierId === savChantierId).sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-                if (tickets.length === 0 && !showSavForm) return <Text style={{ textAlign: 'center', color: '#B0BEC5', paddingVertical: 24, fontSize: 13 }}>Aucun ticket SAV</Text>;
-                const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#2C2C2C', haute: '#F59E0B', urgente: '#E74C3C' };
-                const statutLabels: Record<string, string> = { ouvert: '🔴 Ouvert', en_cours: '🟡 En cours', resolu: '🟢 Résolu', clos: '⚪ Clos' };
-                return tickets.map(t => (
-                  <View key={t.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E2E6EA', borderLeftWidth: 4, borderLeftColor: prioColors[t.priorite] || '#2C2C2C' }}>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{t.objet}</Text>
-                        <Text style={{ fontSize: 11, color: '#687076', marginTop: 2 }}>{statutLabels[t.statut] || t.statut} · Priorité {t.priorite}</Text>
-                        {t.description && <Text style={{ fontSize: 12, color: '#687076', marginTop: 4 }}>{t.description}</Text>}
-                        <Text style={{ fontSize: 10, color: '#B0BEC5', marginTop: 4 }}>Ouvert le {t.dateOuverture}</Text>
-                      </View>
-                    </View>
-                    {/* Commentaires */}
-                    {(t.commentaires || []).length > 0 && (
-                      <View style={{ marginTop: 8, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#F5EDE3' }}>
-                        {t.commentaires!.map(c => (
-                          <View key={c.id} style={{ marginBottom: 4 }}>
-                            <Text style={{ fontSize: 11, color: '#11181C' }}><Text style={{ fontWeight: '700' }}>{c.auteur}</Text> : {c.texte}</Text>
-                            <Text style={{ fontSize: 9, color: '#B0BEC5' }}>{new Date(c.date).toLocaleDateString('fr-FR')}</Text>
-                          </View>
-                        ))}
-                      </View>
-                    )}
-                    {/* Photos du problème */}
-                    {t.photos && t.photos.length > 0 && (
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6 }} contentContainerStyle={{ gap: 4 }}>
-                        {t.photos.map((uri, i) => (
-                          <Pressable key={i} onPress={() => setViewPhotoUri(uri)}>
-                            <Image source={{ uri }} style={{ width: 60, height: 60, borderRadius: 6 }} resizeMode="cover" />
-                          </Pressable>
-                        ))}
-                      </ScrollView>
-                    )}
-                    {/* Assigné à */}
-                    {t.assigneA && (
-                      <Text style={{ fontSize: 10, color: '#2C2C2C', marginTop: 4 }}>
-                        👷 Assigné à : {data.employes.find(e => e.id === t.assigneA)?.prenom || t.assigneA}
-                      </Text>
-                    )}
-                    {/* Infos résolution */}
-                    {t.statut === 'resolu' && (
-                      <View style={{ marginTop: 6, backgroundColor: '#D4EDDA', borderRadius: 6, padding: 8 }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#155724' }}>✓ Résolu{t.resoluPar ? ` par ${t.resoluPar}` : ''}{t.dateResolution ? ` le ${t.dateResolution}` : ''}</Text>
-                        {t.photosResolution && t.photosResolution.length > 0 && (
-                          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4 }} contentContainerStyle={{ gap: 4 }}>
-                            {t.photosResolution.map((uri, i) => (
-                              <Pressable key={i} onPress={() => setViewPhotoUri(uri)}>
-                                <Image source={{ uri }} style={{ width: 50, height: 50, borderRadius: 4 }} resizeMode="cover" />
-                              </Pressable>
-                            ))}
-                          </ScrollView>
-                        )}
-                      </View>
-                    )}
-                    {/* Actions */}
-                    <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-                      {t.statut !== 'resolu' && t.statut !== 'clos' && (
-                        <Pressable style={{ flex: 1, backgroundColor: '#D4EDDA', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
-                          onPress={async () => {
-                            const userName = currentUser?.nom || (isAdmin ? 'Admin' : 'Employé');
-                            // Proposer d'ajouter une photo de résolution
-                            const doResolve = async (photos?: string[]) => {
-                              updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, photosResolution: photos || t.photosResolution, updatedAt: new Date().toISOString() });
-                            };
-                            if (Platform.OS === 'web') { doResolve(); return; }
-                            Alert.alert('Résoudre le ticket', 'Ajouter une photo de la résolution ?', [
-                              { text: 'Annuler', style: 'cancel' },
-                              { text: 'Non, juste résoudre', onPress: () => doResolve() },
-                              { text: '📷 Ajouter photo', onPress: async () => {
-                                const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
-                                if (files.length === 0) { doResolve(); return; }
-                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}_${Date.now()}`);
-                                doResolve(url ? [...(t.photosResolution || []), url] : undefined);
-                              }},
-                            ]);
-                          }}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#155724' }}>✓ Résolu</Text>
-                        </Pressable>
-                      )}
-                      {t.statut === 'ouvert' && (
-                        <Pressable style={{ flex: 1, backgroundColor: '#FFF3CD', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
-                          onPress={() => updateTicketSAV({ ...t, statut: 'en_cours', updatedAt: new Date().toISOString() })}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#856404' }}>→ En cours</Text>
-                        </Pressable>
-                      )}
-                      {isAdmin && (
-                        <Pressable style={{ flex: 1, backgroundColor: '#EBF0FF', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
-                          onPress={() => {
-                            setEditSavId(t.id);
-                            setSavForm({ objet: t.objet, description: t.description || '', priorite: t.priorite, assigneA: t.assigneA || '' });
-                            setSavPhotos(t.photos || []);
-                            setSavFichiers(t.fichiers || []);
-                            setShowSavForm(true);
-                          }}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>✏️</Text>
-                        </Pressable>
-                      )}
-                      {isAdmin && (
-                        <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 6, borderRadius: 6, alignItems: 'center' }}
-                          onPress={() => { if (Platform.OS === 'web') { if (window.confirm('Supprimer ce ticket ?')) deleteTicketSAV(t.id); } else Alert.alert('Supprimer', 'Supprimer ce ticket ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deleteTicketSAV(t.id) }]); }}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#DC2626' }}>🗑</Text>
-                        </Pressable>
-                      )}
-                    </View>
-                  </View>
-                ));
-              })()}
 
-              {/* Formulaire inline nouveau ticket */}
-              {showSavForm && (
-                <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>{editSavId ? 'Modifier le ticket' : 'Nouveau ticket'}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Objet *</Text>
-                  <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, color: '#11181C' }}
-                    value={savForm.objet} onChangeText={v => setSavForm(f => ({ ...f, objet: v }))} placeholder="Ex: Fuite robinet cuisine" />
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Description</Text>
-                  <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 8, color: '#11181C', minHeight: 50 }}
-                    value={savForm.description} onChangeText={v => setSavForm(f => ({ ...f, description: v }))} placeholder="Détails..." multiline />
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Priorité</Text>
-                  <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
-                    {(['basse', 'normale', 'haute', 'urgente'] as PrioriteSAV[]).map(p => (
-                      <Pressable key={p} style={[{ flex: 1, paddingVertical: 7, borderRadius: 8, borderWidth: 1, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#fff' },
-                        savForm.priorite === p && { backgroundColor: p === 'urgente' ? '#FEF2F2' : p === 'haute' ? '#FFF3CD' : p === 'basse' ? '#D4EDDA' : '#EBF0FF', borderColor: p === 'urgente' ? '#E74C3C' : p === 'haute' ? '#F59E0B' : p === 'basse' ? '#27AE60' : '#2C2C2C' }]}
-                        onPress={() => setSavForm(f => ({ ...f, priorite: p }))}>
-                        <Text style={{ fontSize: 10, fontWeight: '700', color: savForm.priorite === p ? '#11181C' : '#687076' }}>{p.charAt(0).toUpperCase() + p.slice(1)}</Text>
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 30 }}>
+              {savChantierId && (() => {
+                const tickets = (data.ticketsSAV || [])
+                  .filter(t => t.chantierId === savChantierId)
+                  .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+                if (tickets.length === 0) {
+                  return (
+                    <Text style={{ textAlign: 'center', color: '#B0BEC5', paddingVertical: 24, fontSize: 13 }}>
+                      Aucun ticket SAV. Tape "+ Nouveau" pour créer le premier.
+                    </Text>
+                  );
+                }
+                const statutColors: Record<string, { bg: string; text: string }> = {
+                  ouvert:   { bg: '#FFF3E0', text: '#E65100' },
+                  en_cours: { bg: '#FFF9C4', text: '#F57F17' },
+                  resolu:   { bg: '#E8F5E9', text: '#2E7D32' },
+                  clos:     { bg: '#ECEFF1', text: '#607D8B' },
+                };
+                const statutLabels: Record<string, string> = {
+                  ouvert: 'Ouvert', en_cours: 'En cours', resolu: 'Résolu', clos: 'Clos',
+                };
+                return tickets.map(t => {
+                  const sc = statutColors[t.statut] || statutColors.ouvert;
+                  const employe = t.assigneA ? data.employes.find(e => e.id === t.assigneA) : null;
+                  return (
+                    <View key={t.id} style={savListeStyles.card}>
+                      <Pressable onPress={() => openSavDetailFromListe(t.id)} style={savListeStyles.tapZone}>
+                        <Text style={savListeStyles.cardObjet}>{t.objet}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
+                          <View style={[savListeStyles.statutBadge, { backgroundColor: sc.bg }]}>
+                            <Text style={{ fontSize: 10, fontWeight: '700', color: sc.text }}>{statutLabels[t.statut] || t.statut}</Text>
+                          </View>
+                          <Text style={savListeStyles.cardPriorite}>· Priorité {t.priorite}</Text>
+                        </View>
+                        {employe && (
+                          <Text style={savListeStyles.cardAssigne}>👤 {employe.prenom} {employe.nom}</Text>
+                        )}
+                        {t.creePar && t.creePar.type !== 'admin' && (
+                          <Text style={savListeStyles.cardCreepar}>Signalé par {t.creePar.nom}</Text>
+                        )}
                       </Pressable>
-                    ))}
-                  </View>
-                  {/* Assigner à un employé */}
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Assigner à</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
-                    <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA' }, !savForm.assigneA && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
-                      onPress={() => setSavForm(f => ({ ...f, assigneA: '' }))}>
-                      <Text style={{ fontSize: 10, fontWeight: '600', color: !savForm.assigneA ? '#fff' : '#687076' }}>Non assigné</Text>
-                    </Pressable>
-                    {data.employes.map(e => (
-                      <Pressable key={e.id} style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA' }, savForm.assigneA === e.id && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
-                        onPress={() => setSavForm(f => ({ ...f, assigneA: e.id }))}>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: savForm.assigneA === e.id ? '#fff' : '#687076' }}>{e.prenom}</Text>
-                      </Pressable>
-                    ))}
-                  </ScrollView>
-                  {/* Photos / fichiers */}
-                  <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
-                    <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
-                      onPress={async () => {
-                        const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                        if (!result.canceled && result.assets[0]) {
-                          const compressed = await compressImage(result.assets[0].uri);
-                          const url = await uploadFileToStorage(compressed, `chantiers/${savChantierId}/sav`, `sav_photo_${Date.now()}`);
-                          if (url) setSavPhotos(prev => [...prev, url]);
-                        }
-                      }}>
-                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Photo ({savPhotos.length})</Text>
-                    </Pressable>
-                    <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
-                      onPress={async () => {
-                        const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
-                        if (!result.canceled && result.assets?.[0]) {
-                          const asset = result.assets[0];
-                          const url = await uploadFileToStorage(asset.uri, `chantiers/${savChantierId}/sav`, `sav_doc_${Date.now()}`);
-                          if (url) setSavFichiers(prev => [...prev, { uri: url, nom: asset.name || 'Document' }]);
-                        }
-                      }}>
-                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📄 PDF ({savFichiers.length})</Text>
-                    </Pressable>
-                    <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
-                      onPress={async () => {
-                        const { status } = await ImagePicker.requestCameraPermissionsAsync();
-                        if (status !== 'granted') { Alert.alert('Permission refusée', 'L\'accès à la caméra est nécessaire pour scanner.'); return; }
-                        const result = await ImagePicker.launchCameraAsync({ quality: 0.7 });
-                        if (!result.canceled && result.assets[0]) {
-                          const compressed = await compressImage(result.assets[0].uri);
-                          const url = await uploadFileToStorage(compressed, `chantiers/${savChantierId}/sav`, `sav_scan_${Date.now()}`);
-                          if (url) setSavPhotos(prev => [...prev, url]);
-                        }
-                      }}>
-                      <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📸 Scanner</Text>
-                    </Pressable>
-                  </View>
-                  <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: savForm.objet.trim() ? 1 : 0.5 }}
-                    disabled={!savForm.objet.trim()}
-                    onPress={() => {
-                      if (!savChantierId) return;
-                      const now = new Date().toISOString();
-                      if (editSavId) {
-                        const existing = (data.ticketsSAV || []).find(t => t.id === editSavId);
-                        if (existing) {
-                          updateTicketSAV({
-                            ...existing,
-                            objet: savForm.objet.trim(),
-                            description: savForm.description.trim() || undefined,
-                            priorite: savForm.priorite,
-                            assigneA: savForm.assigneA || undefined,
-                            photos: savPhotos.length > 0 ? savPhotos : existing.photos,
-                            fichiers: savFichiers.length > 0 ? savFichiers : existing.fichiers,
-                            updatedAt: now,
-                          });
-                        }
-                      } else {
-                        addTicketSAV({
-                          id: `sav_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-                          chantierId: savChantierId,
-                          objet: savForm.objet.trim(),
-                          description: savForm.description.trim() || undefined,
-                          priorite: savForm.priorite,
-                          statut: 'ouvert',
-                          dateOuverture: now.slice(0, 10),
-                          assigneA: savForm.assigneA || undefined,
-                          photos: savPhotos.length > 0 ? savPhotos : undefined,
-                          fichiers: savFichiers.length > 0 ? savFichiers : undefined,
-                          commentaires: [],
-                          createdAt: now,
-                          updatedAt: now,
-                        });
-                      }
-                      setShowSavForm(false);
-                      setEditSavId(null);
-                      setSavPhotos([]);
-                    }}>
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{editSavId ? 'Enregistrer' : 'Créer le ticket'}</Text>
-                  </Pressable>
-                </View>
-              )}
+
+                      {/* 4 boutons d'action rapide (admin) */}
+                      <View style={savListeStyles.actionsRow}>
+                        <Pressable
+                          onPress={() => updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: currentUser?.nom || 'Admin', updatedAt: new Date().toISOString() })}
+                          disabled={t.statut === 'resolu' || t.statut === 'clos'}
+                          style={[savListeStyles.actionBtn, savListeStyles.actionResolu, (t.statut === 'resolu' || t.statut === 'clos') && { opacity: 0.4 }]}
+                        >
+                          <Text style={savListeStyles.actionResoluText}>✓ Résolu</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => updateTicketSAV({ ...t, statut: 'en_cours', updatedAt: new Date().toISOString() })}
+                          disabled={t.statut === 'en_cours'}
+                          style={[savListeStyles.actionBtn, savListeStyles.actionEnCours, t.statut === 'en_cours' && { opacity: 0.4 }]}
+                        >
+                          <Text style={savListeStyles.actionEnCoursText}>→ En cours</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => openSavDetailFromListe(t.id)}
+                          style={[savListeStyles.actionBtn, savListeStyles.actionEdit]}
+                        >
+                          <Text>✏️</Text>
+                        </Pressable>
+                        <Pressable
+                          onPress={() => {
+                            if (Platform.OS === 'web') {
+                              if (window.confirm(`Supprimer le ticket "${t.objet}" ?`)) deleteTicketSAV(t.id);
+                            } else {
+                              Alert.alert('Supprimer ce ticket ?', t.objet, [
+                                { text: 'Annuler', style: 'cancel' },
+                                { text: 'Supprimer', style: 'destructive', onPress: () => deleteTicketSAV(t.id) },
+                              ]);
+                            }
+                          }}
+                          style={[savListeStyles.actionBtn, savListeStyles.actionDelete]}
+                        >
+                          <Text>🗑</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  );
+                });
+              })()}
             </ScrollView>
           </View>
         </View>
-      </ModalKeyboard>
+      </Modal>
+
+      {/* ModalSAVDetail mode admin (depuis Tab Chantiers) */}
+      {savDetailId && (
+        <ModalSAVDetail
+          visible={!!savDetailId}
+          ticketId={savDetailId}
+          chantierId={savChantierId || ''}
+          currentAuthorNom={currentUser?.nom || 'Admin'}
+          mode="admin"
+          employes={data.employes}
+          onClose={() => setSavDetailId(null)}
+        />
+      )}
+
+      {/* ModalNouveauTicketSAV depuis Tab Chantiers (créateur = admin) */}
+      {showNouveauSavChantierId && (
+        <ModalNouveauTicketSAV
+          visible={!!showNouveauSavChantierId}
+          chantierId={showNouveauSavChantierId}
+          chantierNom={data.chantiers.find(c => c.id === showNouveauSavChantierId)?.nom || ''}
+          creePar={{ type: 'admin', id: 'admin', nom: currentUser?.nom || 'Admin' }}
+          employes={data.employes}
+          onClose={() => setShowNouveauSavChantierId(null)}
+        />
+      )}
 
       {/* Viewer photo plein écran (cachette clé, etc.) */}
       <Modal visible={viewPhotoUri !== null} transparent animationType="fade" onRequestClose={() => setViewPhotoUri(null)}>
@@ -4039,6 +3938,52 @@ function FormField({ label, children, style }: { label: string; children: React.
     </View>
   );
 }
+
+// ─── Styles spécifiques modal liste SAV (refacto C3b) ──────────────────────
+const savListeStyles = StyleSheet.create({
+  container: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    height: '90%',
+    overflow: 'hidden',
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    backgroundColor: '#2C2C2C',
+    gap: 10,
+  },
+  title: { fontSize: 18, fontWeight: '800', color: '#fff' },
+  chantierNom: { fontSize: 12, color: '#C9A96E', marginTop: 2 },
+  nouveauBtn: { backgroundColor: '#C9A96E', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
+  nouveauBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 10,
+    borderWidth: 1,
+    borderColor: '#E8DDD0',
+  },
+  tapZone: { paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' },
+  cardObjet: { fontSize: 14, fontWeight: '700', color: '#2C2C2C' },
+  cardPriorite: { fontSize: 11, color: '#687076' },
+  cardAssigne: { fontSize: 11, color: '#687076', marginTop: 4 },
+  cardCreepar: { fontSize: 10, color: '#C9A96E', fontStyle: 'italic', marginTop: 2 },
+  statutBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  actionsRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  actionBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  actionResolu: { backgroundColor: '#E8F5E9' },
+  actionResoluText: { color: '#2E7D32', fontSize: 11, fontWeight: '700' },
+  actionEnCours: { backgroundColor: '#FFF9C4' },
+  actionEnCoursText: { color: '#F57F17', fontSize: 11, fontWeight: '700' },
+  actionEdit: { backgroundColor: '#F5EDE3' },
+  actionDelete: { backgroundColor: '#FFEBEE' },
+});
 
 const styles = StyleSheet.create({
   header: {

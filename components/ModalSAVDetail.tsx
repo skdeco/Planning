@@ -57,10 +57,15 @@ interface Props {
    * 'lecture-commentaire' = lecture + ajout commentaire + ajout photo résolution si statut résolu.
    */
   mode: 'admin' | 'lecture-commentaire';
+  /**
+   * Liste optionnelle des employés pour le dropdown "Assigner à" (admin only).
+   * Si non fournie ou liste vide, le dropdown n'est pas affiché.
+   */
+  employes?: { id: string; prenom: string; nom: string }[];
   onClose: () => void;
 }
 
-export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, onClose }: Props) {
+export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, employes, onClose }: Props) {
   const { data, updateTicketSAV, deleteTicketSAV } = useApp();
   const ticket = useMemo(
     () => (data.ticketsSAV || []).find(t => t.id === ticketId),
@@ -118,13 +123,49 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, onCl
   };
 
   const pickAndAddProblemPhoto = async () => {
-    const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
+    // ActionSheet natif iOS gère Photothèque/Caméra/Fichiers — pas de bouton
+    // Scanner dédié séparé (redondance évitée).
+    const files = await pickNativeFile({ acceptImages: true, acceptPdf: false, acceptCamera: true, multiple: false, compressImages: true });
     if (files.length === 0) return;
     const url = await uploadFileToStorage(files[0].uri, `chantiers/${ticket.chantierId}/sav`, `sav_photo_${Date.now()}`);
     if (!url) return;
     updateTicketSAV({
       ...ticket,
       photos: [...(ticket.photos || []), url],
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
+  const pickAndAddPdfFile = async () => {
+    const files = await pickNativeFile({ acceptImages: false, acceptPdf: true, acceptCamera: false, multiple: false, compressImages: false });
+    if (files.length === 0) return;
+    const file = files[0];
+    const url = await uploadFileToStorage(file.uri, `chantiers/${ticket.chantierId}/sav`, `sav_doc_${Date.now()}`);
+    if (!url) return;
+    updateTicketSAV({
+      ...ticket,
+      fichiers: [...(ticket.fichiers || []), { uri: url, nom: file.filename || 'Document.pdf' }],
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
+  const removePdfFile = (uri: string) => {
+    const doDel = () => updateTicketSAV({
+      ...ticket,
+      fichiers: (ticket.fichiers || []).filter(f => f.uri !== uri),
+      updatedAt: new Date().toISOString(),
+    });
+    if (Platform.OS === 'web') { if (window.confirm('Supprimer ce fichier ?')) doDel(); }
+    else Alert.alert('Supprimer le fichier ?', 'Action irréversible.', [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: doDel },
+    ]);
+  };
+
+  const setAssigne = (employeId: string | undefined) => {
+    updateTicketSAV({
+      ...ticket,
+      assigneA: employeId || undefined,
       updatedAt: new Date().toISOString(),
     });
   };
@@ -352,6 +393,33 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, onCl
               </View>
             )}
 
+            {/* Assigner à — admin only, si liste employés disponible */}
+            {isAdminMode && employes && employes.length > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Assigner à</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+                  <Pressable
+                    onPress={() => setAssigne(undefined)}
+                    style={[styles.statutChip, !ticket.assigneA && { backgroundColor: '#2C2C2C' }]}
+                  >
+                    <Text style={[styles.statutChipText, !ticket.assigneA && { color: '#fff', fontWeight: '700' }]}>Non assigné</Text>
+                  </Pressable>
+                  {employes.map(emp => {
+                    const active = ticket.assigneA === emp.id;
+                    return (
+                      <Pressable
+                        key={emp.id}
+                        onPress={() => setAssigne(emp.id)}
+                        style={[styles.statutChip, active && { backgroundColor: '#2C2C2C' }]}
+                      >
+                        <Text style={[styles.statutChipText, active && { color: '#fff', fontWeight: '700' }]}>{emp.prenom}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+            )}
+
             {/* Photos du problème */}
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>📷 Photos du problème</Text>
@@ -372,6 +440,39 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, onCl
                 </Pressable>
               )}
             </View>
+
+            {/* Fichiers PDF — section séparée des photos */}
+            {(isAdminMode || (ticket.fichiers || []).length > 0) && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>📎 Fichiers PDF</Text>
+                {(ticket.fichiers || []).length === 0 ? (
+                  <Text style={styles.empty}>Aucun fichier</Text>
+                ) : (
+                  <View style={{ gap: 6 }}>
+                    {(ticket.fichiers || []).map(f => (
+                      <Pressable
+                        key={f.uri}
+                        onPress={() => openDocPreview(f.uri)}
+                        style={styles.fichierRow}
+                      >
+                        <Text style={{ fontSize: 18 }}>📄</Text>
+                        <Text style={styles.fichierNom} numberOfLines={1}>{f.nom}</Text>
+                        {isAdminMode && (
+                          <Pressable onPress={() => removePdfFile(f.uri)} style={{ padding: 6 }}>
+                            <Text style={{ fontSize: 14 }}>🗑</Text>
+                          </Pressable>
+                        )}
+                      </Pressable>
+                    ))}
+                  </View>
+                )}
+                {isAdminMode && (
+                  <Pressable onPress={pickAndAddPdfFile} style={[styles.btn, styles.btnSecondary, { marginTop: 10 }]}>
+                    <Text style={styles.btnSecondaryText}>+ Ajouter un PDF</Text>
+                  </Pressable>
+                )}
+              </View>
+            )}
 
             {/* Section Résolution */}
             {(isAdminMode || ticket.statut === 'resolu') && (
@@ -456,11 +557,36 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, onCl
               </View>
             </View>
 
-            {/* Suppression — admin only */}
+            {/* 4 boutons d'action rapide — admin only, cohérent avec la card liste */}
             {isAdminMode && (
-              <Pressable onPress={confirmDelete} style={[styles.btn, styles.btnDanger, { marginTop: 8 }]}>
-                <Text style={styles.btnDangerText}>🗑 Supprimer ce ticket</Text>
-              </Pressable>
+              <View style={styles.actionsRow}>
+                <Pressable
+                  onPress={() => changeStatut('resolu')}
+                  disabled={ticket.statut === 'resolu' || ticket.statut === 'clos'}
+                  style={[styles.actionBtn, styles.actionResolu, (ticket.statut === 'resolu' || ticket.statut === 'clos') && { opacity: 0.4 }]}
+                >
+                  <Text style={styles.actionResoluText}>✓ Résolu</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => changeStatut('en_cours')}
+                  disabled={ticket.statut === 'en_cours'}
+                  style={[styles.actionBtn, styles.actionEnCours, ticket.statut === 'en_cours' && { opacity: 0.4 }]}
+                >
+                  <Text style={styles.actionEnCoursText}>→ En cours</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => setEditingHeader(true)}
+                  style={[styles.actionBtn, styles.actionEdit]}
+                >
+                  <Text>✏️</Text>
+                </Pressable>
+                <Pressable
+                  onPress={confirmDelete}
+                  style={[styles.actionBtn, styles.actionDelete]}
+                >
+                  <Text>🗑</Text>
+                </Pressable>
+              </View>
             )}
           </ScrollView>
         </View>
@@ -526,4 +652,19 @@ const styles = StyleSheet.create({
   btnSecondaryText: { color: '#2C2C2C', fontSize: 13, fontWeight: '600' },
   btnDanger: { backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#E74C3C' },
   btnDangerText: { color: '#DC2626', fontSize: 13, fontWeight: '700' },
+  fichierRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 10, paddingHorizontal: 12,
+    borderRadius: 8, backgroundColor: '#FAF7F3',
+    borderWidth: 1, borderColor: '#E8DDD0',
+  },
+  fichierNom: { flex: 1, fontSize: 13, color: '#2C2C2C', fontWeight: '600' },
+  actionsRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
+  actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  actionResolu: { backgroundColor: '#E8F5E9' },
+  actionResoluText: { color: '#2E7D32', fontSize: 11, fontWeight: '700' },
+  actionEnCours: { backgroundColor: '#FFF9C4' },
+  actionEnCoursText: { color: '#F57F17', fontSize: 11, fontWeight: '700' },
+  actionEdit: { backgroundColor: '#F5EDE3' },
+  actionDelete: { backgroundColor: '#FFEBEE' },
 });

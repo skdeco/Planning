@@ -44,15 +44,23 @@ interface Props {
   chantierId: string;
   chantierNom: string;
   creePar: CreePar;
+  /**
+   * Liste optionnelle des employés pour le dropdown "Assigner à" (admin only).
+   * Si non fournie ou créateur non-admin, le dropdown n'est pas affiché.
+   */
+  employes?: { id: string; prenom: string; nom: string }[];
   onClose: () => void;
 }
 
-export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePar, onClose }: Props) {
+export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePar, employes, onClose }: Props) {
   const { data, addTicketSAV } = useApp();
+  const isAdminCreator = creePar.type === 'admin';
   const [objet, setObjet] = useState('');
   const [description, setDescription] = useState('');
   const [priorite, setPriorite] = useState<PrioriteSAV>('normale');
   const [photos, setPhotos] = useState<string[]>([]);
+  const [fichiers, setFichiers] = useState<{ uri: string; nom: string }[]>([]);
+  const [assigneA, setAssigneA] = useState<string>('');
   const [submitting, setSubmitting] = useState(false);
 
   const reset = () => {
@@ -60,6 +68,8 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
     setDescription('');
     setPriorite('normale');
     setPhotos([]);
+    setFichiers([]);
+    setAssigneA('');
   };
 
   const handleClose = () => {
@@ -68,9 +78,11 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
   };
 
   const pickPhoto = async () => {
+    // ActionSheet natif iOS gère Photothèque/Caméra/Fichiers — pas de bouton
+    // Scanner dédié séparé (redondance évitée).
     const files = await pickNativeFile({
       acceptImages: true,
-      acceptPdf: true,
+      acceptPdf: false,
       acceptCamera: true,
       multiple: false,
       compressImages: true,
@@ -81,8 +93,27 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
     setPhotos(prev => [...prev, url]);
   };
 
+  const pickPdf = async () => {
+    const files = await pickNativeFile({
+      acceptImages: false,
+      acceptPdf: true,
+      acceptCamera: false,
+      multiple: false,
+      compressImages: false,
+    });
+    if (files.length === 0) return;
+    const file = files[0];
+    const url = await uploadFileToStorage(file.uri, `chantiers/${chantierId}/sav`, `sav_doc_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
+    if (!url) return;
+    setFichiers(prev => [...prev, { uri: url, nom: file.filename || 'Document.pdf' }]);
+  };
+
   const removePhoto = (uri: string) => {
     setPhotos(prev => prev.filter(p => p !== uri));
+  };
+
+  const removeFichier = (uri: string) => {
+    setFichiers(prev => prev.filter(f => f.uri !== uri));
   };
 
   const submit = async () => {
@@ -98,7 +129,9 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
         priorite,
         statut: 'ouvert',
         dateOuverture: now.slice(0, 10),
+        assigneA: isAdminCreator && assigneA ? assigneA : undefined,
         photos: photos.length > 0 ? photos : undefined,
+        fichiers: fichiers.length > 0 ? fichiers : undefined,
         commentaires: [],
         creePar: { ...creePar, createdAt: now },
         createdAt: now,
@@ -126,9 +159,6 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
       setSubmitting(false);
     }
   };
-
-  const isPdf = (uri: string): boolean =>
-    uri.toLowerCase().endsWith('.pdf') || uri.startsWith('data:application/pdf');
 
   const canSubmit = objet.trim().length > 0 && description.trim().length > 0 && !submitting;
 
@@ -185,18 +215,39 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
               })}
             </View>
 
-            <Text style={styles.label}>Photos / fichiers</Text>
+            {/* Assigner à — admin only, si liste employés disponible */}
+            {isAdminCreator && employes && employes.length > 0 && (
+              <>
+                <Text style={styles.label}>Assigner à (optionnel)</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }} style={{ marginBottom: 12 }}>
+                  <Pressable
+                    onPress={() => setAssigneA('')}
+                    style={[styles.assignChip, !assigneA && styles.assignChipActive]}
+                  >
+                    <Text style={[styles.assignChipText, !assigneA && styles.assignChipTextActive]}>Non assigné</Text>
+                  </Pressable>
+                  {employes.map(emp => {
+                    const active = assigneA === emp.id;
+                    return (
+                      <Pressable
+                        key={emp.id}
+                        onPress={() => setAssigneA(emp.id)}
+                        style={[styles.assignChip, active && styles.assignChipActive]}
+                      >
+                        <Text style={[styles.assignChipText, active && styles.assignChipTextActive]}>{emp.prenom}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+              </>
+            )}
+
+            <Text style={styles.label}>Photos</Text>
             {photos.length > 0 && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }} style={{ marginBottom: 8 }}>
                 {photos.map(uri => (
                   <View key={uri} style={{ width: 72, height: 72, position: 'relative' }}>
-                    {isPdf(uri) ? (
-                      <View style={{ width: 72, height: 72, borderRadius: 6, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ fontSize: 28 }}>📄</Text>
-                      </View>
-                    ) : (
-                      <Image source={{ uri }} style={{ width: 72, height: 72, borderRadius: 6 }} resizeMode="cover" />
-                    )}
+                    <Image source={{ uri }} style={{ width: 72, height: 72, borderRadius: 6 }} resizeMode="cover" />
                     <Pressable
                       onPress={() => removePhoto(uri)}
                       style={{ position: 'absolute', top: -6, right: -6, width: 18, height: 18, borderRadius: 9, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
@@ -207,8 +258,27 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
                 ))}
               </ScrollView>
             )}
-            <Pressable onPress={pickPhoto} style={[styles.btn, styles.btnSecondary, { marginBottom: 14 }]}>
-              <Text style={styles.btnSecondaryText}>📷 Ajouter une photo / PDF</Text>
+            <Pressable onPress={pickPhoto} style={[styles.btn, styles.btnSecondary, { marginBottom: 10 }]}>
+              <Text style={styles.btnSecondaryText}>📷 Ajouter une photo</Text>
+            </Pressable>
+
+            {/* Fichiers PDF — bouton séparé pour distinction sémantique */}
+            <Text style={styles.label}>Fichiers PDF</Text>
+            {fichiers.length > 0 && (
+              <View style={{ gap: 6, marginBottom: 8 }}>
+                {fichiers.map(f => (
+                  <View key={f.uri} style={styles.fichierRow}>
+                    <Text style={{ fontSize: 18 }}>📄</Text>
+                    <Text style={styles.fichierNom} numberOfLines={1}>{f.nom}</Text>
+                    <Pressable onPress={() => removeFichier(f.uri)} style={{ padding: 6 }}>
+                      <Text style={{ fontSize: 14 }}>🗑</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            )}
+            <Pressable onPress={pickPdf} style={[styles.btn, styles.btnSecondary, { marginBottom: 14 }]}>
+              <Text style={styles.btnSecondaryText}>📎 Ajouter un PDF</Text>
             </Pressable>
 
             <Pressable
@@ -258,4 +328,19 @@ const styles = StyleSheet.create({
   btnPrimaryText: { color: '#fff', fontSize: 14, fontWeight: '700' },
   btnSecondary: { backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E8DDD0' },
   btnSecondaryText: { color: '#2C2C2C', fontSize: 13, fontWeight: '600' },
+  assignChip: {
+    paddingHorizontal: 10, paddingVertical: 6,
+    borderRadius: 14, backgroundColor: '#fff',
+    borderWidth: 1, borderColor: '#E8DDD0',
+  },
+  assignChipActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
+  assignChipText: { fontSize: 11, color: '#687076', fontWeight: '600' },
+  assignChipTextActive: { color: '#fff', fontWeight: '700' },
+  fichierRow: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    paddingVertical: 10, paddingHorizontal: 12,
+    borderRadius: 8, backgroundColor: '#FAF7F3',
+    borderWidth: 1, borderColor: '#E8DDD0',
+  },
+  fichierNom: { flex: 1, fontSize: 13, color: '#2C2C2C', fontWeight: '600' },
 });
