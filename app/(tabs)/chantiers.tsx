@@ -5,8 +5,6 @@ import {
   TextInput, ScrollView, Alert, Platform, Image, Linking,
 } from 'react-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
 import { ScreenContainer } from '@/components/screen-container';
@@ -30,7 +28,6 @@ import { todayYMD } from '@/lib/date/today';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
-import { compressImage } from '@/lib/imageUtils';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
@@ -2245,41 +2242,21 @@ export default function ChantiersScreen() {
                           value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
                         <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
                           value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
-                        {/* Scan / photo document */}
-                        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
-                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                        {/* Bouton unifié — pickNativeFile gère ActionSheet iOS (Photothèque/Caméra/Fichiers) + compression */}
+                        <View style={{ marginBottom: 8 }}>
+                          <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
                             onPress={async () => {
-                              const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                              if (!result.canceled && result.assets[0]) {
-                                const compressed = await compressImage(result.assets[0].uri);
-                                const url = await uploadFileToStorage(compressed, `chantiers/${ficheId}/achats`, `achat_${Date.now()}`);
+                              try {
+                                const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
+                                if (!files || files.length === 0) return;
+                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${ficheId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
                                 if (url) setAchatFichierUri(url);
+                              } catch (err) {
+                                console.error('Upload achat échoué', err);
+                                Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Photo</Text>
-                          </Pressable>
-                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
-                            onPress={async () => {
-                              const { status } = await ImagePicker.requestCameraPermissionsAsync();
-                              if (status !== 'granted') { Alert.alert('Permission', 'Accès caméra requis'); return; }
-                              const result = await ImagePicker.launchCameraAsync({ quality: 0.6 });
-                              if (!result.canceled && result.assets[0]) {
-                                const compressed = await compressImage(result.assets[0].uri);
-                                const url = await uploadFileToStorage(compressed, `chantiers/${ficheId}/achats`, `scan_${Date.now()}`);
-                                if (url) setAchatFichierUri(url);
-                              }
-                            }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📸 Scanner</Text>
-                          </Pressable>
-                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
-                            onPress={async () => {
-                              const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
-                              if (!result.canceled && result.assets?.[0]) {
-                                const url = await uploadFileToStorage(result.assets[0].uri, `chantiers/${ficheId}/achats`, `doc_${Date.now()}`);
-                                if (url) setAchatFichierUri(url);
-                              }
-                            }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📄 PDF</Text>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Ajouter une facture</Text>
                           </Pressable>
                         </View>
                         {achatFichierUri && (
@@ -2897,41 +2874,21 @@ export default function ChantiersScreen() {
                           value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
                         <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
                           value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
-                        {/* Scan / photo / PDF */}
-                        <View style={{ flexDirection: 'row', gap: 6, marginBottom: 8 }}>
-                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                        {/* Bouton unifié — pickNativeFile gère ActionSheet iOS (Photothèque/Caméra/Fichiers) + compression */}
+                        <View style={{ marginBottom: 8 }}>
+                          <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
                             onPress={async () => {
-                              const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                              if (!result.canceled && result.assets[0]) {
-                                const compressed = await compressImage(result.assets[0].uri);
-                                const url = await uploadFileToStorage(compressed, `chantiers/${achatsChantierId}/achats`, `achat_${Date.now()}`);
+                              try {
+                                const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
+                                if (!files || files.length === 0) return;
+                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${achatsChantierId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
                                 if (url) setAchatFichierUri(url);
+                              } catch (err) {
+                                console.error('Upload achat échoué', err);
+                                Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Photo</Text>
-                          </Pressable>
-                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
-                            onPress={async () => {
-                              const { status } = await ImagePicker.requestCameraPermissionsAsync();
-                              if (status !== 'granted') { Alert.alert('Permission', 'Accès caméra requis'); return; }
-                              const result = await ImagePicker.launchCameraAsync({ quality: 0.6 });
-                              if (!result.canceled && result.assets[0]) {
-                                const compressed = await compressImage(result.assets[0].uri);
-                                const url = await uploadFileToStorage(compressed, `chantiers/${achatsChantierId}/achats`, `scan_${Date.now()}`);
-                                if (url) setAchatFichierUri(url);
-                              }
-                            }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📸 Scanner</Text>
-                          </Pressable>
-                          <Pressable style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
-                            onPress={async () => {
-                              const result = await DocumentPicker.getDocumentAsync({ type: ['application/pdf', 'image/*'], copyToCacheDirectory: true });
-                              if (!result.canceled && result.assets?.[0]) {
-                                const url = await uploadFileToStorage(result.assets[0].uri, `chantiers/${achatsChantierId}/achats`, `doc_${Date.now()}`);
-                                if (url) setAchatFichierUri(url);
-                              }
-                            }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📄 PDF</Text>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Ajouter une facture</Text>
                           </Pressable>
                         </View>
                         {achatFichierUri && (
