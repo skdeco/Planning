@@ -25,6 +25,7 @@ import {
   type Apporteur, type Note, type TaskItem,
 } from '@/app/types';
 import { todayYMD } from '@/lib/date/today';
+import { genererNomAchatAuto } from '@/lib/achats/genererNomAuto';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -142,7 +143,7 @@ const DEFAULT_FORM: ChantierForm = {
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, updateDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
   const params = useLocalSearchParams<{ action?: string; chantierId?: string; apporteurId?: string; apporteurType?: string }>();
@@ -228,6 +229,9 @@ export default function ChantiersScreen() {
   const [showAchatForm, setShowAchatForm] = useState(false);
   const [showAchatFormFiche, setShowAchatFormFiche] = useState(false);
   const [achatFichierUri, setAchatFichierUri] = useState<string | null>(null);
+  // C1a-bis : édition d'un achat existant + UX simplifiée (détails repliés par défaut)
+  const [editAchatId, setEditAchatId] = useState<string | null>(null);
+  const [showDetailsAchat, setShowDetailsAchat] = useState(false);
   const [achatForm, setAchatForm] = useState({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
   // Menu actions chantier
   const [actionChantier, setActionChantier] = useState<Chantier | null>(null);
@@ -2221,28 +2225,23 @@ export default function ChantiersScreen() {
                     {/* Bouton ajouter */}
                     <Pressable
                       style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
-                      onPress={() => { setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr2, fournisseur: '', fichier: '', note: '' }); setShowAchatFormFiche(v => !v); }}
+                      onPress={() => {
+                        setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr2, fournisseur: '', fichier: '', note: '' });
+                        setAchatFichierUri(null);
+                        setEditAchatId(null);
+                        setShowDetailsAchat(false);
+                        setShowAchatFormFiche(v => !v);
+                      }}
                     >
                       <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{showAchatFormFiche ? '✕ Annuler' : '+ Ajouter un achat'}</Text>
                     </Pressable>
 
-                    {/* Formulaire inline ajout achat */}
+                    {/* Formulaire inline ajout/édition achat (UX simplifiée : champs essentiels visibles, détails repliés) */}
                     {showAchatFormFiche && (
                       <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>🧾 Nouvel achat</Text>
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé *" />
-                        <View style={{ flexDirection: 'row', gap: 6 }}>
-                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                            value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
-                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                            value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
-                        </View>
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
-                        {/* Bouton unifié — pickNativeFile gère ActionSheet iOS (Photothèque/Caméra/Fichiers) + compression */}
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
+
+                        {/* Bouton facture (priorité visuelle) */}
                         <View style={{ marginBottom: 8 }}>
                           <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
                             onPress={async () => {
@@ -2260,31 +2259,84 @@ export default function ChantiersScreen() {
                           </Pressable>
                         </View>
                         {achatFichierUri && (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                            <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint</Text>
-                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 11, color: '#E74C3C' }}>✕</Text></Pressable>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
+                            <Pressable onPress={() => openDocPreview(achatFichierUri)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Text style={{ fontSize: 14 }}>📄</Text>
+                              <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint (toucher pour voir)</Text>
+                            </Pressable>
+                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
                           </View>
                         )}
-                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: achatForm.libelle.trim() ? 1 : 0.5 }}
-                          disabled={!achatForm.libelle.trim()}
+
+                        {/* Libellé (optionnel — auto-généré si vide) */}
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" />
+
+                        {/* Toggle détails */}
+                        <Pressable
+                          onPress={() => setShowDetailsAchat(v => !v)}
+                          style={{ backgroundColor: '#F5EDE3', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginVertical: 8 }}
+                        >
+                          <Text style={{ fontSize: 12, color: '#687076', fontWeight: '600' }}>
+                            {showDetailsAchat ? '− Masquer les détails' : '+ Plus de détails'}
+                          </Text>
+                        </Pressable>
+
+                        {/* Détails optionnels */}
+                        {showDetailsAchat && (
+                          <>
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
+                            </View>
+                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
+                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
+                          </>
+                        )}
+
+                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (achatForm.libelle.trim() || achatFichierUri) ? 1 : 0.5 }}
+                          disabled={!achatForm.libelle.trim() && !achatFichierUri}
                           onPress={() => {
-                            if (!ficheId || !achatForm.libelle.trim()) return;
-                            addDepense({
-                              id: `dep_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                            if (!ficheId) return;
+                            if (!achatForm.libelle.trim() && !achatFichierUri) return;
+
+                            const libelleAuto = achatForm.libelle.trim() || genererNomAchatAuto();
+                            const depenseData = {
                               chantierId: ficheId,
-                              libelle: achatForm.libelle.trim(),
+                              libelle: libelleAuto,
                               montant: parseFloat(achatForm.montantHT.replace(',', '.')) || 0,
-                              montantTTC: parseFloat(achatForm.montantTTC.replace(',', '.')) || 0,
+                              montantTTC: parseFloat(achatForm.montantTTC.replace(',', '.')) || undefined,
                               date: achatForm.date || todayYMD(),
                               fournisseur: achatForm.fournisseur.trim() || undefined,
                               note: achatForm.note.trim() || undefined,
                               fichier: achatFichierUri || undefined,
-                              createdAt: new Date().toISOString(),
-                            });
-                            setShowAchatFormFiche(false);
+                            };
+
+                            if (editAchatId) {
+                              const existing = (data.depenses || data.depensesChantier || []).find(d => d.id === editAchatId);
+                              if (existing) {
+                                updateDepense({ ...existing, ...depenseData });
+                              }
+                            } else {
+                              addDepense({
+                                id: `dep_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                                ...depenseData,
+                                createdAt: new Date().toISOString(),
+                                createdBy: currentUser?.nom || 'Admin',
+                              });
+                            }
+
+                            setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
                             setAchatFichierUri(null);
+                            setEditAchatId(null);
+                            setShowDetailsAchat(false);
+                            setShowAchatFormFiche(false);
                           }}>
-                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Enregistrer</Text>
+                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{editAchatId ? 'Mettre à jour' : 'Enregistrer'}</Text>
                         </Pressable>
                       </View>
                     )}
@@ -2304,6 +2356,28 @@ export default function ChantiersScreen() {
                           <Pressable
                             key={dep.id}
                             style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: idx % 2 === 0 ? '#fff' : '#F8F9FA', borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            onPress={() => {
+                              const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
+                              if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
+                              actions.push({ text: '✏️ Modifier', onPress: () => {
+                                setAchatForm({
+                                  libelle: dep.libelle || '',
+                                  montantHT: dep.montant ? String(dep.montant) : '',
+                                  montantTTC: dep.montantTTC ? String(dep.montantTTC) : '',
+                                  date: dep.date || '',
+                                  fournisseur: dep.fournisseur || '',
+                                  fichier: '',
+                                  note: dep.note || '',
+                                });
+                                setAchatFichierUri(dep.fichier || null);
+                                setEditAchatId(dep.id);
+                                setShowDetailsAchat(true);
+                                setShowAchatFormFiche(true);
+                              } });
+                              actions.push({ text: '🗑 Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) });
+                              actions.push({ text: 'Annuler', style: 'cancel' });
+                              Alert.alert(dep.libelle || 'Achat', '', actions);
+                            }}
                             onLongPress={() => {
                               if (Platform.OS === 'web') {
                                 if (window.confirm(`Supprimer "${dep.libelle}" (${dep.montant} €) ?`)) deleteDepense(dep.id);
@@ -2322,18 +2396,7 @@ export default function ChantiersScreen() {
                             <Text style={{ flex: 0.7, fontSize: 9, color: '#687076', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
                             <View style={{ width: 30, alignItems: 'center' }}>
                               {dep.fichier ? (
-                                <Pressable onPress={() => {
-                                  if (Platform.OS === 'web') {
-                                    const w = window.open();
-                                    if (w) {
-                                      if (dep.fichier!.startsWith('data:application/pdf') || dep.fichier!.includes('pdf')) {
-                                        w.document.write(`<iframe src="${dep.fichier}" width="100%" height="100%" style="border:none;"></iframe>`);
-                                      } else {
-                                        w.document.write(`<img src="${dep.fichier}" style="max-width:100%;"/>`);
-                                      }
-                                    }
-                                  }
-                                }}>
+                                <Pressable onPress={(e) => { e.stopPropagation?.(); openDocPreview(dep.fichier!); }}>
                                   <Text style={{ fontSize: 16 }}>📄</Text>
                                 </Pressable>
                               ) : (
@@ -2350,7 +2413,7 @@ export default function ChantiersScreen() {
                         <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
-                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Appui long sur une ligne pour supprimer</Text>
+                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
                   </>
                 );
               })()}
@@ -2853,28 +2916,23 @@ export default function ChantiersScreen() {
                     {/* Bouton ajouter */}
                     <Pressable
                       style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
-                      onPress={() => { setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr3, fournisseur: '', fichier: '', note: '' }); setShowAchatForm(v => !v); }}
+                      onPress={() => {
+                        setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr3, fournisseur: '', fichier: '', note: '' });
+                        setAchatFichierUri(null);
+                        setEditAchatId(null);
+                        setShowDetailsAchat(false);
+                        setShowAchatForm(v => !v);
+                      }}
                     >
                       <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{showAchatForm ? '✕ Annuler' : '+ Ajouter un achat'}</Text>
                     </Pressable>
 
-                    {/* Formulaire inline */}
+                    {/* Formulaire inline ajout/édition achat (UX simplifiée : champs essentiels visibles, détails repliés) */}
                     {showAchatForm && (
                       <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>🧾 Nouvel achat</Text>
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé *" />
-                        <View style={{ flexDirection: 'row', gap: 6 }}>
-                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                            value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
-                          <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                            value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
-                        </View>
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
-                        {/* Bouton unifié — pickNativeFile gère ActionSheet iOS (Photothèque/Caméra/Fichiers) + compression */}
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
+
+                        {/* Bouton facture (priorité visuelle) */}
                         <View style={{ marginBottom: 8 }}>
                           <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
                             onPress={async () => {
@@ -2892,31 +2950,84 @@ export default function ChantiersScreen() {
                           </Pressable>
                         </View>
                         {achatFichierUri && (
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 }}>
-                            <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint</Text>
-                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 11, color: '#E74C3C' }}>✕</Text></Pressable>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
+                            <Pressable onPress={() => openDocPreview(achatFichierUri)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                              <Text style={{ fontSize: 14 }}>📄</Text>
+                              <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint (toucher pour voir)</Text>
+                            </Pressable>
+                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
                           </View>
                         )}
-                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: achatForm.libelle.trim() && achatForm.montantHT ? 1 : 0.5 }}
-                          disabled={!achatForm.libelle.trim() || !achatForm.montantHT}
+
+                        {/* Libellé (optionnel — auto-généré si vide) */}
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" />
+
+                        {/* Toggle détails */}
+                        <Pressable
+                          onPress={() => setShowDetailsAchat(v => !v)}
+                          style={{ backgroundColor: '#F5EDE3', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginVertical: 8 }}
+                        >
+                          <Text style={{ fontSize: 12, color: '#687076', fontWeight: '600' }}>
+                            {showDetailsAchat ? '− Masquer les détails' : '+ Plus de détails'}
+                          </Text>
+                        </Pressable>
+
+                        {/* Détails optionnels */}
+                        {showDetailsAchat && (
+                          <>
+                            <View style={{ flexDirection: 'row', gap: 6 }}>
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
+                            </View>
+                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
+                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
+                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
+                          </>
+                        )}
+
+                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (achatForm.libelle.trim() || achatFichierUri) ? 1 : 0.5 }}
+                          disabled={!achatForm.libelle.trim() && !achatFichierUri}
                           onPress={() => {
-                            if (!achatsChantierId || !achatForm.libelle.trim() || !achatForm.montantHT) return;
-                            addDepense({
-                              id: `dep_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+                            if (!achatsChantierId) return;
+                            if (!achatForm.libelle.trim() && !achatFichierUri) return;
+
+                            const libelleAuto = achatForm.libelle.trim() || genererNomAchatAuto();
+                            const depenseData = {
                               chantierId: achatsChantierId,
-                              libelle: achatForm.libelle.trim(),
+                              libelle: libelleAuto,
                               montant: parseFloat(achatForm.montantHT.replace(',', '.')) || 0,
                               montantTTC: parseFloat(achatForm.montantTTC.replace(',', '.')) || undefined,
                               date: achatForm.date || todayYMD(),
                               fournisseur: achatForm.fournisseur.trim() || undefined,
                               note: achatForm.note.trim() || undefined,
                               fichier: achatFichierUri || undefined,
-                              createdAt: new Date().toISOString(),
-                            });
-                            setShowAchatForm(false);
+                            };
+
+                            if (editAchatId) {
+                              const existing = (data.depenses || data.depensesChantier || []).find(d => d.id === editAchatId);
+                              if (existing) {
+                                updateDepense({ ...existing, ...depenseData });
+                              }
+                            } else {
+                              addDepense({
+                                id: `dep_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                                ...depenseData,
+                                createdAt: new Date().toISOString(),
+                                createdBy: currentUser?.nom || 'Admin',
+                              });
+                            }
+
+                            setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
                             setAchatFichierUri(null);
+                            setEditAchatId(null);
+                            setShowDetailsAchat(false);
+                            setShowAchatForm(false);
                           }}>
-                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Enregistrer</Text>
+                          <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{editAchatId ? 'Mettre à jour' : 'Enregistrer'}</Text>
                         </Pressable>
                       </View>
                     )}
@@ -2936,6 +3047,28 @@ export default function ChantiersScreen() {
                           <Pressable
                             key={dep.id}
                             style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: idx % 2 === 0 ? '#fff' : '#F8F9FA', borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            onPress={() => {
+                              const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
+                              if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
+                              actions.push({ text: '✏️ Modifier', onPress: () => {
+                                setAchatForm({
+                                  libelle: dep.libelle || '',
+                                  montantHT: dep.montant ? String(dep.montant) : '',
+                                  montantTTC: dep.montantTTC ? String(dep.montantTTC) : '',
+                                  date: dep.date || '',
+                                  fournisseur: dep.fournisseur || '',
+                                  fichier: '',
+                                  note: dep.note || '',
+                                });
+                                setAchatFichierUri(dep.fichier || null);
+                                setEditAchatId(dep.id);
+                                setShowDetailsAchat(true);
+                                setShowAchatForm(true);
+                              } });
+                              actions.push({ text: '🗑 Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) });
+                              actions.push({ text: 'Annuler', style: 'cancel' });
+                              Alert.alert(dep.libelle || 'Achat', '', actions);
+                            }}
                             onLongPress={() => {
                               if (Platform.OS === 'web') {
                                 if (window.confirm(`Supprimer "${dep.libelle}" ?`)) deleteDepense(dep.id);
@@ -2957,15 +3090,7 @@ export default function ChantiersScreen() {
                             <Text style={{ flex: 0.7, fontSize: 9, color: '#687076', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
                             <View style={{ width: 30, alignItems: 'center' }}>
                               {dep.fichier ? (
-                                <Pressable onPress={() => {
-                                  if (Platform.OS === 'web') {
-                                    const w = window.open();
-                                    if (w) {
-                                      if (dep.fichier!.includes('pdf')) w.document.write(`<iframe src="${dep.fichier}" width="100%" height="100%" style="border:none;"></iframe>`);
-                                      else w.document.write(`<img src="${dep.fichier}" style="max-width:100%;"/>`);
-                                    }
-                                  }
-                                }}>
+                                <Pressable onPress={(e) => { e.stopPropagation?.(); openDocPreview(dep.fichier!); }}>
                                   <Text style={{ fontSize: 14 }}>📄</Text>
                                 </Pressable>
                               ) : <Text style={{ fontSize: 10, color: '#B0BEC5' }}>—</Text>}
@@ -2980,7 +3105,7 @@ export default function ChantiersScreen() {
                         <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
-                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Appui long pour supprimer</Text>
+                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
                   </>
                 );
               })()}
