@@ -6,8 +6,6 @@ import { ScreenContainer } from '@/components/screen-container';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { ImportExcel } from '@/components/ImportExcel';
 import { FadeInView, ScaleButton, StaggeredList, ProgressBar } from '@/components/ui/animated';
-import * as ImagePicker from 'expo-image-picker';
-import { compressImage } from '@/lib/imageUtils';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
@@ -492,23 +490,19 @@ export default function DashboardScreen() {
                   {/* Bouton ajouter photo */}
                   <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, backgroundColor: '#EBF0FF', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start' }}
                     onPress={async () => {
-                      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                      if (!result.canceled && result.assets[0]) {
-                        const { uploadFileToStorage } = require('@/lib/supabase');
-                        const compressed = await compressImage(result.assets[0].uri);
-                        const url = await uploadFileToStorage(compressed, 'notes/photos', `note_${note.noteId}_${Date.now()}`);
-                        if (url) {
-                          const aff = data.affectations.find(a => a.id === note.affectationId);
-                          const existingNote = aff?.notes.find(n => n.id === note.noteId);
-                          if (existingNote && aff) {
-                            upsertNote({
-                              chantierId: aff.chantierId,
-                              employeId: aff.employeId,
-                              date: existingNote.date || today,
-                              note: { ...existingNote, photos: [...(existingNote.photos || []), url], updatedAt: new Date().toISOString() },
-                            });
-                          }
-                        }
+                      const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
+                      if (!files || files.length === 0) return;
+                      const url = await uploadFileToStorage(files[0].uri, 'notes/photos', `note_${note.noteId}_${Date.now()}`);
+                      if (!url) return;
+                      const aff = data.affectations.find(a => a.id === note.affectationId);
+                      const existingNote = aff?.notes.find(n => n.id === note.noteId);
+                      if (existingNote && aff) {
+                        upsertNote({
+                          chantierId: aff.chantierId,
+                          employeId: aff.employeId,
+                          date: existingNote.date || today,
+                          note: { ...existingNote, photos: [...(existingNote.photos || []), url], updatedAt: new Date().toISOString() },
+                        });
                       }
                     }}>
                     <Text style={{ fontSize: 12 }}>📷</Text>
@@ -590,13 +584,13 @@ export default function DashboardScreen() {
                                         { text: 'Annuler', style: 'cancel' },
                                         { text: 'Résoudre sans photo', onPress: () => updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() }) },
                                         { text: '📷 Ajouter photo', onPress: async () => {
-                                          const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                                          if (!result.canceled && result.assets[0]) {
-                                            const { uploadFileToStorage } = require('@/lib/supabase');
-                                            const compressed = await compressImage(result.assets[0].uri);
-                                            const url = await uploadFileToStorage(compressed, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}_${Date.now()}`);
-                                            updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, photosResolution: [...(t.photosResolution || []), ...(url ? [url] : [])], updatedAt: new Date().toISOString() });
+                                          const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
+                                          if (!files || files.length === 0) {
+                                            updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() });
+                                            return;
                                           }
+                                          const url = await uploadFileToStorage(files[0].uri, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}_${Date.now()}`);
+                                          updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, photosResolution: [...(t.photosResolution || []), ...(url ? [url] : [])], updatedAt: new Date().toISOString() });
                                         }},
                                       ]);
                                     }
@@ -605,13 +599,10 @@ export default function DashboardScreen() {
                                 </Pressable>
                                 <Pressable style={{ backgroundColor: '#EBF0FF', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, alignItems: 'center' }}
                                   onPress={async () => {
-                                    const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.5 });
-                                    if (!result.canceled && result.assets[0]) {
-                                      const { uploadFileToStorage } = require('@/lib/supabase');
-                                      const compressed = await compressImage(result.assets[0].uri);
-                                      const url = await uploadFileToStorage(compressed, `chantiers/${t.chantierId}/sav-resolution`, `cr_${t.id}_${Date.now()}`);
-                                      if (url) updateTicketSAV({ ...t, photosResolution: [...(t.photosResolution || []), url], updatedAt: new Date().toISOString() });
-                                    }
+                                    const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
+                                    if (!files || files.length === 0) return;
+                                    const url = await uploadFileToStorage(files[0].uri, `chantiers/${t.chantierId}/sav-resolution`, `cr_${t.id}_${Date.now()}`);
+                                    if (url) updateTicketSAV({ ...t, photosResolution: [...(t.photosResolution || []), url], updatedAt: new Date().toISOString() });
                                   }}>
                                   <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>📷 Photo</Text>
                                 </Pressable>

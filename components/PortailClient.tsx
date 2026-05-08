@@ -25,6 +25,7 @@ import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { getInboxItemPath } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
@@ -431,14 +432,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   };
   const pickPhotoForLot = async (slot: 'generic' | 'avant' | 'apres' = 'generic') => {
     try {
-      const ImagePicker = require('expo-image-picker');
-      const res = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        quality: 0.7,
-        allowsMultipleSelection: Platform.OS !== 'ios',
+      const files = await pickNativeFile({
+        acceptImages: true,
+        acceptCamera: true,
+        multiple: Platform.OS !== 'ios',
+        compressImages: true,
       });
-      if (res.canceled) return;
-      const uris: string[] = (res.assets || []).map((a: any) => a.uri).filter(Boolean);
+      if (!files || files.length === 0) return;
+      const uris = files.map(f => f.uri).filter(Boolean);
       if (uris.length === 0) return;
       if (slot === 'avant') setLotPhotosAvant(prev => [...prev, ...uris]);
       else if (slot === 'apres') setLotPhotosApres(prev => [...prev, ...uris]);
