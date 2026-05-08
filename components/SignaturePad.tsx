@@ -1,190 +1,126 @@
-import React, { useRef, useState, useCallback } from 'react';
-import { View, Text, Pressable, StyleSheet, PanResponder, Platform } from 'react-native';
+import React, { useRef } from 'react';
+import { View, Pressable, Text, Platform } from 'react-native';
+import SignatureView, { SignatureViewRef } from 'react-native-signature-canvas';
 
-interface Props {
-  onSave: (base64: string) => void;
-  onCancel: () => void;
+interface SignaturePadProps {
+  /** Largeur du canvas. Default: 300. */
   width?: number;
+  /** Hauteur du canvas. Default: 150. */
   height?: number;
-  labels?: { signBelow?: string; draw?: string; clear?: string; cancel?: string; validate?: string };
+  onCancel: () => void;
+  onSave: (base64: string) => void;
 }
 
-/**
- * Composant de signature tactile.
- * Sur web : utilise un <canvas>.
- * Sur mobile : utilise PanResponder + SVG path.
- */
-export function SignaturePad({ onSave, onCancel, width = 300, height = 150, labels }: Props) {
+export function SignaturePad({ width = 300, height = 150, onCancel, onSave }: SignaturePadProps) {
+  const ref = useRef<SignatureViewRef>(null);
+
+  // Web fallback : pas de WebView dispo en RN web, signature désactivée
   if (Platform.OS === 'web') {
-    return <SignaturePadWeb onSave={onSave} onCancel={onCancel} width={width} height={height} labels={labels} />;
+    return (
+      <View style={{ alignItems: 'center', padding: 16, width, minHeight: height + 80 }}>
+        <View style={{
+          width, height,
+          borderRadius: 8,
+          borderWidth: 2,
+          borderColor: '#C9A96E',
+          borderStyle: 'dashed',
+          backgroundColor: '#F5EDE3',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+          <Text style={{ fontSize: 12, color: '#8C6D2F', fontWeight: '600' }}>
+            ✍️ Signature uniquement disponible sur mobile
+          </Text>
+        </View>
+        <Pressable
+          onPress={onCancel}
+          style={{ marginTop: 12, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#F5EDE3', borderRadius: 8 }}
+        >
+          <Text style={{ fontSize: 14, color: '#687076', fontWeight: '600' }}>Fermer</Text>
+        </Pressable>
+      </View>
+    );
   }
-  return <SignaturePadMobile onSave={onSave} onCancel={onCancel} width={width} height={height} labels={labels} />;
-}
 
-// ── Web version (canvas) ──
-function SignaturePadWeb({ onSave, onCancel, width, height, labels }: Props) {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const isDrawing = useRef(false);
+  // Style appliqué dans la WebView pour styliser le canvas
+  const webStyle = `
+    .m-signature-pad {
+      box-shadow: none;
+      border: none;
+      width: 100%;
+      height: 100%;
+    }
+    .m-signature-pad--body {
+      border: 2px dashed #C9A96E;
+      border-radius: 8px;
+    }
+    .m-signature-pad--footer { display: none; }
+    body, html {
+      width: ${width}px;
+      height: ${height}px;
+      margin: 0;
+      padding: 0;
+    }
+  `;
 
-  const getCtx = () => canvasRef.current?.getContext('2d') || null;
-
-  const startDraw = (e: React.MouseEvent | React.TouchEvent) => {
-    const ctx = getCtx(); if (!ctx) return;
-    isDrawing.current = true;
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-    ctx.beginPath();
-    ctx.moveTo(x, y);
+  // Callback déclenché par readSignature() quand le canvas a une signature
+  const handleOK = (signature: string) => {
+    // signature = "data:image/png;base64,iVBORw0KG..."
+    onSave(signature);
   };
 
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
-    if (!isDrawing.current) return;
-    const ctx = getCtx(); if (!ctx) return;
-    const rect = canvasRef.current!.getBoundingClientRect();
-    const x = ('touches' in e) ? e.touches[0].clientX - rect.left : e.clientX - rect.left;
-    const y = ('touches' in e) ? e.touches[0].clientY - rect.top : e.clientY - rect.top;
-    ctx.lineWidth = 2;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = '#11181C';
-    ctx.lineTo(x, y);
-    ctx.stroke();
+  // Callback si user tap "Valider" sans avoir signé (canvas vide)
+  const handleEmpty = () => {
+    // Ne rien faire — le user peut signer puis re-valider
   };
 
-  const endDraw = () => { isDrawing.current = false; };
-
-  const clear = () => {
-    const ctx = getCtx(); if (!ctx) return;
-    ctx.clearRect(0, 0, width!, height!);
+  const handleClear = () => {
+    ref.current?.clearSignature();
   };
 
-  const save = () => {
-    if (!canvasRef.current) return;
-    const data = canvasRef.current.toDataURL('image/png');
-    onSave(data);
+  // Déclenche le readSignature() qui appellera handleOK avec la base64
+  const handleConfirm = () => {
+    ref.current?.readSignature();
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{labels?.signBelow || 'Signez ci-dessous :'}</Text>
-      <View style={[styles.canvasWrap, { width, height }]}>
-        <canvas
-          ref={canvasRef as any}
-          width={width}
-          height={height}
-          style={{ border: '1px dashed #B0BEC5', borderRadius: 8, touchAction: 'none', cursor: 'crosshair' }}
-          onMouseDown={startDraw as any}
-          onMouseMove={draw as any}
-          onMouseUp={endDraw}
-          onMouseLeave={endDraw}
-          onTouchStart={startDraw as any}
-          onTouchMove={draw as any}
-          onTouchEnd={endDraw}
+    <View style={{ alignItems: 'center' }}>
+      {/* Canvas WebView */}
+      <View style={{ width, height, backgroundColor: '#fff', borderRadius: 8, overflow: 'hidden' }}>
+        <SignatureView
+          ref={ref}
+          onOK={handleOK}
+          onEmpty={handleEmpty}
+          webStyle={webStyle}
+          backgroundColor="#fff"
+          penColor="#000"
+          autoClear={false}
+          descriptionText=""
+          imageType="image/png"
         />
       </View>
-      <View style={styles.actions}>
-        <Pressable style={styles.clearBtn} onPress={clear}>
-          <Text style={styles.clearBtnText}>{labels?.clear || 'Effacer'}</Text>
-        </Pressable>
-        <Pressable style={styles.cancelBtn} onPress={onCancel}>
-          <Text style={styles.cancelBtnText}>{labels?.cancel || 'Annuler'}</Text>
-        </Pressable>
-        <Pressable style={styles.saveBtn} onPress={save}>
-          <Text style={styles.saveBtnText}>{labels?.validate || 'Valider ✓'}</Text>
-        </Pressable>
-      </View>
-    </View>
-  );
-}
 
-// ── Mobile version (PanResponder + SVG-like paths rendered as View lines) ──
-function SignaturePadMobile({ onSave, onCancel, width, height, labels }: Props) {
-  const [paths, setPaths] = useState<{ x: number; y: number }[][]>([]);
-  const currentPath = useRef<{ x: number; y: number }[]>([]);
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (_, gs) => {
-        currentPath.current = [{ x: gs.x0, y: gs.y0 }];
-        setPaths(prev => [...prev, [{ x: gs.x0, y: gs.y0 }]]);
-      },
-      onPanResponderMove: (_, gs) => {
-        currentPath.current.push({ x: gs.moveX, y: gs.moveY });
-        setPaths(prev => [...prev.slice(0, -1), [...currentPath.current]]);
-      },
-      onPanResponderRelease: () => {
-        setPaths(prev => [...prev]);
-      },
-    })
-  ).current;
-
-  const clear = () => { setPaths([]); currentPath.current = []; };
-
-  const save = () => {
-    // Sur mobile, on genere un simple marqueur "signed" avec timestamp
-    // (pas de canvas disponible pour exporter en image)
-    const timestamp = new Date().toISOString();
-    onSave(`signed_mobile_${timestamp}`);
-  };
-
-  return (
-    <View style={styles.container}>
-      <Text style={styles.label}>{labels?.signBelow || 'Signez ci-dessous :'}</Text>
-      <View
-        style={[styles.canvasWrap, { width, height, backgroundColor: '#fff', borderWidth: 1, borderColor: '#B0BEC5', borderStyle: 'dashed', borderRadius: 8, overflow: 'hidden' }]}
-        {...panResponder.panHandlers}
-      >
-        {paths.map((path, pi) =>
-          path.map((point, i) => {
-            if (i === 0) return null;
-            return (
-              <View
-                key={`${pi}_${i}`}
-                style={{
-                  position: 'absolute',
-                  left: point.x - 1,
-                  top: point.y - 1,
-                  width: 3,
-                  height: 3,
-                  borderRadius: 1.5,
-                  backgroundColor: '#11181C',
-                }}
-              />
-            );
-          })
-        )}
-        {paths.length === 0 && (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: '#B0BEC5', fontSize: 13 }}>{labels?.draw || 'Dessinez votre signature'}</Text>
-          </View>
-        )}
-      </View>
-      <View style={styles.actions}>
-        <Pressable style={styles.clearBtn} onPress={clear}>
-          <Text style={styles.clearBtnText}>{labels?.clear || 'Effacer'}</Text>
+      {/* Boutons d'action */}
+      <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
+        <Pressable
+          onPress={onCancel}
+          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#F5EDE3', borderRadius: 8 }}
+        >
+          <Text style={{ fontSize: 14, color: '#687076', fontWeight: '600' }}>Annuler</Text>
         </Pressable>
-        <Pressable style={styles.cancelBtn} onPress={onCancel}>
-          <Text style={styles.cancelBtnText}>{labels?.cancel || 'Annuler'}</Text>
+        <Pressable
+          onPress={handleClear}
+          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#FFE5E0', borderRadius: 8 }}
+        >
+          <Text style={{ fontSize: 14, color: '#C0392B', fontWeight: '600' }}>Effacer</Text>
         </Pressable>
-        <Pressable style={styles.saveBtn} onPress={save}>
-          <Text style={styles.saveBtnText}>{labels?.validate || 'Valider ✓'}</Text>
+        <Pressable
+          onPress={handleConfirm}
+          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#C9A96E', borderRadius: 8 }}
+        >
+          <Text style={{ fontSize: 14, color: '#fff', fontWeight: '700' }}>Valider</Text>
         </Pressable>
       </View>
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { gap: 10 },
-  label: { fontSize: 13, fontWeight: '700', color: '#11181C' },
-  canvasWrap: { alignSelf: 'center' },
-  actions: { flexDirection: 'row', gap: 8, justifyContent: 'center' },
-  clearBtn: { backgroundColor: '#F2F4F7', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  clearBtnText: { fontSize: 12, fontWeight: '600', color: '#687076' },
-  cancelBtn: { backgroundColor: '#FEF2F2', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  cancelBtnText: { fontSize: 12, fontWeight: '600', color: '#DC2626' },
-  saveBtn: { backgroundColor: '#1A3A6B', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 },
-  saveBtnText: { fontSize: 12, fontWeight: '700', color: '#fff' },
-});
