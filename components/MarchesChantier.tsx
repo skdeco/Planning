@@ -139,7 +139,9 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   };
 
   // ── Marché ──
-  const openNewMarche = () => {
+  // Reset complet + ouverture form en mode création (extrait pour réutilisation
+  // depuis l'Alert de prévention doublons).
+  const proceedNewMarche = () => {
     setEditMarche(null);
     setMarcheForm({ libelle: 'Marché initial', montantHT: '', montantTTC: '', dateDevis: todayYMD(), dateSignature: '' });
     setMarcheDevisInitial(null);
@@ -147,6 +149,28 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     setCommissionEnabled(false);
     setCommissionForm({ apporteurId: '', modeCommission: 'pourcentage', valeur: '', baseCalcul: 'HT', statut: 'a_payer', datePaiement: '', note: '' });
     setShowMarcheForm(true);
+  };
+
+  // Prévention UX : si des marchés existent déjà, proposer de les éditer
+  // pour éviter le doublon accidentel (BUG-MARCHE-DOUBLON).
+  const openNewMarche = () => {
+    if (marches.length === 0) {
+      proceedNewMarche();
+      return;
+    }
+    // 3 plus récents pour respecter la limite iOS Alert (~5 boutons visibles)
+    const recentMarches = marches.slice(-3);
+    const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = recentMarches.map(m => ({
+      text: `✏️ Modifier "${m.libelle}"`,
+      onPress: () => openEditMarche(m),
+    }));
+    buttons.push({ text: '+ Créer un nouveau marché', onPress: proceedNewMarche });
+    buttons.push({ text: 'Annuler', style: 'cancel' });
+    Alert.alert(
+      `${marches.length} marché${marches.length > 1 ? 's' : ''} existant${marches.length > 1 ? 's' : ''} pour ce chantier`,
+      'Pour ajouter un devis signé à un marché existant, modifiez-le plutôt que d\'en créer un nouveau.',
+      buttons,
+    );
   };
   const openEditMarche = (m: MarcheChantier) => {
     setEditMarche(m);
@@ -232,12 +256,33 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   };
 
   // ── Supplément ──
-  const openNewSupp = () => {
+  const proceedNewSupp = () => {
     setEditSupp(null);
     setSuppForm({ libelle: '', description: '', montantHT: '', montantTTC: '', statut: 'en_attente', dateProposition: todayYMD(), dateAccord: '' });
     setSuppDevis(null);
     setSuppFacture(null);
     setShowSuppForm(true);
+  };
+
+  // Prévention UX : si des suppléments existent déjà, proposer de les éditer
+  // pour éviter le doublon accidentel (BUG-MARCHE-DOUBLON).
+  const openNewSupp = () => {
+    if (supplements.length === 0) {
+      proceedNewSupp();
+      return;
+    }
+    const recentSupps = supplements.slice(-3);
+    const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = recentSupps.map(s => ({
+      text: `✏️ Modifier "${s.libelle}"`,
+      onPress: () => openEditSupp(s),
+    }));
+    buttons.push({ text: '+ Créer un nouveau supplément', onPress: proceedNewSupp });
+    buttons.push({ text: 'Annuler', style: 'cancel' });
+    Alert.alert(
+      `${supplements.length} supplément${supplements.length > 1 ? 's' : ''} existant${supplements.length > 1 ? 's' : ''}`,
+      'Pour modifier un supplément existant, sélectionnez-le ci-dessous.',
+      buttons,
+    );
   };
   const openEditSupp = (s: SupplementMarche) => {
     setEditSupp(s);
