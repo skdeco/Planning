@@ -6,8 +6,7 @@ import { useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PENDING_MARCHE_KEY = 'sk_pending_marche_form';
-import * as ImagePicker from 'expo-image-picker';
-import * as DocumentPicker from 'expo-document-picker';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { SignaturePad } from '@/components/SignaturePad';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
@@ -118,26 +117,18 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   const [openSuppId, setOpenSuppId] = useState<string | null>(null);
 
   const pickFile = async (label: string): Promise<{ uri: string; nom: string } | null> => {
-    if (Platform.OS === 'web') {
-      return new Promise(resolve => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*,application/pdf';
-        input.onchange = async (e: Event) => {
-          const file = (e.target as HTMLInputElement).files?.[0];
-          if (!file) { resolve(null); return; }
-          const reader = new FileReader();
-          reader.onload = () => resolve({ uri: reader.result as string, nom: file.name });
-          reader.readAsDataURL(file);
-        };
-        input.click(); setTimeout(() => input.remove(), 60000);
-      });
-    } else {
-      // Mobile : DocumentPicker pour tout type (PDF, images, etc.)
-      const result = await DocumentPicker.getDocumentAsync({ type: ['image/*', 'application/pdf'], copyToCacheDirectory: true });
-      if (result.canceled || !result.assets?.[0]) return null;
-      return { uri: result.assets[0].uri, nom: result.assets[0].name || `${label}_${Date.now()}` };
-    }
+    // 1 seul code path web/iOS/Android via pickNativeFile (cohérence C1a/C1b/C1c).
+    // acceptCamera: true permet à l'utilisateur de photographier un devis sur place.
+    const files = await pickNativeFile({
+      acceptImages: true,
+      acceptPdf: true,
+      acceptCamera: true,
+      multiple: false,
+      compressImages: true,
+    });
+    if (!files || files.length === 0) return null;
+    const f = files[0];
+    return { uri: f.uri, nom: f.filename || `${label}_${Date.now()}` };
   };
 
   const uploadIfNeeded = async (file: { uri: string; nom: string } | null, folder: string): Promise<{ uri?: string; nom?: string }> => {
