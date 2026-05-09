@@ -2355,7 +2355,7 @@ export default function ChantiersScreen() {
                         {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
                           <Pressable
                             key={dep.id}
-                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: idx % 2 === 0 ? '#fff' : '#F8F9FA', borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#FFF8E1' : (idx % 2 === 0 ? '#fff' : '#F8F9FA'), borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
                             onPress={() => {
                               const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
                               if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
@@ -2400,7 +2400,7 @@ export default function ChantiersScreen() {
                                   <Text style={{ fontSize: 16 }}>📄</Text>
                                 </Pressable>
                               ) : (
-                                <Text style={{ fontSize: 10, color: '#B0BEC5' }}>—</Text>
+                                <Text style={{ fontSize: 14 }} accessibilityLabel="Facture manquante">⚠️</Text>
                               )}
                             </View>
                           </Pressable>
@@ -2413,6 +2413,15 @@ export default function ChantiersScreen() {
                         <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
+                    {(() => {
+                      const sansFichier = achats.filter(a => !a.fichier).length;
+                      if (sansFichier === 0) return null;
+                      return (
+                        <Text style={{ fontSize: 11, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: '600' }}>
+                          ⚠️ {sansFichier} achat{sansFichier > 1 ? 's' : ''} sans facture
+                        </Text>
+                      );
+                    })()}
                     <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
                   </>
                 );
@@ -3046,7 +3055,7 @@ export default function ChantiersScreen() {
                         {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
                           <Pressable
                             key={dep.id}
-                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: idx % 2 === 0 ? '#fff' : '#F8F9FA', borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#FFF8E1' : (idx % 2 === 0 ? '#fff' : '#F8F9FA'), borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
                             onPress={() => {
                               const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
                               if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
@@ -3093,7 +3102,9 @@ export default function ChantiersScreen() {
                                 <Pressable onPress={(e) => { e.stopPropagation?.(); openDocPreview(dep.fichier!); }}>
                                   <Text style={{ fontSize: 14 }}>📄</Text>
                                 </Pressable>
-                              ) : <Text style={{ fontSize: 10, color: '#B0BEC5' }}>—</Text>}
+                              ) : (
+                                <Text style={{ fontSize: 14 }} accessibilityLabel="Facture manquante">⚠️</Text>
+                              )}
                             </View>
                           </Pressable>
                         ))}
@@ -3105,6 +3116,15 @@ export default function ChantiersScreen() {
                         <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
+                    {(() => {
+                      const sansFichier = achats.filter(a => !a.fichier).length;
+                      if (sansFichier === 0) return null;
+                      return (
+                        <Text style={{ fontSize: 11, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: '600' }}>
+                          ⚠️ {sansFichier} achat{sansFichier > 1 ? 's' : ''} sans facture
+                        </Text>
+                      );
+                    })()}
                     <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
                   </>
                 );
