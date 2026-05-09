@@ -179,6 +179,10 @@ export interface PlanChantier {
   visiblePar: 'tous' | 'employes' | 'soustraitants' | 'admin' | 'specifique'; // qui peut voir
   visibleIds?: string[];    // IDs spécifiques (employés ou ST) si visiblePar === 'specifique'
   uploadedAt: string;
+  // Versioning automatique : un upload avec même nom normalisé archive le précédent
+  archivedAt?: string;      // ISO datetime — si présent → version remplacée, masquée par défaut
+  replacedById?: string;    // id du plan qui remplace celui-ci (chaîne de versions)
+  version?: number;         // 1, 2, 3… — incrémenté à chaque réupload du même nom
 }
 
 export interface Chantier {

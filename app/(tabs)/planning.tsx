@@ -322,7 +322,8 @@ export default function PlanningScreen() {
   const plansVisibles = useMemo<PlanChantierEntry[]>(() => {
     if (!plansPlanningChantierId) return [];
     const chantier = data.chantiers.find(c => c.id === plansPlanningChantierId);
-    const allPlans = chantier?.fiche?.plans || [];
+    // Versioning : ne montrer que les plans actifs (non-archivés)
+    const allPlans = (chantier?.fiche?.plans || []).filter(p => !p.archivedAt);
     const isAdminUser = currentUser?.role === 'admin';
     const filtered = isAdminUser ? allPlans : allPlans.filter(p => {
       const userId = currentUser?.employeId || currentUser?.soustraitantId || '';

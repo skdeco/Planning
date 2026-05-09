@@ -2,6 +2,7 @@ import { createContext, useContext, useState, useEffect, useRef, useCallback } f
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY, subscribeToRealtimeUpdates, deleteFileFromStorage } from '@/lib/supabase';
+import { normalizePlanNom } from '@/lib/plans/normalizePlanNom';
 
 // Clés AsyncStorage pour persister les IDs supprimés entre rechargements
 const DELETED_AFFECTATIONS_KEY = 'sk_deleted_affectation_ids';
@@ -1496,23 +1497,62 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addPlanChantier = (chantierId: string, plan: PlanChantier) =>
     setData(p => ({
       ...p,
-      chantiers: p.chantiers.map(c =>
-        c.id === chantierId
-          ? { ...c, fiche: { ...(c.fiche || { codeAcces: '', emplacementCle: '', codeAlarme: '', contacts: '', notes: '', photos: [], updatedAt: '' }), plans: [...(c.fiche?.plans || []), plan] } }
-          : c
-      ),
+      chantiers: p.chantiers.map(c => {
+        if (c.id !== chantierId) return c;
+        const ficheBase = c.fiche || { codeAcces: '', emplacementCle: '', codeAlarme: '', contacts: '', notes: '', photos: [], updatedAt: '' };
+        const existingPlans = ficheBase.plans || [];
+        const normalizedNew = normalizePlanNom(plan.nom);
+
+        // Détecter un plan ACTIF (non-archivé) avec le même nom normalisé
+        const previousPlan = existingPlans.find(pl =>
+          !pl.archivedAt && normalizePlanNom(pl.nom) === normalizedNew
+        );
+
+        const newVersion = previousPlan ? (previousPlan.version || 1) + 1 : 1;
+        const newPlanWithVersion: PlanChantier = { ...plan, version: newVersion };
+
+        const updatedPlans = previousPlan
+          ? existingPlans.map(pl =>
+              pl.id === previousPlan.id
+                ? { ...pl, archivedAt: new Date().toISOString(), replacedById: plan.id }
+                : pl
+            )
+          : existingPlans;
+
+        return { ...c, fiche: { ...ficheBase, plans: [...updatedPlans, newPlanWithVersion] } };
+      }),
     }));
 
   const deletePlanChantier = (chantierId: string, planId: string) => {
-    // Supprimer le fichier du Storage Supabase si c'est une URL distante
     const chantier = data.chantiers.find(c => c.id === chantierId);
-    const plan = chantier?.fiche?.plans?.find(p => p.id === planId);
-    if (plan?.fichier?.startsWith('http')) deleteFileFromStorage(plan.fichier).catch(() => {});
+    const plans = chantier?.fiche?.plans || [];
+    const targetPlan = plans.find(pl => pl.id === planId);
+    if (!targetPlan) return;
+
+    // Cascade : si on supprime un plan ACTIF, on emporte aussi ses versions archivées
+    // (reconnues par même nom normalisé). Si on supprime un archivé seul, suppression ciblée.
+    const targetNormalized = normalizePlanNom(targetPlan.nom);
+    const finalIds = new Set<string>([planId]);
+    if (!targetPlan.archivedAt) {
+      plans.forEach(pl => {
+        if (pl.archivedAt && normalizePlanNom(pl.nom) === targetNormalized) {
+          finalIds.add(pl.id);
+        }
+      });
+    }
+
+    // Supprimer les fichiers Storage des plans concernés
+    plans.forEach(pl => {
+      if (finalIds.has(pl.id) && pl.fichier?.startsWith('http')) {
+        deleteFileFromStorage(pl.fichier).catch(() => {});
+      }
+    });
+
     setData(p => ({
       ...p,
       chantiers: p.chantiers.map(c =>
         c.id === chantierId
-          ? { ...c, fiche: c.fiche ? { ...c.fiche, plans: (c.fiche.plans || []).filter(pl => pl.id !== planId) } : c.fiche }
+          ? { ...c, fiche: c.fiche ? { ...c.fiche, plans: (c.fiche.plans || []).filter(pl => !finalIds.has(pl.id)) } : c.fiche }
           : c
       ),
     }));

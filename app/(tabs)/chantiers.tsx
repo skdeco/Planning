@@ -26,6 +26,7 @@ import {
 } from '@/app/types';
 import { todayYMD } from '@/lib/date/today';
 import { genererNomAchatAuto } from '@/lib/achats/genererNomAuto';
+import { normalizePlanNom } from '@/lib/plans/normalizePlanNom';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -405,13 +406,15 @@ export default function ChantiersScreen() {
   const getPlansVisibles = (chantierId: string) => {
     const chantier = data.chantiers.find(c => c.id === chantierId);
     const plans = chantier?.fiche?.plans || [];
-    if (isAdmin) return plans;
+    // Versioning : ne montrer que les plans actifs (non-archivés)
+    const activePlans = plans.filter(p => !p.archivedAt);
+    if (isAdmin) return activePlans;
     const userId = currentUser?.employeId || currentUser?.soustraitantId || '';
     // L'utilisateur doit être affecté au chantier pour voir les plans
     const isAffected = data.affectations.some(a => a.chantierId === chantierId && (a.employeId === userId || a.soustraitantId === userId));
     if (!isAffected) return [];
     const isST = !!currentUser?.soustraitantId;
-    return plans.filter(p => {
+    return activePlans.filter(p => {
       if (p.visiblePar === 'tous') return true;
       if (p.visiblePar === 'employes' && !isST) return true;
       if (p.visiblePar === 'soustraitants' && isST) return true;
@@ -1054,7 +1057,7 @@ export default function ChantiersScreen() {
     const assignedEmps = data.employes.filter(e => item.employeIds.includes(e.id));
     const notesActives = getNotesActives(item.id);
     const nbAchats = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === item.id).length;
-    const nbPlans = item.fiche?.plans?.length ?? 0;
+    const nbPlans = (item.fiche?.plans || []).filter(p => !p.archivedAt).length;
     const nbPhotos = (data.photosChantier || []).filter(p => p.chantierId === item.id).length;
     // Contacts liés (4 types)
     const archContact    = getApporteurById(item.architecteId);
@@ -1397,7 +1400,7 @@ export default function ChantiersScreen() {
               const ch = actionChantier;
               const statut = STATUT_COLORS[ch.statut];
               const notesCount = getNotesActives(ch.id).length;
-              const plansCount = ch.fiche?.plans?.length ?? 0;
+              const plansCount = (ch.fiche?.plans || []).filter(p => !p.archivedAt).length;
               const photosCount = (data.photosChantier || []).filter(p => p.chantierId === ch.id).length;
               const achatsCount = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === ch.id).length;
               const marchesCount = ((data.marchesChantier || []).filter(m => m.chantierId === ch.id).length)
@@ -3178,10 +3181,18 @@ export default function ChantiersScreen() {
                     <Pressable
                       style={styles.planDeleteBtn}
                       onPress={() => {
+                        const allPlans = data.chantiers.find(c => c.id === plansChantierId)?.fiche?.plans || [];
+                        const targetNormalized = normalizePlanNom(plan.nom);
+                        const archivedCount = allPlans.filter(p =>
+                          p.archivedAt && normalizePlanNom(p.nom) === targetNormalized
+                        ).length;
+                        const message = archivedCount > 0
+                          ? `Supprimer "${plan.nom}" supprimera aussi ${archivedCount} version${archivedCount > 1 ? 's' : ''} précédente${archivedCount > 1 ? 's' : ''} archivée${archivedCount > 1 ? 's' : ''}. Continuer ?`
+                          : t.chantiers.deletePlan;
                         if (Platform.OS === 'web') {
-                          if (window.confirm(t.chantiers.deletePlan)) deletePlanChantier(plansChantierId!, plan.id);
+                          if (window.confirm(message)) deletePlanChantier(plansChantierId!, plan.id);
                         } else {
-                          Alert.alert(t.common.delete, t.chantiers.deletePlan, [
+                          Alert.alert(t.common.delete, message, [
                             { text: t.common.cancel, style: 'cancel' },
                             { text: t.common.delete, style: 'destructive', onPress: () => deletePlanChantier(plansChantierId!, plan.id) },
                           ]);

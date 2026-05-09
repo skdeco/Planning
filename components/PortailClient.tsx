@@ -1713,20 +1713,25 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ── Plans ── */}
             <View style={styles.card}>
+              {(() => {
+                // Versioning : ne montrer que les plans actifs (non-archivés)
+                const activePlans = (chantier.fiche?.plans || []).filter(p => !p.archivedAt);
+                return (
+                  <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <Text style={styles.sectionTitle}>📐 Plans</Text>
                 <Text style={{ fontSize: 11, color: '#8C8077' }}>
-                  {(chantier.fiche?.plans || []).length} plan{(chantier.fiche?.plans || []).length > 1 ? 's' : ''}
+                  {activePlans.length} plan{activePlans.length > 1 ? 's' : ''}
                 </Text>
               </View>
 
-              {(chantier.fiche?.plans || []).length === 0 ? (
+              {activePlans.length === 0 ? (
                 <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
                   Aucun plan ajouté
                 </Text>
               ) : (
                 <View style={{ gap: 8, marginBottom: 8 }}>
-                  {(chantier.fiche?.plans || []).map(plan => (
+                  {activePlans.map(plan => (
                     <Pressable
                       key={plan.id}
                       style={styles.planRow}
@@ -1802,6 +1807,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   }}
                 />
               </View>
+                  </>
+                );
+              })()}
             </View>
             </>)}
             {/* ─────────────── /ONGLET PROJET ─────────────── */}
