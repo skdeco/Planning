@@ -83,7 +83,6 @@ import type {
   AgendaEvent,
   ArticleCatalogue,
   PVReception,
-  LeveeReserve,
 } from '@/app/types';
 import type { MessagePrive } from '@/app/types/messages';
 import { EMPLOYE_COLORS } from '@/app/types';
@@ -195,8 +194,6 @@ interface AppContextType {
   deletePlanChantier: (chantierId: string, planId: string) => void;
   // PV de réception
   upsertPVReception: (chantierId: string, pv: PVReception) => void;
-  addLeveeReserve: (chantierId: string, levee: LeveeReserve) => void;
-  removeLeveeReserve: (chantierId: string, leveeId: string) => void;
   // Identifiants admin
   updateAdminPassword: (pwd: string) => void;
   updateAdminIdentifiant: (id: string) => void;
@@ -1573,37 +1570,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ),
     }));
 
-  const addLeveeReserve = (chantierId: string, levee: LeveeReserve) =>
-    setData(p => ({
-      ...p,
-      chantiers: p.chantiers.map(c => {
-        if (c.id !== chantierId || !c.pvReception) return c;
-        const existingLevees = c.pvReception.levees || [];
-        return {
-          ...c,
-          pvReception: {
-            ...c.pvReception,
-            levees: [...existingLevees, levee],
-          },
-        };
-      }),
-    }));
-
-  const removeLeveeReserve = (chantierId: string, leveeId: string) =>
-    setData(p => ({
-      ...p,
-      chantiers: p.chantiers.map(c => {
-        if (c.id !== chantierId || !c.pvReception?.levees) return c;
-        return {
-          ...c,
-          pvReception: {
-            ...c.pvReception,
-            levees: c.pvReception.levees.filter(l => l.id !== leveeId),
-          },
-        };
-      }),
-    }));
-
   const updateAdminPassword = (pwd: string) =>
     setData(p => ({ ...p, adminPassword: pwd, adminPasswordUpdatedAt: new Date().toISOString() }));
 
@@ -1826,7 +1792,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,
-      upsertPVReception, addLeveeReserve, removeLeveeReserve,
+      upsertPVReception,
       updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere,
       addMetierPerso, deleteMetierPerso, updateBudgetChantier,
       addFournisseur, deleteFournisseur,

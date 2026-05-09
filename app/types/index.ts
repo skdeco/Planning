@@ -1,12 +1,10 @@
 import type { PVReception } from './pv';
 
 export type {
-  PVReception, PVItem, LeveeReserve, PVPaiement, PVMailEnvoi,
-  PVPiece, PVPieceLot, PVLotType,
+  PVReception, PVItem, PVPaiement, PVMailEnvoi,
+  PVPiece, PVReserve, PVLevee,
 } from './pv';
-export {
-  PIECES_DEFAULT, LOTS_BY_PIECE_TYPE, PV_LOT_LABELS, getLotsByPieceName,
-} from './pv';
+export { PIECES_DEFAULT } from './pv';
 
 /**
  * Métier : string libre pour permettre à l'admin d'ajouter ses propres métiers.
