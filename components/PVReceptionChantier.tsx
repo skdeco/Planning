@@ -5,7 +5,6 @@ import React, { useState, useMemo } from 'react';
 import {
   View, Text, StyleSheet, Pressable, TextInput, Modal, Alert, Platform, ScrollView, Image,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';

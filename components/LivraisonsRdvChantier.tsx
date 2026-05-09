@@ -6,7 +6,7 @@ import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, Pressable, TextInput, Modal, Alert, Platform, ScrollView, Image, Linking,
 } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { useApp } from '@/app/context/AppContext';
 import type { LivraisonChantier, RdvChantier, FrequenceRdv } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -115,9 +115,15 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
   };
   const pickPhotoEtiquette = async () => {
     try {
-      const res = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ImagePicker.MediaTypeOptions.Images, quality: 0.7 });
-      if (res.canceled || !res.assets?.[0]) return;
-      setLivForm(f => ({ ...f, photoEtiquetteUri: res.assets[0].uri }));
+      const files = await pickNativeFile({
+        acceptImages: true,
+        acceptPdf: false,
+        acceptCamera: true,
+        multiple: false,
+        compressImages: true,
+      });
+      if (!files || files.length === 0) return;
+      setLivForm(f => ({ ...f, photoEtiquetteUri: files[0].uri }));
     } catch { Alert.alert('Erreur', "Impossible d'ouvrir la bibliothèque."); }
   };
   const saveLiv = async () => {

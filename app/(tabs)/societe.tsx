@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal, Alert, Platform, Image, Linking,
 } from 'react-native';
-import * as DocumentPicker from 'expo-document-picker';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { DOC_SOCIETE_CATEGORIES, type DocSocieteCategorie, type DocumentSociete } from '@/app/types';
@@ -99,29 +99,19 @@ export default function SocieteScreen() {
 
   const pickFichier = async () => {
     try {
-      if (Platform.OS === 'web') {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*,application/pdf';
-        input.onchange = async (e: Event) => {
-          const file = (e.target as HTMLInputElement).files?.[0];
-          if (!file) return;
-          const reader = new FileReader();
-          reader.onload = () => {
-            const uri = reader.result as string;
-            const type = file.type.startsWith('application/pdf') ? 'pdf' : 'image';
-            setForm(f => ({ ...f, fichierUri: uri, fichierNom: file.name, fichierType: type }));
-          };
-          reader.readAsDataURL(file);
-        };
-        input.click();
-      } else {
-        const res = await DocumentPicker.getDocumentAsync({ type: ['image/*', 'application/pdf'], copyToCacheDirectory: true });
-        if (res.canceled || !res.assets?.[0]) return;
-        const asset = res.assets[0];
-        const type = asset.mimeType?.includes('pdf') ? 'pdf' : 'image';
-        setForm(f => ({ ...f, fichierUri: asset.uri, fichierNom: asset.name || `doc_${Date.now()}`, fichierType: type }));
-      }
+      // 1 seul code path web/iOS/Android via pickNativeFile (cohérence C1c).
+      const files = await pickNativeFile({
+        acceptImages: true,
+        acceptPdf: true,
+        acceptCamera: true,
+        multiple: false,
+        compressImages: true,
+      });
+      if (!files || files.length === 0) return;
+      const f = files[0];
+      const type: 'pdf' | 'image' = f.mimeType.includes('pdf') ? 'pdf' : 'image';
+      const nom = f.filename || `doc_${Date.now()}`;
+      setForm(form => ({ ...form, fichierUri: f.uri, fichierNom: nom, fichierType: type }));
     } catch {
       Alert.alert('Erreur', 'Impossible d\'ouvrir le fichier.');
     }
