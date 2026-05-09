@@ -2270,7 +2270,7 @@ export default function ChantiersScreen() {
 
                         {/* Libellé (optionnel — auto-généré si vide) */}
                         <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" />
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" placeholderTextColor="#9DA6B0" />
 
                         {/* Toggle détails */}
                         <Pressable
@@ -2287,14 +2287,14 @@ export default function ChantiersScreen() {
                           <>
                             <View style={{ flexDirection: 'row', gap: 6 }}>
                               <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
+                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
                               <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
+                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
                             </View>
                             <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
+                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" placeholderTextColor="#9DA6B0" />
                             <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
+                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9DA6B0" />
                           </>
                         )}
 
@@ -2970,7 +2970,7 @@ export default function ChantiersScreen() {
 
                         {/* Libellé (optionnel — auto-généré si vide) */}
                         <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" />
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" placeholderTextColor="#9DA6B0" />
 
                         {/* Toggle détails */}
                         <Pressable
@@ -2987,14 +2987,14 @@ export default function ChantiersScreen() {
                           <>
                             <View style={{ flexDirection: 'row', gap: 6 }}>
                               <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" keyboardType="decimal-pad" />
+                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
                               <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" keyboardType="decimal-pad" />
+                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
                             </View>
                             <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" />
+                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" placeholderTextColor="#9DA6B0" />
                             <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" />
+                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9DA6B0" />
                           </>
                         )}
 
