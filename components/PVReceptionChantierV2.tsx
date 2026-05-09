@@ -40,6 +40,52 @@ export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
   const [selectedNoms, setSelectedNoms] = useState<string[]>([]);
   const [persoInput, setPersoInput] = useState('');
 
+  // Accordéon : 1 pièce dépliée à la fois
+  const [expandedPieceId, setExpandedPieceId] = useState<string | null>(null);
+
+  const togglePiece = (pieceId: string) => {
+    setExpandedPieceId(prev => prev === pieceId ? null : pieceId);
+  };
+
+  // Modifier l'état conforme d'un lot
+  const updateLotConforme = (pieceId: string, lotId: string, conforme: boolean | null) => {
+    const updatedPieces = pieces.map(piece => {
+      if (piece.id !== pieceId) return piece;
+      const updatedLots = piece.lots.map(lot => {
+        if (lot.id !== lotId) return lot;
+        // On préserve le commentaire (l'admin peut re-toggle)
+        return { ...lot, conforme };
+      });
+      return { ...piece, lots: updatedLots };
+    });
+    setPieces(updatedPieces);
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces: updatedPieces,
+    });
+  };
+
+  // Modifier le commentaire de réserve d'un lot
+  const updateLotReserve = (pieceId: string, lotId: string, reserve: string) => {
+    const updatedPieces = pieces.map(piece => {
+      if (piece.id !== pieceId) return piece;
+      const updatedLots = piece.lots.map(lot => {
+        if (lot.id !== lotId) return lot;
+        return { ...lot, reserve };
+      });
+      return { ...piece, lots: updatedLots };
+    });
+    setPieces(updatedPieces);
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces: updatedPieces,
+    });
+  };
+
   // Init automatique au mount admin pour un chantier qui n'a pas encore
   // de structure pieces[] (rétrocompat : on préserve pv.items legacy).
   useEffect(() => {
@@ -231,6 +277,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
             </View>
 
             {pieces.map(piece => {
+              const isExpanded = expandedPieceId === piece.id;
               const lotsLabels = piece.lots.map(l =>
                 l.libelle || PV_LOT_LABELS[l.type]
               ).join(' • ');
@@ -240,38 +287,162 @@ export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
 
               return (
                 <View key={piece.id} style={styles.pieceCard}>
-                  <View style={styles.pieceCardHeader}>
-                    <Text style={styles.pieceNom}>{piece.nom}</Text>
+                  {/* Header de la pièce — clickable pour toggle */}
+                  <Pressable
+                    onPress={() => togglePiece(piece.id)}
+                    style={styles.pieceCardHeader}
+                    accessibilityRole="button"
+                    accessibilityLabel={`${piece.nom}, ${isExpanded ? 'plier' : 'déplier'}`}
+                  >
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.pieceNom}>
+                        {isExpanded ? '▼' : '▶'} {piece.nom}
+                      </Text>
+                      {!isExpanded && (
+                        <Text style={styles.pieceLotsList} numberOfLines={2}>
+                          {lotsLabels || 'Aucun lot'}
+                        </Text>
+                      )}
+                      <View style={styles.pieceStats}>
+                        {conformes > 0 && (
+                          <Text style={[styles.pieceStat, { color: '#27AE60' }]}>
+                            ✓ {conformes}
+                          </Text>
+                        )}
+                        {reserves > 0 && (
+                          <Text style={[styles.pieceStat, { color: '#E74C3C' }]}>
+                            🔴 {reserves}
+                          </Text>
+                        )}
+                        {noncontroles > 0 && (
+                          <Text style={[styles.pieceStat, { color: '#687076' }]}>
+                            ? {noncontroles}
+                          </Text>
+                        )}
+                      </View>
+                    </View>
                     {isAdmin && !isClotured && (
                       <Pressable
-                        onPress={() => removePiece(piece.id)}
+                        onPress={(e) => {
+                          e.stopPropagation?.();
+                          removePiece(piece.id);
+                        }}
                         accessibilityRole="button"
                         accessibilityLabel={`Retirer ${piece.nom}`}
+                        hitSlop={8}
                       >
                         <Text style={styles.pieceRemoveBtn}>🗑</Text>
                       </Pressable>
                     )}
-                  </View>
-                  <Text style={styles.pieceLotsList} numberOfLines={2}>
-                    {lotsLabels || 'Aucun lot'}
-                  </Text>
-                  <View style={styles.pieceStats}>
-                    {conformes > 0 && (
-                      <Text style={[styles.pieceStat, { color: '#27AE60' }]}>
-                        ✓ {conformes}
-                      </Text>
-                    )}
-                    {reserves > 0 && (
-                      <Text style={[styles.pieceStat, { color: '#E74C3C' }]}>
-                        🔴 {reserves}
-                      </Text>
-                    )}
-                    {noncontroles > 0 && (
-                      <Text style={[styles.pieceStat, { color: '#687076' }]}>
-                        ? {noncontroles}
-                      </Text>
-                    )}
-                  </View>
+                  </Pressable>
+
+                  {/* Body de la pièce — visible si expanded */}
+                  {isExpanded && (
+                    <View style={styles.pieceBody}>
+                      {piece.lots.length === 0 ? (
+                        <Text style={styles.pieceLotsEmpty}>
+                          Aucun lot dans cette pièce.
+                        </Text>
+                      ) : (
+                        piece.lots.map(lot => {
+                          const labelLot = lot.libelle || PV_LOT_LABELS[lot.type];
+                          const isConforme = lot.conforme === true;
+                          const isReserve = lot.conforme === false;
+                          const isNonControle = lot.conforme === null;
+
+                          return (
+                            <View key={lot.id} style={styles.lotCard}>
+                              <Text style={styles.lotLabel}>{labelLot}</Text>
+
+                              {/* Chips 3 états */}
+                              {isAdmin && !isClotured ? (
+                                <View style={styles.chipsRow}>
+                                  <Pressable
+                                    onPress={() => updateLotConforme(piece.id, lot.id, true)}
+                                    style={[styles.chip, isConforme && styles.chipConforme]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Marquer conforme"
+                                    accessibilityState={{ selected: isConforme }}
+                                  >
+                                    <Text style={[styles.chipText, isConforme && styles.chipTextActive]}>
+                                      ✓ Conforme
+                                    </Text>
+                                  </Pressable>
+
+                                  <Pressable
+                                    onPress={() => updateLotConforme(piece.id, lot.id, false)}
+                                    style={[styles.chip, isReserve && styles.chipReserve]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Marquer réserve"
+                                    accessibilityState={{ selected: isReserve }}
+                                  >
+                                    <Text style={[styles.chipText, isReserve && styles.chipTextActive]}>
+                                      🔴 Réserve
+                                    </Text>
+                                  </Pressable>
+
+                                  <Pressable
+                                    onPress={() => updateLotConforme(piece.id, lot.id, null)}
+                                    style={[styles.chip, isNonControle && styles.chipNonControle]}
+                                    accessibilityRole="button"
+                                    accessibilityLabel="Non contrôlé"
+                                    accessibilityState={{ selected: isNonControle }}
+                                  >
+                                    <Text style={[styles.chipText, isNonControle && styles.chipTextActive]}>
+                                      ? Non
+                                    </Text>
+                                  </Pressable>
+                                </View>
+                              ) : (
+                                /* Mode lecture seule (client ou clôturé) */
+                                <View style={styles.chipsRow}>
+                                  {isConforme && (
+                                    <View style={[styles.chip, styles.chipConforme]}>
+                                      <Text style={[styles.chipText, styles.chipTextActive]}>✓ Conforme</Text>
+                                    </View>
+                                  )}
+                                  {isReserve && (
+                                    <View style={[styles.chip, styles.chipReserve]}>
+                                      <Text style={[styles.chipText, styles.chipTextActive]}>🔴 Réserve</Text>
+                                    </View>
+                                  )}
+                                  {isNonControle && (
+                                    <View style={[styles.chip, styles.chipNonControle]}>
+                                      <Text style={[styles.chipText, styles.chipTextActive]}>? Non contrôlé</Text>
+                                    </View>
+                                  )}
+                                </View>
+                              )}
+
+                              {/* TextInput réserve : visible UNIQUEMENT si état Réserve */}
+                              {isReserve && (
+                                <View style={styles.reserveInputBox}>
+                                  <Text style={styles.reserveLabel}>📝 Description de la réserve</Text>
+                                  {isAdmin && !isClotured ? (
+                                    <TextInput
+                                      style={styles.reserveInput}
+                                      value={lot.reserve || ''}
+                                      onChangeText={text => updateLotReserve(piece.id, lot.id, text)}
+                                      placeholder="Décrivez le défaut constaté..."
+                                      placeholderTextColor="#9DA6B0"
+                                      multiline
+                                      textAlignVertical="top"
+                                      numberOfLines={3}
+                                    />
+                                  ) : (
+                                    <Text style={styles.reserveDisplay}>
+                                      {lot.reserve || '—'}
+                                    </Text>
+                                  )}
+                                  {/* Photos seront ajoutées en PV-3c.2 */}
+                                </View>
+                              )}
+                            </View>
+                          );
+                        })
+                      )}
+                    </View>
+                  )}
                 </View>
               );
             })}
@@ -544,6 +715,100 @@ const styles = StyleSheet.create({
   pieceStat: {
     fontSize: 11,
     fontWeight: '600',
+  },
+  // Body de la pièce (accordéon expanded)
+  pieceBody: {
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E6EA',
+    gap: 12,
+  },
+  pieceLotsEmpty: {
+    fontSize: 12,
+    color: '#687076',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
+  // Carte de lot
+  lotCard: {
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#E2E6EA',
+  },
+  lotLabel: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#11181C',
+    marginBottom: 10,
+  },
+  // Chips 3 états
+  chipsRow: {
+    flexDirection: 'row',
+    gap: 6,
+    flexWrap: 'wrap',
+  },
+  chip: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E6EA',
+    backgroundColor: '#F8F9FA',
+  },
+  chipText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#687076',
+  },
+  chipTextActive: {
+    color: '#fff',
+  },
+  chipConforme: {
+    backgroundColor: '#27AE60',
+    borderColor: '#27AE60',
+  },
+  chipReserve: {
+    backgroundColor: '#E74C3C',
+    borderColor: '#E74C3C',
+  },
+  chipNonControle: {
+    backgroundColor: '#687076',
+    borderColor: '#687076',
+  },
+  // TextInput réserve
+  reserveInputBox: {
+    marginTop: 10,
+    backgroundColor: '#FEF6F6',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#FECACA',
+  },
+  reserveLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#7F1D1D',
+    marginBottom: 6,
+  },
+  reserveInput: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    color: '#11181C',
+    borderWidth: 1,
+    borderColor: '#FCA5A5',
+    minHeight: 60,
+  },
+  reserveDisplay: {
+    fontSize: 13,
+    color: '#11181C',
+    fontStyle: 'italic',
   },
   actionsRow: {
     flexDirection: 'row',
