@@ -18,6 +18,7 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PortailClient } from '@/components/PortailClient';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
+import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
@@ -236,6 +237,7 @@ export default function ChantiersScreen() {
   const [achatForm, setAchatForm] = useState({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
   // Menu actions chantier
   const [actionChantier, setActionChantier] = useState<Chantier | null>(null);
+  const [showPVChantier, setShowPVChantier] = useState<string | null>(null);
   // Modal Achats séparé
   const [achatsChantierId, setAchatsChantierId] = useState<string | null>(null);
   // Modal Photos séparé
@@ -1418,6 +1420,7 @@ export default function ChantiersScreen() {
                 ...(isAdmin ? [{ icon: '💼', label: 'Marchés', badge: marchesCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setMarchesChantierId(id), 100); } }] : []),
                 ...(isAdmin ? [{ icon: '🔧', label: 'SAV', badge: ((data.ticketsSAV || []).filter(t => t.chantierId === ch.id && t.statut !== 'clos').length), onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setSavChantierId(id), 100); } }] : []),
                 ...(isAdmin ? [{ icon: '🛒', label: 'Achats', badge: achatsCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setAchatsChantierId(id), 100); } }] : []),
+                ...(isAdmin ? [{ icon: '🏁', label: 'PV réception', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setShowPVChantier(id), 100); } }] : []),
                 ...(isAdmin ? [{ icon: '💰', label: 'Finances', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setBilanChantierId(id), 100); } }] : []),
                 ...(isAdmin ? [{ icon: '👤', label: 'Portail client', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setPortailClientId(id), 100); } }] : []),
                 ...(isAdmin && ch.statut !== 'termine' ? [{ icon: '✅', label: 'Clôturer', badge: 0, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => handleClotureChantier(c), 100); } }] : []),
@@ -1480,6 +1483,32 @@ export default function ChantiersScreen() {
             })()}
           </View>
         </Pressable>
+      </Modal>
+
+      {/* ── Modal PV de réception V2 (admin) ── */}
+      <Modal
+        visible={showPVChantier !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowPVChantier(null)}
+      >
+        <View style={styles.modalOverlay}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setShowPVChantier(null)} />
+          <View style={[styles.modalSheet, { maxHeight: '90%', flex: 1 }]}>
+            <View style={styles.modalHandle} />
+            {showPVChantier && (() => {
+              const ch = data.chantiers.find(c => c.id === showPVChantier);
+              if (!ch) return null;
+              return (
+                <PVReceptionChantierV2
+                  chantier={ch}
+                  isAdmin={true}
+                  onClose={() => setShowPVChantier(null)}
+                />
+              );
+            })()}
+          </View>
+        </View>
       </Modal>
 
       {/* ── Modal formulaire chantier (admin) ── */}

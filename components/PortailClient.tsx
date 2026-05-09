@@ -19,6 +19,7 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { MoodboardChantier } from '@/components/MoodboardChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
+import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChatChantier } from '@/components/ChatChantier';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
@@ -1816,12 +1817,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET FIN DE CHANTIER ─────────────── */}
             {ongletActif === 'finChantier' && (<>
-            {/* ── PV de réception ── */}
-            <PVReceptionChantier
-              chantier={chantier}
-              isAdmin={isAdmin}
-              externAp={isExterne && externAp ? { type: externAp.type, prenom: externAp.prenom, nom: externAp.nom } : undefined}
-            />
+            {/* ── PV de réception (routing V1/V2) ── */}
+            {chantier.pvReception?.pieces ? (
+              <PVReceptionChantierV2 chantier={chantier} isAdmin={isAdmin} />
+            ) : (
+              <PVReceptionChantier
+                chantier={chantier}
+                isAdmin={isAdmin}
+                externAp={isExterne && externAp ? { type: externAp.type, prenom: externAp.prenom, nom: externAp.nom } : undefined}
+              />
+            )}
             </>)}
             {/* ─────────────── /ONGLET FIN DE CHANTIER (partiel — SAV plus bas) ─────────────── */}
 
