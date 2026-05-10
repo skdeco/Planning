@@ -16,14 +16,16 @@ import { todayYMD } from '@/lib/date/today';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { SignaturePad } from '@/components/SignaturePad';
 
 interface Props {
   chantier: Chantier;
   isAdmin: boolean;
+  isClient?: boolean; // true = portail client = peut signer côté client
   onClose?: () => void;
 }
 
-export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
+export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: Props) {
   const { data, upsertPVReception } = useApp();
   const pv = chantier.pvReception;
   const [pieces, setPieces] = useState<PVPiece[]>(pv?.pieces || []);
@@ -48,6 +50,9 @@ export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
     pieceId: string;
     reserve: PVReserve | null; // null = création
   } | null>(null);
+
+  // SignaturePad : 'entreprise' ou 'client' selon qui signe
+  const [showSignaturePad, setShowSignaturePad] = useState<'entreprise' | 'client' | null>(null);
 
   // Init automatique au mount admin
   useEffect(() => {
@@ -286,6 +291,61 @@ export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
       }
     );
     persistPieces(updatedPieces);
+  };
+
+  // ──────────── Handlers signatures ────────────
+  const saveSignatureEntreprise = async (signaturePngDataUri: string) => {
+    try {
+      const url = await uploadFileToStorage(
+        signaturePngDataUri,
+        `chantiers/${chantier.id}/pv-signatures`,
+        `entreprise_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      );
+      if (!url) {
+        Alert.alert('Erreur', "Impossible d'uploader la signature");
+        return;
+      }
+      upsertPVReception(chantier.id, {
+        ...(pv || {}),
+        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+        dateReception,
+        pieces,
+        signatureEntrepriseUri: url,
+        signatureEntrepriseDate: new Date().toISOString(),
+      });
+      setShowSignaturePad(null);
+    } catch (err) {
+      console.error('Upload signature entreprise échoué', err);
+      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
+    }
+  };
+
+  const saveSignatureClient = async (signaturePngDataUri: string) => {
+    try {
+      const url = await uploadFileToStorage(
+        signaturePngDataUri,
+        `chantiers/${chantier.id}/pv-signatures`,
+        `client_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      );
+      if (!url) {
+        Alert.alert('Erreur', "Impossible d'uploader la signature");
+        return;
+      }
+      const nowIso = new Date().toISOString();
+      upsertPVReception(chantier.id, {
+        ...(pv || {}),
+        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+        dateReception,
+        pieces,
+        signatureClientUri: url,
+        signatureClientDate: nowIso,
+        clotureLe: nowIso, // ⚠️ signature client = clôture du PV
+      });
+      setShowSignaturePad(null);
+    } catch (err) {
+      console.error('Upload signature client échoué', err);
+      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
+    }
   };
 
   return (
@@ -545,6 +605,78 @@ export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
           </View>
         )}
 
+        {/* Bloc signatures (visible si au moins 1 pièce) */}
+        {pieces.length > 0 && (
+          <View style={styles.signaturesBlock}>
+            <Text style={styles.signaturesTitle}>✍️ Signatures</Text>
+
+            {/* Signature entreprise */}
+            <View style={styles.signatureCard}>
+              <Text style={styles.signatureLabel}>Entreprise (SK DECO)</Text>
+              {pv?.signatureEntrepriseUri ? (
+                <View style={styles.signatureImageBox}>
+                  <Pressable onPress={() => openDocPreview(pv.signatureEntrepriseUri!)}>
+                    <Text style={styles.signaturePlaceholder}>
+                      ✓ Signée le {pv.signatureEntrepriseDate
+                        ? new Date(pv.signatureEntrepriseDate).toLocaleDateString('fr-FR')
+                        : ''}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <View>
+                  <Text style={styles.signaturePending}>En attente de signature</Text>
+                  {isAdmin && !isClotured && (
+                    <Pressable
+                      onPress={() => setShowSignaturePad('entreprise')}
+                      style={[styles.btn, styles.btnPrimary, { marginTop: 8 }]}
+                    >
+                      <Text style={styles.btnPrimaryText}>✍️ Signer (entreprise)</Text>
+                    </Pressable>
+                  )}
+                </View>
+              )}
+            </View>
+
+            {/* Signature client */}
+            <View style={[styles.signatureCard, { borderBottomWidth: 0, marginBottom: 0, paddingBottom: 0 }]}>
+              <Text style={styles.signatureLabel}>Client / Maître d&apos;ouvrage</Text>
+              {pv?.signatureClientUri ? (
+                <View style={styles.signatureImageBox}>
+                  <Pressable onPress={() => openDocPreview(pv.signatureClientUri!)}>
+                    <Text style={styles.signaturePlaceholder}>
+                      ✓ Signée le {pv.signatureClientDate
+                        ? new Date(pv.signatureClientDate).toLocaleDateString('fr-FR')
+                        : ''}
+                      {pv.nomSignataire ? ` — ${pv.nomSignataire}` : ''}
+                    </Text>
+                  </Pressable>
+                </View>
+              ) : pv?.signatureEntrepriseUri ? (
+                <View>
+                  <Text style={styles.signaturePending}>
+                    {isClient
+                      ? 'En attente de votre signature'
+                      : 'En attente — la signature client se fait depuis le portail client'}
+                  </Text>
+                  {isClient && !isClotured && (
+                    <Pressable
+                      onPress={() => setShowSignaturePad('client')}
+                      style={[styles.btn, styles.btnPrimary, { marginTop: 8 }]}
+                    >
+                      <Text style={styles.btnPrimaryText}>✍️ Je signe comme client</Text>
+                    </Pressable>
+                  )}
+                </View>
+              ) : (
+                <Text style={styles.signaturePending}>
+                  Disponible après la signature entreprise
+                </Text>
+              )}
+            </View>
+          </View>
+        )}
+
         {isClotured && (
           <View style={styles.cloturedBadge}>
             <Text style={styles.cloturedText}>
@@ -553,6 +685,34 @@ export function PVReceptionChantierV2({ chantier, isAdmin, onClose }: Props) {
           </View>
         )}
       </ScrollView>
+
+      {/* Modal SignaturePad (entreprise OU client) */}
+      <Modal
+        visible={showSignaturePad !== null}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setShowSignaturePad(null)}
+      >
+        <View style={styles.signaturePadOverlay}>
+          <View style={styles.signaturePadBox}>
+            <Text style={styles.signaturePadTitle}>
+              {showSignaturePad === 'entreprise' ? '✍️ Signature entreprise' : '✍️ Signature client'}
+            </Text>
+            <SignaturePad
+              width={300}
+              height={150}
+              onCancel={() => setShowSignaturePad(null)}
+              onSave={(base64) => {
+                if (showSignaturePad === 'entreprise') {
+                  saveSignatureEntreprise(base64);
+                } else if (showSignaturePad === 'client') {
+                  saveSignatureClient(base64);
+                }
+              }}
+            />
+          </View>
+        </View>
+      </Modal>
 
       {/* Sheet sélection pièces */}
       <Modal
@@ -1165,6 +1325,68 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#27AE60',
     fontWeight: '600',
+  },
+  // Bloc signatures
+  signaturesBlock: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+  },
+  signaturesTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#11181C',
+    marginBottom: 12,
+  },
+  signatureCard: {
+    marginBottom: 12,
+    paddingBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E2E6EA',
+  },
+  signatureLabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#687076',
+    marginBottom: 6,
+  },
+  signatureImageBox: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    padding: 8,
+    borderWidth: 1,
+    borderColor: '#E2E6EA',
+  },
+  signaturePlaceholder: {
+    fontSize: 12,
+    color: '#27AE60',
+    fontWeight: '600',
+  },
+  signaturePending: {
+    fontSize: 11,
+    color: '#9DA6B0',
+    fontStyle: 'italic',
+  },
+  // Modal SignaturePad
+  signaturePadOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 16,
+  },
+  signaturePadBox: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+  },
+  signaturePadTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#11181C',
+    marginBottom: 12,
+    textAlign: 'center',
   },
   // Sheet sélection pièces
   sheetOverlay: {

@@ -1819,7 +1819,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {ongletActif === 'finChantier' && (<>
             {/* ── PV de réception (routing V1/V2) ── */}
             {chantier.pvReception?.pieces ? (
-              <PVReceptionChantierV2 chantier={chantier} isAdmin={isAdmin} />
+              <PVReceptionChantierV2
+                chantier={chantier}
+                isAdmin={isAdmin}
+                isClient={isClient}
+              />
             ) : (
               <PVReceptionChantier
                 chantier={chantier}
