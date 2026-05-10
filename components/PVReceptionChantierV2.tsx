@@ -294,72 +294,30 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
   };
 
   // ──────────── Handlers signatures ────────────
-  const saveSignatureEntreprise = async (signaturePngDataUri: string) => {
-    try {
-      const url = await uploadFileToStorage(
-        signaturePngDataUri,
-        `chantiers/${chantier.id}/pv-signatures`,
-        `entreprise_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      );
-      if (!url) {
-        Alert.alert(
-          'Upload échoué (null)',
-          'uploadFileToStorage a retourné null. Vérifier les logs (console.error). Probable: erreur Storage Supabase ou Blob non supporté.',
-        );
-        return;
-      }
-      upsertPVReception(chantier.id, {
-        ...(pv || {}),
-        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
-        dateReception,
-        pieces,
-        signatureEntrepriseUri: url,
-        signatureEntrepriseDate: new Date().toISOString(),
-      });
-      setShowSignaturePad(null);
-    } catch (err) {
-      console.error('Upload signature entreprise échoué', err);
-      const errMsg = err instanceof Error ? err.message : String(err);
-      Alert.alert(
-        'Erreur upload signature (debug)',
-        `Type: ${typeof err}\nMessage: ${errMsg}\nFull: ${JSON.stringify(err).slice(0, 300)}`,
-      );
-    }
+  const saveSignatureEntreprise = (signaturePngDataUri: string) => {
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces,
+      signatureEntrepriseUri: signaturePngDataUri,
+      signatureEntrepriseDate: new Date().toISOString(),
+    });
+    setShowSignaturePad(null);
   };
 
-  const saveSignatureClient = async (signaturePngDataUri: string) => {
-    try {
-      const url = await uploadFileToStorage(
-        signaturePngDataUri,
-        `chantiers/${chantier.id}/pv-signatures`,
-        `client_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      );
-      if (!url) {
-        Alert.alert(
-          'Upload échoué (null)',
-          'uploadFileToStorage a retourné null. Vérifier les logs (console.error). Probable: erreur Storage Supabase ou Blob non supporté.',
-        );
-        return;
-      }
-      const nowIso = new Date().toISOString();
-      upsertPVReception(chantier.id, {
-        ...(pv || {}),
-        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
-        dateReception,
-        pieces,
-        signatureClientUri: url,
-        signatureClientDate: nowIso,
-        clotureLe: nowIso, // ⚠️ signature client = clôture du PV
-      });
-      setShowSignaturePad(null);
-    } catch (err) {
-      console.error('Upload signature client échoué', err);
-      const errMsg = err instanceof Error ? err.message : String(err);
-      Alert.alert(
-        'Erreur upload signature (debug)',
-        `Type: ${typeof err}\nMessage: ${errMsg}\nFull: ${JSON.stringify(err).slice(0, 300)}`,
-      );
-    }
+  const saveSignatureClient = (signaturePngDataUri: string) => {
+    const nowIso = new Date().toISOString();
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces,
+      signatureClientUri: signaturePngDataUri,
+      signatureClientDate: nowIso,
+      clotureLe: nowIso, // ⚠️ signature client = clôture du PV
+    });
+    setShowSignaturePad(null);
   };
 
   return (
