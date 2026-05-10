@@ -14,6 +14,18 @@ import {
  * Génère le HTML complet du PV de réception pour conversion en PDF
  * via expo-print.
  *
+ * Design "Studio architecture chic" — palette bordeaux/aubergine SK DECO :
+ *  - Primary  #5C1F2E (bordeaux profond)
+ *  - Cream    #FBF7F2 (fond doux)
+ *  - Ink      #1A1A1A (texte principal)
+ *  - Muted    #6B7280 (texte secondaire)
+ *  - Rule     #D8CFC4 (filets fins)
+ *  - Danger   #B91C1C (réserves à traiter)
+ *
+ * Structure :
+ *  - Page 1 (cover) : page de garde premium pleine page
+ *  - Page 2+ : sections numérotées 01/02/03/04 + header/footer @page
+ *
  * ⚠️ Toutes les images doivent être passées en data URI (base64) :
  * - logoDataUri : logo SK DECO (chargé via expo-asset)
  * - signatures : déjà en data URI dans pv (Plan D — DETTE-PV-DATAURI-001)
@@ -21,6 +33,16 @@ import {
  *   Une URL absente = photo cassée → placeholder ⚠️ affiché
  *
  * Pas de réseau dans cette fonction : 100% pur.
+ *
+ * Règles de pagination (validées sur stress test 15 pièces / 19 réserves) :
+ *  - Body : orphans/widows 2 globaux
+ *  - Titres h2/h3 : page-break-after avoid
+ *  - Header de pièce, sous-titres groupes : page-break-after avoid
+ *  - Réserve : page-break-inside avoid (sauf >3 photos = classe reserve-large)
+ *  - Photos block : page-break-inside avoid
+ *  - Récap chiffré : page-break-inside avoid (juridique)
+ *  - Signatures : page-break-inside avoid (juridique)
+ *  - Footer mention : page-break-inside avoid
  */
 
 export interface GenererPVHtmlParams {
@@ -50,11 +72,26 @@ function escapeHtml(str: string | undefined | null): string {
 
 function formatDateFR(iso: string | undefined): string {
   if (!iso) return '—';
-  // Accepte YYYY-MM-DD ou ISO datetime
   const ymd = iso.includes('T') ? iso.split('T')[0] : iso;
   const parts = ymd.split('-');
   if (parts.length !== 3) return iso;
   return `${parts[2]}/${parts[1]}/${parts[0]}`;
+}
+
+const MOIS_FR = [
+  'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+  'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre',
+];
+
+function formatDateLong(iso: string | undefined): string {
+  if (!iso) return '—';
+  const ymd = iso.includes('T') ? iso.split('T')[0] : iso;
+  const parts = ymd.split('-');
+  if (parts.length !== 3) return iso;
+  const [y, m, d] = parts;
+  const mIdx = parseInt(m, 10) - 1;
+  if (mIdx < 0 || mIdx > 11) return iso;
+  return `${parseInt(d, 10)} ${MOIS_FR[mIdx]} ${y}`;
 }
 
 function formatDateTimeFR(iso: string | undefined): string {
@@ -71,7 +108,7 @@ function formatDateTimeFR(iso: string | undefined): string {
   }
 }
 
-function formatAdresse(chantier: Chantier): string {
+function formatAdresseLignes(chantier: Chantier): string {
   const ligne1 = chantier.rue || '';
   const ligne2Parts = [chantier.codePostal, chantier.ville].filter(Boolean);
   const ligne2 = ligne2Parts.join(' ');
@@ -80,48 +117,81 @@ function formatAdresse(chantier: Chantier): string {
   if (ligne1 || ligne2) {
     return [ligne1, ligne2, ligne3].filter(Boolean).map(escapeHtml).join('<br/>');
   }
-  // Fallback legacy
   return escapeHtml(chantier.adresse || '—');
 }
 
 /* ────────────────────────────────────────────────────────────────────
- * Sections HTML
+ * Page de garde (cover) — pleine page A4
  * ──────────────────────────────────────────────────────────────────── */
 
-function renderEntete(
+function renderCover(
   pv: PVReception,
   chantier: Chantier,
   logoDataUri: string,
 ): string {
   const numero = escapeHtml(pv.numeroPV || '—');
-  const dateReception = formatDateFR(pv.dateReception);
+  const dateLongue = formatDateLong(pv.dateReception);
   const nomChantier = escapeHtml(chantier.nom);
+  const adresse = formatAdresseLignes(chantier);
 
   return `
-<div class="entete">
-  <div class="entete-logo">
-    ${logoDataUri ? `<img src="${logoDataUri}" alt="SK DECO" class="logo"/>` : '<div class="logo-fallback">SK DECO</div>'}
-  </div>
-  <div class="entete-titre">
-    <h1>Procès-verbal de réception</h1>
-    <div class="entete-meta">
-      <div><strong>N° :</strong> ${numero}</div>
-      <div><strong>Date de réception :</strong> ${dateReception}</div>
+<div class="cover">
+  <div class="cover-band"></div>
+  <div class="cover-content">
+    <div class="cover-top">
+      <div class="cover-logo">
+        ${logoDataUri
+          ? `<img src="${logoDataUri}" alt="SK DECO"/>`
+          : '<div class="cover-logo-fallback">SK DECO</div>'
+        }
+      </div>
+      <div class="cover-eyebrow">Document officiel</div>
+      <h1 class="cover-title">Procès-verbal<br/>de réception</h1>
+      <div class="cover-divider"></div>
+      <div class="cover-chantier">
+        <div class="cover-label">Chantier</div>
+        <div class="cover-chantier-nom">${nomChantier}</div>
+        <div class="cover-chantier-adresse">${adresse}</div>
+      </div>
+    </div>
+
+    <div class="cover-bottom">
+      <div class="cover-meta">
+        <div class="cover-meta-block">
+          <div class="cover-meta-label">Référence</div>
+          <div class="cover-meta-value">${numero}</div>
+        </div>
+        <div class="cover-meta-divider"></div>
+        <div class="cover-meta-block">
+          <div class="cover-meta-label">Date de réception</div>
+          <div class="cover-meta-value">${dateLongue}</div>
+        </div>
+      </div>
+      <div class="cover-footer">SK DECO — Aménagement &amp; Décoration d'intérieur</div>
     </div>
   </div>
 </div>
-<div class="entete-chantier">
-  <strong>Chantier :</strong> ${nomChantier}<br/>
-  ${formatAdresse(chantier)}
-</div>
 `;
+}
+
+/* ────────────────────────────────────────────────────────────────────
+ * Section 01 — Parties
+ * ──────────────────────────────────────────────────────────────────── */
+
+function renderSectionHeader(num: string, title: string): string {
+  return `
+    <div class="section-header">
+      <span class="section-num">${num}</span>
+      <h2 class="section-title">${title}</h2>
+      <span class="section-rule"></span>
+    </div>
+  `;
 }
 
 function renderParties(
   chantier: Chantier,
   apporteurs: Apporteur[],
 ): string {
-  // Entreprise (figée — c'est nous)
   const entrepriseHtml = `
     <div class="partie">
       <div class="partie-role">Entreprise</div>
@@ -129,15 +199,20 @@ function renderParties(
     </div>
   `;
 
-  // Client : Apporteur si lié, sinon fallback texte legacy
+  // Client (Apporteur lié, sinon legacy texte)
   const clientApp = chantier.clientApporteurId
     ? apporteurs.find(a => a.id === chantier.clientApporteurId)
     : undefined;
+
   let clientHtml = '';
   if (clientApp) {
     const nom = escapeHtml(`${clientApp.prenom} ${clientApp.nom}`.trim());
-    const societe = clientApp.societe ? `<div class="partie-societe">${escapeHtml(clientApp.societe)}</div>` : '';
-    const adresse = clientApp.adresse ? `<div class="partie-adresse">${escapeHtml(clientApp.adresse)}</div>` : '';
+    const societe = clientApp.societe
+      ? `<div class="partie-info">${escapeHtml(clientApp.societe)}</div>`
+      : '';
+    const adresse = clientApp.adresse
+      ? `<div class="partie-info">${escapeHtml(clientApp.adresse)}</div>`
+      : '';
     clientHtml = `
       <div class="partie">
         <div class="partie-role">Maître d'ouvrage / Client</div>
@@ -158,18 +233,21 @@ function renderParties(
       <div class="partie">
         <div class="partie-role">Maître d'ouvrage / Client</div>
         <div class="partie-nom">—</div>
+        <div class="partie-info">À renseigner</div>
       </div>
     `;
   }
 
-  // Architecte (si lié)
+  // Architecte (optionnel)
   const architecte = chantier.architecteId
     ? apporteurs.find(a => a.id === chantier.architecteId)
     : undefined;
   let architecteHtml = '';
   if (architecte) {
     const nom = escapeHtml(`${architecte.prenom} ${architecte.nom}`.trim());
-    const societe = architecte.societe ? `<div class="partie-societe">${escapeHtml(architecte.societe)}</div>` : '';
+    const societe = architecte.societe
+      ? `<div class="partie-info">${escapeHtml(architecte.societe)}</div>`
+      : '';
     architecteHtml = `
       <div class="partie">
         <div class="partie-role">Architecte / Maître d'œuvre</div>
@@ -179,10 +257,13 @@ function renderParties(
     `;
   }
 
+  // Layout : 2 colonnes par défaut, 3 colonnes si architecte présent
+  const cssClass = architecte ? 'parties parties-three' : 'parties';
+
   return `
-<section class="section parties">
-  <h2>Parties</h2>
-  <div class="parties-grid">
+<section class="section">
+  ${renderSectionHeader('01', 'Parties')}
+  <div class="${cssClass}">
     ${entrepriseHtml}
     ${clientHtml}
     ${architecteHtml}
@@ -190,6 +271,10 @@ function renderParties(
 </section>
 `;
 }
+
+/* ────────────────────────────────────────────────────────────────────
+ * Section 02 — Pièces & réserves
+ * ──────────────────────────────────────────────────────────────────── */
 
 function renderPhotoThumb(
   url: string,
@@ -199,8 +284,7 @@ function renderPhotoThumb(
   if (dataUri) {
     return `<div class="photo-thumb"><img src="${dataUri}" alt="photo"/></div>`;
   }
-  // Photo cassée → placeholder ⚠️ (décision UX validée)
-  return `<div class="photo-thumb photo-thumb-broken"><span class="photo-broken-icon">⚠️</span></div>`;
+  return `<div class="photo-thumb photo-thumb-broken"><span class="photo-broken-icon">⚠</span></div>`;
 }
 
 function renderReserves(
@@ -217,18 +301,17 @@ function renderReserves(
 ): string {
   if (reserves.length === 0) return '';
 
-  const itemsHtml = reserves.map(r => {
+  return reserves.map(r => {
     const cat = r.lotDevisNomSnapshot || r.categorieLibre;
-    const catHtml = cat ? `<div class="reserve-categorie">📂 ${escapeHtml(cat)}</div>` : '';
+    const catHtml = cat ? `<div class="reserve-cat">${escapeHtml(cat)}</div>` : '';
 
-    // Total photos (constat + levée) — au-delà de 3, on autorise la coupure
     const nbPhotosConstat = r.photos?.length || 0;
     const nbPhotosLevee = (isLevee && r.levee?.photos?.length) || 0;
     const nbPhotosTotal = nbPhotosConstat + nbPhotosLevee;
 
     const photosConstat = (r.photos && r.photos.length > 0)
       ? `<div class="photos-block">
-          <div class="photos-label">📷 Constat (${r.photos.length})</div>
+          <div class="photos-label">Constat — ${r.photos.length} photo${r.photos.length > 1 ? 's' : ''}</div>
           <div class="photos-grid">
             ${r.photos.map(url => renderPhotoThumb(url, photosResolved)).join('')}
           </div>
@@ -237,34 +320,27 @@ function renderReserves(
 
     const photosLevee = (isLevee && r.levee && r.levee.photos && r.levee.photos.length > 0)
       ? `<div class="photos-block">
-          <div class="photos-label">✅ Levée le ${formatDateFR(r.levee.le)} (${r.levee.photos.length} photo${r.levee.photos.length > 1 ? 's' : ''})</div>
+          <div class="photos-label">Levée — ${r.levee.photos.length} photo${r.levee.photos.length > 1 ? 's' : ''}</div>
           <div class="photos-grid">
             ${r.levee.photos.map(url => renderPhotoThumb(url, photosResolved)).join('')}
           </div>
         </div>`
       : '';
 
-    const leveeNote = (isLevee && r.levee && !r.levee.photos?.length)
-      ? `<div class="levee-note">✅ Levée le ${formatDateFR(r.levee.le)}</div>`
+    const leveeMeta = (isLevee && r.levee)
+      ? `<div class="reserve-levee-meta">Levée le ${formatDateFR(r.levee.le)}</div>`
       : '';
 
     return `
       <div class="reserve ${isLevee ? 'reserve-levee' : 'reserve-pending'}${nbPhotosTotal > 3 ? ' reserve-large' : ''}">
-        <div class="reserve-head">
-          <span class="reserve-check">${isLevee ? '✅' : '⬜'}</span>
-          <div class="reserve-body">
-            <div class="reserve-desc ${isLevee ? 'reserve-desc-levee' : ''}">${escapeHtml(r.description)}</div>
-            ${catHtml}
-          </div>
-        </div>
+        <div class="reserve-desc ${isLevee ? 'reserve-desc-levee' : ''}">${escapeHtml(r.description)}</div>
+        ${catHtml}
+        ${leveeMeta}
         ${photosConstat}
         ${photosLevee}
-        ${leveeNote}
       </div>
     `;
   }).join('');
-
-  return itemsHtml;
 }
 
 function renderPieces(
@@ -276,13 +352,13 @@ function renderPieces(
   if (pieces.length === 0) {
     return `
 <section class="section">
-  <h2>Pièces & réserves</h2>
+  ${renderSectionHeader('02', 'Pièces &amp; réserves')}
   <div class="empty">Aucune pièce dans ce PV.</div>
 </section>
 `;
   }
 
-  // Comptes globaux (pour synthèse)
+  // Comptes globaux
   let totalATraiter = 0;
   let totalLevees = 0;
   pieces.forEach(p => {
@@ -292,33 +368,50 @@ function renderPieces(
     });
   });
 
-  const synthese = `
-    <div class="synthese">
-      <div class="synthese-pill">🏠 ${pieces.length} pièce${pieces.length > 1 ? 's' : ''}</div>
-      ${totalATraiter > 0 ? `<div class="synthese-pill synthese-pending">🔴 ${totalATraiter} réserve${totalATraiter > 1 ? 's' : ''} à traiter</div>` : ''}
-      ${totalLevees > 0 ? `<div class="synthese-pill synthese-levee">✅ ${totalLevees} levée${totalLevees > 1 ? 's' : ''}</div>` : ''}
-      ${totalATraiter === 0 && totalLevees === 0 ? `<div class="synthese-pill synthese-levee">✅ Aucune réserve</div>` : ''}
-    </div>
-  `;
+  // Synthèse — tags élégants
+  const tagsHtml: string[] = [];
+  tagsHtml.push(`<span class="synthese-tag">${pieces.length} pièce${pieces.length > 1 ? 's' : ''}</span>`);
+  if (totalATraiter > 0) {
+    tagsHtml.push(`<span class="synthese-tag tag-pending">${totalATraiter} réserve${totalATraiter > 1 ? 's' : ''} à traiter</span>`);
+  }
+  if (totalLevees > 0) {
+    tagsHtml.push(`<span class="synthese-tag tag-success">${totalLevees} levée${totalLevees > 1 ? 's' : ''}</span>`);
+  }
+  if (totalATraiter === 0 && totalLevees === 0) {
+    tagsHtml.push(`<span class="synthese-tag tag-success">Aucune réserve</span>`);
+  }
+  const synthese = `<div class="synthese">${tagsHtml.join('')}</div>`;
 
+  // Pièces
   const piecesHtml = pieces.map(piece => {
     const reserves = piece.reserves || [];
     const reservesPending = reserves.filter(r => !r.levee);
     const reservesLevees = reserves.filter(r => !!r.levee);
 
+    let statusHtml = '';
     let bodyHtml = '';
+
     if (reserves.length === 0) {
-      bodyHtml = `<div class="piece-empty">✓ Aucune réserve</div>`;
+      statusHtml = `<span class="piece-status status-clean">Conforme — sans réserve</span>`;
     } else {
+      const parts: string[] = [];
+      if (reservesPending.length > 0) {
+        parts.push(`${reservesPending.length} à traiter`);
+      }
+      if (reservesLevees.length > 0) {
+        parts.push(`${reservesLevees.length} levée${reservesLevees.length > 1 ? 's' : ''}`);
+      }
+      statusHtml = `<span class="piece-status">${parts.join(' · ')}</span>`;
+
       const pendingBlock = reservesPending.length > 0
         ? `<div class="reserves-group">
-             <div class="reserves-group-title">🔴 À traiter (${reservesPending.length})</div>
+             <div class="reserves-group-title">À traiter (${reservesPending.length})</div>
              ${renderReserves(reservesPending, photosResolved, false)}
            </div>`
         : '';
       const leveesBlock = reservesLevees.length > 0
         ? `<div class="reserves-group">
-             <div class="reserves-group-title">✅ Levées (${reservesLevees.length})</div>
+             <div class="reserves-group-title">Levées (${reservesLevees.length})</div>
              ${renderReserves(reservesLevees, photosResolved, true)}
            </div>`
         : '';
@@ -328,11 +421,8 @@ function renderPieces(
     return `
       <div class="piece">
         <div class="piece-head">
-          <h3>${escapeHtml(piece.nom)}</h3>
-          <div class="piece-stats">
-            ${reservesPending.length > 0 ? `<span class="stat-pending">🔴 ${reservesPending.length} à traiter</span>` : ''}
-            ${reservesLevees.length > 0 ? `<span class="stat-levee">✅ ${reservesLevees.length} levée${reservesLevees.length > 1 ? 's' : ''}</span>` : ''}
-          </div>
+          <span class="piece-nom">${escapeHtml(piece.nom)}</span>
+          ${statusHtml}
         </div>
         ${bodyHtml}
       </div>
@@ -341,12 +431,16 @@ function renderPieces(
 
   return `
 <section class="section">
-  <h2>Pièces &amp; réserves</h2>
+  ${renderSectionHeader('02', 'Pièces &amp; réserves')}
   ${synthese}
   ${piecesHtml}
 </section>
 `;
 }
+
+/* ────────────────────────────────────────────────────────────────────
+ * Section 03 — Paiement
+ * ──────────────────────────────────────────────────────────────────── */
 
 function renderPaiement(
   pv: PVReception,
@@ -367,58 +461,55 @@ function renderPaiement(
 
   let recapHtml = '';
   if (afficherRecap) {
-    const lignesMarches = recap.marches.map(l =>
-      `<tr><td>${escapeHtml(l.libelle)}</td><td class="num">${formatEUR(l.montantTTC)}</td></tr>`
-    ).join('');
-    const lignesSupp = recap.supplementsFactures.map(l =>
-      `<tr><td>${escapeHtml(l.libelle)}</td><td class="num">${formatEUR(l.montantTTC)}</td></tr>`
-    ).join('');
-
     if (recap.totalTTC > 0) {
+      const lignesMarches = recap.marches.map(l =>
+        `<tr><td>${escapeHtml(l.libelle)}</td><td class="num">${formatEUR(l.montantTTC)}</td></tr>`
+      ).join('');
+      const lignesSupp = recap.supplementsFactures.map(l =>
+        `<tr><td>${escapeHtml(l.libelle)}</td><td class="num">${formatEUR(l.montantTTC)}</td></tr>`
+      ).join('');
+
       recapHtml = `
         <div class="recap">
-          <h3>Détail des montants</h3>
           <table class="recap-table">
             <tbody>
               ${lignesMarches}
               ${lignesSupp}
-              <tr class="recap-sep"><td colspan="2"></td></tr>
-              <tr class="recap-total">
-                <td><strong>Total TTC</strong></td>
-                <td class="num"><strong>${formatEUR(recap.totalTTC)}</strong></td>
+              <tr class="total">
+                <td>Total TTC</td>
+                <td class="num">${formatEUR(recap.totalTTC)}</td>
               </tr>
               <tr>
                 <td>– Acomptes versés</td>
-                <td class="num green">–${formatEUR(recap.acomptesVerses)}</td>
+                <td class="num">–${formatEUR(recap.acomptesVerses)}</td>
               </tr>
               <tr>
                 <td>– Retenue garantie ${recap.retenueGarantiePct}%</td>
-                <td class="num red">–${formatEUR(recap.retenueGarantieMontant)}</td>
+                <td class="num">–${formatEUR(recap.retenueGarantieMontant)}</td>
               </tr>
-              <tr class="recap-sep"><td colspan="2"></td></tr>
-              <tr class="recap-reste">
-                <td><strong>🟢 Reste à payer aujourd'hui</strong></td>
-                <td class="num green-bold">${formatEUR(recap.resteAPayer)}</td>
+              <tr class="reste">
+                <td>Reste à payer aujourd'hui</td>
+                <td class="num">${formatEUR(recap.resteAPayer)}</td>
               </tr>
             </tbody>
           </table>
           <div class="recap-note">
-            🔒 Retenue garantie : ${formatEUR(recap.retenueGarantieMontant)} à verser après la levée des réserves.
+            Retenue garantie : ${formatEUR(recap.retenueGarantieMontant)} à verser après la levée des réserves.
           </div>
         </div>
       `;
     } else {
       recapHtml = `
-        <div class="recap">
-          <div class="empty">Aucun marché ou facture supplément enregistré sur ce chantier.</div>
+        <div class="recap-empty">
+          Aucun marché ou facture supplément enregistré sur ce chantier.
         </div>
       `;
     }
   }
 
   return `
-<section class="section paiement-section">
-  <h2>Paiement de la retenue garantie</h2>
+<section class="section">
+  ${renderSectionHeader('03', 'Paiement de la retenue garantie')}
   <div class="modalite">
     <div class="modalite-label">Modalité de règlement</div>
     <div class="modalite-text">${escapeHtml(modalite)}</div>
@@ -428,6 +519,10 @@ function renderPaiement(
 `;
 }
 
+/* ────────────────────────────────────────────────────────────────────
+ * Section 04 — Signatures
+ * ──────────────────────────────────────────────────────────────────── */
+
 function renderSignatures(pv: PVReception): string {
   const sigEnt = pv.signatureEntrepriseUri;
   const sigClient = pv.signatureClientUri;
@@ -436,31 +531,32 @@ function renderSignatures(pv: PVReception): string {
   const nomSign = pv.nomSignataire;
 
   const blockEntreprise = `
-    <div class="signature-card">
-      <div class="signature-label">Entreprise (SK DECO)</div>
+    <div class="signature">
+      <div class="signature-label">Entreprise</div>
       <div class="signature-box">
         ${sigEnt
-          ? `<img src="${sigEnt}" alt="signature entreprise" class="signature-img"/>`
+          ? `<img src="${sigEnt}" alt="signature entreprise"/>`
           : `<div class="signature-empty">Non signée</div>`
         }
       </div>
       <div class="signature-meta">
+        <strong>SK DECO</strong>
         ${sigEnt ? `Signé le ${formatDateTimeFR(dateEnt)}` : ''}
       </div>
     </div>
   `;
 
   const blockClient = `
-    <div class="signature-card">
+    <div class="signature">
       <div class="signature-label">Client / Maître d'ouvrage</div>
       <div class="signature-box">
         ${sigClient
-          ? `<img src="${sigClient}" alt="signature client" class="signature-img"/>`
+          ? `<img src="${sigClient}" alt="signature client"/>`
           : `<div class="signature-empty">Non signée</div>`
         }
       </div>
       <div class="signature-meta">
-        ${nomSign ? `<div><strong>${escapeHtml(nomSign)}</strong></div>` : ''}
+        ${nomSign ? `<strong>${escapeHtml(nomSign)}</strong>` : ''}
         ${sigClient ? `Signé le ${formatDateTimeFR(dateClient)}` : ''}
       </div>
     </div>
@@ -468,23 +564,16 @@ function renderSignatures(pv: PVReception): string {
 
   return `
 <section class="section signatures-section">
-  <h2>Signatures</h2>
+  ${renderSectionHeader('04', 'Signatures')}
   <div class="signatures-grid">
     ${blockEntreprise}
     ${blockClient}
   </div>
+  <div class="mentions">
+    Le présent procès-verbal vaut réception de l'ouvrage au sens de l'article 1792-6 du Code civil.<br/>
+    Les réserves éventuelles devront être levées dans un délai raisonnable convenu entre les parties.
+  </div>
 </section>
-`;
-}
-
-function renderPiedDePage(): string {
-  const dateEdition = new Date().toLocaleDateString('fr-FR') + ' à ' +
-    new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-  return `
-<div class="footer-mention">
-  <div>SK DECO — Procès-verbal de réception de chantier</div>
-  <div>Document généré le ${dateEdition}</div>
-</div>
 `;
 }
 
@@ -492,280 +581,411 @@ function renderPiedDePage(): string {
  * CSS
  * ──────────────────────────────────────────────────────────────────── */
 
-const CSS = `
+function buildCss(numeroPV: string, nomChantier: string): string {
+  // Header de page : "PV-XXX — NOM" (échappé pour CSS content)
+  const pageHeader = `${numeroPV} — ${nomChantier}`
+    .replace(/\\/g, '\\\\')
+    .replace(/"/g, '\\"');
+
+  return `
 * { box-sizing: border-box; }
 
 @page {
   size: A4;
-  margin: 18mm 14mm 22mm 14mm;
-  @bottom-center {
-    content: "Page " counter(page) " / " counter(pages);
-    font-family: -apple-system, sans-serif;
-    font-size: 9pt;
-    color: #687076;
+  margin: 22mm 18mm 24mm 18mm;
+  @top-right {
+    content: "${pageHeader}";
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    font-size: 8pt;
+    color: #6B7280;
+    letter-spacing: 1pt;
   }
+  @bottom-left {
+    content: "SK DECO";
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    font-size: 8pt;
+    color: #5C1F2E;
+    letter-spacing: 2pt;
+    font-weight: 700;
+  }
+  @bottom-right {
+    content: counter(page) " / " counter(pages);
+    font-family: -apple-system, "Helvetica Neue", sans-serif;
+    font-size: 8pt;
+    color: #6B7280;
+  }
+}
+
+/* Page de garde : pas de marges, pas de header/footer */
+@page :first {
+  margin: 0;
+  @top-right { content: ""; }
+  @bottom-left { content: ""; }
+  @bottom-right { content: ""; }
 }
 
 body {
   font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 10pt;
-  color: #11181C;
-  line-height: 1.45;
+  color: #1A1A1A;
+  line-height: 1.55;
   margin: 0;
   padding: 0;
-  /* Règles globales : minimum 2 lignes en haut/bas de page */
   orphans: 2;
   widows: 2;
+  letter-spacing: 0.01em;
 }
 
-/* Titres de section : doivent rester avec leur premier contenu */
-h2 {
-  page-break-after: avoid;
-  break-after: avoid;
-}
-h3 {
+h2, h3 {
   page-break-after: avoid;
   break-after: avoid;
 }
 
-h1 {
-  font-size: 18pt;
-  font-weight: 700;
-  margin: 0 0 4px 0;
-  color: #11181C;
+/* ════════════════════════════════════════════════════════════════
+ * PAGE DE GARDE
+ * ════════════════════════════════════════════════════════════════ */
+
+.cover {
+  width: 210mm;
+  height: 297mm;
+  page-break-after: always;
+  background: #FBF7F2;
+  display: flex;
+  flex-direction: column;
 }
-h2 {
-  font-size: 13pt;
-  font-weight: 700;
-  color: #11181C;
-  margin: 0 0 10px 0;
-  padding-bottom: 6px;
-  border-bottom: 2px solid #2C2C2C;
+.cover-band {
+  height: 12mm;
+  background: #5C1F2E;
+  flex: 0 0 auto;
 }
-h3 {
-  font-size: 11pt;
+.cover-content {
+  flex: 1;
+  padding: 22mm 24mm;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.cover-top {
+  display: flex;
+  flex-direction: column;
+}
+.cover-logo {
+  text-align: center;
+  margin-bottom: 18mm;
+}
+.cover-logo img {
+  height: 24mm;
+  width: auto;
+}
+.cover-logo-fallback {
+  font-family: Georgia, serif;
+  font-size: 28pt;
   font-weight: 700;
-  color: #11181C;
+  color: #5C1F2E;
+  letter-spacing: 4pt;
+}
+.cover-eyebrow {
+  text-align: center;
+  font-size: 9pt;
+  letter-spacing: 4pt;
+  color: #5C1F2E;
+  text-transform: uppercase;
+  font-weight: 600;
+  margin-bottom: 8mm;
+}
+.cover-title {
+  text-align: center;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 36pt;
+  color: #1A1A1A;
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: -0.5pt;
   margin: 0;
 }
+.cover-divider {
+  width: 18mm;
+  height: 1.5pt;
+  background: #5C1F2E;
+  margin: 12mm auto;
+}
+.cover-chantier {
+  text-align: center;
+  margin-top: 4mm;
+}
+.cover-label {
+  font-size: 9pt;
+  letter-spacing: 3pt;
+  color: #6B7280;
+  text-transform: uppercase;
+  margin-bottom: 4mm;
+}
+.cover-chantier-nom {
+  font-size: 22pt;
+  font-weight: 700;
+  color: #1A1A1A;
+  letter-spacing: 1pt;
+  margin: 0;
+}
+.cover-chantier-adresse {
+  font-size: 11pt;
+  color: #6B7280;
+  margin-top: 3mm;
+  font-weight: 400;
+  line-height: 1.5;
+}
+.cover-bottom {
+  border-top: 0.5pt solid #D8CFC4;
+  padding-top: 10mm;
+}
+.cover-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 8mm;
+}
+.cover-meta-block {
+  flex: 1;
+  text-align: center;
+}
+.cover-meta-label {
+  font-size: 8pt;
+  letter-spacing: 2pt;
+  color: #6B7280;
+  text-transform: uppercase;
+  margin-bottom: 3mm;
+  font-weight: 600;
+}
+.cover-meta-value {
+  font-size: 12pt;
+  color: #1A1A1A;
+  font-weight: 600;
+}
+.cover-meta-divider {
+  width: 0.5pt;
+  background: #D8CFC4;
+  margin: 0 4mm;
+}
+.cover-footer {
+  text-align: center;
+  font-size: 8pt;
+  color: #6B7280;
+  margin-top: 8mm;
+  letter-spacing: 1pt;
+}
+
+/* ════════════════════════════════════════════════════════════════
+ * PAGES DE CONTENU
+ * ════════════════════════════════════════════════════════════════ */
 
 .section {
-  margin: 16px 0;
+  margin-bottom: 14mm;
 }
 
-/* Entête */
-.entete {
+.section-header {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding-bottom: 12px;
-  border-bottom: 2px solid #2C2C2C;
-  margin-bottom: 12px;
+  align-items: baseline;
+  gap: 6mm;
+  margin-bottom: 8mm;
+  page-break-after: avoid;
+  break-after: avoid;
 }
-.entete-logo { flex: 0 0 auto; }
-.logo {
-  height: 50px;
-  width: auto;
-  display: block;
+.section-num {
+  font-family: Georgia, serif;
+  font-size: 11pt;
+  color: #5C1F2E;
+  font-weight: 400;
+  font-style: italic;
+  letter-spacing: 0.5pt;
 }
-.logo-fallback {
-  font-size: 16pt;
-  font-weight: 800;
-  letter-spacing: 2px;
-  color: #2C2C2C;
+.section-title {
+  font-size: 11pt;
+  letter-spacing: 4pt;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0;
+  flex: 0 0 auto;
 }
-.entete-titre { flex: 1; }
-.entete-meta {
-  font-size: 9pt;
-  color: #687076;
-  margin-top: 4px;
-}
-.entete-meta div { display: inline-block; margin-right: 16px; }
-.entete-chantier {
-  font-size: 10pt;
-  margin-bottom: 6px;
-  padding: 8px 10px;
-  background: #F8F9FA;
-  border-radius: 4px;
+.section-rule {
+  flex: 1;
+  height: 0.5pt;
+  background: #D8CFC4;
+  align-self: center;
+  margin-left: 6mm;
 }
 
 /* Parties */
-.parties-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
+.parties {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8mm;
+}
+.parties-three {
+  grid-template-columns: 1fr 1fr 1fr;
 }
 .partie {
-  flex: 1 1 30%;
-  min-width: 30%;
-  padding: 10px;
-  background: #F8F9FA;
-  border-radius: 6px;
-  border-left: 3px solid #2C2C2C;
+  padding: 6mm 7mm;
+  border-left: 2pt solid #5C1F2E;
+  background: #FBF7F2;
 }
 .partie-role {
   font-size: 8pt;
-  font-weight: 700;
+  letter-spacing: 2.5pt;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #687076;
-  margin-bottom: 4px;
+  color: #5C1F2E;
+  font-weight: 600;
+  margin-bottom: 3mm;
 }
 .partie-nom {
-  font-size: 10pt;
+  font-size: 13pt;
   font-weight: 700;
-  color: #11181C;
+  color: #1A1A1A;
+  letter-spacing: 0.5pt;
 }
-.partie-societe, .partie-adresse {
-  font-size: 9pt;
-  color: #687076;
-  margin-top: 2px;
+.partie-info {
+  font-size: 9.5pt;
+  color: #6B7280;
+  margin-top: 1.5mm;
 }
 
-/* Synthèse */
+/* Synthèse — tags */
 .synthese {
   display: flex;
-  gap: 6px;
+  gap: 4mm;
   flex-wrap: wrap;
-  margin-bottom: 10px;
+  margin-bottom: 8mm;
 }
-.synthese-pill {
+.synthese-tag {
   font-size: 9pt;
+  padding: 2.5mm 5mm;
+  border: 0.5pt solid #5C1F2E;
+  color: #5C1F2E;
+  letter-spacing: 1pt;
   font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
-  background: #F8F9FA;
-  color: #11181C;
 }
-.synthese-pending { background: #FEE2E2; color: #B91C1C; }
-.synthese-levee { background: #D1FAE5; color: #065F46; }
+.synthese-tag.tag-success {
+  background: #5C1F2E;
+  color: #FBF7F2;
+  border-color: #5C1F2E;
+}
+.synthese-tag.tag-pending {
+  border-color: #B91C1C;
+  color: #B91C1C;
+}
 
 /* Pièces */
 .piece {
-  margin-bottom: 12px;
-  padding: 10px;
-  background: #F8F9FA;
-  border-radius: 6px;
+  margin-bottom: 8mm;
 }
 .piece-head {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid #E2E6EA;
-  /* Le header de pièce doit rester avec au moins sa première réserve */
+  align-items: baseline;
+  gap: 4mm;
+  padding-bottom: 3mm;
+  margin-bottom: 4mm;
+  border-bottom: 0.5pt solid #D8CFC4;
   page-break-after: avoid;
   break-after: avoid;
 }
-.piece-stats { font-size: 9pt; }
-.piece-stats span { margin-left: 8px; font-weight: 600; }
-.stat-pending { color: #B91C1C; }
-.stat-levee { color: #065F46; }
-.piece-empty {
-  font-size: 9pt;
-  color: #687076;
-  font-style: italic;
-  padding: 6px 0;
-}
-
-.reserves-group { margin-top: 8px; }
-.reserves-group-title {
-  font-size: 9pt;
+.piece-nom {
+  font-size: 12pt;
   font-weight: 700;
-  color: #687076;
-  margin-bottom: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  /* Le titre "À TRAITER (n)" doit rester avec sa première réserve */
-  page-break-after: avoid;
-  break-after: avoid;
+  color: #1A1A1A;
+  letter-spacing: 0.5pt;
+  flex: 1;
+}
+.piece-status {
+  font-size: 8.5pt;
+  color: #6B7280;
+  font-style: italic;
+  letter-spacing: 0.5pt;
+}
+.piece-status.status-clean {
+  color: #5C1F2E;
 }
 
 /* Réserves */
+.reserves-group {
+  margin: 4mm 0;
+}
+.reserves-group-title {
+  font-size: 8pt;
+  letter-spacing: 3pt;
+  text-transform: uppercase;
+  font-weight: 600;
+  color: #6B7280;
+  margin-bottom: 3mm;
+  page-break-after: avoid;
+  break-after: avoid;
+}
 .reserve {
-  background: #fff;
-  border-radius: 4px;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  border: 1px solid #FCA5A5;
-  /* On évite de couper une réserve, sauf si vraiment trop grosse (4+ photos) */
+  padding: 4mm 5mm;
+  margin-bottom: 3mm;
+  border-left: 2pt solid #B91C1C;
+  background: #FFFAF8;
   page-break-inside: avoid;
   break-inside: avoid;
-  /* Le header de réserve doit rester avec ses photos quand c'est possible */
-  orphans: 2;
-  widows: 2;
 }
-/* Quand une réserve a beaucoup de photos, on autorise la coupure plutôt que créer un grand vide */
+.reserve-levee {
+  border-left-color: #5C1F2E;
+  background: #FBF7F2;
+}
 .reserve-large {
   page-break-inside: auto;
   break-inside: auto;
 }
-.reserve-levee {
-  border-color: #A7F3D0;
-  background: #F0FDF4;
-}
-.reserve-head {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-}
-.reserve-check { font-size: 11pt; flex: 0 0 auto; }
-.reserve-body { flex: 1; }
 .reserve-desc {
-  font-size: 10pt;
+  font-size: 10.5pt;
   font-weight: 600;
-  color: #11181C;
+  color: #1A1A1A;
 }
 .reserve-desc-levee {
   text-decoration: line-through;
-  color: #687076;
+  color: #6B7280;
 }
-.reserve-categorie {
+.reserve-cat {
   font-size: 8.5pt;
-  color: #687076;
-  margin-top: 2px;
+  color: #6B7280;
+  margin-top: 1mm;
+  letter-spacing: 0.5pt;
 }
-.levee-note {
-  font-size: 8.5pt;
-  color: #065F46;
-  margin-top: 4px;
-  padding-left: 18px;
+.reserve-levee-meta {
+  font-size: 8pt;
+  color: #5C1F2E;
+  margin-top: 2mm;
+  letter-spacing: 0.5pt;
+  font-weight: 600;
 }
 
 /* Photos */
 .photos-block {
-  margin-top: 8px;
-  padding-top: 6px;
-  border-top: 1px solid #E2E6EA;
-  /* Le label "📷 Constat (n)" doit rester avec ses photos */
+  margin-top: 3mm;
   page-break-inside: avoid;
   break-inside: avoid;
 }
 .photos-label {
-  font-size: 8.5pt;
+  font-size: 8pt;
+  color: #6B7280;
+  letter-spacing: 1.5pt;
+  text-transform: uppercase;
+  margin-bottom: 2mm;
   font-weight: 600;
-  color: #687076;
-  margin-bottom: 4px;
   page-break-after: avoid;
-  break-after: avoid;
 }
 .photos-grid {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 1.5mm;
 }
 .photo-thumb {
-  width: 90px;
-  height: 90px;
-  background: #F8F9FA;
-  border-radius: 3px;
+  width: 24mm;
+  height: 24mm;
+  background: #F1ECE3;
   overflow: hidden;
-  border: 1px solid #E2E6EA;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 0 0 90px;
+  flex: 0 0 24mm;
 }
 .photo-thumb img {
   width: 100%;
@@ -774,82 +994,85 @@ h3 {
   display: block;
 }
 .photo-thumb-broken {
-  background: #F1F5F9;
+  background: #FBF7F2;
 }
 .photo-broken-icon {
-  font-size: 16pt;
-  color: #94A3B8;
+  font-size: 14pt;
+  color: #B91C1C;
 }
 
 /* Paiement */
-.paiement-section h2 {
-  page-break-after: avoid;
-  break-after: avoid;
-}
-/* Paiement */
 .modalite {
-  padding: 10px;
-  background: #F8F9FA;
-  border-radius: 6px;
-  margin-bottom: 10px;
+  padding: 6mm;
+  background: #FBF7F2;
+  border-left: 2pt solid #5C1F2E;
+  margin-bottom: 6mm;
   page-break-inside: avoid;
-  break-inside: avoid;
 }
 .modalite-label {
   font-size: 8pt;
-  font-weight: 700;
+  letter-spacing: 2.5pt;
   text-transform: uppercase;
-  color: #687076;
-  letter-spacing: 0.5px;
-  margin-bottom: 4px;
+  color: #5C1F2E;
+  font-weight: 600;
+  margin-bottom: 2mm;
 }
 .modalite-text {
-  font-size: 10pt;
-  color: #11181C;
+  font-size: 10.5pt;
+  color: #1A1A1A;
 }
+
 .recap {
-  padding: 10px;
-  background: #fff;
-  border: 1px solid #E2E6EA;
-  border-radius: 6px;
-  /* Le récap chiffré doit rester indivisible (juridique) */
+  margin-top: 4mm;
   page-break-inside: avoid;
-  break-inside: avoid;
-}
-.recap h3 {
-  font-size: 10pt;
-  margin: 0 0 8px 0;
 }
 .recap-table {
   width: 100%;
   border-collapse: collapse;
 }
 .recap-table td {
-  padding: 4px 0;
-  font-size: 9.5pt;
+  padding: 2.5mm 0;
+  font-size: 10pt;
+  border-bottom: 0.3pt solid #E5DDD3;
 }
 .recap-table td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.recap-table td.num.green { color: #065F46; }
-.recap-table td.num.red { color: #B91C1C; }
-.recap-table td.num.green-bold { color: #065F46; font-weight: 800; font-size: 11pt; }
-.recap-sep td {
-  border-top: 1px solid #E2E6EA;
-  height: 0;
-  padding: 0;
+.recap-table tr.total td {
+  border-top: 1pt solid #5C1F2E;
+  border-bottom: 0.3pt solid #5C1F2E;
+  padding-top: 4mm;
+  font-weight: 700;
+  font-size: 11pt;
 }
-.recap-reste td { padding-top: 6px; font-size: 10.5pt; }
+.recap-table tr.reste td {
+  border-top: 1pt solid #5C1F2E;
+  border-bottom: 1pt solid #5C1F2E;
+  padding: 4mm;
+  background: #5C1F2E;
+  color: #FBF7F2;
+  font-weight: 700;
+  font-size: 12pt;
+}
+
 .recap-note {
-  margin-top: 8px;
-  padding: 6px 8px;
-  background: #FEF3C7;
-  border-left: 3px solid #F0AD4E;
-  font-size: 9pt;
-  color: #856404;
-  border-radius: 3px;
+  margin-top: 4mm;
+  font-size: 8.5pt;
+  color: #6B7280;
+  font-style: italic;
+  letter-spacing: 0.5pt;
+}
+
+.recap-empty {
+  font-size: 9.5pt;
+  color: #6B7280;
+  font-style: italic;
+  text-align: center;
+  padding: 6mm;
+  background: #FBF7F2;
+  margin-top: 4mm;
 }
 
 /* Signatures */
@@ -857,42 +1080,34 @@ h3 {
   page-break-inside: avoid;
   break-inside: avoid;
 }
-.signatures-section h2 {
-  page-break-after: avoid;
-  break-after: avoid;
-}
 .signatures-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap: 10mm;
+  margin-top: 4mm;
 }
-.signature-card {
-  padding: 10px;
-  background: #F8F9FA;
-  border-radius: 6px;
-  border: 1px solid #E2E6EA;
+.signature {
+  padding-top: 4mm;
 }
 .signature-label {
   font-size: 8pt;
-  font-weight: 700;
+  letter-spacing: 2.5pt;
   text-transform: uppercase;
-  color: #687076;
-  letter-spacing: 0.5px;
-  margin-bottom: 8px;
+  color: #5C1F2E;
+  font-weight: 600;
+  margin-bottom: 4mm;
 }
 .signature-box {
-  background: #fff;
-  border-radius: 4px;
-  padding: 6px;
-  border: 1px solid #E2E6EA;
-  height: 90px;
+  height: 28mm;
+  border-bottom: 0.5pt solid #1A1A1A;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 2mm;
 }
-.signature-img {
+.signature-box img {
   max-width: 100%;
-  max-height: 80px;
+  max-height: 100%;
   object-fit: contain;
 }
 .signature-empty {
@@ -902,35 +1117,39 @@ h3 {
 }
 .signature-meta {
   font-size: 8.5pt;
-  color: #687076;
-  margin-top: 6px;
+  color: #6B7280;
+  margin-top: 3mm;
+  letter-spacing: 0.5pt;
 }
 .signature-meta strong {
-  color: #11181C;
+  color: #1A1A1A;
   font-size: 9.5pt;
+  display: block;
+  margin-bottom: 1mm;
+  font-weight: 700;
 }
 
-/* Pied de page */
-.footer-mention {
-  margin-top: 16px;
-  padding-top: 8px;
-  border-top: 1px solid #E2E6EA;
-  font-size: 8pt;
-  color: #687076;
+.mentions {
+  margin-top: 14mm;
+  padding-top: 5mm;
+  border-top: 0.5pt solid #D8CFC4;
+  font-size: 7.5pt;
+  color: #6B7280;
+  letter-spacing: 0.5pt;
   text-align: center;
-  page-break-before: avoid;
+  line-height: 1.6;
   page-break-inside: avoid;
 }
-.footer-mention div { margin: 2px 0; }
 
 .empty {
-  padding: 12px;
+  padding: 12mm;
   text-align: center;
-  color: #687076;
+  color: #6B7280;
   font-style: italic;
-  font-size: 9pt;
+  font-size: 9.5pt;
 }
 `;
+}
 
 /* ────────────────────────────────────────────────────────────────────
  * Export
@@ -947,21 +1166,24 @@ export function genererPVHtml(params: GenererPVHtmlParams): string {
     photosResolved,
   } = params;
 
-  const html = `
-<!DOCTYPE html>
+  const css = buildCss(
+    pv.numeroPV || '—',
+    chantier.nom || '—',
+  );
+
+  const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8"/>
   <title>PV de réception — ${escapeHtml(pv.numeroPV || chantier.nom)}</title>
-  <style>${CSS}</style>
+  <style>${css}</style>
 </head>
 <body>
-  ${renderEntete(pv, chantier, logoDataUri)}
+  ${renderCover(pv, chantier, logoDataUri)}
   ${renderParties(chantier, apporteurs)}
   ${renderPieces(pv, photosResolved)}
   ${renderPaiement(pv, chantier, marchesChantier, supplementsMarche)}
   ${renderSignatures(pv)}
-  ${renderPiedDePage()}
 </body>
 </html>
 `;

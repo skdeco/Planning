@@ -29,3 +29,24 @@
 - **TOUJOURS** montrer le plan avant de modifier plus de 2 fichiers
 - Pour les gros refactors : procéder par petites PR (un composant à la fois)
 - Ne jamais casser la logique métier existante lors d'un refactor visuel
+
+## Dette technique ouverte
+
+### DESIGN-SYSTEM-REFONTE-001
+Étendre le design system bordeaux (couleur primaire `#5C1F2E`, crème `#FBF7F2`,
+typo Georgia pour titres, sections numérotées italic) à toute l'application.
+Pour l'instant appliqué uniquement au PDF du PV de réception (PV-5).
+Sessions futures : refonte écran par écran (portail client, écrans admin).
+Estimation : 3-5 sessions complètes.
+Tokens à créer dans `lib/design/tokens.ts` au démarrage du sprint.
+
+### DETTE-PV-DATAURI
+Les signatures du PV V2 (`signatureEntrepriseUri`, `signatureClientUri`) sont
+stockées en data URI base64 directement dans le state Supabase au lieu de
+Storage (Plan D, commit `37e0de1`). Migrer vers Storage en V2 une fois Metro
+dev local accessible pour debug logs serveur Supabase.
+
+### DETTE-EXPO-FS-LEGACY-IMPORT
+Incohérence imports `expo-file-system` : `genererPVPdf.ts` utilise
+`/legacy` explicite, `lib/supabase.ts` utilise import implicite via `require`.
+À harmoniser en V2. Non bloquant : runtime identique.
