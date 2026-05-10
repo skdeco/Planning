@@ -302,7 +302,10 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
         `entreprise_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       );
       if (!url) {
-        Alert.alert('Erreur', "Impossible d'uploader la signature");
+        Alert.alert(
+          'Upload échoué (null)',
+          'uploadFileToStorage a retourné null. Vérifier les logs (console.error). Probable: erreur Storage Supabase ou Blob non supporté.',
+        );
         return;
       }
       upsertPVReception(chantier.id, {
@@ -316,7 +319,11 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
       setShowSignaturePad(null);
     } catch (err) {
       console.error('Upload signature entreprise échoué', err);
-      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
+      const errMsg = err instanceof Error ? err.message : String(err);
+      Alert.alert(
+        'Erreur upload signature (debug)',
+        `Type: ${typeof err}\nMessage: ${errMsg}\nFull: ${JSON.stringify(err).slice(0, 300)}`,
+      );
     }
   };
 
@@ -328,7 +335,10 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
         `client_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
       );
       if (!url) {
-        Alert.alert('Erreur', "Impossible d'uploader la signature");
+        Alert.alert(
+          'Upload échoué (null)',
+          'uploadFileToStorage a retourné null. Vérifier les logs (console.error). Probable: erreur Storage Supabase ou Blob non supporté.',
+        );
         return;
       }
       const nowIso = new Date().toISOString();
@@ -344,7 +354,11 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
       setShowSignaturePad(null);
     } catch (err) {
       console.error('Upload signature client échoué', err);
-      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
+      const errMsg = err instanceof Error ? err.message : String(err);
+      Alert.alert(
+        'Erreur upload signature (debug)',
+        `Type: ${typeof err}\nMessage: ${errMsg}\nFull: ${JSON.stringify(err).slice(0, 300)}`,
+      );
     }
   };
 
