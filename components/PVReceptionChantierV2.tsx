@@ -294,30 +294,58 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
   };
 
   // ──────────── Handlers signatures ────────────
-  const saveSignatureEntreprise = (signaturePngDataUri: string) => {
-    upsertPVReception(chantier.id, {
-      ...(pv || {}),
-      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
-      dateReception,
-      pieces,
-      signatureEntrepriseUri: signaturePngDataUri,
-      signatureEntrepriseDate: new Date().toISOString(),
-    });
-    setShowSignaturePad(null);
+  const saveSignatureEntreprise = async (signaturePngDataUri: string) => {
+    try {
+      const url = await uploadFileToStorage(
+        signaturePngDataUri,
+        `chantiers/${chantier.id}/pv-signatures`,
+        `entreprise_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      );
+      if (!url) {
+        Alert.alert('Erreur', "Impossible d'uploader la signature");
+        return;
+      }
+      upsertPVReception(chantier.id, {
+        ...(pv || {}),
+        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+        dateReception,
+        pieces,
+        signatureEntrepriseUri: url,
+        signatureEntrepriseDate: new Date().toISOString(),
+      });
+      setShowSignaturePad(null);
+    } catch (err) {
+      console.error('Upload signature entreprise échoué', err);
+      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
+    }
   };
 
-  const saveSignatureClient = (signaturePngDataUri: string) => {
-    const nowIso = new Date().toISOString();
-    upsertPVReception(chantier.id, {
-      ...(pv || {}),
-      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
-      dateReception,
-      pieces,
-      signatureClientUri: signaturePngDataUri,
-      signatureClientDate: nowIso,
-      clotureLe: nowIso, // ⚠️ signature client = clôture du PV
-    });
-    setShowSignaturePad(null);
+  const saveSignatureClient = async (signaturePngDataUri: string) => {
+    try {
+      const url = await uploadFileToStorage(
+        signaturePngDataUri,
+        `chantiers/${chantier.id}/pv-signatures`,
+        `client_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      );
+      if (!url) {
+        Alert.alert('Erreur', "Impossible d'uploader la signature");
+        return;
+      }
+      const nowIso = new Date().toISOString();
+      upsertPVReception(chantier.id, {
+        ...(pv || {}),
+        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+        dateReception,
+        pieces,
+        signatureClientUri: url,
+        signatureClientDate: nowIso,
+        clotureLe: nowIso, // ⚠️ signature client = clôture du PV
+      });
+      setShowSignaturePad(null);
+    } catch (err) {
+      console.error('Upload signature client échoué', err);
+      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
+    }
   };
 
   return (
@@ -627,16 +655,16 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               ) : pv?.signatureEntrepriseUri ? (
                 <View>
                   <Text style={styles.signaturePending}>
-                    {isClient
-                      ? 'En attente de votre signature'
-                      : 'En attente — la signature client se fait depuis le portail client'}
+                    En attente de signature client
                   </Text>
-                  {isClient && !isClotured && (
+                  {(isClient || isAdmin) && !isClotured && (
                     <Pressable
                       onPress={() => setShowSignaturePad('client')}
                       style={[styles.btn, styles.btnPrimary, { marginTop: 8 }]}
                     >
-                      <Text style={styles.btnPrimaryText}>✍️ Je signe comme client</Text>
+                      <Text style={styles.btnPrimaryText}>
+                        ✍️ {isAdmin ? 'Faire signer le client' : 'Je signe comme client'}
+                      </Text>
                     </Pressable>
                   )}
                 </View>
