@@ -192,13 +192,22 @@ export async function genererPVPdf(
 
   // 4. Conversion HTML → PDF via expo-print
   // Pas de base64: true → on récupère l'URI du fichier directement (plus économe)
+  // Margins 0 : expo-print/WebKit n'applique pas correctement les @page { margin }
+  // CSS, donc on gère les marges via .content { padding } dans genererPVHtml.
   const { uri } = await Print.printToFileAsync({
     html,
     base64: false,
     // width/height en points (1pt = 1/72 inch). A4 = 595 × 842 pt.
     width: 595,
     height: 842,
-    // margins gérées via @page CSS dans genererPVHtml
+    // Marges PDF à 0 : on veut un "full bleed" pour la page de garde.
+    // Les marges des pages de contenu sont gérées en CSS via .content padding.
+    margins: {
+      left: 0,
+      right: 0,
+      top: 0,
+      bottom: 0,
+    },
   });
 
   return {

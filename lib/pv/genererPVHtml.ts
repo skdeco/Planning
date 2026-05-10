@@ -582,7 +582,7 @@ function renderSignatures(pv: PVReception): string {
  * ──────────────────────────────────────────────────────────────────── */
 
 function buildCss(numeroPV: string, nomChantier: string): string {
-  // Header de page : "PV-XXX — NOM" (échappé pour CSS content)
+  // Header de page (échappé pour CSS content)
   const pageHeader = `${numeroPV} — ${nomChantier}`
     .replace(/\\/g, '\\\\')
     .replace(/"/g, '\\"');
@@ -592,48 +592,18 @@ function buildCss(numeroPV: string, nomChantier: string): string {
 
 @page {
   size: A4;
-  margin: 22mm 18mm 24mm 18mm;
-  @top-right {
-    content: "${pageHeader}";
-    font-family: -apple-system, "Helvetica Neue", sans-serif;
-    font-size: 8pt;
-    color: #6B7280;
-    letter-spacing: 1pt;
-  }
-  @bottom-left {
-    content: "SK DECO";
-    font-family: -apple-system, "Helvetica Neue", sans-serif;
-    font-size: 8pt;
-    color: #5C1F2E;
-    letter-spacing: 2pt;
-    font-weight: 700;
-  }
-  @bottom-right {
-    content: counter(page) " / " counter(pages);
-    font-family: -apple-system, "Helvetica Neue", sans-serif;
-    font-size: 8pt;
-    color: #6B7280;
-  }
-}
-
-/* Page de garde : pas de marges, pas de header/footer */
-@page :first {
   margin: 0;
-  @top-right { content: ""; }
-  @bottom-left { content: ""; }
-  @bottom-right { content: ""; }
 }
 
 body {
   font-family: -apple-system, "Helvetica Neue", Helvetica, Arial, sans-serif;
-  font-size: 10pt;
+  font-size: 11pt;
   color: #1A1A1A;
   line-height: 1.55;
   margin: 0;
   padding: 0;
   orphans: 2;
   widows: 2;
-  letter-spacing: 0.01em;
 }
 
 h2, h3 {
@@ -642,7 +612,7 @@ h2, h3 {
 }
 
 /* ════════════════════════════════════════════════════════════════
- * PAGE DE GARDE
+ * PAGE DE GARDE (full bleed 210×297mm)
  * ════════════════════════════════════════════════════════════════ */
 
 .cover {
@@ -674,7 +644,7 @@ h2, h3 {
   margin-bottom: 18mm;
 }
 .cover-logo img {
-  height: 24mm;
+  height: 26mm;
   width: auto;
 }
 .cover-logo-fallback {
@@ -686,7 +656,7 @@ h2, h3 {
 }
 .cover-eyebrow {
   text-align: center;
-  font-size: 9pt;
+  font-size: 10pt;
   letter-spacing: 4pt;
   color: #5C1F2E;
   text-transform: uppercase;
@@ -696,7 +666,7 @@ h2, h3 {
 .cover-title {
   text-align: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 36pt;
+  font-size: 38pt;
   color: #1A1A1A;
   font-weight: 400;
   line-height: 1.1;
@@ -714,21 +684,21 @@ h2, h3 {
   margin-top: 4mm;
 }
 .cover-label {
-  font-size: 9pt;
+  font-size: 10pt;
   letter-spacing: 3pt;
   color: #6B7280;
   text-transform: uppercase;
   margin-bottom: 4mm;
 }
 .cover-chantier-nom {
-  font-size: 22pt;
+  font-size: 24pt;
   font-weight: 700;
   color: #1A1A1A;
   letter-spacing: 1pt;
   margin: 0;
 }
 .cover-chantier-adresse {
-  font-size: 11pt;
+  font-size: 12pt;
   color: #6B7280;
   margin-top: 3mm;
   font-weight: 400;
@@ -748,7 +718,7 @@ h2, h3 {
   text-align: center;
 }
 .cover-meta-label {
-  font-size: 8pt;
+  font-size: 9pt;
   letter-spacing: 2pt;
   color: #6B7280;
   text-transform: uppercase;
@@ -756,7 +726,7 @@ h2, h3 {
   font-weight: 600;
 }
 .cover-meta-value {
-  font-size: 12pt;
+  font-size: 13pt;
   color: #1A1A1A;
   font-weight: 600;
 }
@@ -767,15 +737,39 @@ h2, h3 {
 }
 .cover-footer {
   text-align: center;
-  font-size: 8pt;
+  font-size: 9pt;
   color: #6B7280;
   margin-top: 8mm;
   letter-spacing: 1pt;
 }
 
 /* ════════════════════════════════════════════════════════════════
- * PAGES DE CONTENU
+ * WRAPPER PAGES DE CONTENU
+ * (padding pour simuler les marges car expo-print/WebKit n'applique
+ *  pas les @page { margin } en interne)
  * ════════════════════════════════════════════════════════════════ */
+
+.content {
+  padding: 22mm 18mm 24mm 18mm;
+}
+
+/* Bandeau du haut sur les pages de contenu (réf chantier) */
+.content-band {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-size: 9pt;
+  color: #6B7280;
+  letter-spacing: 1pt;
+  padding-bottom: 6mm;
+  margin-bottom: 10mm;
+  border-bottom: 0.5pt solid #D8CFC4;
+}
+.content-band-left {
+  font-weight: 700;
+  color: #5C1F2E;
+  letter-spacing: 2pt;
+}
 
 .section {
   margin-bottom: 14mm;
@@ -784,22 +778,23 @@ h2, h3 {
 .section-header {
   display: flex;
   align-items: baseline;
-  gap: 6mm;
+  gap: 5mm;
   margin-bottom: 8mm;
   page-break-after: avoid;
   break-after: avoid;
 }
 .section-num {
   font-family: Georgia, serif;
-  font-size: 11pt;
+  font-size: 14pt;
   color: #5C1F2E;
   font-weight: 400;
   font-style: italic;
   letter-spacing: 0.5pt;
+  flex: 0 0 auto;
 }
 .section-title {
-  font-size: 11pt;
-  letter-spacing: 4pt;
+  font-size: 13pt;
+  letter-spacing: 2.5pt;
   text-transform: uppercase;
   font-weight: 700;
   color: #1A1A1A;
@@ -811,39 +806,40 @@ h2, h3 {
   height: 0.5pt;
   background: #D8CFC4;
   align-self: center;
-  margin-left: 6mm;
+  margin-left: 4mm;
+  min-width: 20mm;
 }
 
 /* Parties */
 .parties {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8mm;
+  gap: 6mm;
 }
 .parties-three {
   grid-template-columns: 1fr 1fr 1fr;
 }
 .partie {
-  padding: 6mm 7mm;
+  padding: 5mm 6mm;
   border-left: 2pt solid #5C1F2E;
   background: #FBF7F2;
 }
 .partie-role {
-  font-size: 8pt;
-  letter-spacing: 2.5pt;
+  font-size: 9pt;
+  letter-spacing: 2pt;
   text-transform: uppercase;
   color: #5C1F2E;
   font-weight: 600;
   margin-bottom: 3mm;
 }
 .partie-nom {
-  font-size: 13pt;
+  font-size: 14pt;
   font-weight: 700;
   color: #1A1A1A;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
 }
 .partie-info {
-  font-size: 9.5pt;
+  font-size: 10pt;
   color: #6B7280;
   margin-top: 1.5mm;
 }
@@ -856,11 +852,11 @@ h2, h3 {
   margin-bottom: 8mm;
 }
 .synthese-tag {
-  font-size: 9pt;
+  font-size: 10pt;
   padding: 2.5mm 5mm;
   border: 0.5pt solid #5C1F2E;
   color: #5C1F2E;
-  letter-spacing: 1pt;
+  letter-spacing: 0.5pt;
   font-weight: 600;
 }
 .synthese-tag.tag-success {
@@ -888,17 +884,17 @@ h2, h3 {
   break-after: avoid;
 }
 .piece-nom {
-  font-size: 12pt;
+  font-size: 14pt;
   font-weight: 700;
   color: #1A1A1A;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
   flex: 1;
 }
 .piece-status {
-  font-size: 8.5pt;
+  font-size: 10pt;
   color: #6B7280;
   font-style: italic;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
 }
 .piece-status.status-clean {
   color: #5C1F2E;
@@ -909,8 +905,8 @@ h2, h3 {
   margin: 4mm 0;
 }
 .reserves-group-title {
-  font-size: 8pt;
-  letter-spacing: 3pt;
+  font-size: 9pt;
+  letter-spacing: 2pt;
   text-transform: uppercase;
   font-weight: 600;
   color: #6B7280;
@@ -935,7 +931,7 @@ h2, h3 {
   break-inside: auto;
 }
 .reserve-desc {
-  font-size: 10.5pt;
+  font-size: 11pt;
   font-weight: 600;
   color: #1A1A1A;
 }
@@ -944,16 +940,16 @@ h2, h3 {
   color: #6B7280;
 }
 .reserve-cat {
-  font-size: 8.5pt;
+  font-size: 9pt;
   color: #6B7280;
   margin-top: 1mm;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
 }
 .reserve-levee-meta {
-  font-size: 8pt;
+  font-size: 9pt;
   color: #5C1F2E;
   margin-top: 2mm;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
   font-weight: 600;
 }
 
@@ -964,9 +960,9 @@ h2, h3 {
   break-inside: avoid;
 }
 .photos-label {
-  font-size: 8pt;
+  font-size: 9pt;
   color: #6B7280;
-  letter-spacing: 1.5pt;
+  letter-spacing: 1pt;
   text-transform: uppercase;
   margin-bottom: 2mm;
   font-weight: 600;
@@ -1010,15 +1006,15 @@ h2, h3 {
   page-break-inside: avoid;
 }
 .modalite-label {
-  font-size: 8pt;
-  letter-spacing: 2.5pt;
+  font-size: 9pt;
+  letter-spacing: 2pt;
   text-transform: uppercase;
   color: #5C1F2E;
   font-weight: 600;
   margin-bottom: 2mm;
 }
 .modalite-text {
-  font-size: 10.5pt;
+  font-size: 11pt;
   color: #1A1A1A;
 }
 
@@ -1031,8 +1027,8 @@ h2, h3 {
   border-collapse: collapse;
 }
 .recap-table td {
-  padding: 2.5mm 0;
-  font-size: 10pt;
+  padding: 3mm 0;
+  font-size: 11pt;
   border-bottom: 0.3pt solid #E5DDD3;
 }
 .recap-table td.num {
@@ -1045,7 +1041,7 @@ h2, h3 {
   border-bottom: 0.3pt solid #5C1F2E;
   padding-top: 4mm;
   font-weight: 700;
-  font-size: 11pt;
+  font-size: 12pt;
 }
 .recap-table tr.reste td {
   border-top: 1pt solid #5C1F2E;
@@ -1054,25 +1050,26 @@ h2, h3 {
   background: #5C1F2E;
   color: #FBF7F2;
   font-weight: 700;
-  font-size: 12pt;
+  font-size: 13pt;
 }
 
 .recap-note {
   margin-top: 4mm;
-  font-size: 8.5pt;
+  font-size: 9pt;
   color: #6B7280;
   font-style: italic;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
 }
 
 .recap-empty {
-  font-size: 9.5pt;
+  font-size: 10pt;
   color: #6B7280;
   font-style: italic;
   text-align: center;
-  padding: 6mm;
+  padding: 8mm;
   background: #FBF7F2;
   margin-top: 4mm;
+  border-radius: 1mm;
 }
 
 /* Signatures */
@@ -1090,15 +1087,15 @@ h2, h3 {
   padding-top: 4mm;
 }
 .signature-label {
-  font-size: 8pt;
-  letter-spacing: 2.5pt;
+  font-size: 9pt;
+  letter-spacing: 2pt;
   text-transform: uppercase;
   color: #5C1F2E;
   font-weight: 600;
   margin-bottom: 4mm;
 }
 .signature-box {
-  height: 28mm;
+  height: 30mm;
   border-bottom: 0.5pt solid #1A1A1A;
   display: flex;
   align-items: center;
@@ -1111,19 +1108,19 @@ h2, h3 {
   object-fit: contain;
 }
 .signature-empty {
-  font-size: 9pt;
+  font-size: 10pt;
   color: #9DA6B0;
   font-style: italic;
 }
 .signature-meta {
-  font-size: 8.5pt;
+  font-size: 9.5pt;
   color: #6B7280;
   margin-top: 3mm;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
 }
 .signature-meta strong {
   color: #1A1A1A;
-  font-size: 9.5pt;
+  font-size: 10.5pt;
   display: block;
   margin-bottom: 1mm;
   font-weight: 700;
@@ -1133,9 +1130,9 @@ h2, h3 {
   margin-top: 14mm;
   padding-top: 5mm;
   border-top: 0.5pt solid #D8CFC4;
-  font-size: 7.5pt;
+  font-size: 8.5pt;
   color: #6B7280;
-  letter-spacing: 0.5pt;
+  letter-spacing: 0.3pt;
   text-align: center;
   line-height: 1.6;
   page-break-inside: avoid;
@@ -1146,7 +1143,7 @@ h2, h3 {
   text-align: center;
   color: #6B7280;
   font-style: italic;
-  font-size: 9.5pt;
+  font-size: 10pt;
 }
 `;
 }
@@ -1171,6 +1168,8 @@ export function genererPVHtml(params: GenererPVHtmlParams): string {
     chantier.nom || '—',
   );
 
+  const refChantierLabel = `${escapeHtml(pv.numeroPV || '—')} — ${escapeHtml(chantier.nom || '—')}`;
+
   const html = `<!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -1180,10 +1179,16 @@ export function genererPVHtml(params: GenererPVHtmlParams): string {
 </head>
 <body>
   ${renderCover(pv, chantier, logoDataUri)}
-  ${renderParties(chantier, apporteurs)}
-  ${renderPieces(pv, photosResolved)}
-  ${renderPaiement(pv, chantier, marchesChantier, supplementsMarche)}
-  ${renderSignatures(pv)}
+  <div class="content">
+    <div class="content-band">
+      <span class="content-band-left">SK DECO</span>
+      <span class="content-band-right">${refChantierLabel}</span>
+    </div>
+    ${renderParties(chantier, apporteurs)}
+    ${renderPieces(pv, photosResolved)}
+    ${renderPaiement(pv, chantier, marchesChantier, supplementsMarche)}
+    ${renderSignatures(pv)}
+  </div>
 </body>
 </html>
 `;
