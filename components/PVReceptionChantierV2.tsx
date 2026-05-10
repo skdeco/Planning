@@ -57,6 +57,9 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
   // Aperçu d'une signature (Modal plein écran avec <Image>)
   const [previewSignatureUri, setPreviewSignatureUri] = useState<string | null>(null);
 
+  // Nom du signataire client (saisi via Alert.prompt avant ouverture du SignaturePad)
+  const [nomSignataireTemp, setNomSignataireTemp] = useState<string>('');
+
   // Init automatique au mount admin
   useEffect(() => {
     if (isAdmin && !pv?.pieces) {
@@ -318,9 +321,54 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
       pieces,
       signatureClientUri: signaturePngDataUri,
       signatureClientDate: nowIso,
+      nomSignataire: nomSignataireTemp || pv?.nomSignataire,
       clotureLe: nowIso, // ⚠️ signature client = clôture du PV
     });
     setShowSignaturePad(null);
+    setNomSignataireTemp(''); // reset après usage
+  };
+
+  // Pre-prompt avant ouverture du SignaturePad client : nom signataire pré-rempli avec
+  // le client du chantier (Apporteur via clientApporteurId, fallback chantier.client legacy).
+  const handleClientSignatureClick = () => {
+    const clientApp = data.apporteurs?.find(a => a.id === chantier.clientApporteurId);
+    const defaultNom = clientApp
+      ? `${clientApp.prenom} ${clientApp.nom}`.trim()
+      : (chantier.client || '');
+
+    if (Platform.OS === 'web') {
+      const nom = window.prompt('Nom du signataire (modifiable) :', defaultNom);
+      if (nom !== null) {
+        setNomSignataireTemp(nom.trim() || defaultNom);
+        setShowSignaturePad('client');
+      }
+      return;
+    }
+
+    if (Platform.OS === 'ios') {
+      Alert.prompt(
+        'Signature client',
+        'Nom de la personne qui signe :',
+        [
+          { text: 'Annuler', style: 'cancel' },
+          {
+            text: 'Continuer',
+            onPress: (nom?: string) => {
+              const finalNom = (nom || '').trim() || defaultNom;
+              setNomSignataireTemp(finalNom);
+              setShowSignaturePad('client');
+            },
+          },
+        ],
+        'plain-text',
+        defaultNom,
+      );
+      return;
+    }
+
+    // Android : pas de Alert.prompt natif → on utilise le default sans saisie (MVP)
+    setNomSignataireTemp(defaultNom);
+    setShowSignaturePad('client');
   };
 
   return (
@@ -634,7 +682,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                   </Text>
                   {(isClient || isAdmin) && !isClotured && (
                     <Pressable
-                      onPress={() => setShowSignaturePad('client')}
+                      onPress={handleClientSignatureClick}
                       style={[styles.btn, styles.btnPrimary, { marginTop: 8 }]}
                     >
                       <Text style={styles.btnPrimaryText}>
