@@ -18,6 +18,8 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { SignaturePad } from '@/components/SignaturePad';
 
+const DEFAULT_PAIEMENT = 'chèque ou virement instantané, avant de quitter le chantier';
+
 interface Props {
   chantier: Chantier;
   isAdmin: boolean;
@@ -59,6 +61,11 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
 
   // Nom du signataire client (saisi via Alert.prompt avant ouverture du SignaturePad)
   const [nomSignataireTemp, setNomSignataireTemp] = useState<string>('');
+
+  // Modalité de paiement de la retenue garantie (default + édition libre admin)
+  const [paiementModalite, setPaiementModalite] = useState<string>(
+    pv?.paiementRetenueGarantie?.modalite ?? DEFAULT_PAIEMENT,
+  );
 
   // Init automatique au mount admin
   useEffect(() => {
@@ -326,6 +333,24 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
     });
     setShowSignaturePad(null);
     setNomSignataireTemp(''); // reset après usage
+  };
+
+  // Persister la modalité de paiement (appelé à onBlur du TextInput,
+  // pas à chaque keystroke pour éviter les writes en boucle)
+  const persistPaiement = (newModalite: string) => {
+    const trimmed = newModalite.trim();
+    if (trimmed === (pv?.paiementRetenueGarantie?.modalite ?? '').trim()) {
+      return; // valeur identique → pas de write
+    }
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces,
+      paiementRetenueGarantie: {
+        modalite: trimmed || DEFAULT_PAIEMENT,
+      },
+    });
   };
 
   // Pre-prompt avant ouverture du SignaturePad client : nom signataire pré-rempli avec
@@ -625,6 +650,33 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                 </View>
               );
             })}
+          </View>
+        )}
+
+        {/* Bloc Paiement retenue garantie (visible si au moins 1 pièce) */}
+        {pieces.length > 0 && (
+          <View style={styles.paiementBlock}>
+            <Text style={styles.paiementLabel}>💳 Paiement de la retenue garantie</Text>
+            <Text style={styles.paiementHint}>
+              Modalité de règlement après levée des réserves
+            </Text>
+            {(isAdmin && !isClotured) ? (
+              <TextInput
+                style={styles.paiementInput}
+                value={paiementModalite}
+                onChangeText={setPaiementModalite}
+                onBlur={() => persistPaiement(paiementModalite)}
+                placeholder={DEFAULT_PAIEMENT}
+                placeholderTextColor="#9DA6B0"
+                multiline
+                numberOfLines={3}
+                textAlignVertical="top"
+              />
+            ) : (
+              <Text style={styles.paiementReadOnly}>
+                {pv?.paiementRetenueGarantie?.modalite || paiementModalite || DEFAULT_PAIEMENT}
+              </Text>
+            )}
           </View>
         )}
 
@@ -1375,6 +1427,43 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#27AE60',
     fontWeight: '600',
+  },
+  // Bloc paiement
+  paiementBlock: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+  },
+  paiementLabel: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#11181C',
+    marginBottom: 4,
+  },
+  paiementHint: {
+    fontSize: 11,
+    color: '#687076',
+    fontStyle: 'italic',
+    marginBottom: 10,
+  },
+  paiementInput: {
+    backgroundColor: '#fff',
+    borderRadius: 6,
+    paddingHorizontal: 10,
+    paddingVertical: 8,
+    fontSize: 13,
+    borderWidth: 1,
+    borderColor: '#E2E6EA',
+    color: '#11181C',
+    minHeight: 60,
+  },
+  paiementReadOnly: {
+    fontSize: 13,
+    color: '#11181C',
+    paddingHorizontal: 4,
+    paddingVertical: 6,
+    fontStyle: 'italic',
   },
   // Bloc signatures
   signaturesBlock: {
