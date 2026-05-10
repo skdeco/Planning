@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
-  TextInput, Alert, Platform,
+  TextInput, Alert, Platform, Image,
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
@@ -53,6 +53,9 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
 
   // SignaturePad : 'entreprise' ou 'client' selon qui signe
   const [showSignaturePad, setShowSignaturePad] = useState<'entreprise' | 'client' | null>(null);
+
+  // Aperçu d'une signature (Modal plein écran avec <Image>)
+  const [previewSignatureUri, setPreviewSignatureUri] = useState<string | null>(null);
 
   // Init automatique au mount admin
   useEffect(() => {
@@ -294,58 +297,30 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
   };
 
   // ──────────── Handlers signatures ────────────
-  const saveSignatureEntreprise = async (signaturePngDataUri: string) => {
-    try {
-      const url = await uploadFileToStorage(
-        signaturePngDataUri,
-        `chantiers/${chantier.id}/pv-signatures`,
-        `entreprise_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      );
-      if (!url) {
-        Alert.alert('Erreur', "Impossible d'uploader la signature");
-        return;
-      }
-      upsertPVReception(chantier.id, {
-        ...(pv || {}),
-        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
-        dateReception,
-        pieces,
-        signatureEntrepriseUri: url,
-        signatureEntrepriseDate: new Date().toISOString(),
-      });
-      setShowSignaturePad(null);
-    } catch (err) {
-      console.error('Upload signature entreprise échoué', err);
-      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
-    }
+  const saveSignatureEntreprise = (signaturePngDataUri: string) => {
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces,
+      signatureEntrepriseUri: signaturePngDataUri,
+      signatureEntrepriseDate: new Date().toISOString(),
+    });
+    setShowSignaturePad(null);
   };
 
-  const saveSignatureClient = async (signaturePngDataUri: string) => {
-    try {
-      const url = await uploadFileToStorage(
-        signaturePngDataUri,
-        `chantiers/${chantier.id}/pv-signatures`,
-        `client_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
-      );
-      if (!url) {
-        Alert.alert('Erreur', "Impossible d'uploader la signature");
-        return;
-      }
-      const nowIso = new Date().toISOString();
-      upsertPVReception(chantier.id, {
-        ...(pv || {}),
-        numeroPV: numeroPV || genererNumeroPV(data.chantiers),
-        dateReception,
-        pieces,
-        signatureClientUri: url,
-        signatureClientDate: nowIso,
-        clotureLe: nowIso, // ⚠️ signature client = clôture du PV
-      });
-      setShowSignaturePad(null);
-    } catch (err) {
-      console.error('Upload signature client échoué', err);
-      Alert.alert('Erreur', "Impossible d'enregistrer la signature");
-    }
+  const saveSignatureClient = (signaturePngDataUri: string) => {
+    const nowIso = new Date().toISOString();
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces,
+      signatureClientUri: signaturePngDataUri,
+      signatureClientDate: nowIso,
+      clotureLe: nowIso, // ⚠️ signature client = clôture du PV
+    });
+    setShowSignaturePad(null);
   };
 
   return (
@@ -615,7 +590,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               <Text style={styles.signatureLabel}>Entreprise (SK DECO)</Text>
               {pv?.signatureEntrepriseUri ? (
                 <View style={styles.signatureImageBox}>
-                  <Pressable onPress={() => openDocPreview(pv.signatureEntrepriseUri!)}>
+                  <Pressable onPress={() => setPreviewSignatureUri(pv.signatureEntrepriseUri!)}>
                     <Text style={styles.signaturePlaceholder}>
                       ✓ Signée le {pv.signatureEntrepriseDate
                         ? new Date(pv.signatureEntrepriseDate).toLocaleDateString('fr-FR')
@@ -643,7 +618,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               <Text style={styles.signatureLabel}>Client / Maître d&apos;ouvrage</Text>
               {pv?.signatureClientUri ? (
                 <View style={styles.signatureImageBox}>
-                  <Pressable onPress={() => openDocPreview(pv.signatureClientUri!)}>
+                  <Pressable onPress={() => setPreviewSignatureUri(pv.signatureClientUri!)}>
                     <Text style={styles.signaturePlaceholder}>
                       ✓ Signée le {pv.signatureClientDate
                         ? new Date(pv.signatureClientDate).toLocaleDateString('fr-FR')
@@ -713,6 +688,33 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
           </View>
         </View>
       </Modal>
+
+      {/* Modal aperçu signature (data URI inline) */}
+      {previewSignatureUri && (
+        <Modal
+          visible
+          animationType="fade"
+          transparent
+          onRequestClose={() => setPreviewSignatureUri(null)}
+        >
+          <View style={styles.previewSignatureOverlay}>
+            <Pressable
+              style={styles.previewSignatureClose}
+              onPress={() => setPreviewSignatureUri(null)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Fermer l'aperçu"
+            >
+              <Text style={styles.previewSignatureCloseText}>✕</Text>
+            </Pressable>
+            <Image
+              source={{ uri: previewSignatureUri }}
+              style={styles.previewSignatureImage}
+              resizeMode="contain"
+            />
+          </View>
+        </Modal>
+      )}
 
       {/* Sheet sélection pièces */}
       <Modal
@@ -1387,6 +1389,28 @@ const styles = StyleSheet.create({
     color: '#11181C',
     marginBottom: 12,
     textAlign: 'center',
+  },
+  // Modal aperçu signature inline
+  previewSignatureOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  previewSignatureClose: {
+    position: 'absolute',
+    top: 50,
+    right: 20,
+    padding: 12,
+  },
+  previewSignatureCloseText: {
+    fontSize: 22,
+    color: '#fff',
+    fontWeight: '600',
+  },
+  previewSignatureImage: {
+    width: '90%',
+    height: 300,
   },
   // Sheet sélection pièces
   sheetOverlay: {
