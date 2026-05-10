@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
-  TextInput, Alert, Platform, Image,
+  TextInput, Alert, Platform, Image, ActivityIndicator,
 } from 'react-native';
+import * as Sharing from 'expo-sharing';
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
 import {
@@ -13,6 +14,7 @@ import {
 } from '@/app/types';
 import { genererNumeroPV } from '@/lib/pv/genererNumeroPV';
 import { calculPaiementChantier, formatEUR } from '@/lib/pv/calculPaiementChantier';
+import { genererPVPdf } from '@/lib/pv/genererPVPdf';
 import { todayYMD } from '@/lib/date/today';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -62,6 +64,9 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
 
   // Nom du signataire client (saisi via Alert.prompt avant ouverture du SignaturePad)
   const [nomSignataireTemp, setNomSignataireTemp] = useState<string>('');
+
+  // PV-5 : génération PDF en cours
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
 
   // Modalité de paiement de la retenue garantie (default + édition libre admin)
   const [paiementModalite, setPaiementModalite] = useState<string>(
@@ -420,6 +425,51 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
     setShowSignaturePad('client');
   };
 
+  // PV-5 : génération + partage du PDF du PV signé
+  const handleDownloadPdf = async () => {
+    if (!pv || !isClotured) {
+      Alert.alert('PDF indisponible', 'Le PDF est généré uniquement après la signature client (clôture du PV).');
+      return;
+    }
+    if (isGeneratingPdf) return;
+
+    try {
+      setIsGeneratingPdf(true);
+      const result = await genererPVPdf({
+        pv,
+        chantier,
+        apporteurs: data.apporteurs || [],
+        marchesChantier: data.marchesChantier || [],
+        supplementsMarche: data.supplementsMarche || [],
+      });
+
+      // Avertir si certaines photos n'ont pas pu être chargées (placeholder ⚠️ dans le PDF)
+      if (result.numPhotos > 0 && result.numLoaded < result.numPhotos) {
+        const manquantes = result.numPhotos - result.numLoaded;
+        console.warn(`[PV PDF] ${manquantes} photo(s) non chargée(s) sur ${result.numPhotos}`);
+      }
+
+      const isAvailable = await Sharing.isAvailableAsync();
+      if (!isAvailable) {
+        Alert.alert('Partage indisponible', `PDF généré : ${result.uri}`);
+        return;
+      }
+      await Sharing.shareAsync(result.uri, {
+        mimeType: 'application/pdf',
+        dialogTitle: `PV ${pv.numeroPV || ''} — ${chantier.nom}`,
+        UTI: 'com.adobe.pdf',
+      });
+    } catch (err) {
+      console.error('[PV PDF] Échec génération', err);
+      Alert.alert(
+        'Erreur',
+        'Impossible de générer le PDF. Vérifiez votre connexion internet et réessayez.',
+      );
+    } finally {
+      setIsGeneratingPdf(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -442,6 +492,25 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {isClotured && (
+          <Pressable
+            onPress={handleDownloadPdf}
+            disabled={isGeneratingPdf}
+            style={[styles.pdfBtn, isGeneratingPdf && styles.pdfBtnDisabled]}
+            accessibilityRole="button"
+            accessibilityLabel="Télécharger le PDF du PV"
+          >
+            {isGeneratingPdf ? (
+              <View style={styles.pdfBtnInner}>
+                <ActivityIndicator size="small" color="#fff" />
+                <Text style={styles.pdfBtnText}>Génération en cours…</Text>
+              </View>
+            ) : (
+              <Text style={styles.pdfBtnText}>📄  Télécharger le PDF</Text>
+            )}
+          </Pressable>
+        )}
+
         <View style={styles.infoCard}>
           <Text style={styles.infoLabel}>📅 Date de réception</Text>
           <Text style={styles.infoValue}>
@@ -1270,6 +1339,27 @@ const styles = StyleSheet.create({
   closeBtn: {
     fontSize: 18,
     color: '#687076',
+  },
+  pdfBtn: {
+    backgroundColor: '#2C2C2C',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  pdfBtnDisabled: {
+    opacity: 0.6,
+  },
+  pdfBtnInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pdfBtnText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
   },
   scrollContent: {
     padding: 16,
