@@ -502,23 +502,60 @@ export async function uploadFileToStorage(
         return `${STORAGE_PUBLIC_URL}/${path}`;
       }
 
-      // Mobile : REST API direct (contourne SDK qui foire avec Blob RN)
-      const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
-      const uploadResponse = await fetch(uploadUrl, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
-          'x-upsert': 'true',
-          'Content-Type': mimeType,
-        },
-        body: blob,
-      });
-      if (!uploadResponse.ok) {
-        const errText = await uploadResponse.text();
-        console.error('Upload mobile data URI REST err:', uploadResponse.status, errText);
+      // Mobile : écrire le data URI en fichier temporaire via expo-file-system,
+      // puis upload via fetch file:// (contourne le problème Blob+fetch sur RN).
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const FileSystem = require('expo-file-system');
+        const tmpDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
+        if (!tmpDir) {
+          console.error('Upload mobile data URI: no cache dir');
+          return null;
+        }
+        const tmpPath = `${tmpDir}sig_tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
+
+        // Extraire la partie base64 du data URI (après la virgule)
+        const base64Data = uri.split(',')[1];
+        if (!base64Data) {
+          console.error('Upload mobile data URI: no base64 data');
+          return null;
+        }
+
+        // Écrire le fichier en base64 (encoding binaire)
+        await FileSystem.writeAsStringAsync(tmpPath, base64Data, {
+          encoding: FileSystem.EncodingType.Base64,
+        });
+
+        // Upload via REST API (le fichier file:// existe maintenant)
+        const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
+        const fileResponse = await fetch(tmpPath);
+        const fileBlob = await fileResponse.blob();
+
+        const uploadResponse = await fetch(uploadUrl, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'x-upsert': 'true',
+            'Content-Type': mimeType,
+          },
+          body: fileBlob,
+        });
+
+        // Cleanup tmp file (best-effort)
+        try {
+          await FileSystem.deleteAsync(tmpPath, { idempotent: true });
+        } catch {}
+
+        if (!uploadResponse.ok) {
+          const errText = await uploadResponse.text();
+          console.error('Upload mobile data URI REST err:', uploadResponse.status, errText);
+          return null;
+        }
+        return `${STORAGE_PUBLIC_URL}/${path}`;
+      } catch (e) {
+        console.error('Upload mobile data URI exception:', e);
         return null;
       }
-      return `${STORAGE_PUBLIC_URL}/${path}`;
     }
 
     // ── Mobile : upload via REST API direct (le plus fiable sur React Native) ──
