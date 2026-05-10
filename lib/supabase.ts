@@ -1,5 +1,6 @@
 // SK Deco Planning — v2.3.1 — Fix persistence polling (2026-04-01)
 import { createClient } from '@supabase/supabase-js';
+import { Platform } from 'react-native';
 
 //// ─── Supabase client ────────────────────────────────────────────────
 const SUPABASE_URL = 'https://wgbzslmwhyuoxqhishzk.supabase.co';
@@ -488,15 +489,36 @@ export async function uploadFileToStorage(
     if (uri.startsWith('http')) return uri;
 
     if (uri.startsWith('data:')) {
-      // ── Web : base64 data URI → Blob → SDK upload ──
       const { blob, mimeType } = base64ToBlob(uri);
       const ext = mimeToExt(mimeType);
-      const webPath = `${folder}/${fileId}.${ext}`;
-      const { error } = await supabaseStorage.storage
-        .from(STORAGE_BUCKET)
-        .upload(webPath, blob, { contentType: mimeType, upsert: true });
-      if (error) { console.error('Upload web err:', error.message); return null; }
-      return `${STORAGE_PUBLIC_URL}/${webPath}`;
+      const path = `${folder}/${fileId}.${ext}`;
+
+      if (Platform.OS === 'web') {
+        // Web : SDK upload (fonctionne avec Blob web natif)
+        const { error } = await supabaseStorage.storage
+          .from(STORAGE_BUCKET)
+          .upload(path, blob, { contentType: mimeType, upsert: true });
+        if (error) { console.error('Upload web data URI err:', error.message); return null; }
+        return `${STORAGE_PUBLIC_URL}/${path}`;
+      }
+
+      // Mobile : REST API direct (contourne SDK qui foire avec Blob RN)
+      const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+          'x-upsert': 'true',
+          'Content-Type': mimeType,
+        },
+        body: blob,
+      });
+      if (!uploadResponse.ok) {
+        const errText = await uploadResponse.text();
+        console.error('Upload mobile data URI REST err:', uploadResponse.status, errText);
+        return null;
+      }
+      return `${STORAGE_PUBLIC_URL}/${path}`;
     }
 
     // ── Mobile : upload via REST API direct (le plus fiable sur React Native) ──
