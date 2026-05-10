@@ -77,6 +77,10 @@ export interface PVReception {
 
   paiementRetenueGarantie?: PVPaiement;
 
+  /** Afficher le récap chiffré des montants (default true). Admin peut
+   *  masquer si toutes les factures de suppléments ne sont pas encore émises. */
+  afficherRecapPaiement?: boolean;
+
   // Signatures
   signatureEntrepriseUri?: string;
   signatureEntrepriseDate?: string;

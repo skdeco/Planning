@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   TextInput, Alert, Platform, Image,
@@ -12,6 +12,7 @@ import {
   type PVLevee,
 } from '@/app/types';
 import { genererNumeroPV } from '@/lib/pv/genererNumeroPV';
+import { calculPaiementChantier, formatEUR } from '@/lib/pv/calculPaiementChantier';
 import { todayYMD } from '@/lib/date/today';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -66,6 +67,18 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
   const [paiementModalite, setPaiementModalite] = useState<string>(
     pv?.paiementRetenueGarantie?.modalite ?? DEFAULT_PAIEMENT,
   );
+
+  // Récap chiffré (calcul à la volée) + toggle d'affichage
+  const recapPaiement = useMemo(
+    () => calculPaiementChantier(
+      chantier.id,
+      data.marchesChantier,
+      data.supplementsMarche,
+    ),
+    [chantier.id, data.marchesChantier, data.supplementsMarche],
+  );
+  // !== false : true par défaut si undefined
+  const afficherRecap = pv?.afficherRecapPaiement !== false;
 
   // Init automatique au mount admin
   useEffect(() => {
@@ -333,6 +346,17 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
     });
     setShowSignaturePad(null);
     setNomSignataireTemp(''); // reset après usage
+  };
+
+  // Toggle d'affichage du récap chiffré (admin uniquement, persisté)
+  const toggleAfficherRecap = () => {
+    upsertPVReception(chantier.id, {
+      ...(pv || {}),
+      numeroPV: numeroPV || genererNumeroPV(data.chantiers),
+      dateReception,
+      pieces,
+      afficherRecapPaiement: !afficherRecap,
+    });
   };
 
   // Persister la modalité de paiement (appelé à onBlur du TextInput,
@@ -676,6 +700,87 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               <Text style={styles.paiementReadOnly}>
                 {pv?.paiementRetenueGarantie?.modalite || paiementModalite || DEFAULT_PAIEMENT}
               </Text>
+            )}
+
+            {/* Récap chiffré (conditionnel — toggle admin) */}
+            {afficherRecap && (
+              <View style={styles.recapBlock}>
+                <Text style={styles.recapTitle}>📋 Détail des montants</Text>
+
+                {recapPaiement.marches.map((ligne, i) => (
+                  <View key={`m_${i}`} style={styles.recapLigne}>
+                    <Text style={styles.recapLabel}>{ligne.libelle}</Text>
+                    <Text style={styles.recapMontant}>{formatEUR(ligne.montantTTC)}</Text>
+                  </View>
+                ))}
+
+                {recapPaiement.supplementsFactures.map((ligne, i) => (
+                  <View key={`s_${i}`} style={styles.recapLigne}>
+                    <Text style={styles.recapLabel}>{ligne.libelle}</Text>
+                    <Text style={styles.recapMontant}>{formatEUR(ligne.montantTTC)}</Text>
+                  </View>
+                ))}
+
+                {recapPaiement.marches.length === 0 && recapPaiement.supplementsFactures.length === 0 && (
+                  <Text style={styles.recapEmpty}>
+                    Aucun marché ou facture supplément enregistré sur ce chantier.
+                  </Text>
+                )}
+
+                {recapPaiement.totalTTC > 0 && (
+                  <>
+                    <View style={styles.recapSep} />
+
+                    <View style={styles.recapLigne}>
+                      <Text style={styles.recapLabelBold}>Total TTC</Text>
+                      <Text style={styles.recapMontantBold}>{formatEUR(recapPaiement.totalTTC)}</Text>
+                    </View>
+
+                    <View style={styles.recapLigne}>
+                      <Text style={styles.recapLabel}>– Acomptes versés</Text>
+                      <Text style={[styles.recapMontant, { color: '#27AE60' }]}>
+                        –{formatEUR(recapPaiement.acomptesVerses)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.recapLigne}>
+                      <Text style={styles.recapLabel}>– Retenue garantie {recapPaiement.retenueGarantiePct}%</Text>
+                      <Text style={[styles.recapMontant, { color: '#E74C3C' }]}>
+                        –{formatEUR(recapPaiement.retenueGarantieMontant)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.recapSep} />
+
+                    <View style={styles.recapLigne}>
+                      <Text style={styles.recapResteLabel}>🟢 Reste à payer aujourd&apos;hui</Text>
+                      <Text style={styles.recapResteMontant}>
+                        {formatEUR(recapPaiement.resteAPayer)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.recapNote}>
+                      <Text style={styles.recapNoteText}>
+                        🔒 Retenue garantie : {formatEUR(recapPaiement.retenueGarantieMontant)} à verser après la levée des réserves
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </View>
+            )}
+
+            {/* Toggle admin pour cacher le récap (avant clôture seulement) */}
+            {isAdmin && !isClotured && (
+              <Pressable
+                onPress={toggleAfficherRecap}
+                style={styles.toggleRecapBtn}
+              >
+                <Text style={styles.toggleRecapText}>
+                  {afficherRecap
+                    ? '👁 Détail affiché — masquer si factures non émises'
+                    : '👁‍🗨 Détail masqué — afficher'}
+                </Text>
+              </Pressable>
             )}
           </View>
         )}
@@ -1464,6 +1569,105 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
     paddingVertical: 6,
     fontStyle: 'italic',
+  },
+  // Récap chiffré
+  recapBlock: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E6EA',
+  },
+  recapTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#11181C',
+    marginBottom: 10,
+  },
+  recapLigne: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  recapLabel: {
+    fontSize: 12,
+    color: '#11181C',
+    flex: 1,
+    marginRight: 8,
+  },
+  recapLabelBold: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#11181C',
+    flex: 1,
+    marginRight: 8,
+  },
+  recapMontant: {
+    fontSize: 12,
+    color: '#11181C',
+    fontVariant: ['tabular-nums'],
+  },
+  recapMontantBold: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#11181C',
+    fontVariant: ['tabular-nums'],
+  },
+  recapSep: {
+    height: 1,
+    backgroundColor: '#E2E6EA',
+    marginVertical: 6,
+  },
+  recapResteLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#27AE60',
+    flex: 1,
+    marginRight: 8,
+  },
+  recapResteMontant: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#27AE60',
+    fontVariant: ['tabular-nums'],
+  },
+  recapEmpty: {
+    fontSize: 11,
+    color: '#9DA6B0',
+    fontStyle: 'italic',
+    textAlign: 'center',
+    paddingVertical: 8,
+  },
+  recapNote: {
+    marginTop: 10,
+    padding: 8,
+    backgroundColor: '#FFF8E1',
+    borderRadius: 6,
+    borderLeftWidth: 3,
+    borderLeftColor: '#F0AD4E',
+  },
+  recapNoteText: {
+    fontSize: 11,
+    color: '#856404',
+    lineHeight: 16,
+  },
+  toggleRecapBtn: {
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 6,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E6EA',
+    borderStyle: 'dashed',
+  },
+  toggleRecapText: {
+    fontSize: 11,
+    color: '#687076',
+    fontWeight: '600',
   },
   // Bloc signatures
   signaturesBlock: {
