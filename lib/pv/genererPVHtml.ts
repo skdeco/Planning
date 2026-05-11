@@ -57,7 +57,7 @@ const SK_DECO_INFO = {
  *  - Body : orphans/widows 2 globaux
  *  - Titres h2/h3 : page-break-after avoid
  *  - Header de pièce, sous-titres groupes : page-break-after avoid
- *  - Réserve : page-break-inside avoid (sauf >3 photos = classe reserve-large)
+ *  - Réserve : page-break-inside avoid STRICT (jamais coupée)
  *  - Photos block : page-break-inside avoid
  *  - Récap chiffré : page-break-inside avoid (juridique)
  *  - Signatures : page-break-inside avoid (juridique)
@@ -156,12 +156,16 @@ function formatAdresseLignes(chantier: Chantier): string {
 function renderCover(
   pv: PVReception,
   chantier: Chantier,
+  apporteurs: Apporteur[],
   logoDataUri: string,
 ): string {
   const numero = escapeHtml(pv.numeroPV || '—');
   const dateLongue = formatDateLong(pv.dateReception);
   const nomChantier = escapeHtml(chantier.nom);
   const adresse = formatAdresseLignes(chantier);
+
+  const parties = buildPartiesCards(chantier, apporteurs);
+  const partiesCssClass = parties.count === 3 ? 'cover-parties cover-parties-three' : 'cover-parties cover-parties-two';
 
   return `
 <div class="cover">
@@ -181,6 +185,12 @@ function renderCover(
         <div class="cover-label">Chantier</div>
         <div class="cover-chantier-nom">${nomChantier}</div>
         ${adresse ? `<div class="cover-chantier-adresse">${adresse}</div>` : ''}
+      </div>
+    </div>
+
+    <div class="cover-parties-wrapper">
+      <div class="${partiesCssClass}">
+        ${parties.html}
       </div>
     </div>
 
@@ -217,18 +227,22 @@ function renderSectionHeader(num: string, title: string): string {
   `;
 }
 
-function renderParties(
+/**
+ * Construit les 3 cards parties (Entreprise / Client / Architecte si présent).
+ * Utilisé sur la page de garde (tiers inférieur).
+ */
+function buildPartiesCards(
   chantier: Chantier,
   apporteurs: Apporteur[],
-): string {
+): { html: string; count: number } {
   const entrepriseHtml = `
     <div class="partie">
-      <div class="partie-role">Entreprise titulaire du marché</div>
+      <div class="partie-role">Entreprise titulaire</div>
       <div class="partie-nom">${escapeHtml(SK_DECO_INFO.raisonSociale)}</div>
       <div class="partie-info partie-info-strong">${escapeHtml(SK_DECO_INFO.qualite)}</div>
       <div class="partie-info">${escapeHtml(SK_DECO_INFO.rue)}<br/>${escapeHtml(SK_DECO_INFO.codePostal)} ${escapeHtml(SK_DECO_INFO.ville)}</div>
       <div class="partie-info partie-info-meta">SIRET : ${escapeHtml(SK_DECO_INFO.siret)}</div>
-      <div class="partie-info partie-info-meta">${escapeHtml(SK_DECO_INFO.telephone)} · ${escapeHtml(SK_DECO_INFO.email)}</div>
+      <div class="partie-info partie-info-meta">${escapeHtml(SK_DECO_INFO.telephone)}<br/>${escapeHtml(SK_DECO_INFO.email)}</div>
     </div>
   `;
 
@@ -246,12 +260,20 @@ function renderParties(
     const adresse = clientApp.adresse
       ? `<div class="partie-info">${escapeHtml(clientApp.adresse)}</div>`
       : '';
+    const tel = clientApp.telephone
+      ? `<div class="partie-info partie-info-meta">${escapeHtml(clientApp.telephone)}</div>`
+      : '';
+    const email = clientApp.email
+      ? `<div class="partie-info partie-info-meta">${escapeHtml(clientApp.email)}</div>`
+      : '';
     clientHtml = `
       <div class="partie">
         <div class="partie-role">Maître d'ouvrage / Client</div>
         <div class="partie-nom">${nom}</div>
         ${societe}
         ${adresse}
+        ${tel}
+        ${email}
       </div>
     `;
   } else if (chantier.client) {
@@ -276,7 +298,9 @@ function renderParties(
     ? apporteurs.find(a => a.id === chantier.architecteId)
     : undefined;
   let architecteHtml = '';
+  let count = 2;
   if (architecte) {
+    count = 3;
     const nom = escapeHtml(`${architecte.prenom} ${architecte.nom}`.trim());
     const societe = architecte.societe
       ? `<div class="partie-info">${escapeHtml(architecte.societe)}</div>`
@@ -290,21 +314,8 @@ function renderParties(
     `;
   }
 
-  // Layout : 2 colonnes par défaut, 3 colonnes si architecte présent
-  const cssClass = architecte ? 'parties parties-three' : 'parties';
-
-  return `
-<section class="section">
-  <div class="section-intro">
-    ${renderSectionHeader('01', 'Parties')}
-    <div class="${cssClass}">
-      ${entrepriseHtml}
-      ${clientHtml}
-      ${architecteHtml}
-    </div>
-  </div>
-</section>
-`;
+  const html = `${entrepriseHtml}${clientHtml}${architecteHtml}`;
+  return { html, count };
 }
 
 /* ────────────────────────────────────────────────────────────────────
@@ -340,10 +351,6 @@ function renderReserves(
     const cat = r.lotDevisNomSnapshot || r.categorieLibre;
     const catHtml = cat ? `<div class="reserve-cat">${escapeHtml(cat)}</div>` : '';
 
-    const nbPhotosConstat = r.photos?.length || 0;
-    const nbPhotosLevee = (isLevee && r.levee?.photos?.length) || 0;
-    const nbPhotosTotal = nbPhotosConstat + nbPhotosLevee;
-
     const photosConstat = (r.photos && r.photos.length > 0)
       ? `<div class="photos-block">
           <div class="photos-label">Constat — ${r.photos.length} photo${r.photos.length > 1 ? 's' : ''}</div>
@@ -366,8 +373,12 @@ function renderReserves(
       ? `<div class="reserve-levee-meta">Levée le ${formatDateFR(r.levee.le)}</div>`
       : '';
 
+    // Règle V6 stricte : on ne coupe JAMAIS une réserve (même avec beaucoup
+    // de photos). Si une réserve trop grosse ne tient pas sur la page,
+    // le navigateur la poussera vers la suivante et acceptera la coupure
+    // uniquement si elle dépasse la hauteur d'une page entière (cas rare).
     return `
-      <div class="reserve ${isLevee ? 'reserve-levee' : 'reserve-pending'}${nbPhotosTotal > 3 ? ' reserve-large' : ''}">
+      <div class="reserve ${isLevee ? 'reserve-levee' : 'reserve-pending'}">
         <div class="reserve-desc ${isLevee ? 'reserve-desc-levee' : ''}">${escapeHtml(r.description)}</div>
         ${catHtml}
         ${leveeMeta}
@@ -388,7 +399,7 @@ function renderPieces(
     return `
 <section class="section">
   <div class="section-intro">
-    ${renderSectionHeader('02', 'Pièces &amp; réserves')}
+    ${renderSectionHeader('01', 'Pièces &amp; réserves')}
     <div class="empty">Aucune pièce dans ce PV.</div>
   </div>
 </section>
@@ -469,7 +480,7 @@ function renderPieces(
   return `
 <section class="section">
   <div class="section-intro">
-    ${renderSectionHeader('02', 'Pièces &amp; réserves')}
+    ${renderSectionHeader('01', 'Pièces &amp; réserves')}
     ${synthese}
   </div>
   ${piecesHtml}
@@ -549,7 +560,7 @@ function renderPaiement(
   return `
 <section class="section paiement-section">
   <div class="section-intro">
-    ${renderSectionHeader('03', 'Paiement de la retenue garantie')}
+    ${renderSectionHeader('02', 'Paiement de la retenue garantie')}
     <div class="modalite">
       <div class="modalite-label">Modalité de règlement</div>
       <div class="modalite-text">${escapeHtml(modalite)}</div>
@@ -606,7 +617,7 @@ function renderSignatures(pv: PVReception): string {
   return `
 <section class="section signatures-section">
   <div class="section-intro">
-    ${renderSectionHeader('04', 'Signatures')}
+    ${renderSectionHeader('03', 'Signatures')}
     <div class="signatures-grid">
       ${blockEntreprise}
       ${blockClient}
@@ -669,10 +680,9 @@ h2, h3 {
 }
 .cover-content {
   flex: 1;
-  padding: 22mm 24mm;
+  padding: 18mm 22mm;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
 }
 .cover-top {
   display: flex;
@@ -680,32 +690,32 @@ h2, h3 {
 }
 .cover-logo {
   text-align: center;
-  margin-bottom: 18mm;
+  margin-bottom: 12mm;
 }
 .cover-logo img {
-  height: 26mm;
+  height: 20mm;
   width: auto;
 }
 .cover-logo-fallback {
   font-family: Georgia, serif;
-  font-size: 28pt;
+  font-size: 24pt;
   font-weight: 700;
   color: #5C1F2E;
   letter-spacing: 4pt;
 }
 .cover-eyebrow {
   text-align: center;
-  font-size: 10pt;
+  font-size: 9pt;
   letter-spacing: 4pt;
   color: #5C1F2E;
   text-transform: uppercase;
   font-weight: 600;
-  margin-bottom: 8mm;
+  margin-bottom: 6mm;
 }
 .cover-title {
   text-align: center;
   font-family: Georgia, "Times New Roman", serif;
-  font-size: 38pt;
+  font-size: 32pt;
   color: #1A1A1A;
   font-weight: 400;
   line-height: 1.1;
@@ -716,36 +726,91 @@ h2, h3 {
   width: 18mm;
   height: 1.5pt;
   background: #5C1F2E;
-  margin: 12mm auto;
+  margin: 10mm auto;
 }
 .cover-chantier {
   text-align: center;
-  margin-top: 4mm;
+  margin-top: 2mm;
 }
 .cover-label {
-  font-size: 10pt;
+  font-size: 9pt;
   letter-spacing: 3pt;
   color: #6B7280;
   text-transform: uppercase;
   margin-bottom: 4mm;
 }
 .cover-chantier-nom {
-  font-size: 24pt;
+  font-size: 22pt;
   font-weight: 700;
   color: #1A1A1A;
   letter-spacing: 1pt;
   margin: 0;
 }
 .cover-chantier-adresse {
-  font-size: 12pt;
+  font-size: 11pt;
   color: #6B7280;
   margin-top: 3mm;
   font-weight: 400;
   line-height: 1.5;
 }
-.cover-bottom {
+
+/* Parties dans le tiers inférieur de la page de garde */
+.cover-parties-wrapper {
+  margin-top: auto;
+  padding-top: 8mm;
+  padding-bottom: 8mm;
   border-top: 0.5pt solid #D8CFC4;
-  padding-top: 10mm;
+  border-bottom: 0.5pt solid #D8CFC4;
+  margin-bottom: 6mm;
+}
+.cover-parties {
+  display: grid;
+  gap: 4mm;
+}
+.cover-parties-two {
+  grid-template-columns: 1fr 1fr;
+}
+.cover-parties-three {
+  grid-template-columns: 1fr 1fr 1fr;
+}
+.cover-parties .partie {
+  padding: 4mm 5mm;
+  border-left: 2pt solid #5C1F2E;
+  background: #FBF7F2;
+}
+.cover-parties .partie-role {
+  font-size: 7pt;
+  letter-spacing: 1.5pt;
+  text-transform: uppercase;
+  color: #5C1F2E;
+  font-weight: 600;
+  margin-bottom: 2mm;
+}
+.cover-parties .partie-nom {
+  font-size: 11pt;
+  font-weight: 700;
+  color: #1A1A1A;
+  letter-spacing: 0.3pt;
+  line-height: 1.25;
+}
+.cover-parties .partie-info {
+  font-size: 8.5pt;
+  color: #6B7280;
+  margin-top: 1.5mm;
+  line-height: 1.4;
+}
+.cover-parties .partie-info-strong {
+  color: #1A1A1A;
+  font-style: italic;
+  font-weight: 500;
+}
+.cover-parties .partie-info-meta {
+  font-size: 7.5pt;
+  letter-spacing: 0.2pt;
+}
+
+.cover-bottom {
+  /* Pas de border-top : déjà géré par cover-parties-wrapper */
 }
 .cover-meta {
   display: flex;
@@ -1006,10 +1071,6 @@ h2, h3 {
   border-left-color: #5C1F2E;
   background: #FBF7F2;
 }
-.reserve-large {
-  page-break-inside: auto;
-  break-inside: auto;
-}
 .reserve-desc {
   font-size: 11pt;
   font-weight: 600;
@@ -1154,6 +1215,17 @@ h2, h3 {
 }
 
 /* Signatures */
+/* V6 Règle 3 : Paiement (02) + Signatures (03) DOIVENT être sur la même
+   dernière page. On force un saut de page avant + on empêche tout split
+   à l'intérieur. Compromis : la page précédente (Pièces) peut avoir du
+   vide en bas. */
+.final-page {
+  page-break-before: always;
+  break-before: page;
+  page-break-inside: avoid;
+  break-inside: avoid;
+}
+
 .signatures-section {
   page-break-inside: avoid;
   break-inside: avoid;
@@ -1260,7 +1332,7 @@ export function genererPVHtml(params: GenererPVHtmlParams): string {
   <style>${css}</style>
 </head>
 <body>
-  ${renderCover(pv, chantier, logoDataUri)}
+  ${renderCover(pv, chantier, apporteurs, logoDataUri)}
   <div class="content">
     <div class="content-band">
       <span class="content-band-left">SK DECO</span>
@@ -1270,10 +1342,11 @@ export function genererPVHtml(params: GenererPVHtmlParams): string {
       <div class="content-title-line">Procès-Verbal de Réception</div>
       ${nomChantierTitle ? `<div class="content-title-sub">— ${nomChantierTitle} —</div>` : ''}
     </div>
-    ${renderParties(chantier, apporteurs)}
     ${renderPieces(pv, photosResolved)}
-    ${renderPaiement(pv, chantier, marchesChantier, supplementsMarche)}
-    ${renderSignatures(pv)}
+    <div class="final-page">
+      ${renderPaiement(pv, chantier, marchesChantier, supplementsMarche)}
+      ${renderSignatures(pv)}
+    </div>
   </div>
 </body>
 </html>
