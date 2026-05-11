@@ -11,6 +11,25 @@ import {
 } from '@/lib/pv/calculPaiementChantier';
 
 /**
+ * Coordonnées légales de SK DECO affichées dans la carte "Entreprise"
+ * du PV de réception.
+ *
+ * TODO : à terme, déplacer dans un écran "Paramètres de l'entreprise"
+ * pour qu'un futur compte multi-tenant puisse personnaliser ces infos.
+ * Pour l'instant, hardcodé car mono-entreprise.
+ */
+const SK_DECO_INFO = {
+  raisonSociale: 'SK DECO',
+  qualite: "Entreprise Tous Corps d'État",
+  rue: '34 rue du Commandant Mouchotte',
+  codePostal: '94160',
+  ville: 'Saint-Mandé',
+  siret: '813 532 876 00022',
+  telephone: '07 63 62 84 10',
+  email: 'contact@skdeco.fr',
+} as const;
+
+/**
  * Génère le HTML complet du PV de réception pour conversion en PDF
  * via expo-print.
  *
@@ -109,15 +128,25 @@ function formatDateTimeFR(iso: string | undefined): string {
 }
 
 function formatAdresseLignes(chantier: Chantier): string {
-  const ligne1 = chantier.rue || '';
+  const ligne1 = (chantier.rue || '').trim();
   const ligne2Parts = [chantier.codePostal, chantier.ville].filter(Boolean);
-  const ligne2 = ligne2Parts.join(' ');
-  const ligne3 = chantier.pays && chantier.pays !== 'France' ? chantier.pays : '';
+  const ligne2 = ligne2Parts.join(' ').trim();
 
+  // Cas idéal : nouvelle structure rue + CP + ville
   if (ligne1 || ligne2) {
+    const ligne3 = chantier.pays && chantier.pays !== 'France' ? chantier.pays : '';
     return [ligne1, ligne2, ligne3].filter(Boolean).map(escapeHtml).join('<br/>');
   }
-  return escapeHtml(chantier.adresse || '—');
+
+  // Fallback legacy : on accepte chantier.adresse seulement si elle ressemble
+  // à une vraie adresse (contient au moins un chiffre = numéro de rue ou CP)
+  const legacy = (chantier.adresse || '').trim();
+  if (legacy && legacy !== '—' && /\d/.test(legacy)) {
+    return escapeHtml(legacy);
+  }
+
+  // Aucune adresse exploitable : retourne chaîne vide → le rendu masque le bloc
+  return '';
 }
 
 /* ────────────────────────────────────────────────────────────────────
@@ -151,7 +180,7 @@ function renderCover(
       <div class="cover-chantier">
         <div class="cover-label">Chantier</div>
         <div class="cover-chantier-nom">${nomChantier}</div>
-        <div class="cover-chantier-adresse">${adresse}</div>
+        ${adresse ? `<div class="cover-chantier-adresse">${adresse}</div>` : ''}
       </div>
     </div>
 
@@ -194,8 +223,12 @@ function renderParties(
 ): string {
   const entrepriseHtml = `
     <div class="partie">
-      <div class="partie-role">Entreprise</div>
-      <div class="partie-nom">SK DECO</div>
+      <div class="partie-role">Entreprise titulaire du marché</div>
+      <div class="partie-nom">${escapeHtml(SK_DECO_INFO.raisonSociale)}</div>
+      <div class="partie-info partie-info-strong">${escapeHtml(SK_DECO_INFO.qualite)}</div>
+      <div class="partie-info">${escapeHtml(SK_DECO_INFO.rue)}<br/>${escapeHtml(SK_DECO_INFO.codePostal)} ${escapeHtml(SK_DECO_INFO.ville)}</div>
+      <div class="partie-info partie-info-meta">SIRET : ${escapeHtml(SK_DECO_INFO.siret)}</div>
+      <div class="partie-info partie-info-meta">${escapeHtml(SK_DECO_INFO.telephone)} · ${escapeHtml(SK_DECO_INFO.email)}</div>
     </div>
   `;
 
@@ -262,11 +295,13 @@ function renderParties(
 
   return `
 <section class="section">
-  ${renderSectionHeader('01', 'Parties')}
-  <div class="${cssClass}">
-    ${entrepriseHtml}
-    ${clientHtml}
-    ${architecteHtml}
+  <div class="section-intro">
+    ${renderSectionHeader('01', 'Parties')}
+    <div class="${cssClass}">
+      ${entrepriseHtml}
+      ${clientHtml}
+      ${architecteHtml}
+    </div>
   </div>
 </section>
 `;
@@ -352,8 +387,10 @@ function renderPieces(
   if (pieces.length === 0) {
     return `
 <section class="section">
-  ${renderSectionHeader('02', 'Pièces &amp; réserves')}
-  <div class="empty">Aucune pièce dans ce PV.</div>
+  <div class="section-intro">
+    ${renderSectionHeader('02', 'Pièces &amp; réserves')}
+    <div class="empty">Aucune pièce dans ce PV.</div>
+  </div>
 </section>
 `;
   }
@@ -431,8 +468,10 @@ function renderPieces(
 
   return `
 <section class="section">
-  ${renderSectionHeader('02', 'Pièces &amp; réserves')}
-  ${synthese}
+  <div class="section-intro">
+    ${renderSectionHeader('02', 'Pièces &amp; réserves')}
+    ${synthese}
+  </div>
   ${piecesHtml}
 </section>
 `;
@@ -508,11 +547,13 @@ function renderPaiement(
   }
 
   return `
-<section class="section">
-  ${renderSectionHeader('03', 'Paiement de la retenue garantie')}
-  <div class="modalite">
-    <div class="modalite-label">Modalité de règlement</div>
-    <div class="modalite-text">${escapeHtml(modalite)}</div>
+<section class="section paiement-section">
+  <div class="section-intro">
+    ${renderSectionHeader('03', 'Paiement de la retenue garantie')}
+    <div class="modalite">
+      <div class="modalite-label">Modalité de règlement</div>
+      <div class="modalite-text">${escapeHtml(modalite)}</div>
+    </div>
   </div>
   ${recapHtml}
 </section>
@@ -564,14 +605,12 @@ function renderSignatures(pv: PVReception): string {
 
   return `
 <section class="section signatures-section">
-  ${renderSectionHeader('04', 'Signatures')}
-  <div class="signatures-grid">
-    ${blockEntreprise}
-    ${blockClient}
-  </div>
-  <div class="mentions">
-    Le présent procès-verbal vaut réception de l'ouvrage au sens de l'article 1792-6 du Code civil.<br/>
-    Les réserves éventuelles devront être levées dans un délai raisonnable convenu entre les parties.
+  <div class="section-intro">
+    ${renderSectionHeader('04', 'Signatures')}
+    <div class="signatures-grid">
+      ${blockEntreprise}
+      ${blockClient}
+    </div>
   </div>
 </section>
 `;
@@ -771,8 +810,39 @@ h2, h3 {
   letter-spacing: 2pt;
 }
 
+/* Titre central serif (rappel du document sur chaque page de contenu) */
+.content-title {
+  text-align: center;
+  margin-bottom: 12mm;
+  page-break-after: avoid;
+  break-after: avoid;
+}
+.content-title-line {
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 22pt;
+  font-style: italic;
+  font-weight: 400;
+  color: #1A1A1A;
+  letter-spacing: -0.3pt;
+  line-height: 1.2;
+}
+.content-title-sub {
+  font-size: 10pt;
+  color: #6B7280;
+  margin-top: 3mm;
+  letter-spacing: 1.5pt;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
 .section {
   margin-bottom: 14mm;
+}
+
+/* Wrapper qui force header + premier contenu à rester sur la même page */
+.section-intro {
+  page-break-inside: avoid;
+  break-inside: avoid;
 }
 
 .section-header {
@@ -842,6 +912,16 @@ h2, h3 {
   font-size: 10pt;
   color: #6B7280;
   margin-top: 1.5mm;
+}
+.partie-info-strong {
+  color: #1A1A1A;
+  font-weight: 500;
+  font-style: italic;
+  margin-top: 2mm;
+}
+.partie-info-meta {
+  font-size: 9pt;
+  letter-spacing: 0.2pt;
 }
 
 /* Synthèse — tags */
@@ -976,17 +1056,18 @@ h2, h3 {
 .photo-thumb {
   width: 24mm;
   height: 24mm;
-  background: #F1ECE3;
+  background: #FBF7F2;
   overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
   flex: 0 0 24mm;
+  border: 0.3pt solid #E5DDD3;
 }
 .photo-thumb img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
 }
 .photo-thumb-broken {
@@ -1169,6 +1250,7 @@ export function genererPVHtml(params: GenererPVHtmlParams): string {
   );
 
   const refChantierLabel = `${escapeHtml(pv.numeroPV || '—')} — ${escapeHtml(chantier.nom || '—')}`;
+  const nomChantierTitle = escapeHtml(chantier.nom || '');
 
   const html = `<!DOCTYPE html>
 <html lang="fr">
@@ -1183,6 +1265,10 @@ export function genererPVHtml(params: GenererPVHtmlParams): string {
     <div class="content-band">
       <span class="content-band-left">SK DECO</span>
       <span class="content-band-right">${refChantierLabel}</span>
+    </div>
+    <div class="content-title">
+      <div class="content-title-line">Procès-Verbal de Réception</div>
+      ${nomChantierTitle ? `<div class="content-title-sub">— ${nomChantierTitle} —</div>` : ''}
     </div>
     ${renderParties(chantier, apporteurs)}
     ${renderPieces(pv, photosResolved)}
