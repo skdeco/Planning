@@ -3141,7 +3141,7 @@ export default function ChantiersScreen() {
                           </Text>
                         </Pressable>
                       )}
-                      {/* Plans archivés (visibles si expanded) — consultation seulement */}
+                      {/* Plans archivés (visibles si expanded) — consultation + delete admin */}
                       {isExpanded && group.plansArchives.map(plan => (
                         <View key={plan.id} style={[styles.planCard, { opacity: 0.65 }]}>
                           <Pressable
@@ -3159,6 +3159,26 @@ export default function ChantiersScreen() {
                             </View>
                             <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
                           </Pressable>
+                          {isAdmin && (
+                            <Pressable
+                              style={styles.planDeleteBtn}
+                              onPress={() => {
+                                const message = `Supprimer définitivement la version archivée "${plan.nom}" ? Cette action est irréversible.`;
+                                if (Platform.OS === 'web') {
+                                  if (typeof window !== 'undefined' && window.confirm(message)) deletePlanChantier(plansChantierId!, plan.id);
+                                } else {
+                                  Alert.alert(t.common.delete, message, [
+                                    { text: t.common.cancel, style: 'cancel' },
+                                    { text: t.common.delete, style: 'destructive', onPress: () => deletePlanChantier(plansChantierId!, plan.id) },
+                                  ]);
+                                }
+                              }}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Supprimer la version archivée ${plan.nom}`}
+                            >
+                              <Text style={styles.planDeleteBtnText}>🗑</Text>
+                            </Pressable>
+                          )}
                         </View>
                       ))}
                     </View>
