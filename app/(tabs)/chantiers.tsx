@@ -1989,17 +1989,8 @@ export default function ChantiersScreen() {
                     </View>
                   </View>
 
-                  {/* Statut */}
-                  <View style={{ marginTop: 12 }}>
-                    <Text style={styles.ficheSectionLabel}>Statut</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, marginTop: 6 }}>
-                      {STATUTS.map(s => (
-                        <Pressable key={s} style={[styles.chip, form.statut === s && styles.chipActive]} onPress={() => setForm(f => ({ ...f, statut: s }))}>
-                          <Text style={[styles.chipText, form.statut === s && styles.chipTextActive]}>{STATUT_LABELS[s]}</Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                  </View>
+                  {/* Statut — SUPPRIMÉ commit V10 (badge visible en haut de la modal,
+                      édition via switch rapide dans la modal d'actions chantier) */}
 
                   {/* Couleur — avec indication si déjà prise */}
                   <View style={{ marginTop: 12 }}>
