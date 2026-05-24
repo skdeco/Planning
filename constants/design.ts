@@ -49,6 +49,20 @@ export const DS = {
   // Header
   headerStart: '#2C2C2C',
   headerEnd: '#3D3D3D',
+
+  // ────── PALETTE V10 (refonte mai 2026, additive) ──────
+  // Coexiste avec la palette beige/noir actuelle pour migration progressive.
+  // À utiliser dans les nouveaux composants UI et écrans refondus.
+  // Cf. memory/design-system-sk-deco-planning.md
+  bordeaux:  '#5C1F2E',   // accent principal v10 (CTA, FAB, statut actif, icônes gestion)
+  marron:    '#7A4F2E',   // accent secondaire v10 (statut attente, sous-titres, icônes terrain)
+  sombre:    '#2A2622',   // texte principal v10 + bordures épaisses
+  cremeFond: '#FBF7F2',   // fond app v10
+  cremeNude: '#F1E8DC',   // fond icônes bordeaux + search bar + filter chips
+  nudeMoyen: '#EADFD0',   // fond icônes marron
+  // Pour blanc → utiliser DS.surface (existant)
+  // Pour taupe → utiliser DS.textSecondary (existant, #8C8077, équivalent)
+  // Pour bordures → utiliser DS.border (existant, #E8DDD0, équivalent)
 };
 
 // ── Overlays ────────────────────────────────────────────────────────────────
