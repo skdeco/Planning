@@ -81,6 +81,13 @@ export interface PlanningWeekData {
   /** True si la cellule a au moins une note. */
   cellHasNotes: (chantierId: string, dateStr: string) => boolean;
 
+  /**
+   * V10 — Toutes les notes du chantier (toutes affectations, toutes dates),
+   * triées par date desc. Utilisé par la modal Notes ouverte depuis le
+   * dashboard chantier (mode='chantier').
+   */
+  getAllNotesForChantier: (chantierId: string) => CellNote[];
+
   /** Liste ordonnée de chantierId pour un employé un jour donné. */
   getOrdreChantiers: (employeId: string, date: string) => string[];
 
@@ -247,6 +254,26 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
   }, [getAllNotesForCell]);
 
   /**
+   * V10 — Récupère TOUTES les notes du chantier (toutes affectations, toutes dates).
+   * Utilisé quand la modal Notes est ouverte depuis le dashboard chantier
+   * (mode='chantier'). Triées par date desc (les plus récentes en haut).
+   */
+  const getAllNotesForChantier = useCallback((chantierId: string): CellNote[] => {
+    return data.affectations
+      .filter(a => a.chantierId === chantierId)
+      .flatMap(a => (a.notes || []).map(n => ({
+        ...n,
+        affectationId: a.id,
+        affectationEmployeId: a.employeId,
+      })))
+      .sort((a, b) => {
+        const dateA = a.date || a.createdAt || '';
+        const dateB = b.date || b.createdAt || '';
+        return dateB.localeCompare(dateA);
+      });
+  }, [data]);
+
+  /**
    * Retourne la liste ordonnée de chantierId pour un employé un jour donné.
    * Note : cette fonction est désormais mémoïsée (était une fonction simple
    * dans l'original — amélioration mémoïsation fonctionnellement identique).
@@ -287,6 +314,7 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
     getSTForCell,
     getAllNotesForCell,
     cellHasNotes,
+    getAllNotesForChantier,
     getOrdreChantiers,
     getOrdreNum,
   };

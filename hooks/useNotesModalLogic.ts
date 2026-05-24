@@ -40,6 +40,15 @@ export interface NoteModalState {
   allNotes:        CellNote[];
   /** Note en cours d'édition (null = mode création nouvelle note). */
   editingNote:     CellNote | null;
+  /**
+   * V10 — Mode d'ouverture de la modal :
+   * - 'cell' (défaut) : modal ouverte depuis Planning (cellule chantier × jour × employé).
+   *   `allNotes` filtre par date + employé. Création crée note dans l'affectation cible.
+   * - 'chantier' : modal ouverte depuis le dashboard chantier (tuile Notes).
+   *   `allNotes` agrège toutes les notes du chantier (toutes affectations, toutes dates).
+   *   Création : admin doit sélectionner un destinataire (date = aujourd'hui).
+   */
+  mode?:           'cell' | 'chantier';
 }
 
 /** Brouillon de la note en cours de saisie/édition. */
