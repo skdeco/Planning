@@ -20,6 +20,7 @@ import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard';
+import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
@@ -1902,170 +1903,62 @@ export default function ChantiersScreen() {
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
               {ficheOnglet === 'fiche' && (
                 <>
-              {/* ═══ FICHE CHANTIER REFONDÉE ═══ */}
-
-              {/* Adresse */}
-              <View style={styles.ficheSection}>
-                <Text style={styles.ficheSectionIcon}>📍</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.ficheSectionLabel}>Adresse</Text>
-                  {isAdmin ? (
-                    <TextInput style={styles.ficheInput} value={form.adresse} onChangeText={v => setForm(f => ({ ...f, adresse: v }))} placeholder="Rue" />
-                  ) : (
-                    <Text style={{ fontSize: 14, color: '#11181C' }}>{form.adresse || '—'}</Text>
-                  )}
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 6 }}>
-                    <View style={{ width: 80 }}>
-                      {isAdmin ? (
-                        <TextInput style={styles.ficheInput} value={(() => { const c = data.chantiers.find(c2 => c2.id === ficheId); return c?.codePostal || ''; })()} onChangeText={v => { if (!ficheId) return; const c = data.chantiers.find(c2 => c2.id === ficheId); if (c) updateChantier({ ...c, codePostal: v }); }} placeholder="CP" keyboardType="number-pad" />
-                      ) : (
-                        <Text style={{ fontSize: 14, color: '#11181C' }}>{data.chantiers.find(c => c.id === ficheId)?.codePostal || '—'}</Text>
-                      )}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      {isAdmin ? (
-                        <TextInput style={styles.ficheInput} value={(() => { const c = data.chantiers.find(c2 => c2.id === ficheId); return c?.ville || ''; })()} onChangeText={v => { if (!ficheId) return; const c = data.chantiers.find(c2 => c2.id === ficheId); if (c) updateChantier({ ...c, ville: v }); }} placeholder="Ville" />
-                      ) : (
-                        <Text style={{ fontSize: 14, color: '#11181C' }}>{data.chantiers.find(c => c.id === ficheId)?.ville || '—'}</Text>
-                      )}
-                    </View>
-                  </View>
-                </View>
-              </View>
-
-              {/* Code accès */}
-              <View style={styles.ficheSection}>
-                <Text style={styles.ficheSectionIcon}>🔢</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.ficheSectionLabel}>{t.common.accessCode}</Text>
-                  <TextInput
-                    style={styles.ficheInput}
-                    value={fiche.codeAcces}
-                    onChangeText={v => setFiche(f => ({ ...f, codeAcces: v }))}
-                    placeholder="Ex: 1234A"
-                    placeholderTextColor="#B0BEC5"
-                    editable={isAdmin}
+              {/* ═══ INFOS UTILES (V10) ═══ */}
+              {(() => {
+                const chantierForFiche = ficheId ? data.chantiers.find(c => c.id === ficheId) || null : null;
+                const chantierInfos = chantierForFiche
+                  ? {
+                      adresse: form.adresse,
+                      codePostal: chantierForFiche.codePostal || '',
+                      ville: chantierForFiche.ville || '',
+                    }
+                  : null;
+                return (
+                  <InfosUtilesPanel
+                    fiche={fiche}
+                    chantier={chantierInfos}
+                    isAdmin={isAdmin}
+                    onChangeFiche={patch => setFiche(f => ({ ...f, ...patch }))}
+                    onChangeAdresse={v => setForm(f => ({ ...f, adresse: v }))}
+                    onChangeCodePostal={v => {
+                      if (chantierForFiche) updateChantier({ ...chantierForFiche, codePostal: v });
+                    }}
+                    onChangeVille={v => {
+                      if (chantierForFiche) updateChantier({ ...chantierForFiche, ville: v });
+                    }}
+                    onPressYAller={() => openDirectionsHelper(form.adresse)}
+                    onOpenPhotoCle={uri => openDocPreview(uri)}
+                    onRemovePhotoCle={() => {
+                      const doDelete = () => setFiche(f => ({ ...f, photoEmplacementCle: '' }));
+                      if (Platform.OS === 'web') {
+                        if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer la photo cachette ?')) doDelete();
+                      } else {
+                        Alert.alert('Supprimer la photo ?', 'La photo cachette sera retirée de la fiche.', [
+                          { text: 'Annuler', style: 'cancel' },
+                          { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                        ]);
+                      }
+                    }}
+                    renderPhotoClePickers={() => (
+                      <>
+                        <NativeFilePickerButton
+                          onPick={handleClePickNative}
+                          acceptImages
+                          acceptCamera
+                          acceptPdf={false}
+                          multiple={false}
+                          compressImages
+                          label={fiche.photoEmplacementCle ? '📷 Changer la photo' : '📷 Ajouter photo cachette'}
+                        />
+                        <InboxPickerButton
+                          onPick={handleClePickFromInbox}
+                          mimeFilter={(m) => m.startsWith('image/')}
+                        />
+                      </>
+                    )}
                   />
-                </View>
-              </View>
-
-              {/* Emplacement clé */}
-              <View style={styles.ficheSection}>
-                <Text style={styles.ficheSectionIcon}>🔑</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.ficheSectionLabel}>{t.common.keyLocation}</Text>
-                  <TextInput
-                    style={styles.ficheInput}
-                    value={fiche.emplacementCle}
-                    onChangeText={v => setFiche(f => ({ ...f, emplacementCle: v }))}
-                    placeholder="Ex: Boîte à clé sous le compteur, code 5678"
-                    placeholderTextColor="#B0BEC5"
-                    multiline
-                    editable={isAdmin}
-                  />
-                  {/* Photo cachette clé */}
-                  {fiche.photoEmplacementCle && (
-                    <View style={{ marginTop: 8, position: 'relative', alignSelf: 'flex-start' }}>
-                      <Pressable
-                        onPress={() => openDocPreview(fiche.photoEmplacementCle!)}
-                        accessibilityRole="button"
-                        accessibilityLabel="Ouvrir la photo cachette"
-                      >
-                        <View style={{ width: 100, height: 100, borderRadius: 8, overflow: 'hidden', backgroundColor: '#F5EDE3' }}>
-                          <Image source={{ uri: fiche.photoEmplacementCle }} style={{ width: 100, height: 100 }} resizeMode="cover" />
-                        </View>
-                      </Pressable>
-                      {isAdmin && (
-                        <Pressable
-                          style={styles.photoRemove}
-                          onPress={() => {
-                            const doDelete = () => setFiche(f => ({ ...f, photoEmplacementCle: '' }));
-                            if (Platform.OS === 'web') {
-                              if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer la photo cachette ?')) doDelete();
-                            } else {
-                              Alert.alert('Supprimer la photo ?', 'La photo cachette sera retirée de la fiche.', [
-                                { text: 'Annuler', style: 'cancel' },
-                                { text: 'Supprimer', style: 'destructive', onPress: doDelete },
-                              ]);
-                            }
-                          }}
-                          accessibilityRole="button"
-                          accessibilityLabel="Supprimer la photo cachette"
-                        >
-                          <Text style={styles.photoRemoveText}>✕</Text>
-                        </Pressable>
-                      )}
-                    </View>
-                  )}
-                  {isAdmin && (
-                    <View style={{ marginTop: 6, gap: 4 }}>
-                      <NativeFilePickerButton
-                        onPick={handleClePickNative}
-                        acceptImages
-                        acceptCamera
-                        acceptPdf={false}
-                        multiple={false}
-                        compressImages
-                        label={fiche.photoEmplacementCle ? '📷 Changer la photo' : '📷 Ajouter photo cachette'}
-                      />
-                      <InboxPickerButton
-                        onPick={handleClePickFromInbox}
-                        mimeFilter={(m) => m.startsWith('image/')}
-                      />
-                    </View>
-                  )}
-                </View>
-              </View>
-
-              {/* Code alarme */}
-              <View style={styles.ficheSection}>
-                <Text style={styles.ficheSectionIcon}>🚨</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.ficheSectionLabel}>{t.common.alarmCode}</Text>
-                  <TextInput
-                    style={styles.ficheInput}
-                    value={fiche.codeAlarme}
-                    onChangeText={v => setFiche(f => ({ ...f, codeAlarme: v }))}
-                    placeholder="Ex: 9876 — désactiver en 30 sec"
-                    placeholderTextColor="#B0BEC5"
-                    editable={isAdmin}
-                  />
-                </View>
-              </View>
-
-              {/* Contacts */}
-              <View style={styles.ficheSection}>
-                <Text style={styles.ficheSectionIcon}>📞</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.ficheSectionLabel}>{t.common.usefulContacts}</Text>
-                  <TextInput
-                    style={[styles.ficheInput, { minHeight: 72, textAlignVertical: 'top' }]}
-                    value={fiche.contacts}
-                    onChangeText={v => setFiche(f => ({ ...f, contacts: v }))}
-                    placeholder="Ex: Gardien : M. Dupont — 06 12 34 56 78&#10;Propriétaire : Mme Martin — 06 98 76 54 32"
-                    placeholderTextColor="#B0BEC5"
-                    multiline
-                    editable={isAdmin}
-                  />
-                </View>
-              </View>
-
-              {/* Notes libres */}
-              <View style={styles.ficheSection}>
-                <Text style={styles.ficheSectionIcon}>📝</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.ficheSectionLabel}>{t.common.notesInfo}</Text>
-                  <TextInput
-                    style={[styles.ficheInput, { minHeight: 100, textAlignVertical: 'top' }]}
-                    value={fiche.notes}
-                    onChangeText={v => setFiche(f => ({ ...f, notes: v }))}
-                    placeholder="Ex: Ascenseur en panne, utiliser l'escalier B. Parking réservé devant l'entrée."
-                    placeholderTextColor="#B0BEC5"
-                    multiline
-                    editable={isAdmin}
-                  />
-                </View>
-              </View>
+                );
+              })()}
 
               {/* Photos / Plans / PDF */}
               <View style={styles.ficheSectionPhotos}>
@@ -2461,47 +2354,7 @@ export default function ChantiersScreen() {
             </ScrollView>
 
 
-            {/* Budget prévisionnel */}
-            {isAdmin && ficheOnglet === 'fiche' && ficheId && (
-              <View style={{ paddingHorizontal: 16, marginBottom: 12 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                  <Text style={{ fontSize: 14 }}>💰</Text>
-                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#1A1A1A' }}>Budget prévisionnel</Text>
-                </View>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <TextInput
-                    style={{ flex: 1, backgroundColor: '#FBF8F4', borderWidth: 1, borderColor: '#E8DDD0', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 10, fontSize: 15, color: '#1A1A1A' }}
-                    placeholder="Ex: 25000"
-                    placeholderTextColor="#B0A89E"
-                    keyboardType="numeric"
-                    value={data.budgetsChantier?.[ficheId]?.toString() || ''}
-                    onChangeText={v => {
-                      const num = parseFloat(v.replace(',', '.'));
-                      updateBudgetChantier(ficheId, isNaN(num) ? undefined : num);
-                    }}
-                  />
-                  <Text style={{ fontSize: 14, color: '#8C8077', fontWeight: '600' }}>€ TTC</Text>
-                </View>
-                {data.budgetsChantier?.[ficheId] != null && (() => {
-                  const budget = data.budgetsChantier![ficheId];
-                  const depenses = (data.depensesChantier || []).filter(d => d.chantierId === ficheId).reduce((s, d) => s + (d.montant || 0), 0);
-                  const pct = budget > 0 ? Math.round((depenses / budget) * 100) : 0;
-                  const color = pct < 70 ? '#10B981' : pct < 90 ? '#E5A840' : '#D94F4F';
-                  return (
-                    <View style={{ marginTop: 8 }}>
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                        <Text style={{ fontSize: 11, color: '#8C8077' }}>Dépensé : {depenses.toLocaleString('fr-FR')} €</Text>
-                        <Text style={{ fontSize: 11, color, fontWeight: '700' }}>{pct}%</Text>
-                      </View>
-                      <View style={{ height: 6, backgroundColor: '#E8DDD0', borderRadius: 3, overflow: 'hidden' }}>
-                        <View style={{ height: 6, backgroundColor: color, borderRadius: 3, width: `${Math.min(100, pct)}%` }} />
-                      </View>
-                      {pct >= 90 && <Text style={{ fontSize: 10, color: '#D94F4F', marginTop: 4, fontWeight: '600' }}>⚠️ Budget presque épuisé !</Text>}
-                    </View>
-                  );
-                })()}
-              </View>
-            )}
+            {/* Budget prévisionnel — SUPPRIMÉ commit D refonte V10 (cf. mockup) */}
 
             {isAdmin && ficheOnglet === 'fiche' && (
               <Pressable style={styles.saveBtn} onPress={handleSaveFiche}>
