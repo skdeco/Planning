@@ -3301,8 +3301,15 @@ export default function ChantiersScreen() {
         </View>
       </ModalKeyboard>
 
-      {/* ── Modal sélecteur de lot (V10) — utilisée par la modal Plans ── */}
-      <Modal visible={showLotPicker} transparent animationType="fade" onRequestClose={() => setShowLotPicker(false)}>
+      {/* ── Modal sélecteur de lot (V10) — utilisée par la modal Plans ──
+           presentationStyle="overFullScreen" requis pour stacking Modal-on-Modal iOS */}
+      <Modal
+        visible={showLotPicker}
+        transparent
+        animationType="fade"
+        presentationStyle="overFullScreen"
+        onRequestClose={() => setShowLotPicker(false)}
+      >
         <Pressable
           style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
           onPress={() => setShowLotPicker(false)}
