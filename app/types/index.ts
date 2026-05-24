@@ -179,6 +179,20 @@ export interface FicheChantier {
   updatedAt: string;        // ISO datetime de dernière modification
 }
 
+/** V10 — Tâche cochable d'une note (NoteChantier.taches[]) */
+export interface TacheNote {
+  id: string;
+  texte: string;
+  cochee: boolean;
+  // Tracking : qui a coché + quand (Q précisé Kevin 24/05)
+  cocheParId?: string;     // 'admin' ou id employé
+  cocheParNom?: string;    // libellé pour affichage rapide sans lookup
+  cocheAt?: string;        // ISO datetime de la coche
+  // Photo OU PDF associé à cette tâche (l'un OU l'autre, pas les deux)
+  photoUri?: string;       // URI Supabase Storage (ou base64 legacy)
+  pdfUri?: string;
+}
+
 /** Plan PDF attaché à un chantier */
 export interface PlanChantier {
   id: string;
@@ -873,6 +887,12 @@ export interface NoteChantier {
   pieceJointeNom?: string;   // nom du fichier
   pieceJointeType?: 'image' | 'pdf'; // type de fichier
   photos?: string[];         // tableau de base64 URIs (images ou PDFs)
+  // ─── V10 (refonte mai 2026) — nouveau format checklist ──────────────────
+  // Quand `taches` est défini et non-vide, l'UI affiche les cases à cocher
+  // et IGNORE le champ `texte` (qui reste pour rétrocompat avec anciennes notes).
+  // Une note est considérée "active" (à afficher dans le planning du jour) tant
+  // qu'au moins une de ses tâches n'est pas cochée. Cochée par employé OU admin.
+  taches?: TacheNote[];
   // Historique suppression (admin uniquement)
   deletedBy?: string;        // 'admin' ou id de celui qui a supprimé
   deletedAt?: string;        // ISO datetime de suppression
