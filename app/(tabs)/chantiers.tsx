@@ -1887,11 +1887,22 @@ export default function ChantiersScreen() {
           <View style={styles.modalSheetFiche}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <View>
+              <View style={{ flex: 1 }}>
                 <Text style={styles.modalTitle}>🪪 {t.chantiers.ficheChantier}</Text>
                 <Text style={styles.modalSubtitle}>
                   {data.chantiers.find(c => c.id === ficheId)?.nom ?? ''}
                 </Text>
+                {/* Badge statut V10 — visible tout en haut de la modal */}
+                {(() => {
+                  const ch = data.chantiers.find(c => c.id === ficheId);
+                  if (!ch) return null;
+                  const statut = STATUT_COLORS[ch.statut];
+                  return (
+                    <View style={[styles.statutBadge, { backgroundColor: statut.bg, alignSelf: 'flex-start', marginTop: 6 }]}>
+                      <Text style={[styles.statutText, { color: statut.text }]}>{STATUT_LABELS[ch.statut]}</Text>
+                    </View>
+                  );
+                })()}
               </View>
               <Pressable onPress={() => setShowFiche(false)}>
                 <Text style={styles.modalClose}>✕</Text>
