@@ -191,6 +191,8 @@ export interface PlanChantier {
   archivedAt?: string;      // ISO datetime — si présent → version remplacée, masquée par défaut
   replacedById?: string;    // id du plan qui remplace celui-ci (chaîne de versions)
   version?: number;         // 1, 2, 3… — incrémenté à chaque réupload du même nom
+  // V10 (refonte mai 2026) — rattachement à un lot/corps de métier (cf. constants/lots.ts)
+  lotId?: string;           // ex: 'cloisons', 'electricite'. Optionnel pour rétrocompat plans existants.
 }
 
 export interface Chantier {
