@@ -21,6 +21,7 @@ import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard';
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
+import { LOTS_TRIES, getLotNom } from '@/constants/lots';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
@@ -366,6 +367,7 @@ export default function ChantiersScreen() {
   const [newPlanFichier, setNewPlanFichier] = useState<string | null>(null);
   const [newPlanVisiblePar, setNewPlanVisiblePar] = useState<'tous' | 'employes' | 'soustraitants' | 'specifique'>('tous');
   const [newPlanVisibleIds, setNewPlanVisibleIds] = useState<string[]>([]);
+  const [newPlanLotId, setNewPlanLotId] = useState<string | null>(null);
 
   const openPlans = (chantier: Chantier) => {
     setPlansChantierId(chantier.id);
@@ -373,6 +375,7 @@ export default function ChantiersScreen() {
     setNewPlanFichier(null);
     setNewPlanVisiblePar('tous');
     setNewPlanVisibleIds([]);
+    setNewPlanLotId(null);
     setShowPlans(true);
   };
 
@@ -399,12 +402,14 @@ export default function ChantiersScreen() {
       visiblePar: newPlanVisiblePar,
       visibleIds: newPlanVisiblePar === 'specifique' ? newPlanVisibleIds : undefined,
       uploadedAt: new Date().toISOString(),
+      lotId: newPlanLotId ?? undefined,
     };
     addPlanChantier(plansChantierId, plan);
     setNewPlanNom('');
     setNewPlanFichier(null);
     setNewPlanVisiblePar('tous');
     setNewPlanVisibleIds([]);
+    setNewPlanLotId(null);
   };
 
   const getPlansVisibles = (chantierId: string) => {
@@ -2986,6 +2991,7 @@ export default function ChantiersScreen() {
                       <Text style={styles.planNom}>{plan.nom}</Text>
                       <Text style={styles.planMeta}>
                         {new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                        {plan.lotId && ` • 🏷️ ${getLotNom(plan.lotId)}`}
                         {plan.visiblePar !== 'tous' && ` • ${plan.visiblePar === 'employes' ? '👷 Employés' : plan.visiblePar === 'soustraitants' ? '👤 ST' : '👥 Sélection'}`}
                       </Text>
                     </View>
@@ -3066,6 +3072,22 @@ export default function ChantiersScreen() {
                       }}
                       mimeFilter={inboxMimeFilterImagePdf}
                     />
+                  </View>
+
+                  {/* Lot / corps de métier (V10) */}
+                  <View style={{ marginTop: 8 }}>
+                    <Text style={styles.fieldLabel}>Lot / corps de métier</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
+                      {LOTS_TRIES.map(lot => (
+                        <Pressable
+                          key={lot.id}
+                          style={[styles.chip, newPlanLotId === lot.id && styles.chipActive]}
+                          onPress={() => setNewPlanLotId(prev => prev === lot.id ? null : lot.id)}
+                        >
+                          <Text style={[styles.chipText, newPlanLotId === lot.id && styles.chipTextActive]}>{lot.nom}</Text>
+                        </Pressable>
+                      ))}
+                    </ScrollView>
                   </View>
 
                   {/* Visibilité */}
