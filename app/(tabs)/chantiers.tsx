@@ -371,6 +371,8 @@ export default function ChantiersScreen() {
   const [newPlanLotId, setNewPlanLotId] = useState<string | null>(null);
   // V10 — toggle d'expansion des plans archivés par groupe lot
   const [archivedLotsExpanded, setArchivedLotsExpanded] = useState<Set<string>>(new Set());
+  // V10 — modal sélecteur de lot pour ajout plan
+  const [showLotPicker, setShowLotPicker] = useState(false);
 
   const openPlans = (chantier: Chantier) => {
     setPlansChantierId(chantier.id);
@@ -3213,20 +3215,31 @@ export default function ChantiersScreen() {
                     />
                   </View>
 
-                  {/* Lot / corps de métier (V10) */}
+                  {/* Lot / corps de métier (V10) — liste déroulante */}
                   <View style={{ marginTop: 8 }}>
                     <Text style={styles.fieldLabel}>Lot / corps de métier</Text>
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-                      {LOTS_TRIES.map(lot => (
-                        <Pressable
-                          key={lot.id}
-                          style={[styles.chip, newPlanLotId === lot.id && styles.chipActive]}
-                          onPress={() => setNewPlanLotId(prev => prev === lot.id ? null : lot.id)}
-                        >
-                          <Text style={[styles.chipText, newPlanLotId === lot.id && styles.chipTextActive]}>{lot.nom}</Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
+                    <Pressable
+                      onPress={() => setShowLotPicker(true)}
+                      style={{
+                        marginTop: 4,
+                        backgroundColor: DS.cremeFond,
+                        borderWidth: 1,
+                        borderColor: DS.border,
+                        borderRadius: 10,
+                        paddingHorizontal: 14,
+                        paddingVertical: 12,
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                      }}
+                      accessibilityRole="button"
+                      accessibilityLabel="Sélectionner un lot"
+                    >
+                      <Text style={{ fontSize: 14, color: newPlanLotId ? DS.sombre : DS.textSecondary }}>
+                        {newPlanLotId ? `🏷️ ${getLotNom(newPlanLotId)}` : 'Sélectionner un lot…'}
+                      </Text>
+                      <Text style={{ fontSize: 12, color: DS.textSecondary }}>▼</Text>
+                    </Pressable>
                   </View>
 
                   {/* Visibilité */}
@@ -3287,6 +3300,77 @@ export default function ChantiersScreen() {
           </View>
         </View>
       </ModalKeyboard>
+
+      {/* ── Modal sélecteur de lot (V10) — utilisée par la modal Plans ── */}
+      <Modal visible={showLotPicker} transparent animationType="fade" onRequestClose={() => setShowLotPicker(false)}>
+        <Pressable
+          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
+          onPress={() => setShowLotPicker(false)}
+        >
+          <Pressable
+            style={{
+              backgroundColor: DS.cremeFond,
+              borderTopLeftRadius: 24,
+              borderTopRightRadius: 24,
+              paddingTop: 16,
+              paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+              maxHeight: '80%',
+            }}
+            onPress={() => { /* swallow press to prevent backdrop close */ }}
+          >
+            <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 12 }} />
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>Sélectionner un lot</Text>
+              <Pressable onPress={() => setShowLotPicker(false)} accessibilityRole="button" accessibilityLabel="Fermer">
+                <Text style={{ fontSize: 18, color: DS.textSecondary }}>✕</Text>
+              </Pressable>
+            </View>
+            <ScrollView style={{ maxHeight: 500 }}>
+              {/* Option "Aucun lot" en haut */}
+              <Pressable
+                onPress={() => { setNewPlanLotId(null); setShowLotPicker(false); }}
+                style={{
+                  paddingHorizontal: 20,
+                  paddingVertical: 14,
+                  flexDirection: 'row',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  borderBottomWidth: 1,
+                  borderBottomColor: DS.border,
+                }}
+              >
+                <Text style={{ fontSize: 15, fontStyle: 'italic', color: DS.textSecondary }}>Aucun lot</Text>
+                {newPlanLotId === null && <Text style={{ color: DS.bordeaux, fontWeight: '700' }}>✓</Text>}
+              </Pressable>
+              {/* Liste alphabétique des lots */}
+              {[...LOTS_DEFAUT]
+                .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+                .map(lot => (
+                  <Pressable
+                    key={lot.id}
+                    onPress={() => { setNewPlanLotId(lot.id); setShowLotPicker(false); }}
+                    style={{
+                      paddingHorizontal: 20,
+                      paddingVertical: 14,
+                      flexDirection: 'row',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      borderBottomWidth: 1,
+                      borderBottomColor: DS.border,
+                      backgroundColor: newPlanLotId === lot.id ? DS.cremeNude : 'transparent',
+                    }}
+                  >
+                    <Text style={{ fontSize: 15, color: DS.sombre, fontWeight: newPlanLotId === lot.id ? '600' : '400' }}>
+                      🏷️ {lot.nom}
+                    </Text>
+                    {newPlanLotId === lot.id && <Text style={{ color: DS.bordeaux, fontWeight: '700' }}>✓</Text>}
+                  </Pressable>
+                ))}
+            </ScrollView>
+          </Pressable>
+        </Pressable>
+      </Modal>
+
       {bilanChantierId && (
         <BilanFinancierChantier visible={!!bilanChantierId} onClose={() => setBilanChantierId(null)} chantierId={bilanChantierId} />
       )}
