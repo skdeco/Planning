@@ -369,6 +369,8 @@ export default function ChantiersScreen() {
   const [newPlanVisiblePar, setNewPlanVisiblePar] = useState<'tous' | 'employes' | 'soustraitants' | 'specifique'>('tous');
   const [newPlanVisibleIds, setNewPlanVisibleIds] = useState<string[]>([]);
   const [newPlanLotId, setNewPlanLotId] = useState<string | null>(null);
+  // V10 — toggle d'expansion des plans archivés par groupe lot
+  const [archivedLotsExpanded, setArchivedLotsExpanded] = useState<Set<string>>(new Set());
 
   const openPlans = (chantier: Chantier) => {
     setPlansChantierId(chantier.id);
@@ -3031,79 +3033,135 @@ export default function ChantiersScreen() {
                 <Text style={[styles.emptyText, { margin: 16 }]}>{t.chantiers.noPlans}</Text>
               )}
               {plansChantierId && (() => {
-                const plans = getPlansVisibles(plansChantierId);
-                // Groupage par lot
-                const groups = new Map<string, PlanChantier[]>();
-                for (const p of plans) {
+                const allPlans = data.chantiers.find(c => c.id === plansChantierId)?.fiche?.plans || [];
+                // Groupage par lot — actifs + archivés séparés
+                type GroupData = {
+                  lotId: string | null;
+                  lotKey: string;
+                  lotNom: string;
+                  ordre: number;
+                  plansActifs: PlanChantier[];
+                  plansArchives: PlanChantier[];
+                };
+                const groups = new Map<string, GroupData>();
+                for (const p of allPlans) {
                   const key = p.lotId || '__nonclasse';
-                  if (!groups.has(key)) groups.set(key, []);
-                  groups.get(key)!.push(p);
-                }
-                // Tri : lots dans l'ordre défini, "Non classés" en dernier
-                const sortedGroups = Array.from(groups.entries()).map(([key, plansGroup]) => {
-                  if (key === '__nonclasse') {
-                    return { lotId: null, lotNom: 'Non classés', ordre: 999, plans: plansGroup };
+                  if (!groups.has(key)) {
+                    const lot = key === '__nonclasse' ? undefined : LOTS_DEFAUT.find(l => l.id === key);
+                    groups.set(key, {
+                      lotId: key === '__nonclasse' ? null : key,
+                      lotKey: key,
+                      lotNom: key === '__nonclasse' ? 'Non classés' : (lot?.nom || key),
+                      ordre: key === '__nonclasse' ? 999 : (lot?.ordre ?? 998),
+                      plansActifs: [],
+                      plansArchives: [],
+                    });
                   }
-                  const lot = LOTS_DEFAUT.find(l => l.id === key);
-                  return { lotId: key, lotNom: lot?.nom || key, ordre: lot?.ordre ?? 998, plans: plansGroup };
-                }).sort((a, b) => a.ordre - b.ordre);
+                  const g = groups.get(key)!;
+                  if (p.archivedAt) g.plansArchives.push(p);
+                  else g.plansActifs.push(p);
+                }
+                const sortedGroups = Array.from(groups.values())
+                  .filter(g => g.plansActifs.length > 0 || g.plansArchives.length > 0)
+                  .sort((a, b) => a.ordre - b.ordre);
 
-                return sortedGroups.map(group => (
-                  <View key={group.lotId || 'nonclasse'} style={{ marginBottom: 12 }}>
-                    {/* Header du groupe lot */}
-                    <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '700', color: DS.bordeaux, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                        🏷️ {group.lotNom} ({group.plans.length})
-                      </Text>
-                    </View>
-                    {/* Plans du groupe */}
-                    {group.plans.map(plan => (
-                      <View key={plan.id} style={styles.planCard}>
-                        <Pressable
-                          style={styles.planCardContent}
-                          onPress={() => openDocPreview(plan.fichier)}
-                          accessibilityRole="button"
-                          accessibilityLabel={`Ouvrir ${plan.nom}`}
-                        >
-                          <Text style={styles.planIcon}>{(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
-                          <View style={{ flex: 1 }}>
-                            <Text style={styles.planNom}>{plan.nom}</Text>
-                            <Text style={styles.planMeta}>
-                              {new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                              {plan.visiblePar !== 'tous' && ` • ${plan.visiblePar === 'employes' ? '👷 Employés' : plan.visiblePar === 'soustraitants' ? '👤 ST' : '👥 Sélection'}`}
-                            </Text>
-                          </View>
-                          <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
-                        </Pressable>
-                        {isAdmin && (
-                          <Pressable
-                            style={styles.planDeleteBtn}
-                            onPress={() => {
-                              const allPlans = data.chantiers.find(c => c.id === plansChantierId)?.fiche?.plans || [];
-                              const targetNormalized = normalizePlanNom(plan.nom);
-                              const archivedCount = allPlans.filter(p =>
-                                p.archivedAt && normalizePlanNom(p.nom) === targetNormalized
-                              ).length;
-                              const message = archivedCount > 0
-                                ? `Supprimer "${plan.nom}" supprimera aussi ${archivedCount} version${archivedCount > 1 ? 's' : ''} précédente${archivedCount > 1 ? 's' : ''} archivée${archivedCount > 1 ? 's' : ''}. Continuer ?`
-                                : t.chantiers.deletePlan;
-                              if (Platform.OS === 'web') {
-                                if (window.confirm(message)) deletePlanChantier(plansChantierId!, plan.id);
-                              } else {
-                                Alert.alert(t.common.delete, message, [
-                                  { text: t.common.cancel, style: 'cancel' },
-                                  { text: t.common.delete, style: 'destructive', onPress: () => deletePlanChantier(plansChantierId!, plan.id) },
-                                ]);
-                              }
-                            }}
-                          >
-                            <Text style={styles.planDeleteBtnText}>🗑</Text>
-                          </Pressable>
-                        )}
+                return sortedGroups.map(group => {
+                  const isExpanded = archivedLotsExpanded.has(group.lotKey);
+                  return (
+                    <View key={group.lotKey} style={{ marginBottom: 12 }}>
+                      {/* Header du groupe lot */}
+                      <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: DS.bordeaux, letterSpacing: 0.6, textTransform: 'uppercase' }}>
+                          🏷️ {group.lotNom} ({group.plansActifs.length})
+                        </Text>
                       </View>
-                    ))}
-                  </View>
-                ));
+                      {/* Plans actifs du groupe */}
+                      {group.plansActifs.map(plan => (
+                        <View key={plan.id} style={styles.planCard}>
+                          <Pressable
+                            style={styles.planCardContent}
+                            onPress={() => openDocPreview(plan.fichier)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Ouvrir ${plan.nom}`}
+                          >
+                            <Text style={styles.planIcon}>{(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.planNom}>{plan.nom}</Text>
+                              <Text style={styles.planMeta}>
+                                {new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                {plan.visiblePar !== 'tous' && ` • ${plan.visiblePar === 'employes' ? '👷 Employés' : plan.visiblePar === 'soustraitants' ? '👤 ST' : '👥 Sélection'}`}
+                              </Text>
+                            </View>
+                            <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
+                          </Pressable>
+                          {isAdmin && (
+                            <Pressable
+                              style={styles.planDeleteBtn}
+                              onPress={() => {
+                                const allPlansLocal = data.chantiers.find(c => c.id === plansChantierId)?.fiche?.plans || [];
+                                const targetNormalized = normalizePlanNom(plan.nom);
+                                const archivedCount = allPlansLocal.filter(p =>
+                                  p.archivedAt && normalizePlanNom(p.nom) === targetNormalized
+                                ).length;
+                                const message = archivedCount > 0
+                                  ? `Supprimer "${plan.nom}" supprimera aussi ${archivedCount} version${archivedCount > 1 ? 's' : ''} précédente${archivedCount > 1 ? 's' : ''} archivée${archivedCount > 1 ? 's' : ''}. Continuer ?`
+                                  : t.chantiers.deletePlan;
+                                if (Platform.OS === 'web') {
+                                  if (window.confirm(message)) deletePlanChantier(plansChantierId!, plan.id);
+                                } else {
+                                  Alert.alert(t.common.delete, message, [
+                                    { text: t.common.cancel, style: 'cancel' },
+                                    { text: t.common.delete, style: 'destructive', onPress: () => deletePlanChantier(plansChantierId!, plan.id) },
+                                  ]);
+                                }
+                              }}
+                            >
+                              <Text style={styles.planDeleteBtnText}>🗑</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      ))}
+                      {/* Bouton "Anciens plans archivés (N)" — replié par défaut */}
+                      {group.plansArchives.length > 0 && (
+                        <Pressable
+                          onPress={() => {
+                            setArchivedLotsExpanded(prev => {
+                              const next = new Set(prev);
+                              if (next.has(group.lotKey)) next.delete(group.lotKey);
+                              else next.add(group.lotKey);
+                              return next;
+                            });
+                          }}
+                          style={{ paddingHorizontal: 16, paddingVertical: 10, marginTop: 4 }}
+                        >
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: DS.textSecondary }}>
+                            {isExpanded ? '▼' : '▶'} 📁 Anciens plans archivés ({group.plansArchives.length})
+                          </Text>
+                        </Pressable>
+                      )}
+                      {/* Plans archivés (visibles si expanded) — consultation seulement */}
+                      {isExpanded && group.plansArchives.map(plan => (
+                        <View key={plan.id} style={[styles.planCard, { opacity: 0.65 }]}>
+                          <Pressable
+                            style={styles.planCardContent}
+                            onPress={() => openDocPreview(plan.fichier)}
+                            accessibilityRole="button"
+                            accessibilityLabel={`Ouvrir ${plan.nom} (archivé)`}
+                          >
+                            <Text style={styles.planIcon}>{(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.planNom}>{plan.nom}</Text>
+                              <Text style={styles.planMeta}>
+                                ⚪ Archivé · {plan.archivedAt ? new Date(plan.archivedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                              </Text>
+                            </View>
+                            <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
+                          </Pressable>
+                        </View>
+                      ))}
+                    </View>
+                  );
+                });
               })()}
 
               {/* Formulaire ajout plan (admin) */}
