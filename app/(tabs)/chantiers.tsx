@@ -3298,85 +3298,65 @@ export default function ChantiersScreen() {
               )}
             </ScrollView>
           </View>
+          {/* ── Overlay sélecteur de lot (V10) — inline dans la modal Plans
+               pour contourner le bug Modal-on-Modal iOS ── */}
+          {showLotPicker && (
+            <Pressable
+              style={{
+                position: 'absolute',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.4)',
+                justifyContent: 'flex-end',
+                zIndex: 1000,
+              }}
+              onPress={() => setShowLotPicker(false)}
+            >
+              <Pressable
+                style={{
+                  backgroundColor: DS.cremeFond,
+                  borderTopLeftRadius: 24,
+                  borderTopRightRadius: 24,
+                  paddingTop: 16,
+                  paddingBottom: Platform.OS === 'ios' ? 40 : 20,
+                  maxHeight: '80%',
+                }}
+                onPress={() => { /* swallow */ }}
+              >
+                <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 12 }} />
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>Sélectionner un lot</Text>
+                  <Pressable onPress={() => setShowLotPicker(false)} accessibilityRole="button" accessibilityLabel="Fermer">
+                    <Text style={{ fontSize: 18, color: DS.textSecondary }}>✕</Text>
+                  </Pressable>
+                </View>
+                <ScrollView style={{ maxHeight: 500 }}>
+                  <Pressable
+                    onPress={() => { setNewPlanLotId(null); setShowLotPicker(false); }}
+                    style={{ paddingHorizontal: 20, paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: DS.border }}
+                  >
+                    <Text style={{ fontSize: 15, fontStyle: 'italic', color: DS.textSecondary }}>Aucun lot</Text>
+                    {newPlanLotId === null && <Text style={{ color: DS.bordeaux, fontWeight: '700' }}>✓</Text>}
+                  </Pressable>
+                  {[...LOTS_DEFAUT]
+                    .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
+                    .map(lot => (
+                      <Pressable
+                        key={lot.id}
+                        onPress={() => { setNewPlanLotId(lot.id); setShowLotPicker(false); }}
+                        style={{ paddingHorizontal: 20, paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: DS.border, backgroundColor: newPlanLotId === lot.id ? DS.cremeNude : 'transparent' }}
+                      >
+                        <Text style={{ fontSize: 15, color: DS.sombre, fontWeight: newPlanLotId === lot.id ? '600' : '400' }}>
+                          🏷️ {lot.nom}
+                        </Text>
+                        {newPlanLotId === lot.id && <Text style={{ color: DS.bordeaux, fontWeight: '700' }}>✓</Text>}
+                      </Pressable>
+                    ))}
+                </ScrollView>
+              </Pressable>
+            </Pressable>
+          )}
         </View>
       </ModalKeyboard>
-
-      {/* ── Modal sélecteur de lot (V10) — utilisée par la modal Plans ──
-           presentationStyle="overFullScreen" requis pour stacking Modal-on-Modal iOS */}
-      <Modal
-        visible={showLotPicker}
-        transparent
-        animationType="fade"
-        presentationStyle="overFullScreen"
-        onRequestClose={() => setShowLotPicker(false)}
-      >
-        <Pressable
-          style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}
-          onPress={() => setShowLotPicker(false)}
-        >
-          <Pressable
-            style={{
-              backgroundColor: DS.cremeFond,
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
-              paddingTop: 16,
-              paddingBottom: Platform.OS === 'ios' ? 40 : 20,
-              maxHeight: '80%',
-            }}
-            onPress={() => { /* swallow press to prevent backdrop close */ }}
-          >
-            <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 12 }} />
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, marginBottom: 12 }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>Sélectionner un lot</Text>
-              <Pressable onPress={() => setShowLotPicker(false)} accessibilityRole="button" accessibilityLabel="Fermer">
-                <Text style={{ fontSize: 18, color: DS.textSecondary }}>✕</Text>
-              </Pressable>
-            </View>
-            <ScrollView style={{ maxHeight: 500 }}>
-              {/* Option "Aucun lot" en haut */}
-              <Pressable
-                onPress={() => { setNewPlanLotId(null); setShowLotPicker(false); }}
-                style={{
-                  paddingHorizontal: 20,
-                  paddingVertical: 14,
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  borderBottomWidth: 1,
-                  borderBottomColor: DS.border,
-                }}
-              >
-                <Text style={{ fontSize: 15, fontStyle: 'italic', color: DS.textSecondary }}>Aucun lot</Text>
-                {newPlanLotId === null && <Text style={{ color: DS.bordeaux, fontWeight: '700' }}>✓</Text>}
-              </Pressable>
-              {/* Liste alphabétique des lots */}
-              {[...LOTS_DEFAUT]
-                .sort((a, b) => a.nom.localeCompare(b.nom, 'fr'))
-                .map(lot => (
-                  <Pressable
-                    key={lot.id}
-                    onPress={() => { setNewPlanLotId(lot.id); setShowLotPicker(false); }}
-                    style={{
-                      paddingHorizontal: 20,
-                      paddingVertical: 14,
-                      flexDirection: 'row',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      borderBottomWidth: 1,
-                      borderBottomColor: DS.border,
-                      backgroundColor: newPlanLotId === lot.id ? DS.cremeNude : 'transparent',
-                    }}
-                  >
-                    <Text style={{ fontSize: 15, color: DS.sombre, fontWeight: newPlanLotId === lot.id ? '600' : '400' }}>
-                      🏷️ {lot.nom}
-                    </Text>
-                    {newPlanLotId === lot.id && <Text style={{ color: DS.bordeaux, fontWeight: '700' }}>✓</Text>}
-                  </Pressable>
-                ))}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
 
       {bilanChantierId && (
         <BilanFinancierChantier visible={!!bilanChantierId} onClose={() => setBilanChantierId(null)} chantierId={bilanChantierId} />
