@@ -238,17 +238,8 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                   <Text style={styles.noteLabel}>
                     {noteModal?.editingNote ? 'Modifier la note' : 'Nouvelle note'}
                   </Text>
-                  {/* Modèles de notes rapides */}
-                  {!noteModal?.editingNote && !draft.texte && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
-                      {['Finitions à terminer', 'Attente livraison matériel', 'Nettoyage fin de chantier', 'Problème à signaler', 'RAS — Travail en cours'].map(tpl => (
-                        <Pressable key={tpl} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' }}
-                          onPress={() => setDraft({ texte: tpl })}>
-                          <Text style={{ fontSize: 11, color: '#687076' }}>{tpl}</Text>
-                        </Pressable>
-                      ))}
-                    </ScrollView>
-                  )}
+                  {/* Modèles de notes rapides — SUPPRIMÉ V10 (Kevin : pas de saisie libre,
+                      uniquement des cases à cocher) */}
                   {/* Sélecteur SAV (si tickets existent pour ce chantier) */}
                   {noteModal && (() => {
                     const savTickets = (data.ticketsSAV || []).filter(t => t.chantierId === noteModal.chantierId && t.statut !== 'clos');
@@ -274,52 +265,11 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     );
                   })()}
 
-                  <View style={styles.noteInputRow}>
-                    <TextInput
-                      style={styles.noteInput}
-                      value={draft.texte}
-                      onChangeText={(text) => {
-                        const match = text.match(/@(\w*)$/);
-                        setDraft({ texte: text });
-                        setUi({ mentionQuery: match ? match[1] : null });
-                      }}
-                      placeholder="Saisir une note... (tapez @ pour mentionner)"
-                      placeholderTextColor="#B0BEC5"
-                      multiline
-                      numberOfLines={4}
-                      returnKeyType="done"
-                      blurOnSubmit
-                    />
-                    {/* Suggestions @mentions */}
-                    {ui.mentionQuery !== null && (() => {
-                      const q = ui.mentionQuery.toLowerCase();
-                      const suggestions = data.employes.filter(e =>
-                        `${e.prenom} ${e.nom}`.toLowerCase().includes(q) || e.prenom.toLowerCase().startsWith(q)
-                      ).slice(0, 5);
-                      if (suggestions.length === 0) return null;
-                      return (
-                        <View style={{ backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, maxHeight: 150 }}>
-                          {suggestions.map(emp => (
-                            <Pressable key={emp.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}
-                              onPress={() => {
-                                const before = draft.texte.replace(/@\w*$/, '');
-                                setDraft({ texte: `${before}@${emp.prenom} ` });
-                                setUi({ mentionQuery: null });
-                              }}>
-                              <Text style={{ fontSize: 14, color: '#11181C' }}>
-                                <Text style={{ fontWeight: '700' }}>{emp.prenom}</Text> {emp.nom}
-                              </Text>
-                            </Pressable>
-                          ))}
-                        </View>
-                      );
-                    })()}
-                    <Pressable style={styles.keyboardDismissBtn} onPress={Keyboard.dismiss}>
-                      <Text style={styles.keyboardDismissText}>↓</Text>
-                    </Pressable>
-                  </View>
+                  {/* Champ texte libre + suggestions @mentions — SUPPRIMÉ V10
+                      (Kevin : pas de saisie libre, uniquement des cases à cocher).
+                      draft.texte reste en mémoire pour rétrocompat (notes existantes). */}
 
-                  <Text style={[styles.noteLabel, { marginTop: 12 }]}>Photos & PDF</Text>
+                  <Text style={styles.noteLabel}>Photos & PDF</Text>
                   {draft.photos.length > 0 && (
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosRow}>
                       {draft.photos.map((uri, idx) => {
@@ -612,17 +562,8 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                           </View>
                         );
                       })()}
-                      <Text style={styles.noteLabel}>Répéter sur</Text>
-                      <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
-                        {[0, 1, 2, 3, 5, 7, 14].map(d => (
-                          <FilterChip
-                            key={d}
-                            label={d === 0 ? 'Non' : d === 1 ? '+1 j' : `+${d} j`}
-                            active={draft.repeatDays === d}
-                            onPress={() => setDraft({ repeatDays: d })}
-                          />
-                        ))}
-                      </View>
+                      {/* "Répéter sur N jours" — SUPPRIMÉ V10 (Kevin : la note reste
+                          active automatiquement tant qu'une case n'est pas cochée). */}
                     </View>
                   )}
 
