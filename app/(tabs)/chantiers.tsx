@@ -19,6 +19,7 @@ import { PortailClient } from '@/components/PortailClient';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
+import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
@@ -1409,23 +1410,7 @@ export default function ChantiersScreen() {
                 + ((data.supplementsMarche || []).filter(s => s.chantierId === ch.id).length);
 
               const notesPlanningCount = data.affectations.filter(a => a.chantierId === ch.id && (a.notes || []).length > 0).reduce((s, a) => s + a.notes.length, 0);
-
-              const actions = [
-                { icon: '🪪', label: 'Fiche', badge: 0, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => { openFicheUnifiee(c); }, 100); } },
-                { icon: '📐', label: 'Plans', badge: plansCount, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => openPlans(c), 100); } },
-                { icon: '📝', label: 'Notes', badge: notesCount, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => openNotes(c), 100); } },
-                { icon: '📋', label: 'Suivi', badge: notesPlanningCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setSuiviChantierId(id), 100); } },
-                { icon: '📸', label: 'Photos', badge: photosCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setShowGalerie(id), 100); } },
-                { icon: '📍', label: 'Y aller', badge: 0, onPress: () => { const adr = ch.adresse; setActionChantier(null); setTimeout(() => openDirectionsHelper(adr), 100); } },
-                ...(isAdmin ? [{ icon: '💼', label: 'Marchés', badge: marchesCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setMarchesChantierId(id), 100); } }] : []),
-                ...(isAdmin ? [{ icon: '🔧', label: 'SAV', badge: ((data.ticketsSAV || []).filter(t => t.chantierId === ch.id && t.statut !== 'clos').length), onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setSavChantierId(id), 100); } }] : []),
-                ...(isAdmin ? [{ icon: '🛒', label: 'Achats', badge: achatsCount, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setAchatsChantierId(id), 100); } }] : []),
-                ...(isAdmin ? [{ icon: '🏁', label: 'PV réception', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setShowPVChantier(id), 100); } }] : []),
-                ...(isAdmin ? [{ icon: '💰', label: 'Finances', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setBilanChantierId(id), 100); } }] : []),
-                ...(isAdmin ? [{ icon: '👤', label: 'Portail client', badge: 0, onPress: () => { const id = ch.id; setActionChantier(null); setTimeout(() => setPortailClientId(id), 100); } }] : []),
-                ...(isAdmin && ch.statut !== 'termine' ? [{ icon: '✅', label: 'Clôturer', badge: 0, onPress: () => { const c = ch; setActionChantier(null); setTimeout(() => handleClotureChantier(c), 100); } }] : []),
-                ...(isAdmin ? [{ icon: '🗑', label: 'Supprimer', badge: 0, danger: true, onPress: () => { const id = ch.id; const nom = ch.nom; setActionChantier(null); setTimeout(() => handleDelete(id, nom), 100); } }] : []),
-              ];
+              const savCount = (data.ticketsSAV || []).filter(t => t.chantierId === ch.id && t.statut !== 'clos').length;
 
               return (
                 <>
@@ -1441,24 +1426,39 @@ export default function ChantiersScreen() {
                     </View>
                   </View>
 
-                  {/* Grille d'actions */}
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
-                    {actions.map((a, i) => (
-                      <Pressable
-                        key={i}
-                        style={{ width: 80, height: 80, borderRadius: 16, backgroundColor: (a as any).danger ? '#FEF2F2' : '#F5EDE3', alignItems: 'center', justifyContent: 'center', position: 'relative' }}
-                        onPress={a.onPress}
-                      >
-                        <Text style={{ fontSize: 28 }}>{a.icon}</Text>
-                        <Text style={{ fontSize: 10, fontWeight: '600', color: (a as any).danger ? '#E74C3C' : '#11181C', marginTop: 4 }}>{a.label}</Text>
-                        {a.badge > 0 && (
-                          <View style={{ position: 'absolute', top: 4, right: 4, backgroundColor: '#2C2C2C', borderRadius: 8, minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 }}>
-                            <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>{a.badge}</Text>
-                          </View>
-                        )}
-                      </Pressable>
-                    ))}
-                  </View>
+                  {/* Dashboard V10 — grille de tuiles + footer actions */}
+                  <ChantierDetailDashboard
+                    isAdmin={isAdmin}
+                    counts={{
+                      notes: notesCount,
+                      plans: plansCount,
+                      photos: photosCount,
+                      achats: achatsCount,
+                      marches: marchesCount,
+                      notesPlanning: notesPlanningCount,
+                      sav: savCount,
+                    }}
+                    handlers={{
+                      onPressFiche:       () => { setActionChantier(null); setTimeout(() => openFicheUnifiee(ch), 100); },
+                      onPressPlans:       () => { setActionChantier(null); setTimeout(() => openPlans(ch), 100); },
+                      onPressNotes:       () => { setActionChantier(null); setTimeout(() => openNotes(ch), 100); },
+                      onPressSuivis:      () => { setActionChantier(null); setTimeout(() => setSuiviChantierId(ch.id), 100); },
+                      onPressPhotos:      () => { setActionChantier(null); setTimeout(() => setShowGalerie(ch.id), 100); },
+                      onPressYAller:      () => { setActionChantier(null); setTimeout(() => openDirectionsHelper(ch.adresse), 100); },
+                      onPressMarches:     () => { setActionChantier(null); setTimeout(() => setMarchesChantierId(ch.id), 100); },
+                      onPressSAV:         () => { setActionChantier(null); setTimeout(() => setSavChantierId(ch.id), 100); },
+                      onPressAchats:      () => { setActionChantier(null); setTimeout(() => setAchatsChantierId(ch.id), 100); },
+                      onPressPV:          () => { setActionChantier(null); setTimeout(() => setShowPVChantier(ch.id), 100); },
+                      onPressRentabilite: () => { setActionChantier(null); setTimeout(() => setBilanChantierId(ch.id), 100); },
+                      onPressMessagerie:  () => { setActionChantier(null); setTimeout(() => setPortailClientId(ch.id), 100); },
+                      onPressCloturer:    isAdmin && ch.statut !== 'termine'
+                        ? () => { setActionChantier(null); setTimeout(() => handleClotureChantier(ch), 100); }
+                        : undefined,
+                      onPressSupprimer:   isAdmin
+                        ? () => { setActionChantier(null); setTimeout(() => handleDelete(ch.id, ch.nom), 100); }
+                        : undefined,
+                    }}
+                  />
 
                   {/* Changement rapide de statut */}
                   {isAdmin && (
