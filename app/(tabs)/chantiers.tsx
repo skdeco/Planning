@@ -1960,78 +1960,8 @@ export default function ChantiersScreen() {
                 );
               })()}
 
-              {/* Photos / Plans / PDF */}
-              <View style={styles.ficheSectionPhotos}>
-                <Text style={styles.ficheSectionLabel}>{t.common.photosPlans}</Text>
-                <View style={styles.photosGrid}>
-                  {fiche.photos.map((uri, idx) => {
-                    const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
-                    return (
-                      <View key={idx} style={styles.photoWrap}>
-                        {isPdf ? (
-                          <Pressable
-                            style={styles.pdfThumb}
-                            onPress={() => openDocPreview(uri)}
-                            accessibilityRole="button"
-                            accessibilityLabel="Ouvrir le PDF"
-                          >
-                            <Text style={styles.pdfThumbIcon}>📄</Text>
-                            <Text style={styles.pdfThumbText}>PDF</Text>
-                          </Pressable>
-                        ) : (
-                          <Pressable
-                            onPress={() => openDocPreview(uri)}
-                            accessibilityRole="button"
-                            accessibilityLabel="Ouvrir la photo"
-                          >
-                            <Image source={{ uri }} style={styles.photoThumb} resizeMode="cover" />
-                          </Pressable>
-                        )}
-                        {isAdmin && (
-                          <Pressable
-                            style={styles.photoRemove}
-                            onPress={() => {
-                              const doDelete = () => removePhoto(idx);
-                              if (Platform.OS === 'web') {
-                                if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer ce fichier ?')) doDelete();
-                              } else {
-                                Alert.alert('Supprimer le fichier ?', 'Cette action est irréversible.', [
-                                  { text: 'Annuler', style: 'cancel' },
-                                  { text: 'Supprimer', style: 'destructive', onPress: doDelete },
-                                ]);
-                              }
-                            }}
-                            accessibilityRole="button"
-                            accessibilityLabel="Supprimer le fichier"
-                          >
-                            <Text style={styles.photoRemoveText}>✕</Text>
-                          </Pressable>
-                        )}
-                      </View>
-                    );
-                  })}
-                  {isAdmin && (
-                    <NativeFilePickerButton
-                      onPick={handleFichePickNative}
-                      acceptImages
-                      acceptCamera
-                      acceptPdf
-                      multiple
-                      compressImages
-                      buttonStyle={styles.photoAdd}
-                      label={`+ ${t.common.add}`}
-                    />
-                  )}
-                </View>
-                {isAdmin && (
-                  <View style={{ marginTop: 8 }}>
-                    <InboxPickerButton
-                      onPick={handleFichePickFromInbox}
-                      mimeFilter={inboxMimeFilterImagePdf}
-                    />
-                  </View>
-                )}
-              </View>
+              {/* Photos / Plans / PDF — SUPPRIMÉ commit D' refonte V10
+                  (accessible via tuiles "Photos" et "Plans" du dashboard) */}
 
               {/* ═══ CONFIGURATION CHANTIER (admin) ═══ */}
               {isAdmin && (
