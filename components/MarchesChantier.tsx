@@ -62,6 +62,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   const [marcheForm, setMarcheForm] = useState({ libelle: '', montantHT: '', montantTTC: '', dateDevis: '', dateSignature: '' });
   const [marcheDevisInitial, setMarcheDevisInitial] = useState<{ uri: string; nom: string } | null>(null);
   const [marcheDevisSigne, setMarcheDevisSigne] = useState<{ uri: string; nom: string } | null>(null);
+  const [devisAutoExtractLoading, setDevisAutoExtractLoading] = useState(false);
+  const [devisAutoExtractMsg, setDevisAutoExtractMsg] = useState<string | null>(null);
   // ── Commission apporteur (dans le form marché) ──
   const [commissionEnabled, setCommissionEnabled] = useState(false);
   const [commissionForm, setCommissionForm] = useState<{
@@ -181,6 +183,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     setMarcheForm({ libelle: 'Marché initial', montantHT: '', montantTTC: '', dateDevis: todayYMD(), dateSignature: '' });
     setMarcheDevisInitial(null);
     setMarcheDevisSigne(null);
+    setDevisAutoExtractMsg(null);
+    setDevisAutoExtractLoading(false);
     setCommissionEnabled(false);
     setCommissionForm({ apporteurId: '', modeCommission: 'pourcentage', valeur: '', baseCalcul: 'HT', statut: 'a_payer', datePaiement: '', note: '' });
     setShowMarcheForm(true);
@@ -969,9 +973,62 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               </View>
 
               <Text style={lbl}>📄 Devis initial</Text>
-              <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis'); if (f) setMarcheDevisInitial(f); }}>
+              <Pressable style={fileBtn} onPress={async () => {
+                const f = await pickFile('devis');
+                if (!f) return;
+                setMarcheDevisInitial(f);
+                // Auto-extraction silencieuse HT/TTC depuis le devis PDF
+                // (utile pour pré-remplir les champs montants).
+                setDevisAutoExtractMsg(null);
+                setDevisAutoExtractLoading(true);
+                try {
+                  // 1. Upload sur Supabase (URL distante requise par l'API)
+                  const uploaded = await uploadIfNeeded(f, 'marche/devis');
+                  if (!uploaded.uri || uploaded.uri.startsWith('file://')) {
+                    setDevisAutoExtractLoading(false);
+                    return;
+                  }
+                  // 2. Mémorise le PDF avec son URL distante (évite re-upload au save)
+                  setMarcheDevisInitial({ uri: uploaded.uri, nom: uploaded.nom || f.nom });
+                  // 3. Extrait le texte côté serveur
+                  const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
+                  const texte = await extractTextFromPdfUrl(uploaded.uri);
+                  if (!texte) { setDevisAutoExtractLoading(false); return; }
+                  // 4. Parse le récap (totaux HT/TTC)
+                  const { extraireRecapDevis, extraireTotalTTC } = await import('@/lib/devisParser');
+                  const recap = extraireRecapDevis(texte);
+                  const totalTTC = recap.totalTTC || extraireTotalTTC(texte);
+                  const totalHT = recap.totalNetHT || recap.totalBrutHT;
+                  let filled: string[] = [];
+                  if (totalHT && !marcheForm.montantHT.trim()) {
+                    setMarcheForm(prev => ({ ...prev, montantHT: String(totalHT) }));
+                    filled.push(`HT ${totalHT.toLocaleString('fr-FR')} €`);
+                  }
+                  if (totalTTC && !marcheForm.montantTTC.trim()) {
+                    setMarcheForm(prev => ({ ...prev, montantTTC: String(totalTTC) }));
+                    filled.push(`TTC ${totalTTC.toLocaleString('fr-FR')} €`);
+                  }
+                  if (filled.length > 0) {
+                    setDevisAutoExtractMsg(`✓ Auto-rempli : ${filled.join(' · ')}`);
+                  }
+                } catch (e) {
+                  console.warn('[MarchesChantier] auto-extract devis échoué:', e);
+                } finally {
+                  setDevisAutoExtractLoading(false);
+                }
+              }}>
                 <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{marcheDevisInitial ? `📎 ${marcheDevisInitial.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
+              {devisAutoExtractLoading && (
+                <Text style={{ fontSize: 11, color: '#687076', fontStyle: 'italic', marginTop: 4 }}>
+                  🤖 Analyse du devis pour pré-remplir HT/TTC...
+                </Text>
+              )}
+              {devisAutoExtractMsg && (
+                <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600', marginTop: 4 }}>
+                  {devisAutoExtractMsg}
+                </Text>
+              )}
 
               <Text style={lbl}>✍️ Devis signé</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis-signe'); if (f) setMarcheDevisSigne(f); }}>
