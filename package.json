@@ -75,6 +75,7 @@
     "moti": "^0.30.0",
     "mysql2": "^3.16.0",
     "nativewind": "^4.2.1",
+    "pdf-lib": "^1.17.1",
     "pdfreader": "^3.0.8",
     "react": "19.1.0",
     "react-dom": "19.1.0",
