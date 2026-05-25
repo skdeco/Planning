@@ -25,7 +25,7 @@ const COLOR_BLANC = rgb(1, 1, 1);
  */
 const BOX = {
   marginX: 40,           // marge gauche/droite
-  marginBottom: 20,      // marge depuis le bas de la page
+  marginBottom: 70,      // marge depuis le bas de la page (laisse place au footer SKDECO)
   height: 150,           // hauteur de l'encadré
   paddingX: 12,
   paddingTop: 14,
