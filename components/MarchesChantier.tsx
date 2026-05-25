@@ -475,33 +475,34 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
             </Pressable>
           </View>
 
-          {/* Récap */}
-          <View style={{ flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#F8F9FA' }}>
-            <View style={{ flex: 1, backgroundColor: '#EBF0FF', borderRadius: 8, padding: 10 }}>
-              <Text style={{ fontSize: 10, color: '#687076', fontWeight: '600' }}>TOTAL DÛ TTC</Text>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C' }}>{fmt(totalDu)} €</Text>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
+            {/* Récap */}
+            <View style={{ flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#F8F9FA' }}>
+              <View style={{ flex: 1, backgroundColor: '#EBF0FF', borderRadius: 8, padding: 10 }}>
+                <Text style={{ fontSize: 10, color: '#687076', fontWeight: '600' }}>TOTAL DÛ TTC</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C' }}>{fmt(totalDu)} €</Text>
+              </View>
+              <View style={{ flex: 1, backgroundColor: '#D4EDDA', borderRadius: 8, padding: 10 }}>
+                <Text style={{ fontSize: 10, color: '#155724', fontWeight: '600' }}>REÇU</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#155724' }}>{fmt(totalRecu)} €</Text>
+              </View>
+              <View style={{ flex: 1, backgroundColor: reste > 0 ? '#FEF2F2' : reste === 0 ? '#D4EDDA' : '#EBF0FF', borderRadius: 8, padding: 10 }}>
+                <Text style={{ fontSize: 10, color: '#687076', fontWeight: '600' }}>{reste < 0 ? 'TROP-PERÇU' : 'RESTE'}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: reste > 0 ? '#DC2626' : reste === 0 ? '#155724' : '#2C2C2C' }}>{reste === 0 ? 'Soldé ✓' : `${fmt(Math.abs(reste))} €`}</Text>
+              </View>
             </View>
-            <View style={{ flex: 1, backgroundColor: '#D4EDDA', borderRadius: 8, padding: 10 }}>
-              <Text style={{ fontSize: 10, color: '#155724', fontWeight: '600' }}>REÇU</Text>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: '#155724' }}>{fmt(totalRecu)} €</Text>
-            </View>
-            <View style={{ flex: 1, backgroundColor: reste > 0 ? '#FEF2F2' : reste === 0 ? '#D4EDDA' : '#EBF0FF', borderRadius: 8, padding: 10 }}>
-              <Text style={{ fontSize: 10, color: '#687076', fontWeight: '600' }}>{reste < 0 ? 'TROP-PERÇU' : 'RESTE'}</Text>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: reste > 0 ? '#DC2626' : reste === 0 ? '#155724' : '#2C2C2C' }}>{reste === 0 ? 'Soldé ✓' : `${fmt(Math.abs(reste))} €`}</Text>
-            </View>
-          </View>
 
-          {/* V10 — Section avancement par lot (H) */}
-          {chantier && (
-            <AvancementLotsPanel
-              chantier={chantier}
-              isAdmin={isAdmin}
-              onPressImport={isAdmin ? () => setShowImportLots(true) : undefined}
-            />
-          )}
+            {/* V10 — Section avancement par lot (H) */}
+            {chantier && (
+              <AvancementLotsPanel
+                chantier={chantier}
+                isAdmin={isAdmin}
+                onPressImport={isAdmin ? () => setShowImportLots(true) : undefined}
+              />
+            )}
 
-          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
             {/* ── MARCHÉS ── */}
+            <View style={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
               <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>📋 Marchés ({marches.length})</Text>
               <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }} onPress={openNewMarche}>
@@ -775,6 +776,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 </View>
               );
             })}
+            </View>
           </ScrollView>
         </View>
 
