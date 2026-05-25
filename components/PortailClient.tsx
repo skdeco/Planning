@@ -321,7 +321,24 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   };
 
   // ── Avancement par corps de métier ──
-  const avancementCorps = chantier?.avancementCorps || [];
+  // Phase A : les lots sont désormais portés par chaque marché et chaque
+  // supplément. On agrège tous les lots disponibles pour l'affichage.
+  // Le legacy chantier.avancementCorps est conservé pour les chantiers
+  // qui n'ont pas encore été migrés (migration automatique au prochain
+  // ouverture de Marchés admin).
+  const avancementCorps = useMemo(() => {
+    const all: NonNullable<Chantier['avancementCorps']> = [];
+    // Lots portés par les marchés
+    marches.forEach(m => { (m.avancementCorps || []).forEach(l => all.push(l)); });
+    // Lots portés par les suppléments acceptés
+    supplements.forEach(s => { (s.avancementCorps || []).forEach(l => all.push(l)); });
+    // Legacy (pré-Phase A migration)
+    (chantier?.avancementCorps || []).forEach(l => {
+      // Évite les doublons d'ID si un lot a déjà été migré
+      if (!all.find(x => x.id === l.id)) all.push(l);
+    });
+    return all;
+  }, [marches, supplements, chantier?.avancementCorps]);
   const avancementGlobalCorps = useMemo(() => {
     if (avancementCorps.length === 0) return null;
     const avecMontant = avancementCorps.filter(c => c.montant && c.montant > 0);
