@@ -504,9 +504,11 @@ export async function uploadFileToStorage(
 
       // Mobile : data URI → fichier tmp → FileSystem.uploadAsync
       // (méthode dédiée upload qui contourne le bug fetch+Blob sur RN)
+      // IMPORTANT : import explicite /legacy — l'API moderne (v18+) ne
+      // donne plus cacheDirectory/documentDirectory au top-level.
       try {
         // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const FileSystem = require('expo-file-system');
+        const FileSystem = require('expo-file-system/legacy');
         const tmpDir = FileSystem.cacheDirectory || FileSystem.documentDirectory;
         if (!tmpDir) {
           console.error('Upload mobile data URI: no cache dir');
