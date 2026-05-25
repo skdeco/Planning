@@ -16,10 +16,14 @@ export interface LotExtrait {
   montantHT: number;
 }
 
-// Mots-clés à ignorer
+// Mots-clés à ignorer (au début du nom ou comme nom entier)
 const BLACKLIST_NOMS = [
   'total', 'sous-total', 'soustotal', 'tva', 'tvac', 'remise', 'rabais',
   'net à payer', 'net a payer', 'brut', 'taux', 'acompte', 'mention',
+  // Stop words FR qui apparaissent quand pdfreader merge des morceaux
+  // de lignes (ex : "ET 3 3.3 Coffrages" = bout de "BOISERIE, ET METAL"
+  // recollé à un sous-lot).
+  'et', 'ou', 'de', 'du', 'la', 'le', 'les', 'des', 'au', 'aux', 'à', 'a',
 ];
 
 function estDansBlacklist(nom: string): boolean {
@@ -67,22 +71,28 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
 
   const lots: LotExtrait[] = [];
 
-  // Regex globale : numéro simple + nom + montant.
-  // La dédup post-match par numéro de lot a été RETIRÉE — elle bloquait
-  // injustement les vrais lots dans certains cas. Si une fausse détection
-  // type "Coffrages" arrive, l'admin peut la supprimer via le bouton
-  // "Tout supprimer" ou la corbeille individuelle.
-  const pattern = new RegExp(
-    '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s*' +
-    '([A-ZÉÈÀÂÎÔÛÇ]' +
-    '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2}))' +
-    '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2})){2,60}?)' +
-    '\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€',
-    'g'
+  // Stratégie STRICTE : on traite texte LIGNE PAR LIGNE.
+  // Règle Kevin : une ligne de lot valide commence par UN entier SANS point
+  // (ex "1", "12") suivi d'un espace puis du nom (capital initial) puis
+  // d'un montant en €. Tout le reste est ignoré.
+  //
+  // En cas de bug pdfreader (mélange de morceaux de lignes), on a aussi un
+  // filtre post-match qui rejette les noms contenant un pattern "X.Y" interne
+  // (signature de sous-lot mergé type "ET 3 3.3 Coffrages").
+  //
+  // Regex sur ligne trimée :
+  //   ^(\d{1,3})\s+([A-Z...].+?)\s+(\d{1,3}(?:\s\d{3})*,\d{2})\s*€
+  const linePattern = new RegExp(
+    '^(\\d{1,3})\\s+' +
+    '([A-ZÉÈÀÂÎÔÛÇ].+?)' +
+    '\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€'
   );
 
-  let match: RegExpExecArray | null;
-  while ((match = pattern.exec(normalise)) !== null) {
+  for (const rawLine of normalise.split(/\r?\n/)) {
+    const line = rawLine.trim();
+    if (!line) continue;
+    const match = line.match(linePattern);
+    if (!match) continue;
     const numero = parseInt(match[1], 10);
     const nomBrut = match[2];
     const montantStr = match[3];
@@ -96,8 +106,41 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
     if (estDansBlacklist(nom)) continue;
     if (!(new RegExp('[A-Za-zÀ-ÿ]')).test(nom)) continue;
     if (/^\d/.test(nom)) continue;
+    // Signature de sous-lot mergé (ex "ET 3 3.3 Coffrages") : présence
+    // d'un motif "X.Y" interne dans le nom.
+    if (/\d\.\d/.test(nom)) continue;
 
     lots.push({ nom, montantHT: montant });
+  }
+
+  // Filet de sécurité : si rien détecté avec la stratégie stricte (peut-être
+  // que pdfreader retourne un format inattendu), on retombe sur la regex
+  // globale historique AVEC les mêmes filtres (stop words + motif X.Y).
+  if (lots.length === 0) {
+    const fallbackPattern = new RegExp(
+      '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s+' +
+      '([A-ZÉÈÀÂÎÔÛÇ]' +
+      '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2}))' +
+      '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2})){2,60}?)' +
+      '\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€',
+      'g'
+    );
+    let m: RegExpExecArray | null;
+    while ((m = fallbackPattern.exec(normalise)) !== null) {
+      const numero = parseInt(m[1], 10);
+      const nomBrut = m[2];
+      const montantStr = m[3];
+      const montant = parseMontant(montantStr);
+      if (numero < 1 || numero > 50) continue;
+      const nom = nettoyerNom(nomBrut);
+      if (nom.length < 3 || nom.length > 60) continue;
+      if (isNaN(montant) || montant < 100 || montant > 50_000_000) continue;
+      if (estDansBlacklist(nom)) continue;
+      if (!(new RegExp('[A-Za-zÀ-ÿ]')).test(nom)) continue;
+      if (/^\d/.test(nom)) continue;
+      if (/\d\.\d/.test(nom)) continue;
+      lots.push({ nom, montantHT: montant });
+    }
   }
 
   // Dédupliquer par nom (garde le premier)
