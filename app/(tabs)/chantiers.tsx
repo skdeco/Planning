@@ -23,6 +23,9 @@ import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS } from '@/constants/design';
+import { ModalNotes } from '@/components/planning/ModalNotes';
+import type { NoteModalState } from '@/hooks/useNotesModalLogic';
+import type { CellNote } from '@/hooks/usePlanningWeekData';
 import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
@@ -488,7 +491,9 @@ export default function ChantiersScreen() {
     });
   };
 
-  // Notes chantier
+  // Notes chantier — états legacy (ancienne modal inline, deprecated V10)
+  // L'ancienne modal showNotes (lignes ~2362-2764) n'est plus ouverte par
+  // openNotes() — dead code à nettoyer en F1d.
   const [showNotes, setShowNotes] = useState(false);
   const [notesChantierId, setNotesChantierId] = useState<string | null>(null);
   const [newNoteTexte, setNewNoteTexte] = useState('');
@@ -497,13 +502,33 @@ export default function ChantiersScreen() {
   const [notesOnglet, setNotesOnglet] = useState<'actives' | 'historique'>('actives');
   const [notePhotos, setNotePhotos] = useState<string[]>([]);
 
+  // V10 — État de la modal Notes unifiée (ModalNotes du planning, mode='chantier')
+  const [noteModalChantier, setNoteModalChantier] = useState<NoteModalState | null>(null);
+
   const openNotes = (chantier: Chantier) => {
-    setNotesChantierId(chantier.id);
-    setNewNoteTexte('');
-    setNoteDestinataires('tous');
-    setNotesOnglet('actives');
-    setNotePhotos([]);
-    setShowNotes(true);
+    // V10 — Aggrégation de toutes les notes du chantier (toutes affectations,
+    // toutes dates) pour mode='chantier' de la modal Planning unifiée.
+    const today = todayYMD();
+    const allNotes: CellNote[] = data.affectations
+      .filter(a => a.chantierId === chantier.id)
+      .flatMap(a => (a.notes || []).map(n => ({
+        ...n,
+        affectationId: a.id,
+        affectationEmployeId: a.employeId,
+      })))
+      .sort((a, b) => {
+        const dA = a.date || a.createdAt || '';
+        const dB = b.date || b.createdAt || '';
+        return dB.localeCompare(dA);
+      });
+    setNoteModalChantier({
+      chantierId: chantier.id,
+      date: today,                // date par défaut pour les nouvelles notes créées
+      targetEmployeId: '',        // pas de cible spécifique en mode chantier
+      allNotes,
+      editingNote: null,
+      mode: 'chantier',
+    });
   };
 
   const handleNoteChantierPickNative = async (file: PickedFile): Promise<string | null> => {
@@ -3382,6 +3407,9 @@ export default function ChantiersScreen() {
         <BilanFinancierChantier visible={!!bilanChantierId} onClose={() => setBilanChantierId(null)} chantierId={bilanChantierId} />
       )}
       <GaleriePhotos visible={showGalerie !== null} onClose={() => setShowGalerie(null)} chantierId={showGalerie || undefined} titre={`📷 Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
+      {/* V10 — Modal Notes unifiée (planning), ouverte depuis tuile Notes du dashboard chantier */}
+      <ModalNotes noteModal={noteModalChantier} setNoteModal={setNoteModalChantier} />
+
       {marchesChantierId && (
         <MarchesChantier visible={!!marchesChantierId} onClose={() => setMarchesChantierId(null)} chantierId={marchesChantierId} />
       )}
