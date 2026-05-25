@@ -489,7 +489,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
           {/* V10 — Section avancement par lot (H) */}
           {chantier && (
-            <AvancementLotsPanel chantier={chantier} isAdmin={isAdmin} />
+            <AvancementLotsPanel
+              chantier={chantier}
+              isAdmin={isAdmin}
+              devisUri={marches.find(m => m.devisInitialUri)?.devisInitialUri}
+              devisNom={marches.find(m => m.devisInitialUri)?.devisInitialNom}
+            />
           )}
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
