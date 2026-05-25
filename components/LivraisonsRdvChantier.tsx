@@ -323,6 +323,69 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
               {l.numeroColis && <Text style={styles.livDetail}>📦 Colis {l.numeroColis}</Text>}
               {l.nomContact && <Text style={styles.livDetail}>👤 {l.nomContact}{l.telephoneContact ? ` · ${l.telephoneContact}` : ''}</Text>}
               {l.note && <Text style={styles.livNote}>💬 {l.note}</Text>}
+              {/* V10 — Workflow monte-charge (admin only, si monteChargeRequis=true) */}
+              {isAdmin && l.monteChargeRequis && (
+                <View style={{
+                  marginTop: 10,
+                  padding: 10,
+                  backgroundColor: '#F1E8DC',
+                  borderRadius: 8,
+                  borderLeftWidth: 3,
+                  borderLeftColor: '#5C1F2E',
+                }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E', letterSpacing: 0.5, textTransform: 'uppercase', marginBottom: 6 }}>
+                    🏗️ Monte-charge — workflow admin
+                  </Text>
+                  {/* Sous-case 1 : Demande mairie */}
+                  <Pressable
+                    onPress={() => updateLivraison({
+                      ...l,
+                      demandeMairie: { ...(l.demandeMairie || { fait: false }), fait: !(l.demandeMairie?.fait) },
+                      updatedAt: new Date().toISOString(),
+                    })}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: !!l.demandeMairie?.fait }}
+                  >
+                    <View style={{
+                      width: 18, height: 18, borderRadius: 4,
+                      borderWidth: 2,
+                      borderColor: l.demandeMairie?.fait ? '#5C1F2E' : '#8A7B6E',
+                      backgroundColor: l.demandeMairie?.fait ? '#5C1F2E' : 'transparent',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {l.demandeMairie?.fait && <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>✓</Text>}
+                    </View>
+                    <Text style={{ fontSize: 12, color: '#2A2622', flex: 1 }}>
+                      📋 Demande mairie {l.demandeMairie?.fait ? 'envoyée' : 'à faire'}
+                    </Text>
+                  </Pressable>
+                  {/* Sous-case 2 : Prévenir prestataire monte-charge */}
+                  <Pressable
+                    onPress={() => updateLivraison({
+                      ...l,
+                      prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: false }), fait: !(l.prevenirMonteCharge?.fait) },
+                      updatedAt: new Date().toISOString(),
+                    })}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: !!l.prevenirMonteCharge?.fait }}
+                  >
+                    <View style={{
+                      width: 18, height: 18, borderRadius: 4,
+                      borderWidth: 2,
+                      borderColor: l.prevenirMonteCharge?.fait ? '#5C1F2E' : '#8A7B6E',
+                      backgroundColor: l.prevenirMonteCharge?.fait ? '#5C1F2E' : 'transparent',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      {l.prevenirMonteCharge?.fait && <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>✓</Text>}
+                    </View>
+                    <Text style={{ fontSize: 12, color: '#2A2622', flex: 1 }}>
+                      📞 Monte-charge {l.prevenirMonteCharge?.fait ? 'prévenu' : 'à prévenir'}
+                    </Text>
+                  </Pressable>
+                </View>
+              )}
               {l.photoEtiquetteUri && (
                 <Pressable onPress={() => l.photoEtiquetteUri && (Platform.OS === 'web' ? window.open(l.photoEtiquetteUri) : Linking.openURL(l.photoEtiquetteUri))}>
                   <Image source={{ uri: l.photoEtiquetteUri }} style={{ width: 80, height: 80, borderRadius: 6, marginTop: 6 }} />
