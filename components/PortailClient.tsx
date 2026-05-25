@@ -227,6 +227,49 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const marches = useMemo(() => (data.marchesChantier || []).filter(m => m.chantierId === chantierId), [data.marchesChantier, chantierId]);
   const supplements = useMemo(() => (data.supplementsMarche || []).filter(s => s.chantierId === chantierId && s.statut === 'accepte'), [data.supplementsMarche, chantierId]);
 
+  // ── Situations facturées (snapshots) agrégées par date, tous marchés + supps ──
+  const situationsFigees = useMemo(() => {
+    type SituationLine = {
+      id: string;
+      source: string;          // libellé du marché ou supplément parent
+      dateGel: string;
+      intitule: string;
+      numero?: number;
+      montantNouveau: number;  // ce qui est facturé sur ce snapshot
+      cumulFacture: number;    // cumul HT à cette date pour ce parent
+    };
+    const all: SituationLine[] = [];
+    marches.forEach(m => {
+      (m.snapshots || []).forEach(s => {
+        all.push({
+          id: s.id,
+          source: m.libelle,
+          dateGel: s.dateGel,
+          intitule: s.intitule || `Situation N°${s.numero ?? '?'}`,
+          numero: s.numero,
+          montantNouveau: (s.lots || []).reduce((sum, l) => sum + l.montantFactureNouveau, 0),
+          cumulFacture: s.cumulFacture,
+        });
+      });
+    });
+    supplements.forEach(sup => {
+      (sup.snapshots || []).forEach(s => {
+        all.push({
+          id: s.id,
+          source: `+ ${sup.libelle}`,
+          dateGel: s.dateGel,
+          intitule: s.intitule || `Situation N°${s.numero ?? '?'}`,
+          numero: s.numero,
+          montantNouveau: (s.lots || []).reduce((sum, l) => sum + l.montantFactureNouveau, 0),
+          cumulFacture: s.cumulFacture,
+        });
+      });
+    });
+    // Trie par date décroissante (la plus récente en haut)
+    all.sort((a, b) => b.dateGel.localeCompare(a.dateGel));
+    return all;
+  }, [marches, supplements]);
+
   // ── Totaux financiers ──
   const financials = useMemo(() => {
     let totalHT = 0;
@@ -1462,6 +1505,39 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   )}
                 </>
               )}
+
+            {/* V10 — Situations figées par marché/supplément (Phase B) */}
+            {situationsFigees.length > 0 && (
+              <>
+                <View style={styles.subSectionHeader}>
+                  <Text style={styles.subSectionTitle}>📋 Situations facturées</Text>
+                </View>
+                <Text style={styles.pfsSubtitle}>
+                  {situationsFigees.length} situation{situationsFigees.length > 1 ? 's' : ''} figée{situationsFigees.length > 1 ? 's' : ''} par marché/supplément
+                </Text>
+                {situationsFigees.map(s => {
+                  const dateFr = new Date(s.dateGel).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+                  return (
+                    <View key={s.id} style={styles.pfsHistItem}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.pfsHistNumero}>{s.intitule}</Text>
+                          <Text style={styles.pfsHistDate}>{dateFr} · {s.source}</Text>
+                        </View>
+                      </View>
+                      <View style={styles.pfsHistRow}>
+                        <Text style={styles.pfsHistLabel}>Facturé sur cette situation :</Text>
+                        <Text style={styles.pfsHistMontant}>{fmt(s.montantNouveau)} € HT</Text>
+                      </View>
+                      <View style={styles.pfsHistRow}>
+                        <Text style={styles.pfsHistLabel}>Cumul à cette date :</Text>
+                        <Text style={[styles.pfsHistLabel, { fontWeight: '700' }]}>{fmt(s.cumulFacture)} € HT</Text>
+                      </View>
+                    </View>
+                  );
+                })}
+              </>
+            )}
 
             {/* ── Point financier de situation (dans le même card) ── */}
             {(situation.lignes.length > 0 || situationsHistorique.length > 0) && (
