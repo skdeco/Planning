@@ -19,21 +19,21 @@ export const SIGNATURE_LAYOUT = {
   // Texte de la mention (manuscrite normalement, ici typée)
   mention: {
     x: 90,
-    y: 180,           // ligne haute du cadre
+    y: 285,           // ligne haute du cadre "Pour le client"
     fontSize: 9,
-    maxWidth: 200,    // pour wrap éventuel
+    maxWidth: 200,
   },
   // Signature image (PNG transparent)
   signature: {
-    x: 320,
-    y: 100,
-    width: 180,
-    height: 70,
+    x: 340,
+    y: 195,
+    width: 160,
+    height: 65,
   },
   // Date (format DD/MM/YYYY)
   date: {
     x: 90,
-    y: 80,            // ligne pointillée date
+    y: 195,           // ligne pointillée date
     fontSize: 10,
   },
 } as const;
