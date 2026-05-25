@@ -83,19 +83,19 @@ export function SectionTile({
 
 const styles = StyleSheet.create({
   touchable: {
-    aspectRatio: 1,
+    aspectRatio: 1.4, // V10 — Option A validée Kevin : tuiles aplaties
   },
   tile: {
     flex: 1,
     backgroundColor: DS.surface,
     borderWidth: 1,
     borderColor: DS.border,
-    borderRadius: 16,
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    borderRadius: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
+    gap: 6,
     position: 'relative',
   },
   iconWrap: {
@@ -106,11 +106,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   label: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: DS.sombre,
     textAlign: 'center',
-    lineHeight: 14.4,
+    lineHeight: 13,
   },
   badge: {
     position: 'absolute',

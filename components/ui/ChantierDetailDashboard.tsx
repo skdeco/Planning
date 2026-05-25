@@ -100,20 +100,37 @@ export function ChantierDetailDashboard({
   const hasFooterActions =
     isAdmin && (handlers.onPressCloturer !== undefined || handlers.onPressSupprimer !== undefined);
 
+  // V10 — Centrer la dernière ligne si elle est incomplète (ex: 13 tuiles sur 3 colonnes
+  //        → la 13e seule sur la 5e ligne. Spacer avant pour la centrer.)
+  const totalTiles = visibleTiles.length;
+  const remainder = totalTiles % 3;
+  // Si reste = 1 (cas 13) : 1 spacer avant ; si reste = 2 (cas 14) : 0.5 spacer avant
+  // (en pratique on ajoute 1 spacer pour reste=1, 0 pour reste=2 ou 0)
+  const lastRowSpacers = remainder === 1 ? 1 : 0;
+
   return (
     <View style={styles.container}>
       <View style={styles.grid}>
-        {visibleTiles.map((tile, i) => (
-          <View key={`${tile.label}-${i}`} style={styles.tileWrap}>
-            <SectionTile
-              icon={tile.icon}
-              label={tile.label}
-              variant={tile.variant}
-              onPress={tile.onPress}
-              badge={tile.badge}
-            />
-          </View>
-        ))}
+        {visibleTiles.map((tile, i) => {
+          const isLastTile = i === totalTiles - 1;
+          return (
+            <React.Fragment key={`${tile.label}-${i}`}>
+              {/* Spacer invisible avant la dernière tuile si dernière ligne incomplète */}
+              {isLastTile && Array.from({ length: lastRowSpacers }).map((_, j) => (
+                <View key={`spacer-${j}`} style={styles.tileWrap} />
+              ))}
+              <View style={styles.tileWrap}>
+                <SectionTile
+                  icon={tile.icon}
+                  label={tile.label}
+                  variant={tile.variant}
+                  onPress={tile.onPress}
+                  badge={tile.badge}
+                />
+              </View>
+            </React.Fragment>
+          );
+        })}
       </View>
 
       {hasFooterActions && (
@@ -145,10 +162,10 @@ const styles = StyleSheet.create({
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
+    gap: 8, // V10 Option A : gap réduit pour densité
   },
   tileWrap: {
-    width: '31.5%',
+    width: '31.8%',
   },
   footer: {
     gap: 8,
