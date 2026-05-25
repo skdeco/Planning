@@ -47,7 +47,7 @@ export function InfoTile({
   return (
     <View style={[styles.tile, wide && styles.wide, style]}>
       <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
-        <Icon size={13} color={iconColor} strokeWidth={2} />
+        <Icon size={12} color={iconColor} strokeWidth={2} />
       </View>
       <Text style={styles.label}>{label}</Text>
       {typeof value === 'string' ? (
@@ -81,9 +81,9 @@ const styles = StyleSheet.create({
     flex: 0,
   },
   iconWrap: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
+    width: 20,
+    height: 20,
+    borderRadius: 6,
     alignItems: 'center',
     justifyContent: 'center',
   },

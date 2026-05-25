@@ -46,6 +46,8 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
   const { data, addLivraison, updateLivraison, deleteLivraison, addRdvChantier, updateRdvChantier, deleteRdvChantier, currentUser, updateChantier } = useApp();
   // V10 — chantier courant pour pré-remplir emails mairie/monte-charge par défaut
   const chantierCurrent = useMemo(() => data.chantiers.find(c => c.id === chantierId) || null, [data.chantiers, chantierId]);
+  // V10 — état d'ouverture des dropdowns d'assignation (par livraison × type)
+  const [openAssignDropdown, setOpenAssignDropdown] = useState<{ livId: string; type: 'mairie' | 'monteCharge' } | null>(null);
 
   const allLivraisons = useMemo(
     () => (data.livraisons || []).filter(l => l.chantierId === chantierId).sort((a, b) => a.dateLivraison.localeCompare(b.dateLivraison)),
@@ -374,32 +376,61 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                   {/* V10 — Mini-form d'assignation (employé + mail) si case cochée */}
                   {l.demandeMairie?.fait && (
                     <View style={{ marginLeft: 26, marginTop: 4, gap: 6 }}>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 10, color: '#8A7B6E', marginRight: 2 }}>Assigné à :</Text>
+                      {/* Dropdown employé assigné */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 10, color: '#8A7B6E' }}>Assigné à :</Text>
                         <Pressable
-                          onPress={() => updateLivraison({
-                            ...l,
-                            demandeMairie: { ...(l.demandeMairie || { fait: true }), assigneA: undefined, assigneANom: undefined },
-                            updatedAt: new Date().toISOString(),
-                          })}
-                          style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: !l.demandeMairie?.assigneA ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
+                          onPress={() => setOpenAssignDropdown(prev =>
+                            prev?.livId === l.id && prev?.type === 'mairie' ? null : { livId: l.id, type: 'mairie' }
+                          )}
+                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Choisir un employé pour la demande mairie"
                         >
-                          <Text style={{ fontSize: 10, color: !l.demandeMairie?.assigneA ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>Personne</Text>
+                          <Text style={{ fontSize: 11, color: l.demandeMairie?.assigneANom ? '#2A2622' : '#B0A89E' }}>
+                            {l.demandeMairie?.assigneANom ?? 'Sélectionner…'}
+                          </Text>
+                          <Text style={{ fontSize: 10, color: '#8A7B6E' }}>▼</Text>
                         </Pressable>
-                        {employes.map(emp => (
-                          <Pressable
-                            key={emp.id}
-                            onPress={() => updateLivraison({
-                              ...l,
-                              demandeMairie: { ...(l.demandeMairie || { fait: true }), assigneA: emp.id, assigneANom: emp.prenom },
-                              updatedAt: new Date().toISOString(),
-                            })}
-                            style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: l.demandeMairie?.assigneA === emp.id ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
-                          >
-                            <Text style={{ fontSize: 10, color: l.demandeMairie?.assigneA === emp.id ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>{emp.prenom}</Text>
-                          </Pressable>
-                        ))}
                       </View>
+                      {/* Liste déroulante (visible si dropdown ouvert pour cette livraison × type) */}
+                      {openAssignDropdown?.livId === l.id && openAssignDropdown?.type === 'mairie' && (
+                        <View style={{ marginLeft: 70, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#ECDFCD', maxHeight: 180 }}>
+                          <ScrollView>
+                            <Pressable
+                              onPress={() => {
+                                updateLivraison({
+                                  ...l,
+                                  demandeMairie: { ...(l.demandeMairie || { fait: true }), assigneA: undefined, assigneANom: undefined },
+                                  updatedAt: new Date().toISOString(),
+                                });
+                                setOpenAssignDropdown(null);
+                              }}
+                              style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD' }}
+                            >
+                              <Text style={{ fontSize: 12, color: '#8A7B6E', fontStyle: 'italic' }}>Personne (désassigner)</Text>
+                            </Pressable>
+                            {employes.map(emp => (
+                              <Pressable
+                                key={emp.id}
+                                onPress={() => {
+                                  updateLivraison({
+                                    ...l,
+                                    demandeMairie: { ...(l.demandeMairie || { fait: true }), assigneA: emp.id, assigneANom: emp.prenom },
+                                    updatedAt: new Date().toISOString(),
+                                  });
+                                  setOpenAssignDropdown(null);
+                                }}
+                                style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD', backgroundColor: l.demandeMairie?.assigneA === emp.id ? '#F1E8DC' : 'transparent' }}
+                              >
+                                <Text style={{ fontSize: 12, color: '#2A2622', fontWeight: l.demandeMairie?.assigneA === emp.id ? '600' : '400' }}>
+                                  {emp.prenom} {emp.nom}{l.demandeMairie?.assigneA === emp.id ? ' ✓' : ''}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      )}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Text style={{ fontSize: 10, color: '#8A7B6E' }}>Mail :</Text>
                         <TextInput
@@ -451,32 +482,60 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                   {/* V10 — Mini-form d'assignation (employé + mail) si case cochée */}
                   {l.prevenirMonteCharge?.fait && (
                     <View style={{ marginLeft: 26, marginTop: 4, gap: 6 }}>
-                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 10, color: '#8A7B6E', marginRight: 2 }}>Assigné à :</Text>
+                      {/* Dropdown employé assigné */}
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 10, color: '#8A7B6E' }}>Assigné à :</Text>
                         <Pressable
-                          onPress={() => updateLivraison({
-                            ...l,
-                            prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: true }), assigneA: undefined, assigneANom: undefined },
-                            updatedAt: new Date().toISOString(),
-                          })}
-                          style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: !l.prevenirMonteCharge?.assigneA ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
+                          onPress={() => setOpenAssignDropdown(prev =>
+                            prev?.livId === l.id && prev?.type === 'monteCharge' ? null : { livId: l.id, type: 'monteCharge' }
+                          )}
+                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4 }}
+                          accessibilityRole="button"
+                          accessibilityLabel="Choisir un employé pour prévenir le monte-charge"
                         >
-                          <Text style={{ fontSize: 10, color: !l.prevenirMonteCharge?.assigneA ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>Personne</Text>
+                          <Text style={{ fontSize: 11, color: l.prevenirMonteCharge?.assigneANom ? '#2A2622' : '#B0A89E' }}>
+                            {l.prevenirMonteCharge?.assigneANom ?? 'Sélectionner…'}
+                          </Text>
+                          <Text style={{ fontSize: 10, color: '#8A7B6E' }}>▼</Text>
                         </Pressable>
-                        {employes.map(emp => (
-                          <Pressable
-                            key={emp.id}
-                            onPress={() => updateLivraison({
-                              ...l,
-                              prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: true }), assigneA: emp.id, assigneANom: emp.prenom },
-                              updatedAt: new Date().toISOString(),
-                            })}
-                            style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: l.prevenirMonteCharge?.assigneA === emp.id ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
-                          >
-                            <Text style={{ fontSize: 10, color: l.prevenirMonteCharge?.assigneA === emp.id ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>{emp.prenom}</Text>
-                          </Pressable>
-                        ))}
                       </View>
+                      {openAssignDropdown?.livId === l.id && openAssignDropdown?.type === 'monteCharge' && (
+                        <View style={{ marginLeft: 70, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#ECDFCD', maxHeight: 180 }}>
+                          <ScrollView>
+                            <Pressable
+                              onPress={() => {
+                                updateLivraison({
+                                  ...l,
+                                  prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: true }), assigneA: undefined, assigneANom: undefined },
+                                  updatedAt: new Date().toISOString(),
+                                });
+                                setOpenAssignDropdown(null);
+                              }}
+                              style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD' }}
+                            >
+                              <Text style={{ fontSize: 12, color: '#8A7B6E', fontStyle: 'italic' }}>Personne (désassigner)</Text>
+                            </Pressable>
+                            {employes.map(emp => (
+                              <Pressable
+                                key={emp.id}
+                                onPress={() => {
+                                  updateLivraison({
+                                    ...l,
+                                    prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: true }), assigneA: emp.id, assigneANom: emp.prenom },
+                                    updatedAt: new Date().toISOString(),
+                                  });
+                                  setOpenAssignDropdown(null);
+                                }}
+                                style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD', backgroundColor: l.prevenirMonteCharge?.assigneA === emp.id ? '#F1E8DC' : 'transparent' }}
+                              >
+                                <Text style={{ fontSize: 12, color: '#2A2622', fontWeight: l.prevenirMonteCharge?.assigneA === emp.id ? '600' : '400' }}>
+                                  {emp.prenom} {emp.nom}{l.prevenirMonteCharge?.assigneA === emp.id ? ' ✓' : ''}
+                                </Text>
+                              </Pressable>
+                            ))}
+                          </ScrollView>
+                        </View>
+                      )}
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         <Text style={{ fontSize: 10, color: '#8A7B6E' }}>Mail :</Text>
                         <TextInput
