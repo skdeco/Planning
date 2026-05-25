@@ -19,6 +19,11 @@ interface Props {
   /** Rôle externe (client/architecte/apporteur) — peut créer livraisons, lire RDV */
   externRole?: 'client' | 'architecte' | 'apporteur' | 'contractant';
   createdByNom?: string;
+  /** V10 — mode d'affichage : 'livraisons' | 'rdv' | 'both' (default). Permet
+   *  de n'afficher qu'une section pour usage dans les tuiles V10 dédiées :
+   *  - mode='livraisons' : utilisé par la modal Livraison du dashboard chantier
+   *  - mode='rdv' : sera utilisé par la modal Suivis CR (commit G futur) */
+  mode?: 'livraisons' | 'rdv' | 'both';
 }
 
 const FREQ_LABELS: Record<FrequenceRdv, string> = {
@@ -35,7 +40,9 @@ function formatFR(iso?: string) {
   return new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
-export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, createdByNom }: Props) {
+export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, createdByNom, mode = 'both' }: Props) {
+  const showLivraisons = mode === 'livraisons' || mode === 'both';
+  const showRdvs = mode === 'rdv' || mode === 'both';
   const { data, addLivraison, updateLivraison, deleteLivraison, addRdvChantier, updateRdvChantier, deleteRdvChantier, currentUser } = useApp();
 
   const allLivraisons = useMemo(
@@ -299,6 +306,8 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
 
   return (
     <View style={styles.card}>
+      {showLivraisons && (
+      <>
       <Text style={styles.sectionTitle}>🚚 Livraisons ({livraisons.length})</Text>
       {livraisons.length === 0 ? (
         !isAdmin && prochaineLivraisonHorsHorizon ? (
@@ -416,10 +425,13 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
         </Pressable>
       )}
 
-      {/* RDV — visible seulement si admin ou si externRole valide */}
-      {(isAdmin || externRole) && (
+      </>
+      )}
+
+      {/* RDV — visible seulement si admin ou si externRole valide, ET si mode l'autorise */}
+      {showRdvs && (isAdmin || externRole) && (
         <>
-          <View style={styles.divider} />
+          {showLivraisons && <View style={styles.divider} />}
           <Text style={styles.sectionTitle}>📅 RDV de chantier ({rdvs.length})</Text>
           {rdvs.length === 0 ? (
             !isAdmin && prochainRdvHorsHorizon ? (

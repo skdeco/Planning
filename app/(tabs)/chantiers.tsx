@@ -3453,6 +3453,7 @@ export default function ChantiersScreen() {
                       chantierId={ch.id}
                       isAdmin={isAdmin}
                       createdByNom={currentUser?.nom}
+                      mode="livraisons"
                     />
                   </ScrollView>
                 </>
