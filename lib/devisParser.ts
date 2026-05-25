@@ -67,13 +67,18 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
 
   const lots: LotExtrait[] = [];
 
-  // Regex globale : numéro simple + nom + montant en €
+  // Regex globale : numéro simple en DÉBUT DE LIGNE + nom + montant en €
   // Construite avec RegExp() pour éviter les problèmes de classe de caractères Tailwind
-  // \b(\d{1,3})       : numéro (1 à 999)
-  // (?!\d*\.\d)       : PAS suivi de .chiffre (exclut 1.1, 3.2.1)
-  // (?!\s*[,.]\d)     : PAS suivi de ,chiffre ou .chiffre (exclut 7 854,00 où 7 serait matché seul)
+  //
+  // (?:^|\n)[ \t]* : numéro doit être en début de ligne (avec indentation optionnelle).
+  //                  IMPORTANT : pas n'importe quel whitespace, sinon on match
+  //                  le "3" du montant "3 450,00 €" précédent et on confond
+  //                  un sous-lot "3.3 Coffrages 3 450,00 €" avec un lot.
+  // \b(\d{1,3})    : numéro (1 à 999)
+  // (?!\d*\.\d)    : PAS suivi de .chiffre (exclut 1.1, 3.2.1)
+  // (?!\s*[,.]\d)  : safety belt : PAS suivi de ,chiffre / .chiffre
   // \s+([A-ZÉÈÀÂÎÔÛÇa-zà-ÿ][...]{3,60}?)  : nom
-  // \s+(\d{1,3}(?:\s\d{3})*,\d{2}|\d+[,.]\d{2})\s*€  : montant en €
+  // \s+(\d{1,3}(?:\s\d{3})*,\d{2})\s*€    : montant en €
   //
   // Classe de caractères autorisés dans le nom :
   //   - Lettres a-z/A-Z + accents À-ÿ
@@ -86,7 +91,7 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
   //   - Virgule , (pour "Sol, Murs, Mobilier") — lookahead pour exclure ,XX décimal
   // Note : on garde la contrainte "première lettre = majuscule" pour filtrer le bruit.
   const pattern = new RegExp(
-    '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s*' +
+    '(?:^|\\n)[ \\t]*(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s+' +
     '([A-ZÉÈÀÂÎÔÛÇ]' +
     '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2}))' +
     '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2})){2,60}?)' +
