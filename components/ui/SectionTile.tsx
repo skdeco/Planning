@@ -63,7 +63,7 @@ export function SectionTile({
           style={styles.tile}
         >
           <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
-            <Icon size={18} color={iconColor} strokeWidth={2} />
+            <Icon size={20} color={iconColor} strokeWidth={2.2} />
           </View>
           <Text style={styles.label} numberOfLines={2}>
             {label}
@@ -99,9 +99,9 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   iconWrap: {
-    width: 22,
-    height: 22,
-    borderRadius: 6,
+    width: 24,
+    height: 24,
+    borderRadius: 7,
     alignItems: 'center',
     justifyContent: 'center',
   },
