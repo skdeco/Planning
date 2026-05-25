@@ -16,6 +16,7 @@ import {
   Truck,
   CheckCircle2,
   Trash2,
+  User,
   type LucideIcon,
 } from 'lucide-react-native';
 import { DS } from '@/constants/design';
@@ -54,6 +55,8 @@ export interface ChantierDetailDashboardHandlers {
   onPressRentabilite: () => void;
   onPressLivraison: () => void;
   onPressMessagerie: () => void;
+  /** Aperçu du portail client (vue qu'aura le client connecté). */
+  onPressPortailClient: () => void;
   /** Si undefined, bouton "Clôturer" masqué (ex: chantier déjà terminé ou pas admin) */
   onPressCloturer?: () => void;
   /** Si undefined, bouton "Supprimer" masqué (ex: pas admin) */
@@ -94,6 +97,7 @@ export function ChantierDetailDashboard({
     { icon: TrendingUp,     label: 'Rentabilité',  variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
     { icon: Truck,          label: 'Livraison',    variant: 'marron',   onPress: handlers.onPressLivraison,   badge: counts.livraisons },
     { icon: MessageCircle,  label: 'Messagerie',   variant: 'bordeaux', onPress: handlers.onPressMessagerie,  adminOnly: true },
+    { icon: User,           label: 'Portail client', variant: 'marron', onPress: handlers.onPressPortailClient, adminOnly: true },
   ];
 
   const visibleTiles = tiles.filter(t => !t.adminOnly || isAdmin);
