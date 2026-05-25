@@ -14,10 +14,12 @@ import {
 import { SignaturePad } from '@/components/SignaturePad';
 import { DS } from '@/constants/design';
 import {
-  apposerSignatureSurPdf,
+  ajouterPageSignature,
   fetchPdfBytes,
   bytesToBase64,
-  findSignatureBoxPosition,
+  type ClientInfo,
+  type DevisInfo,
+  type MontantsRecap,
 } from '@/lib/pdfSigner';
 import { uploadFileToStorage } from '@/lib/supabase';
 
@@ -39,6 +41,12 @@ export interface SignerDevisOverlayProps {
   chantierId: string;
   /** Type pour le folder Storage (marche/supplement). */
   type: 'marche' | 'supplement';
+  /** Infos client à afficher dans la page de signature. */
+  client: ClientInfo;
+  /** Infos devis (référence, libellé, date). */
+  devis: DevisInfo;
+  /** Montants HT/TVA/TTC à afficher dans le récap. */
+  montants: MontantsRecap;
   /** Callback après upload réussi du PDF signé. */
   onSigned: (uri: string, nom: string) => void;
 }
@@ -59,6 +67,9 @@ export function SignerDevisOverlay({
   devisNom,
   chantierId,
   type,
+  client,
+  devis,
+  montants,
   onSigned,
 }: SignerDevisOverlayProps) {
   const [signature, setSignature] = useState<string | null>(null);
@@ -93,22 +104,18 @@ export function SignerDevisOverlay({
     }
     setBusy(true);
     try {
-      // 1. Détecter la position du cadre "Pour le client" via API serveur
-      //    (lecture du texte du PDF avec positions). Si non trouvé,
-      //    fallback sur coords hardcodées dans SIGNATURE_LAYOUT.
-      const boxPosition = await findSignatureBoxPosition(devisUri);
-
-      // 2. Télécharger le PDF original (en parallèle aurait été plus rapide
-      //    mais le PDF est gros, on évite la concurrence pour limiter la
-      //    pression mémoire iOS)
+      // 1. Télécharger le PDF original
       const pdfBytes = await fetchPdfBytes(devisUri);
-      // 3. Apposer signature/date/mention sur la page détectée
-      const signedBytes = await apposerSignatureSurPdf({
+      // 2. Ajouter une nouvelle page "Bon pour accord" propre, avec
+      //    en-tête société + client + récap financier + cadre signature
+      const signedBytes = await ajouterPageSignature({
         pdfBytes,
         signatureBase64: signature,
         mention: mention.trim(),
         date: date.trim(),
-        boxPosition,
+        client,
+        devis,
+        montants,
       });
       // 3. Convertir bytes → data URI pour réutiliser uploadFileToStorage
       const base64 = bytesToBase64(signedBytes);

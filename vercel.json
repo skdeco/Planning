@@ -9,10 +9,6 @@
       "maxDuration": 30,
       "memory": 1024
     },
-    "api/find-signature-box.ts": {
-      "maxDuration": 30,
-      "memory": 1024
-    },
     "api/send-email.ts": {
       "maxDuration": 10,
       "memory": 256

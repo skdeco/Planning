@@ -1,186 +1,302 @@
 /**
- * pdfSigner — Appose une signature + date + mention sur la dernière page
- * d'un PDF (devis), dans le cadre "Pour le client" existant.
+ * pdfSigner — Ajoute une page "Bon pour accord" à la fin d'un PDF de devis.
  *
- * Stratégie de positionnement :
- *   1. L'API serveur /api/find-signature-box détecte la position du label
- *      "Pour le client" sur la dernière page (origine top-left, points PDF).
- *   2. Le cadre est juste EN DESSOUS du label (gap réglé via OFFSETS_BELOW_LABEL).
- *   3. Le client convertit en coordonnées pdf-lib (origine bottom-left)
- *      et passe les coords absolues à apposerSignatureSurPdf().
- *
- * Si le label n'est pas détecté (vieux devis, devis modifié), fallback
- * SIGNATURE_LAYOUT (coords hardcodées qui correspondent au template SK DECO
- * actuel).
+ * Approche : au lieu de tenter de positionner la signature dans un cadre
+ * existant (dont la position varie selon le contenu du devis), on AJOUTE
+ * une nouvelle page propre à la fin avec :
+ *   - En-tête SKDECO (société + référence devis)
+ *   - Bloc client (nom + adresse)
+ *   - Récapitulatif financier (HT remisé / TVA / TTC remisé)
+ *   - Cadre signature : mention manuscrite + date + signature image
  */
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
+import { PDFDocument, rgb, StandardFonts, PDFPage, PDFFont } from 'pdf-lib';
 
-/**
- * Fallback hardcodé : coords pour le template SK DECO standard (A4 portrait).
- * Utilisé seulement si la détection serveur échoue.
- */
-export const SIGNATURE_LAYOUT = {
-  mention:   { x: 90,  y: 285, fontSize: 9,  maxWidth: 200 },
-  signature: { x: 340, y: 195, width: 160, height: 65 },
-  date:      { x: 90,  y: 195, fontSize: 10 },
-} as const;
+// ─── Constantes design ────────────────────────────────────────────────────
 
-/**
- * Offsets RELATIFS au label "Pour le client" pour placer les 3 éléments.
- * Le label est positionné AU-DESSUS du cadre. Les éléments vont DANS le cadre.
- *
- * Coords en points PDF, exprimées en delta depuis le coin gauche du label :
- * - dx = décalage horizontal (signature à droite, mention/date à gauche)
- * - dy = décalage vertical EN DESCENDANT (top-left origin), car ce qu'on
- *   reçoit du serveur est aussi en top-left origin.
- */
-export const OFFSETS_BELOW_LABEL = {
-  mention:   { dx: 0,    dy: 20, fontSize: 9,  maxWidth: 230 },
-  signature: { dx: 260,  dy: 50, width: 160, height: 65 },
-  date:      { dx: 0,    dy: 110, fontSize: 10 },
-} as const;
+const PAGE_WIDTH = 595;   // A4 portrait, pts
+const PAGE_HEIGHT = 842;
+const MARGIN_X = 50;
+const COLOR_BORDEAUX = rgb(0.36, 0.12, 0.18);   // #5C1F2E
+const COLOR_SOMBRE = rgb(0.11, 0.11, 0.11);     // #1c1c1c
+const COLOR_GRIS = rgb(0.4, 0.4, 0.4);
+const COLOR_LIGNE = rgb(0.8, 0.8, 0.8);
+const COLOR_ORANGE = rgb(0.85, 0.58, 0.28);     // ~#D9954B (NET À PAYER bar)
 
-export interface SignatureBoxPosition {
-  /** Position du label "Pour le client", origin top-left, unités points PDF. */
-  x: number;
-  y: number;
-  /** Largeur/hauteur de la page (pour convertir en coords pdf-lib). */
-  pageWidth: number;
-  pageHeight: number;
-  /** Numéro de la page (1-indexé). */
-  page: number;
+// ─── Données société (en dur — change ici si SK DECO déménage) ────────────
+
+const ENTETE_SOCIETE = {
+  nom: 'SKDECO',
+  adresse1: '34 Rue du Commandant René Mouchotte',
+  adresse2: '94160 Saint-Mandé',
+  tel: '07 63 62 84 10',
+  email: 'contact@skdeco.fr',
+  siret: 'RCS Créteil 813 532 876 00022',
+  capital: 'SAS au capital de 1000 €',
+};
+
+// ─── Types d'entrée ──────────────────────────────────────────────────────
+
+export interface ClientInfo {
+  nom: string;        // "M. Dupont" ou "Société X"
+  adresse?: string;   // adresse complète multi-lignes
 }
 
-/**
- * Appelle l'API serveur pour trouver la position du label "Pour le client".
- * Retourne null si non trouvé ou erreur réseau.
- */
-export async function findSignatureBoxPosition(pdfUrl: string): Promise<SignatureBoxPosition | null> {
-  try {
-    const apiBase = getApiBaseUrl();
-    const res = await fetch(`${apiBase}/api/find-signature-box`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ url: pdfUrl }),
-    });
-    if (!res.ok) {
-      console.warn('[findSignatureBoxPosition] API error:', res.status);
-      return null;
-    }
-    const data = await res.json();
-    if (data.error) {
-      console.warn('[findSignatureBoxPosition] no box:', data.error);
-      return null;
-    }
-    return data as SignatureBoxPosition;
-  } catch (e) {
-    console.warn('[findSignatureBoxPosition] fetch error:', e);
-    return null;
-  }
+export interface DevisInfo {
+  reference?: string;   // ex: "D-2024-0114"
+  libelle?: string;     // ex: "Marché initial"
+  dateDevis?: string;   // ex: "13/05/2026"
 }
 
-function getApiBaseUrl(): string {
-  if (typeof window !== 'undefined' && window.location) return window.location.origin;
-  return 'https://sk-deco-planning.vercel.app';
+export interface MontantsRecap {
+  totalHT: number;      // HT après remise
+  tva: number;
+  totalTTC: number;     // TTC après remise
 }
 
-export interface ApposerSignatureOptions {
+export interface AjouterPageSignatureOptions {
   /** Bytes du PDF original (Uint8Array). */
   pdfBytes: Uint8Array;
-  /** Signature en base64 PNG (avec ou sans préfixe data:image/png;base64,). */
+  /** Signature en base64 PNG. */
   signatureBase64: string;
   /** Mention manuscrite (texte). */
   mention: string;
   /** Date au format DD/MM/YYYY. */
   date: string;
-  /** Position détectée du label (optionnel — fallback SIGNATURE_LAYOUT si absent). */
-  boxPosition?: SignatureBoxPosition | null;
+  /** Infos client (nom + adresse). */
+  client: ClientInfo;
+  /** Référence et libellé du devis. */
+  devis: DevisInfo;
+  /** Montants HT/TVA/TTC (après remise). */
+  montants: MontantsRecap;
 }
 
+// ─── Fonction principale ──────────────────────────────────────────────────
+
 /**
- * Appose la signature + mention + date sur la page contenant le label
- * "Pour le client" (ou la dernière page en fallback).
- * Retourne les bytes du PDF signé.
+ * Ajoute une nouvelle page "Bon pour accord" à la fin du PDF passé en bytes.
+ * Retourne les bytes du PDF modifié.
  */
-export async function apposerSignatureSurPdf(opts: ApposerSignatureOptions): Promise<Uint8Array> {
-  const { pdfBytes, signatureBase64, mention, date, boxPosition } = opts;
+export async function ajouterPageSignature(
+  opts: AjouterPageSignatureOptions
+): Promise<Uint8Array> {
+  const { pdfBytes, signatureBase64, mention, date, client, devis, montants } = opts;
 
-  // 1. Charger le PDF
   const pdfDoc = await PDFDocument.load(pdfBytes);
-  const pages = pdfDoc.getPages();
+  const fontReg = await pdfDoc.embedFont(StandardFonts.Helvetica);
+  const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // 2. Page cible : celle du label si détectée, sinon dernière
-  const targetPageIndex = boxPosition
-    ? Math.min(Math.max(boxPosition.page - 1, 0), pages.length - 1)
-    : pages.length - 1;
-  const page = pages[targetPageIndex];
-  const { height: pageHeight } = page.getSize();
-
-  // 3. Embed signature
+  // Embed signature
   const pngBase64 = signatureBase64.replace(/^data:image\/png;base64,/, '');
   const pngBytes = base64ToBytes(pngBase64);
   const pngImage = await pdfDoc.embedPng(pngBytes);
-  const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  // 4. Calculer les coordonnées absolues
-  // Si boxPosition fourni : on convertit pdfreader (top-left) → pdf-lib (bottom-left)
-  // via y_pdfLib = pageHeight - y_topLeft. Puis on applique les offsets.
-  // Sinon : SIGNATURE_LAYOUT hardcodé en fallback.
-  let mentionX: number, mentionY: number, mentionSize: number, mentionMaxWidth: number;
-  let sigX: number, sigY: number, sigW: number, sigH: number;
-  let dateX: number, dateY: number, dateSize: number;
+  // Créer nouvelle page A4
+  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
 
-  if (boxPosition) {
-    // y du label converti en bottom-left
-    const labelYBL = pageHeight - boxPosition.y;
-    const labelX = boxPosition.x;
+  // ─── EN-TÊTE ────────────────────────────────────────────────────────
+  let y = PAGE_HEIGHT - 60;
 
-    const O = OFFSETS_BELOW_LABEL;
-    mentionX = labelX + O.mention.dx;
-    mentionY = labelYBL - O.mention.dy;
-    mentionSize = O.mention.fontSize;
-    mentionMaxWidth = O.mention.maxWidth;
+  // Société à gauche
+  page.drawText(ENTETE_SOCIETE.nom, {
+    x: MARGIN_X, y, size: 18, font: fontBold, color: COLOR_BORDEAUX,
+  });
+  page.drawText(ENTETE_SOCIETE.adresse1, {
+    x: MARGIN_X, y: y - 20, size: 9, font: fontReg, color: COLOR_SOMBRE,
+  });
+  page.drawText(ENTETE_SOCIETE.adresse2, {
+    x: MARGIN_X, y: y - 32, size: 9, font: fontReg, color: COLOR_SOMBRE,
+  });
+  page.drawText(`Tél : ${ENTETE_SOCIETE.tel}`, {
+    x: MARGIN_X, y: y - 46, size: 9, font: fontReg, color: COLOR_SOMBRE,
+  });
+  page.drawText(`Email : ${ENTETE_SOCIETE.email}`, {
+    x: MARGIN_X, y: y - 58, size: 9, font: fontReg, color: COLOR_SOMBRE,
+  });
 
-    sigX = labelX + O.signature.dx;
-    sigY = labelYBL - O.signature.dy - O.signature.height; // image: y = bas de l'image
-    sigW = O.signature.width;
-    sigH = O.signature.height;
-
-    dateX = labelX + O.date.dx;
-    dateY = labelYBL - O.date.dy;
-    dateSize = O.date.fontSize;
-  } else {
-    const L = SIGNATURE_LAYOUT;
-    mentionX = L.mention.x; mentionY = L.mention.y;
-    mentionSize = L.mention.fontSize; mentionMaxWidth = L.mention.maxWidth;
-    sigX = L.signature.x; sigY = L.signature.y;
-    sigW = L.signature.width; sigH = L.signature.height;
-    dateX = L.date.x; dateY = L.date.y; dateSize = L.date.fontSize;
+  // Référence devis à droite
+  const refX = PAGE_WIDTH - MARGIN_X - 200;
+  if (devis.reference) {
+    page.drawText(`Devis N° ${devis.reference}`, {
+      x: refX, y, size: 12, font: fontBold, color: COLOR_SOMBRE,
+    });
+  } else if (devis.libelle) {
+    page.drawText(devis.libelle, {
+      x: refX, y, size: 12, font: fontBold, color: COLOR_SOMBRE,
+    });
+  }
+  if (devis.dateDevis) {
+    page.drawText(`Date : ${devis.dateDevis}`, {
+      x: refX, y: y - 20, size: 10, font: fontReg, color: COLOR_SOMBRE,
+    });
   }
 
-  // 5. Dessiner
-  page.drawText(mention, {
-    x: mentionX, y: mentionY, size: mentionSize, font,
-    color: rgb(0, 0, 0), maxWidth: mentionMaxWidth,
+  // Ligne séparation
+  y = y - 80;
+  drawHLine(page, MARGIN_X, PAGE_WIDTH - MARGIN_X, y, COLOR_LIGNE);
+  y -= 30;
+
+  // ─── BLOC CLIENT ────────────────────────────────────────────────────
+  page.drawText('Adressé à :', {
+    x: MARGIN_X, y, size: 10, font: fontBold, color: COLOR_GRIS,
+  });
+  y -= 18;
+  page.drawText(client.nom || '—', {
+    x: MARGIN_X, y, size: 12, font: fontBold, color: COLOR_SOMBRE,
+  });
+  if (client.adresse) {
+    const lines = client.adresse.split('\n').slice(0, 3);
+    for (const line of lines) {
+      y -= 14;
+      page.drawText(line, {
+        x: MARGIN_X, y, size: 10, font: fontReg, color: COLOR_SOMBRE,
+      });
+    }
+  }
+
+  // ─── RÉCAPITULATIF FINANCIER ─────────────────────────────────────────
+  y -= 50;
+  drawHLine(page, MARGIN_X, PAGE_WIDTH - MARGIN_X, y, COLOR_LIGNE);
+  y -= 25;
+
+  page.drawText('Récapitulatif du devis', {
+    x: MARGIN_X, y, size: 12, font: fontBold, color: COLOR_BORDEAUX,
+  });
+  y -= 25;
+
+  const labelX = MARGIN_X + 10;
+  const valueX = PAGE_WIDTH - MARGIN_X - 10;
+  const drawMontantRow = (label: string, valueEUR: number, bold: boolean) => {
+    const font = bold ? fontBold : fontReg;
+    const size = bold ? 12 : 11;
+    page.drawText(label, {
+      x: labelX, y, size, font, color: COLOR_SOMBRE,
+    });
+    const valueStr = `${fmtEUR(valueEUR)} €`;
+    const valueW = font.widthOfTextAtSize(valueStr, size);
+    page.drawText(valueStr, {
+      x: valueX - valueW, y, size, font, color: COLOR_SOMBRE,
+    });
+  };
+
+  drawMontantRow('Total HT remisé', montants.totalHT, false);
+  y -= 22;
+  drawMontantRow('TVA', montants.tva, false);
+  y -= 22;
+
+  // Bandeau orange "Total TTC remisé / Net à payer"
+  const bandY = y - 5;
+  page.drawRectangle({
+    x: MARGIN_X, y: bandY - 20, width: PAGE_WIDTH - 2 * MARGIN_X, height: 30,
+    color: COLOR_ORANGE,
+  });
+  const labelTTC = 'NET À PAYER (Total TTC remisé)';
+  page.drawText(labelTTC, {
+    x: labelX, y: bandY - 12, size: 11, font: fontBold, color: rgb(1, 1, 1),
+  });
+  const ttcStr = `${fmtEUR(montants.totalTTC)} €`;
+  const ttcW = fontBold.widthOfTextAtSize(ttcStr, 12);
+  page.drawText(ttcStr, {
+    x: valueX - ttcW, y: bandY - 12, size: 12, font: fontBold, color: rgb(1, 1, 1),
+  });
+  y = bandY - 40;
+
+  // ─── CADRE SIGNATURE ─────────────────────────────────────────────────
+  y -= 30;
+  page.drawText('Pour le client', {
+    x: MARGIN_X, y, size: 12, font: fontBold, color: COLOR_BORDEAUX,
+  });
+  y -= 15;
+
+  // Encadré
+  const boxTop = y;
+  const boxBottom = MARGIN_X + 20; // marge bas
+  const boxHeight = boxTop - boxBottom;
+  page.drawRectangle({
+    x: MARGIN_X, y: boxBottom, width: PAGE_WIDTH - 2 * MARGIN_X, height: boxHeight,
+    borderWidth: 0.8, borderColor: COLOR_LIGNE,
   });
 
-  page.drawImage(pngImage, {
-    x: sigX, y: sigY, width: sigW, height: sigH,
+  // Mention manuscrite (à gauche, haut du cadre)
+  const mentionX = MARGIN_X + 14;
+  let mentionY = boxTop - 24;
+  page.drawText('Mention manuscrite :', {
+    x: mentionX, y: mentionY, size: 9, font: fontBold, color: COLOR_GRIS,
+  });
+  mentionY -= 16;
+  drawWrappedText(page, mention, {
+    x: mentionX, y: mentionY, maxWidth: 240,
+    font: fontReg, size: 11, color: COLOR_SOMBRE, lineHeight: 14,
   });
 
+  // Date + signature côté droit
+  const rightColX = PAGE_WIDTH / 2 + 20;
+  page.drawText('Date :', {
+    x: rightColX, y: boxTop - 24, size: 9, font: fontBold, color: COLOR_GRIS,
+  });
   page.drawText(date, {
-    x: dateX, y: dateY, size: dateSize, font, color: rgb(0, 0, 0),
+    x: rightColX + 38, y: boxTop - 24, size: 11, font: fontReg, color: COLOR_SOMBRE,
   });
 
-  // 6. Sauvegarder
+  page.drawText('Signature :', {
+    x: rightColX, y: boxTop - 56, size: 9, font: fontBold, color: COLOR_GRIS,
+  });
+  // Image signature : on cale en bas droite du cadre
+  const sigW = 180;
+  const sigH = 70;
+  const sigX = rightColX;
+  const sigY = boxBottom + 18;
+  page.drawImage(pngImage, { x: sigX, y: sigY, width: sigW, height: sigH });
+
+  // Footer minimal
+  const footerY = 30;
+  page.drawText(
+    `${ENTETE_SOCIETE.nom} — ${ENTETE_SOCIETE.adresse1}, ${ENTETE_SOCIETE.adresse2} — ${ENTETE_SOCIETE.siret} — ${ENTETE_SOCIETE.capital}`,
+    { x: MARGIN_X, y: footerY, size: 7, font: fontReg, color: COLOR_GRIS }
+  );
+
   return await pdfDoc.save();
 }
 
-/**
- * Convertit une string base64 en Uint8Array (compatible RN + web).
- */
+// ─── Helpers ──────────────────────────────────────────────────────────────
+
+function drawHLine(page: PDFPage, x1: number, x2: number, y: number, color: ReturnType<typeof rgb>) {
+  page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness: 0.7, color });
+}
+
+function fmtEUR(n: number): string {
+  return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+interface DrawWrappedTextOpts {
+  x: number;
+  y: number;
+  maxWidth: number;
+  font: PDFFont;
+  size: number;
+  color: ReturnType<typeof rgb>;
+  lineHeight: number;
+}
+
+function drawWrappedText(page: PDFPage, text: string, opts: DrawWrappedTextOpts) {
+  const { x, y, maxWidth, font, size, color, lineHeight } = opts;
+  const words = text.split(/\s+/);
+  let line = '';
+  let curY = y;
+  for (const word of words) {
+    const candidate = line ? `${line} ${word}` : word;
+    const w = font.widthOfTextAtSize(candidate, size);
+    if (w > maxWidth && line) {
+      page.drawText(line, { x, y: curY, size, font, color });
+      line = word;
+      curY -= lineHeight;
+    } else {
+      line = candidate;
+    }
+  }
+  if (line) page.drawText(line, { x, y: curY, size, font, color });
+}
+
 function base64ToBytes(base64: string): Uint8Array {
-  // RN n'a pas atob — fallback Buffer si dispo, sinon polyfill manuel
   if (typeof atob === 'function') {
     const binary = atob(base64);
     const bytes = new Uint8Array(binary.length);
@@ -189,7 +305,6 @@ function base64ToBytes(base64: string): Uint8Array {
     }
     return bytes;
   }
-  // Fallback : decodage manuel base64 → bytes
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   const lookup = new Uint8Array(256);
   for (let i = 0; i < chars.length; i++) lookup[chars.charCodeAt(i)] = i;
@@ -212,9 +327,6 @@ function base64ToBytes(base64: string): Uint8Array {
   return bytes;
 }
 
-/**
- * Fetch un PDF depuis une URL et retourne ses bytes.
- */
 export async function fetchPdfBytes(url: string): Promise<Uint8Array> {
   const res = await fetch(url);
   if (!res.ok) throw new Error(`Impossible de télécharger le PDF (HTTP ${res.status})`);
@@ -222,9 +334,6 @@ export async function fetchPdfBytes(url: string): Promise<Uint8Array> {
   return new Uint8Array(arrayBuf);
 }
 
-/**
- * Convertit Uint8Array → base64 (pour upload en Storage si besoin).
- */
 export function bytesToBase64(bytes: Uint8Array): string {
   if (typeof btoa === 'function') {
     let binary = '';
@@ -234,7 +343,6 @@ export function bytesToBase64(bytes: Uint8Array): string {
     }
     return btoa(binary);
   }
-  // Fallback minimal
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
   let result = '';
   for (let i = 0; i < bytes.length; i += 3) {
