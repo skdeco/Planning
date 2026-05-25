@@ -7,7 +7,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PENDING_MARCHE_KEY = 'sk_pending_marche_form';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
-import { SignaturePad } from '@/components/SignaturePad';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -76,7 +75,6 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   const [paiementCommissionPaye, setPaiementCommissionPaye] = useState(false);
 
   // ── Signature client ──
-  const [signatureMarcheId, setSignatureMarcheId] = useState<string | null>(null);
 
   // ── Restauration du formulaire après ajout d'un apporteur ──
   useEffect(() => {
@@ -685,19 +683,6 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         );
                       })}
 
-                      {/* Signature client */}
-                      {m.signatureClientUri ? (
-                        <View style={{ marginBottom: 8 }}>
-                          <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600', marginBottom: 4 }}>✍️ Signé par le client le {m.signatureClientDate ? new Date(m.signatureClientDate).toLocaleDateString('fr-FR') : ''}</Text>
-                          <Image source={{ uri: m.signatureClientUri }} style={{ width: 200, height: 80, borderRadius: 6, borderWidth: 1, borderColor: '#E2E6EA' }} resizeMode="contain" />
-                        </View>
-                      ) : (
-                        <Pressable style={{ backgroundColor: '#FFF3CD', borderRadius: 8, padding: 10, alignItems: 'center', marginBottom: 8, borderWidth: 1, borderColor: '#FFE082' }}
-                          onPress={() => setSignatureMarcheId(m.id)}>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#856404' }}>✍️ Faire signer le client</Text>
-                        </Pressable>
-                      )}
-
                       {/* Actions marché */}
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
                         <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditMarche(m)}>
@@ -1258,39 +1243,6 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           </View>
         </View>
       </ModalKeyboard>
-      {/* ── Modal Signature Client ── */}
-      <Modal visible={signatureMarcheId !== null} transparent animationType="fade" onRequestClose={() => setSignatureMarcheId(null)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C', marginBottom: 4 }}>✍️ Signature client</Text>
-            <Text style={{ fontSize: 12, color: '#687076', marginBottom: 8 }}>{chantier?.nom} — {marches.find(m => m.id === signatureMarcheId)?.libelle}</Text>
-            <View style={{ backgroundColor: '#FFF3CD', borderRadius: 8, padding: 10, marginBottom: 12, borderWidth: 1, borderColor: '#FFE082' }}>
-              <Text style={{ fontSize: 11, color: '#856404', lineHeight: 16 }}>
-                En apposant ma signature ci-dessous, je reconnais avoir pris connaissance et accepté le devis référencé ci-joint, établi par SK DECO, pour les travaux décrits dans ledit document. Je m'engage à régler les sommes indiquées selon les modalités convenues.
-              </Text>
-              <Text style={{ fontSize: 10, color: '#856404', marginTop: 6, fontStyle: 'italic' }}>
-                Fait le {new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
-              </Text>
-            </View>
-            <SignaturePad
-              width={280}
-              height={140}
-              onCancel={() => setSignatureMarcheId(null)}
-              onSave={async (base64) => {
-                const m = marches.find(x => x.id === signatureMarcheId);
-                if (!m) return;
-                let uri = base64;
-                if (base64.startsWith('data:')) {
-                  const uploaded = await uploadFileToStorage(base64, `chantiers/${chantierId}/signatures`, `sig_${m.id}`);
-                  if (uploaded) uri = uploaded;
-                }
-                updateMarcheChantier({ ...m, signatureClientUri: uri, signatureClientDate: new Date().toISOString(), updatedAt: new Date().toISOString() });
-                setSignatureMarcheId(null);
-              }}
-            />
-          </View>
-        </View>
-      </Modal>
     </ModalKeyboard>
   );
 }

@@ -103,13 +103,9 @@ export async function apposerEncadreSignature(opts: ApposerEncadreOptions): Prom
     thickness: 0.5, color: COLOR_LIGNE,
   });
 
-  // ─── 4. Colonne GAUCHE : mention manuscrite ──────────────────────────
+  // ─── 4. Colonne GAUCHE : mention ─────────────────────────────────────
   const colLeftX = boxLeft + BOX.paddingX;
-  let lY = sepY - 16;
-  page.drawText('Mention manuscrite :', {
-    x: colLeftX, y: lY, size: 8, font: fontBold, color: COLOR_GRIS,
-  });
-  lY -= 14;
+  const lY = sepY - 18;
   drawWrappedText(page, mention, {
     x: colLeftX, y: lY,
     maxWidth: boxWidth / 2 - BOX.paddingX - 6,
