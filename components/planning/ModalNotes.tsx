@@ -276,56 +276,14 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                       (Kevin : pas de saisie libre, uniquement des cases à cocher).
                       draft.texte reste en mémoire pour rétrocompat (notes existantes). */}
 
-                  <Text style={styles.noteLabel}>Photos & PDF</Text>
-                  {draft.photos.length > 0 && (
-                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.photosRow}>
-                      {draft.photos.map((uri, idx) => {
-                        const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
-                        return (
-                          <View key={idx} style={styles.photoThumb}>
-                            <Pressable
-                              onPress={() => {
-                                // Bug B fix : fermer la modal note AVANT openDocPreview pour éviter
-                                // le conflit Modal native iOS qui ferme la modal note quand l'utilisateur
-                                // ferme Safari in-app. Pattern emprunté à Suivi chantier (chantiers.tsx).
-                                actions.close();
-                                setTimeout(() => openDocPreview(uri), 150);
-                              }}
-                              style={{ width: '100%', height: '100%' }}
-                              accessibilityRole="button"
-                              accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
-                            >
-                              {isPdf ? (
-                                <View style={[styles.photoImg, styles.pdfPreview]}>
-                                  <Text style={styles.pdfPreviewIcon}>📄</Text>
-                                  <Text style={styles.pdfPreviewLabel}>PDF</Text>
-                                </View>
-                              ) : (
-                                <Image source={{ uri }} style={styles.photoImg} />
-                              )}
-                            </Pressable>
-                            <Pressable style={styles.photoRemove} onPress={() => actions.removePhoto(idx)}>
-                              <Text style={styles.photoRemoveText}>✕</Text>
-                            </Pressable>
-                          </View>
-                        );
-                      })}
-                    </ScrollView>
-                  )}
-                  <View style={{ flexDirection: 'row', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-                    <NativeFilePickerButton
-                      acceptImages
-                      acceptPdf
-                      acceptCamera
-                      multiple
-                      compressImages
-                      onPick={actions.addPhotoFromFile}
-                    />
-                    <InboxPickerButton onPick={actions.addFromInbox} mimeFilter={(m) => m.startsWith('image/') || m === 'application/pdf'} />
-                  </View>
+                  {/* Bloc "Photos & PDF" global — SUPPRIMÉ V10 (Kevin : les photos/PDF
+                      doivent être attachées à une case à cocher spécifique, pas à
+                      la note globale). Voir bouton ➕ par case dans la section
+                      "Tâches à faire" ci-dessous. draft.photos reste en mémoire
+                      pour rétrocompat mais n'est plus éditable via cette modal. */}
 
                   {/* Section checklist */}
-                  <Text style={[styles.noteLabel, { marginTop: 12 }]}>📋 Tâches à faire</Text>
+                  <Text style={styles.noteLabel}>📋 Tâches à faire</Text>
                   {/* Tâches dans l'éditeur : editingNote.tasks (note existante) ou draft.tasks (nouvelle note) */}
                   {(() => {
                     const editorTasks = noteModal?.editingNote ? (noteModal.editingNote.tasks || []) : draft.tasks;
