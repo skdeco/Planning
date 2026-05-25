@@ -72,12 +72,25 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
   // \b(\d{1,3})       : numéro (1 à 999)
   // (?!\d*\.\d)       : PAS suivi de .chiffre (exclut 1.1, 3.2.1)
   // (?!\s*[,.]\d)     : PAS suivi de ,chiffre ou .chiffre (exclut 7 854,00 où 7 serait matché seul)
-  // \s+([A-ZÉÈÀÂÎÔÛÇa-zà-ÿ][\w\sÀ-ÿ'/-]{3,60}?)  : nom
+  // \s+([A-ZÉÈÀÂÎÔÛÇa-zà-ÿ][...]{3,60}?)  : nom
   // \s+(\d{1,3}(?:\s\d{3})*,\d{2}|\d+[,.]\d{2})\s*€  : montant en €
-  // Permet les virgules dans le nom (ex: "Revêtement Sol, Murs et Mobilier")
-  // mais rejette toute virgule suivie de 2 chiffres (qui serait une décimale de montant)
+  //
+  // Classe de caractères autorisés dans le nom :
+  //   - Lettres a-z/A-Z + accents À-ÿ
+  //   - Espaces \s
+  //   - Apostrophes ' ’
+  //   - Tiret -, slash /
+  //   - Chiffres 0-9 (pour "VMC 1", "Lot 2 bis"…)
+  //   - Deux-points : (pour "VMC : cuisine, W.C.")
+  //   - Point . (pour "W.C.", "C.V.C") — mais lookahead pour exclure .XX décimal
+  //   - Virgule , (pour "Sol, Murs, Mobilier") — lookahead pour exclure ,XX décimal
+  // Note : on garde la contrainte "première lettre = majuscule" pour filtrer le bruit.
   const pattern = new RegExp(
-    '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s*([A-ZÉÈÀÂÎÔÛÇ](?:[A-Za-zÀ-ÿ\\s\'’/\\-]|,(?!\\d))(?:[A-Za-zÀ-ÿ\\s\'’/\\-]|,(?!\\d)){2,60}?)\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€',
+    '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s*' +
+    '([A-ZÉÈÀÂÎÔÛÇ]' +
+    '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2}))' +
+    '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2})){2,60}?)' +
+    '\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€',
     'g'
   );
 
