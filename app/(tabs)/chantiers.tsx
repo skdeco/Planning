@@ -24,6 +24,7 @@ import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS } from '@/constants/design';
 import { ModalNotes } from '@/components/planning/ModalNotes';
+import { ChatChantier } from '@/components/ChatChantier';
 import type { NoteModalState } from '@/hooks/useNotesModalLogic';
 import type { CellNote } from '@/hooks/usePlanningWeekData';
 import {
@@ -253,6 +254,8 @@ export default function ChantiersScreen() {
   const [marchesChantierId, setMarchesChantierId] = useState<string | null>(null);
   const [savChantierId, setSavChantierId] = useState<string | null>(null);
   const [portailClientId, setPortailClientId] = useState<string | null>(null);
+  // V10 — messagerie côté admin (modal ChatChantier dédiée, distincte du portail client)
+  const [messagerieChantierId, setMessagerieChantierId] = useState<string | null>(null);
   const [suiviChantierId, setSuiviChantierId] = useState<string | null>(null);
   const [suiviFilterEmp, setSuiviFilterEmp] = useState<string>('all');
   const [suiviFilterSemaine, setSuiviFilterSemaine] = useState<'tout' | 'semaine' | 'mois'>('semaine');
@@ -1537,7 +1540,7 @@ export default function ChantiersScreen() {
                       onPressAchats:      () => { setActionChantier(null); setTimeout(() => setAchatsChantierId(ch.id), 100); },
                       onPressPV:          () => { setActionChantier(null); setTimeout(() => setShowPVChantier(ch.id), 100); },
                       onPressRentabilite: () => { setActionChantier(null); setTimeout(() => setBilanChantierId(ch.id), 100); },
-                      onPressMessagerie:  () => { setActionChantier(null); setTimeout(() => setPortailClientId(ch.id), 100); },
+                      onPressMessagerie:  () => { setActionChantier(null); setTimeout(() => setMessagerieChantierId(ch.id), 100); },
                       onPressCloturer:    isAdmin && ch.statut !== 'termine'
                         ? () => { setActionChantier(null); setTimeout(() => handleClotureChantier(ch), 100); }
                         : undefined,
@@ -3414,6 +3417,41 @@ export default function ChantiersScreen() {
       <GaleriePhotos visible={showGalerie !== null} onClose={() => setShowGalerie(null)} chantierId={showGalerie || undefined} titre={`📷 Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
       {/* V10 — Modal Notes unifiée (planning), ouverte depuis tuile Notes du dashboard chantier */}
       <ModalNotes noteModal={noteModalChantier} setNoteModal={setNoteModalChantier} />
+
+      {/* V10 — Modal Messagerie admin (ChatChantier réutilisé) */}
+      <Modal
+        visible={messagerieChantierId !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setMessagerieChantierId(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setMessagerieChantierId(null)} />
+          <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12 }}>
+            <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 8 }} />
+            {(() => {
+              const ch = data.chantiers.find(c => c.id === messagerieChantierId);
+              if (!ch) return null;
+              return (
+                <>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>💬 Messagerie</Text>
+                      <Text style={{ fontSize: 13, color: DS.textSecondary, marginTop: 2 }}>{ch.nom}</Text>
+                    </View>
+                    <Pressable onPress={() => setMessagerieChantierId(null)} accessibilityRole="button" accessibilityLabel="Fermer">
+                      <Text style={{ fontSize: 18, color: DS.textSecondary }}>✕</Text>
+                    </Pressable>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <ChatChantier chantier={ch} isAdmin={true} fullScreen={true} />
+                  </View>
+                </>
+              );
+            })()}
+          </View>
+        </View>
+      </Modal>
 
       {marchesChantierId && (
         <MarchesChantier visible={!!marchesChantierId} onClose={() => setMarchesChantierId(null)} chantierId={marchesChantierId} />
