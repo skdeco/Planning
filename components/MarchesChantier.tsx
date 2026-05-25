@@ -590,9 +590,18 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             <Pressable
                               style={{ position: 'absolute', top: -4, right: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#D94F4F', alignItems: 'center', justifyContent: 'center' }}
                               onPress={() => {
-                                const doDelete = () => updateMarcheChantier({ ...m, devisInitialUri: undefined, devisInitialNom: undefined });
-                                if (Platform.OS === 'web') { if (typeof window !== 'undefined' && window.confirm('Supprimer le devis initial ?')) doDelete(); }
-                                else Alert.alert('Supprimer', 'Supprimer le devis initial ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
+                                // Suppression du devis = on remet aussi HT/TTC à 0
+                                // (cohérence avec l'auto-extraction au chargement).
+                                const doDelete = () => updateMarcheChantier({
+                                  ...m,
+                                  devisInitialUri: undefined,
+                                  devisInitialNom: undefined,
+                                  montantHT: 0,
+                                  montantTTC: 0,
+                                });
+                                const msg = 'Supprimer le devis initial ? Les montants HT/TTC seront aussi remis à zéro.';
+                                if (Platform.OS === 'web') { if (typeof window !== 'undefined' && window.confirm(msg)) doDelete(); }
+                                else Alert.alert('Supprimer', msg, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
                               }}>
                               <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>✕</Text>
                             </Pressable>
