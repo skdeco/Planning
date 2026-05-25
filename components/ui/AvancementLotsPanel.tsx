@@ -126,6 +126,19 @@ export function AvancementLotsPanel({
     }
   };
 
+  const confirmDeleteAll = () => {
+    const doDel = () => onChangeLots([]);
+    const msg = `Supprimer les ${lots.length} lot${lots.length > 1 ? 's' : ''} ? Cette action est irréversible.`;
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(msg)) doDel();
+    } else {
+      Alert.alert('Tout supprimer', msg, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Tout supprimer', style: 'destructive', onPress: doDel },
+      ]);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header section */}
@@ -186,7 +199,7 @@ export function AvancementLotsPanel({
         ))
       )}
 
-      {/* Boutons admin : Import depuis devis (priorité) + Ajout manuel */}
+      {/* Boutons admin : Import depuis devis (priorité) + Ajout manuel + Tout supprimer */}
       {isAdmin && (
         <View style={{ gap: 6, marginTop: 8 }}>
           {onPressImport && (
@@ -199,6 +212,12 @@ export function AvancementLotsPanel({
             <Plus size={13} color={DS.bordeaux} strokeWidth={2.5} />
             <Text style={styles.addBtnSecondaryText}>Ajouter un lot manuellement</Text>
           </Pressable>
+          {lots.length > 0 && (
+            <Pressable onPress={confirmDeleteAll} style={styles.clearAllBtn}>
+              <Trash2 size={12} color="#E74C3C" strokeWidth={2.2} />
+              <Text style={styles.clearAllBtnText}>Tout supprimer ({lots.length})</Text>
+            </Pressable>
+          )}
         </View>
       )}
 
@@ -404,6 +423,20 @@ const styles = StyleSheet.create({
   addBtnSecondaryText: {
     color: DS.bordeaux,
     fontSize: 12,
+    fontWeight: '600',
+  },
+  clearAllBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: 'transparent',
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  clearAllBtnText: {
+    color: '#E74C3C',
+    fontSize: 11,
     fontWeight: '600',
   },
   modeChip: {
