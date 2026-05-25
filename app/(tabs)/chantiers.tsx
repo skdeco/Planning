@@ -1746,26 +1746,8 @@ export default function ChantiersScreen() {
                 </View>
               </FormField>
 
-              <FormField label={t.common.assignedEmployees}>
-                {data.employes.map(emp => {
-                  const mc = METIER_COLORS[emp.metier];
-                  const selected = form.employeIds.includes(emp.id);
-                  return (
-                    <Pressable
-                      key={emp.id}
-                      style={[styles.empRow, selected && styles.empRowSelected]}
-                      onPress={() => toggleEmploye(emp.id)}
-                    >
-                      <View style={[styles.empAvatar, { backgroundColor: mc.color }]}>
-                        <Text style={[styles.empAvatarText, { color: mc.textColor }]}>{emp.prenom?.[0] || '?'}</Text>
-                      </View>
-                      <Text style={styles.empRowName}>{emp.prenom} {emp.nom}</Text>
-                      <Text style={styles.empRowMetier}>{mc.label}</Text>
-                      {selected && <Text style={styles.empCheck}>✓</Text>}
-                    </Pressable>
-                  );
-                })}
-              </FormField>
+              {/* "Employés assignés" supprimé : les affectations sont gérées
+                  directement dans le planning, pas via le formulaire chantier. */}
 
               {/* ═══ Section Contacts (4 types) ═══ */}
               <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
