@@ -21,6 +21,7 @@ import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButto
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { DS } from '@/constants/design';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -186,6 +187,26 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                   <Text style={[styles.taskText, task.fait && styles.taskTextDone]}>{task.texte}</Text>
                                   {task.fait && task.faitPar && (
                                     <Text style={styles.taskDoneBy}>Fait par {task.faitPar}</Text>
+                                  )}
+                                  {/* V10 — liens vers les pièces jointes de cette tâche */}
+                                  {task.photos && task.photos.length > 0 && (
+                                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4 }}>
+                                      {task.photos.map((uri, i) => {
+                                        const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
+                                        return (
+                                          <Pressable
+                                            key={i}
+                                            onPress={() => openDocPreview(uri)}
+                                            accessibilityRole="button"
+                                            accessibilityLabel={isPdf ? 'Ouvrir le document' : 'Ouvrir la photo'}
+                                          >
+                                            <Text style={{ fontSize: 12, color: DS.bordeaux, fontWeight: '600', textDecorationLine: 'underline' }}>
+                                              {isPdf ? '📄 Document' : '📷 Photo'}
+                                            </Text>
+                                          </Pressable>
+                                        );
+                                      })}
+                                    </View>
                                   )}
                                 </View>
                                 {canEdit && (
@@ -375,33 +396,34 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                   <Text style={{ color: '#E74C3C', fontSize: 12 }}>✕</Text>
                                 </Pressable>
                               </View>
+                              {/* V10 — liens texte (au lieu de thumbnails) pour cohérence avec vue lecture */}
                               {task.photos && task.photos.length > 0 && (
-                                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 4, marginLeft: 32 }}>
+                                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 4, marginLeft: 32 }}>
                                   {task.photos.map((uri, idx) => {
                                     const isPdf = uri.startsWith('data:application/pdf') || uri.toLowerCase().endsWith('.pdf');
                                     return (
-                                      <View key={idx} style={{ marginRight: 6 }}>
-                                        <Pressable onPress={() => openDocPreview(uri)} accessibilityRole="button" accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}>
-                                          {isPdf ? (
-                                            <View style={{ width: 48, height: 48, borderRadius: 6, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
-                                              <Text style={{ fontSize: 18 }}>📄</Text>
-                                            </View>
-                                          ) : (
-                                            <Image source={{ uri }} style={{ width: 48, height: 48, borderRadius: 6 }} />
-                                          )}
+                                      <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                                        <Pressable
+                                          onPress={() => openDocPreview(uri)}
+                                          accessibilityRole="button"
+                                          accessibilityLabel={isPdf ? 'Ouvrir le document' : 'Ouvrir la photo'}
+                                        >
+                                          <Text style={{ fontSize: 12, color: DS.bordeaux, fontWeight: '600', textDecorationLine: 'underline' }}>
+                                            {isPdf ? '📄 Document' : '📷 Photo'}
+                                          </Text>
                                         </Pressable>
                                         <Pressable
                                           onPress={() => handleRemovePhoto(uri)}
-                                          style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: 7, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
+                                          style={{ paddingHorizontal: 4 }}
                                           accessibilityRole="button"
-                                          accessibilityLabel="Supprimer la photo"
+                                          accessibilityLabel="Supprimer la pièce jointe"
                                         >
-                                          <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
+                                          <Text style={{ color: '#E74C3C', fontSize: 12 }}>✕</Text>
                                         </Pressable>
                                       </View>
                                     );
                                   })}
-                                </ScrollView>
+                                </View>
                               )}
                             </View>
                           );
