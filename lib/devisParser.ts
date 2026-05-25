@@ -71,28 +71,26 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
 
   const lots: LotExtrait[] = [];
 
-  // Stratégie STRICTE : on traite texte LIGNE PAR LIGNE.
-  // Règle Kevin : une ligne de lot valide commence par UN entier SANS point
-  // (ex "1", "12") suivi d'un espace puis du nom (capital initial) puis
-  // d'un montant en €. Tout le reste est ignoré.
+  // Regex globale historique (qui détecte correctement les vrais lots
+  // dans le format pdfreader). Le `\s*` après les lookaheads autorise
+  // 0 ou plusieurs espaces entre le numéro et le nom.
   //
-  // En cas de bug pdfreader (mélange de morceaux de lignes), on a aussi un
-  // filtre post-match qui rejette les noms contenant un pattern "X.Y" interne
-  // (signature de sous-lot mergé type "ET 3 3.3 Coffrages").
-  //
-  // Regex sur ligne trimée :
-  //   ^(\d{1,3})\s+([A-Z...].+?)\s+(\d{1,3}(?:\s\d{3})*,\d{2})\s*€
-  const linePattern = new RegExp(
-    '^(\\d{1,3})\\s+' +
-    '([A-ZÉÈÀÂÎÔÛÇ].+?)' +
-    '\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€'
+  // Pour éliminer "ET 3 3.3 Coffrages" (faux positif où pdfreader merge
+  // des morceaux de lignes), on s'appuie sur les filtres POST-match :
+  //   - stop words FR au début du nom (ET, OU, DE, DU, etc.)
+  //   - rejet si le nom contient un motif interne "X.Y" (signature
+  //     d'un sous-lot dont le "." est resté collé au nom)
+  const pattern = new RegExp(
+    '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s*' +
+    '([A-ZÉÈÀÂÎÔÛÇ]' +
+    '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2}))' +
+    '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2})){2,60}?)' +
+    '\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€',
+    'g'
   );
 
-  for (const rawLine of normalise.split(/\r?\n/)) {
-    const line = rawLine.trim();
-    if (!line) continue;
-    const match = line.match(linePattern);
-    if (!match) continue;
+  let match: RegExpExecArray | null;
+  while ((match = pattern.exec(normalise)) !== null) {
     const numero = parseInt(match[1], 10);
     const nomBrut = match[2];
     const montantStr = match[3];
@@ -111,36 +109,6 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
     if (/\d\.\d/.test(nom)) continue;
 
     lots.push({ nom, montantHT: montant });
-  }
-
-  // Filet de sécurité : si rien détecté avec la stratégie stricte (peut-être
-  // que pdfreader retourne un format inattendu), on retombe sur la regex
-  // globale historique AVEC les mêmes filtres (stop words + motif X.Y).
-  if (lots.length === 0) {
-    const fallbackPattern = new RegExp(
-      '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s+' +
-      '([A-ZÉÈÀÂÎÔÛÇ]' +
-      '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2}))' +
-      '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2})){2,60}?)' +
-      '\\s+(\\d{1,3}(?:\\s\\d{3})*,\\d{2})\\s*€',
-      'g'
-    );
-    let m: RegExpExecArray | null;
-    while ((m = fallbackPattern.exec(normalise)) !== null) {
-      const numero = parseInt(m[1], 10);
-      const nomBrut = m[2];
-      const montantStr = m[3];
-      const montant = parseMontant(montantStr);
-      if (numero < 1 || numero > 50) continue;
-      const nom = nettoyerNom(nomBrut);
-      if (nom.length < 3 || nom.length > 60) continue;
-      if (isNaN(montant) || montant < 100 || montant > 50_000_000) continue;
-      if (estDansBlacklist(nom)) continue;
-      if (!(new RegExp('[A-Za-zÀ-ÿ]')).test(nom)) continue;
-      if (/^\d/.test(nom)) continue;
-      if (/\d\.\d/.test(nom)) continue;
-      lots.push({ nom, montantHT: montant });
-    }
   }
 
   // Dédupliquer par nom (garde le premier)
