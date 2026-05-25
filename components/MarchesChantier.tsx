@@ -30,13 +30,30 @@ function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random()
 function fmt(n: number) { return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
 
 export function MarchesChantier({ visible, onClose, chantierId }: Props) {
-  const { data, addMarcheChantier, updateMarcheChantier, deleteMarcheChantier, addSupplementMarche, updateSupplementMarche, deleteSupplementMarche, currentUser } = useApp();
+  const { data, addMarcheChantier, updateMarcheChantier, deleteMarcheChantier, addSupplementMarche, updateSupplementMarche, deleteSupplementMarche, updateChantier, currentUser } = useApp();
   const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
 
   const chantier = data.chantiers.find(c => c.id === chantierId);
   const marches = useMemo(() => (data.marchesChantier || []).filter(m => m.chantierId === chantierId), [data.marchesChantier, chantierId]);
   const supplements = useMemo(() => (data.supplementsMarche || []).filter(s => s.chantierId === chantierId), [data.supplementsMarche, chantierId]);
+
+  // Migration : si le chantier a des lots au niveau racine (legacy) et qu'AUCUN
+  // marché/supplément n'a encore de lots, on rattache ces lots au premier marché
+  // créé. Au-delà, le chantier.avancementCorps reste lu pour le portail client
+  // (refacto séparé), mais la source de vérité côté admin est marche.avancementCorps.
+  useEffect(() => {
+    if (!visible || !chantier?.avancementCorps?.length) return;
+    const aucunLotPorte = marches.every(m => !m.avancementCorps?.length)
+      && supplements.every(s => !s.avancementCorps?.length);
+    if (!aucunLotPorte) return;
+    const premierMarche = marches[0];
+    if (!premierMarche) return;
+    // Déplace les lots vers le premier marché et vide le champ legacy
+    updateMarcheChantier({ ...premierMarche, avancementCorps: chantier.avancementCorps });
+    updateChantier({ ...chantier, avancementCorps: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visible, chantier?.id]);
   const apporteurs = data.apporteurs || [];
 
   // ── Form marché ──
@@ -119,7 +136,13 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   const [openSuppId, setOpenSuppId] = useState<string | null>(null);
 
   // ── Import lots depuis devis (overlay inline pour éviter bug iOS Modal-on-Modal) ──
-  const [showImportLots, setShowImportLots] = useState(false);
+  // Cible : un marché ou un supplément spécifique (les lots sont attachés
+  // à un parent unique, plus au chantier).
+  const [importLotsTarget, setImportLotsTarget] = useState<
+    | { type: 'marche'; id: string; devisUri?: string; devisNom?: string }
+    | { type: 'supplement'; id: string; devisUri?: string; devisNom?: string }
+    | null
+  >(null);
 
   // ── Signer devis (apposer signature/date/mention sur PDF original) ──
   const [signerTarget, setSignerTarget] = useState<
@@ -498,15 +521,6 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               </View>
             </View>
 
-            {/* V10 — Section avancement par lot (H) */}
-            {chantier && (
-              <AvancementLotsPanel
-                chantier={chantier}
-                isAdmin={isAdmin}
-                onPressImport={isAdmin ? () => setShowImportLots(true) : undefined}
-              />
-            )}
-
             {/* ── MARCHÉS ── */}
             <View style={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -621,6 +635,18 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             </Pressable>
                           </>
                         ) : null}
+                      </View>
+
+                      {/* V10 — Avancement par lot du marché (état de facturation) */}
+                      <View style={{ marginBottom: 10 }}>
+                        <AvancementLotsPanel
+                          lots={m.avancementCorps || []}
+                          isAdmin={isAdmin}
+                          onChangeLots={(lots) => updateMarcheChantier({ ...m, avancementCorps: lots })}
+                          onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'marche', id: m.id, devisUri: m.devisInitialUri, devisNom: m.devisInitialNom }) : undefined}
+                          title="📊 Avancement de ce marché"
+                          compact
+                        />
                       </View>
 
                       {/* Paiements */}
@@ -790,6 +816,20 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         ) : null}
                       </View>
 
+                      {/* V10 — Avancement par lot du supplément */}
+                      {s.statut === 'accepte' && (
+                        <View style={{ marginBottom: 10 }}>
+                          <AvancementLotsPanel
+                            lots={s.avancementCorps || []}
+                            isAdmin={isAdmin}
+                            onChangeLots={(lots) => updateSupplementMarche({ ...s, avancementCorps: lots, updatedAt: new Date().toISOString() })}
+                            onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'supplement', id: s.id, devisUri: s.devisUri, devisNom: s.devisNom }) : undefined}
+                            title="📊 Avancement de ce supplément"
+                            compact
+                          />
+                        </View>
+                      )}
+
                       {/* Paiements (si accepté) */}
                       {s.statut === 'accepte' && (
                         <>
@@ -840,16 +880,33 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
         </View>
 
         {/* V10 — Overlay inline d'import des lots (PAS un Modal pour éviter
-            le bug iOS Modal-on-Modal qui figeait la fenêtre Marchés). */}
-        {chantier && (
-          <ImportLotsDevisOverlay
-            visible={showImportLots}
-            onClose={() => setShowImportLots(false)}
-            chantier={chantier}
-            devisUri={marches.find(m => m.devisInitialUri)?.devisInitialUri}
-            devisNom={marches.find(m => m.devisInitialUri)?.devisInitialNom}
-          />
-        )}
+            le bug iOS Modal-on-Modal qui figeait la fenêtre Marchés).
+            Cible un marché ou supplément spécifique. */}
+        {importLotsTarget && (() => {
+          const target = importLotsTarget.type === 'marche'
+            ? marches.find(m => m.id === importLotsTarget.id)
+            : supplements.find(s => s.id === importLotsTarget.id);
+          if (!target) return null;
+          const lotsActuels = target.avancementCorps || [];
+          return (
+            <ImportLotsDevisOverlay
+              visible={!!importLotsTarget}
+              onClose={() => setImportLotsTarget(null)}
+              lotsActuels={lotsActuels}
+              devisUri={importLotsTarget.devisUri}
+              devisNom={importLotsTarget.devisNom}
+              onImport={(nouveauxLots) => {
+                if (importLotsTarget.type === 'marche') {
+                  const m = marches.find(x => x.id === importLotsTarget.id);
+                  if (m) updateMarcheChantier({ ...m, avancementCorps: [...(m.avancementCorps || []), ...nouveauxLots] });
+                } else {
+                  const s = supplements.find(x => x.id === importLotsTarget.id);
+                  if (s) updateSupplementMarche({ ...s, avancementCorps: [...(s.avancementCorps || []), ...nouveauxLots], updatedAt: new Date().toISOString() });
+                }
+              }}
+            />
+          );
+        })()}
 
         {/* V10 — Overlay signature devis (encadré en bas de la dernière page). */}
         {signerTarget && (

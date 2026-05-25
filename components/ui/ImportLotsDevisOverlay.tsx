@@ -10,8 +10,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { Wand2 } from 'lucide-react-native';
-import { useApp } from '@/app/context/AppContext';
-import type { Chantier } from '@/app/types';
+import type { LotAvancement } from '@/app/types';
 import { DS } from '@/constants/design';
 import {
   extraireLotsAvecRemise,
@@ -32,7 +31,10 @@ import {
 export interface ImportLotsDevisOverlayProps {
   visible: boolean;
   onClose: () => void;
-  chantier: Chantier;
+  /** Lots déjà présents (pour dédoublonner). */
+  lotsActuels: LotAvancement[];
+  /** Callback : les nouveaux lots à ajouter. Parent fait l'update. */
+  onImport: (nouveauxLots: LotAvancement[]) => void;
   /** URL du devis PDF lié — active le mode "PDF auto". */
   devisUri?: string;
   /** Nom du fichier devis (affiché dans l'overlay). */
@@ -50,11 +52,11 @@ function fmt(n: number): string {
 export function ImportLotsDevisOverlay({
   visible,
   onClose,
-  chantier,
+  lotsActuels,
+  onImport,
   devisUri,
   devisNom,
 }: ImportLotsDevisOverlayProps) {
-  const { updateChantier } = useApp();
   const [importMode, setImportMode] = useState<'pdf' | 'coller' | 'rapide'>('coller');
   const [importTexte, setImportTexte] = useState('');
   const [lotsDetectes, setLotsDetectes] = useState<LotExtrait[]>([]);
@@ -141,9 +143,8 @@ export function ImportLotsDevisOverlay({
   const importerLots = () => {
     const aImporter = lotsDetectes.filter((_, i) => lotsSelection[i]);
     if (aImporter.length === 0) return;
-    const existing = chantier.avancementCorps || [];
-    const nomsExistants = new Set(existing.map(c => c.nom.toLowerCase().trim()));
-    const nouveaux = aImporter
+    const nomsExistants = new Set(lotsActuels.map(c => c.nom.toLowerCase().trim()));
+    const nouveaux: LotAvancement[] = aImporter
       .filter(l => !nomsExistants.has(l.nom.toLowerCase().trim()))
       .map(l => ({
         id: genId('lot'),
@@ -153,12 +154,12 @@ export function ImportLotsDevisOverlay({
         updatedAt: new Date().toISOString(),
       }));
     if (nouveaux.length === 0) {
-      const msg = 'Tous les lots sélectionnés existent déjà dans ce chantier.';
+      const msg = 'Tous les lots sélectionnés existent déjà.';
       if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
       else Alert.alert('Rien à importer', msg);
       return;
     }
-    updateChantier({ ...chantier, avancementCorps: [...existing, ...nouveaux] });
+    onImport(nouveaux);
     onClose();
   };
 

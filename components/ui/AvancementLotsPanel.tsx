@@ -1,28 +1,34 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, TextInput, Modal, Alert, Platform, StyleSheet } from 'react-native';
 import { Plus, Pencil, Trash2, Wand2 } from 'lucide-react-native';
-import { useApp } from '@/app/context/AppContext';
-import type { Chantier } from '@/app/types';
+import type { LotAvancement } from '@/app/types';
 import { DS } from '@/constants/design';
 import { ProgressBar } from './ProgressBar';
 
 /**
- * AvancementLotsPanel — Gestion des lots / corps de métier d'un chantier (palette V10).
+ * AvancementLotsPanel — Gestion des lots / corps de métier (palette V10).
+ *
+ * Composant générique : prend une liste de lots + un callback pour
+ * la mise à jour, ne fait aucune hypothèse sur le parent (marché ou
+ * supplément). Le parent gère la persistance.
  *
  * Affiche :
  * - Bar globale d'avancement (moyenne pondérée par montant ou simple)
  * - Liste des lots avec barre individuelle + nom + montant + actions admin
  * - Modal d'édition lot (admin uniquement)
- *
- * Utilisé par MarchesChantier (côté admin). À terme aussi par PortailClient
- * (refacto séparé : actuellement PortailClient duplique la logique).
  */
 export interface AvancementLotsPanelProps {
-  chantier: Chantier;
+  /** Lots à afficher / modifier. */
+  lots: LotAvancement[];
+  /** Callback déclenché à chaque modification (add/edit/delete). */
+  onChangeLots: (lots: LotAvancement[]) => void;
   isAdmin: boolean;
-  /** Callback déclenché quand l'utilisateur clique sur "Importer depuis le devis".
-   *  Le parent (ex: MarchesChantier) doit afficher l'ImportLotsDevisOverlay. */
+  /** Callback "Importer depuis le devis" — si défini, affiche le bouton. */
   onPressImport?: () => void;
+  /** Titre personnalisable (par défaut "📊 Avancement par lot"). */
+  title?: string;
+  /** Variante de mise en page : version compacte pour intégration en card. */
+  compact?: boolean;
 }
 
 function genId(prefix: string): string {
@@ -33,10 +39,14 @@ function fmt(n: number): string {
   return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
 }
 
-export function AvancementLotsPanel({ chantier, isAdmin, onPressImport }: AvancementLotsPanelProps) {
-  const { updateChantier } = useApp();
-  const lots = chantier.avancementCorps || [];
-
+export function AvancementLotsPanel({
+  lots,
+  onChangeLots,
+  isAdmin,
+  onPressImport,
+  title = '📊 Avancement par lot',
+  compact = false,
+}: AvancementLotsPanelProps) {
   const [showForm, setShowForm] = useState(false);
   const [editLotId, setEditLotId] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -76,7 +86,7 @@ export function AvancementLotsPanel({ chantier, isAdmin, onPressImport }: Avance
     setShowForm(true);
   };
 
-  const openEdit = (l: NonNullable<Chantier['avancementCorps']>[number]) => {
+  const openEdit = (l: LotAvancement) => {
     setEditLotId(l.id);
     setForm({
       nom: l.nom,
@@ -89,7 +99,7 @@ export function AvancementLotsPanel({ chantier, isAdmin, onPressImport }: Avance
 
   const save = () => {
     if (!form.nom.trim()) return;
-    const entry = {
+    const entry: LotAvancement = {
       id: editLotId || genId('lot'),
       nom: form.nom.trim(),
       pourcentage: Math.max(0, Math.min(100, Math.round(form.pourcentage))),
@@ -100,12 +110,12 @@ export function AvancementLotsPanel({ chantier, isAdmin, onPressImport }: Avance
     const next = editLotId
       ? lots.map(l => (l.id === editLotId ? { ...l, ...entry } : l))
       : [...lots, entry];
-    updateChantier({ ...chantier, avancementCorps: next });
+    onChangeLots(next);
     setShowForm(false);
   };
 
   const confirmDelete = (id: string) => {
-    const doDel = () => updateChantier({ ...chantier, avancementCorps: lots.filter(l => l.id !== id) });
+    const doDel = () => onChangeLots(lots.filter(l => l.id !== id));
     if (Platform.OS === 'web') {
       if (typeof window !== 'undefined' && window.confirm('Supprimer ce lot ?')) doDel();
     } else {
@@ -121,7 +131,7 @@ export function AvancementLotsPanel({ chantier, isAdmin, onPressImport }: Avance
       {/* Header section */}
       <View style={styles.headerRow}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.sectionTitle}>📊 Avancement par lot</Text>
+          <Text style={styles.sectionTitle}>{title}</Text>
           {lots.length > 0 && (
             <Text style={styles.sectionSubtitle}>
               {lots.length} lot{lots.length > 1 ? 's' : ''}

@@ -237,30 +237,14 @@ export interface Chantier {
   // Portail client : photos sélectionnées pour affichage
   photosPortailClient?: string[];  // IDs des photos visibles dans le portail client
   // Avancement par corps de métier (affiché dans le portail client)
-  avancementCorps?: {
-    id: string;
-    nom: string;
-    pourcentage: number;
-    montant?: number;
-    commentaire?: string;                 // note admin visible par externes
-    photos?: string[];                    // URIs des photos attachées au lot
-    photosAvant?: string[];               // photos "avant travaux"
-    photosApres?: string[];               // photos "après travaux"
-    dateDebutPrevue?: string;             // YYYY-MM-DD
-    dateFinPrevue?: string;               // YYYY-MM-DD
-    enCours?: boolean;                    // marqué "en cours de réalisation"
-    commentairesClient?: Array<{
-      id: string;
-      auteurId: string;                   // apporteurId ou 'admin'
-      auteurNom: string;
-      auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
-      texte: string;
-      createdAt: string;                  // ISO datetime
-      luParAdmin?: boolean;
-      luParExternes?: string[];           // ids apporteurs qui ont lu
-    }>;
-    updatedAt?: string;                   // ISO datetime — pour détecter "nouveau"
-  }[];
+  /**
+   * @deprecated Voir LotAvancement et MarcheChantier.avancementCorps /
+   * SupplementMarche.avancementCorps : les lots sont désormais portés
+   * par chaque marché/supplément (pour pouvoir figer des snapshots
+   * de facturation indépendants). Ce champ reste pour la rétro-compat ;
+   * une migration automatique au load les déplace vers le premier marché.
+   */
+  avancementCorps?: LotAvancement[];
   // Historique des points financiers de situation figés (avant émission facture)
   situationsHistorique?: SituationFigee[];
   // Décomposition TVA extraite du devis (ex : [{taux:5.5, montant:55}, {taux:20, montant:16000}])
@@ -978,6 +962,61 @@ export interface PaiementRecu {
   commissionDatePaiement?: string;
 }
 
+/**
+ * Un lot d'avancement (corps de métier) sur un marché ou supplément.
+ * Mêmes champs que l'ancien `Chantier.avancementCorps[]` — extrait en
+ * type partagé pour pouvoir le porter au niveau marché/supplément.
+ */
+export interface LotAvancement {
+  id: string;
+  nom: string;
+  pourcentage: number;                // 0-100
+  montant?: number;                   // € HT
+  commentaire?: string;
+  photos?: string[];
+  photosAvant?: string[];
+  photosApres?: string[];
+  dateDebutPrevue?: string;           // YYYY-MM-DD
+  dateFinPrevue?: string;             // YYYY-MM-DD
+  enCours?: boolean;
+  commentairesClient?: Array<{
+    id: string;
+    auteurId: string;
+    auteurNom: string;
+    auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+    texte: string;
+    createdAt: string;
+    luParAdmin?: boolean;
+    luParExternes?: string[];
+  }>;
+  updatedAt?: string;
+}
+
+/**
+ * Snapshot d'avancement figé pour facturation. Immuable une fois créé —
+ * sert de base à une facture/situation. Conservé en historique.
+ */
+export interface SnapshotAvancement {
+  id: string;
+  dateGel: string;                    // ISO datetime, date du gel
+  numero?: number;                    // numéro de situation (1, 2, ...)
+  intitule?: string;                  // ex : "Situation N°1 — fin mai"
+  lots: Array<{
+    lotId: string;                    // référence vers le lot d'origine
+    nom: string;                      // copie du nom (en cas de renommage)
+    montant?: number;                 // copie du montant
+    pourcentageGel: number;           // % au moment du gel
+    montantFactureNouveau: number;    // € facturable sur ce snapshot
+  }>;
+  /** Cumul facturé jusque-là (avant ce snapshot inclus). */
+  cumulFacture: number;
+  /** Note libre (visible sur la facture/situation). */
+  note?: string;
+  /** Identifiant de l'admin qui a figé. */
+  cocheParId?: string;
+  cocheParNom?: string;
+}
+
 /** Marché principal d'un chantier */
 export interface MarcheChantier {
   id: string;
@@ -995,6 +1034,10 @@ export interface MarcheChantier {
   signatureClientDate?: string; // ISO datetime
   paiements: PaiementRecu[];
   commission?: CommissionApporteur; // commission versée à un architecte / apporteur d'affaires
+  /** Lots d'avancement attachés à ce marché (suivi % par corps de métier). */
+  avancementCorps?: LotAvancement[];
+  /** Snapshots d'avancement figés pour facturation (immutables). */
+  snapshots?: SnapshotAvancement[];
   createdAt: string;
   updatedAt: string;
 }
@@ -1022,6 +1065,10 @@ export interface SupplementMarche {
   factureUri?: string;
   factureNom?: string;
   paiements: PaiementRecu[];
+  /** Lots d'avancement attachés à ce supplément. */
+  avancementCorps?: LotAvancement[];
+  /** Snapshots d'avancement figés pour facturation. */
+  snapshots?: SnapshotAvancement[];
   createdAt: string;
   updatedAt: string;
 }
