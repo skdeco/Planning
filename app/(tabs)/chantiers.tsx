@@ -1547,6 +1547,9 @@ export default function ChantiersScreen() {
                       onPressLivraison:   () => { setActionChantier(null); setTimeout(() => setLivraisonsChantierId(ch.id), 100); },
                       onPressMessagerie:  () => { setActionChantier(null); setTimeout(() => setMessagerieChantierId(ch.id), 100); },
                       onPressPortailClient: () => { setActionChantier(null); setTimeout(() => setPortailClientId(ch.id), 100); },
+                      onPressEdit:        isAdmin
+                        ? () => { setActionChantier(null); setTimeout(() => openEdit(ch), 100); }
+                        : undefined,
                       onPressCloturer:    isAdmin && ch.statut !== 'termine'
                         ? () => { setActionChantier(null); setTimeout(() => handleClotureChantier(ch), 100); }
                         : undefined,

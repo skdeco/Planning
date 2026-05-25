@@ -17,6 +17,7 @@ import {
   CheckCircle2,
   Trash2,
   User,
+  Pencil,
   type LucideIcon,
 } from 'lucide-react-native';
 import { DS } from '@/constants/design';
@@ -57,6 +58,8 @@ export interface ChantierDetailDashboardHandlers {
   onPressMessagerie: () => void;
   /** Aperçu du portail client (vue qu'aura le client connecté). */
   onPressPortailClient: () => void;
+  /** Si undefined, bouton "Modifier" masqué. */
+  onPressEdit?: () => void;
   /** Si undefined, bouton "Clôturer" masqué (ex: chantier déjà terminé ou pas admin) */
   onPressCloturer?: () => void;
   /** Si undefined, bouton "Supprimer" masqué (ex: pas admin) */
@@ -102,7 +105,11 @@ export function ChantierDetailDashboard({
 
   const visibleTiles = tiles.filter(t => !t.adminOnly || isAdmin);
   const hasFooterActions =
-    isAdmin && (handlers.onPressCloturer !== undefined || handlers.onPressSupprimer !== undefined);
+    isAdmin && (
+      handlers.onPressEdit !== undefined ||
+      handlers.onPressCloturer !== undefined ||
+      handlers.onPressSupprimer !== undefined
+    );
 
   // V10 — Centrer la dernière ligne si elle est incomplète (ex: 13 tuiles sur 3 colonnes
   //        → la 13e seule sur la 5e ligne. Spacer avant pour la centrer.)
@@ -139,6 +146,12 @@ export function ChantierDetailDashboard({
 
       {hasFooterActions && (
         <View style={styles.footer}>
+          {handlers.onPressEdit && (
+            <Pressable onPress={handlers.onPressEdit} style={styles.footerBtn}>
+              <Pencil size={16} color={DS.bordeaux} strokeWidth={2} />
+              <Text style={styles.footerBtnText}>Modifier le chantier</Text>
+            </Pressable>
+          )}
           {handlers.onPressCloturer && (
             <Pressable onPress={handlers.onPressCloturer} style={styles.footerBtn}>
               <CheckCircle2 size={16} color={DS.bordeaux} strokeWidth={2} />
