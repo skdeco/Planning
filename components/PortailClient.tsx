@@ -17,7 +17,7 @@ import {
 } from '@/lib/devisParser';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
-import { MoodboardChantier } from '@/components/MoodboardChantier';
+// Moodboard retiré du portail client (refacto V10).
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChatChantier } from '@/components/ChatChantier';
@@ -1648,12 +1648,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </View>
             )}
 
-            {/* ── Moodboard inspirations ── */}
-            <MoodboardChantier
-              chantier={chantier}
-              isAdmin={isAdmin}
-              externAp={isExterne && externAp ? { id: externAp.id, prenom: externAp.prenom, nom: externAp.nom, type: externAp.type } : undefined}
-            />
+            {/* Moodboard retiré (refacto V10). */}
 
             {/* ── Plans ── */}
             <View style={styles.card}>
