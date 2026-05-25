@@ -521,7 +521,14 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   <Pressable onPress={() => setOpenMarcheId(isOpen ? null : m.id)}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{m.libelle}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{m.libelle}</Text>
+                          {m.devisInitialUri && !m.devisSigneUri && (
+                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }}>
+                              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900', lineHeight: 14 }}>!</Text>
+                            </View>
+                          )}
+                        </View>
                         <Text style={{ fontSize: 11, color: '#687076', marginTop: 2 }}>{fmt(m.montantHT)} € HT · {fmt(m.montantTTC)} € TTC</Text>
                         <Text style={{ fontSize: 11, color: resteM > 0 ? '#DC2626' : '#27AE60', fontWeight: '600', marginTop: 2 }}>
                           Reçu : {fmt(totalRecuM)} € · Reste : {fmt(resteM)} €
@@ -695,7 +702,14 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   <Pressable onPress={() => setOpenSuppId(isOpen ? null : s.id)}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{s.libelle}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{s.libelle}</Text>
+                          {s.devisUri && s.statut === 'en_attente' && (
+                            <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }}>
+                              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900', lineHeight: 14 }}>!</Text>
+                            </View>
+                          )}
+                        </View>
                         <Text style={{ fontSize: 11, color: '#687076', marginTop: 2 }}>{fmt(s.montantHT)} € HT · {fmt(s.montantTTC)} € TTC</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                           <View style={{ backgroundColor: statutColor + '22', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
