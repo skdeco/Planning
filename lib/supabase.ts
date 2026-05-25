@@ -438,18 +438,6 @@ export async function restoreBackup(backupId: string): Promise<Record<string, un
 /**
  * Convertit un URI base64 en Blob pour l'upload.
  */
-function base64ToBlob(base64Uri: string): { blob: Blob; mimeType: string } {
-  const [header, data] = base64Uri.split(',');
-  const mimeMatch = header.match(/:(.*?);/);
-  const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
-  const byteChars = atob(data);
-  const byteArray = new Uint8Array(byteChars.length);
-  for (let i = 0; i < byteChars.length; i++) {
-    byteArray[i] = byteChars.charCodeAt(i);
-  }
-  return { blob: new Blob([byteArray], { type: mimeType }), mimeType };
-}
-
 /**
  * Détermine l'extension de fichier à partir du MIME type.
  */
@@ -489,12 +477,24 @@ export async function uploadFileToStorage(
     if (uri.startsWith('http')) return uri;
 
     if (uri.startsWith('data:')) {
-      const { blob, mimeType } = base64ToBlob(uri);
+      // Parse header seulement (PAS de construction de Blob ici — celui-ci
+      // crash sur React Native iOS dès que la string base64 dépasse ~quelques
+      // mégaoctets — "Creating blobs from strings longer than ... not supported").
+      // La construction du Blob est repoussée dans la branche web uniquement.
+      const [header, base64DataInline] = uri.split(',');
+      const mimeMatch = header.match(/:(.*?);/);
+      const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
       const ext = mimeToExt(mimeType);
       const path = `${folder}/${fileId}.${ext}`;
 
       if (Platform.OS === 'web') {
-        // Web : SDK upload (fonctionne avec Blob web natif)
+        // Web : on peut construire un Blob sans limite de taille notable
+        const byteChars = atob(base64DataInline);
+        const byteArray = new Uint8Array(byteChars.length);
+        for (let i = 0; i < byteChars.length; i++) {
+          byteArray[i] = byteChars.charCodeAt(i);
+        }
+        const blob = new Blob([byteArray], { type: mimeType });
         const { error } = await supabaseStorage.storage
           .from(STORAGE_BUCKET)
           .upload(path, blob, { contentType: mimeType, upsert: true });
@@ -514,13 +514,12 @@ export async function uploadFileToStorage(
         }
         const tmpPath = `${tmpDir}sig_tmp_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`;
 
-        const base64Data = uri.split(',')[1];
-        if (!base64Data) {
+        if (!base64DataInline) {
           console.error('Upload mobile data URI: no base64 data');
           return null;
         }
 
-        await FileSystem.writeAsStringAsync(tmpPath, base64Data, {
+        await FileSystem.writeAsStringAsync(tmpPath, base64DataInline, {
           encoding: FileSystem.EncodingType.Base64,
         });
 
