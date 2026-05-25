@@ -67,15 +67,13 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
 
   const lots: LotExtrait[] = [];
 
-  // Stratégie hybride :
-  //   - Pattern global avec ancre "préfixe whitespace" (permissif comme avant,
-  //     fonctionne même si l'extraction PDF ne préserve pas les newlines)
-  //   - Filtre POST-match par NUMÉRO DE LOT : si le même numéro est déjà
-  //     pris par un lot précédent, on rejette → bloque la duplication
-  //     "3 Maçonnerie" puis "3 Coffrages" (sous-lot où le "." de "3.3" a été
-  //     perdu par pdfreader).
+  // Regex globale : numéro simple + nom + montant.
+  // La dédup post-match par numéro de lot a été RETIRÉE — elle bloquait
+  // injustement les vrais lots dans certains cas. Si une fausse détection
+  // type "Coffrages" arrive, l'admin peut la supprimer via le bouton
+  // "Tout supprimer" ou la corbeille individuelle.
   const pattern = new RegExp(
-    '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s+' +
+    '(?:^|[\\s])(\\d{1,3})(?!\\d)(?!\\.\\d)(?!\\s*[,.]\\d)\\s*' +
     '([A-ZÉÈÀÂÎÔÛÇ]' +
     '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2}))' +
     '(?:[A-Za-z0-9À-ÿ\\s\'’/\\-:]|,(?!\\d)|\\.(?!\\d{2})){2,60}?)' +
@@ -83,7 +81,6 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
     'g'
   );
 
-  const numerosVus = new Set<number>();
   let match: RegExpExecArray | null;
   while ((match = pattern.exec(normalise)) !== null) {
     const numero = parseInt(match[1], 10);
@@ -93,10 +90,6 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
 
     // Filtres
     if (numero < 1 || numero > 50) continue;
-    // Doublon de numéro : on rejette les matchs ultérieurs sur le même
-    // numéro (sous-lot où pdfreader a perdu un point décimal).
-    if (numerosVus.has(numero)) continue;
-
     const nom = nettoyerNom(nomBrut);
     if (nom.length < 3 || nom.length > 60) continue;
     if (isNaN(montant) || montant < 100 || montant > 50_000_000) continue;
@@ -104,7 +97,6 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
     if (!(new RegExp('[A-Za-zÀ-ÿ]')).test(nom)) continue;
     if (/^\d/.test(nom)) continue;
 
-    numerosVus.add(numero);
     lots.push({ nom, montantHT: montant });
   }
 
