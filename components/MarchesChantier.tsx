@@ -13,6 +13,7 @@ import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { todayYMD } from '@/lib/date/today';
 import { AvancementLotsPanel } from '@/components/ui/AvancementLotsPanel';
+import { ImportLotsDevisOverlay } from '@/components/ui/ImportLotsDevisOverlay';
 import {
   MODES_PAIEMENT,
   type MarcheChantier, type SupplementMarche, type PaiementRecu,
@@ -117,6 +118,9 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   // ── Détail marché ──
   const [openMarcheId, setOpenMarcheId] = useState<string | null>(null);
   const [openSuppId, setOpenSuppId] = useState<string | null>(null);
+
+  // ── Import lots depuis devis (overlay inline pour éviter bug iOS Modal-on-Modal) ──
+  const [showImportLots, setShowImportLots] = useState(false);
 
   const pickFile = async (label: string): Promise<{ uri: string; nom: string } | null> => {
     // 1 seul code path web/iOS/Android via pickNativeFile (cohérence C1a/C1b/C1c).
@@ -492,8 +496,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
             <AvancementLotsPanel
               chantier={chantier}
               isAdmin={isAdmin}
-              devisUri={marches.find(m => m.devisInitialUri)?.devisInitialUri}
-              devisNom={marches.find(m => m.devisInitialUri)?.devisInitialNom}
+              onPressImport={isAdmin ? () => setShowImportLots(true) : undefined}
             />
           )}
 
@@ -774,6 +777,18 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
             })}
           </ScrollView>
         </View>
+
+        {/* V10 — Overlay inline d'import des lots (PAS un Modal pour éviter
+            le bug iOS Modal-on-Modal qui figeait la fenêtre Marchés). */}
+        {chantier && (
+          <ImportLotsDevisOverlay
+            visible={showImportLots}
+            onClose={() => setShowImportLots(false)}
+            chantier={chantier}
+            devisUri={marches.find(m => m.devisInitialUri)?.devisInitialUri}
+            devisNom={marches.find(m => m.devisInitialUri)?.devisInitialNom}
+          />
+        )}
       </View>
 
       {/* ── Modal Form Marché ── */}

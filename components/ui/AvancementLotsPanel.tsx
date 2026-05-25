@@ -1,11 +1,10 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, Pressable, TextInput, Modal, ScrollView, Alert, Platform, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, Modal, Alert, Platform, StyleSheet } from 'react-native';
 import { Plus, Pencil, Trash2, Wand2 } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
 import { DS } from '@/constants/design';
 import { ProgressBar } from './ProgressBar';
-import { extraireLotsAvecRemise, parseSaisieManuelle, type LotExtrait } from '@/lib/devisParser';
 
 /**
  * AvancementLotsPanel — Gestion des lots / corps de métier d'un chantier (palette V10).
@@ -21,10 +20,9 @@ import { extraireLotsAvecRemise, parseSaisieManuelle, type LotExtrait } from '@/
 export interface AvancementLotsPanelProps {
   chantier: Chantier;
   isAdmin: boolean;
-  /** URL du devis PDF lié (premier marché). Active le mode "PDF auto". */
-  devisUri?: string;
-  /** Nom du fichier devis (affiché dans la modal). */
-  devisNom?: string;
+  /** Callback déclenché quand l'utilisateur clique sur "Importer depuis le devis".
+   *  Le parent (ex: MarchesChantier) doit afficher l'ImportLotsDevisOverlay. */
+  onPressImport?: () => void;
 }
 
 function genId(prefix: string): string {
@@ -35,7 +33,7 @@ function fmt(n: number): string {
   return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
 }
 
-export function AvancementLotsPanel({ chantier, isAdmin, devisUri, devisNom }: AvancementLotsPanelProps) {
+export function AvancementLotsPanel({ chantier, isAdmin, onPressImport }: AvancementLotsPanelProps) {
   const { updateChantier } = useApp();
   const lots = chantier.avancementCorps || [];
 
@@ -47,21 +45,6 @@ export function AvancementLotsPanel({ chantier, isAdmin, devisUri, devisNom }: A
     pourcentage: 0,
     commentaire: '',
   });
-  // V10 — Import depuis devis
-  const [showImport, setShowImport] = useState(false);
-  const [importMode, setImportMode] = useState<'pdf' | 'coller' | 'rapide'>('coller');
-  const [importTexte, setImportTexte] = useState('');
-  const [lotsDetectes, setLotsDetectes] = useState<LotExtrait[]>([]);
-  const [lotsSelection, setLotsSelection] = useState<Record<number, boolean>>({});
-  const [pdfExtractLoading, setPdfExtractLoading] = useState(false);
-
-  const openImport = () => {
-    setImportMode(devisUri ? 'pdf' : 'coller');
-    setImportTexte('');
-    setLotsDetectes([]);
-    setLotsSelection({});
-    setShowImport(true);
-  };
 
   // Calcul de l'avancement global (moyenne pondérée par montant si présent, sinon moyenne simple)
   const avancementGlobal = useMemo(() => {
@@ -119,114 +102,6 @@ export function AvancementLotsPanel({ chantier, isAdmin, devisUri, devisNom }: A
       : [...lots, entry];
     updateChantier({ ...chantier, avancementCorps: next });
     setShowForm(false);
-  };
-
-  // V10 — Extraction automatique depuis le PDF uploadé (via API serveur)
-  const extraireAutoDepuisPdf = async () => {
-    if (!devisUri) {
-      const msg = 'Aucun devis PDF lié à ce chantier. Uploadez-en un dans la section Marchés.';
-      if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
-      else Alert.alert('Pas de devis', msg);
-      return;
-    }
-    setPdfExtractLoading(true);
-    try {
-      const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
-      const texte = await extractTextFromPdfUrl(devisUri);
-      if (!texte) {
-        const msg = "Impossible d'extraire le texte du PDF. Essayez le mode 'Coller texte devis'.";
-        if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
-        else Alert.alert('Extraction échouée', msg);
-        return;
-      }
-      setImportTexte(texte);
-      const { lots: detected, remiseHT, totalBrutHT } = extraireLotsAvecRemise(texte);
-      setLotsDetectes(detected);
-      const sel: Record<number, boolean> = {};
-      detected.forEach((_, i) => { sel[i] = true; });
-      setLotsSelection(sel);
-      if (detected.length === 0) {
-        const msg = `Texte extrait (${texte.length} caractères) mais aucun lot détecté. Passez en mode "Coller texte devis" pour ajuster.`;
-        if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
-        else Alert.alert('Aucun lot détecté', msg);
-      } else if (remiseHT > 0) {
-        const msg = `✓ ${detected.length} lots détectés\n🎯 Remise de ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata (total brut ${totalBrutHT.toLocaleString('fr-FR')} €)`;
-        if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
-        else Alert.alert('Extraction', msg);
-      }
-    } catch (e) {
-      const msg = "Erreur lors de l'extraction. Essayez le mode 'Coller texte devis'.";
-      if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
-      else Alert.alert('Erreur', msg);
-    } finally {
-      setPdfExtractLoading(false);
-    }
-  };
-
-  // V10 — Détection automatique des lots depuis le texte du devis
-  const detecterLots = () => {
-    let lots: LotExtrait[];
-    let remiseInfo: { remiseHT: number; totalBrutHT: number } | null = null;
-    if (importMode === 'coller') {
-      const r = extraireLotsAvecRemise(importTexte);
-      lots = r.lots;
-      if (r.remiseHT > 0) remiseInfo = { remiseHT: r.remiseHT, totalBrutHT: r.totalBrutHT };
-    } else {
-      lots = parseSaisieManuelle(importTexte);
-    }
-    setLotsDetectes(lots);
-    const sel: Record<number, boolean> = {};
-    lots.forEach((_, i) => { sel[i] = true; });
-    setLotsSelection(sel);
-    if (lots.length === 0) {
-      const msg = 'Aucun lot détecté. Vérifiez que le texte contient bien des lignes avec un nom et un montant.';
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined') window.alert(msg);
-      } else {
-        Alert.alert('Aucun lot détecté', msg);
-      }
-    } else if (remiseInfo) {
-      const msg = `✓ ${lots.length} lots détectés\n🎯 Remise de ${remiseInfo.remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata`;
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined') window.alert(msg);
-      } else {
-        Alert.alert('Extraction', msg);
-      }
-    }
-  };
-
-  const importerLots = () => {
-    const aImporter = lotsDetectes.filter((_, i) => lotsSelection[i]);
-    if (aImporter.length === 0) return;
-    const existing = chantier.avancementCorps || [];
-    const nomsExistants = new Set(existing.map(c => c.nom.toLowerCase().trim()));
-    const nouveaux = aImporter
-      .filter(l => !nomsExistants.has(l.nom.toLowerCase().trim()))
-      .map(l => ({
-        id: genId('lot'),
-        nom: l.nom,
-        montant: l.montantHT,
-        pourcentage: 0,
-        updatedAt: new Date().toISOString(),
-      }));
-    if (nouveaux.length === 0) {
-      const msg = 'Tous les lots sélectionnés existent déjà dans ce chantier.';
-      if (Platform.OS === 'web') {
-        if (typeof window !== 'undefined') window.alert(msg);
-      } else {
-        Alert.alert('Rien à importer', msg);
-      }
-      return;
-    }
-    updateChantier({ ...chantier, avancementCorps: [...existing, ...nouveaux] });
-    setShowImport(false);
-    setImportTexte('');
-    setLotsDetectes([]);
-    setLotsSelection({});
-  };
-
-  const toggleLotSel = (i: number) => {
-    setLotsSelection(prev => ({ ...prev, [i]: !prev[i] }));
   };
 
   const confirmDelete = (id: string) => {
@@ -304,10 +179,12 @@ export function AvancementLotsPanel({ chantier, isAdmin, devisUri, devisNom }: A
       {/* Boutons admin : Import depuis devis (priorité) + Ajout manuel */}
       {isAdmin && (
         <View style={{ gap: 6, marginTop: 8 }}>
-          <Pressable onPress={openImport} style={styles.importBtn}>
-            <Wand2 size={14} color={DS.cremeFond} strokeWidth={2.5} />
-            <Text style={styles.importBtnText}>Importer depuis le devis</Text>
-          </Pressable>
+          {onPressImport && (
+            <Pressable onPress={onPressImport} style={styles.importBtn}>
+              <Wand2 size={14} color={DS.cremeFond} strokeWidth={2.5} />
+              <Text style={styles.importBtnText}>Importer depuis le devis</Text>
+            </Pressable>
+          )}
           <Pressable onPress={openNew} style={styles.addBtnSecondary}>
             <Plus size={13} color={DS.bordeaux} strokeWidth={2.5} />
             <Text style={styles.addBtnSecondaryText}>Ajouter un lot manuellement</Text>
@@ -315,143 +192,7 @@ export function AvancementLotsPanel({ chantier, isAdmin, devisUri, devisNom }: A
         </View>
       )}
 
-      {/* === Modal Import depuis devis === */}
-      <Modal visible={showImport} transparent animationType="slide" onRequestClose={() => setShowImport(false)}>
-        <Pressable style={styles.modalOverlay} onPress={() => setShowImport(false)}>
-          <Pressable style={[styles.modalSheet, { maxWidth: 600, width: '100%' }]} onPress={() => { /* swallow */ }}>
-            <Text style={styles.modalTitle}>🤖 Importer les lots depuis le devis</Text>
-
-            {/* Choix mode */}
-            <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
-              {devisUri && (
-                <Pressable
-                  onPress={() => { setImportMode('pdf'); setLotsDetectes([]); }}
-                  style={[styles.modeChip, importMode === 'pdf' && styles.modeChipActive]}
-                >
-                  <Text style={[styles.modeChipText, importMode === 'pdf' && styles.modeChipTextActive]}>
-                    🤖 PDF auto
-                  </Text>
-                </Pressable>
-              )}
-              <Pressable
-                onPress={() => setImportMode('coller')}
-                style={[styles.modeChip, importMode === 'coller' && styles.modeChipActive]}
-              >
-                <Text style={[styles.modeChipText, importMode === 'coller' && styles.modeChipTextActive]}>
-                  📋 Coller texte
-                </Text>
-              </Pressable>
-              <Pressable
-                onPress={() => setImportMode('rapide')}
-                style={[styles.modeChip, importMode === 'rapide' && styles.modeChipActive]}
-              >
-                <Text style={[styles.modeChipText, importMode === 'rapide' && styles.modeChipTextActive]}>
-                  ⚡ Saisie
-                </Text>
-              </Pressable>
-            </View>
-
-            {importMode === 'pdf' ? (
-              <>
-                <Text style={styles.fieldLabel}>
-                  🤖 Extraction automatique depuis le devis PDF lié à ce chantier
-                </Text>
-                <View style={styles.pdfInfoBox}>
-                  <Text style={styles.pdfInfoText} numberOfLines={2}>
-                    📄 {devisNom || 'Devis lié à ce chantier'}
-                  </Text>
-                </View>
-                <Pressable
-                  onPress={extraireAutoDepuisPdf}
-                  disabled={pdfExtractLoading}
-                  style={[styles.detectBtn, pdfExtractLoading && { opacity: 0.5 }]}
-                >
-                  <Wand2 size={14} color={DS.cremeFond} strokeWidth={2.5} />
-                  <Text style={styles.detectBtnText}>
-                    {pdfExtractLoading ? '⏳ Analyse en cours…' : '🤖 Analyser le devis PDF'}
-                  </Text>
-                </Pressable>
-              </>
-            ) : (
-              <>
-                <Text style={styles.fieldLabel}>
-                  {importMode === 'coller'
-                    ? 'Collez ici le texte de votre devis (lots + montants)'
-                    : 'Saisie libre : 1 lot par ligne, format "Nom du lot : montant"'}
-                </Text>
-                <TextInput
-                  style={[styles.input, { minHeight: 140, textAlignVertical: 'top', fontSize: 12 }]}
-                  value={importTexte}
-                  onChangeText={setImportTexte}
-                  placeholder={
-                    importMode === 'coller'
-                      ? 'Cloisons placo BA13................. 4 500,00 €\nCarrelage salle de bain............... 3 200,00 €\nÉlectricité (mise aux normes)......... 5 800,00 €\n...'
-                      : 'Cloisons : 4500\nCarrelage : 3200\nÉlectricité : 5800'
-                  }
-                  placeholderTextColor={DS.textSecondary}
-                  multiline
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-
-                <Pressable
-                  onPress={detecterLots}
-                  disabled={!importTexte.trim()}
-                  style={[styles.detectBtn, !importTexte.trim() && { opacity: 0.5 }]}
-                >
-                  <Wand2 size={14} color={DS.cremeFond} strokeWidth={2.5} />
-                  <Text style={styles.detectBtnText}>Détecter les lots</Text>
-                </Pressable>
-              </>
-            )}
-
-            {/* Liste lots détectés */}
-            {lotsDetectes.length > 0 && (
-              <>
-                <Text style={[styles.fieldLabel, { marginTop: 16 }]}>
-                  ✓ {lotsDetectes.length} lot{lotsDetectes.length > 1 ? 's' : ''} détecté{lotsDetectes.length > 1 ? 's' : ''} — sélectionne ceux à importer
-                </Text>
-                <ScrollView style={{ maxHeight: 200, marginTop: 4 }}>
-                  {lotsDetectes.map((l, i) => (
-                    <Pressable
-                      key={i}
-                      onPress={() => toggleLotSel(i)}
-                      style={styles.detectedRow}
-                    >
-                      <View style={[styles.checkbox, lotsSelection[i] && styles.checkboxChecked]}>
-                        {lotsSelection[i] && <Text style={styles.checkboxIcon}>✓</Text>}
-                      </View>
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.detectedNom}>{l.nom}</Text>
-                      </View>
-                      <Text style={styles.detectedMontant}>
-                        {l.montantHT > 0 ? `${fmt(l.montantHT)} €` : '—'}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </>
-            )}
-
-            <View style={styles.modalActions}>
-              <Pressable onPress={() => setShowImport(false)} style={styles.cancelBtn}>
-                <Text style={styles.cancelBtnText}>Annuler</Text>
-              </Pressable>
-              <Pressable
-                onPress={importerLots}
-                disabled={lotsDetectes.length === 0}
-                style={[styles.saveBtn, lotsDetectes.length === 0 && { opacity: 0.5 }]}
-              >
-                <Text style={styles.saveBtnText}>
-                  Importer ({lotsDetectes.filter((_, i) => lotsSelection[i]).length})
-                </Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </Pressable>
-      </Modal>
-
-      {/* Modal d'édition lot */}
+      {/* Modal d'édition lot (l'import est rendu dans le parent via ImportLotsDevisOverlay) */}
       <Modal visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowForm(false)}>
           <Pressable style={styles.modalSheet} onPress={() => { /* swallow */ }}>
