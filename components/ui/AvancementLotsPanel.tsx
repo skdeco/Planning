@@ -177,12 +177,12 @@ export function AvancementLotsPanel({
               <Text style={styles.lotPct}>{l.pourcentage}%</Text>
             </View>
             <ProgressBar value={l.pourcentage} variant="bordeaux" />
-            {l.montant && l.montant > 0 && (
+            {(l.montant ?? 0) > 0 && (
               <Text style={styles.lotMontant}>
-                {fmt((l.montant * l.pourcentage) / 100)} / {fmt(l.montant)} € HT
+                {fmt(((l.montant || 0) * l.pourcentage) / 100)} / {fmt(l.montant || 0)} € HT
               </Text>
             )}
-            {l.commentaire && <Text style={styles.lotComment}>💬 {l.commentaire}</Text>}
+            {!!l.commentaire && <Text style={styles.lotComment}>💬 {l.commentaire}</Text>}
             {isAdmin && (
               <View style={styles.lotActions}>
                 <Pressable onPress={() => openEdit(l)} style={styles.actionBtn}>
