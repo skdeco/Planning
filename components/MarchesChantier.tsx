@@ -999,17 +999,22 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   const recap = extraireRecapDevis(texte);
                   const totalTTC = recap.totalTTC || extraireTotalTTC(texte);
                   const totalHT = recap.totalNetHT || recap.totalBrutHT;
+                  // Remplit si vide OU à 0 (n'écrase pas une saisie réelle > 0)
+                  const currentHT = parseFloat((marcheForm.montantHT || '').replace(',', '.')) || 0;
+                  const currentTTC = parseFloat((marcheForm.montantTTC || '').replace(',', '.')) || 0;
                   let filled: string[] = [];
-                  if (totalHT && !marcheForm.montantHT.trim()) {
+                  if (totalHT && currentHT === 0) {
                     setMarcheForm(prev => ({ ...prev, montantHT: String(totalHT) }));
                     filled.push(`HT ${totalHT.toLocaleString('fr-FR')} €`);
                   }
-                  if (totalTTC && !marcheForm.montantTTC.trim()) {
+                  if (totalTTC && currentTTC === 0) {
                     setMarcheForm(prev => ({ ...prev, montantTTC: String(totalTTC) }));
                     filled.push(`TTC ${totalTTC.toLocaleString('fr-FR')} €`);
                   }
                   if (filled.length > 0) {
                     setDevisAutoExtractMsg(`✓ Auto-rempli : ${filled.join(' · ')}`);
+                  } else if (!totalHT && !totalTTC) {
+                    setDevisAutoExtractMsg('⚠ HT/TTC non détectés dans le devis');
                   }
                 } catch (e) {
                   console.warn('[MarchesChantier] auto-extract devis échoué:', e);
