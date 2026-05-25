@@ -590,6 +590,20 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                               <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>✕</Text>
                             </Pressable>
                           </View>
+                        ) : m.devisInitialUri ? (
+                          /* V10 — placeholder upload devis signé visible tant que pas encore uploadé */
+                          <Pressable
+                            style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 6, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#DC2626', borderStyle: 'dashed' }}
+                            onPress={async () => {
+                              const f = await pickFile('devis-signe');
+                              if (!f) return;
+                              const uploaded = await uploadIfNeeded(f, 'marche/devis-signe');
+                              if (uploaded.uri) updateMarcheChantier({ ...m, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
+                            }}
+                          >
+                            <Text style={{ fontSize: 16 }}>📥</Text>
+                            <Text style={{ fontSize: 9, color: '#DC2626', fontWeight: '700' }} numberOfLines={1}>Uploader devis signé</Text>
+                          </Pressable>
                         ) : null}
                       </View>
 
