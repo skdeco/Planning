@@ -12,6 +12,7 @@ import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { todayYMD } from '@/lib/date/today';
+import { AvancementLotsPanel } from '@/components/ui/AvancementLotsPanel';
 import {
   MODES_PAIEMENT,
   type MarcheChantier, type SupplementMarche, type PaiementRecu,
@@ -28,7 +29,8 @@ function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random()
 function fmt(n: number) { return n.toLocaleString('fr-FR', { maximumFractionDigits: 2 }); }
 
 export function MarchesChantier({ visible, onClose, chantierId }: Props) {
-  const { data, addMarcheChantier, updateMarcheChantier, deleteMarcheChantier, addSupplementMarche, updateSupplementMarche, deleteSupplementMarche } = useApp();
+  const { data, addMarcheChantier, updateMarcheChantier, deleteMarcheChantier, addSupplementMarche, updateSupplementMarche, deleteSupplementMarche, currentUser } = useApp();
+  const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
 
   const chantier = data.chantiers.find(c => c.id === chantierId);
@@ -484,6 +486,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               <Text style={{ fontSize: 16, fontWeight: '800', color: reste > 0 ? '#DC2626' : reste === 0 ? '#155724' : '#2C2C2C' }}>{reste === 0 ? 'Soldé ✓' : `${fmt(Math.abs(reste))} €`}</Text>
             </View>
           </View>
+
+          {/* V10 — Section avancement par lot (H) */}
+          {chantier && (
+            <AvancementLotsPanel chantier={chantier} isAdmin={isAdmin} />
+          )}
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
             {/* ── MARCHÉS ── */}
