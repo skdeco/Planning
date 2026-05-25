@@ -2,41 +2,87 @@
  * pdfSigner — Appose une signature + date + mention sur la dernière page
  * d'un PDF (devis), dans le cadre "Pour le client" existant.
  *
- * Position des éléments : voir SIGNATURE_LAYOUT ci-dessous. Si Kevin
- * change le template du devis, ajuster ces constantes (coordonnées en
- * points PDF, origine bottom-left).
+ * Stratégie de positionnement :
+ *   1. L'API serveur /api/find-signature-box détecte la position du label
+ *      "Pour le client" sur la dernière page (origine top-left, points PDF).
+ *   2. Le cadre est juste EN DESSOUS du label (gap réglé via OFFSETS_BELOW_LABEL).
+ *   3. Le client convertit en coordonnées pdf-lib (origine bottom-left)
+ *      et passe les coords absolues à apposerSignatureSurPdf().
+ *
+ * Si le label n'est pas détecté (vieux devis, devis modifié), fallback
+ * SIGNATURE_LAYOUT (coords hardcodées qui correspondent au template SK DECO
+ * actuel).
  */
 import { PDFDocument, rgb, StandardFonts } from 'pdf-lib';
 
 /**
- * Coordonnées dans le cadre "Pour le client" en bas de la dernière page
- * du template devis SK DECO. À ajuster si le template change.
- *
- * Page A4 portrait = 595.28 x 841.89 pts. Origine = bottom-left.
- * Le cadre observé est dans le quart inférieur (y ≈ 30 → 240 from bottom).
+ * Fallback hardcodé : coords pour le template SK DECO standard (A4 portrait).
+ * Utilisé seulement si la détection serveur échoue.
  */
 export const SIGNATURE_LAYOUT = {
-  // Texte de la mention (manuscrite normalement, ici typée)
-  mention: {
-    x: 90,
-    y: 285,           // ligne haute du cadre "Pour le client"
-    fontSize: 9,
-    maxWidth: 200,
-  },
-  // Signature image (PNG transparent)
-  signature: {
-    x: 340,
-    y: 195,
-    width: 160,
-    height: 65,
-  },
-  // Date (format DD/MM/YYYY)
-  date: {
-    x: 90,
-    y: 195,           // ligne pointillée date
-    fontSize: 10,
-  },
+  mention:   { x: 90,  y: 285, fontSize: 9,  maxWidth: 200 },
+  signature: { x: 340, y: 195, width: 160, height: 65 },
+  date:      { x: 90,  y: 195, fontSize: 10 },
 } as const;
+
+/**
+ * Offsets RELATIFS au label "Pour le client" pour placer les 3 éléments.
+ * Le label est positionné AU-DESSUS du cadre. Les éléments vont DANS le cadre.
+ *
+ * Coords en points PDF, exprimées en delta depuis le coin gauche du label :
+ * - dx = décalage horizontal (signature à droite, mention/date à gauche)
+ * - dy = décalage vertical EN DESCENDANT (top-left origin), car ce qu'on
+ *   reçoit du serveur est aussi en top-left origin.
+ */
+export const OFFSETS_BELOW_LABEL = {
+  mention:   { dx: 0,    dy: 20, fontSize: 9,  maxWidth: 230 },
+  signature: { dx: 260,  dy: 50, width: 160, height: 65 },
+  date:      { dx: 0,    dy: 110, fontSize: 10 },
+} as const;
+
+export interface SignatureBoxPosition {
+  /** Position du label "Pour le client", origin top-left, unités points PDF. */
+  x: number;
+  y: number;
+  /** Largeur/hauteur de la page (pour convertir en coords pdf-lib). */
+  pageWidth: number;
+  pageHeight: number;
+  /** Numéro de la page (1-indexé). */
+  page: number;
+}
+
+/**
+ * Appelle l'API serveur pour trouver la position du label "Pour le client".
+ * Retourne null si non trouvé ou erreur réseau.
+ */
+export async function findSignatureBoxPosition(pdfUrl: string): Promise<SignatureBoxPosition | null> {
+  try {
+    const apiBase = getApiBaseUrl();
+    const res = await fetch(`${apiBase}/api/find-signature-box`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: pdfUrl }),
+    });
+    if (!res.ok) {
+      console.warn('[findSignatureBoxPosition] API error:', res.status);
+      return null;
+    }
+    const data = await res.json();
+    if (data.error) {
+      console.warn('[findSignatureBoxPosition] no box:', data.error);
+      return null;
+    }
+    return data as SignatureBoxPosition;
+  } catch (e) {
+    console.warn('[findSignatureBoxPosition] fetch error:', e);
+    return null;
+  }
+}
+
+function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined' && window.location) return window.location.origin;
+  return 'https://sk-deco-planning.vercel.app';
+}
 
 export interface ApposerSignatureOptions {
   /** Bytes du PDF original (Uint8Array). */
@@ -47,56 +93,86 @@ export interface ApposerSignatureOptions {
   mention: string;
   /** Date au format DD/MM/YYYY. */
   date: string;
+  /** Position détectée du label (optionnel — fallback SIGNATURE_LAYOUT si absent). */
+  boxPosition?: SignatureBoxPosition | null;
 }
 
 /**
- * Appose la signature + mention + date sur la dernière page du PDF
- * et retourne les bytes du PDF signé.
+ * Appose la signature + mention + date sur la page contenant le label
+ * "Pour le client" (ou la dernière page en fallback).
+ * Retourne les bytes du PDF signé.
  */
 export async function apposerSignatureSurPdf(opts: ApposerSignatureOptions): Promise<Uint8Array> {
-  const { pdfBytes, signatureBase64, mention, date } = opts;
+  const { pdfBytes, signatureBase64, mention, date, boxPosition } = opts;
 
   // 1. Charger le PDF
   const pdfDoc = await PDFDocument.load(pdfBytes);
   const pages = pdfDoc.getPages();
-  const lastPage = pages[pages.length - 1];
 
-  // 2. Embed signature (clean base64 prefix si présent)
+  // 2. Page cible : celle du label si détectée, sinon dernière
+  const targetPageIndex = boxPosition
+    ? Math.min(Math.max(boxPosition.page - 1, 0), pages.length - 1)
+    : pages.length - 1;
+  const page = pages[targetPageIndex];
+  const { height: pageHeight } = page.getSize();
+
+  // 3. Embed signature
   const pngBase64 = signatureBase64.replace(/^data:image\/png;base64,/, '');
   const pngBytes = base64ToBytes(pngBase64);
   const pngImage = await pdfDoc.embedPng(pngBytes);
-
-  // 3. Police standard pour mention + date
   const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
 
-  // 4. Dessiner la mention (texte typé)
-  lastPage.drawText(mention, {
-    x: SIGNATURE_LAYOUT.mention.x,
-    y: SIGNATURE_LAYOUT.mention.y,
-    size: SIGNATURE_LAYOUT.mention.fontSize,
-    font,
-    color: rgb(0, 0, 0),
-    maxWidth: SIGNATURE_LAYOUT.mention.maxWidth,
+  // 4. Calculer les coordonnées absolues
+  // Si boxPosition fourni : on convertit pdfreader (top-left) → pdf-lib (bottom-left)
+  // via y_pdfLib = pageHeight - y_topLeft. Puis on applique les offsets.
+  // Sinon : SIGNATURE_LAYOUT hardcodé en fallback.
+  let mentionX: number, mentionY: number, mentionSize: number, mentionMaxWidth: number;
+  let sigX: number, sigY: number, sigW: number, sigH: number;
+  let dateX: number, dateY: number, dateSize: number;
+
+  if (boxPosition) {
+    // y du label converti en bottom-left
+    const labelYBL = pageHeight - boxPosition.y;
+    const labelX = boxPosition.x;
+
+    const O = OFFSETS_BELOW_LABEL;
+    mentionX = labelX + O.mention.dx;
+    mentionY = labelYBL - O.mention.dy;
+    mentionSize = O.mention.fontSize;
+    mentionMaxWidth = O.mention.maxWidth;
+
+    sigX = labelX + O.signature.dx;
+    sigY = labelYBL - O.signature.dy - O.signature.height; // image: y = bas de l'image
+    sigW = O.signature.width;
+    sigH = O.signature.height;
+
+    dateX = labelX + O.date.dx;
+    dateY = labelYBL - O.date.dy;
+    dateSize = O.date.fontSize;
+  } else {
+    const L = SIGNATURE_LAYOUT;
+    mentionX = L.mention.x; mentionY = L.mention.y;
+    mentionSize = L.mention.fontSize; mentionMaxWidth = L.mention.maxWidth;
+    sigX = L.signature.x; sigY = L.signature.y;
+    sigW = L.signature.width; sigH = L.signature.height;
+    dateX = L.date.x; dateY = L.date.y; dateSize = L.date.fontSize;
+  }
+
+  // 5. Dessiner
+  page.drawText(mention, {
+    x: mentionX, y: mentionY, size: mentionSize, font,
+    color: rgb(0, 0, 0), maxWidth: mentionMaxWidth,
   });
 
-  // 5. Dessiner la signature
-  lastPage.drawImage(pngImage, {
-    x: SIGNATURE_LAYOUT.signature.x,
-    y: SIGNATURE_LAYOUT.signature.y,
-    width: SIGNATURE_LAYOUT.signature.width,
-    height: SIGNATURE_LAYOUT.signature.height,
+  page.drawImage(pngImage, {
+    x: sigX, y: sigY, width: sigW, height: sigH,
   });
 
-  // 6. Dessiner la date
-  lastPage.drawText(date, {
-    x: SIGNATURE_LAYOUT.date.x,
-    y: SIGNATURE_LAYOUT.date.y,
-    size: SIGNATURE_LAYOUT.date.fontSize,
-    font,
-    color: rgb(0, 0, 0),
+  page.drawText(date, {
+    x: dateX, y: dateY, size: dateSize, font, color: rgb(0, 0, 0),
   });
 
-  // 7. Sauvegarder
+  // 6. Sauvegarder
   return await pdfDoc.save();
 }
 

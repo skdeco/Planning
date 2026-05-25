@@ -17,6 +17,7 @@ import {
   apposerSignatureSurPdf,
   fetchPdfBytes,
   bytesToBase64,
+  findSignatureBoxPosition,
 } from '@/lib/pdfSigner';
 import { uploadFileToStorage } from '@/lib/supabase';
 
@@ -92,14 +93,22 @@ export function SignerDevisOverlay({
     }
     setBusy(true);
     try {
-      // 1. Télécharger le PDF original
+      // 1. Détecter la position du cadre "Pour le client" via API serveur
+      //    (lecture du texte du PDF avec positions). Si non trouvé,
+      //    fallback sur coords hardcodées dans SIGNATURE_LAYOUT.
+      const boxPosition = await findSignatureBoxPosition(devisUri);
+
+      // 2. Télécharger le PDF original (en parallèle aurait été plus rapide
+      //    mais le PDF est gros, on évite la concurrence pour limiter la
+      //    pression mémoire iOS)
       const pdfBytes = await fetchPdfBytes(devisUri);
-      // 2. Apposer signature/date/mention
+      // 3. Apposer signature/date/mention sur la page détectée
       const signedBytes = await apposerSignatureSurPdf({
         pdfBytes,
         signatureBase64: signature,
         mention: mention.trim(),
         date: date.trim(),
+        boxPosition,
       });
       // 3. Convertir bytes → data URI pour réutiliser uploadFileToStorage
       const base64 = bytesToBase64(signedBytes);
