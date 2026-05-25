@@ -100,7 +100,11 @@ export function extraireLotsDuTexte(texte: string): LotExtrait[] {
     if (numero < 1 || numero > 50) continue;
     const nom = nettoyerNom(nomBrut);
     if (nom.length < 3 || nom.length > 60) continue;
-    if (isNaN(montant) || montant < 100 || montant > 50_000_000) continue;
+    // Accepte montant 0 (cas légitime : un lot "header" dont le total
+    // est porté par ses sous-lots — ex "VM C 1 : cuisine ... 0,00 €"
+    // avec sous-lot "Fourniture ... 1 500,00 €"). Rejet seulement si
+    // NaN, négatif, ou aberrant (> 50M).
+    if (isNaN(montant) || montant < 0 || montant > 50_000_000) continue;
     if (estDansBlacklist(nom)) continue;
     if (!(new RegExp('[A-Za-zÀ-ÿ]')).test(nom)) continue;
     if (/^\d/.test(nom)) continue;
