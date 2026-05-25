@@ -284,6 +284,31 @@ export function NotificationListener() {
     prevPushNotesChantier.current = nb;
   }, [data.notesChantier]);
 
+  // V10 — Idem mais pour les notes du store unifié affectations[].notes[]
+  // (depuis F1c, la nouvelle modal écrit dans ce store et plus dans notesChantier[]).
+  const prevPushNotesAffectation = useRef(-1);
+  useEffect(() => {
+    if (isAdmin || !myId) return;
+    const myNotes = data.affectations.flatMap(a =>
+      (a.notes || []).filter(n => n.auteurId === myId).map(n => ({ ...n, chantierId: a.chantierId }))
+    );
+    const nb = myNotes.length;
+    if (prevPushNotesAffectation.current >= 0 && nb > prevPushNotesAffectation.current) {
+      const derniere = myNotes.slice(-1)[0];
+      if (derniere) {
+        const ch = data.chantiers.find(c => c.id === derniere.chantierId);
+        const msg = `${derniere.auteurNom} sur ${ch?.nom || 'chantier'}`;
+        const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
+        sendPushNotification(adminTokens, 'Note chantier', msg);
+        const colleagueTokens = getChantierEmployeeTokens(derniere.chantierId, myId, data.affectations, data.employes);
+        if (colleagueTokens.length > 0) {
+          sendPushNotification(colleagueTokens, 'Note chantier', msg);
+        }
+      }
+    }
+    prevPushNotesAffectation.current = nb;
+  }, [data.affectations]);
+
   const prevPushPhotosChantier = useRef(-1);
   useEffect(() => {
     if (isAdmin || !myId) return;
