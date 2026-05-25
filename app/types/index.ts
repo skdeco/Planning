@@ -831,6 +831,24 @@ export interface LivraisonChantier {
   createdByNom?: string;
   createdAt: string;
   updatedAt: string;
+  // ─── V10 (refonte mai 2026) — workflow monte-charge / mairie ────────────
+  /** Si true, la livraison nécessite un monte-charge → débloque les 2 cases ci-dessous (admin only) */
+  monteChargeRequis?: boolean;
+  /** Demande administrative à la mairie pour stationnement / occupation voirie */
+  demandeMairie?: {
+    fait: boolean;
+    assigneA?: string;       // id employé chargé de faire la demande
+    assigneANom?: string;    // libellé pour affichage rapide
+    mailEnvoye?: boolean;    // true si le mail a été envoyé
+  };
+  /** Coordination du prestataire monte-charge (interne ou externe) */
+  prevenirMonteCharge?: {
+    fait: boolean;
+    assigneA?: string;             // id employé chargé de prévenir
+    assigneANom?: string;
+    mailEnvoye?: boolean;
+    contactExterneId?: string;     // id apporteur/prestataire externe à prévenir par mail
+  };
 }
 
 /** Fréquence d'un RDV de chantier récurrent */
