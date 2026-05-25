@@ -89,11 +89,12 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
     adresseLivraison: '',
     note: '',
     photoEtiquetteUri: '',
+    monteChargeRequis: false,
   });
 
   const openNewLiv = () => {
     setEditLivId(null);
-    setLivForm({ titre: '', dateLivraison: todayYMD(), heure: '', numeroColis: '', transporteur: '', numeroTransporteur: '', nomContact: '', telephoneContact: '', adresseLivraison: '', note: '', photoEtiquetteUri: '' });
+    setLivForm({ titre: '', dateLivraison: todayYMD(), heure: '', numeroColis: '', transporteur: '', numeroTransporteur: '', nomContact: '', telephoneContact: '', adresseLivraison: '', note: '', photoEtiquetteUri: '', monteChargeRequis: false });
     setShowLivForm(true);
   };
   const openEditLiv = (l: LivraisonChantier) => {
@@ -110,6 +111,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
       adresseLivraison: l.adresseLivraison || '',
       note: l.note || '',
       photoEtiquetteUri: l.photoEtiquetteUri || '',
+      monteChargeRequis: l.monteChargeRequis === true,
     });
     setShowLivForm(true);
   };
@@ -151,6 +153,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
         adresseLivraison: livForm.adresseLivraison.trim() || undefined,
         note: livForm.note.trim() || undefined,
         photoEtiquetteUri: photoUri || undefined,
+        monteChargeRequis: livForm.monteChargeRequis,
         updatedAt: now,
       });
     } else {
@@ -168,6 +171,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
         adresseLivraison: livForm.adresseLivraison.trim() || undefined,
         note: livForm.note.trim() || undefined,
         photoEtiquetteUri: photoUri || undefined,
+        monteChargeRequis: livForm.monteChargeRequis,
         recue: false,
         createdBy: currentUser?.role === 'admin' ? 'admin' : (currentUser?.apporteurId || currentUser?.employeId || 'unknown'),
         createdByNom: createdByNom || currentUser?.nom,
@@ -442,6 +446,28 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                 <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>
                   {livForm.photoEtiquetteUri ? '✓ Photo étiquette ajoutée' : '📷 Photo d\'étiquette (optionnel)'}
                 </Text>
+              </Pressable>
+              {/* V10 — case Monte-charge requis (débloque les sous-cases mairie + prévenir côté admin sur la card) */}
+              <Pressable
+                onPress={() => setLivForm(f => ({ ...f, monteChargeRequis: !f.monteChargeRequis }))}
+                style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }}
+                accessibilityRole="checkbox"
+                accessibilityState={{ checked: livForm.monteChargeRequis }}
+                accessibilityLabel="Monte-charge requis"
+              >
+                <View style={{
+                  width: 22,
+                  height: 22,
+                  borderRadius: 6,
+                  borderWidth: 2,
+                  borderColor: livForm.monteChargeRequis ? '#5C1F2E' : '#8A7B6E',
+                  backgroundColor: livForm.monteChargeRequis ? '#5C1F2E' : 'transparent',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  {livForm.monteChargeRequis && <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>✓</Text>}
+                </View>
+                <Text style={{ fontSize: 14, color: '#2A2622', fontWeight: '500' }}>🏗️ Monte-charge requis</Text>
               </Pressable>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
                 <Pressable onPress={() => setShowLivForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
