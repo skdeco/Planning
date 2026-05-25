@@ -26,7 +26,7 @@ function toYMD(d: Date): string {
 }
 
 export default function DashboardScreen() {
-  const { data, currentUser, isHydrated, logout, toggleTask, addTaskPhoto, removeTaskPhoto, addRetardPlanifie, updateTicketSAV, upsertNote, updateEmploye, addBadgeEmploye } = useApp();
+  const { data, currentUser, isHydrated, logout, toggleTask, addTaskPhoto, removeTaskPhoto, addRetardPlanifie, updateTicketSAV, upsertNote, updateEmploye, updateApporteur, addBadgeEmploye } = useApp();
   const { t } = useLanguage();
   const router = useRouter();
   const { pushToken } = useNotifications();
@@ -55,7 +55,14 @@ export default function DashboardScreen() {
         updateEmploye({ ...emp, pushToken });
       }
     }
-  }, [pushToken, currentUser?.employeId, currentUser?.role]);
+    // Apporteur (client, architecte, contractant, apporteur d'affaires)
+    if (currentUser.role === 'apporteur' && currentUser.apporteurId) {
+      const ap = (data.apporteurs || []).find(a => a.id === currentUser.apporteurId);
+      if (ap && ap.pushToken !== pushToken) {
+        updateApporteur({ ...ap, pushToken });
+      }
+    }
+  }, [pushToken, currentUser?.employeId, currentUser?.apporteurId, currentUser?.role]);
 
   const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';

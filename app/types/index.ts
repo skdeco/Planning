@@ -468,6 +468,7 @@ export interface Apporteur {
   motDePasseVisible?: string;  // copie visible côté admin seulement (masquée par défaut avec œil)
   accesApp?: boolean;          // true si l'admin a activé l'accès à l'app
   derniereConnexion?: string;  // ISO datetime
+  pushToken?: string;          // Expo Push Token pour notifications push
   /** Permissions par défaut sur le portail client (override possible par chantier) */
   portailDefaut?: {
     voirProjet?: boolean;

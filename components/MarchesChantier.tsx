@@ -14,6 +14,7 @@ import { todayYMD } from '@/lib/date/today';
 import { AvancementLotsPanel } from '@/components/ui/AvancementLotsPanel';
 import { ImportLotsDevisOverlay } from '@/components/ui/ImportLotsDevisOverlay';
 import { SignerDevisOverlay } from '@/components/SignerDevisOverlay';
+import { sendPushNotification } from '@/hooks/useNotifications';
 import {
   MODES_PAIEMENT,
   type MarcheChantier, type SupplementMarche, type PaiementRecu,
@@ -145,6 +146,28 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     | { type: 'supplement'; id: string; devisUri?: string; devisNom?: string }
     | null
   >(null);
+
+  /**
+   * Quand un nouveau snapshot est créé (figer pour facturation), notifie le
+   * client lié au chantier via Expo push. Silencieux si pas de client lié
+   * ou pas de push token (apporteur jamais connecté).
+   */
+  const notifyClientSnapshot = (oldSnaps: import('@/app/types').SnapshotAvancement[] | undefined, newSnaps: import('@/app/types').SnapshotAvancement[], libelleParent: string) => {
+    const oldCount = oldSnaps?.length || 0;
+    if (newSnaps.length <= oldCount) return; // pas un nouveau snapshot
+    const dernier = newSnaps[newSnaps.length - 1];
+    const clientId = chantier?.clientApporteurId;
+    if (!clientId) return;
+    const client = apporteurs.find(a => a.id === clientId);
+    if (!client?.pushToken) return;
+    const montantNouveau = (dernier.lots || []).reduce((s, l) => s + l.montantFactureNouveau, 0);
+    sendPushNotification(
+      [client.pushToken],
+      `📋 Nouvelle situation figée — ${chantier?.nom || ''}`.trim(),
+      `${dernier.intitule || 'Situation'} sur ${libelleParent} : ${fmt(montantNouveau)} € HT à facturer.`,
+      { type: 'snapshot', chantierId, snapshotId: dernier.id }
+    );
+  };
 
   // ── Signer devis (apposer signature/date/mention sur PDF original) ──
   const [signerTarget, setSignerTarget] = useState<
@@ -660,7 +683,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           title="📊 Avancement de ce marché"
                           compact
                           snapshots={m.snapshots}
-                          onChangeSnapshots={(s) => updateMarcheChantier({ ...m, snapshots: s })}
+                          onChangeSnapshots={(s) => {
+                            notifyClientSnapshot(m.snapshots, s, m.libelle);
+                            updateMarcheChantier({ ...m, snapshots: s });
+                          }}
                           cocheParId={currentUser?.employeId || currentUser?.apporteurId || currentUser?.soustraitantId || currentUser?.role}
                           cocheParNom={currentUser?.nom || currentUser?.role}
                         />
@@ -844,7 +870,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             title="📊 Avancement de ce supplément"
                             compact
                             snapshots={s.snapshots}
-                            onChangeSnapshots={(snaps) => updateSupplementMarche({ ...s, snapshots: snaps, updatedAt: new Date().toISOString() })}
+                            onChangeSnapshots={(snaps) => {
+                              notifyClientSnapshot(s.snapshots, snaps, `+ ${s.libelle}`);
+                              updateSupplementMarche({ ...s, snapshots: snaps, updatedAt: new Date().toISOString() });
+                            }}
                             cocheParId={currentUser?.employeId || currentUser?.apporteurId || currentUser?.soustraitantId || currentUser?.role}
                             cocheParNom={currentUser?.nom || currentUser?.role}
                           />
