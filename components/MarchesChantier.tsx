@@ -14,6 +14,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { todayYMD } from '@/lib/date/today';
 import { AvancementLotsPanel } from '@/components/ui/AvancementLotsPanel';
 import { ImportLotsDevisOverlay } from '@/components/ui/ImportLotsDevisOverlay';
+import { SignerDevisOverlay } from '@/components/SignerDevisOverlay';
 import {
   MODES_PAIEMENT,
   type MarcheChantier, type SupplementMarche, type PaiementRecu,
@@ -121,6 +122,13 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
   // ── Import lots depuis devis (overlay inline pour éviter bug iOS Modal-on-Modal) ──
   const [showImportLots, setShowImportLots] = useState(false);
+
+  // ── Signer devis (apposer signature/date/mention sur PDF original) ──
+  const [signerTarget, setSignerTarget] = useState<
+    | { type: 'marche'; id: string; devisUri: string; devisNom?: string }
+    | { type: 'supplement'; id: string; devisUri: string; devisNom?: string }
+    | null
+  >(null);
 
   const pickFile = async (label: string): Promise<{ uri: string; nom: string } | null> => {
     // 1 seul code path web/iOS/Android via pickNativeFile (cohérence C1a/C1b/C1c).
@@ -591,19 +599,29 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             </Pressable>
                           </View>
                         ) : m.devisInitialUri ? (
-                          /* V10 — placeholder upload devis signé visible tant que pas encore uploadé */
-                          <Pressable
-                            style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 6, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#DC2626', borderStyle: 'dashed' }}
-                            onPress={async () => {
-                              const f = await pickFile('devis-signe');
-                              if (!f) return;
-                              const uploaded = await uploadIfNeeded(f, 'marche/devis-signe');
-                              if (uploaded.uri) updateMarcheChantier({ ...m, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
-                            }}
-                          >
-                            <Text style={{ fontSize: 16 }}>📥</Text>
-                            <Text style={{ fontSize: 9, color: '#DC2626', fontWeight: '700' }} numberOfLines={1}>Uploader devis signé</Text>
-                          </Pressable>
+                          <>
+                            {/* V10 — Signer le devis dans l'app (apposer signature/date/mention sur PDF) */}
+                            <Pressable
+                              style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 6, padding: 8, alignItems: 'center' }}
+                              onPress={() => setSignerTarget({ type: 'marche', id: m.id, devisUri: m.devisInitialUri!, devisNom: m.devisInitialNom })}
+                            >
+                              <Text style={{ fontSize: 16 }}>✍️</Text>
+                              <Text style={{ fontSize: 9, color: '#FBF7F2', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
+                            </Pressable>
+                            {/* Toujours laisser la possibilité d'uploader un devis signé externe (client chez lui) */}
+                            <Pressable
+                              style={{ flex: 1, backgroundColor: 'transparent', borderRadius: 6, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#DC2626', borderStyle: 'dashed' }}
+                              onPress={async () => {
+                                const f = await pickFile('devis-signe');
+                                if (!f) return;
+                                const uploaded = await uploadIfNeeded(f, 'marche/devis-signe');
+                                if (uploaded.uri) updateMarcheChantier({ ...m, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
+                              }}
+                            >
+                              <Text style={{ fontSize: 16 }}>📥</Text>
+                              <Text style={{ fontSize: 9, color: '#DC2626', fontWeight: '700' }} numberOfLines={1}>Uploader signé</Text>
+                            </Pressable>
+                          </>
                         ) : null}
                       </View>
 
@@ -718,7 +736,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                           <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{s.libelle}</Text>
-                          {s.devisUri && s.statut === 'en_attente' && (
+                          {s.devisUri && !s.devisSigneUri && (
                             <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }}>
                               <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900', lineHeight: 14 }}>!</Text>
                             </View>
@@ -744,15 +762,43 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         <Text style={{ fontSize: 12, color: '#11181C', marginBottom: 8 }}>{s.description}</Text>
                       )}
                       {/* Documents */}
-                      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
+                      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                         {s.devisUri ? (
-                          <Pressable style={{ flex: 1, backgroundColor: '#EBF0FF', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.devisUri)}>
+                          <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#EBF0FF', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.devisUri)}>
                             <Text style={{ fontSize: 16 }}>📄</Text>
                             <Text style={{ fontSize: 9, color: '#2C2C2C', fontWeight: '600' }} numberOfLines={1}>Devis</Text>
                           </Pressable>
                         ) : null}
+                        {s.devisSigneUri ? (
+                          <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#D4EDDA', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.devisSigneUri)}>
+                            <Text style={{ fontSize: 16 }}>✍️</Text>
+                            <Text style={{ fontSize: 9, color: '#155724', fontWeight: '600' }} numberOfLines={1}>Devis signé</Text>
+                          </Pressable>
+                        ) : s.devisUri ? (
+                          <>
+                            <Pressable
+                              style={{ flex: 1, minWidth: 70, backgroundColor: '#5C1F2E', borderRadius: 6, padding: 8, alignItems: 'center' }}
+                              onPress={() => setSignerTarget({ type: 'supplement', id: s.id, devisUri: s.devisUri!, devisNom: s.devisNom })}
+                            >
+                              <Text style={{ fontSize: 16 }}>✍️</Text>
+                              <Text style={{ fontSize: 9, color: '#FBF7F2', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
+                            </Pressable>
+                            <Pressable
+                              style={{ flex: 1, minWidth: 70, backgroundColor: 'transparent', borderRadius: 6, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#DC2626', borderStyle: 'dashed' }}
+                              onPress={async () => {
+                                const f = await pickFile('devis-signe');
+                                if (!f) return;
+                                const uploaded = await uploadIfNeeded(f, 'supplements/devis-signe');
+                                if (uploaded.uri) updateSupplementMarche({ ...s, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom, updatedAt: new Date().toISOString() });
+                              }}
+                            >
+                              <Text style={{ fontSize: 16 }}>📥</Text>
+                              <Text style={{ fontSize: 9, color: '#DC2626', fontWeight: '700' }} numberOfLines={1}>Uploader signé</Text>
+                            </Pressable>
+                          </>
+                        ) : null}
                         {s.factureUri ? (
-                          <Pressable style={{ flex: 1, backgroundColor: '#FFF3CD', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.factureUri)}>
+                          <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#FFF3CD', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.factureUri)}>
                             <Text style={{ fontSize: 16 }}>🧾</Text>
                             <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }} numberOfLines={1}>Facture</Text>
                           </Pressable>
@@ -817,6 +863,27 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
             chantier={chantier}
             devisUri={marches.find(m => m.devisInitialUri)?.devisInitialUri}
             devisNom={marches.find(m => m.devisInitialUri)?.devisInitialNom}
+          />
+        )}
+
+        {/* V10 — Overlay signature devis (apposer signature + date + mention sur PDF). */}
+        {signerTarget && (
+          <SignerDevisOverlay
+            visible={!!signerTarget}
+            onClose={() => setSignerTarget(null)}
+            devisUri={signerTarget.devisUri}
+            devisNom={signerTarget.devisNom}
+            chantierId={chantierId}
+            type={signerTarget.type}
+            onSigned={(uri, nom) => {
+              if (signerTarget.type === 'marche') {
+                const m = marches.find(x => x.id === signerTarget.id);
+                if (m) updateMarcheChantier({ ...m, devisSigneUri: uri, devisSigneNom: nom });
+              } else {
+                const s = supplements.find(x => x.id === signerTarget.id);
+                if (s) updateSupplementMarche({ ...s, devisSigneUri: uri, devisSigneNom: nom, updatedAt: new Date().toISOString() });
+              }
+            }}
           />
         )}
       </View>

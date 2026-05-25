@@ -1016,6 +1016,9 @@ export interface SupplementMarche {
   dateAccord?: string;              // YYYY-MM-DD si accepté
   devisUri?: string;
   devisNom?: string;
+  /** Devis signé numériquement ou uploadé après accord client (équivalent marché). */
+  devisSigneUri?: string;
+  devisSigneNom?: string;
   factureUri?: string;
   factureNom?: string;
   paiements: PaiementRecu[];
