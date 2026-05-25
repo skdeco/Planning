@@ -866,74 +866,26 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           />
         )}
 
-        {/* V10 — Overlay signature devis (ajoute une page "Bon pour accord" au PDF). */}
-        {signerTarget && chantier && (() => {
-          // Construction des infos client + devis + montants à partir du chantier
-          // et du marché/supplément ciblé.
-          const clientApporteur = chantier.clientApporteurId
-            ? apporteurs.find(a => a.id === chantier.clientApporteurId)
-            : undefined;
-          const clientNom = clientApporteur
-            ? `${clientApporteur.prenom || ''} ${clientApporteur.nom || ''}`.trim()
-              || clientApporteur.societe || chantier.client || '—'
-            : chantier.client || chantier.nom;
-          const clientAdresse = [
-            clientApporteur?.adresse,
-            chantier.rue,
-            [chantier.codePostal, chantier.ville].filter(Boolean).join(' '),
-            chantier.pays,
-          ].filter(Boolean).join('\n') || chantier.adresse;
-
-          let montantHT = 0, montantTTC = 0, libelle = '', dateDevis: string | undefined;
-          if (signerTarget.type === 'marche') {
-            const m = marches.find(x => x.id === signerTarget.id);
-            if (m) {
-              montantHT = m.montantHT; montantTTC = m.montantTTC;
-              libelle = m.libelle; dateDevis = m.dateDevis;
-            }
-          } else {
-            const s = supplements.find(x => x.id === signerTarget.id);
-            if (s) {
-              montantHT = s.montantHT; montantTTC = s.montantTTC;
-              libelle = s.libelle; dateDevis = s.dateProposition;
-            }
-          }
-          // Référence devis depuis le nom de fichier (ex: "D-2024-0114.pdf" → "D-2024-0114")
-          const reference = signerTarget.devisNom
-            ? signerTarget.devisNom.replace(/\.pdf$/i, '').replace(/^.*?([A-Z0-9_-]{4,30})$/, '$1')
-            : undefined;
-          // Format date FR
-          const dateDevisFR = dateDevis
-            ? dateDevis.split('-').reverse().join('/')
-            : undefined;
-
-          return (
-            <SignerDevisOverlay
-              visible={!!signerTarget}
-              onClose={() => setSignerTarget(null)}
-              devisUri={signerTarget.devisUri}
-              devisNom={signerTarget.devisNom}
-              chantierId={chantierId}
-              type={signerTarget.type}
-              client={{ nom: clientNom, adresse: clientAdresse }}
-              devis={{ reference, libelle, dateDevis: dateDevisFR }}
-              montants={{
-                totalHT: montantHT,
-                tva: montantTTC - montantHT,
-                totalTTC: montantTTC,
-              }}
-              onSigned={(uri, nom) => {
-                if (signerTarget.type === 'marche') {
-                  const m = marches.find(x => x.id === signerTarget.id);
-                  if (m) updateMarcheChantier({ ...m, devisSigneUri: uri, devisSigneNom: nom });
-                } else {
-                  const s = supplements.find(x => x.id === signerTarget.id);
-                  if (s) updateSupplementMarche({ ...s, devisSigneUri: uri, devisSigneNom: nom, updatedAt: new Date().toISOString() });
-                }
-              }}
-            />
-          );
-        })()}
+        {/* V10 — Overlay signature devis (encadré en bas de la dernière page). */}
+        {signerTarget && (
+          <SignerDevisOverlay
+            visible={!!signerTarget}
+            onClose={() => setSignerTarget(null)}
+            devisUri={signerTarget.devisUri}
+            devisNom={signerTarget.devisNom}
+            chantierId={chantierId}
+            type={signerTarget.type}
+            onSigned={(uri, nom) => {
+              if (signerTarget.type === 'marche') {
+                const m = marches.find(x => x.id === signerTarget.id);
+                if (m) updateMarcheChantier({ ...m, devisSigneUri: uri, devisSigneNom: nom });
+              } else {
+                const s = supplements.find(x => x.id === signerTarget.id);
+                if (s) updateSupplementMarche({ ...s, devisSigneUri: uri, devisSigneNom: nom, updatedAt: new Date().toISOString() });
+              }
+            }}
+          />
+        )}
       </View>
 
       {/* ── Modal Form Marché ── */}

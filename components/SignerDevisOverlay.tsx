@@ -14,12 +14,9 @@ import {
 import { SignaturePad } from '@/components/SignaturePad';
 import { DS } from '@/constants/design';
 import {
-  ajouterPageSignature,
+  apposerEncadreSignature,
   fetchPdfBytes,
   bytesToBase64,
-  type ClientInfo,
-  type DevisInfo,
-  type MontantsRecap,
 } from '@/lib/pdfSigner';
 import { uploadFileToStorage } from '@/lib/supabase';
 
@@ -41,12 +38,6 @@ export interface SignerDevisOverlayProps {
   chantierId: string;
   /** Type pour le folder Storage (marche/supplement). */
   type: 'marche' | 'supplement';
-  /** Infos client à afficher dans la page de signature. */
-  client: ClientInfo;
-  /** Infos devis (référence, libellé, date). */
-  devis: DevisInfo;
-  /** Montants HT/TVA/TTC à afficher dans le récap. */
-  montants: MontantsRecap;
   /** Callback après upload réussi du PDF signé. */
   onSigned: (uri: string, nom: string) => void;
 }
@@ -67,9 +58,6 @@ export function SignerDevisOverlay({
   devisNom,
   chantierId,
   type,
-  client,
-  devis,
-  montants,
   onSigned,
 }: SignerDevisOverlayProps) {
   const [signature, setSignature] = useState<string | null>(null);
@@ -106,16 +94,14 @@ export function SignerDevisOverlay({
     try {
       // 1. Télécharger le PDF original
       const pdfBytes = await fetchPdfBytes(devisUri);
-      // 2. Ajouter une nouvelle page "Bon pour accord" propre, avec
-      //    en-tête société + client + récap financier + cadre signature
-      const signedBytes = await ajouterPageSignature({
+      // 2. Dessiner l'encadré "Bon pour accord" en bas de la dernière
+      //    page (fond blanc opaque qui masque tout contenu existant
+      //    en dessous)
+      const signedBytes = await apposerEncadreSignature({
         pdfBytes,
         signatureBase64: signature,
         mention: mention.trim(),
         date: date.trim(),
-        client,
-        devis,
-        montants,
       });
       // 3. Convertir bytes → data URI pour réutiliser uploadFileToStorage
       const base64 = bytesToBase64(signedBytes);

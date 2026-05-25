@@ -1,271 +1,151 @@
 /**
- * pdfSigner — Ajoute une page "Bon pour accord" à la fin d'un PDF de devis.
+ * pdfSigner — Appose un encadré "Bon pour accord" en bas de la dernière
+ * page d'un PDF de devis.
  *
- * Approche : au lieu de tenter de positionner la signature dans un cadre
- * existant (dont la position varie selon le contenu du devis), on AJOUTE
- * une nouvelle page propre à la fin avec :
- *   - En-tête SKDECO (société + référence devis)
- *   - Bloc client (nom + adresse)
- *   - Récapitulatif financier (HT remisé / TVA / TTC remisé)
- *   - Cadre signature : mention manuscrite + date + signature image
+ * Approche : on dessine un encadré à coordonnées fixes en bas de la
+ * dernière page, AVEC un fond blanc opaque qui masque tout contenu
+ * existant en dessous (si superposition).
+ *
+ * L'encadré contient : mention manuscrite à gauche, date + signature
+ * à droite. Header "Pour le client — Bon pour accord" en haut.
  */
 import { PDFDocument, rgb, StandardFonts, PDFPage, PDFFont } from 'pdf-lib';
 
 // ─── Constantes design ────────────────────────────────────────────────────
 
-const PAGE_WIDTH = 595;   // A4 portrait, pts
-const PAGE_HEIGHT = 842;
-const MARGIN_X = 50;
-const COLOR_BORDEAUX = rgb(0.36, 0.12, 0.18);   // #5C1F2E
-const COLOR_SOMBRE = rgb(0.11, 0.11, 0.11);     // #1c1c1c
-const COLOR_GRIS = rgb(0.4, 0.4, 0.4);
-const COLOR_LIGNE = rgb(0.8, 0.8, 0.8);
-const COLOR_ORANGE = rgb(0.85, 0.58, 0.28);     // ~#D9954B (NET À PAYER bar)
+const COLOR_BORDEAUX = rgb(0.36, 0.12, 0.18);  // #5C1F2E
+const COLOR_SOMBRE = rgb(0.11, 0.11, 0.11);
+const COLOR_GRIS = rgb(0.45, 0.45, 0.45);
+const COLOR_LIGNE = rgb(0.7, 0.7, 0.7);
+const COLOR_BLANC = rgb(1, 1, 1);
 
-// ─── Données société (en dur — change ici si SK DECO déménage) ────────────
-
-const ENTETE_SOCIETE = {
-  nom: 'SKDECO',
-  adresse1: '34 Rue du Commandant René Mouchotte',
-  adresse2: '94160 Saint-Mandé',
-  tel: '07 63 62 84 10',
-  email: 'contact@skdeco.fr',
-  siret: 'RCS Créteil 813 532 876 00022',
-  capital: 'SAS au capital de 1000 €',
+/**
+ * Géométrie de l'encadré, en points PDF (origine bottom-left). Ajustable
+ * si Kevin veut le déplacer/agrandir.
+ */
+const BOX = {
+  marginX: 40,           // marge gauche/droite
+  marginBottom: 20,      // marge depuis le bas de la page
+  height: 150,           // hauteur de l'encadré
+  paddingX: 12,
+  paddingTop: 14,
 };
 
-// ─── Types d'entrée ──────────────────────────────────────────────────────
+// ─── Types ────────────────────────────────────────────────────────────────
 
-export interface ClientInfo {
-  nom: string;        // "M. Dupont" ou "Société X"
-  adresse?: string;   // adresse complète multi-lignes
-}
-
-export interface DevisInfo {
-  reference?: string;   // ex: "D-2024-0114"
-  libelle?: string;     // ex: "Marché initial"
-  dateDevis?: string;   // ex: "13/05/2026"
-}
-
-export interface MontantsRecap {
-  totalHT: number;      // HT après remise
-  tva: number;
-  totalTTC: number;     // TTC après remise
-}
-
-export interface AjouterPageSignatureOptions {
-  /** Bytes du PDF original (Uint8Array). */
+export interface ApposerEncadreOptions {
+  /** Bytes du PDF original. */
   pdfBytes: Uint8Array;
   /** Signature en base64 PNG. */
   signatureBase64: string;
-  /** Mention manuscrite (texte). */
+  /** Mention manuscrite (typée par l'utilisateur). */
   mention: string;
   /** Date au format DD/MM/YYYY. */
   date: string;
-  /** Infos client (nom + adresse). */
-  client: ClientInfo;
-  /** Référence et libellé du devis. */
-  devis: DevisInfo;
-  /** Montants HT/TVA/TTC (après remise). */
-  montants: MontantsRecap;
 }
 
 // ─── Fonction principale ──────────────────────────────────────────────────
 
 /**
- * Ajoute une nouvelle page "Bon pour accord" à la fin du PDF passé en bytes.
- * Retourne les bytes du PDF modifié.
+ * Dessine un encadré "Bon pour accord" en bas de la dernière page existante.
+ * Le fond blanc masque tout contenu sous-jacent. Retourne les bytes du PDF.
  */
-export async function ajouterPageSignature(
-  opts: AjouterPageSignatureOptions
-): Promise<Uint8Array> {
-  const { pdfBytes, signatureBase64, mention, date, client, devis, montants } = opts;
+export async function apposerEncadreSignature(opts: ApposerEncadreOptions): Promise<Uint8Array> {
+  const { pdfBytes, signatureBase64, mention, date } = opts;
 
   const pdfDoc = await PDFDocument.load(pdfBytes);
+  const pages = pdfDoc.getPages();
+  const page = pages[pages.length - 1];
+  const { width, height } = page.getSize();
+
   const fontReg = await pdfDoc.embedFont(StandardFonts.Helvetica);
   const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
 
-  // Embed signature
   const pngBase64 = signatureBase64.replace(/^data:image\/png;base64,/, '');
   const pngBytes = base64ToBytes(pngBase64);
   const pngImage = await pdfDoc.embedPng(pngBytes);
 
-  // Créer nouvelle page A4
-  const page = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT]);
+  // ─── Géométrie de l'encadré (origine bottom-left) ─────────────────────
+  const boxLeft = BOX.marginX;
+  const boxBottom = BOX.marginBottom;
+  const boxWidth = width - 2 * BOX.marginX;
+  const boxHeight = BOX.height;
+  const boxTop = boxBottom + boxHeight;
+  const boxRight = boxLeft + boxWidth;
 
-  // ─── EN-TÊTE ────────────────────────────────────────────────────────
-  let y = PAGE_HEIGHT - 60;
-
-  // Société à gauche
-  page.drawText(ENTETE_SOCIETE.nom, {
-    x: MARGIN_X, y, size: 18, font: fontBold, color: COLOR_BORDEAUX,
-  });
-  page.drawText(ENTETE_SOCIETE.adresse1, {
-    x: MARGIN_X, y: y - 20, size: 9, font: fontReg, color: COLOR_SOMBRE,
-  });
-  page.drawText(ENTETE_SOCIETE.adresse2, {
-    x: MARGIN_X, y: y - 32, size: 9, font: fontReg, color: COLOR_SOMBRE,
-  });
-  page.drawText(`Tél : ${ENTETE_SOCIETE.tel}`, {
-    x: MARGIN_X, y: y - 46, size: 9, font: fontReg, color: COLOR_SOMBRE,
-  });
-  page.drawText(`Email : ${ENTETE_SOCIETE.email}`, {
-    x: MARGIN_X, y: y - 58, size: 9, font: fontReg, color: COLOR_SOMBRE,
-  });
-
-  // Référence devis à droite
-  const refX = PAGE_WIDTH - MARGIN_X - 200;
-  if (devis.reference) {
-    page.drawText(`Devis N° ${devis.reference}`, {
-      x: refX, y, size: 12, font: fontBold, color: COLOR_SOMBRE,
-    });
-  } else if (devis.libelle) {
-    page.drawText(devis.libelle, {
-      x: refX, y, size: 12, font: fontBold, color: COLOR_SOMBRE,
-    });
-  }
-  if (devis.dateDevis) {
-    page.drawText(`Date : ${devis.dateDevis}`, {
-      x: refX, y: y - 20, size: 10, font: fontReg, color: COLOR_SOMBRE,
-    });
-  }
-
-  // Ligne séparation
-  y = y - 80;
-  drawHLine(page, MARGIN_X, PAGE_WIDTH - MARGIN_X, y, COLOR_LIGNE);
-  y -= 30;
-
-  // ─── BLOC CLIENT ────────────────────────────────────────────────────
-  page.drawText('Adressé à :', {
-    x: MARGIN_X, y, size: 10, font: fontBold, color: COLOR_GRIS,
-  });
-  y -= 18;
-  page.drawText(client.nom || '—', {
-    x: MARGIN_X, y, size: 12, font: fontBold, color: COLOR_SOMBRE,
-  });
-  if (client.adresse) {
-    const lines = client.adresse.split('\n').slice(0, 3);
-    for (const line of lines) {
-      y -= 14;
-      page.drawText(line, {
-        x: MARGIN_X, y, size: 10, font: fontReg, color: COLOR_SOMBRE,
-      });
-    }
-  }
-
-  // ─── RÉCAPITULATIF FINANCIER ─────────────────────────────────────────
-  y -= 50;
-  drawHLine(page, MARGIN_X, PAGE_WIDTH - MARGIN_X, y, COLOR_LIGNE);
-  y -= 25;
-
-  page.drawText('Récapitulatif du devis', {
-    x: MARGIN_X, y, size: 12, font: fontBold, color: COLOR_BORDEAUX,
-  });
-  y -= 25;
-
-  const labelX = MARGIN_X + 10;
-  const valueX = PAGE_WIDTH - MARGIN_X - 10;
-  const drawMontantRow = (label: string, valueEUR: number, bold: boolean) => {
-    const font = bold ? fontBold : fontReg;
-    const size = bold ? 12 : 11;
-    page.drawText(label, {
-      x: labelX, y, size, font, color: COLOR_SOMBRE,
-    });
-    const valueStr = `${fmtEUR(valueEUR)} €`;
-    const valueW = font.widthOfTextAtSize(valueStr, size);
-    page.drawText(valueStr, {
-      x: valueX - valueW, y, size, font, color: COLOR_SOMBRE,
-    });
-  };
-
-  drawMontantRow('Total HT remisé', montants.totalHT, false);
-  y -= 22;
-  drawMontantRow('TVA', montants.tva, false);
-  y -= 22;
-
-  // Bandeau orange "Total TTC remisé / Net à payer"
-  const bandY = y - 5;
+  // ─── 1. Fond blanc opaque (masque tout dessous) ──────────────────────
   page.drawRectangle({
-    x: MARGIN_X, y: bandY - 20, width: PAGE_WIDTH - 2 * MARGIN_X, height: 30,
-    color: COLOR_ORANGE,
+    x: boxLeft - 1, y: boxBottom - 1,
+    width: boxWidth + 2, height: boxHeight + 2,
+    color: COLOR_BLANC,
   });
-  const labelTTC = 'NET À PAYER (Total TTC remisé)';
-  page.drawText(labelTTC, {
-    x: labelX, y: bandY - 12, size: 11, font: fontBold, color: rgb(1, 1, 1),
-  });
-  const ttcStr = `${fmtEUR(montants.totalTTC)} €`;
-  const ttcW = fontBold.widthOfTextAtSize(ttcStr, 12);
-  page.drawText(ttcStr, {
-    x: valueX - ttcW, y: bandY - 12, size: 12, font: fontBold, color: rgb(1, 1, 1),
-  });
-  y = bandY - 40;
 
-  // ─── CADRE SIGNATURE ─────────────────────────────────────────────────
-  y -= 30;
-  page.drawText('Pour le client', {
-    x: MARGIN_X, y, size: 12, font: fontBold, color: COLOR_BORDEAUX,
-  });
-  y -= 15;
-
-  // Encadré
-  const boxTop = y;
-  const boxBottom = MARGIN_X + 20; // marge bas
-  const boxHeight = boxTop - boxBottom;
+  // ─── 2. Bordure de l'encadré ──────────────────────────────────────────
   page.drawRectangle({
-    x: MARGIN_X, y: boxBottom, width: PAGE_WIDTH - 2 * MARGIN_X, height: boxHeight,
+    x: boxLeft, y: boxBottom,
+    width: boxWidth, height: boxHeight,
     borderWidth: 0.8, borderColor: COLOR_LIGNE,
+    color: COLOR_BLANC,
   });
 
-  // Mention manuscrite (à gauche, haut du cadre)
-  const mentionX = MARGIN_X + 14;
-  let mentionY = boxTop - 24;
+  // ─── 3. Header "Pour le client — Bon pour accord" ────────────────────
+  const titleY = boxTop - BOX.paddingTop;
+  page.drawText('Pour le client — Bon pour accord', {
+    x: boxLeft + BOX.paddingX, y: titleY,
+    size: 11, font: fontBold, color: COLOR_BORDEAUX,
+  });
+
+  // Séparateur sous le titre
+  const sepY = titleY - 6;
+  page.drawLine({
+    start: { x: boxLeft + BOX.paddingX, y: sepY },
+    end: { x: boxRight - BOX.paddingX, y: sepY },
+    thickness: 0.5, color: COLOR_LIGNE,
+  });
+
+  // ─── 4. Colonne GAUCHE : mention manuscrite ──────────────────────────
+  const colLeftX = boxLeft + BOX.paddingX;
+  let lY = sepY - 16;
   page.drawText('Mention manuscrite :', {
-    x: mentionX, y: mentionY, size: 9, font: fontBold, color: COLOR_GRIS,
+    x: colLeftX, y: lY, size: 8, font: fontBold, color: COLOR_GRIS,
   });
-  mentionY -= 16;
+  lY -= 14;
   drawWrappedText(page, mention, {
-    x: mentionX, y: mentionY, maxWidth: 240,
-    font: fontReg, size: 11, color: COLOR_SOMBRE, lineHeight: 14,
+    x: colLeftX, y: lY,
+    maxWidth: boxWidth / 2 - BOX.paddingX - 6,
+    font: fontReg, size: 10, color: COLOR_SOMBRE, lineHeight: 12,
   });
 
-  // Date + signature côté droit
-  const rightColX = PAGE_WIDTH / 2 + 20;
+  // ─── 5. Colonne DROITE : date + signature ────────────────────────────
+  const colRightX = boxLeft + boxWidth / 2 + 6;
+
+  // Date
+  let rY = sepY - 16;
   page.drawText('Date :', {
-    x: rightColX, y: boxTop - 24, size: 9, font: fontBold, color: COLOR_GRIS,
+    x: colRightX, y: rY, size: 8, font: fontBold, color: COLOR_GRIS,
   });
   page.drawText(date, {
-    x: rightColX + 38, y: boxTop - 24, size: 11, font: fontReg, color: COLOR_SOMBRE,
+    x: colRightX + 32, y: rY, size: 10, font: fontReg, color: COLOR_SOMBRE,
   });
+  rY -= 18;
 
+  // Signature
   page.drawText('Signature :', {
-    x: rightColX, y: boxTop - 56, size: 9, font: fontBold, color: COLOR_GRIS,
+    x: colRightX, y: rY, size: 8, font: fontBold, color: COLOR_GRIS,
   });
-  // Image signature : on cale en bas droite du cadre
-  const sigW = 180;
-  const sigH = 70;
-  const sigX = rightColX;
-  const sigY = boxBottom + 18;
-  page.drawImage(pngImage, { x: sigX, y: sigY, width: sigW, height: sigH });
 
-  // Footer minimal
-  const footerY = 30;
-  page.drawText(
-    `${ENTETE_SOCIETE.nom} — ${ENTETE_SOCIETE.adresse1}, ${ENTETE_SOCIETE.adresse2} — ${ENTETE_SOCIETE.siret} — ${ENTETE_SOCIETE.capital}`,
-    { x: MARGIN_X, y: footerY, size: 7, font: fontReg, color: COLOR_GRIS }
-  );
+  // Image signature, alignée en bas de la colonne droite
+  const sigMaxW = (boxWidth / 2) - BOX.paddingX - 6;
+  const sigW = Math.min(170, sigMaxW);
+  const sigH = 60;
+  const sigX = colRightX;
+  const sigY = boxBottom + 10;
+  page.drawImage(pngImage, { x: sigX, y: sigY, width: sigW, height: sigH });
 
   return await pdfDoc.save();
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────
-
-function drawHLine(page: PDFPage, x1: number, x2: number, y: number, color: ReturnType<typeof rgb>) {
-  page.drawLine({ start: { x: x1, y }, end: { x: x2, y }, thickness: 0.7, color });
-}
-
-function fmtEUR(n: number): string {
-  return n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-}
 
 interface DrawWrappedTextOpts {
   x: number;
