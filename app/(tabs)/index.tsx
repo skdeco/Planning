@@ -213,7 +213,16 @@ export default function DashboardScreen() {
       .filter(a => a.employeId === myId && a.dateDebut <= today && a.dateFin >= today)
       .forEach(a => {
         const ch = data.chantiers.find(c => c.id === a.chantierId);
-        (a.notes || []).filter(n => (n.date === today || !n.date) && (n.texte?.trim() || (n.tasks && n.tasks.length > 0))).forEach(n => {
+        (a.notes || []).filter(n => {
+          if (!(n.date === today || !n.date)) return false;
+          const hasTexte = !!n.texte?.trim();
+          const hasTasks = !!(n.tasks && n.tasks.length > 0);
+          if (!hasTexte && !hasTasks) return false;
+          // V10 — masquer la note si TOUTES les tâches sont cochées (la note "disparaît"
+          // du planning du jour de l'employé une fois entièrement traitée)
+          if (hasTasks && (n.tasks || []).every(t => t.fait)) return false;
+          return true;
+        }).forEach(n => {
           result.push({ texte: n.texte, chantierNom: ch?.nom || '', auteurNom: n.auteurNom, savTicketId: n.savTicketId, photos: n.photos, tasks: n.tasks, affectationId: a.id, noteId: n.id });
         });
       });
@@ -1323,7 +1332,15 @@ export default function DashboardScreen() {
         {/* Toutes les notes du jour */}
         {(() => {
           const allNotesJour = data.affectations.filter(a => a.dateDebut <= today && a.dateFin >= today)
-            .flatMap(a => (a.notes || []).filter(n => (n.date === today || !n.date) && (n.texte?.trim() || (n.tasks && n.tasks.length > 0)))
+            .flatMap(a => (a.notes || []).filter(n => {
+              if (!(n.date === today || !n.date)) return false;
+              const hasTexte = !!n.texte?.trim();
+              const hasTasks = !!(n.tasks && n.tasks.length > 0);
+              if (!hasTexte && !hasTasks) return false;
+              // V10 — idem myNotesJour : masquer les notes entièrement cochées
+              if (hasTasks && (n.tasks || []).every(t => t.fait)) return false;
+              return true;
+            })
               .map(n => ({ ...n, chantierNom: data.chantiers.find(c => c.id === a.chantierId)?.nom || '', employeNom: data.employes.find(e => e.id === a.employeId)?.prenom || a.employeId })));
           if (allNotesJour.length === 0) return null;
           return (
