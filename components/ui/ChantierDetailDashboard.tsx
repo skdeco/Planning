@@ -13,6 +13,7 @@ import {
   FileCheck,
   TrendingUp,
   MessageCircle,
+  Truck,
   CheckCircle2,
   Trash2,
   type LucideIcon,
@@ -36,6 +37,7 @@ export interface ChantierDetailDashboardCounts {
   marches: number;
   notesPlanning: number;
   sav: number;
+  livraisons: number;
 }
 
 export interface ChantierDetailDashboardHandlers {
@@ -50,6 +52,7 @@ export interface ChantierDetailDashboardHandlers {
   onPressAchats: () => void;
   onPressPV: () => void;
   onPressRentabilite: () => void;
+  onPressLivraison: () => void;
   onPressMessagerie: () => void;
   /** Si undefined, bouton "Clôturer" masqué (ex: chantier déjà terminé ou pas admin) */
   onPressCloturer?: () => void;
@@ -89,6 +92,7 @@ export function ChantierDetailDashboard({
     { icon: ShoppingCart,   label: 'Achats',       variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
     { icon: FileCheck,      label: 'PV réception', variant: 'bordeaux', onPress: handlers.onPressPV,          adminOnly: true },
     { icon: TrendingUp,     label: 'Rentabilité',  variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
+    { icon: Truck,          label: 'Livraison',    variant: 'marron',   onPress: handlers.onPressLivraison,   badge: counts.livraisons },
     { icon: MessageCircle,  label: 'Messagerie',   variant: 'bordeaux', onPress: handlers.onPressMessagerie,  adminOnly: true },
   ];
 

@@ -256,6 +256,8 @@ export default function ChantiersScreen() {
   const [portailClientId, setPortailClientId] = useState<string | null>(null);
   // V10 — messagerie côté admin (modal ChatChantier dédiée, distincte du portail client)
   const [messagerieChantierId, setMessagerieChantierId] = useState<string | null>(null);
+  // V10 — modal Livraisons côté admin (wrapper de LivraisonsRdvChantier)
+  const [livraisonsChantierId, setLivraisonsChantierId] = useState<string | null>(null);
   const [suiviChantierId, setSuiviChantierId] = useState<string | null>(null);
   const [suiviFilterEmp, setSuiviFilterEmp] = useState<string>('all');
   const [suiviFilterSemaine, setSuiviFilterSemaine] = useState<'tout' | 'semaine' | 'mois'>('semaine');
@@ -1501,6 +1503,7 @@ export default function ChantiersScreen() {
 
               const notesPlanningCount = data.affectations.filter(a => a.chantierId === ch.id && (a.notes || []).length > 0).reduce((s, a) => s + a.notes.length, 0);
               const savCount = (data.ticketsSAV || []).filter(t => t.chantierId === ch.id && t.statut !== 'clos').length;
+              const livraisonsCount = (data.livraisons || []).filter(l => l.chantierId === ch.id && !l.recue).length;
 
               return (
                 <>
@@ -1527,6 +1530,7 @@ export default function ChantiersScreen() {
                       marches: marchesCount,
                       notesPlanning: notesPlanningCount,
                       sav: savCount,
+                      livraisons: livraisonsCount,
                     }}
                     handlers={{
                       onPressFiche:       () => { setActionChantier(null); setTimeout(() => openFicheUnifiee(ch), 100); },
@@ -1540,6 +1544,7 @@ export default function ChantiersScreen() {
                       onPressAchats:      () => { setActionChantier(null); setTimeout(() => setAchatsChantierId(ch.id), 100); },
                       onPressPV:          () => { setActionChantier(null); setTimeout(() => setShowPVChantier(ch.id), 100); },
                       onPressRentabilite: () => { setActionChantier(null); setTimeout(() => setBilanChantierId(ch.id), 100); },
+                      onPressLivraison:   () => { setActionChantier(null); setTimeout(() => setLivraisonsChantierId(ch.id), 100); },
                       onPressMessagerie:  () => { setActionChantier(null); setTimeout(() => setMessagerieChantierId(ch.id), 100); },
                       onPressCloturer:    isAdmin && ch.statut !== 'termine'
                         ? () => { setActionChantier(null); setTimeout(() => handleClotureChantier(ch), 100); }
@@ -3417,6 +3422,45 @@ export default function ChantiersScreen() {
       <GaleriePhotos visible={showGalerie !== null} onClose={() => setShowGalerie(null)} chantierId={showGalerie || undefined} titre={`📷 Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
       {/* V10 — Modal Notes unifiée (planning), ouverte depuis tuile Notes du dashboard chantier */}
       <ModalNotes noteModal={noteModalChantier} setNoteModal={setNoteModalChantier} />
+
+      {/* V10 — Modal Livraisons admin (wrapper de LivraisonsRdvChantier) */}
+      <Modal
+        visible={livraisonsChantierId !== null}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setLivraisonsChantierId(null)}
+      >
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
+          <Pressable style={{ flex: 0.05 }} onPress={() => setLivraisonsChantierId(null)} />
+          <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12 }}>
+            <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 8 }} />
+            {(() => {
+              const ch = data.chantiers.find(c => c.id === livraisonsChantierId);
+              if (!ch) return null;
+              return (
+                <>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 10 }}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>🚚 Livraisons</Text>
+                      <Text style={{ fontSize: 13, color: DS.textSecondary, marginTop: 2 }}>{ch.nom}</Text>
+                    </View>
+                    <Pressable onPress={() => setLivraisonsChantierId(null)} accessibilityRole="button" accessibilityLabel="Fermer">
+                      <Text style={{ fontSize: 18, color: DS.textSecondary }}>✕</Text>
+                    </Pressable>
+                  </View>
+                  <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 40 }}>
+                    <LivraisonsRdvChantier
+                      chantierId={ch.id}
+                      isAdmin={isAdmin}
+                      createdByNom={currentUser?.nom}
+                    />
+                  </ScrollView>
+                </>
+              );
+            })()}
+          </View>
+        </View>
+      </Modal>
 
       {/* V10 — Modal Messagerie admin (ChatChantier réutilisé) */}
       <Modal
