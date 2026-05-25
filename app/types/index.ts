@@ -309,6 +309,11 @@ export interface Chantier {
     voirFinChantier?: boolean;
     voirMessages?: boolean;
   }>;
+  // ─── V10 (refonte mai 2026) — emails par défaut pour les sous-cases admin
+  //     du workflow monte-charge des livraisons. Préremplis à chaque nouvelle
+  //     livraison nécessitant un monte-charge. L'admin peut toujours surcharger.
+  emailMairieDefault?: string;       // email destinataire demande mairie (réutilisé par défaut)
+  emailMonteChargeDefault?: string;  // email prestataire monte-charge (réutilisé par défaut)
 }
 
 /** Snapshot figé d'un point financier de situation (avant émission d'une facture). */
@@ -839,6 +844,7 @@ export interface LivraisonChantier {
     fait: boolean;
     assigneA?: string;       // id employé chargé de faire la demande
     assigneANom?: string;    // libellé pour affichage rapide
+    mail?: string;           // email destinataire (libre, prérempli depuis Chantier.emailMairieDefault)
     mailEnvoye?: boolean;    // true si le mail a été envoyé
   };
   /** Coordination du prestataire monte-charge (interne ou externe) */
@@ -846,6 +852,7 @@ export interface LivraisonChantier {
     fait: boolean;
     assigneA?: string;             // id employé chargé de prévenir
     assigneANom?: string;
+    mail?: string;                 // email destinataire (libre, prérempli depuis Chantier.emailMonteChargeDefault)
     mailEnvoye?: boolean;
     contactExterneId?: string;     // id apporteur/prestataire externe à prévenir par mail
   };

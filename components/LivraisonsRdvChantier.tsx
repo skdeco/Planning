@@ -43,7 +43,9 @@ function formatFR(iso?: string) {
 export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, createdByNom, mode = 'both' }: Props) {
   const showLivraisons = mode === 'livraisons' || mode === 'both';
   const showRdvs = mode === 'rdv' || mode === 'both';
-  const { data, addLivraison, updateLivraison, deleteLivraison, addRdvChantier, updateRdvChantier, deleteRdvChantier, currentUser } = useApp();
+  const { data, addLivraison, updateLivraison, deleteLivraison, addRdvChantier, updateRdvChantier, deleteRdvChantier, currentUser, updateChantier } = useApp();
+  // V10 — chantier courant pour pré-remplir emails mairie/monte-charge par défaut
+  const chantierCurrent = useMemo(() => data.chantiers.find(c => c.id === chantierId) || null, [data.chantiers, chantierId]);
 
   const allLivraisons = useMemo(
     () => (data.livraisons || []).filter(l => l.chantierId === chantierId).sort((a, b) => a.dateLivraison.localeCompare(b.dateLivraison)),
@@ -369,6 +371,59 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                       📋 Demande mairie {l.demandeMairie?.fait ? 'envoyée' : 'à faire'}
                     </Text>
                   </Pressable>
+                  {/* V10 — Mini-form d'assignation (employé + mail) si case cochée */}
+                  {l.demandeMairie?.fait && (
+                    <View style={{ marginLeft: 26, marginTop: 4, gap: 6 }}>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 10, color: '#8A7B6E', marginRight: 2 }}>Assigné à :</Text>
+                        <Pressable
+                          onPress={() => updateLivraison({
+                            ...l,
+                            demandeMairie: { ...(l.demandeMairie || { fait: true }), assigneA: undefined, assigneANom: undefined },
+                            updatedAt: new Date().toISOString(),
+                          })}
+                          style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: !l.demandeMairie?.assigneA ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
+                        >
+                          <Text style={{ fontSize: 10, color: !l.demandeMairie?.assigneA ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>Personne</Text>
+                        </Pressable>
+                        {employes.map(emp => (
+                          <Pressable
+                            key={emp.id}
+                            onPress={() => updateLivraison({
+                              ...l,
+                              demandeMairie: { ...(l.demandeMairie || { fait: true }), assigneA: emp.id, assigneANom: emp.prenom },
+                              updatedAt: new Date().toISOString(),
+                            })}
+                            style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: l.demandeMairie?.assigneA === emp.id ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
+                          >
+                            <Text style={{ fontSize: 10, color: l.demandeMairie?.assigneA === emp.id ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>{emp.prenom}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 10, color: '#8A7B6E' }}>Mail :</Text>
+                        <TextInput
+                          value={l.demandeMairie?.mail ?? chantierCurrent?.emailMairieDefault ?? ''}
+                          onChangeText={(v) => updateLivraison({
+                            ...l,
+                            demandeMairie: { ...(l.demandeMairie || { fait: true }), mail: v },
+                            updatedAt: new Date().toISOString(),
+                          })}
+                          onBlur={() => {
+                            const newMail = l.demandeMairie?.mail?.trim();
+                            if (newMail && chantierCurrent && chantierCurrent.emailMairieDefault !== newMail) {
+                              updateChantier({ ...chantierCurrent, emailMairieDefault: newMail });
+                            }
+                          }}
+                          placeholder="email@mairie.fr"
+                          placeholderTextColor="#B0A89E"
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                          style={{ flex: 1, fontSize: 11, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#FFFFFF', borderRadius: 6, borderWidth: 1, borderColor: '#ECDFCD', color: '#2A2622' }}
+                        />
+                      </View>
+                    </View>
+                  )}
                   {/* Sous-case 2 : Prévenir prestataire monte-charge */}
                   <Pressable
                     onPress={() => updateLivraison({
@@ -393,6 +448,59 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                       📞 Monte-charge {l.prevenirMonteCharge?.fait ? 'prévenu' : 'à prévenir'}
                     </Text>
                   </Pressable>
+                  {/* V10 — Mini-form d'assignation (employé + mail) si case cochée */}
+                  {l.prevenirMonteCharge?.fait && (
+                    <View style={{ marginLeft: 26, marginTop: 4, gap: 6 }}>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 10, color: '#8A7B6E', marginRight: 2 }}>Assigné à :</Text>
+                        <Pressable
+                          onPress={() => updateLivraison({
+                            ...l,
+                            prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: true }), assigneA: undefined, assigneANom: undefined },
+                            updatedAt: new Date().toISOString(),
+                          })}
+                          style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: !l.prevenirMonteCharge?.assigneA ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
+                        >
+                          <Text style={{ fontSize: 10, color: !l.prevenirMonteCharge?.assigneA ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>Personne</Text>
+                        </Pressable>
+                        {employes.map(emp => (
+                          <Pressable
+                            key={emp.id}
+                            onPress={() => updateLivraison({
+                              ...l,
+                              prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: true }), assigneA: emp.id, assigneANom: emp.prenom },
+                              updatedAt: new Date().toISOString(),
+                            })}
+                            style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8, backgroundColor: l.prevenirMonteCharge?.assigneA === emp.id ? '#5C1F2E' : '#FFFFFF', borderWidth: 1, borderColor: '#ECDFCD' }}
+                          >
+                            <Text style={{ fontSize: 10, color: l.prevenirMonteCharge?.assigneA === emp.id ? '#FFFFFF' : '#2A2622', fontWeight: '500' }}>{emp.prenom}</Text>
+                          </Pressable>
+                        ))}
+                      </View>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Text style={{ fontSize: 10, color: '#8A7B6E' }}>Mail :</Text>
+                        <TextInput
+                          value={l.prevenirMonteCharge?.mail ?? chantierCurrent?.emailMonteChargeDefault ?? ''}
+                          onChangeText={(v) => updateLivraison({
+                            ...l,
+                            prevenirMonteCharge: { ...(l.prevenirMonteCharge || { fait: true }), mail: v },
+                            updatedAt: new Date().toISOString(),
+                          })}
+                          onBlur={() => {
+                            const newMail = l.prevenirMonteCharge?.mail?.trim();
+                            if (newMail && chantierCurrent && chantierCurrent.emailMonteChargeDefault !== newMail) {
+                              updateChantier({ ...chantierCurrent, emailMonteChargeDefault: newMail });
+                            }
+                          }}
+                          placeholder="contact@monte-charge.fr"
+                          placeholderTextColor="#B0A89E"
+                          keyboardType="email-address"
+                          autoCapitalize="none"
+                          style={{ flex: 1, fontSize: 11, paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#FFFFFF', borderRadius: 6, borderWidth: 1, borderColor: '#ECDFCD', color: '#2A2622' }}
+                        />
+                      </View>
+                    </View>
+                  )}
                 </View>
               )}
               {l.photoEtiquetteUri && (
