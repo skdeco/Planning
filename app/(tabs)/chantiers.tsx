@@ -2384,7 +2384,12 @@ export default function ChantiersScreen() {
       </ModalKeyboard>
 
       {/* ── Modal Notes Chantier (enrichi) ── */}
-      <ModalKeyboard visible={showNotes} animationType="slide" transparent onRequestClose={() => setShowNotes(false)}>
+      {/* ANCIENNE MODAL Notes — DÉSACTIVÉE V10 (commit F5 — la modal Notes unifiée
+          ModalNotes du planning est désormais utilisée à la place via openNotes()).
+          Code conservé temporairement comme référence ; cleanup complet (suppression
+          des 400 lignes + des états newNoteTexte/noteDestinataires/notePhotos/etc.)
+          dans un commit ultérieur dédié. */}
+      <ModalKeyboard visible={false} animationType="slide" transparent onRequestClose={() => setShowNotes(false)}>
         <View style={styles.modalOverlay}>
           <Pressable style={{ flex: 0.05 }} onPress={() => setShowNotes(false)} />
           <View style={[styles.modalSheet, { maxHeight: '90%' }]}>
