@@ -82,6 +82,11 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
               <View style={{ flex: 1 }}>
                 <Text style={styles.modalTitle}>
                   {(() => {
+                    // V10 — mode='chantier' : titre = nom du chantier (toutes notes)
+                    if (noteModal?.mode === 'chantier') {
+                      const chantier = data.chantiers.find(c => c.id === noteModal?.chantierId);
+                      return chantier?.nom || 'Notes du chantier';
+                    }
                     if (noteModal?.targetEmployeId?.startsWith('st:')) {
                       const stId = noteModal.targetEmployeId.replace('st:', '');
                       const st = data.sousTraitants.find(s => s.id === stId);
@@ -94,7 +99,9 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                 </Text>
                 {noteModal && (
                   <Text style={styles.modalSubtitle}>
-                    {data.chantiers.find(c => c.id === noteModal.chantierId)?.nom} — {noteModal.date}
+                    {noteModal.mode === 'chantier'
+                      ? `Toutes les notes du chantier (${noteModal.allNotes.length})`
+                      : `${data.chantiers.find(c => c.id === noteModal.chantierId)?.nom} — ${noteModal.date}`}
                   </Text>
                 )}
               </View>
