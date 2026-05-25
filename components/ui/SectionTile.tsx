@@ -63,7 +63,7 @@ export function SectionTile({
           style={styles.tile}
         >
           <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
-            <Icon size={14} color={iconColor} strokeWidth={2} />
+            <Icon size={18} color={iconColor} strokeWidth={2} />
           </View>
           <Text style={styles.label} numberOfLines={2}>
             {label}

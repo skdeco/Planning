@@ -47,7 +47,7 @@ export function InfoTile({
   return (
     <View style={[styles.tile, wide && styles.wide, style]}>
       <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
-        <Icon size={12} color={iconColor} strokeWidth={2} />
+        <Icon size={15} color={iconColor} strokeWidth={2} />
       </View>
       <Text style={styles.label}>{label}</Text>
       {typeof value === 'string' ? (
