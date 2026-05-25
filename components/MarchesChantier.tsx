@@ -646,6 +646,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'marche', id: m.id, devisUri: m.devisInitialUri, devisNom: m.devisInitialNom }) : undefined}
                           title="📊 Avancement de ce marché"
                           compact
+                          snapshots={m.snapshots}
+                          onChangeSnapshots={(s) => updateMarcheChantier({ ...m, snapshots: s })}
+                          cocheParId={currentUser?.employeId || currentUser?.apporteurId || currentUser?.soustraitantId || currentUser?.role}
+                          cocheParNom={currentUser?.nom || currentUser?.role}
                         />
                       </View>
 
@@ -826,6 +830,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'supplement', id: s.id, devisUri: s.devisUri, devisNom: s.devisNom }) : undefined}
                             title="📊 Avancement de ce supplément"
                             compact
+                            snapshots={s.snapshots}
+                            onChangeSnapshots={(snaps) => updateSupplementMarche({ ...s, snapshots: snaps, updatedAt: new Date().toISOString() })}
+                            cocheParId={currentUser?.employeId || currentUser?.apporteurId || currentUser?.soustraitantId || currentUser?.role}
+                            cocheParNom={currentUser?.nom || currentUser?.role}
                           />
                         </View>
                       )}

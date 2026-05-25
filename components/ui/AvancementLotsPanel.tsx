@@ -1,9 +1,10 @@
 import React, { useState, useMemo } from 'react';
 import { View, Text, Pressable, TextInput, Modal, Alert, Platform, StyleSheet } from 'react-native';
-import { Plus, Pencil, Trash2, Wand2 } from 'lucide-react-native';
-import type { LotAvancement } from '@/app/types';
+import { Plus, Pencil, Trash2, Wand2, Camera, Lock } from 'lucide-react-native';
+import type { LotAvancement, SnapshotAvancement } from '@/app/types';
 import { DS } from '@/constants/design';
 import { ProgressBar } from './ProgressBar';
+import { calculerSnapshot, creerSnapshot } from '@/lib/snapshotsHelpers';
 
 /**
  * AvancementLotsPanel — Gestion des lots / corps de métier (palette V10).
@@ -29,6 +30,13 @@ export interface AvancementLotsPanelProps {
   title?: string;
   /** Variante de mise en page : version compacte pour intégration en card. */
   compact?: boolean;
+  /** Snapshots de facturation (historique des situations figées). */
+  snapshots?: SnapshotAvancement[];
+  /** Callback pour modifier la liste des snapshots (ajout/suppression). */
+  onChangeSnapshots?: (snapshots: SnapshotAvancement[]) => void;
+  /** Identité de l'admin qui fige (pour traçabilité dans le snapshot). */
+  cocheParId?: string;
+  cocheParNom?: string;
 }
 
 function genId(prefix: string): string {
@@ -46,6 +54,10 @@ export function AvancementLotsPanel({
   onPressImport,
   title = '📊 Avancement par lot',
   compact = false,
+  snapshots,
+  onChangeSnapshots,
+  cocheParId,
+  cocheParNom,
 }: AvancementLotsPanelProps) {
   const [showForm, setShowForm] = useState(false);
   const [editLotId, setEditLotId] = useState<string | null>(null);
@@ -139,6 +151,56 @@ export function AvancementLotsPanel({
     }
   };
 
+  // V10 Phase B — Figer la situation pour facturation
+  const snapshotsArr = snapshots || [];
+  const calc = useMemo(() => calculerSnapshot(lots, snapshotsArr), [lots, snapshotsArr]);
+  const canFiger = isAdmin && !!onChangeSnapshots && lots.length > 0
+    && calc.montantFacturableNouveau > 0;
+
+  const handleFiger = () => {
+    if (!onChangeSnapshots) return;
+    const newSnap = creerSnapshot({
+      lots,
+      snapshotsExistants: snapshotsArr,
+      cocheParId,
+      cocheParNom,
+    });
+    const msg = `Situation N°${newSnap.numero} — ${fmt(newSnap.cumulFacture)} € HT cumulés. ` +
+      `À facturer maintenant : ${fmt(calc.montantFacturableNouveau)} € HT. Confirmer ?`;
+    const doIt = () => onChangeSnapshots([...snapshotsArr, newSnap]);
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(msg)) doIt();
+    } else {
+      Alert.alert(newSnap.intitule || 'Figer la situation', msg, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Figer', style: 'default', onPress: doIt },
+      ]);
+    }
+  };
+
+  const supprimerSnapshot = (snapId: string) => {
+    if (!onChangeSnapshots) return;
+    const doDel = () => onChangeSnapshots(snapshotsArr.filter(s => s.id !== snapId));
+    const msg = 'Supprimer cette situation figée ? Cette action est irréversible.';
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.confirm(msg)) doDel();
+    } else {
+      Alert.alert('Supprimer la situation', msg, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Supprimer', style: 'destructive', onPress: doDel },
+      ]);
+    }
+  };
+
+  const formatDateFR = (iso: string): string => {
+    try {
+      const d = new Date(iso);
+      const dd = String(d.getDate()).padStart(2, '0');
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      return `${dd}/${mm}/${d.getFullYear()}`;
+    } catch { return iso; }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header section */}
@@ -199,13 +261,21 @@ export function AvancementLotsPanel({
         ))
       )}
 
-      {/* Boutons admin : Import depuis devis (priorité) + Ajout manuel + Tout supprimer */}
+      {/* Boutons admin : Import devis + Ajout manuel + Figer + Tout supprimer */}
       {isAdmin && (
         <View style={{ gap: 6, marginTop: 8 }}>
           {onPressImport && (
             <Pressable onPress={onPressImport} style={styles.importBtn}>
               <Wand2 size={14} color={DS.cremeFond} strokeWidth={2.5} />
               <Text style={styles.importBtnText}>Importer depuis le devis</Text>
+            </Pressable>
+          )}
+          {canFiger && (
+            <Pressable onPress={handleFiger} style={styles.figerBtn}>
+              <Camera size={14} color={DS.cremeFond} strokeWidth={2.5} />
+              <Text style={styles.figerBtnText}>
+                📸 Figer ce point ({fmt(calc.montantFacturableNouveau)} € à facturer)
+              </Text>
             </Pressable>
           )}
           <Pressable onPress={openNew} style={styles.addBtnSecondary}>
@@ -218,6 +288,45 @@ export function AvancementLotsPanel({
               <Text style={styles.clearAllBtnText}>Tout supprimer ({lots.length})</Text>
             </Pressable>
           )}
+        </View>
+      )}
+
+      {/* V10 Phase B — Historique des situations figées (visible admin + client) */}
+      {snapshotsArr.length > 0 && (
+        <View style={styles.snapshotsSection}>
+          <Text style={styles.snapshotsTitle}>
+            📋 Historique facturation ({snapshotsArr.length})
+          </Text>
+          {snapshotsArr.map(snap => (
+            <View key={snap.id} style={styles.snapshotCard}>
+              <View style={styles.snapshotHeader}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.snapshotTitre}>
+                    {snap.intitule || `Situation N°${snap.numero ?? '?'}`}
+                  </Text>
+                  <Text style={styles.snapshotMeta}>
+                    Figée le {formatDateFR(snap.dateGel)}
+                    {snap.cocheParNom ? ` · ${snap.cocheParNom}` : ''}
+                  </Text>
+                </View>
+                <Lock size={11} color={DS.textSecondary} strokeWidth={2.2} />
+              </View>
+              <View style={styles.snapshotTotaux}>
+                <Text style={styles.snapshotMontant}>
+                  {fmt(snap.lots.reduce((s, l) => s + l.montantFactureNouveau, 0))} € HT
+                </Text>
+                <Text style={styles.snapshotMontantSub}>
+                  · Cumul : {fmt(snap.cumulFacture)} € HT
+                </Text>
+              </View>
+              {isAdmin && onChangeSnapshots && (
+                <Pressable onPress={() => supprimerSnapshot(snap.id)} style={styles.snapshotDelBtn}>
+                  <Trash2 size={10} color="#E74C3C" strokeWidth={2.2} />
+                  <Text style={styles.snapshotDelBtnText}>Supprimer</Text>
+                </Pressable>
+              )}
+            </View>
+          ))}
         </View>
       )}
 
@@ -437,6 +546,83 @@ const styles = StyleSheet.create({
   clearAllBtnText: {
     color: '#E74C3C',
     fontSize: 11,
+    fontWeight: '600',
+  },
+  figerBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: DS.marron,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  figerBtnText: {
+    color: DS.cremeFond,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  snapshotsSection: {
+    marginTop: 14,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: DS.border,
+    gap: 6,
+  },
+  snapshotsTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: DS.sombre,
+    marginBottom: 2,
+  },
+  snapshotCard: {
+    backgroundColor: DS.cremeNude,
+    borderRadius: 8,
+    padding: 10,
+    gap: 4,
+  },
+  snapshotHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  snapshotTitre: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: DS.sombre,
+  },
+  snapshotMeta: {
+    fontSize: 10,
+    color: DS.textSecondary,
+    marginTop: 1,
+  },
+  snapshotTotaux: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    gap: 4,
+    marginTop: 2,
+  },
+  snapshotMontant: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: DS.bordeaux,
+  },
+  snapshotMontantSub: {
+    fontSize: 10,
+    color: DS.textSecondary,
+  },
+  snapshotDelBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-end',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    marginTop: 2,
+  },
+  snapshotDelBtnText: {
+    fontSize: 10,
+    color: '#E74C3C',
     fontWeight: '600',
   },
   modeChip: {
