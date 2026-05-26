@@ -233,6 +233,10 @@ interface AppContextType {
   addTicketSAV: (t: import('@/app/types').TicketSAV) => void;
   updateTicketSAV: (t: import('@/app/types').TicketSAV) => void;
   deleteTicketSAV: (id: string) => void;
+  // Suivis CR (compte-rendu de chantier)
+  addSuiviCR: (cr: import('@/app/types').SuiviCR) => void;
+  updateSuiviCR: (cr: import('@/app/types').SuiviCR) => void;
+  deleteSuiviCR: (id: string) => void;
   // Marchés chantier
   addMarcheChantier: (m: import('@/app/types').MarcheChantier) => void;
   updateMarcheChantier: (m: import('@/app/types').MarcheChantier) => void;
@@ -419,6 +423,8 @@ function migrateData(parsed: Record<string, any>): AppData {
     // Marchés & supplements chantier
     marchesChantier: parsed.marchesChantier || [],
     supplementsMarche: parsed.supplementsMarche || [],
+    // Suivis CR (compte-rendu de chantier — Phase V10 G)
+    suivisCR: parsed.suivisCR || [],
     // Tickets SAV
     ticketsSAV: parsed.ticketsSAV || [],
     // Présences forcées
@@ -893,6 +899,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       notesChantierSupprimees: (p.notesChantierSupprimees || []).filter(n => n.chantierId !== id),
       marchesChantier: (p.marchesChantier || []).filter(m => m.chantierId !== id),
       supplementsMarche: (p.supplementsMarche || []).filter(s => s.chantierId !== id),
+      suivisCR: (p.suivisCR || []).filter(cr => cr.chantierId !== id),
       ticketsSAV: (p.ticketsSAV || []).filter(t => t.chantierId !== id),
       interventions: (p.interventions || []).filter(i => i.chantierId !== id),
     }));
@@ -1718,6 +1725,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateTicketSAV = (t: import('@/app/types').TicketSAV) => setData(p => ({ ...p, ticketsSAV: (p.ticketsSAV || []).map(x => x.id === t.id ? t : x) }));
   const deleteTicketSAV = (id: string) => { deletedGenericIdsRef.current.add(id); setData(p => ({ ...p, ticketsSAV: (p.ticketsSAV || []).filter(x => x.id !== id) })); };
 
+  // ── Suivis CR (compte-rendu de chantier) ──
+  const addSuiviCR = (cr: import('@/app/types').SuiviCR) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, suivisCR: [...(p.suivisCR || []), cr] }));
+  };
+  const updateSuiviCR = (cr: import('@/app/types').SuiviCR) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, suivisCR: (p.suivisCR || []).map(x => x.id === cr.id ? cr : x) }));
+  };
+  const deleteSuiviCR = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, suivisCR: (p.suivisCR || []).filter(x => x.id !== id) }));
+  };
+
   const addMarcheChantier = (m: import('@/app/types').MarcheChantier) => {
     lastLocalChangeRef.current = Date.now();
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -1802,6 +1823,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addAgendaEvent, updateAgendaEvent, deleteAgendaEvent,
       togglePresenceForcee,
       addTicketSAV, updateTicketSAV, deleteTicketSAV,
+      addSuiviCR, updateSuiviCR, deleteSuiviCR,
       addMarcheChantier, updateMarcheChantier, deleteMarcheChantier,
       addSupplementMarche, updateSupplementMarche, deleteSupplementMarche,
       addBadgeEmploye,

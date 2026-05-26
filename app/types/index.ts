@@ -333,6 +333,60 @@ export interface TaskItem {
   photos?: string[];   // URIs photos de preuve
 }
 
+// ─── Suivis CR (compte-rendu de chantier) ─────────────────────────────────
+
+/** Personne présente sur le chantier le jour du CR. */
+export interface CRPersonnePresente {
+  id: string;            // employe.id / soustraitant.id / apporteur.id
+  nom: string;           // copie du nom (figé au moment du CR)
+  type: 'employe' | 'soustraitant' | 'apporteur' | 'admin';
+}
+
+/** Section d'un CR rattachée à un lot (corps de métier). */
+export interface CRSection {
+  /** ID du lot d'origine (depuis marche.avancementCorps ou supp.avancementCorps).
+   *  null = section "Hors lot" (commentaire général qui ne dépend pas d'un lot). */
+  lotId: string | null;
+  /** Nom affiché de la section (copie du nom du lot ou libellé libre). */
+  titre: string;
+  /** Points à suivre dans cette section (cases à cocher avec carry-over). */
+  tasks: TaskItem[];
+  /** Commentaire libre lié à cette section. */
+  commentaire?: string;
+}
+
+/** RDV de chantier planifié (mention dans le CR pour avertir les invités). */
+export interface CRRendezVous {
+  id: string;
+  dateISO: string;       // YYYY-MM-DD ou ISO datetime
+  heure?: string;        // HH:MM (optionnel si all-day)
+  libelle: string;       // ex "RDV avec architecte", "Livraison cuisine"
+  invitesIds: string[];  // IDs des employés/STs/apporteurs invités
+}
+
+/** Un compte-rendu de chantier. Structure plus formelle qu'une note. */
+export interface SuiviCR {
+  id: string;
+  chantierId: string;
+  /** Date du CR (modifiable, ex "2026-05-26"). */
+  date: string;
+  /** Auteur (admin) qui a rédigé ce CR. */
+  auteurId: string;
+  auteurNom: string;
+  /** Personnes présentes sur le chantier ce jour-là. */
+  personnesPresentes: CRPersonnePresente[];
+  /** Bloc texte libre — résumé des travaux réalisés. */
+  travauxRealises?: string;
+  /** Sections par lot, contenant les tâches/checkboxes. */
+  sections: CRSection[];
+  /** RDV planifiés mentionnés dans le CR. */
+  rdvProchains?: CRRendezVous[];
+  /** Statut du CR (draft pour brouillon, finalisé visible au client). */
+  statut: 'brouillon' | 'finalise';
+  createdAt: string;
+  updatedAt: string;
+}
+
 /** Une note laissée par un utilisateur (admin ou employé) sur une cellule du planning */
 export interface Note {
   id: string;
@@ -1239,6 +1293,7 @@ export interface AppData {
   // Marchés et suppléments par chantier
   marchesChantier?: MarcheChantier[];
   supplementsMarche?: SupplementMarche[];
+  suivisCR?: SuiviCR[];
   // Tickets SAV
   ticketsSAV?: TicketSAV[];
   // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour
