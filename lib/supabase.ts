@@ -553,7 +553,7 @@ export async function uploadFileToStorage(
       }
     }
 
-    // ── Mobile : upload via REST API direct (le plus fiable sur React Native) ──
+    // ── file:// ou content:// URI ──
     // Détecter l'extension depuis l'URI
     const uriLower = uri.toLowerCase();
     const ext = uriLower.endsWith('.pdf') ? 'pdf'
@@ -568,11 +568,35 @@ export async function uploadFileToStorage(
     const path = `${folder}/${fileId}.${ext}`;
     const uploadUrl = `${SUPABASE_URL}/storage/v1/object/${STORAGE_BUCKET}/${path}`;
 
-    // Lire le fichier comme blob via fetch (fonctionne avec file:// et content:// sur RN)
+    // Mobile : FileSystem.uploadAsync (fast path — pas de conversion Blob).
+    // ~5-10x plus rapide que fetch(uri)→.blob()→fetch(upload) sur RN.
+    if (Platform.OS !== 'web') {
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-require-imports
+        const FileSystem = require('expo-file-system/legacy');
+        const uploadResult = await FileSystem.uploadAsync(uploadUrl, uri, {
+          httpMethod: 'POST',
+          uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT,
+          headers: {
+            'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+            'x-upsert': 'true',
+            'Content-Type': contentType,
+          },
+        });
+        if (uploadResult.status < 200 || uploadResult.status >= 300) {
+          console.error('Upload file:// uploadAsync err:', uploadResult.status, uploadResult.body);
+          return null;
+        }
+        return `${STORAGE_PUBLIC_URL}/${path}`;
+      } catch (e) {
+        console.error('Upload file:// uploadAsync exception, fallback fetch+Blob:', e);
+        // Fallback à la méthode fetch+Blob ci-dessous
+      }
+    }
+
+    // Web (ou fallback si uploadAsync indisponible) : fetch + Blob
     const fileResponse = await fetch(uri);
     const fileBlob = await fileResponse.blob();
-
-    // Upload direct via REST API (contourne le SDK JS qui gère mal les blobs sur RN)
     const uploadResponse = await fetch(uploadUrl, {
       method: 'POST',
       headers: {
@@ -585,7 +609,7 @@ export async function uploadFileToStorage(
 
     if (!uploadResponse.ok) {
       const errText = await uploadResponse.text();
-      console.error('Upload mobile REST err:', uploadResponse.status, errText);
+      console.error('Upload web fetch err:', uploadResponse.status, errText);
       return null;
     }
 
