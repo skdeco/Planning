@@ -3510,10 +3510,29 @@ export default function ChantiersScreen() {
                 {isAdmin && (
                   <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8 }}
                     onPress={() => {
+                      const opening = !suiviShowForm;
                       setSuiviShowForm(v => !v);
                       setSuiviNoteText('');
                       setSuiviNoteEmpId('');
-                      setSuiviDraft({ tasks: [], photos: [], savTicketId: null, visiblePar: 'tous' });
+                      // V10 Suivis CR — Carry-over : pré-remplit avec les tâches
+                      // NON COCHÉES de la dernière note du chantier.
+                      let carryTasks: TaskItem[] = [];
+                      if (opening && suiviChantierId) {
+                        const allNotes = (data.affectations || [])
+                          .filter(a => a.chantierId === suiviChantierId)
+                          .flatMap(a => a.notes || []);
+                        if (allNotes.length > 0) {
+                          allNotes.sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+                          const last = allNotes[0];
+                          const unchecked = (last.tasks || []).filter(t => !t.fait);
+                          carryTasks = unchecked.map(t => ({
+                            id: `task_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+                            texte: t.texte,
+                            fait: false,
+                          }));
+                        }
+                      }
+                      setSuiviDraft({ tasks: carryTasks, photos: [], savTicketId: null, visiblePar: 'tous' });
                       setSuiviShowTaskInput(false);
                       setSuiviNewTaskText('');
                       setSuiviEditingNote(null);
