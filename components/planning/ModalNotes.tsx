@@ -8,6 +8,8 @@ import {
   TextInput,
   Image,
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Alert,
   StyleSheet,
 } from 'react-native';
@@ -75,6 +77,10 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
       transparent
       onRequestClose={actions.close}
     >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
         <Pressable style={{ flex: 0.08 }} onPress={actions.close} />
         <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
@@ -584,6 +590,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
           </Pressable>
         </View>
       </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
