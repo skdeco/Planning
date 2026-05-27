@@ -1,8 +1,8 @@
 import type { Apporteur, Chantier } from '@/app/types';
 
-export type OngletPortail = 'projet' | 'chiffres' | 'planning' | 'finChantier' | 'messages';
+export type OngletPortail = 'projet' | 'chiffres' | 'planning' | 'suivisCR' | 'finChantier' | 'messages';
 
-type PermKey = 'voirProjet' | 'voirChiffres' | 'voirPlanning' | 'voirFinChantier' | 'voirMessages';
+type PermKey = 'voirProjet' | 'voirChiffres' | 'voirPlanning' | 'voirSuivisCR' | 'voirFinChantier' | 'voirMessages';
 
 /**
  * Cascade de résolution des permissions :

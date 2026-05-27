@@ -290,6 +290,7 @@ export interface Chantier {
     voirProjet?: boolean;
     voirChiffres?: boolean;
     voirPlanning?: boolean;
+    voirSuivisCR?: boolean;
     voirFinChantier?: boolean;
     voirMessages?: boolean;
   }>;
@@ -528,6 +529,7 @@ export interface Apporteur {
     voirProjet?: boolean;
     voirChiffres?: boolean;
     voirPlanning?: boolean;
+    voirSuivisCR?: boolean;
     voirFinChantier?: boolean;
     voirMessages?: boolean;
   };

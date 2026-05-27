@@ -21,6 +21,7 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChatChantier } from '@/components/ChatChantier';
+import { SuiviCRPanel } from '@/components/SuiviCRPanel';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
@@ -109,7 +110,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Revert au premier onglet visible si l'actif disparaît (changement permissions).
   useEffect(() => {
     if (!chantier) return;
-    const keys: OngletPortail[] = ['projet', 'chiffres', 'planning', 'finChantier', 'messages'];
+    const keys: OngletPortail[] = ['projet', 'chiffres', 'planning', 'suivisCR', 'finChantier', 'messages'];
     const visibles = keys.filter(k => canVoirOnglet(k, externAp, chantier, isAdmin));
     if (visibles.length > 0 && !visibles.includes(ongletActif)) {
       setOngletActif(visibles[0]);
@@ -1139,6 +1140,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     { key: 'projet', label: 'Projet', icon: '🎨' },
     { key: 'chiffres', label: 'Chiffres', icon: '💰' },
     { key: 'planning', label: 'Planning', icon: '📅' },
+    { key: 'suivisCR', label: 'CR', icon: '📋' },
     { key: 'finChantier', label: 'Fin de chantier', icon: '🏁' },
     { key: 'messages', label: 'Messages', icon: '💬' },
   ];
@@ -1769,6 +1771,21 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
             </>)}
             {/* ─────────────── /ONGLET PROJET ─────────────── */}
+
+            {/* ─────────────── ONGLET SUIVIS CR ─────────────── */}
+            {ongletActif === 'suivisCR' && (
+              <View style={{ height: 600 }}>
+                <SuiviCRPanel
+                  visible
+                  onClose={() => { /* géré au niveau de la modal parente */ }}
+                  chantierId={chantierId}
+                  isAdmin={isAdmin}
+                  readOnly={!isAdmin}
+                  inline
+                />
+              </View>
+            )}
+            {/* ─────────────── /ONGLET SUIVIS CR ─────────────── */}
 
             {/* ─────────────── ONGLET FIN DE CHANTIER ─────────────── */}
             {ongletActif === 'finChantier' && (<>

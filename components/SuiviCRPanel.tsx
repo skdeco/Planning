@@ -27,6 +27,8 @@ export interface SuiviCRPanelProps {
   isAdmin: boolean;
   /** Lecture seule (mode client portail) ; admin a true. */
   readOnly?: boolean;
+  /** Rendu inline sans Modal RN (pour intégration dans un onglet/page). */
+  inline?: boolean;
 }
 
 type ViewMode = 'list' | 'edit';
@@ -47,7 +49,7 @@ function formatDateFR(iso: string): string {
   } catch { return iso; }
 }
 
-export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly }: SuiviCRPanelProps) {
+export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, inline }: SuiviCRPanelProps) {
   const { data, addSuiviCR, updateSuiviCR, deleteSuiviCR, currentUser } = useApp();
 
   const chantier = data.chantiers.find(c => c.id === chantierId);
@@ -153,34 +155,29 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly }
     }
   };
 
-  return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      >
-        <View style={styles.overlay}>
-          <Pressable style={{ height: '6%' }} onPress={onClose} />
-          <View style={styles.sheet}>
-            {/* Header */}
-            <View style={styles.header}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                {mode === 'edit' && (
-                  <Pressable onPress={() => { setMode('list'); setEditingCR(null); }} style={styles.backBtn}>
-                    <ChevronLeft size={18} color={DS.bordeaux} strokeWidth={2.2} />
-                  </Pressable>
-                )}
-                <View>
-                  <Text style={styles.title}>📋 Suivis CR</Text>
-                  <Text style={styles.subtitle}>{chantier?.nom || ''}</Text>
-                </View>
-              </View>
-              <Pressable onPress={onClose} style={styles.closeBtn}>
-                <X size={20} color={DS.textSecondary} strokeWidth={2.2} />
-              </Pressable>
-            </View>
+  const content = (
+    <>
+      {/* Header */}
+      <View style={styles.header}>
+        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {mode === 'edit' && (
+            <Pressable onPress={() => { setMode('list'); setEditingCR(null); }} style={styles.backBtn}>
+              <ChevronLeft size={18} color={DS.bordeaux} strokeWidth={2.2} />
+            </Pressable>
+          )}
+          <View>
+            <Text style={styles.title}>📋 Suivis CR</Text>
+            <Text style={styles.subtitle}>{chantier?.nom || ''}</Text>
+          </View>
+        </View>
+        {!inline && (
+          <Pressable onPress={onClose} style={styles.closeBtn}>
+            <X size={20} color={DS.textSecondary} strokeWidth={2.2} />
+          </Pressable>
+        )}
+      </View>
 
-            {/* Body */}
+      {/* Body */}
             {mode === 'list' ? (
               <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingBottom: 40 }}>
                 {allCRs.length === 0 ? (
@@ -225,6 +222,23 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly }
                 onCancel={() => { setMode('list'); setEditingCR(null); }}
               />
             ) : null}
+    </>
+  );
+
+  if (inline) {
+    return <View style={{ flex: 1, backgroundColor: DS.cremeFond }}>{content}</View>;
+  }
+
+  return (
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={styles.overlay}>
+          <Pressable style={{ height: '6%' }} onPress={onClose} />
+          <View style={styles.sheet}>
+            {content}
           </View>
         </View>
       </KeyboardAvoidingView>
