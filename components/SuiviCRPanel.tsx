@@ -3,10 +3,11 @@ import {
   View, Text, Pressable, TextInput, ScrollView, Modal,
   KeyboardAvoidingView, Platform, Alert, StyleSheet,
 } from 'react-native';
-import { Plus, Calendar, ChevronLeft, Pencil, Trash2, CheckSquare, Square, X } from 'lucide-react-native';
+import { Plus, Calendar, ChevronLeft, Pencil, Trash2, CheckSquare, Square, X, Users, Clock } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
 import { DS } from '@/constants/design';
-import type { SuiviCR, CRSection, TaskItem, LotAvancement } from '@/app/types';
+import type { SuiviCR, CRSection, CRPersonnePresente, CRRendezVous, TaskItem, LotAvancement } from '@/app/types';
+import { sendPushNotification } from '@/hooks/useNotifications';
 
 /**
  * SuiviCRPanel — Modal de gestion des CR (compte-rendu) d'un chantier.
@@ -258,8 +259,89 @@ interface CRFormProps {
 }
 
 function CRForm({ cr, isAdmin, readOnly, onSave, onDelete, onCancel: _onCancel }: CRFormProps) {
+  const { data } = useApp();
   const [draft, setDraft] = useState<SuiviCR>(cr);
   const ro: boolean = !isAdmin || !!readOnly;
+  const [showPersonnesPicker, setShowPersonnesPicker] = useState(false);
+  const [showRdvForm, setShowRdvForm] = useState(false);
+  const [newRdv, setNewRdv] = useState<{ dateISO: string; heure: string; libelle: string; invitesIds: string[] }>(
+    { dateISO: '', heure: '', libelle: '', invitesIds: [] }
+  );
+
+  // ── Personnes disponibles (employés + sous-traitants + apporteurs) ──
+  const candidatsPersonnes = useMemo(() => {
+    const out: CRPersonnePresente[] = [];
+    (data.employes || []).forEach(e => out.push({
+      id: e.id, nom: `${e.prenom} ${e.nom}`.trim(), type: 'employe',
+    }));
+    (data.sousTraitants || []).forEach(s => out.push({
+      id: s.id, nom: `${s.prenom} ${s.nom}${s.societe ? ' — ' + s.societe : ''}`.trim(), type: 'soustraitant',
+    }));
+    (data.apporteurs || []).forEach(a => out.push({
+      id: a.id, nom: `${a.prenom} ${a.nom}${a.societe ? ' — ' + a.societe : ''}`.trim(), type: 'apporteur',
+    }));
+    return out;
+  }, [data.employes, data.sousTraitants, data.apporteurs]);
+
+  const togglePersonne = (p: CRPersonnePresente) => {
+    setDraft(prev => {
+      const exists = prev.personnesPresentes.find(pp => pp.id === p.id);
+      return {
+        ...prev,
+        personnesPresentes: exists
+          ? prev.personnesPresentes.filter(pp => pp.id !== p.id)
+          : [...prev.personnesPresentes, p],
+      };
+    });
+  };
+
+  // ── RDV : ajout/suppression ──
+  const addRdv = () => {
+    if (!newRdv.dateISO.trim() || !newRdv.libelle.trim()) return;
+    const rdv: CRRendezVous = {
+      id: genId('rdv'),
+      dateISO: newRdv.dateISO.trim(),
+      heure: newRdv.heure.trim() || undefined,
+      libelle: newRdv.libelle.trim(),
+      invitesIds: newRdv.invitesIds,
+    };
+    setDraft(prev => ({ ...prev, rdvProchains: [...(prev.rdvProchains || []), rdv] }));
+    setNewRdv({ dateISO: '', heure: '', libelle: '', invitesIds: [] });
+    setShowRdvForm(false);
+  };
+  const removeRdv = (rdvId: string) => {
+    setDraft(prev => ({ ...prev, rdvProchains: (prev.rdvProchains || []).filter(r => r.id !== rdvId) }));
+  };
+  const toggleRdvInvite = (personId: string) => {
+    setNewRdv(prev => ({
+      ...prev,
+      invitesIds: prev.invitesIds.includes(personId)
+        ? prev.invitesIds.filter(i => i !== personId)
+        : [...prev.invitesIds, personId],
+    }));
+  };
+
+  // Envoi des push pour les RDV à la finalisation
+  const sendRdvNotifs = (rdvs: CRRendezVous[]) => {
+    if (rdvs.length === 0) return;
+    const allPersons = [
+      ...(data.employes || []).map(e => ({ id: e.id, nom: `${e.prenom} ${e.nom}`.trim(), pushToken: e.pushToken })),
+      ...(data.sousTraitants || []).map(s => ({ id: s.id, nom: `${s.prenom} ${s.nom}`.trim(), pushToken: s.pushToken })),
+      ...(data.apporteurs || []).map(a => ({ id: a.id, nom: `${a.prenom} ${a.nom}`.trim(), pushToken: a.pushToken })),
+    ];
+    for (const rdv of rdvs) {
+      const tokens = rdv.invitesIds
+        .map(id => allPersons.find(p => p.id === id)?.pushToken)
+        .filter((t): t is string => !!t);
+      if (tokens.length === 0) continue;
+      sendPushNotification(
+        tokens,
+        `📅 Nouveau RDV chantier — ${rdv.libelle}`,
+        `${rdv.dateISO}${rdv.heure ? ' à ' + rdv.heure : ''}`,
+        { type: 'cr_rdv', crId: draft.id, rdvId: rdv.id }
+      );
+    }
+  };
 
   const updateSection = (idx: number, patch: Partial<CRSection>) => {
     setDraft(prev => ({ ...prev, sections: prev.sections.map((s, i) => i === idx ? { ...s, ...patch } : s) }));
@@ -295,6 +377,12 @@ function CRForm({ cr, isAdmin, readOnly, onSave, onDelete, onCancel: _onCancel }
   };
 
   const handleFinaliser = () => {
+    // À la finalisation, on envoie une push aux invités des RDV (qui n'étaient
+    // pas déjà notifiés en brouillon). Ne notifie que pour les RDV nouveaux
+    // (présents ici mais pas dans l'original cr.rdvProchains).
+    const ancienIds = new Set((cr.rdvProchains || []).map(r => r.id));
+    const nouveauxRdv = (draft.rdvProchains || []).filter(r => !ancienIds.has(r.id));
+    if (nouveauxRdv.length > 0) sendRdvNotifs(nouveauxRdv);
     onSave({ ...draft, statut: 'finalise' });
   };
   const handleSaveBrouillon = () => {
@@ -326,6 +414,126 @@ function CRForm({ cr, isAdmin, readOnly, onSave, onDelete, onCancel: _onCancel }
         multiline
         editable={!ro}
       />
+
+      {/* Personnes présentes */}
+      <View style={{ marginTop: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={styles.fieldLabel}>
+            <Users size={11} color={DS.textSecondary} /> Personnes présentes ({draft.personnesPresentes.length})
+          </Text>
+          {!ro && (
+            <Pressable onPress={() => setShowPersonnesPicker(v => !v)} style={styles.chipBtn}>
+              <Text style={styles.chipBtnText}>{showPersonnesPicker ? 'Terminer' : '+ Ajouter'}</Text>
+            </Pressable>
+          )}
+        </View>
+        {draft.personnesPresentes.length > 0 && (
+          <View style={styles.chipsRow}>
+            {draft.personnesPresentes.map(p => (
+              <View key={p.id} style={styles.chipSelected}>
+                <Text style={styles.chipSelectedText}>{p.nom}</Text>
+                {!ro && (
+                  <Pressable onPress={() => togglePersonne(p)} style={{ marginLeft: 4 }}>
+                    <X size={11} color={DS.cremeFond} strokeWidth={2.5} />
+                  </Pressable>
+                )}
+              </View>
+            ))}
+          </View>
+        )}
+        {showPersonnesPicker && !ro && (
+          <View style={styles.pickerBox}>
+            {candidatsPersonnes.map(p => {
+              const selected = draft.personnesPresentes.some(pp => pp.id === p.id);
+              return (
+                <Pressable key={`${p.type}-${p.id}`} onPress={() => togglePersonne(p)} style={[styles.pickerRow, selected && styles.pickerRowSelected]}>
+                  {selected
+                    ? <CheckSquare size={14} color={DS.bordeaux} strokeWidth={2.2} />
+                    : <Square size={14} color={DS.textSecondary} strokeWidth={2.2} />}
+                  <Text style={styles.pickerRowText}>{p.nom}</Text>
+                  <Text style={styles.pickerRowType}>{p.type === 'employe' ? '👷' : p.type === 'soustraitant' ? '🔧' : '👤'}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        )}
+      </View>
+
+      {/* RDV de chantier */}
+      <View style={{ marginTop: 14 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={styles.fieldLabel}>
+            <Calendar size={11} color={DS.textSecondary} /> RDV à venir ({(draft.rdvProchains || []).length})
+          </Text>
+          {!ro && (
+            <Pressable onPress={() => setShowRdvForm(v => !v)} style={styles.chipBtn}>
+              <Text style={styles.chipBtnText}>{showRdvForm ? 'Annuler' : '+ Ajouter'}</Text>
+            </Pressable>
+          )}
+        </View>
+        {(draft.rdvProchains || []).map(rdv => (
+          <View key={rdv.id} style={styles.rdvCard}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.rdvLibelle}>{rdv.libelle}</Text>
+              <Text style={styles.rdvMeta}>
+                {rdv.dateISO}{rdv.heure ? ` à ${rdv.heure}` : ''}
+                {rdv.invitesIds.length > 0 ? ` · ${rdv.invitesIds.length} invité${rdv.invitesIds.length > 1 ? 's' : ''}` : ''}
+              </Text>
+            </View>
+            {!ro && (
+              <Pressable onPress={() => removeRdv(rdv.id)} style={{ padding: 4 }}>
+                <X size={14} color="#E74C3C" strokeWidth={2.2} />
+              </Pressable>
+            )}
+          </View>
+        ))}
+        {showRdvForm && !ro && (
+          <View style={styles.rdvForm}>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              <TextInput
+                style={[styles.dateInput, { flex: 1 }]}
+                value={newRdv.dateISO}
+                onChangeText={v => setNewRdv(p => ({ ...p, dateISO: v }))}
+                placeholder="YYYY-MM-DD"
+                placeholderTextColor={DS.textSecondary}
+              />
+              <TextInput
+                style={[styles.dateInput, { width: 80 }]}
+                value={newRdv.heure}
+                onChangeText={v => setNewRdv(p => ({ ...p, heure: v }))}
+                placeholder="HH:MM"
+                placeholderTextColor={DS.textSecondary}
+              />
+            </View>
+            <TextInput
+              style={styles.dateInput}
+              value={newRdv.libelle}
+              onChangeText={v => setNewRdv(p => ({ ...p, libelle: v }))}
+              placeholder="Libellé du RDV (ex: Livraison cuisine)"
+              placeholderTextColor={DS.textSecondary}
+            />
+            <Text style={[styles.fieldLabel, { marginTop: 4 }]}>Invités ({newRdv.invitesIds.length})</Text>
+            <View style={styles.pickerBox}>
+              {candidatsPersonnes.map(p => {
+                const selected = newRdv.invitesIds.includes(p.id);
+                return (
+                  <Pressable key={`rdv-${p.type}-${p.id}`} onPress={() => toggleRdvInvite(p.id)} style={[styles.pickerRow, selected && styles.pickerRowSelected]}>
+                    {selected
+                      ? <CheckSquare size={14} color={DS.bordeaux} strokeWidth={2.2} />
+                      : <Square size={14} color={DS.textSecondary} strokeWidth={2.2} />}
+                    <Text style={styles.pickerRowText}>{p.nom}</Text>
+                    <Text style={styles.pickerRowType}>{p.type === 'employe' ? '👷' : p.type === 'soustraitant' ? '🔧' : '👤'}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+            <Pressable onPress={addRdv} disabled={!newRdv.dateISO.trim() || !newRdv.libelle.trim()} style={[styles.rdvAddBtn, (!newRdv.dateISO.trim() || !newRdv.libelle.trim()) && { opacity: 0.5 }]}>
+              <Clock size={12} color={DS.cremeFond} strokeWidth={2.5} />
+              <Text style={styles.rdvAddBtnText}>Ajouter ce RDV</Text>
+            </Pressable>
+          </View>
+        )}
+      </View>
 
       {/* Sections par lot */}
       <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Sections par lot</Text>
@@ -629,6 +837,74 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   finalizeBtnText: { color: DS.cremeFond, fontSize: 12, fontWeight: '700' },
+  // Personnes présentes + RDV
+  chipBtn: {
+    backgroundColor: DS.cremeNude,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 14,
+  },
+  chipBtnText: { color: DS.bordeaux, fontSize: 11, fontWeight: '700' },
+  chipsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 },
+  chipSelected: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: DS.bordeaux,
+    paddingLeft: 10,
+    paddingRight: 6,
+    paddingVertical: 4,
+    borderRadius: 14,
+    gap: 2,
+  },
+  chipSelectedText: { color: DS.cremeFond, fontSize: 11, fontWeight: '700' },
+  pickerBox: {
+    marginTop: 6,
+    backgroundColor: DS.surface,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: DS.border,
+    padding: 4,
+    maxHeight: 200,
+  },
+  pickerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+  },
+  pickerRowSelected: { backgroundColor: DS.cremeNude, borderRadius: 6 },
+  pickerRowText: { flex: 1, fontSize: 12, color: DS.sombre },
+  pickerRowType: { fontSize: 11 },
+  rdvCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: DS.cremeNude,
+    borderRadius: 8,
+    padding: 10,
+    marginTop: 6,
+    gap: 6,
+  },
+  rdvLibelle: { fontSize: 12, fontWeight: '700', color: DS.sombre },
+  rdvMeta: { fontSize: 10, color: DS.textSecondary, marginTop: 2 },
+  rdvForm: {
+    marginTop: 6,
+    padding: 10,
+    backgroundColor: DS.cremeNude,
+    borderRadius: 8,
+    gap: 6,
+  },
+  rdvAddBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: DS.bordeaux,
+    paddingVertical: 8,
+    borderRadius: 8,
+    marginTop: 4,
+  },
+  rdvAddBtnText: { color: DS.cremeFond, fontSize: 11, fontWeight: '700' },
   // Pencil import unused warning fix
   _pencil: { width: 1 },
 });
