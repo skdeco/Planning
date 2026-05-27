@@ -343,26 +343,79 @@ export interface CRPersonnePresente {
   type: 'employe' | 'soustraitant' | 'apporteur' | 'admin';
 }
 
+/** Texte libre dans une sous-section (peut recevoir photo/PDF). */
+export interface CRTexteItem {
+  id: string;
+  texte: string;
+  photoUri?: string;     // URI photo attachée (optionnelle)
+  pdfUri?: string;       // URI PDF attaché (optionnel)
+  pdfNom?: string;       // nom du PDF (pour affichage)
+}
+
+/** Une tâche (case à cocher) dans une sous-section (peut recevoir photo/PDF). */
+export interface CRTaskItem {
+  id: string;
+  texte: string;
+  fait: boolean;
+  faitAt?: string;
+  faitPar?: string;
+  photoUri?: string;
+  pdfUri?: string;
+  pdfNom?: string;
+}
+
+/** Un item de sous-section : tâche OU texte libre. */
+export type CRItem =
+  | { kind: 'task'; task: CRTaskItem }
+  | { kind: 'texte'; texte: CRTexteItem };
+
+/** Sous-section d'un lot (regroupe items par pièce / sous-thème). */
+export interface CRSubSection {
+  id: string;
+  titre: string;          // ex "Cuisine", "Salle de bain master"
+  items: CRItem[];
+}
+
 /** Section d'un CR rattachée à un lot (corps de métier). */
 export interface CRSection {
   /** ID du lot d'origine (depuis marche.avancementCorps ou supp.avancementCorps).
-   *  null = section "Hors lot" (commentaire général qui ne dépend pas d'un lot). */
+   *  null = section "Hors lot". */
   lotId: string | null;
   /** Nom affiché de la section (copie du nom du lot ou libellé libre). */
   titre: string;
-  /** Points à suivre dans cette section (cases à cocher avec carry-over). */
-  tasks: TaskItem[];
-  /** Commentaire libre lié à cette section. */
+  /** Sous-sections (par pièce) — chaque sous-section a un titre et des items. */
+  subSections: CRSubSection[];
+  /** @deprecated — anciens CR avaient tasks au niveau section, migrés vers subSections. */
+  tasks?: TaskItem[];
+  /** Commentaire libre lié à la section globale. */
   commentaire?: string;
 }
 
-/** RDV de chantier planifié (mention dans le CR pour avertir les invités). */
+/** @deprecated remplacé par RDVChantier (entité séparée du CR). */
 export interface CRRendezVous {
   id: string;
-  dateISO: string;       // YYYY-MM-DD ou ISO datetime
-  heure?: string;        // HH:MM (optionnel si all-day)
-  libelle: string;       // ex "RDV avec architecte", "Livraison cuisine"
-  invitesIds: string[];  // IDs des employés/STs/apporteurs invités
+  dateISO: string;
+  heure?: string;
+  libelle: string;
+  invitesIds: string[];
+}
+
+/** RDV de chantier (entité séparée des CR, affichée en intercalation). */
+export interface RDVChantier {
+  id: string;
+  chantierId: string;
+  dateISO: string;        // YYYY-MM-DD
+  heure?: string;         // HH:MM
+  libelle: string;        // ex "RDV avec architecte"
+  /** IDs des invités (employés / sous-traitants / apporteurs). */
+  invitesIds: string[];
+  /** Notif push envoyée à la création — pour ne pas re-notifier en cas de modif. */
+  notifiee: boolean;
+  createdAt: string;
+  updatedAt: string;
+  /** Auteur (admin qui a planifié). */
+  auteurId?: string;
+  auteurNom?: string;
 }
 
 /** Un compte-rendu de chantier. Structure plus formelle qu'une note. */
@@ -376,11 +429,11 @@ export interface SuiviCR {
   auteurNom: string;
   /** Personnes présentes sur le chantier ce jour-là. */
   personnesPresentes: CRPersonnePresente[];
-  /** Bloc texte libre — résumé des travaux réalisés. */
+  /** @deprecated retiré (jamais utilisé en pratique). */
   travauxRealises?: string;
-  /** Sections par lot, contenant les tâches/checkboxes. */
+  /** Sections par lot, contenant les sous-sections (par pièce) + items. */
   sections: CRSection[];
-  /** RDV planifiés mentionnés dans le CR. */
+  /** @deprecated les RDV sont désormais une entité séparée (RDVChantier). */
   rdvProchains?: CRRendezVous[];
   /** Statut du CR (draft pour brouillon, finalisé visible au client). */
   statut: 'brouillon' | 'finalise';
@@ -1296,6 +1349,7 @@ export interface AppData {
   marchesChantier?: MarcheChantier[];
   supplementsMarche?: SupplementMarche[];
   suivisCR?: SuiviCR[];
+  rdvsChantier?: RDVChantier[];
   // Tickets SAV
   ticketsSAV?: TicketSAV[];
   // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour

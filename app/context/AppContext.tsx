@@ -237,6 +237,10 @@ interface AppContextType {
   addSuiviCR: (cr: import('@/app/types').SuiviCR) => void;
   updateSuiviCR: (cr: import('@/app/types').SuiviCR) => void;
   deleteSuiviCR: (id: string) => void;
+  // RDV de chantier
+  addRDVChantier: (rdv: import('@/app/types').RDVChantier) => void;
+  updateRDVChantier: (rdv: import('@/app/types').RDVChantier) => void;
+  deleteRDVChantier: (id: string) => void;
   // Marchés chantier
   addMarcheChantier: (m: import('@/app/types').MarcheChantier) => void;
   updateMarcheChantier: (m: import('@/app/types').MarcheChantier) => void;
@@ -425,6 +429,8 @@ function migrateData(parsed: Record<string, any>): AppData {
     supplementsMarche: parsed.supplementsMarche || [],
     // Suivis CR (compte-rendu de chantier — Phase V10 G)
     suivisCR: parsed.suivisCR || [],
+    // RDV de chantier (entité séparée, intercalée dans la liste des CR)
+    rdvsChantier: parsed.rdvsChantier || [],
     // Tickets SAV
     ticketsSAV: parsed.ticketsSAV || [],
     // Présences forcées
@@ -900,6 +906,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       marchesChantier: (p.marchesChantier || []).filter(m => m.chantierId !== id),
       supplementsMarche: (p.supplementsMarche || []).filter(s => s.chantierId !== id),
       suivisCR: (p.suivisCR || []).filter(cr => cr.chantierId !== id),
+      rdvsChantier: (p.rdvsChantier || []).filter(r => r.chantierId !== id),
       ticketsSAV: (p.ticketsSAV || []).filter(t => t.chantierId !== id),
       interventions: (p.interventions || []).filter(i => i.chantierId !== id),
     }));
@@ -1739,6 +1746,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, suivisCR: (p.suivisCR || []).filter(x => x.id !== id) }));
   };
 
+  // ── RDV de chantier ──
+  const addRDVChantier = (rdv: import('@/app/types').RDVChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, rdvsChantier: [...(p.rdvsChantier || []), rdv] }));
+  };
+  const updateRDVChantier = (rdv: import('@/app/types').RDVChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, rdvsChantier: (p.rdvsChantier || []).map(x => x.id === rdv.id ? rdv : x) }));
+  };
+  const deleteRDVChantier = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, rdvsChantier: (p.rdvsChantier || []).filter(x => x.id !== id) }));
+  };
+
   const addMarcheChantier = (m: import('@/app/types').MarcheChantier) => {
     lastLocalChangeRef.current = Date.now();
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -1824,6 +1845,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       togglePresenceForcee,
       addTicketSAV, updateTicketSAV, deleteTicketSAV,
       addSuiviCR, updateSuiviCR, deleteSuiviCR,
+      addRDVChantier, updateRDVChantier, deleteRDVChantier,
       addMarcheChantier, updateMarcheChantier, deleteMarcheChantier,
       addSupplementMarche, updateSupplementMarche, deleteSupplementMarche,
       addBadgeEmploye,
