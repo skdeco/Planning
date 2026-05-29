@@ -355,12 +355,32 @@ interface CRFormProps {
 function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel: _onCancel }: CRFormProps) {
   const { data } = useApp();
   const [draft, setDraft] = useState<SuiviCR>(cr);
-  const ro: boolean = !isAdmin || !!readOnly;
+  const chantier = data.chantiers.find(c => c.id === chantierId);
+  // 3 niveaux de droits :
+  //   - ro (client side ou explicite) : pas d'édition du tout (pas même les cases)
+  //   - finalise (admin sur CR finalisé) : seules les checkboxes restent cliquables
+  //   - edit : édition complète (admin sur brouillon)
+  const fullRO: boolean = !isAdmin || !!readOnly;
+  const finalise: boolean = !fullRO && draft.statut === 'finalise';
+  // ro propagé aux composants enfants = read-only pour le META (text, ajout, attach, suppr)
+  // → vrai si fullRO OU finalise
+  const ro: boolean = fullRO || finalise;
+  // allowToggle = peut cocher les cases ? Admin partout sauf si explicitement readOnly.
+  const allowToggle: boolean = !fullRO;
   const [showPersonnesPicker, setShowPersonnesPicker] = useState(false);
 
   // Personnes disponibles catégorisées
-  const candidatsClients = useMemo(() => (data.apporteurs || []).filter(a => a.type === 'client'), [data.apporteurs]);
-  const candidatsArchis = useMemo(() => (data.apporteurs || []).filter(a => a.type === 'architecte'), [data.apporteurs]);
+  //  - Clients : SEULEMENT le client lié au chantier (chantier.clientApporteurId)
+  //  - Architectes : SEULEMENT l'architecte lié au chantier (chantier.architecteId)
+  //  - Autres : apporteurs d'affaires + contractants (label générique "Autres")
+  const candidatsClients = useMemo(() => {
+    if (!chantier?.clientApporteurId) return [];
+    return (data.apporteurs || []).filter(a => a.id === chantier.clientApporteurId);
+  }, [data.apporteurs, chantier?.clientApporteurId]);
+  const candidatsArchis = useMemo(() => {
+    if (!chantier?.architecteId) return [];
+    return (data.apporteurs || []).filter(a => a.id === chantier.architecteId);
+  }, [data.apporteurs, chantier?.architecteId]);
   const candidatsAutresAp = useMemo(() => (data.apporteurs || []).filter(a => a.type !== 'client' && a.type !== 'architecte'), [data.apporteurs]);
 
   const togglePersonne = (p: CRPersonnePresente) => {
@@ -456,24 +476,43 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
         )}
       </View>
 
-      {/* Sections par lot */}
+      {/* Sections par lot.
+          Côté lecture seule (client) : on masque les sections vides
+          (aucune sous-section ET aucun commentaire). */}
       <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Sections par lot</Text>
-      {draft.sections.length === 0 ? (
-        <Text style={styles.empty}>Aucun lot disponible. Ajoute des lots dans Marchés pour générer les sections.</Text>
-      ) : (
-        draft.sections.map((section, idx) => (
-          <CRSectionBox
-            key={`${section.lotId || 'horslot'}-${idx}`}
-            section={section}
-            ro={ro}
-            chantierId={chantierId}
-            onChangeCommentaire={v => updateSection(idx, { commentaire: v })}
-            onAddSubSection={titre => addSubSection(idx, titre)}
-            onUpdateSubSection={(subIdx, patch) => updateSubSection(idx, subIdx, patch)}
-            onRemoveSubSection={subIdx => removeSubSection(idx, subIdx)}
-          />
-        ))
-      )}
+      {(() => {
+        const sectionsToShow = fullRO
+          ? draft.sections.filter(s =>
+              (s.subSections || []).some(sub => (sub.items || []).length > 0)
+              || !!(s.commentaire?.trim())
+            )
+          : draft.sections;
+        if (sectionsToShow.length === 0) {
+          return (
+            <Text style={styles.empty}>
+              {fullRO
+                ? 'Aucun contenu pour ce CR.'
+                : 'Aucun lot disponible. Ajoute des lots dans Marchés pour générer les sections.'}
+            </Text>
+          );
+        }
+        return sectionsToShow.map(section => {
+          const idx = draft.sections.findIndex(s => s.lotId === section.lotId && s.titre === section.titre);
+          return (
+            <CRSectionBox
+              key={`${section.lotId || 'horslot'}-${idx}`}
+              section={section}
+              ro={ro}
+              allowToggle={allowToggle}
+              chantierId={chantierId}
+              onChangeCommentaire={v => updateSection(idx, { commentaire: v })}
+              onAddSubSection={titre => addSubSection(idx, titre)}
+              onUpdateSubSection={(subIdx, patch) => updateSubSection(idx, subIdx, patch)}
+              onRemoveSubSection={subIdx => removeSubSection(idx, subIdx)}
+            />
+          );
+        });
+      })()}
 
       {/* Actions */}
       {!ro && (
@@ -554,6 +593,7 @@ function CategorizedPicker({ selected, onToggle, employes, clients, architectes,
 interface CRSectionBoxProps {
   section: CRSection;
   ro: boolean;
+  allowToggle: boolean;
   chantierId: string;
   onChangeCommentaire: (v: string) => void;
   onAddSubSection: (titre: string) => void;
@@ -561,7 +601,7 @@ interface CRSectionBoxProps {
   onRemoveSubSection: (subIdx: number) => void;
 }
 
-function CRSectionBox({ section, ro, chantierId, onChangeCommentaire, onAddSubSection, onUpdateSubSection, onRemoveSubSection }: CRSectionBoxProps) {
+function CRSectionBox({ section, ro, allowToggle, chantierId, onChangeCommentaire, onAddSubSection, onUpdateSubSection, onRemoveSubSection }: CRSectionBoxProps) {
   const [newSubTitre, setNewSubTitre] = useState('');
   const submitNewSub = () => { onAddSubSection(newSubTitre); setNewSubTitre(''); };
 
@@ -581,6 +621,7 @@ function CRSectionBox({ section, ro, chantierId, onChangeCommentaire, onAddSubSe
           key={sub.id}
           sub={sub}
           ro={ro}
+          allowToggle={allowToggle}
           chantierId={chantierId}
           onUpdate={patch => onUpdateSubSection(subIdx, patch)}
           onRemove={() => onRemoveSubSection(subIdx)}
@@ -628,12 +669,13 @@ function CRSectionBox({ section, ro, chantierId, onChangeCommentaire, onAddSubSe
 interface CRSubSectionBoxProps {
   sub: CRSubSection;
   ro: boolean;
+  allowToggle: boolean;
   chantierId: string;
   onUpdate: (patch: Partial<CRSubSection>) => void;
   onRemove: () => void;
 }
 
-function CRSubSectionBox({ sub, ro, chantierId, onUpdate, onRemove }: CRSubSectionBoxProps) {
+function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove }: CRSubSectionBoxProps) {
   const [editingTitre, setEditingTitre] = useState(false);
   const [titreDraft, setTitreDraft] = useState(sub.titre);
   const [newItemText, setNewItemText] = useState('');
@@ -710,6 +752,7 @@ function CRSubSectionBox({ sub, ro, chantierId, onUpdate, onRemove }: CRSubSecti
           key={it.kind === 'task' ? it.task.id : it.texte.id}
           item={it}
           ro={ro}
+          allowToggle={allowToggle}
           onChange={patch => updateItem(idx, patch)}
           onRemove={() => removeItem(idx)}
           onAttachPhoto={() => handleAttach(idx, 'photo')}
@@ -750,20 +793,21 @@ function CRSubSectionBox({ sub, ro, chantierId, onUpdate, onRemove }: CRSubSecti
 interface CRItemRowProps {
   item: CRItem;
   ro: boolean;
+  allowToggle: boolean;
   onChange: (patch: CRItem) => void;
   onRemove: () => void;
   onAttachPhoto: () => void;
   onAttachPdf: () => void;
 }
 
-function CRItemRow({ item, ro, onChange, onRemove, onAttachPhoto, onAttachPdf }: CRItemRowProps) {
+function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, onAttachPdf }: CRItemRowProps) {
   if (item.kind === 'task') {
     const t = item.task;
     const toggle = () => onChange({ kind: 'task', task: { ...t, fait: !t.fait, faitAt: !t.fait ? new Date().toISOString() : undefined } });
     const editText = (v: string) => onChange({ kind: 'task', task: { ...t, texte: v } });
     return (
       <View style={styles.itemRow}>
-        <Pressable onPress={() => !ro && toggle()} style={{ paddingTop: 8 }}>
+        <Pressable onPress={() => allowToggle && toggle()} style={{ paddingTop: 8 }}>
           {t.fait ? <CheckSquare size={16} color={DS.bordeaux} strokeWidth={2.2} /> : <Square size={16} color={DS.textSecondary} strokeWidth={2.2} />}
         </Pressable>
         <View style={{ flex: 1 }}>
@@ -868,10 +912,18 @@ interface RDVFormProps {
 function RDVForm({ rdv, isAdmin, readOnly, onSave, onDelete }: RDVFormProps) {
   const { data } = useApp();
   const [draft, setDraft] = useState<RDVChantier>(rdv);
+  const chantier = data.chantiers.find(c => c.id === rdv.chantierId);
   const ro: boolean = !isAdmin || !!readOnly;
 
-  const clients = useMemo(() => (data.apporteurs || []).filter(a => a.type === 'client'), [data.apporteurs]);
-  const archis = useMemo(() => (data.apporteurs || []).filter(a => a.type === 'architecte'), [data.apporteurs]);
+  // Mêmes règles que CR : clients/archis = uniquement ceux du chantier
+  const clients = useMemo(() => {
+    if (!chantier?.clientApporteurId) return [];
+    return (data.apporteurs || []).filter(a => a.id === chantier.clientApporteurId);
+  }, [data.apporteurs, chantier?.clientApporteurId]);
+  const archis = useMemo(() => {
+    if (!chantier?.architecteId) return [];
+    return (data.apporteurs || []).filter(a => a.id === chantier.architecteId);
+  }, [data.apporteurs, chantier?.architecteId]);
   const autresAp = useMemo(() => (data.apporteurs || []).filter(a => a.type !== 'client' && a.type !== 'architecte'), [data.apporteurs]);
 
   const toggleInvite = (id: string) => {
