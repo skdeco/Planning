@@ -193,10 +193,19 @@ export function useNotesModalLogic(
 
   const startEdit = useCallback((note: CellNote) => {
     setNoteModal(prev => prev ? { ...prev, editingNote: note } : prev);
+    // Réhydrater les destinataires depuis la note existante (sinon le draft
+    // repartirait à « Tous » et écraserait visiblePar à la sauvegarde).
+    const vp = note.visiblePar;
+    const visibleIds = Array.isArray(vp) ? vp : [];
+    const visiblePar: NoteDraft['visiblePar'] = Array.isArray(vp)
+      ? (vp.some(id => id.startsWith('st:')) ? 'soustraitants' : 'employes')
+      : (vp === 'employes' || vp === 'soustraitants' ? vp : 'tous');
     setDraftState({
       ...INITIAL_DRAFT,
       texte:  note.texte,
       photos: note.photos || [],
+      visiblePar,
+      visibleIds,
     });
     setUiState(prev => ({ ...prev, showEditor: true }));
   }, [setNoteModal]);

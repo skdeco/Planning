@@ -488,7 +488,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                   )}
 
                   {/* Options admin : visibilité et répétition */}
-                  {isAdmin && !noteModal?.editingNote && (
+                  {isAdmin && (
                     <View style={{ marginTop: 12, gap: 10 }}>
                       <Text style={styles.noteLabel}>Visible par</Text>
                       <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
@@ -506,19 +506,17 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                       </View>
                       {/* Sélection spécifique d'acteurs présents sur le chantier */}
                       {(draft.visiblePar === 'employes' || draft.visiblePar === 'soustraitants') && noteModal && (() => {
-                        // Récupérer les acteurs présents sur ce chantier ce jour
-                        const dateStr = noteModal.date;
+                        // Tous les acteurs affectés au chantier (toutes dates) : permet
+                        // de rendre une note accessible à un employé/ST affecté après coup.
                         const chantierId = noteModal.chantierId;
                         const employes = draft.visiblePar === 'employes'
                           ? data.employes.filter(e => data.affectations.some(a =>
-                              a.chantierId === chantierId && a.employeId === e.id &&
-                              a.dateDebut <= dateStr && a.dateFin >= dateStr
+                              a.chantierId === chantierId && a.employeId === e.id
                             ))
                           : [];
                         const sts = draft.visiblePar === 'soustraitants'
                           ? (data.sousTraitants || []).filter(s => data.affectations.some(a =>
-                              a.chantierId === chantierId && a.soustraitantId === s.id &&
-                              a.dateDebut <= dateStr && a.dateFin >= dateStr
+                              a.chantierId === chantierId && a.soustraitantId === s.id
                             ))
                           : [];
                         const acteurs = [
