@@ -348,6 +348,7 @@ export interface CRTexteItem {
   id: string;
   texte: string;
   photoUri?: string;     // URI photo attachée (optionnelle)
+  photoNom?: string;     // nom de la photo (pour affichage en lien)
   pdfUri?: string;       // URI PDF attaché (optionnel)
   pdfNom?: string;       // nom du PDF (pour affichage)
 }
@@ -360,6 +361,7 @@ export interface CRTaskItem {
   faitAt?: string;
   faitPar?: string;
   photoUri?: string;
+  photoNom?: string;
   pdfUri?: string;
   pdfNom?: string;
 }

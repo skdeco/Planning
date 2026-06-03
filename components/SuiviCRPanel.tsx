@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import {
-  View, Text, Pressable, TextInput, ScrollView, Modal, Image,
+  View, Text, Pressable, TextInput, ScrollView, Modal,
   KeyboardAvoidingView, Platform, Alert, StyleSheet,
 } from 'react-native';
 import {
@@ -78,7 +78,10 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
     const items: TimelineItem[] = [];
     allCRs.forEach(cr => items.push({ kind: 'cr', date: cr.date, cr }));
     allRDVs.forEach(r => items.push({ kind: 'rdv', date: r.dateISO, rdv: r }));
-    items.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    // Tri par date de création décroissante : le dernier CR/RDV créé reste
+    // toujours en haut de la liste (indépendamment de la date saisie).
+    const createdAtOf = (it: TimelineItem) => it.kind === 'cr' ? it.cr.createdAt : it.rdv.createdAt;
+    items.sort((a, b) => (createdAtOf(b) || '').localeCompare(createdAtOf(a) || ''));
     return items;
   }, [allCRs, allRDVs]);
 
@@ -514,8 +517,9 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
         });
       })()}
 
-      {/* Actions */}
-      {!ro && (
+      {/* Actions — visibles pour l'admin (même sur un CR finalisé, pour
+          pouvoir le supprimer). Brouillon/Finaliser uniquement si non finalisé. */}
+      {!fullRO && (
         <View style={styles.formActions}>
           {onDelete && draft.id && (
             <Pressable onPress={() => onDelete(draft)} style={styles.deleteBtn}>
@@ -524,12 +528,16 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
             </Pressable>
           )}
           <View style={{ flex: 1 }} />
-          <Pressable onPress={handleSaveBrouillon} style={styles.draftBtn}>
-            <Text style={styles.draftBtnText}>Enregistrer brouillon</Text>
-          </Pressable>
-          <Pressable onPress={handleFinaliser} style={styles.finalizeBtn}>
-            <Text style={styles.finalizeBtnText}>Finaliser</Text>
-          </Pressable>
+          {!finalise && (
+            <>
+              <Pressable onPress={handleSaveBrouillon} style={styles.draftBtn}>
+                <Text style={styles.draftBtnText}>Enregistrer brouillon</Text>
+              </Pressable>
+              <Pressable onPress={handleFinaliser} style={styles.finalizeBtn}>
+                <Text style={styles.finalizeBtnText}>Finaliser</Text>
+              </Pressable>
+            </>
+          )}
         </View>
       )}
     </ScrollView>
@@ -715,10 +723,10 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove 
     if (!url) return;
     const current = sub.items[idx];
     if (current.kind === 'task') {
-      const patch: CRItem = { kind: 'task', task: { ...current.task, ...(kind === 'photo' ? { photoUri: url } : { pdfUri: url, pdfNom: f.filename }) } };
+      const patch: CRItem = { kind: 'task', task: { ...current.task, ...(kind === 'photo' ? { photoUri: url, photoNom: f.filename } : { pdfUri: url, pdfNom: f.filename }) } };
       updateItem(idx, patch);
     } else {
-      const patch: CRItem = { kind: 'texte', texte: { ...current.texte, ...(kind === 'photo' ? { photoUri: url } : { pdfUri: url, pdfNom: f.filename }) } };
+      const patch: CRItem = { kind: 'texte', texte: { ...current.texte, ...(kind === 'photo' ? { photoUri: url, photoNom: f.filename } : { pdfUri: url, pdfNom: f.filename }) } };
       updateItem(idx, patch);
     }
   };
@@ -822,7 +830,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
             <View style={styles.attachmentRow}>
               {t.photoUri && (
                 <Pressable onPress={() => openDocPreview(t.photoUri!)} style={styles.attachmentChip}>
-                  <Image source={{ uri: t.photoUri }} style={styles.attachmentPhoto} />
+                  <Text style={styles.attachmentPdf}>📷 {t.photoNom || 'Photo'}</Text>
                 </Pressable>
               )}
               {t.pdfUri && (
@@ -870,7 +878,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
             <View style={styles.attachmentRow}>
               {txt.photoUri && (
                 <Pressable onPress={() => openDocPreview(txt.photoUri!)} style={styles.attachmentChip}>
-                  <Image source={{ uri: txt.photoUri }} style={styles.attachmentPhoto} />
+                  <Text style={styles.attachmentPdf}>📷 {txt.photoNom || 'Photo'}</Text>
                 </Pressable>
               )}
               {txt.pdfUri && (
@@ -1052,7 +1060,6 @@ const styles = StyleSheet.create({
   iconBtn: { padding: 4 },
   attachmentRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
   attachmentChip: { },
-  attachmentPhoto: { width: 48, height: 48, borderRadius: 6, borderWidth: 1, borderColor: DS.border },
   attachmentPdf: { fontSize: 11, color: DS.bordeaux, backgroundColor: DS.cremeNude, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, fontWeight: '600' },
   formActions: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#FEE2E2', borderRadius: 8 },
