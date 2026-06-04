@@ -10,6 +10,8 @@ import type { Chantier } from '@/app/types';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { sendPushNotification } from '@/hooks/useNotifications';
+import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -23,7 +25,7 @@ interface Props {
 }
 
 export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, fullScreen = false }: Props) {
-  const { updateChantier } = useApp();
+  const { updateChantier, data } = useApp();
   const messages = chantier.messagesChantier || [];
   const [texte, setTexte] = useState('');
   const [kbHeight, setKbHeight] = useState(0);
@@ -103,6 +105,28 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
       messagesChantier: [...messages, newMsg],
       derniereMajContenu: new Date().toISOString(),
     });
+
+    // Notifier l'autre partie par push (atteint le destinataire même app fermée)
+    try {
+      const titre = `💬 ${newMsg.auteurNom}`;
+      const corps = `${chantier.nom} : ${texte.trim() || '📎 Pièce jointe'}`;
+      if (isAdmin) {
+        // Admin → intervenants externes liés à ce chantier
+        const ids = [chantier.clientApporteurId, chantier.architecteId, chantier.apporteurId, chantier.contractantId]
+          .filter(Boolean) as string[];
+        const tokens = (data.apporteurs || [])
+          .filter(a => ids.includes(a.id) && a.pushToken)
+          .map(a => a.pushToken!) as string[];
+        sendPushNotification(tokens, titre, corps);
+      } else {
+        // Intervenant externe → admin
+        const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
+        sendPushNotification(adminTokens, titre, corps);
+      }
+    } catch (e) {
+      console.warn('[Chat] push échoué', e);
+    }
+
     setTexte('');
     setPjUri(null);
     setPjNom(null);
