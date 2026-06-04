@@ -46,6 +46,7 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
 import * as FileSystem from 'expo-file-system/legacy';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 
 // Filtre mime utilisé par les pickers Notes Chantier + Plans Chantier (photos + PDF).
 const inboxMimeFilterImagePdf = (m: string): boolean =>
@@ -68,10 +69,18 @@ async function envoyerFactureChaintrust(
   fichierUrl: string | undefined,
   libelle: string,
 ): Promise<void> {
+  // Garde anti-crash : le module natif ExpoMailComposer n'existe que dans un
+  // build natif récent. requireOptionalNativeModule renvoie null (sans crasher)
+  // s'il est absent — on teste sa présence AVANT de charger expo-mail-composer,
+  // dont le require() déclencherait sinon un crash natif non rattrapable.
+  if (!requireOptionalNativeModule('ExpoMailComposer')) {
+    Alert.alert(
+      'Envoi Chaintrust indisponible',
+      "L'envoi automatique vers Chaintrust nécessite la dernière version de l'app (build natif en attente). L'achat est bien enregistré.",
+    );
+    return;
+  }
   try {
-    // Import paresseux : le module natif expo-mail-composer n'existe que dans
-    // un build natif récent. Le charger ici (et non en haut du fichier) évite
-    // tout crash de l'écran sur un build qui ne le contient pas encore.
     const MailComposer = require('expo-mail-composer') as typeof import('expo-mail-composer');
     const dispo = await MailComposer.isAvailableAsync();
     if (!dispo) {
