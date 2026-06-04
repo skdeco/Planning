@@ -183,6 +183,7 @@ export default function EquipeScreen() {
   const [form, setForm] = useState<EmployeForm>(DEFAULT_FORM);
   useUnsavedChanges(showForm && (form.prenom.trim().length > 0 || form.nom.trim().length > 0));
   const [filterMetier, setFilterMetier] = useState<Metier | 'all'>('all');
+  const [filterApporteurType, setFilterApporteurType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [showHoraires, setShowHoraires] = useState(false);
   const [showMdp, setShowMdp] = useState(false);
@@ -1131,17 +1132,17 @@ export default function EquipeScreen() {
       {/* Onglets Employés / Sous-traitants / Apporteurs */}
       <View style={styles.tabRow}>
         <Pressable style={[styles.tabBtn, activeTab === 'employes' && styles.tabBtnActive]} onPress={() => setActiveTab('employes')}>
-          <Text style={[styles.tabBtnText, activeTab === 'employes' && styles.tabBtnTextActive]}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tabBtnText, activeTab === 'employes' && styles.tabBtnTextActive]}>
             {t.equipe.employees} ({data.employes.length})
           </Text>
         </Pressable>
         <Pressable style={[styles.tabBtn, activeTab === 'soustraitants' && styles.tabBtnActive]} onPress={() => setActiveTab('soustraitants')}>
-          <Text style={[styles.tabBtnText, activeTab === 'soustraitants' && styles.tabBtnTextActive]}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tabBtnText, activeTab === 'soustraitants' && styles.tabBtnTextActive]}>
             {t.equipe.subcontractors} ({data.sousTraitants.length})
           </Text>
         </Pressable>
         <Pressable style={[styles.tabBtn, activeTab === 'apporteurs' && styles.tabBtnActive]} onPress={() => setActiveTab('apporteurs')}>
-          <Text style={[styles.tabBtnText, activeTab === 'apporteurs' && styles.tabBtnTextActive]}>
+          <Text numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8} style={[styles.tabBtnText, activeTab === 'apporteurs' && styles.tabBtnTextActive]}>
             Autres ({apporteurs.length})
           </Text>
         </Pressable>
@@ -1239,6 +1240,28 @@ export default function EquipeScreen() {
             </View>
           )}
 
+          {/* Sous-filtre par type de compte */}
+          {apporteurs.length > 0 && (() => {
+            const typesPresents = Array.from(new Set(apporteurs.map(a => a.type)))
+              .sort((x, y) => (APPORTEUR_TYPE_ORDER[x] ?? 99) - (APPORTEUR_TYPE_ORDER[y] ?? 99));
+            return (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll} contentContainerStyle={styles.filterContent}>
+                <Pressable style={[styles.filterChip, filterApporteurType === 'all' && styles.filterChipActive]} onPress={() => setFilterApporteurType('all')}>
+                  <Text style={[styles.filterChipText, filterApporteurType === 'all' && styles.filterChipTextActive]}>Tous</Text>
+                </Pressable>
+                {typesPresents.map(ty => {
+                  const meta = APPORTEUR_TYPE_LABELS[ty];
+                  const active = filterApporteurType === ty;
+                  return (
+                    <Pressable key={ty} style={[styles.filterChip, active && { backgroundColor: meta?.couleur, borderColor: meta?.couleur }]} onPress={() => setFilterApporteurType(ty)}>
+                      <Text style={[styles.filterChipText, active && { color: '#fff' }]}>{meta?.emoji} {meta?.label || ty}</Text>
+                    </Pressable>
+                  );
+                })}
+              </ScrollView>
+            );
+          })()}
+
           {apporteurs.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>Aucun architecte ni apporteur d'affaires</Text>
@@ -1253,6 +1276,7 @@ export default function EquipeScreen() {
                 (APPORTEUR_TYPE_ORDER[a.type] ?? 99) - (APPORTEUR_TYPE_ORDER[b.type] ?? 99)
                 || `${a.prenom} ${a.nom}`.localeCompare(`${b.prenom} ${b.nom}`, 'fr'),
               )
+              .filter(a => filterApporteurType === 'all' || a.type === filterApporteurType)
               .filter(a => {
                 if (!searchQuery.trim()) return true;
                 const q = searchQuery.toLowerCase().trim();
