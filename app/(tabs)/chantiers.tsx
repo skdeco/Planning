@@ -1367,7 +1367,7 @@ export default function ChantiersScreen() {
       )}
 
       {/* ── Vue SAV globale ── */}
-      {vueChantiersTab === 'sav' && (
+      {vueChantiersTab === 'sav' && (data.ticketsSAV || []).length > 0 && (
         <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
           {(() => {
             const allTickets = (data.ticketsSAV || []).sort((a, b) => {
