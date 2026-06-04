@@ -1,8 +1,10 @@
 import { useEffect, useRef, useMemo } from 'react';
+import * as Notifications from 'expo-notifications';
 import { useApp } from '@/app/context/AppContext';
 import { useNotifications, sendPushNotification } from '@/hooks/useNotifications';
 import { todayYMD } from '@/lib/date/today';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
+import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 
 /**
  * Récupère les push tokens des employés affectés à un chantier (sauf l'expéditeur).
@@ -86,6 +88,13 @@ export function NotificationListener() {
     }
     prevMsgsCount.current = nonLus;
   }, [data.messagesPrive]);
+
+  // ── Badge icône : messages de chantier non lus (admin) ───────────────────
+  useEffect(() => {
+    if (!isAdmin) return;
+    const n = countUnreadChantierMessages(data.chantiers, 'admin');
+    Notifications.setBadgeCountAsync(n).catch(() => {});
+  }, [data.chantiers, isAdmin]);
 
   // ── Demandes RH (admin/RH seulement) ──────────────────────────────────────
   useEffect(() => {

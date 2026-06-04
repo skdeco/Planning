@@ -43,7 +43,8 @@ export async function sendPushNotification(
   pushTokens: string[],
   title: string,
   body: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
+  badge?: number
 ): Promise<void> {
   if (pushTokens.length === 0) return;
 
@@ -53,6 +54,7 @@ export async function sendPushNotification(
     title,
     body,
     data: data || {},
+    ...(typeof badge === 'number' ? { badge } : {}),
   }));
 
   if (messages.length === 0) return;

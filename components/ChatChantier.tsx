@@ -10,8 +10,10 @@ import type { Chantier } from '@/app/types';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import * as Notifications from 'expo-notifications';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
+import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -64,6 +66,9 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     if (changed) {
       updateChantier({ ...chantier, messagesChantier: next });
     }
+    // Met à jour le badge d'icône : ce chantier est désormais lu
+    const updated = data.chantiers.map(c => c.id === chantier.id ? { ...c, messagesChantier: next } : c);
+    Notifications.setBadgeCountAsync(countUnreadChantierMessages(updated, monId)).catch(() => {});
     setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: false }), 100);
   }, [chantier.id]);
 
@@ -110,18 +115,25 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     try {
       const titre = `💬 ${newMsg.auteurNom}`;
       const corps = `${chantier.nom} : ${texte.trim() || '📎 Pièce jointe'}`;
+      // Données à jour (message ajouté) pour calculer le badge exact du destinataire
+      const updatedChantiers = data.chantiers.map(c =>
+        c.id === chantier.id ? { ...c, messagesChantier: [...messages, newMsg] } : c,
+      );
       if (isAdmin) {
-        // Admin → intervenants externes liés à ce chantier
+        // Admin → intervenants externes liés à ce chantier (badge propre à chacun)
         const ids = [chantier.clientApporteurId, chantier.architecteId, chantier.apporteurId, chantier.contractantId]
           .filter(Boolean) as string[];
-        const tokens = (data.apporteurs || [])
+        (data.apporteurs || [])
           .filter(a => ids.includes(a.id) && a.pushToken)
-          .map(a => a.pushToken!) as string[];
-        sendPushNotification(tokens, titre, corps);
+          .forEach(a => {
+            const n = countUnreadChantierMessages(updatedChantiers, a.id);
+            sendPushNotification([a.pushToken!], titre, corps, undefined, n);
+          });
       } else {
         // Intervenant externe → admin
         const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
-        sendPushNotification(adminTokens, titre, corps);
+        const n = countUnreadChantierMessages(updatedChantiers, 'admin');
+        sendPushNotification(adminTokens, titre, corps, undefined, n);
       }
     } catch (e) {
       console.warn('[Chat] push échoué', e);
