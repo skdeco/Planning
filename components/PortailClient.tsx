@@ -75,7 +75,6 @@ const SAV_STATUT_COLORS: Record<string, { bg: string; text: string }> = {
 const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contractant'; field: keyof Chantier }> = [
   { key: 'architecte',  field: 'architecteId' },
   { key: 'apporteur',   field: 'apporteurId' },
-  { key: 'contractant', field: 'contractantId' },
   { key: 'client',      field: 'clientApporteurId' },
 ];
 

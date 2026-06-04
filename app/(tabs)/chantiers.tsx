@@ -1479,7 +1479,7 @@ export default function ChantiersScreen() {
             >
               <Text style={{ fontSize: 12, fontWeight: '700', color: filterContactType === 'all' ? '#fff' : '#687076' }}>Tous les chantiers</Text>
             </Pressable>
-            {(['architecte', 'apporteur', 'contractant', 'client'] as const).map(ty => {
+            {(['architecte', 'apporteur', 'client'] as const).map(ty => {
               const meta = APPORTEUR_TYPE_LABELS[ty];
               const active = filterContactType === ty;
               return (
@@ -1812,12 +1812,11 @@ export default function ChantiersScreen() {
               <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 10 }}>🤝 Contacts</Text>
 
-                {(['architecte', 'apporteur', 'contractant', 'client'] as const).map((ty) => {
+                {(['architecte', 'apporteur', 'client'] as const).map((ty) => {
                   const meta = APPORTEUR_TYPE_LABELS[ty];
                   const field: keyof ChantierForm =
                     ty === 'architecte'  ? 'architecteId' :
                     ty === 'apporteur'   ? 'apporteurId' :
-                    ty === 'contractant' ? 'contractantId' :
                                             'clientApporteurId';
                   const selectedId = form[field] as string;
                   const listOfThisType = apporteursAll.filter(a => a.type === ty);
