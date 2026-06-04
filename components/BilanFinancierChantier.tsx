@@ -155,7 +155,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
         ['Poste', 'Montant (€)'],
         ['Main d\'oeuvre', bilan.totalMainOeuvre],
         ['Dépenses / achats', bilan.totalDepenses],
-        ['Sous-traitance', bilan.totalSousTraitants],
+        ['Sous-traitance (acomptes versés)', bilan.totalAcomptesST],
         ['TOTAL GÉNÉRAL', bilan.totalGeneral],
         [],
         ['Suppléments acceptés', bilan.totalSupplements],
@@ -176,10 +176,14 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
       XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(depData), 'Dépenses');
 
       // Feuille 4 : Sous-traitants
-      if (bilan.sousTraitants && bilan.sousTraitants.length > 0) {
-        const stData: any[][] = [['Sous-traitant', 'Coût (€)']];
-        bilan.sousTraitants.forEach((s: any) => stData.push([s.nom, s.cout]));
-        stData.push(['TOTAL', bilan.totalSousTraitants]);
+      if (bilan.devisChantier && bilan.devisChantier.length > 0) {
+        const stData: any[][] = [['Sous-traitant', 'Objet', 'Acomptes versés (€)', 'Prix convenu (€)']];
+        bilan.devisChantier.forEach((d: any) => {
+          const st = data.sousTraitants.find(s => s.id === d.soustraitantId);
+          const acomptes = data.acomptesst.filter(a => a.devisId === d.id).reduce((s, a) => s + a.montant, 0);
+          stData.push([st?.nom || '?', d.objet, acomptes, d.prixConvenu]);
+        });
+        stData.push(['', 'TOTAL', bilan.totalAcomptesST, bilan.totalDevis]);
         XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(stData), 'Sous-traitants');
       }
 

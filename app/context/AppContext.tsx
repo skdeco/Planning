@@ -834,10 +834,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ref.current = stillInRemote;
           persistDeletedIds(key, ref.current);
         };
-        cleanDeletedSet(deletedChantierIdsRef, DELETED_CHANTIERS_KEY, supabaseData.chantiers || []);
-        cleanDeletedSet(deletedEmployeIdsRef, DELETED_EMPLOYES_KEY, supabaseData.employes || []);
-        cleanDeletedSet(deletedPointageIdsRef, DELETED_POINTAGES_KEY, supabaseData.pointages || []);
-        cleanDeletedSet(deletedListeIdsRef, DELETED_LISTES_KEY, supabaseData.listesMateriaux || []);
+        cleanDeletedSet(deletedChantierIdsRef, DELETED_CHANTIERS_KEY, (supabaseData.chantiers as { id: string }[]) || []);
+        cleanDeletedSet(deletedEmployeIdsRef, DELETED_EMPLOYES_KEY, (supabaseData.employes as { id: string }[]) || []);
+        cleanDeletedSet(deletedPointageIdsRef, DELETED_POINTAGES_KEY, (supabaseData.pointages as { id: string }[]) || []);
+        cleanDeletedSet(deletedListeIdsRef, DELETED_LISTES_KEY, (supabaseData.listesMateriaux as { id: string }[]) || []);
       }
     } catch {}
   }, []);
