@@ -30,6 +30,15 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 const inboxMimeFilterImagePdf = (m: string): boolean =>
   m.startsWith('image/') || m === 'application/pdf';
 
+// Ordre d'affichage des comptes dans l'onglet "Autres" :
+// apporteur → architecte → client → intervenant externe (contractant).
+const APPORTEUR_TYPE_ORDER: Record<string, number> = {
+  apporteur: 0,
+  architecte: 1,
+  client: 2,
+  contractant: 3,
+};
+
 // ─── Documents légaux requis pour un sous-traitant (checklist) ───────────────
 const DOCUMENTS_LEGAUX_TYPES: { id: string; label: string }[] = [
   { id: 'kbis', label: 'Kbis (extrait récent < 3 mois)' },
@@ -1133,7 +1142,7 @@ export default function EquipeScreen() {
         </Pressable>
         <Pressable style={[styles.tabBtn, activeTab === 'apporteurs' && styles.tabBtnActive]} onPress={() => setActiveTab('apporteurs')}>
           <Text style={[styles.tabBtnText, activeTab === 'apporteurs' && styles.tabBtnTextActive]}>
-            🤝 Apporteurs ({apporteurs.length})
+            Autres ({apporteurs.length})
           </Text>
         </Pressable>
       </View>
@@ -1239,6 +1248,11 @@ export default function EquipeScreen() {
             </View>
           ) : (
             apporteurs
+              .slice()
+              .sort((a, b) =>
+                (APPORTEUR_TYPE_ORDER[a.type] ?? 99) - (APPORTEUR_TYPE_ORDER[b.type] ?? 99)
+                || `${a.prenom} ${a.nom}`.localeCompare(`${b.prenom} ${b.nom}`, 'fr'),
+              )
               .filter(a => {
                 if (!searchQuery.trim()) return true;
                 const q = searchQuery.toLowerCase().trim();
