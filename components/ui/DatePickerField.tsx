@@ -34,6 +34,21 @@ export function DatePickerField({ value, onChange, placeholder = 'Sélectionner 
   const [showPicker, setShowPicker] = useState(false);
   const [viewMonth, setViewMonth] = useState(() => (value ? parseISO(value) : new Date()));
 
+  const monthStart = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
+  const firstDow = (monthStart.getDay() + 6) % 7; // lundi = 0
+  const daysInMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
+
+  const cells: ({ iso: string; day: number } | null)[] = useMemo(() => {
+    const arr: ({ iso: string; day: number } | null)[] = [];
+    for (let i = 0; i < firstDow; i++) arr.push(null);
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dt = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d);
+      arr.push({ iso: toISO(dt), day: d });
+    }
+    while (arr.length % 7 !== 0) arr.push(null);
+    return arr;
+  }, [viewMonth, firstDow, daysInMonth]);
+
   if (Platform.OS === 'web') {
     return (
       // @ts-ignore — input HTML natif
@@ -50,21 +65,6 @@ export function DatePickerField({ value, onChange, placeholder = 'Sélectionner 
       />
     );
   }
-
-  const monthStart = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1);
-  const firstDow = (monthStart.getDay() + 6) % 7; // lundi = 0
-  const daysInMonth = new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0).getDate();
-
-  const cells: ({ iso: string; day: number } | null)[] = useMemo(() => {
-    const arr: ({ iso: string; day: number } | null)[] = [];
-    for (let i = 0; i < firstDow; i++) arr.push(null);
-    for (let d = 1; d <= daysInMonth; d++) {
-      const dt = new Date(viewMonth.getFullYear(), viewMonth.getMonth(), d);
-      arr.push({ iso: toISO(dt), day: d });
-    }
-    while (arr.length % 7 !== 0) arr.push(null);
-    return arr;
-  }, [viewMonth, firstDow, daysInMonth]);
 
   const prevMonth = () => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() - 1, 1));
   const nextMonth = () => setViewMonth(new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 1));

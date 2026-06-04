@@ -34,7 +34,6 @@ export default function AgendaScreen() {
   }, [isHydrated, currentUser]);
 
   const isAdmin = currentUser?.role === 'admin';
-  if (!isAdmin) return null;
 
   const today = toYMD(new Date());
   const [selectedDate, setSelectedDate] = useState(today);
@@ -121,6 +120,8 @@ export default function AgendaScreen() {
     const dans7j = new Date(); dans7j.setDate(dans7j.getDate() + 7);
     return allEvents.filter(e => e.date >= today && e.date <= toYMD(dans7j));
   }, [allEvents, today]);
+
+  if (!isAdmin) return null;
 
   return (
     <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>

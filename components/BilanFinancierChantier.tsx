@@ -14,7 +14,6 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
   const { data } = useApp();
 
   const chantier = data.chantiers.find(c => c.id === chantierId);
-  if (!chantier) return null;
 
   const bilan = useMemo(() => {
     // ── Main d'oeuvre ──
@@ -141,6 +140,8 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
       totalGeneral,
     };
   }, [data, chantierId]);
+
+  if (!chantier) return null;
 
   const fmt = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + ' €';
 
