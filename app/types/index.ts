@@ -343,27 +343,39 @@ export interface CRPersonnePresente {
   type: 'employe' | 'soustraitant' | 'apporteur' | 'admin';
 }
 
-/** Texte libre dans une sous-section (peut recevoir photo/PDF). */
+/** Pièce jointe (photo ou PDF) d'un item de CR. */
+export interface CRAttachment {
+  uri: string;
+  nom?: string;          // nom du fichier (pour affichage en lien)
+}
+
+/** Texte libre dans une sous-section (peut recevoir plusieurs photos/PDF). */
 export interface CRTexteItem {
   id: string;
   texte: string;
-  photoUri?: string;     // URI photo attachée (optionnelle)
-  photoNom?: string;     // nom de la photo (pour affichage en lien)
-  pdfUri?: string;       // URI PDF attaché (optionnel)
-  pdfNom?: string;       // nom du PDF (pour affichage)
+  photos?: CRAttachment[];  // photos attachées (multiples)
+  pdfs?: CRAttachment[];    // PDF attachés (multiples)
+  // ── Legacy (CR créés avant le multi-pièces jointes) — lecture seule ──
+  /** @deprecated remplacé par `photos[]` */ photoUri?: string;
+  /** @deprecated remplacé par `photos[]` */ photoNom?: string;
+  /** @deprecated remplacé par `pdfs[]` */ pdfUri?: string;
+  /** @deprecated remplacé par `pdfs[]` */ pdfNom?: string;
 }
 
-/** Une tâche (case à cocher) dans une sous-section (peut recevoir photo/PDF). */
+/** Une tâche (case à cocher) dans une sous-section (peut recevoir plusieurs photos/PDF). */
 export interface CRTaskItem {
   id: string;
   texte: string;
   fait: boolean;
   faitAt?: string;
   faitPar?: string;
-  photoUri?: string;
-  photoNom?: string;
-  pdfUri?: string;
-  pdfNom?: string;
+  photos?: CRAttachment[];  // photos attachées (multiples)
+  pdfs?: CRAttachment[];    // PDF attachés (multiples)
+  // ── Legacy (CR créés avant le multi-pièces jointes) — lecture seule ──
+  /** @deprecated remplacé par `photos[]` */ photoUri?: string;
+  /** @deprecated remplacé par `photos[]` */ photoNom?: string;
+  /** @deprecated remplacé par `pdfs[]` */ pdfUri?: string;
+  /** @deprecated remplacé par `pdfs[]` */ pdfNom?: string;
 }
 
 /** Un item de sous-section : tâche OU texte libre. */

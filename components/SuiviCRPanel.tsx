@@ -11,7 +11,7 @@ import { useApp } from '@/app/context/AppContext';
 import { DS } from '@/constants/design';
 import type {
   SuiviCR, CRSection, CRSubSection, CRItem, CRTaskItem, CRTexteItem,
-  CRPersonnePresente, LotAvancement, RDVChantier,
+  CRPersonnePresente, LotAvancement, RDVChantier, CRAttachment,
 } from '@/app/types';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
@@ -41,6 +41,13 @@ function formatDateFR(iso: string): string {
     const d = new Date(iso);
     return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
   } catch { return iso; }
+}
+/** Normalise une éventuelle pièce jointe legacy (champ unique) en tête du tableau. */
+function legacyMerge(arr: CRAttachment[] | undefined, legacyUri?: string, legacyNom?: string): CRAttachment[] {
+  return [
+    ...(legacyUri ? [{ uri: legacyUri, nom: legacyNom }] : []),
+    ...(arr || []),
+  ];
 }
 
 export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, inline }: SuiviCRPanelProps) {
@@ -712,21 +719,30 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove 
       acceptImages: kind === 'photo',
       acceptPdf: kind === 'pdf',
       acceptCamera: kind === 'photo',
-      multiple: false,
+      multiple: true,
       compressImages: true,
     });
     if (files.length === 0) return;
-    const f = files[0];
     const folder = `chantiers/${chantierId}/cr-items`;
-    const fileId = `${kind}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-    const url = await uploadFileToStorage(f.uri, folder, fileId);
-    if (!url) return;
+    const uploaded: CRAttachment[] = [];
+    for (const f of files) {
+      const fileId = `${kind}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      const url = await uploadFileToStorage(f.uri, folder, fileId);
+      if (url) uploaded.push({ uri: url, nom: f.filename });
+    }
+    if (uploaded.length === 0) return;
     const current = sub.items[idx];
     if (current.kind === 'task') {
-      const patch: CRItem = { kind: 'task', task: { ...current.task, ...(kind === 'photo' ? { photoUri: url, photoNom: f.filename } : { pdfUri: url, pdfNom: f.filename }) } };
+      const t = current.task;
+      const patch: CRItem = kind === 'photo'
+        ? { kind: 'task', task: { ...t, photos: [...legacyMerge(t.photos, t.photoUri, t.photoNom), ...uploaded], photoUri: undefined, photoNom: undefined } }
+        : { kind: 'task', task: { ...t, pdfs: [...legacyMerge(t.pdfs, t.pdfUri, t.pdfNom), ...uploaded], pdfUri: undefined, pdfNom: undefined } };
       updateItem(idx, patch);
     } else {
-      const patch: CRItem = { kind: 'texte', texte: { ...current.texte, ...(kind === 'photo' ? { photoUri: url, photoNom: f.filename } : { pdfUri: url, pdfNom: f.filename }) } };
+      const tx = current.texte;
+      const patch: CRItem = kind === 'photo'
+        ? { kind: 'texte', texte: { ...tx, photos: [...legacyMerge(tx.photos, tx.photoUri, tx.photoNom), ...uploaded], photoUri: undefined, photoNom: undefined } }
+        : { kind: 'texte', texte: { ...tx, pdfs: [...legacyMerge(tx.pdfs, tx.pdfUri, tx.pdfNom), ...uploaded], pdfUri: undefined, pdfNom: undefined } };
       updateItem(idx, patch);
     }
   };
@@ -826,20 +842,41 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
             editable={!ro}
             multiline
           />
-          {(t.photoUri || t.pdfUri) && (
-            <View style={styles.attachmentRow}>
-              {t.photoUri && (
-                <Pressable onPress={() => openDocPreview(t.photoUri!)} style={styles.attachmentChip}>
-                  <Text style={styles.attachmentPdf}>📷 {t.photoNom || 'Photo'}</Text>
-                </Pressable>
-              )}
-              {t.pdfUri && (
-                <Pressable onPress={() => openDocPreview(t.pdfUri!)} style={styles.attachmentChip}>
-                  <Text style={styles.attachmentPdf}>📄 {t.pdfNom || 'PDF'}</Text>
-                </Pressable>
-              )}
-            </View>
-          )}
+          {(() => {
+            const photoList = legacyMerge(t.photos, t.photoUri, t.photoNom);
+            const pdfList = legacyMerge(t.pdfs, t.pdfUri, t.pdfNom);
+            if (photoList.length === 0 && pdfList.length === 0) return null;
+            const removePhotoAt = (i: number) => onChange({ kind: 'task', task: { ...t, photos: photoList.filter((_, j) => j !== i), photoUri: undefined, photoNom: undefined } });
+            const removePdfAt = (i: number) => onChange({ kind: 'task', task: { ...t, pdfs: pdfList.filter((_, j) => j !== i), pdfUri: undefined, pdfNom: undefined } });
+            return (
+              <View style={styles.attachmentRow}>
+                {photoList.map((p, i) => (
+                  <View key={`ph-${i}`} style={styles.attachmentItem}>
+                    <Pressable onPress={() => openDocPreview(p.uri)}>
+                      <Text style={styles.attachmentPdf}>📷 {p.nom || 'Photo'}</Text>
+                    </Pressable>
+                    {!ro && (
+                      <Pressable onPress={() => removePhotoAt(i)} hitSlop={6}>
+                        <X size={11} color={DS.textSecondary} strokeWidth={2.2} />
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+                {pdfList.map((p, i) => (
+                  <View key={`pdf-${i}`} style={styles.attachmentItem}>
+                    <Pressable onPress={() => openDocPreview(p.uri)}>
+                      <Text style={styles.attachmentPdf}>📄 {p.nom || 'PDF'}</Text>
+                    </Pressable>
+                    {!ro && (
+                      <Pressable onPress={() => removePdfAt(i)} hitSlop={6}>
+                        <X size={11} color={DS.textSecondary} strokeWidth={2.2} />
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+              </View>
+            );
+          })()}
         </View>
         {!ro && (
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 2 }}>
@@ -874,20 +911,41 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
             placeholder="Texte libre…"
             placeholderTextColor={DS.textSecondary}
           />
-          {(txt.photoUri || txt.pdfUri) && (
-            <View style={styles.attachmentRow}>
-              {txt.photoUri && (
-                <Pressable onPress={() => openDocPreview(txt.photoUri!)} style={styles.attachmentChip}>
-                  <Text style={styles.attachmentPdf}>📷 {txt.photoNom || 'Photo'}</Text>
-                </Pressable>
-              )}
-              {txt.pdfUri && (
-                <Pressable onPress={() => openDocPreview(txt.pdfUri!)} style={styles.attachmentChip}>
-                  <Text style={styles.attachmentPdf}>📄 {txt.pdfNom || 'PDF'}</Text>
-                </Pressable>
-              )}
-            </View>
-          )}
+          {(() => {
+            const photoList = legacyMerge(txt.photos, txt.photoUri, txt.photoNom);
+            const pdfList = legacyMerge(txt.pdfs, txt.pdfUri, txt.pdfNom);
+            if (photoList.length === 0 && pdfList.length === 0) return null;
+            const removePhotoAt = (i: number) => onChange({ kind: 'texte', texte: { ...txt, photos: photoList.filter((_, j) => j !== i), photoUri: undefined, photoNom: undefined } });
+            const removePdfAt = (i: number) => onChange({ kind: 'texte', texte: { ...txt, pdfs: pdfList.filter((_, j) => j !== i), pdfUri: undefined, pdfNom: undefined } });
+            return (
+              <View style={styles.attachmentRow}>
+                {photoList.map((p, i) => (
+                  <View key={`ph-${i}`} style={styles.attachmentItem}>
+                    <Pressable onPress={() => openDocPreview(p.uri)}>
+                      <Text style={styles.attachmentPdf}>📷 {p.nom || 'Photo'}</Text>
+                    </Pressable>
+                    {!ro && (
+                      <Pressable onPress={() => removePhotoAt(i)} hitSlop={6}>
+                        <X size={11} color={DS.textSecondary} strokeWidth={2.2} />
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+                {pdfList.map((p, i) => (
+                  <View key={`pdf-${i}`} style={styles.attachmentItem}>
+                    <Pressable onPress={() => openDocPreview(p.uri)}>
+                      <Text style={styles.attachmentPdf}>📄 {p.nom || 'PDF'}</Text>
+                    </Pressable>
+                    {!ro && (
+                      <Pressable onPress={() => removePdfAt(i)} hitSlop={6}>
+                        <X size={11} color={DS.textSecondary} strokeWidth={2.2} />
+                      </Pressable>
+                    )}
+                  </View>
+                ))}
+              </View>
+            );
+          })()}
         </View>
         {!ro && (
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 2 }}>
@@ -1058,8 +1116,8 @@ const styles = StyleSheet.create({
   itemText: { fontSize: 13, color: DS.sombre, padding: 4, backgroundColor: DS.surface, borderRadius: 6, borderWidth: 1, borderColor: DS.border, minHeight: 32 },
   itemTextDone: { textDecorationLine: 'line-through', color: DS.textSecondary },
   iconBtn: { padding: 4 },
-  attachmentRow: { flexDirection: 'row', gap: 6, marginTop: 4 },
-  attachmentChip: { },
+  attachmentRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 },
+  attachmentItem: { flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: DS.cremeNude, borderRadius: 6, paddingLeft: 2, paddingRight: 4 },
   attachmentPdf: { fontSize: 11, color: DS.bordeaux, backgroundColor: DS.cremeNude, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 6, fontWeight: '600' },
   formActions: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
   deleteBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingHorizontal: 10, paddingVertical: 8, backgroundColor: '#FEE2E2', borderRadius: 8 },
