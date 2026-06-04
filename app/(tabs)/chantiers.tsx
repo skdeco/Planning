@@ -45,12 +45,57 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
+import * as MailComposer from 'expo-mail-composer';
+import * as FileSystem from 'expo-file-system/legacy';
 
 // Filtre mime utilisé par les pickers Notes Chantier + Plans Chantier (photos + PDF).
 const inboxMimeFilterImagePdf = (m: string): boolean =>
   m.startsWith('image/') || m === 'application/pdf';
 
 const STATUTS: StatutChantier[] = ['actif', 'en_attente', 'termine', 'en_pause', 'sav'];
+
+// Email de capture Chaintrust (réception automatique des factures).
+// L'expéditeur doit être contact@skdeco.fr (compte autorisé dans Chaintrust) :
+// expo-mail-composer n'impose pas le From, il faut que ce compte soit configuré
+// dans l'app Mail de l'iPhone (champ "De :" sélectionnable à l'envoi).
+const CHAINTRUST_CAPTURE_EMAIL = 'avoda_skdeco_e0ec380e@capture.chaintrust.io';
+
+// Ouvre l'app Mail pré-remplie pour envoyer une facture vers Chaintrust.
+// localUri : chemin local de la photo (capture caméra) si disponible ;
+// fichierUrl : URL Supabase de secours (cas modification d'un achat existant)
+// — téléchargée en cache local avant d'être jointe.
+async function envoyerFactureChaintrust(
+  localUri: string | null,
+  fichierUrl: string | undefined,
+  libelle: string,
+): Promise<void> {
+  try {
+    const dispo = await MailComposer.isAvailableAsync();
+    if (!dispo) {
+      Alert.alert(
+        'Mail indisponible',
+        "Aucune app Mail n'est configurée. Ajoute le compte contact@skdeco.fr dans Réglages → Mail pour envoyer vers Chaintrust.",
+      );
+      return;
+    }
+    let attachmentUri = localUri;
+    if (!attachmentUri && fichierUrl) {
+      const ext = (fichierUrl.split('?')[0].split('.').pop() || 'jpg').slice(0, 5);
+      const dest = `${FileSystem.cacheDirectory}chaintrust_${Date.now()}.${ext}`;
+      const dl = await FileSystem.downloadAsync(fichierUrl, dest);
+      attachmentUri = dl.uri;
+    }
+    await MailComposer.composeAsync({
+      recipients: [CHAINTRUST_CAPTURE_EMAIL],
+      subject: `Facture - ${libelle}`,
+      body: `Facture transmise depuis SK DECO Planning.\n\n${libelle}`,
+      attachments: attachmentUri ? [attachmentUri] : undefined,
+    });
+  } catch (err) {
+    console.error('Envoi Chaintrust échoué', err);
+    Alert.alert('Erreur', "Impossible d'ouvrir l'email vers Chaintrust.");
+  }
+}
 
 function genId(): string {
   return `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
@@ -240,6 +285,7 @@ export default function ChantiersScreen() {
   const [showAchatForm, setShowAchatForm] = useState(false);
   const [showAchatFormFiche, setShowAchatFormFiche] = useState(false);
   const [achatFichierUri, setAchatFichierUri] = useState<string | null>(null);
+  const [achatFichierLocalUri, setAchatFichierLocalUri] = useState<string | null>(null);
   // C1a-bis : édition d'un achat existant + UX simplifiée (détails repliés par défaut)
   const [editAchatId, setEditAchatId] = useState<string | null>(null);
   const [showDetailsAchat, setShowDetailsAchat] = useState(false);
@@ -2202,7 +2248,7 @@ export default function ChantiersScreen() {
                               <Text style={{ fontSize: 14 }}>📄</Text>
                               <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint (toucher pour voir)</Text>
                             </Pressable>
-                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
+                            <Pressable onPress={() => { setAchatFichierUri(null); setAchatFichierLocalUri(null); }}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
                           </View>
                         )}
 
@@ -2831,6 +2877,7 @@ export default function ChantiersScreen() {
                       onPress={() => {
                         setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr3, fournisseur: '', fichier: '', note: '' });
                         setAchatFichierUri(null);
+                        setAchatFichierLocalUri(null);
                         setEditAchatId(null);
                         setShowDetailsAchat(false);
                         setShowAchatForm(v => !v);
@@ -2851,6 +2898,7 @@ export default function ChantiersScreen() {
                               try {
                                 const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
                                 if (!files || files.length === 0) return;
+                                setAchatFichierLocalUri(files[0].uri);
                                 const url = await uploadFileToStorage(files[0].uri, `chantiers/${achatsChantierId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
                                 if (url) setAchatFichierUri(url);
                               } catch (err) {
@@ -2867,7 +2915,7 @@ export default function ChantiersScreen() {
                               <Text style={{ fontSize: 14 }}>📄</Text>
                               <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint (toucher pour voir)</Text>
                             </Pressable>
-                            <Pressable onPress={() => setAchatFichierUri(null)}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
+                            <Pressable onPress={() => { setAchatFichierUri(null); setAchatFichierLocalUri(null); }}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
                           </View>
                         )}
 
@@ -2933,8 +2981,14 @@ export default function ChantiersScreen() {
                               });
                             }
 
+                            // Envoi automatique de la facture vers Chaintrust (si une facture est jointe)
+                            if (achatFichierUri) {
+                              envoyerFactureChaintrust(achatFichierLocalUri, achatFichierUri, libelleAuto);
+                            }
+
                             setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
                             setAchatFichierUri(null);
+                            setAchatFichierLocalUri(null);
                             setEditAchatId(null);
                             setShowDetailsAchat(false);
                             setShowAchatForm(false);
@@ -2973,6 +3027,7 @@ export default function ChantiersScreen() {
                                   note: dep.note || '',
                                 });
                                 setAchatFichierUri(dep.fichier || null);
+                                setAchatFichierLocalUri(null);
                                 setEditAchatId(dep.id);
                                 setShowDetailsAchat(true);
                                 setShowAchatForm(true);

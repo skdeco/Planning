@@ -106,6 +106,7 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
     "expo-updates",
+    "expo-mail-composer",
     [
       "expo-audio",
       {
