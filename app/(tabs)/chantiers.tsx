@@ -45,7 +45,6 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
-import * as MailComposer from 'expo-mail-composer';
 import * as FileSystem from 'expo-file-system/legacy';
 
 // Filtre mime utilisé par les pickers Notes Chantier + Plans Chantier (photos + PDF).
@@ -70,6 +69,10 @@ async function envoyerFactureChaintrust(
   libelle: string,
 ): Promise<void> {
   try {
+    // Import paresseux : le module natif expo-mail-composer n'existe que dans
+    // un build natif récent. Le charger ici (et non en haut du fichier) évite
+    // tout crash de l'écran sur un build qui ne le contient pas encore.
+    const MailComposer = require('expo-mail-composer') as typeof import('expo-mail-composer');
     const dispo = await MailComposer.isAvailableAsync();
     if (!dispo) {
       Alert.alert(
