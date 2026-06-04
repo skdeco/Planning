@@ -1331,7 +1331,7 @@ export default function EquipeScreen() {
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={styles.fieldLabel}>Type *</Text>
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                {(['architecte', 'apporteur', 'contractant', 'client'] as const).map(ty => {
+                {(['architecte', 'apporteur', 'client'] as const).map(ty => {
                   const meta = APPORTEUR_TYPE_LABELS[ty];
                   const active = apporteurForm.type === ty;
                   return (
