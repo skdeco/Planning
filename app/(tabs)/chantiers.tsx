@@ -3506,7 +3506,7 @@ export default function ChantiersScreen() {
       </Modal>
 
       {/* V10 — Modal Messagerie admin (ChatChantier réutilisé) */}
-      <ModalKeyboard
+      <Modal
         visible={messagerieChantierId !== null}
         animationType="slide"
         transparent
@@ -3538,7 +3538,7 @@ export default function ChantiersScreen() {
             })()}
           </View>
         </View>
-      </ModalKeyboard>
+      </Modal>
 
       {marchesChantierId && (
         <MarchesChantier visible={!!marchesChantierId} onClose={() => setMarchesChantierId(null)} chantierId={marchesChantierId} />

@@ -3,7 +3,7 @@
  */
 import React, { useMemo, useRef, useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, TextInput, ScrollView, Platform, KeyboardAvoidingView,
+  View, Text, StyleSheet, Pressable, TextInput, ScrollView, Platform, Keyboard,
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
@@ -23,7 +23,22 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
   const { updateChantier } = useApp();
   const messages = chantier.messagesChantier || [];
   const [texte, setTexte] = useState('');
+  const [kbHeight, setKbHeight] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
+
+  // Remonte la zone de saisie au-dessus du clavier (le Modal parent ne gère
+  // pas le clavier de façon fiable sur iOS → on écoute les events directement).
+  useEffect(() => {
+    if (!fullScreen) return;
+    const showEvt = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvt = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showSub = Keyboard.addListener(showEvt, (e) => {
+      setKbHeight(e.endCoordinates?.height ?? 0);
+      setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: true }), 50);
+    });
+    const hideSub = Keyboard.addListener(hideEvt, () => setKbHeight(0));
+    return () => { showSub.remove(); hideSub.remove(); };
+  }, [fullScreen]);
 
   const monId = isAdmin ? 'admin' : (externAp?.id || '');
   const monType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' =
@@ -72,7 +87,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
   const nbNonLus = messages.filter(m => !m.luPar?.includes(monId)).length;
 
   return (
-    <View style={[styles.card, fullScreen && styles.cardFull]}>
+    <View style={[styles.card, fullScreen && styles.cardFull, fullScreen && kbHeight > 0 && { paddingBottom: kbHeight }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Text style={styles.title}>💬 Messagerie du chantier</Text>
         {nbNonLus > 0 && (
