@@ -7,6 +7,9 @@ import {
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { uploadFileToStorage } from '@/lib/supabase';
+import { openDocPreview } from '@/lib/share/openDocPreview';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -24,6 +27,9 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
   const messages = chantier.messagesChantier || [];
   const [texte, setTexte] = useState('');
   const [kbHeight, setKbHeight] = useState(0);
+  const [pjUri, setPjUri] = useState<string | null>(null);
+  const [pjNom, setPjNom] = useState<string | null>(null);
+  const [pjUploading, setPjUploading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
 
   // Remonte la zone de saisie au-dessus du clavier (le Modal parent ne gère
@@ -59,8 +65,29 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: false }), 100);
   }, [chantier.id]);
 
+  const ajouterPieceJointe = async () => {
+    try {
+      const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
+      if (!files || files.length === 0) return;
+      setPjUploading(true);
+      const url = await uploadFileToStorage(
+        files[0].uri,
+        `chantiers/${chantier.id}/messages`,
+        `msg_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+      );
+      if (url) {
+        setPjUri(url);
+        setPjNom(files[0].filename || 'Document');
+      }
+    } catch (err) {
+      console.error('Pièce jointe message échouée', err);
+    } finally {
+      setPjUploading(false);
+    }
+  };
+
   const envoyer = () => {
-    if (!texte.trim()) return;
+    if (!texte.trim() && !pjUri) return;
     const newMsg = {
       id: genId('msg'),
       auteurId: monId,
@@ -69,6 +96,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
       texte: texte.trim(),
       createdAt: new Date().toISOString(),
       luPar: [monId],
+      ...(pjUri ? { pieceJointe: pjUri, pieceJointeNom: pjNom || 'Document' } : {}),
     };
     updateChantier({
       ...chantier,
@@ -76,6 +104,8 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
       derniereMajContenu: new Date().toISOString(),
     });
     setTexte('');
+    setPjUri(null);
+    setPjNom(null);
     setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: true }), 50);
   };
 
@@ -115,7 +145,14 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
                   {!isMine && (
                     <Text style={styles.author}>{m.auteurNom} · {m.auteurType}</Text>
                   )}
-                  <Text style={[styles.msgText, isMine && { color: '#fff' }]}>{m.texte}</Text>
+                  {!!m.texte && (
+                    <Text style={[styles.msgText, isMine && { color: '#fff' }]}>{m.texte}</Text>
+                  )}
+                  {m.pieceJointe && (
+                    <Pressable onPress={() => openDocPreview(m.pieceJointe!)} style={styles.pjBubble}>
+                      <Text style={[styles.pjLink, isMine && { color: '#fff' }]} numberOfLines={1}>📎 {m.pieceJointeNom || 'Document'}</Text>
+                    </Pressable>
+                  )}
                   <Text style={[styles.date, isMine && { color: 'rgba(255,255,255,0.7)' }]}>{formatDate(m.createdAt)}</Text>
                 </View>
               </View>
@@ -124,7 +161,18 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
         )}
       </ScrollView>
 
+      {pjUri && (
+        <View style={styles.pjPending}>
+          <Text style={styles.pjPendingText} numberOfLines={1}>📎 {pjNom || 'Document'}</Text>
+          <Pressable onPress={() => { setPjUri(null); setPjNom(null); }} hitSlop={8}>
+            <Text style={styles.pjPendingRemove}>✕</Text>
+          </Pressable>
+        </View>
+      )}
       <View style={styles.inputRow}>
+        <Pressable onPress={ajouterPieceJointe} disabled={pjUploading} style={[styles.attachBtn, pjUploading && { opacity: 0.4 }]}>
+          <Text style={styles.attachBtnText}>{pjUploading ? '…' : '📎'}</Text>
+        </Pressable>
         <TextInput
           style={styles.input}
           value={texte}
@@ -132,7 +180,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
           placeholder="Votre message..."
           multiline
         />
-        <Pressable onPress={envoyer} disabled={!texte.trim()} style={[styles.sendBtn, !texte.trim() && { opacity: 0.4 }]}>
+        <Pressable onPress={envoyer} disabled={!texte.trim() && !pjUri} style={[styles.sendBtn, (!texte.trim() && !pjUri) && { opacity: 0.4 }]}>
           <Text style={styles.sendBtnText}>➤</Text>
         </Pressable>
       </View>
@@ -156,7 +204,14 @@ const styles = StyleSheet.create({
   bubbleOther: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E8DDD0', borderBottomLeftRadius: 2 },
   author: { fontSize: 10, color: '#8C6D2F', fontWeight: '800', marginBottom: 3 },
   msgText: { fontSize: 13, color: '#2C2C2C', lineHeight: 18 },
+  pjBubble: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
+  pjLink: { fontSize: 13, color: '#8C6D2F', fontWeight: '700', textDecorationLine: 'underline', flexShrink: 1 },
   date: { fontSize: 9, color: '#8C8077', marginTop: 4, textAlign: 'right' },
+  pjPending: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8, backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginTop: 10 },
+  pjPendingText: { flex: 1, fontSize: 12, color: '#2C2C2C', fontWeight: '600' },
+  pjPendingRemove: { fontSize: 14, color: '#E74C3C', fontWeight: '800' },
+  attachBtn: { backgroundColor: '#FAF7F3', borderRadius: 10, borderWidth: 1, borderColor: '#E8DDD0', width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
+  attachBtnText: { fontSize: 18 },
   inputRow: { flexDirection: 'row', gap: 6, alignItems: 'flex-end', marginTop: 10 },
   input: { flex: 1, backgroundColor: '#FAF7F3', borderRadius: 10, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 10, fontSize: 13, color: '#2C2C2C', minHeight: 40, maxHeight: 100 },
   sendBtn: { backgroundColor: '#2C2C2C', borderRadius: 10, width: 44, height: 44, alignItems: 'center', justifyContent: 'center' },
