@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, mergeDataSafely, LOCAL_DATA_KEY, subscribeToRealtimeUpdates, deleteFileFromStorage } from '@/lib/supabase';
+import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, LOCAL_DATA_KEY, subscribeToRealtimeUpdates, deleteFileFromStorage } from '@/lib/supabase';
 import { normalizePlanNom } from '@/lib/plans/normalizePlanNom';
 
 // Clés AsyncStorage pour persister les IDs supprimés entre rechargements
@@ -20,10 +20,11 @@ const RETRY_DELAY_MS = 2000;
 async function safeSaveToSupabase(
   data: Record<string, unknown>,
   onError: (msg: string) => void,
+  deletedIds?: Set<string>,
 ): Promise<boolean> {
   for (let attempt = 1; attempt <= MAX_RETRY; attempt++) {
     try {
-      const ok = await saveDataToSupabase(data);
+      const ok = await saveDataToSupabase(data, deletedIds);
       if (ok) return true;
       console.warn(`[Save] Tentative ${attempt}/${MAX_RETRY} échouée (retour false)`);
     } catch (err) {
@@ -653,8 +654,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       lastSaveRef.current = Date.now();
 
       // 1. Sauvegarder dans Supabase (SANS photos — stripPhotosForSupabase appliqué dans saveDataToSupabase)
+      // Union de toutes les suppressions locales : transmise à la fusion
+      // distante (écriture sûre multi-admin) pour ne pas ressusciter une
+      // suppression via les ajouts d'un autre admin restés en distant.
+      const deletedIds = new Set<string>([
+        ...deletedAffectationIdsRef.current,
+        ...deletedChantierIdsRef.current,
+        ...deletedEmployeIdsRef.current,
+        ...deletedPointageIdsRef.current,
+        ...deletedListeIdsRef.current,
+        ...deletedGenericIdsRef.current,
+      ]);
       setSyncStatus('saving');
-      safeSaveToSupabase(dataToSave, showSaveError)
+      safeSaveToSupabase(dataToSave, showSaveError, deletedIds)
         .then(ok => {
           lastSaveRef.current = Date.now(); // Marquer la fin de la sauvegarde
           if (ok) {

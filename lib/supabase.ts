@@ -302,13 +302,46 @@ export async function loadDataFromSupabase(): Promise<Record<string, unknown> | 
  * 2. Ne jamais réduire une collection existante dans Supabase
  * 3. Fusionner avec les données existantes si nécessaire
  * 4. Debounce géré côté AppContext (ne pas appeler trop fréquemment)
+ *
+ * ÉCRITURE SÛRE MULTI-ADMIN (Lot 8) :
+ * Avant d'écrire, on relit l'état distant et on le fusionne avec le local
+ * (`mergeDataSafely`, local prioritaire). Ainsi, si un 2e admin (ex : le frère)
+ * a ajouté des données depuis notre dernière synchro, ses ajouts ne sont PAS
+ * écrasés. `deletedIds` contient les ids supprimés localement : on les retire
+ * après fusion pour que la fusion additive ne ressuscite pas une suppression.
+ * Si la lecture distante échoue (timeout/vide), on retombe sur l'écriture
+ * directe du local (comportement historique) pour ne pas bloquer la sauvegarde.
  */
-export async function saveDataToSupabase(appData: Record<string, unknown>): Promise<boolean> {
-  // Retirer les photos volumineuses avant envoi (base64 dans toutes les collections)
-  const lightPayload = stripPhotosForSupabase(appData);
+export async function saveDataToSupabase(
+  appData: Record<string, unknown>,
+  deletedIds?: Set<string>,
+): Promise<boolean> {
+  // Relire le distant pour fusionner les ajouts concurrents d'un autre admin.
+  let payload = appData;
+  try {
+    const remote = await loadDataFromSupabase();
+    if (remote) {
+      const merged = mergeDataSafely(appData, remote);
+      // Retirer les suppressions locales que la fusion additive aurait ramenées.
+      if (deletedIds && deletedIds.size > 0) {
+        for (const key of ARRAY_COLLECTIONS) {
+          if (Array.isArray(merged[key])) {
+            merged[key] = (merged[key] as Record<string, unknown>[]).filter(
+              item => !deletedIds.has(item.id as string),
+            );
+          }
+        }
+      }
+      payload = merged;
+    }
+  } catch (e) {
+    // Lecture distante impossible → écriture directe du local (fallback sûr).
+    console.warn('[Save] Fusion distante impossible, écriture directe:', e);
+  }
 
-  // Écriture directe : les données locales sont la source de vérité au moment de la sauvegarde.
-  // La résolution de conflits est gérée côté lecture (reloadFromSupabase dans AppContext).
+  // Retirer les photos volumineuses avant envoi (base64 dans toutes les collections)
+  const lightPayload = stripPhotosForSupabase(payload);
+
   const { error } = await supabase
     .from('app_data')
     .upsert({ id: 'main', data: lightPayload, updated_at: new Date().toISOString() });
