@@ -186,6 +186,8 @@ interface AppContextType {
   deleteRdvChantier: (id: string) => void;
   // Préférences de notifications (clé : 'admin' ou employeId)
   updateNotificationPrefs: (userKey: string, partial: Partial<NotificationPrefs>) => void;
+  // Restauration d'une sauvegarde : remplace l'intégralité des données
+  importAllData: (raw: Record<string, unknown>) => void;
   // Notes chantier
   addNoteChantier: (n: NoteChantier) => void;
   updateNoteChantier: (n: NoteChantier) => void;
@@ -1430,6 +1432,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       },
     }));
 
+  // ── Restauration d'une sauvegarde (remplace tout) ──
+  // Passe par migrateData pour normaliser les champs manquants/obsolètes.
+  // Le auto-save propage ensuite la restauration vers Supabase + cache local.
+  const importAllData = (raw: Record<string, unknown>) => {
+    setData(migrateData(raw));
+  };
+
   // ── Messagerie privée ──
   const addMessagePrive = (m: MessagePrive) =>
     setData(p => ({ ...p, messagesPrive: [...(p.messagesPrive || []), m] }));
@@ -1845,6 +1854,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addLivraison, updateLivraison, deleteLivraison,
       addRdvChantier, updateRdvChantier, deleteRdvChantier,
       updateNotificationPrefs,
+      importAllData,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,

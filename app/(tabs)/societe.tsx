@@ -6,6 +6,7 @@ import { useRefresh } from '@/hooks/useRefresh';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { ScreenContainer } from '@/components/screen-container';
 import { NotificationSettings } from '@/components/NotificationSettings';
+import { DataBackupCard } from '@/components/DataBackupCard';
 import { useApp } from '@/app/context/AppContext';
 import { DOC_SOCIETE_CATEGORIES, type DocSocieteCategorie, type DocumentSociete } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -317,10 +318,13 @@ export default function SocieteScreen() {
           <Text style={styles.addBtnText}>+ Ajouter un document</Text>
         </Pressable>
 
-        {/* Réglages des notifications (admin) */}
+        {/* Sauvegarde / restauration des données (admin) */}
         <View style={{ marginTop: 24 }}>
-          <NotificationSettings />
+          <DataBackupCard />
         </View>
+
+        {/* Réglages des notifications (admin) */}
+        <NotificationSettings />
       </ScrollView>
 
       {/* Modal création / édition */}
