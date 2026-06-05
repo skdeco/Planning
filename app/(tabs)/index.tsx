@@ -1044,6 +1044,69 @@ export default function DashboardScreen() {
             }
           })();
 
+          // 5. Chantiers en retard (actifs dont la date de fin est dépassée)
+          data.chantiers.forEach(c => {
+            if (c.statut !== 'actif' || !c.dateFin || c.dateFin >= today) return;
+            const jRetard = Math.floor((todayDate.getTime() - new Date(c.dateFin).getTime()) / 86400000);
+            alertes.push({
+              id: `chretard_${c.id}_${c.dateFin}`,
+              icon: '⏰',
+              text: `${c.nom} : fin dépassée de ${jRetard}j`,
+              color: '#E74C3C',
+              onPress: () => router.push('/(tabs)/chantiers' as any),
+            });
+          });
+
+          // 6. SAV ouverts non assignés
+          (data.ticketsSAV || []).forEach(t => {
+            if ((t.statut !== 'ouvert' && t.statut !== 'en_cours') || t.assigneA) return;
+            const ch = data.chantiers.find(c => c.id === t.chantierId);
+            alertes.push({
+              id: `savna_${t.id}`,
+              icon: '🔧',
+              text: `SAV non assigné : ${t.objet}${ch ? ` — ${ch.nom}` : ''}`,
+              color: '#E5A840',
+              onPress: () => router.push('/(tabs)/chantiers' as any),
+            });
+          });
+
+          // 7. Devis sous-traitant à signer (devis reçu mais pas encore signé)
+          (data.devis || []).forEach(d => {
+            if (!d.devisFichier || d.devisSigne) return;
+            const st = data.sousTraitants.find(s => s.id === d.soustraitantId);
+            const ch = data.chantiers.find(c => c.id === d.chantierId);
+            alertes.push({
+              id: `devsign_${d.id}`,
+              icon: '✍️',
+              text: `Devis à signer : ${st?.societe || st?.nom || 'ST'}${ch ? ` — ${ch.nom}` : ''} (${d.objet})`,
+              color: '#6B8EBF',
+              onPress: () => router.push('/(tabs)/financier-st' as any),
+            });
+          });
+
+          // 8. Documents société expirant (<=30j) ou expirés
+          (data.documentsSociete || []).forEach(doc => {
+            if (!doc.dateExpiration) return;
+            const jRestants = Math.floor((new Date(doc.dateExpiration).getTime() - todayDate.getTime()) / 86400000);
+            if (jRestants < 0) {
+              alertes.push({
+                id: `docsoc_exp_${doc.id}`,
+                icon: '🚨',
+                text: `Société : ${doc.nom} EXPIRÉ`,
+                color: '#E74C3C',
+                onPress: () => router.push('/(tabs)/societe' as any),
+              });
+            } else if (jRestants <= 30) {
+              alertes.push({
+                id: `docsoc_${doc.id}`,
+                icon: '📑',
+                text: `Société : ${doc.nom} expire dans ${jRestants}j`,
+                color: '#F59E0B',
+                onPress: () => router.push('/(tabs)/societe' as any),
+              });
+            }
+          });
+
           const visibleAlertes = alertes.filter(a => !dismissedAlertes.has(a.id));
           const hiddenCount = dismissedAlertes.size;
           // Si toutes les alertes sont masquées, on affiche quand même un petit bouton "restaurer"
@@ -1078,7 +1141,7 @@ export default function DashboardScreen() {
                 </View>
               </View>
               <View style={{ gap: 4, marginBottom: 8 }}>
-                {visibleAlertes.slice(0, 8).map((a) => (
+                {visibleAlertes.slice(0, 15).map((a) => (
                   <Pressable key={a.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: a.color + '12', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: a.color }}
                     onPress={a.onPress}>
                     <Text style={{ fontSize: 14 }}>{a.icon}</Text>
