@@ -8,6 +8,8 @@ import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+import { useConfirm } from '@/hooks/useConfirm';
+import { toast } from 'sonner-native';
 
 // Filtre mime utilisé par tous les InboxPickerButton de cet écran
 // (devis, factures, documents légaux ST). Aligné avec equipe.tsx.
@@ -45,6 +47,7 @@ function findDocForType(documents: any[], typeLabel: string): any | undefined {
 export default function FinancierSTScreen() {
   const { data, currentUser, isHydrated, updateDevis, updateAcompteST, updateSousTraitant } = useApp();
   const router = useRouter();
+  const { confirm, ConfirmModal } = useConfirm();
 
   useEffect(() => {
     if (isHydrated && !currentUser) router.replace('/login');
@@ -205,10 +208,12 @@ export default function FinancierSTScreen() {
     [monST, stId, updateSousTraitant],
   );
 
-  const handleDeleteDocLegal = (docId: string) => {
+  const handleDeleteDocLegal = async (docId: string) => {
     if (!monST) return;
+    if (!(await confirm('Supprimer ce document ?'))) return;
     const newDocs = (monST.documents || []).filter(d => d.id !== docId);
     updateSousTraitant({ ...monST, documents: newDocs });
+    toast.success('Document supprimé');
   };
 
   const chantiersIds = Object.keys(devisByChantier);
@@ -408,6 +413,7 @@ export default function FinancierSTScreen() {
           })
         )}
       </ScrollView>
+      <ConfirmModal />
     </ScreenContainer>
   );
 }

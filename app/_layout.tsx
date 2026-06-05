@@ -23,6 +23,7 @@ import { LanguageProvider } from "@/app/context/LanguageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { InboxBanner } from "@/components/InboxBanner";
 import { useChantiersCacheSync } from "@/hooks/useChantiersCacheSync";
+import { Toaster } from "sonner-native";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -108,6 +109,7 @@ export default function RootLayout() {
           {/* in order for ios apps tab switching to work properly, use presentation: "fullScreenModal" for login page, whenever you decide to use presentation: "modal*/}
           <View style={{ flex: 1 }}>
             <InboxBanner />
+            <Toaster position="top-center" richColors offset={60} />
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="login" />
