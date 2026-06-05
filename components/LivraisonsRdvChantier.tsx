@@ -12,6 +12,8 @@ import type { LivraisonChantier, RdvChantier, FrequenceRdv } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
+import { sendPushNotification } from '@/hooks/useNotifications';
+import { getStaffNotifTokens } from '@/lib/notif/getStaffNotifTokens';
 
 interface Props {
   chantierId: string;
@@ -193,12 +195,21 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
     setShowLivForm(false);
   };
   const toggleRecue = (l: LivraisonChantier) => {
+    const nowRecue = !l.recue;
     updateLivraison({
       ...l,
-      recue: !l.recue,
-      recueAt: !l.recue ? new Date().toISOString() : undefined,
+      recue: nowRecue,
+      recueAt: nowRecue ? new Date().toISOString() : undefined,
       updatedAt: new Date().toISOString(),
     });
+    // Notifier le staff (admin + RH) qu'une livraison vient d'être reçue.
+    if (nowRecue) {
+      const tokens = getStaffNotifTokens(data, 'livraisonRecue');
+      if (tokens.length > 0) {
+        const nomChantier = chantierCurrent?.nom || 'chantier';
+        sendPushNotification(tokens, '📦 Livraison reçue', `${l.titre} — ${nomChantier}`);
+      }
+    }
   };
   const confirmDeleteLiv = (l: LivraisonChantier) => {
     const msg = `Supprimer la livraison "${l.titre}" ?`;

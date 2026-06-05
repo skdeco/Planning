@@ -4,6 +4,8 @@ import { useApp } from '@/app/context/AppContext';
 import { useNotifications, sendPushNotification } from '@/hooks/useNotifications';
 import { todayYMD } from '@/lib/date/today';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
+import { getStaffNotifTokens, isNotifEnabled } from '@/lib/notif/getStaffNotifTokens';
+import { scheduleRdvReminders } from '@/lib/notif/scheduleRdvReminders';
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 
 /**
@@ -41,6 +43,8 @@ export function NotificationListener() {
   const isST = currentUser?.role === 'soustraitant';
   const myId = currentUser?.employeId || currentUser?.soustraitantId || '';
   const myRole = currentUser?.role;
+  // Clé de préférences de notifications de l'utilisateur courant ('admin' ou employeId)
+  const myNotifKey = isAdmin ? 'admin' : (currentUser?.employeId || '');
 
   // Chantiers de l'employé (pour les notifications notes/photos)
   const mesChantiersIds = useMemo(() => {
@@ -181,7 +185,7 @@ export function NotificationListener() {
     const nb = (data.arretsMaladie || []).length;
     if (prevArretsMaladieCount.current >= 0 && nb > prevArretsMaladieCount.current) {
       const dernier = (data.arretsMaladie || []).slice(-1)[0];
-      if (dernier) {
+      if (dernier && isNotifEnabled(data.notificationPrefs, 'admin', 'arretMaladie')) {
         const emp = data.employes.find(e => e.id === dernier.employeId);
         sendNotification('Arrêt maladie', `Déclaration de ${emp?.prenom || 'Employé'}`);
       }
@@ -241,12 +245,13 @@ export function NotificationListener() {
     const mesCongesTraites = [
       ...(data.demandesConge || []).filter(d => d.employeId === myId && d.statut !== 'en_attente'),
       ...(data.demandesAvance || []).filter(d => d.employeId === myId && d.statut !== 'en_attente'),
+      ...(data.arretsMaladie || []).filter(d => d.employeId === myId && d.statut !== 'en_attente'),
     ].length;
     if (prevCongesCount.current >= 0 && mesCongesTraites > prevCongesCount.current) {
       sendNotification('SK DECO — RH', 'Votre demande a été traitée');
     }
     prevCongesCount.current = mesCongesTraites;
-  }, [data.demandesConge, data.demandesAvance]);
+  }, [data.demandesConge, data.demandesAvance, data.arretsMaladie]);
 
   // ══════════════════════════════════════════════════════════════════════════
   // PUSH NOTIFICATIONS : envoi vers les AUTRES appareils
@@ -359,8 +364,8 @@ export function NotificationListener() {
     const nb = (data.arretsMaladie || []).filter(a => a.employeId === myId).length;
     if (prevPushMaladie.current >= 0 && nb > prevPushMaladie.current) {
       const emp = data.employes.find(e => e.id === myId);
-      const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
-      sendPushNotification(adminTokens, 'Arrêt maladie', `Déclaration de ${emp?.prenom || 'Employé'}`);
+      const tokens = getStaffNotifTokens(data, 'arretMaladie');
+      sendPushNotification(tokens, 'Arrêt maladie', `Déclaration de ${emp?.prenom || 'Employé'}`);
     }
     prevPushMaladie.current = nb;
   }, [data.arretsMaladie]);
@@ -391,12 +396,14 @@ export function NotificationListener() {
     const traitees = [
       ...(data.demandesConge || []).filter(d => d.statut !== 'en_attente'),
       ...(data.demandesAvance || []).filter(d => d.statut !== 'en_attente'),
+      ...(data.arretsMaladie || []).filter(d => d.statut !== 'en_attente'),
     ].length;
     if (prevPushAdminRH.current >= 0 && traitees > prevPushAdminRH.current) {
       // Trouver la dernière traitée
       const toutesTraitees = [
         ...(data.demandesConge || []).filter(d => d.statut !== 'en_attente'),
         ...(data.demandesAvance || []).filter(d => d.statut !== 'en_attente'),
+        ...(data.arretsMaladie || []).filter(d => d.statut !== 'en_attente'),
       ];
       const derniere = toutesTraitees.slice(-1)[0];
       if (derniere) {
@@ -408,7 +415,7 @@ export function NotificationListener() {
       }
     }
     prevPushAdminRH.current = traitees;
-  }, [data.demandesConge, data.demandesAvance]);
+  }, [data.demandesConge, data.demandesAvance, data.arretsMaladie]);
 
   // Admin ajoute note chantier → push vers employés et ST du chantier
   const prevPushAdminNotes = useRef(-1);
@@ -481,12 +488,34 @@ export function NotificationListener() {
 
     if (retardataires.length > 0) {
       const noms = retardataires.map(e => e.prenom).join(', ');
-      sendNotification(
-        'SK DECO — Absences',
-        `${retardataires.length} employé(s) non pointé(s) : ${noms}`
-      );
+      const body = `${retardataires.length} employé(s) non pointé(s) : ${noms}`;
+      // Notif locale pour l'admin (si activée)
+      if (isNotifEnabled(data.notificationPrefs, 'admin', 'pointageRetard')) {
+        sendNotification('SK DECO — Absences', body);
+      }
+      // Push vers les RH (hors admin), chacun selon sa préférence
+      const rhTokens = (data.employes || [])
+        .filter(e => e.isRH && e.role !== 'admin' && e.pushToken
+          && isNotifEnabled(data.notificationPrefs, e.id, 'pointageRetard'))
+        .map(e => e.pushToken!);
+      if (rhTokens.length > 0) {
+        sendPushNotification(rhTokens, 'SK DECO — Absences', body);
+      }
     }
   }, [data.pointages, data.employes, data.affectations, isAdmin]);
+
+  // ── Rappels RDV de chantier (J-1 et H-1) — notifications locales programmées ──
+  // Admin : tous les RDV. Employé : RDV qui lui sont assignés.
+  useEffect(() => {
+    if (isST || (!isAdmin && !myId)) return;
+    const allRdvs = data.rdvChantiers || [];
+    const mesRdvs = isAdmin ? allRdvs : allRdvs.filter(r => r.assigneA === myId);
+    const enabled = isNotifEnabled(data.notificationPrefs, myNotifKey, 'rdvRappel');
+    scheduleRdvReminders(mesRdvs, data.chantiers, enabled).catch(() => {});
+    // data.chantiers volontairement hors deps : seulement utilisé pour le libellé,
+    // évite de reprogrammer à chaque mutation de chantier.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.rdvChantiers, data.notificationPrefs, isAdmin, isST, myId, myNotifKey]);
 
   return null;
 }

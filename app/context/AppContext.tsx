@@ -77,6 +77,7 @@ import type {
   DocumentSociete,
   LivraisonChantier,
   RdvChantier,
+  NotificationPrefs,
   NoteChantier,
   PlanChantier,
   ActivityLog,
@@ -183,6 +184,8 @@ interface AppContextType {
   addRdvChantier: (r: RdvChantier) => void;
   updateRdvChantier: (r: RdvChantier) => void;
   deleteRdvChantier: (id: string) => void;
+  // Préférences de notifications (clé : 'admin' ou employeId)
+  updateNotificationPrefs: (userKey: string, partial: Partial<NotificationPrefs>) => void;
   // Notes chantier
   addNoteChantier: (n: NoteChantier) => void;
   updateNoteChantier: (n: NoteChantier) => void;
@@ -1417,6 +1420,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, rdvChantiers: (p.rdvChantiers || []).filter(x => x.id !== id) }));
   };
 
+  // ── Préférences de notifications ──
+  const updateNotificationPrefs = (userKey: string, partial: Partial<NotificationPrefs>) =>
+    setData(p => ({
+      ...p,
+      notificationPrefs: {
+        ...(p.notificationPrefs || {}),
+        [userKey]: { ...(p.notificationPrefs?.[userKey] || {}), ...partial },
+      },
+    }));
+
   // ── Messagerie privée ──
   const addMessagePrive = (m: MessagePrive) =>
     setData(p => ({ ...p, messagesPrive: [...(p.messagesPrive || []), m] }));
@@ -1831,6 +1844,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addDocumentSociete, updateDocumentSociete, deleteDocumentSociete,
       addLivraison, updateLivraison, deleteLivraison,
       addRdvChantier, updateRdvChantier, deleteRdvChantier,
+      updateNotificationPrefs,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,

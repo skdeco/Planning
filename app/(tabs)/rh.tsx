@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useRefresh } from '@/hooks/useRefresh';
 import { toast } from 'sonner-native';
+import { NotificationSettings } from '@/components/NotificationSettings';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
@@ -389,6 +390,9 @@ export default function RHScreen() {
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+
+        {/* Réglages notifications (RH non-admin ; l'admin les a dans Société) */}
+        {!isAdmin && currentEmploye?.isRH && <NotificationSettings />}
 
         {/* ── Congés ── */}
         {activeTab === 'conges' && (() => {

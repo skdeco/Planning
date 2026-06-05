@@ -1377,7 +1377,21 @@ export interface AppData {
   badgesEmployes?: BadgeEmploye[];
   // Architectes / Apporteurs d'affaires (commissions sur marchés)
   apporteurs?: Apporteur[];
+  // Préférences de notifications par utilisateur (clé : 'admin' ou employeId).
+  // Modèle opt-out : une valeur absente ou true = notification active.
+  notificationPrefs?: Record<string, NotificationPrefs>;
 }
+
+/** Préférences de notifications (opt-out : absent/true = actif) */
+export interface NotificationPrefs {
+  livraisonRecue?: boolean;   // une livraison passe à "reçue"
+  rdvRappel?: boolean;        // rappels RDV chantier J-1 et H-1
+  arretMaladie?: boolean;     // un employé déclare un arrêt maladie
+  pointageRetard?: boolean;   // un employé n'a pas pointé à l'heure
+}
+
+/** Clés des types de notifications (pour itérer dans l'UI de réglages) */
+export type NotificationPrefKey = keyof NotificationPrefs;
 
 export type UserRole = 'admin' | 'employe' | 'soustraitant' | 'apporteur';
 
