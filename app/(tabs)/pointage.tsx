@@ -2,8 +2,10 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View, Text, StyleSheet, Pressable, ScrollView, ActivityIndicator, Platform, Alert,
-  Modal, FlatList, Image as RNImage,
+  Modal, FlatList, Image as RNImage, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
+import { toast } from 'sonner-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -303,6 +305,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
 export default function PointageScreen() {
   const { data, currentUser, isHydrated, addPointage, addPhotosChantier } = useApp();
   const { t } = useLanguage();
+  const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
 
@@ -314,7 +317,6 @@ export default function PointageScreen() {
 
   const [now, setNow] = useState(new Date());
   const [loadingChantierId, setLoadingChantierId] = useState<string | null>(null);
-  const [pointageFeedback, setPointageFeedback] = useState<string | null>(null);
 
   // ── État modal photos fin de journée ──
   const [showPhotosModal, setShowPhotosModal] = useState(false);
@@ -447,8 +449,7 @@ export default function PointageScreen() {
 
       // Feedback visuel
       const label = type === 'debut' ? 'Arrivée' : 'Départ';
-      setPointageFeedback(`✓ ${label} enregistré${type === 'fin' ? 'e' : ''} à ${toHM(ts)}`);
-      setTimeout(() => setPointageFeedback(null), 4000);
+      toast.success(`${label} enregistré${type === 'fin' ? 'e' : ''} à ${toHM(ts)}`);
 
       // Ouvrir modal photos après fin de journée
       if (type === 'fin') {
@@ -595,14 +596,7 @@ export default function PointageScreen() {
         <Text style={styles.headerSub}>{t.pointage.title}</Text>
       </View>
 
-      {/* Feedback pointage */}
-      {pointageFeedback && (
-        <View style={{ backgroundColor: '#D4EDDA', paddingVertical: 10, paddingHorizontal: 16, borderBottomWidth: 1, borderBottomColor: '#27AE60' }}>
-          <Text style={{ color: '#155724', fontWeight: '700', fontSize: 14, textAlign: 'center' }}>{pointageFeedback}</Text>
-        </View>
-      )}
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
 
         {/* Carte identité du jour */}
         <View style={styles.identiteCard}>

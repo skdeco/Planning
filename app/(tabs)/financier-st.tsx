@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, Platform,
+  View, Text, StyleSheet, ScrollView, Pressable, Platform, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -46,6 +47,7 @@ function findDocForType(documents: any[], typeLabel: string): any | undefined {
 
 export default function FinancierSTScreen() {
   const { data, currentUser, isHydrated, updateDevis, updateAcompteST, updateSousTraitant } = useApp();
+  const { refreshing, onRefresh } = useRefresh();
   const router = useRouter();
   const { confirm, ConfirmModal } = useConfirm();
 
@@ -224,7 +226,7 @@ export default function FinancierSTScreen() {
         <Text style={styles.headerTitle}>Mes finances</Text>
       </View>
 
-      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false}>
+      <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {/* ─── Mes documents légaux ─── */}
         {monST && (() => {
           const nbFournis = DOCUMENTS_LEGAUX_TYPES.filter(t => findDocForType(monST.documents || [], t.label)).length;

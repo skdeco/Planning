@@ -1,8 +1,10 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
-  TextInput, Platform, Alert,
+  TextInput, Platform, Alert, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
+import { toast } from 'sonner-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
@@ -54,6 +56,7 @@ export default function RHScreen() {
     addAcompte,
   } = useApp();
   const { t } = useLanguage();
+  const { refreshing, onRefresh } = useRefresh();
 
   const router = useRouter();
 
@@ -193,10 +196,11 @@ export default function RHScreen() {
     setShowCongeModal(false);
     setEditConge(null);
     setCongeForm({ dateDebut: '', dateFin: '', motif: '', employeId: '' });
+    toast.success(editConge ? 'Demande modifiée' : 'Demande de congé envoyée');
   };
 
   const handleDeleteConge = (id: string) => {
-    const doDelete = () => deleteDemandeConge(id);
+    const doDelete = () => { deleteDemandeConge(id); toast.success('Demande supprimée'); };
     if (Platform.OS === 'web') { if ((typeof window !== 'undefined' && window.confirm ? window.confirm('Supprimer cette demande ?') : true)) doDelete(); }
     else Alert.alert('Supprimer ?', '', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
   };
@@ -215,6 +219,7 @@ export default function RHScreen() {
     setShowArretModal(false);
     setEditArret(null);
     setArretForm({ dateDebut: '', dateFin: '', commentaire: '', justificatif: '', justificatifNom: '', employeId: '' });
+    toast.success(editArret ? 'Arrêt modifié' : 'Arrêt maladie enregistré');
   };
 
   // ─── Actions avance ──────────────────────────────────────────────────────
@@ -230,6 +235,7 @@ export default function RHScreen() {
     setShowAvanceModal(false);
     setEditAvance(null);
     setAvanceForm({ montant: '', motif: '', employeId: '' });
+    toast.success(editAvance ? 'Demande modifiée' : "Demande d'avance envoyée");
   };
 
   // ─── Réponse RH ──────────────────────────────────────────────────────────
@@ -261,6 +267,7 @@ export default function RHScreen() {
     }
     setShowReponseModal(false);
     setReponseTarget(null);
+    toast.success(reponseForm.statut === 'approuve' ? 'Demande approuvée' : 'Demande refusée');
   };
 
   // ─── Upload fiche de paie avec sélecteur mois/année ──────────────────────────────────────────────────────────
@@ -381,7 +388,7 @@ export default function RHScreen() {
         ))}
       </View>
 
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
 
         {/* ── Congés ── */}
         {activeTab === 'conges' && (() => {

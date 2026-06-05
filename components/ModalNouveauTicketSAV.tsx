@@ -9,8 +9,9 @@
  */
 import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, Pressable, TextInput, ScrollView, Image, Alert, Platform,
+  View, Text, StyleSheet, Pressable, TextInput, ScrollView, Image,
 } from 'react-native';
+import { toast } from 'sonner-native';
 import { useApp } from '@/app/context/AppContext';
 import type { PrioriteSAV, TicketSAV } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -151,10 +152,7 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
 
       reset();
       onClose();
-      // Confirmation
-      if (Platform.OS !== 'web') {
-        setTimeout(() => Alert.alert('Ticket envoyé', 'Votre demande SAV a bien été transmise.'), 200);
-      }
+      toast.success('Ticket SAV envoyé');
     } finally {
       setSubmitting(false);
     }

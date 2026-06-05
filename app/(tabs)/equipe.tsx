@@ -2,8 +2,10 @@ import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal, Image,
-  TextInput, ScrollView, Alert, Platform, Switch,
+  TextInput, ScrollView, Alert, Platform, Switch, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
+import { toast } from 'sonner-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
@@ -138,6 +140,7 @@ const DEFAULT_FORM: EmployeForm = {
 export default function EquipeScreen() {
   const { data, currentUser, isHydrated, addEmploye, updateEmploye, deleteEmploye, addSousTraitant, updateSousTraitant, deleteSousTraitant, addDocumentRH, deleteDocumentRH, addMetierPerso, deleteMetierPerso, addBadgeEmploye, addApporteur, updateApporteur, deleteApporteur, addDevis, updateDevis, deleteDevis, addAcompteST, updateAcompteST, deleteAcompteST } = useApp();
   const { t } = useLanguage();
+  const { refreshing, onRefresh } = useRefresh();
   const router = useRouter();
   const { confirm: confirmDelete, ConfirmModal } = useConfirm();
 
@@ -368,15 +371,19 @@ export default function EquipeScreen() {
       addEmploye(employe);
     }
     setShowForm(false);
+    toast.success(editId ? 'Employé modifié' : 'Employé ajouté');
   };
 
   const handleDelete = (id: string, nom: string) => {
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.common.deleteConfirm} "${nom}" ?`) : true)) deleteEmploye(id);
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.common.deleteConfirm} "${nom}" ?`) : true)) {
+        deleteEmploye(id);
+        toast.success('Employé supprimé');
+      }
     } else {
       Alert.alert(t.equipe.deleteEmployee, `${t.common.deleteConfirm} "${nom}" ?`, [
         { text: t.common.cancel, style: 'cancel' },
-        { text: t.common.delete, style: 'destructive', onPress: () => deleteEmploye(id) },
+        { text: t.common.delete, style: 'destructive', onPress: () => { deleteEmploye(id); toast.success('Employé supprimé'); } },
       ]);
     }
   };
@@ -526,15 +533,19 @@ export default function EquipeScreen() {
     if (editSTId) updateSousTraitant(st);
     else addSousTraitant(st);
     setShowSTForm(false);
+    toast.success(editSTId ? 'Sous-traitant modifié' : 'Sous-traitant ajouté');
   };
 
   const handleDeleteST = (id: string, nom: string) => {
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.common.deleteConfirm} "${nom}" ?`) : true)) deleteSousTraitant(id);
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.common.deleteConfirm} "${nom}" ?`) : true)) {
+        deleteSousTraitant(id);
+        toast.success('Sous-traitant supprimé');
+      }
     } else {
       Alert.alert(t.common.delete, `${t.common.deleteConfirm} "${nom}" ?`, [
         { text: t.common.cancel, style: 'cancel' },
-        { text: t.common.delete, style: 'destructive', onPress: () => deleteSousTraitant(id) },
+        { text: t.common.delete, style: 'destructive', onPress: () => { deleteSousTraitant(id); toast.success('Sous-traitant supprimé'); } },
       ]);
     }
   };
@@ -922,6 +933,7 @@ export default function EquipeScreen() {
       });
     }
     setShowApporteurForm(false);
+    toast.success(editApporteurId ? 'Apporteur modifié' : 'Apporteur ajouté');
     // Retour automatique au formulaire de marché si on vient de là
     if (isCreation && params.returnToMarche === '1') {
       setTimeout(() => {
@@ -947,7 +959,7 @@ export default function EquipeScreen() {
   };
 
   const handleDeleteApporteur = async (a: Apporteur) => {
-    if (await confirmDelete(`Supprimer ${a.prenom} ${a.nom} ?`)) deleteApporteur(a.id);
+    if (await confirmDelete(`Supprimer ${a.prenom} ${a.nom} ?`)) { deleteApporteur(a.id); toast.success('Apporteur supprimé'); }
   };
 
   // Calcul du montant d'une commission (résout % -> €)
@@ -1201,6 +1213,8 @@ export default function EquipeScreen() {
             keyExtractor={item => item.id}
             renderItem={renderEmploye}
             contentContainerStyle={styles.list}
+            refreshing={refreshing}
+            onRefresh={onRefresh}
             ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>{t.equipe.noEmployee}</Text></View>}
           />
         </>
@@ -1215,12 +1229,14 @@ export default function EquipeScreen() {
           keyExtractor={item => item.id}
           renderItem={renderST}
           contentContainerStyle={styles.list}
+          refreshing={refreshing}
+          onRefresh={onRefresh}
           ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>{t.equipe.noSubcontractor}</Text></View>}
         />
       )}
 
       {activeTab === 'apporteurs' && (
-        <ScrollView contentContainerStyle={styles.list}>
+        <ScrollView contentContainerStyle={styles.list} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           {/* Récap commissions en attente */}
           {marchesWithCommission.length > 0 && (
             <View style={styles.commissionRecap}>

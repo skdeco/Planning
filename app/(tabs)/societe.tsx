@@ -1,7 +1,8 @@
 import React, { useMemo, useState } from 'react';
 import {
-  View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal, Alert, Platform, Image, Linking,
+  View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal, Alert, Platform, Image, Linking, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
@@ -21,6 +22,7 @@ function formatFR(iso?: string): string {
 
 export default function SocieteScreen() {
   const { data, currentUser, addDocumentSociete, updateDocumentSociete, deleteDocumentSociete } = useApp();
+  const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
   const [selectedCat, setSelectedCat] = useState<DocSocieteCategorie | 'toutes'>('toutes');
   const [showForm, setShowForm] = useState(false);
@@ -193,7 +195,7 @@ export default function SocieteScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Text style={styles.title}>📁 Documents société</Text>
         <Text style={styles.subtitle}>Juridique, fiscal, social, assurances, certifications…</Text>
 

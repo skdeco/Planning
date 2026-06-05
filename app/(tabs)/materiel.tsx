@@ -1,8 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, TextInput, Modal,
-  Platform, LayoutAnimation, UIManager, ActivityIndicator, Linking, Alert,
+  Platform, LayoutAnimation, UIManager, ActivityIndicator, Linking, Alert, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
+import { toast } from 'sonner-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useConfirm } from '@/hooks/useConfirm';
 
@@ -115,6 +117,7 @@ export default function MaterielScreen() {
     addFournisseur, deleteFournisseur,
   } = useApp();
   const { t } = useLanguage();
+  const { refreshing, onRefresh } = useRefresh();
 
   useEffect(() => {
     if (isHydrated && !currentUser) router.replace('/login');
@@ -160,7 +163,6 @@ export default function MaterielScreen() {
     isAcheteur && !isEmploye ? 'acheteur' : 'mes_listes'
   );
   const [searchQuery, setSearchQuery] = useState('');
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [showCatalogue, setShowCatalogue] = useState(false);
 
   // ── État d'ouverture des sections archivées (par listeId) ──
@@ -290,8 +292,7 @@ export default function MaterielScreen() {
       : 'Admin';
     sendNotificationEmail(acheteurs, employeNom, addModal.chantierNom, [item.texte]);
 
-    setToastMsg(`✓ "${item.texte}" ajouté`);
-    setTimeout(() => setToastMsg(null), 3000);
+    toast.success(`"${item.texte}" ajouté`);
     setNewArticle('');
     setNewQuantite('');
     setNewCommentaire('');
@@ -309,8 +310,7 @@ export default function MaterielScreen() {
     );
     upsertListeMateriau({ ...liste, items: updatedItems, updatedAt: new Date().toISOString() });
     setFournisseurPickerModal(null);
-    setToastMsg(`Fournisseur mis a jour`);
-    setTimeout(() => setToastMsg(null), 3000);
+    toast.success('Fournisseur mis à jour');
   };
 
   // ── Modal achat (prix réel) ──
@@ -453,8 +453,7 @@ export default function MaterielScreen() {
 
     setPartielModal(null);
     setPartielQty('');
-    setToastMsg(`✓ ${qtyAchete}${uniteStr} acheté, ${reste}${uniteStr} restant`);
-    setTimeout(() => setToastMsg(null), 3000);
+    toast.success(`${qtyAchete}${uniteStr} acheté, ${reste}${uniteStr} restant`);
   };
 
   // ── Supprimer un article (admin, acheteur, ou créateur de la liste) ──
@@ -465,6 +464,7 @@ export default function MaterielScreen() {
     if (!canDelete) return;
     if (await confirm(t.materiel.deleteItem)) {
       deleteMateriauItem(listeId, itemId);
+      toast.success('Article supprimé');
     }
   };
 
@@ -472,6 +472,7 @@ export default function MaterielScreen() {
   const handleDeleteListe = async (listeId: string) => {
     if (await confirm(t.materiel.deleteList)) {
       deleteListeMateriau(listeId);
+      toast.success('Liste supprimée');
     }
   };
 
@@ -649,7 +650,7 @@ export default function MaterielScreen() {
 
   // ── Vue employé : tous les articles du chantier (peu importe qui les a ajoutés) ──
   const renderMesListes = () => (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       {chantiersVisibles.length === 0 && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>{t.materiel.noActiveProject}</Text>
@@ -734,7 +735,7 @@ export default function MaterielScreen() {
 
   // ── Vue acheteur : toutes les listes fusionnées par chantier ──
   const renderVueAcheteur = () => (
-    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
       {listesParChantier.length === 0 && (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>{t.materiel.noLists}</Text>
@@ -891,11 +892,6 @@ export default function MaterielScreen() {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>🛒 {t.materiel.title}</Text>
-        {toastMsg && (
-          <View style={{ backgroundColor: '#D4EDDA', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}>
-            <Text style={{ color: '#155724', fontSize: 12, fontWeight: '600' }}>{toastMsg}</Text>
-          </View>
-        )}
         {nbNonAchetes > 0 && isAcheteur && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{nbNonAchetes}</Text>

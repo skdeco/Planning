@@ -2,8 +2,9 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Image,
-  TextInput, Modal, Platform, Alert, Linking,
+  TextInput, Modal, Platform, Alert, Linking, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -118,6 +119,7 @@ function calcJoursOuvrablesMois(year: number, month: number): number {
 export default function ReportingScreen() {
   const { data, currentUser, isHydrated, addAcompte, deleteAcompte, addPointage, updatePointage, deletePointage, togglePresenceForcee } = useApp();
   const { t } = useLanguage();
+  const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
 
@@ -592,7 +594,7 @@ export default function ReportingScreen() {
 
       {/* ── VUE JOURNALIÈRE ── */}
       {vue === 'journalier' && (
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           {/* Navigation jour */}
           <View style={styles.navRow}>
             <Pressable style={styles.navBtn} onPress={prevDay}>
@@ -768,7 +770,7 @@ export default function ReportingScreen() {
 
       {/* ── VUE PAR EMPLOYÉ ── */}
       {vue === 'employe' && (
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           {/* Navigation mois */}
           <View style={styles.navRow}>
             <Pressable style={styles.navBtn} onPress={prevMonth}>
@@ -1113,7 +1115,7 @@ export default function ReportingScreen() {
 
       {/* ── VUE SAISIE MANUELLE (admin/RH uniquement) ── */}
       {vue === 'saisie' && isAdmin && (
-        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           <View style={styles.navRow}>
             <Pressable style={styles.navBtn} onPress={prevMonth}>
               <Text style={styles.navArrow}>‹</Text>

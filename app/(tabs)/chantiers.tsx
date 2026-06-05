@@ -2,8 +2,10 @@ import React, { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal,
-  TextInput, ScrollView, Alert, Platform, Image, Linking,
+  TextInput, ScrollView, Alert, Platform, Image, Linking, RefreshControl,
 } from 'react-native';
+import { useRefresh } from '@/hooks/useRefresh';
+import { toast } from 'sonner-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import * as XLSX from 'xlsx';
 import JSZip from 'jszip';
@@ -213,6 +215,7 @@ const DEFAULT_FORM: ChantierForm = {
 export default function ChantiersScreen() {
   const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, updateDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
+  const { refreshing, onRefresh } = useRefresh();
   const router = useRouter();
   const params = useLocalSearchParams<{ action?: string; chantierId?: string; apporteurId?: string; apporteurType?: string }>();
 
@@ -630,6 +633,7 @@ export default function ChantiersScreen() {
     setNewNoteTexte('');
     setNoteDestinataires('tous');
     setNotePhotos([]);
+    toast.success('Note ajoutée');
   };
 
   const handleArchiveNote = (noteId: string) => {
@@ -814,6 +818,7 @@ export default function ChantiersScreen() {
       });
     }
     setShowForm(false);
+    toast.success(editId ? 'Chantier modifié' : 'Chantier créé');
   };
 
   const handleSaveFiche = () => {
@@ -823,6 +828,7 @@ export default function ChantiersScreen() {
       updatedAt: new Date().toISOString(),
     });
     setShowFiche(false);
+    toast.success('Fiche enregistrée');
   };
 
   const triggerDownload = (blob: Blob, filename: string) => {
@@ -1088,11 +1094,14 @@ export default function ChantiersScreen() {
 
   const handleDelete = (id: string, nom: string) => {
     if (Platform.OS === 'web') {
-      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.chantiers.deleteConfirm} "${nom}" ?`) : true)) deleteChantier(id);
+      if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`${t.chantiers.deleteConfirm} "${nom}" ?`) : true)) {
+        deleteChantier(id);
+        toast.success('Chantier supprimé');
+      }
     } else {
       Alert.alert(t.chantiers.delete, `${t.chantiers.deleteConfirm} "${nom}" ?`, [
         { text: t.common.cancel, style: 'cancel' },
-        { text: t.common.delete, style: 'destructive', onPress: () => deleteChantier(id) },
+        { text: t.common.delete, style: 'destructive', onPress: () => { deleteChantier(id); toast.success('Chantier supprimé'); } },
       ]);
     }
   };
@@ -1368,7 +1377,7 @@ export default function ChantiersScreen() {
 
       {/* ── Vue SAV globale ── */}
       {vueChantiersTab === 'sav' && (data.ticketsSAV || []).length > 0 && (
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 16, paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
           {(() => {
             const allTickets = (data.ticketsSAV || []).sort((a, b) => {
               const statutOrdre: Record<string, number> = { ouvert: 0, en_cours: 1, resolu: 2, clos: 3 };
@@ -1536,6 +1545,8 @@ export default function ChantiersScreen() {
         keyExtractor={item => item.id}
         renderItem={renderChantier}
         contentContainerStyle={styles.list}
+        refreshing={refreshing}
+        onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.emptyState}>
             <Text style={styles.emptyText}>{t.chantiers.noChantiers}</Text>
@@ -2327,6 +2338,7 @@ export default function ChantiersScreen() {
 
                             setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
                             setAchatFichierUri(null);
+                            toast.success(editAchatId ? 'Dépense mise à jour' : 'Dépense ajoutée');
                             setEditAchatId(null);
                             setShowDetailsAchat(false);
                             setShowAchatFormFiche(false);
@@ -3000,6 +3012,7 @@ export default function ChantiersScreen() {
                             setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
                             setAchatFichierUri(null);
                             setAchatFichierLocalUri(null);
+                            toast.success(editAchatId ? 'Dépense mise à jour' : 'Dépense ajoutée');
                             setEditAchatId(null);
                             setShowDetailsAchat(false);
                             setShowAchatForm(false);
