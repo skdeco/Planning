@@ -51,7 +51,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "13",
+    buildNumber: "14",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSPhotoLibraryUsageDescription: "SK DECO utilise votre bibliothèque photo pour importer des photos de chantier, documents et profils employés.",
