@@ -121,10 +121,11 @@ export const font = {
   // Tailles existantes — INCHANGÉES
   xs: 10, sm: 12, md: 14, lg: 16, xl: 20, xxl: 26, xxxl: 32,
 
-  // Tailles intermédiaires manquantes (additif uniquement)
-  tiny:    9,    // micro-labels (numéros, dates dans grilles)
-  compact: 11,   // badges, onglets, labels compacts
-  body:    13,   // corps de texte médium
+  // Tailles intermédiaires (additif uniquement)
+  // Lot 9 — lisibilité : +1px sur les plus petites tailles (les plus dures à lire)
+  tiny:    10,   // micro-labels (numéros, dates dans grilles)
+  compact: 12,   // badges, onglets, labels compacts
+  body:    14,   // corps de texte médium
   subhead: 15,   // sous-titres de section
   title:   18,   // titres de modales
 

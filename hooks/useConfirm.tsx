@@ -1,5 +1,6 @@
 import { useRef, useState, useCallback } from 'react';
 import { Modal, View, Text, Pressable, StyleSheet } from 'react-native';
+import { hapticWarning, hapticMedium, hapticLight } from '@/lib/haptics';
 
 /**
  * Hook useConfirm — remplace window.confirm sur toutes plateformes (iOS, Android, Web).
@@ -15,6 +16,7 @@ export function useConfirm() {
   const resolveRef = useRef<((val: boolean) => void) | null>(null);
 
   const confirm = useCallback((msg: string): Promise<boolean> => {
+    hapticWarning(); // signale qu'une confirmation est demandée
     return new Promise(resolve => {
       setMessage(msg);
       setVisible(true);
@@ -23,11 +25,13 @@ export function useConfirm() {
   }, []);
 
   const handleOk = useCallback(() => {
+    hapticMedium(); // action confirmée
     setVisible(false);
     resolveRef.current?.(true);
   }, []);
 
   const handleCancel = useCallback(() => {
+    hapticLight();
     setVisible(false);
     resolveRef.current?.(false);
   }, []);

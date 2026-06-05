@@ -15,6 +15,7 @@ import { DatabaseBackup, Upload, Download } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
 import { useConfirm } from '@/hooks/useConfirm';
 import { exportDataBackup, parseBackup, summarizeBackup } from '@/lib/backup/dataBackup';
+import { hapticSuccess, hapticError } from '@/lib/haptics';
 import { DS, radius, space, font } from '@/constants/design';
 
 export function DataBackupCard() {
@@ -26,8 +27,8 @@ export function DataBackupCard() {
     setBusy('export');
     try {
       const res = await exportDataBackup(data);
-      if (res.ok) toast.success('Sauvegarde exportée');
-      else toast.error(res.error || "Échec de l'export");
+      if (res.ok) { hapticSuccess(); toast.success('Sauvegarde exportée'); }
+      else { hapticError(); toast.error(res.error || "Échec de l'export"); }
     } finally {
       setBusy(null);
     }
@@ -63,8 +64,10 @@ export function DataBackupCard() {
 
       setBusy('import');
       importAllData(parsed);
+      hapticSuccess();
       toast.success('Sauvegarde restaurée');
     } catch {
+      hapticError();
       toast.error('Échec de la restauration');
     } finally {
       setBusy(null);
