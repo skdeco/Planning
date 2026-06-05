@@ -191,24 +191,38 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ═══ ONGLET 5 : Reporting (admin) ═══ */}
+      {/* ═══ ONGLET 5 : Gestion (admin) — hub Reporting / RH / Société ═══ */}
+      <Tabs.Screen
+        name="gestion"
+        options={{
+          title: 'Gestion',
+          href: isAdmin ? undefined : null,
+          tabBarBadge: isAdmin && nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
+          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={26} name="square.grid.2x2.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* Reporting — accessible via le hub Gestion (caché du bar) */}
       <Tabs.Screen
         name="reporting"
         options={{
           title: t.nav.reporting,
-          href: isAdmin ? undefined : null,
+          href: null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="chart.bar.fill" color={color} />
           ),
         }}
       />
 
-      {/* ═══ ONGLET 6 : RH (tous sauf ST & apporteur) ═══ */}
+      {/* ═══ RH : direct pour les employés non-admin ; via Gestion pour l'admin ═══ */}
       <Tabs.Screen
         name="rh"
         options={{
           title: t.nav.rh,
-          href: hasRHAccess ? undefined : null,
+          href: (hasRHAccess && !isAdmin) ? undefined : null,
           tabBarBadge: nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
           tabBarIcon: ({ color }) => (
@@ -252,15 +266,12 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Société : admin uniquement */}
+      {/* Société : accessible via le hub Gestion (caché du bar) */}
       <Tabs.Screen
         name="societe"
         options={{
           title: 'Société',
-          href: isAdmin ? undefined : null,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="doc.text.fill" color={color} />
-          ),
+          href: null,
         }}
       />
     </Tabs>

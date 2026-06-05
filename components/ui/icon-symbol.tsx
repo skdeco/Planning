@@ -51,6 +51,8 @@ const MAPPING = {
   // Messagerie
   "message.fill": "chat",
   "bubble.left.fill": "chat-bubble",
+  // Gestion (hub Reporting / RH / Société)
+  "square.grid.2x2.fill": "dashboard",
 } as IconMapping;
 
 /**
