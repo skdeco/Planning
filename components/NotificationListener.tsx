@@ -6,6 +6,7 @@ import { todayYMD } from '@/lib/date/today';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { getStaffNotifTokens, isNotifEnabled } from '@/lib/notif/getStaffNotifTokens';
 import { scheduleRdvReminders } from '@/lib/notif/scheduleRdvReminders';
+import { scheduleStDocReminders } from '@/lib/notif/scheduleStDocReminders';
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 
 /**
@@ -516,6 +517,13 @@ export function NotificationListener() {
     // évite de reprogrammer à chaque mutation de chantier.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.rdvChantiers, data.notificationPrefs, isAdmin, isST, myId, myNotifKey]);
+
+  // ── Rappels semestriels de vérification des documents sous-traitants ──
+  // Admin uniquement. Un rappel par ST, décalé d'1 semaine, tous les 6 mois.
+  useEffect(() => {
+    if (!isAdmin) return;
+    scheduleStDocReminders(data.sousTraitants || [], true).catch(() => {});
+  }, [data.sousTraitants, isAdmin]);
 
   return null;
 }
