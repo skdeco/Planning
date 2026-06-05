@@ -5,6 +5,7 @@ import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { ImportExcel } from '@/components/ImportExcel';
+import { GlobalSearch } from '@/components/GlobalSearch';
 import { FadeInView, ScaleButton, StaggeredList, ProgressBar } from '@/components/ui/animated';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
@@ -250,30 +251,8 @@ export default function DashboardScreen() {
   const [showImport, setShowImport] = useState(false);
   // Alertes masquées (clé = texte de l'alerte)
   const [dismissedAlertes, setDismissedAlertes] = useState<Set<string>>(new Set());
-  // Recherche globale
-  const [searchGlobal, setSearchGlobal] = useState('');
-  const searchResults = useMemo(() => {
-    if (!searchGlobal.trim() || searchGlobal.length < 2) return null;
-    const q = searchGlobal.toLowerCase().trim();
-    const results: { type: string; icon: string; label: string; sub: string; route?: string }[] = [];
-    data.chantiers.forEach(c => {
-      if (c.nom.toLowerCase().includes(q) || (c.adresse || '').toLowerCase().includes(q))
-        results.push({ type: 'chantier', icon: '🏗', label: c.nom, sub: c.adresse || c.statut, route: '/(tabs)/chantiers' });
-    });
-    data.employes.forEach(e => {
-      if (`${e.prenom} ${e.nom}`.toLowerCase().includes(q) || e.identifiant.toLowerCase().includes(q))
-        results.push({ type: 'employe', icon: '👷', label: `${e.prenom} ${e.nom}`, sub: e.metier, route: '/(tabs)/equipe' });
-    });
-    data.sousTraitants.forEach(s => {
-      if (`${s.prenom} ${s.nom} ${s.societe}`.toLowerCase().includes(q))
-        results.push({ type: 'st', icon: '🔧', label: s.societe || `${s.prenom} ${s.nom}`, sub: 'Sous-traitant' });
-    });
-    (data.catalogueArticles || []).forEach(a => {
-      if (a.nom.toLowerCase().includes(q) || (a.reference || '').toLowerCase().includes(q))
-        results.push({ type: 'article', icon: '📦', label: a.nom, sub: a.categorie + (a.fournisseur ? ` · ${a.fournisseur}` : ''), route: '/(tabs)/materiel' });
-    });
-    return results.slice(0, 10);
-  }, [searchGlobal, data]);
+  // Recherche globale (modal dédié GlobalSearch)
+  const [searchOpen, setSearchOpen] = useState(false);
   // Pense-bête
   const [penseBeteText, setPenseBeteText] = useState('');
   const [penseBeteChantierId, setPenseBeteChantierId] = useState<string | null>(null);
@@ -908,42 +887,13 @@ export default function DashboardScreen() {
           </FadeInView>
         )}
 
-        {/* Recherche globale */}
+        {/* Recherche globale — ouvre le modal dédié (filtres par type) */}
         <FadeInView delay={100}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 14, marginBottom: 12, shadowColor: '#2C2C2C', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
+        <Pressable onPress={() => setSearchOpen(true)} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 14, paddingVertical: 13, marginBottom: 12, shadowColor: '#2C2C2C', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
           <Text style={{ fontSize: 14, color: '#B0A89E', marginRight: 8 }}>🔍</Text>
-          <TextInput
-            style={{ flex: 1, paddingVertical: 12, fontSize: 14, color: '#1A1A1A' }}
-            placeholder="Rechercher chantier, employé, article..."
-            placeholderTextColor="#B0A89E"
-            value={searchGlobal}
-            onChangeText={setSearchGlobal}
-          />
-          {searchGlobal.length > 0 && (
-            <Pressable onPress={() => setSearchGlobal('')}><Text style={{ fontSize: 14, color: '#B0A89E' }}>✕</Text></Pressable>
-          )}
-        </View>
+          <Text style={{ flex: 1, fontSize: 14, color: '#B0A89E' }}>Rechercher partout (chantiers, SAV, devis…)</Text>
+        </Pressable>
         </FadeInView>
-        {searchResults && searchResults.length > 0 && (
-          <View style={{ backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 12, overflow: 'hidden' }}>
-            {searchResults.map((r, i) => (
-              <Pressable key={`${r.type}_${i}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: i < searchResults.length - 1 ? 0.5 : 0, borderBottomColor: '#F5EDE3' }}
-                onPress={() => { if (r.route) router.push(r.route as any); setSearchGlobal(''); }}>
-                <Text style={{ fontSize: 18 }}>{r.icon}</Text>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C' }}>{r.label}</Text>
-                  <Text style={{ fontSize: 10, color: '#687076' }}>{r.sub}</Text>
-                </View>
-                <Text style={{ fontSize: 12, color: '#B0BEC5' }}>→</Text>
-              </Pressable>
-            ))}
-          </View>
-        )}
-        {searchResults && searchResults.length === 0 && searchGlobal.length >= 2 && (
-          <View style={{ backgroundColor: '#F5EDE3', borderRadius: 10, padding: 16, marginBottom: 12, alignItems: 'center' }}>
-            <Text style={{ fontSize: 13, color: '#687076' }}>Aucun résultat pour "{searchGlobal}"</Text>
-          </View>
-        )}
 
         {/* Alertes système — rappels automatiques */}
         {(() => {
@@ -1517,6 +1467,7 @@ export default function DashboardScreen() {
         </Modal>
       </ScrollView>
       <ImportExcel visible={showImport} onClose={() => setShowImport(false)} />
+      <GlobalSearch visible={searchOpen} onClose={() => setSearchOpen(false)} />
       <Onboarding
         visible={showOnboarding}
         role={(currentUser?.role === 'apporteur' ? 'employe' : currentUser?.role) || 'employe'}
