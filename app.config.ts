@@ -51,7 +51,7 @@ const config: ExpoConfig = {
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
-    buildNumber: "20",
+    buildNumber: "21",
     infoPlist: {
       ITSAppUsesNonExemptEncryption: false,
       NSPhotoLibraryUsageDescription: "SK DECO utilise votre bibliothèque photo pour importer des photos de chantier, documents et profils employés.",
@@ -100,7 +100,9 @@ const config: ExpoConfig = {
   },
   web: {
     bundler: "metro",
-    output: "static",
+    // Prod = "static" (SSG). En dev local, EXPO_WEB_OUTPUT=single force un rendu
+    // client-only (SPA) pour contourner le crash SSR tslib de `expo start --web`.
+    output: process.env.EXPO_WEB_OUTPUT === "single" ? "single" : "static",
     favicon: "./assets/images/favicon.png",
   },
   plugins: [
@@ -116,7 +118,7 @@ const config: ExpoConfig = {
     [
       "expo-video",
       {
-        supportsBackgroundPlayback: true,
+        supportsBackgroundPlayback: false,
         supportsPictureInPicture: true,
       },
     ],

@@ -904,7 +904,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addChantier = (c: Chantier) =>
     setData(p => ({ ...p, chantiers: [...p.chantiers, c] }));
   const updateChantier = (c: Chantier) =>
-    setData(p => ({ ...p, chantiers: p.chantiers.map(x => x.id === c.id ? c : x) }));
+    setData(p => ({ ...p, chantiers: p.chantiers.map(x => x.id === c.id ? { ...x, ...c } : x) }));
   const deleteChantier = (id: string) => {
     deletedChantierIdsRef.current.add(id);
     persistDeletedIds(DELETED_CHANTIERS_KEY, deletedChantierIdsRef.current);
@@ -933,7 +933,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addEmploye = (e: Employe) =>
     setData(p => ({ ...p, employes: [...p.employes, e] }));
   const updateEmploye = (e: Employe) =>
-    setData(p => ({ ...p, employes: p.employes.map(x => x.id === e.id ? e : x) }));
+    setData(p => ({ ...p, employes: p.employes.map(x => x.id === e.id ? { ...x, ...e } : x) }));
   const deleteEmploye = (id: string) => {
     deletedEmployeIdsRef.current.add(id);
     persistDeletedIds(DELETED_EMPLOYES_KEY, deletedEmployeIdsRef.current);

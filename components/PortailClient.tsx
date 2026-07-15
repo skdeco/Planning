@@ -110,7 +110,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   useEffect(() => {
     if (!chantier) return;
     const keys: OngletPortail[] = ['projet', 'chiffres', 'planning', 'suivisCR', 'finChantier', 'messages'];
-    const visibles = keys.filter(k => canVoirOnglet(k, externAp, chantier, isAdmin));
+    const visibles = keys.filter(k => canVoirOnglet(k, externAp, chantier, isAdmin) && (k !== 'planning' || peutVoirPlanning));
     if (visibles.length > 0 && !visibles.includes(ongletActif)) {
       setOngletActif(visibles[0]);
     }
@@ -301,7 +301,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     const allNotes: { date: string; texte: string; createdAt: string }[] = [];
     affectations.forEach(a => {
       (a.notes || []).forEach(n => {
-        if (n.visiblePar && n.visiblePar !== 'tous' && n.visiblePar !== 'employes' && n.visiblePar !== 'soustraitants') return;
+        // Portail externe : ne montrer QUE les notes publiques ('tous' ou sans restriction).
+        // Exclut les notes internes ('employes', 'soustraitants') et les notes ciblées par IDs.
+        if (n.visiblePar && n.visiblePar !== 'tous') return;
         if (n.texte && n.texte.trim()) {
           allNotes.push({ date: n.date, texte: n.texte, createdAt: n.createdAt });
         }
@@ -736,7 +738,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     }
 
     let marchesHtml = '';
-    if (marches.length > 0 || supplements.length > 0) {
+    // L'export financier respecte la même permission que l'onglet Chiffres (ne pas contourner canVoirOnglet).
+    if ((marches.length > 0 || supplements.length > 0) && canVoirOnglet('chiffres', externAp, chantier, isAdmin)) {
       marchesHtml = `<h2 style="color:#C9A96E;border-bottom:2px solid #C9A96E;padding-bottom:6px;">Marches &amp; Supplements</h2>
         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
           <thead><tr style="background:#2C2C2C;color:#fff;">
@@ -1143,7 +1146,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     { key: 'finChantier', label: 'Fin de chantier', icon: '🏁' },
     { key: 'messages', label: 'Messages', icon: '💬' },
   ];
-  const ongletsVisibles = ongletsConfig.filter(o => canVoirOnglet(o.key, externAp, chantier, isAdmin));
+  // Le planning n'est visible au client que si l'admin l'a activé (afficherPlanningAuClient).
+  const ongletsVisibles = ongletsConfig.filter(o => canVoirOnglet(o.key, externAp, chantier, isAdmin) && (o.key !== 'planning' || peutVoirPlanning));
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>

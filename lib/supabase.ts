@@ -66,6 +66,21 @@ const ARRAY_COLLECTIONS = [
   'ticketsSAV',
   'catalogueArticles',
   'agendaEvents',
+  // Collections précédemment absentes → non protégées contre l'écrasement multi-admin.
+  // Toutes possèdent un champ `id` (fusion par id sûre). Exclues volontairement :
+  // presencesForcees / fournisseurs / chantierOrderPlanning (pas d'id / string[]).
+  'depenses',
+  'supplements',
+  'docsSuivi',
+  'notesSuivi',
+  'documentsSociete',
+  'livraisons',
+  'rdvChantiers',
+  'rdvsChantier',
+  'suivisCR',
+  'badgesEmployes',
+  'metiersPerso',
+  'apporteurs',
 ] as const;
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -318,6 +333,7 @@ export async function saveDataToSupabase(
 ): Promise<boolean> {
   // Relire le distant pour fusionner les ajouts concurrents d'un autre admin.
   let payload = appData;
+  let mergedWithRemote = false;
   try {
     const remote = await loadDataFromSupabase();
     if (remote) {
@@ -333,10 +349,21 @@ export async function saveDataToSupabase(
         }
       }
       payload = merged;
+      mergedWithRemote = true;
     }
   } catch (e) {
     // Lecture distante impossible → écriture directe du local (fallback sûr).
     console.warn('[Save] Fusion distante impossible, écriture directe:', e);
+  }
+
+  // Garde anti-écrasement : loadDataFromSupabase() renvoie null sur timeout/vide
+  // SANS lever d'exception. Si on n'a donc PAS pu relire le distant ET que le
+  // payload local n'est pas substantiel, on refuse d'écraser la ligne unique
+  // 'main' avec des données potentiellement vides (ex : appareil neuf + réseau
+  // lent au démarrage). On retourne false pour que la file de retry retente.
+  if (!mergedWithRemote && !isSubstantialData(payload)) {
+    console.warn('[Save] Relecture distante impossible et données locales vides → upsert annulé (anti-écrasement).');
+    return false;
   }
 
   // Retirer les photos volumineuses avant envoi (base64 dans toutes les collections)

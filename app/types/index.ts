@@ -277,6 +277,7 @@ export interface Chantier {
     auteurId: string;                   // 'admin' ou apporteurId
     auteurNom: string;
     auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+    destinataireId?: string;            // contact externe destinataire (messages admin) — cloisonne les conversations
     texte: string;
     createdAt: string;                  // ISO datetime
     luPar: string[];                    // ids qui ont lu (admin + apporteurIds)

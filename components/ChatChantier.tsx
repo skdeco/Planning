@@ -54,23 +54,53 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
   const monType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' =
     isAdmin ? 'admin' : (externAp?.type || 'client');
 
-  // Marquer les messages comme lus à l'ouverture
+  // ── Cloisonnement des conversations (admin ↔ un contact externe) ──
+  // Contacts externes rattachés au chantier.
+  const contactsExternes = useMemo(() => {
+    const ids = [chantier.clientApporteurId, chantier.architecteId, chantier.apporteurId, chantier.contractantId]
+      .filter(Boolean) as string[];
+    return (data.apporteurs || []).filter(a => ids.includes(a.id));
+  }, [chantier.clientApporteurId, chantier.architecteId, chantier.apporteurId, chantier.contractantId, data.apporteurs]);
+
+  // Côté admin : contact dont on lit/écrit la conversation (auto-sélection du 1er).
+  const [contactSelId, setContactSelId] = useState('');
+  useEffect(() => {
+    if (isAdmin && contactsExternes.length > 0 && !contactsExternes.some(c => c.id === contactSelId)) {
+      setContactSelId(contactsExternes[0].id);
+    }
+  }, [isAdmin, contactsExternes, contactSelId]);
+
+  // Conversation courante : admin ↔ contact sélectionné ; côté externe = soi-même.
+  const conversationId = isAdmin ? contactSelId : monId;
+  // Un message appartient à la conversation C si : écrit par C (externe), ou écrit
+  // par l'admin À DESTINATION de C. Les anciens messages admin sans destinataireId
+  // ne matchent aucune conversation externe → masqués aux externes (pas de fuite).
+  const messagesVisibles = useMemo(() => {
+    if (!conversationId) return [];
+    return messages.filter(m =>
+      (m.auteurType !== 'admin' && m.auteurId === conversationId) ||
+      (m.auteurType === 'admin' && m.destinataireId === conversationId),
+    );
+  }, [messages, conversationId]);
+
+  // Marquer comme lus les messages de la conversation visible (à l'ouverture / au changement de contact)
   useEffect(() => {
     if (!monId) return;
+    const visibleIds = new Set(messagesVisibles.map(m => m.id));
     let changed = false;
     const next = messages.map(m => {
-      if (m.luPar?.includes(monId)) return m;
+      if (!visibleIds.has(m.id) || m.luPar?.includes(monId)) return m;
       changed = true;
       return { ...m, luPar: [...(m.luPar || []), monId] };
     });
     if (changed) {
       updateChantier({ ...chantier, messagesChantier: next });
     }
-    // Met à jour le badge d'icône : ce chantier est désormais lu
+    // Met à jour le badge d'icône
     const updated = data.chantiers.map(c => c.id === chantier.id ? { ...c, messagesChantier: next } : c);
     Notifications.setBadgeCountAsync(countUnreadChantierMessages(updated, monId)).catch(() => {});
     setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: false }), 100);
-  }, [chantier.id]);
+  }, [chantier.id, conversationId]);
 
   const ajouterPieceJointe = async () => {
     try {
@@ -95,11 +125,13 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
 
   const envoyer = () => {
     if (!texte.trim() && !pjUri) return;
+    if (isAdmin && !contactSelId) return; // l'admin doit adresser un contact
     const newMsg = {
       id: genId('msg'),
       auteurId: monId,
       auteurNom: currentUserNom || (externAp ? `${externAp.prenom} ${externAp.nom}` : 'Admin'),
       auteurType: monType,
+      ...(isAdmin ? { destinataireId: contactSelId } : {}),
       texte: texte.trim(),
       createdAt: new Date().toISOString(),
       luPar: [monId],
@@ -120,15 +152,12 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
         c.id === chantier.id ? { ...c, messagesChantier: [...messages, newMsg] } : c,
       );
       if (isAdmin) {
-        // Admin → intervenants externes liés à ce chantier (badge propre à chacun)
-        const ids = [chantier.clientApporteurId, chantier.architecteId, chantier.apporteurId, chantier.contractantId]
-          .filter(Boolean) as string[];
-        (data.apporteurs || [])
-          .filter(a => ids.includes(a.id) && a.pushToken)
-          .forEach(a => {
-            const n = countUnreadChantierMessages(updatedChantiers, a.id);
-            sendPushNotification([a.pushToken!], titre, corps, undefined, n);
-          });
+        // Admin → uniquement le contact destinataire de la conversation courante
+        const target = (data.apporteurs || []).find(a => a.id === contactSelId);
+        if (target?.pushToken) {
+          const n = countUnreadChantierMessages(updatedChantiers, target.id);
+          sendPushNotification([target.pushToken!], titre, corps, undefined, n);
+        }
       } else {
         // Intervenant externe → admin
         const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
@@ -150,7 +179,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     return d.toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
   };
 
-  const nbNonLus = messages.filter(m => !m.luPar?.includes(monId)).length;
+  const nbNonLus = messagesVisibles.filter(m => !m.luPar?.includes(monId)).length;
 
   return (
     <View style={[styles.card, fullScreen && styles.cardFull, fullScreen && kbHeight > 0 && { paddingBottom: kbHeight }]}>
@@ -163,6 +192,18 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
         )}
       </View>
       <Text style={styles.subtitle}>Conversation admin ↔ intervenants externes</Text>
+      {isAdmin && contactsExternes.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactRow} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+          {contactsExternes.map(c => (
+            <Pressable key={c.id} onPress={() => setContactSelId(c.id)} style={[styles.contactChip, contactSelId === c.id && styles.contactChipActive]}>
+              <Text style={[styles.contactChipText, contactSelId === c.id && styles.contactChipTextActive]}>{c.prenom} {c.nom}</Text>
+            </Pressable>
+          ))}
+        </ScrollView>
+      )}
+      {isAdmin && contactsExternes.length === 0 && (
+        <Text style={styles.empty}>Aucun intervenant externe rattaché à ce chantier.</Text>
+      )}
 
       <ScrollView
         ref={scrollRef}
@@ -170,10 +211,10 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
         contentContainerStyle={{ paddingVertical: 10 }}
         showsVerticalScrollIndicator={false}
       >
-        {messages.length === 0 ? (
+        {messagesVisibles.length === 0 ? (
           <Text style={styles.empty}>Aucun message. Soyez le premier à écrire !</Text>
         ) : (
-          messages.map(m => {
+          messagesVisibles.map(m => {
             const isMine = m.auteurId === monId;
             return (
               <View key={m.id} style={[styles.msgRow, isMine ? styles.msgRowMine : styles.msgRowOther]}>
@@ -216,7 +257,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
           placeholder="Votre message..."
           multiline
         />
-        <Pressable onPress={envoyer} disabled={!texte.trim() && !pjUri} style={[styles.sendBtn, (!texte.trim() && !pjUri) && { opacity: 0.4 }]}>
+        <Pressable onPress={envoyer} disabled={(!texte.trim() && !pjUri) || (isAdmin && !contactSelId)} style={[styles.sendBtn, ((!texte.trim() && !pjUri) || (isAdmin && !contactSelId)) && { opacity: 0.4 }]}>
           <Text style={styles.sendBtnText}>➤</Text>
         </Pressable>
       </View>
@@ -227,6 +268,11 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
 const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12 },
   cardFull: { flex: 1, marginBottom: 0 },
+  contactRow: { flexGrow: 0, marginBottom: 8 },
+  contactChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0' },
+  contactChipActive: { backgroundColor: '#2C2C2C' },
+  contactChipText: { fontSize: 12, color: '#687076', fontWeight: '600' },
+  contactChipTextActive: { color: '#fff' },
   title: { fontSize: 14, fontWeight: '800', color: '#2C2C2C' },
   subtitle: { fontSize: 11, color: '#8C8077', marginBottom: 8 },
   list: { maxHeight: 360, backgroundColor: '#FAF7F3', borderRadius: 10, paddingHorizontal: 10 },
