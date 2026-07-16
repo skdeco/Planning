@@ -145,8 +145,14 @@ export default function EquipeScreen() {
   const { confirm: confirmDelete, ConfirmModal } = useConfirm();
 
   useEffect(() => {
-    if (isHydrated && !currentUser) router.replace('/login');
-  }, [isHydrated, currentUser, router]);
+    if (!isHydrated) return;
+    if (!currentUser) { router.replace('/login'); return; }
+    // Défense en profondeur : l'écran Équipe (fiches RH des collègues) est réservé
+    // à l'admin et aux RH. href:null cache l'onglet mais ne protège pas la route.
+    const admin = currentUser.role === 'admin';
+    const rh = admin || data.employes.find(e => e.id === currentUser?.employeId)?.isRH;
+    if (!admin && !rh) router.replace('/(tabs)');
+  }, [isHydrated, currentUser, data.employes, router]);
 
   const isAdmin = currentUser?.role === 'admin';
   const isRH = isAdmin || data.employes.find(e => e.id === currentUser?.employeId)?.isRH;

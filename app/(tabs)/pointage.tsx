@@ -15,6 +15,8 @@ import { Image } from 'react-native';
 import Svg, { Path, Circle, Polyline, Line } from 'react-native-svg';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
+import * as Location from 'expo-location';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (photos pointage fin journée). Aligné avec equipe.tsx + financier-st.tsx.
@@ -67,19 +69,28 @@ async function geocodeAddress(adresse: string): Promise<{ lat: number; lng: numb
   return null;
 }
 
-/** Obtient la position GPS courante via l'API navigateur */
-function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
-  return new Promise((resolve, reject) => {
-    if (!navigator?.geolocation) {
-      reject(new Error('Géolocalisation non disponible'));
-      return;
-    }
-    navigator.geolocation.getCurrentPosition(
-      pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-      err => reject(new Error(err.message)),
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-    );
-  });
+/** Obtient la position GPS courante — natif (iOS/Android) via expo-location, web via l'API navigateur. */
+async function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
+  if (Platform.OS === 'web') {
+    return new Promise((resolve, reject) => {
+      if (!navigator?.geolocation) {
+        reject(new Error('Géolocalisation non disponible'));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
+        err => reject(new Error(err.message)),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    });
+  }
+  // Natif : expo-location (navigator.geolocation n'existe pas en React Native).
+  const { status } = await Location.requestForegroundPermissionsAsync();
+  if (status !== 'granted') {
+    throw new Error('Permission de localisation refusée');
+  }
+  const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+  return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
 }
 
 /** Ouvre le sélecteur de fichier image/PDF natif web */
@@ -488,6 +499,12 @@ export default function PointageScreen() {
     if (Platform.OS === 'web') {
       const files = await pickFilesWeb();
       setPhotosEnAttente(prev => [...prev, ...files]);
+    } else {
+      // Natif : sélecteur photothèque / caméra / fichiers (uploadé à la sauvegarde).
+      const picked = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: true, compressImages: true });
+      if (picked.length > 0) {
+        setPhotosEnAttente(prev => [...prev, ...picked.map(f => ({ uri: f.uri, name: f.filename || `photo_${Date.now()}` }))]);
+      }
     }
   };
 

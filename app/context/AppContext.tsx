@@ -657,14 +657,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Union de toutes les suppressions locales : transmise à la fusion
       // distante (écriture sûre multi-admin) pour ne pas ressusciter une
       // suppression via les ajouts d'un autre admin restés en distant.
-      const deletedIds = new Set<string>([
-        ...deletedAffectationIdsRef.current,
-        ...deletedChantierIdsRef.current,
-        ...deletedEmployeIdsRef.current,
-        ...deletedPointageIdsRef.current,
-        ...deletedListeIdsRef.current,
-        ...deletedGenericIdsRef.current,
-      ]);
+      const deletedIds = buildDeletedIdsUnion();
       setSyncStatus('saving');
       safeSaveToSupabase(dataToSave, showSaveError, deletedIds)
         .then(ok => {
@@ -834,6 +827,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             messagesPrive: (result.messagesPrive || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             retardsPlanifies: (result.retardsPlanifies || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             notesChantier: (result.notesChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            notesChantierSupprimees: (result.notesChantierSupprimees || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            marchesChantier: (result.marchesChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            supplementsMarche: (result.supplementsMarche || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            ticketsSAV: (result.ticketsSAV || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            suivisCR: (result.suivisCR || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            rdvsChantier: (result.rdvsChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            rdvChantiers: (result.rdvChantiers || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            documentsSociete: (result.documentsSociete || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            livraisons: (result.livraisons || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            badgesEmployes: (result.badgesEmployes || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            apporteurs: (result.apporteurs || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            catalogueArticles: (result.catalogueArticles || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            agendaEvents: (result.agendaEvents || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             // Conserver les données locales qui ne sont pas dans Supabase (plans, fiches)
             fichesChantier: { ...(result.fichesChantier || {}), ...(prev.fichesChantier || {}) },
             plansChantier: { ...(result.plansChantier || {}), ...(prev.plansChantier || {}) },
@@ -899,6 +905,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     persistDeletedIds(DELETED_GENERIC_KEY, deletedGenericIdsRef.current);
     lastLocalChangeRef.current = Date.now();
   };
+
+  // Helper : union de toutes les suppressions locales, à transmettre à chaque save
+  // (debounce ET saves immédiats) pour que la fusion additive ne ressuscite pas
+  // une suppression via les ajouts d'un autre admin restés en distant.
+  const buildDeletedIdsUnion = () => new Set<string>([
+    ...deletedAffectationIdsRef.current,
+    ...deletedChantierIdsRef.current,
+    ...deletedEmployeIdsRef.current,
+    ...deletedPointageIdsRef.current,
+    ...deletedListeIdsRef.current,
+    ...deletedGenericIdsRef.current,
+  ]);
 
   // ── Chantiers ──
   const addChantier = (c: Chantier) =>
@@ -1016,7 +1034,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const newData = { ...p, affectations: newAffectations };
       // Sauvegarder immédiatement dans Supabase pour éviter que d'autres appareils ne réintroduisent l'affectation
       lastSaveRef.current = Date.now();
-      safeSaveToSupabase(newData as unknown as Record<string, unknown>, showSaveError);
+      safeSaveToSupabase(newData as unknown as Record<string, unknown>, showSaveError, buildDeletedIdsUnion());
       safeAsyncStorageSet(LOCAL_DATA_KEY, JSON.stringify(newData));
       return newData;
     });
@@ -1258,7 +1276,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const newData = { ...p, listesMateriaux: (p.listesMateriaux || []).filter(l => l.id !== id) };
       // Sauvegarder immédiatement dans Supabase
       lastSaveRef.current = Date.now();
-      safeSaveToSupabase(newData as unknown as Record<string, unknown>, showSaveError);
+      safeSaveToSupabase(newData as unknown as Record<string, unknown>, showSaveError, buildDeletedIdsUnion());
       return newData;
     });
   };
@@ -1651,8 +1669,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, apporteurs: [...(p.apporteurs || []), a] }));
   const updateApporteur = (a: import('@/app/types').Apporteur) =>
     setData(p => ({ ...p, apporteurs: (p.apporteurs || []).map(x => x.id === a.id ? a : x) }));
-  const deleteApporteur = (id: string) =>
+  const deleteApporteur = (id: string) => {
+    trackGenericDeletion(id);
     setData(p => ({ ...p, apporteurs: (p.apporteurs || []).filter(a => a.id !== id) }));
+  };
 
   // Budget prévisionnel par chantier
   const updateBudgetChantier = (chantierId: string, budget: number | undefined) =>

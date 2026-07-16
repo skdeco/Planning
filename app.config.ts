@@ -110,6 +110,13 @@ const config: ExpoConfig = {
     "expo-updates",
     "expo-mail-composer",
     [
+      "expo-location",
+      {
+        locationWhenInUsePermission:
+          "SK DECO utilise votre position pour vérifier que le pointage est réalisé sur le chantier.",
+      },
+    ],
+    [
       "expo-audio",
       {
         microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone.",

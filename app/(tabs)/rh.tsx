@@ -23,6 +23,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { uploadFileToStorage } from '@/lib/supabase';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (fiches de paie). Aligné avec equipe.tsx + financier-st.tsx + pointage.tsx.
@@ -398,6 +399,7 @@ export default function RHScreen() {
         {activeTab === 'conges' && (() => {
           // Calcul du solde de congés
           const JOURS_PAR_AN = 25;
+          const anneeRef = new Date().getFullYear(); // le solde se calcule sur l'année civile en cours
           const targetId = isRH ? null : myId; // Admin voit tous, employé voit le sien
           const congesApprouves = conges.filter(d => d.statut === 'approuve' && (!targetId || d.employeId === targetId));
           const joursPris = congesApprouves.reduce((total, d) => {
@@ -407,7 +409,8 @@ export default function RHScreen() {
             const current = new Date(debut);
             while (current <= fin) {
               const dow = current.getDay();
-              if (dow !== 0 && dow !== 6) jours++; // Jours ouvrés uniquement
+              // Jours ouvrés de l'année de référence uniquement (réinitialisation annuelle du solde)
+              if (dow !== 0 && dow !== 6 && current.getFullYear() === anneeRef) jours++;
               current.setDate(current.getDate() + 1);
             }
             return total + jours;
@@ -754,7 +757,7 @@ export default function RHScreen() {
             <Text style={styles.fieldLabel}>{t.rh.proof}</Text>
             <Pressable
               style={styles.uploadArretBtn}
-              onPress={() => {
+              onPress={async () => {
                 if (Platform.OS === 'web') {
                   const input = document.createElement('input');
                   input.type = 'file';
@@ -773,6 +776,18 @@ export default function RHScreen() {
                     document.body.removeChild(input);
                   };
                   input.click(); setTimeout(() => input.remove(), 60000);
+                } else {
+                  // Natif : sélecteur photothèque/caméra/fichiers + upload Storage
+                  // (file:// n'est pas synchronisable tel quel entre appareils).
+                  const picked = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
+                  if (picked.length > 0) {
+                    const doc = picked[0];
+                    const docId = `arret_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+                    const url = await uploadFileToStorage(doc.uri, 'arrets-maladie', docId);
+                    if (url) {
+                      setArretForm(f => ({ ...f, justificatif: url, justificatifNom: doc.filename || 'justificatif' }));
+                    }
+                  }
                 }
               }}
             >

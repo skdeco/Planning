@@ -152,6 +152,16 @@ export function mergeDataSafely(
     result[key] = merged;
   }
 
+  // Journal d'activité : borné à 200 entrées (le cap local slice(-199) est sinon
+  // défait par la fusion additive → la cellule jsonb 'main' grossirait sans limite,
+  // alourdissant chaque load/save pour tout le monde).
+  if (Array.isArray(result.activityLog) && result.activityLog.length > 200) {
+    result.activityLog = (result.activityLog as Record<string, unknown>[])
+      .slice()
+      .sort((a, b) => String(a.timestamp || '').localeCompare(String(b.timestamp || '')))
+      .slice(-200);
+  }
+
   // Pour les objets (fichesChantier, plansChantier) : fusionner les clés
   for (const key of ['fichesChantier', 'plansChantier'] as const) {
     const localObj = (local[key] as Record<string, unknown>) || {};

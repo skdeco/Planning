@@ -639,19 +639,20 @@ export default function PlanningScreen() {
       if (!day) return { day: null, chantiers: [] };
       const active = visibleChantiers.filter(c =>
         dateInRange(day, c.dateDebut, c.dateFin) &&
-        data.affectations.some(a =>
-          a.chantierId === c.id &&
-          dateInRange(day, a.dateDebut, a.dateFin) &&
-          !a.soustraitantId &&
-          (isAdmin || a.employeId === currentUser?.employeId)
-        )
+        data.affectations.some(a => {
+          if (a.chantierId !== c.id || !dateInRange(day, a.dateDebut, a.dateFin)) return false;
+          if (isAdmin) return !a.soustraitantId;
+          // Sous-traitant : ses propres affectations (soustraitantId) ; sinon employé.
+          if (currentUser?.soustraitantId) return a.soustraitantId === currentUser.soustraitantId;
+          return !a.soustraitantId && a.employeId === currentUser?.employeId;
+        })
       );
       return {
         day,
         chantiers: active.map(c => ({ id: c.id, nom: c.nom, couleur: c.couleur })),
       };
     }),
-    [monthData, visibleChantiers, data.affectations, isAdmin, currentUser?.employeId],
+    [monthData, visibleChantiers, data.affectations, isAdmin, currentUser?.employeId, currentUser?.soustraitantId],
   );
 
   const chantiersLegend = useMemo(() =>
