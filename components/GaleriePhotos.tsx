@@ -67,12 +67,27 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   const isAdmin = currentUser?.role === 'admin';
   const myId = currentUser?.employeId || currentUser?.soustraitantId || 'admin';
 
+  // Non-admin (employé / sous-traitant) : restreint aux chantiers où l'utilisateur est
+  // affecté — la galerie globale ne doit pas exposer les photos des autres chantiers.
+  const allowedChantierIds = useMemo(() => {
+    if (isAdmin) return null; // null = tous les chantiers
+    const ids = new Set<string>();
+    const empId = currentUser?.employeId;
+    const stId = currentUser?.soustraitantId;
+    data.affectations.forEach(a => {
+      if ((empId && a.employeId === empId) || (stId && a.soustraitantId === stId)) ids.add(a.chantierId);
+    });
+    if (empId) data.chantiers.forEach(c => { if ((c.employeIds || []).includes(empId)) ids.add(c.id); });
+    return ids;
+  }, [isAdmin, currentUser?.employeId, currentUser?.soustraitantId, data.affectations, data.chantiers]);
+
   const allPhotos = useMemo(() => {
     let photos = (data.photosChantier || []);
     if (chantierId) photos = photos.filter(p => p.chantierId === chantierId);
+    else if (allowedChantierIds) photos = photos.filter(p => allowedChantierIds.has(p.chantierId));
     if (filterEmployeId !== 'all') photos = photos.filter(p => p.employeId === filterEmployeId);
     return photos.sort((a, b) => (b.createdAt || b.date || '').localeCompare(a.createdAt || a.date || ''));
-  }, [data.photosChantier, chantierId, filterEmployeId]);
+  }, [data.photosChantier, chantierId, filterEmployeId, allowedChantierIds]);
 
   const getChantierNom = (id: string) => data.chantiers.find(c => c.id === id)?.nom || '?';
   const getChantierCouleur = (id: string) => data.chantiers.find(c => c.id === id)?.couleur || '#2C2C2C';
@@ -180,7 +195,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
             {/* Sélecteur chantier — visible si pas de chantierId fixe (admin galerie globale) */}
             {!chantierId && (
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
-                {data.chantiers.filter(c => c.statut === 'actif').map(c => (
+                {data.chantiers.filter(c => c.statut === 'actif' && (!allowedChantierIds || allowedChantierIds.has(c.id))).map(c => (
                   <Pressable key={c.id}
                     style={[styles.triBtn, uploadChantierId === c.id && { backgroundColor: c.couleur || '#2C2C2C', borderColor: c.couleur || '#2C2C2C' }]}
                     onPress={() => setUploadChantierId(c.id)}>

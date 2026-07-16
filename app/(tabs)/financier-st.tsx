@@ -38,10 +38,13 @@ function normalizeDocLabel(s: string): string {
 
 function findDocForType(documents: any[], typeLabel: string): any | undefined {
   const target = normalizeDocLabel(typeLabel);
-  const targetShort = target.split(' ')[0];
+  // Matching précis par id de type (résolu depuis le libellé) au lieu du 1er mot,
+  // pour ne PAS confondre les paires partageant leur début : "Assurance décennale"
+  // / "Assurance RC Pro" et "Attestation URSSAF" / "Attestation fiscale".
+  const typeId = normalizeDocLabel(DOCUMENTS_LEGAUX_TYPES.find(t => normalizeDocLabel(t.label) === target)?.id || '');
   return (documents || []).find(d => {
     const n = normalizeDocLabel(d.libelle || '');
-    return n === target || n.includes(targetShort) || target.includes(n);
+    return n === target || (typeId !== '' && n.includes(typeId));
   });
 }
 
