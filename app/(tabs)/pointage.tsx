@@ -417,14 +417,11 @@ export default function PointageScreen() {
           if (coords) {
             const dist = haversineDistance(pos.latitude, pos.longitude, coords.lat, coords.lng);
             if (dist > 100) {
-              const distStr = dist < 1000 ? `${Math.round(dist)} m` : `${(dist / 1000).toFixed(1)} km`;
-              const msg =
-                `Vous êtes à ${distStr} du chantier.\n\n` +
-                `Vous devez être à moins de 100 m de "${chantier?.nom}" pour pointer.`;
+              const msg = "Vous n'êtes pas sur le chantier, vous n'êtes pas autorisé à pointer.";
               if (Platform.OS === 'web') {
                 alert(msg);
               } else {
-                Alert.alert('Trop loin du chantier', msg);
+                Alert.alert('Pointage refusé', msg);
               }
               return;
             }

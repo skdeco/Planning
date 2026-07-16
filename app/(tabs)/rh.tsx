@@ -24,6 +24,8 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import * as FileSystem from 'expo-file-system/legacy';
+import { requireOptionalNativeModule } from 'expo-modules-core';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (fiches de paie). Aligné avec equipe.tsx + financier-st.tsx + pointage.tsx.
@@ -44,6 +46,50 @@ function formatMois(ym: string) {
   const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
   const [y, m] = ym.split('-');
   return `${MOIS[parseInt(m, 10) - 1]} ${y}`;
+}
+
+// Destinataires comptables (cabinet AVODA) pour la transmission des arrêts de travail.
+const COMPTABLE_EMAILS = ['boye@cabinetavoda.com', 'yossi@cabinetavoda.com'];
+
+// Ouvre un mail pour transmettre l'arrêt de travail approuvé au comptable
+// (justificatif de l'employé joint). Natif uniquement (expo-mail-composer).
+async function envoyerArretAuComptable(
+  nomComplet: string,
+  dateDebut: string,
+  dateFin: string | undefined,
+  justificatifUrl: string | undefined,
+): Promise<void> {
+  if (!requireOptionalNativeModule('ExpoMailComposer')) {
+    Alert.alert(
+      'Transmission indisponible',
+      "L'ouverture du mail nécessite la dernière version de l'app (build natif). L'arrêt est bien approuvé.",
+    );
+    return;
+  }
+  try {
+    const MailComposer = require('expo-mail-composer') as typeof import('expo-mail-composer');
+    if (!(await MailComposer.isAvailableAsync())) {
+      Alert.alert('Mail indisponible', "Aucune app Mail n'est configurée sur l'appareil.");
+      return;
+    }
+    let attachmentUri: string | undefined;
+    if (justificatifUrl && justificatifUrl.startsWith('http')) {
+      const ext = (justificatifUrl.split('?')[0].split('.').pop() || 'pdf').slice(0, 5);
+      const dest = `${FileSystem.cacheDirectory}arret_${Date.now()}.${ext}`;
+      const dl = await FileSystem.downloadAsync(justificatifUrl, dest);
+      attachmentUri = dl.uri;
+    }
+    const periode = dateFin ? `${formatDate(dateDebut)} au ${formatDate(dateFin)}` : formatDate(dateDebut);
+    await MailComposer.composeAsync({
+      recipients: COMPTABLE_EMAILS,
+      subject: `Arrêt de travail pour ${nomComplet} — ${periode}`,
+      body: `Bonjour,\n\nVeuillez trouver ci-joint l'arrêt de travail de ${nomComplet} (${periode}).\n\nCordialement,\nSK DECO`,
+      attachments: attachmentUri ? [attachmentUri] : undefined,
+    });
+  } catch (err) {
+    console.error('Mail arrêt maladie échoué', err);
+    Alert.alert('Erreur', "Impossible d'ouvrir l'email.");
+  }
 }
 
 type Tab = 'conges' | 'maladie' | 'avances' | 'paies';
@@ -249,7 +295,15 @@ export default function RHScreen() {
       if (d) updateDemandeConge({ ...d, statut: reponseForm.statut, commentaireRH: reponseForm.commentaire, updatedAt: now() });
     } else if (type === 'arret') {
       const d = arrets.find(x => x.id === id);
-      if (d) updateArretMaladie({ ...d, statut: reponseForm.statut, commentaireRH: reponseForm.commentaire, updatedAt: now() });
+      if (d) {
+        updateArretMaladie({ ...d, statut: reponseForm.statut, commentaireRH: reponseForm.commentaire, updatedAt: now() });
+        // À l'approbation : ouvrir un mail pour transmettre l'arrêt (+ justificatif) au comptable.
+        if (reponseForm.statut === 'approuve') {
+          const emp = data.employes.find(e => e.id === d.employeId);
+          const nomComplet = emp ? `${emp.prenom} ${emp.nom}` : 'Salarié';
+          envoyerArretAuComptable(nomComplet, d.dateDebut, d.dateFin, d.justificatif);
+        }
+      }
     } else if (type === 'avance') {
       const d = avances.find(x => x.id === id);
       if (d) {
