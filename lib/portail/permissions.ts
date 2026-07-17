@@ -32,8 +32,10 @@ export function canVoirOnglet(
   const defaut = contact.portailDefaut?.[key];
   if (defaut !== undefined) return defaut;
 
-  // Défaut opt-in pour les finances : seul l'architecte les voit sans autorisation.
-  if (onglet === 'chiffres') return contact.type === 'architecte';
+  // Finances : le client voit SON suivi (budget TTC, versements, validation d'étapes,
+  // avenants) et l'architecte le détail — par défaut. L'apporteur d'affaires et le
+  // contractant (tiers) sont en OPT-IN : masqués sauf autorisation explicite de l'admin.
+  if (onglet === 'chiffres') return contact.type === 'architecte' || contact.type === 'client';
 
   return true;
 }

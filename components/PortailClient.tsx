@@ -79,7 +79,7 @@ const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contract
 ];
 
 export function PortailClient({ visible, onClose, chantierId }: PortailClientProps) {
-  const { data, currentUser, updateChantier, updateSupplementMarche, addPlanChantier, deletePlanChantier } = useApp();
+  const { data, currentUser, updateChantier, updateMarcheChantier, updateSupplementMarche, addPlanChantier, deletePlanChantier } = useApp();
   const isAdmin = currentUser?.role === 'admin';
   const isExterne = currentUser?.role === 'apporteur';
   const externAp = isExterne ? (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId) : undefined;
@@ -133,47 +133,60 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const [commentaireLotId, setCommentaireLotId] = useState<string | null>(null);
   const [commentaireTexte, setCommentaireTexte] = useState('');
 
+  // Route une mutation de lot vers son PORTEUR réel : chantier legacy, marché, ou
+  // supplément accepté. Après migration lots→marché (MarchesChantier), chantier.avancementCorps
+  // est vidé — écrire dessus perdrait silencieusement la saisie. transform renvoie null = suppression.
+  const mutateLot = (
+    lotId: string,
+    transform: (lot: NonNullable<Chantier['avancementCorps']>[number]) => NonNullable<Chantier['avancementCorps']>[number] | null,
+  ) => {
+    const apply = (lots: NonNullable<Chantier['avancementCorps']>) => lots.flatMap(l => {
+      if (l.id !== lotId) return [l];
+      const r = transform(l);
+      return r ? [r] : [];
+    });
+    if (chantier && (chantier.avancementCorps || []).some(l => l.id === lotId)) {
+      updateChantier({ ...chantier, avancementCorps: apply(chantier.avancementCorps || []), derniereMajContenu: new Date().toISOString() });
+      return;
+    }
+    const m = marches.find(mm => (mm.avancementCorps || []).some(l => l.id === lotId));
+    if (m) { updateMarcheChantier({ ...m, avancementCorps: apply(m.avancementCorps || []) }); return; }
+    const s = supplements.find(ss => (ss.avancementCorps || []).some(l => l.id === lotId));
+    if (s) { updateSupplementMarche({ ...s, avancementCorps: apply(s.avancementCorps || []) }); return; }
+  };
+
   const openCommentaireClient = (lotId: string) => {
     setCommentaireLotId(lotId);
     setCommentaireTexte('');
     // Marquer tous les commentaires existants du lot comme "lus" par l'admin
-    if (isAdmin && chantier) {
-      const lots = chantier.avancementCorps || [];
-      const next = lots.map(l => {
-        if (l.id !== lotId) return l;
-        const updated = (l.commentairesClient || []).map(cc => cc.luParAdmin ? cc : { ...cc, luParAdmin: true });
-        return { ...l, commentairesClient: updated };
-      });
-      updateChantier({ ...chantier, avancementCorps: next });
+    if (isAdmin) {
+      mutateLot(lotId, l => ({
+        ...l,
+        commentairesClient: (l.commentairesClient || []).map(cc => cc.luParAdmin ? cc : { ...cc, luParAdmin: true }),
+      }));
     }
   };
   const saveCommentaireClient = () => {
-    if (!chantier || !commentaireLotId || !commentaireTexte.trim()) return;
-    const lots = chantier.avancementCorps || [];
+    if (!commentaireLotId || !commentaireTexte.trim()) return;
     const auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' =
       isAdmin ? 'admin' : (externAp?.type || 'client');
-    const next = lots.map(l => {
-      if (l.id !== commentaireLotId) return l;
-      const commentaires = l.commentairesClient || [];
-      return {
-        ...l,
-        commentairesClient: [
-          ...commentaires,
-          {
-            id: genId('cm'),
-            auteurId: isAdmin ? 'admin' : (externAp?.id || 'unknown'),
-            auteurNom: currentUser?.nom || (externAp ? `${externAp.prenom} ${externAp.nom}` : 'Utilisateur'),
-            auteurType,
-            texte: commentaireTexte.trim(),
-            createdAt: new Date().toISOString(),
-            luParAdmin: isAdmin,
-            luParExternes: [],
-          },
-        ],
-        updatedAt: new Date().toISOString(),
-      };
-    });
-    updateChantier({ ...chantier, avancementCorps: next, derniereMajContenu: new Date().toISOString() });
+    mutateLot(commentaireLotId, l => ({
+      ...l,
+      commentairesClient: [
+        ...(l.commentairesClient || []),
+        {
+          id: genId('cm'),
+          auteurId: isAdmin ? 'admin' : (externAp?.id || 'unknown'),
+          auteurNom: currentUser?.nom || (externAp ? `${externAp.prenom} ${externAp.nom}` : 'Utilisateur'),
+          auteurType,
+          texte: commentaireTexte.trim(),
+          createdAt: new Date().toISOString(),
+          luParAdmin: isAdmin,
+          luParExternes: [],
+        },
+      ],
+      updatedAt: new Date().toISOString(),
+    }));
     setCommentaireLotId(null);
     setCommentaireTexte('');
   };
@@ -560,10 +573,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       photosApres: lotPhotosApres.length > 0 ? lotPhotosApres : undefined,
       updatedAt: new Date().toISOString(),
     };
-    const next = editCorpsId
-      ? existing.map(c => c.id === editCorpsId ? entry : c)
-      : [...existing, entry];
-    updateChantier({ ...chantier, avancementCorps: next });
+    if (editCorpsId) {
+      // Édition : router vers le porteur réel (le lot peut vivre dans un marché migré).
+      mutateLot(editCorpsId, () => entry);
+    } else {
+      updateChantier({ ...chantier, avancementCorps: [...existing, entry] });
+    }
     setShowCorpsForm(false);
   };
   const pickPhotoForLot = async (slot: 'generic' | 'avant' | 'apres' = 'generic') => {
@@ -593,7 +608,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const [lotPhotosApres, setLotPhotosApres] = useState<string[]>([]);
   const deleteCorps = (id: string) => {
     if (!chantier) return;
-    const doDel = () => updateChantier({ ...chantier, avancementCorps: (chantier.avancementCorps || []).filter(c => c.id !== id) });
+    const doDel = () => mutateLot(id, () => null);
     if (Platform.OS === 'web') { if (window.confirm('Supprimer ce corps de métier ?')) doDel(); }
     else Alert.alert('Supprimer', 'Supprimer ce corps de métier ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDel }]);
   };
@@ -889,7 +904,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
         <div style="margin-bottom:24px;">
           ${avancementCorps.map(c => `<div style="margin-bottom:10px;">
             <div style="display:flex;justify-content:space-between;margin-bottom:4px;">
-              <strong>${c.nom}${c.montant ? ` - ${fmt(c.montant)} EUR` : ''}</strong>
+              <strong>${c.nom}${c.montant && !isClient && canVoirOnglet('chiffres', externAp, chantier, isAdmin) ? ` - ${fmt(c.montant)} EUR` : ''}</strong>
               <span style="color:#C9A96E;font-weight:700;">${c.pourcentage}%</span>
             </div>
             <div style="background:#E2E6EA;border-radius:8px;height:10px;overflow:hidden;">
@@ -1515,7 +1530,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         </Pressable>
                         <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
                           <Text style={{ fontSize: 13, fontWeight: '800', color: '#C9A96E' }}>{c.pourcentage}%</Text>
-                          {c.montant && c.pourcentage > 0 && (
+                          {c.montant && c.pourcentage > 0 && !isClient && (
                             <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700', marginTop: 1 }}>
                               = {fmt((c.montant || 0) * (c.pourcentage / 100))} €
                             </Text>

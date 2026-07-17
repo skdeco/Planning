@@ -70,7 +70,9 @@ export default function PlanningExterne() {
         c.apporteurId === apporteurId ||
         c.contractantId === apporteurId;
       if (!lie) return false;
-      if (estClient && c.afficherPlanningAuClient === false) return false;
+      // Opt-in client (aligné sur PortailClient.peutVoirPlanning) : masqué tant que
+      // l'admin n'a pas activé afficherPlanningAuClient (undefined = masqué).
+      if (estClient && c.afficherPlanningAuClient !== true) return false;
       // Respecte l'autorisation portail "planning" (comme PortailClient) : l'admin
       // peut masquer le planning à un intervenant via override.
       if (!canVoirOnglet('planning', apporteur, c, false)) return false;

@@ -29,7 +29,7 @@ export default function MesChantiersExterne() {
     const cutoff = new Date();
     cutoff.setFullYear(cutoff.getFullYear() - 3);
     for (const c of mesChantiers) {
-      const isClos = c.statutChantier === 'cloture' || (c as any).statut === 'termine';
+      const isClos = c.statutChantier === 'cloture' || (c as any).statut === 'termine' || (c as any).statut === 'archive';
       if (isClos) {
         const dateRef = (c as any).updatedAt || (c as any).dateFin || null;
         const d = dateRef ? new Date(dateRef) : null;

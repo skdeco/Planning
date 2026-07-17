@@ -23,7 +23,7 @@ export function DashboardKPI() {
     const chantiers = data.chantiers || [];
     const marches = data.marchesChantier || [];
     const supps = (data.supplementsMarche || []).filter(s => s.statut === 'accepte');
-    const chantiersActifs = chantiers.filter(c => c.statut !== 'termine');
+    const chantiersActifs = chantiers.filter(c => c.statut !== 'termine' && c.statut !== 'archive');
     const chantiersActifsIds = new Set(chantiersActifs.map(c => c.id));
 
     // CA total signé
