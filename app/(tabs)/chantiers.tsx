@@ -54,7 +54,7 @@ import { requireOptionalNativeModule } from 'expo-modules-core';
 const inboxMimeFilterImagePdf = (m: string): boolean =>
   m.startsWith('image/') || m === 'application/pdf';
 
-const STATUTS: StatutChantier[] = ['actif', 'en_attente', 'termine', 'en_pause', 'sav'];
+const STATUTS: StatutChantier[] = ['a_letude', 'actif', 'en_attente', 'en_pause', 'sav', 'termine', 'archive'];
 
 // Email de capture Chaintrust (réception automatique des factures).
 // L'expéditeur doit être contact@skdeco.fr (compte autorisé dans Chaintrust) :
@@ -287,6 +287,8 @@ export default function ChantiersScreen() {
     }
   };
   const [searchQuery, setSearchQuery] = useState('');
+  // Filtre par statut de la liste chantiers (défaut : opérationnels = liste épurée).
+  const [filterStatut, setFilterStatut] = useState<'en_cours' | 'a_letude' | 'termine' | 'archive' | 'tous'>('en_cours');
   const [bilanChantierId, setBilanChantierId] = useState<string | null>(null);
   // Protection contre la perte de données si refresh pendant édition
   useUnsavedChanges(showForm && form.nom.trim().length > 0);
@@ -1212,8 +1214,19 @@ export default function ChantiersScreen() {
         list = list.filter(c => (c as any)[field] === filterContactId);
       }
     }
+    // Filtre par statut — défaut "En cours" (opérationnels) pour garder la liste principale épurée.
+    if (filterStatut !== 'tous') {
+      const groupesStatut: Record<string, StatutChantier[]> = {
+        en_cours: ['actif', 'en_attente', 'en_pause', 'sav'],
+        a_letude: ['a_letude'],
+        termine: ['termine'],
+        archive: ['archive'],
+      };
+      const allowed = groupesStatut[filterStatut] || [];
+      list = list.filter(c => allowed.includes(c.statut));
+    }
     return list;
-  }, [data.chantiers, searchQuery, filterContactType, filterContactId, isApporteurUser, currentUser?.apporteurId]);
+  }, [data.chantiers, searchQuery, filterContactType, filterContactId, filterStatut, isApporteurUser, currentUser?.apporteurId]);
 
   const renderChantier = ({ item }: { item: Chantier }) => {
     const statut = STATUT_COLORS[item.statut];
@@ -1477,6 +1490,32 @@ export default function ChantiersScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* Filtre par statut de chantier — défaut "En cours" pour garder la liste principale épurée */}
+      {isAdmin && (
+        <View style={{ paddingHorizontal: 16, marginBottom: 6, marginTop: 4 }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
+            {([
+              { key: 'en_cours', label: 'En cours' },
+              { key: 'a_letude', label: "À l'étude" },
+              { key: 'termine', label: 'Terminés' },
+              { key: 'archive', label: 'Archivés' },
+              { key: 'tous', label: 'Tous' },
+            ] as const).map(({ key, label }) => {
+              const active = filterStatut === key;
+              return (
+                <Pressable
+                  key={key}
+                  style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: active ? '#2C2C2C' : '#E8DDD0', backgroundColor: active ? '#2C2C2C' : '#F5EDE3' }}
+                  onPress={() => setFilterStatut(key)}
+                >
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: active ? '#fff' : '#687076' }}>{label}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </View>
+      )}
 
       {/* Filtre par type de contact */}
       {isAdmin && (

@@ -75,7 +75,7 @@ export function getMetiersList(metiersPerso?: MetierPerso[]): string[] {
 /** Rétro-compatibilité */
 export const METIERS_LIST: string[] = METIERS_LIST_DEFAULT;
 
-export type StatutChantier = 'actif' | 'en_attente' | 'termine' | 'en_pause' | 'sav';
+export type StatutChantier = 'actif' | 'en_attente' | 'termine' | 'en_pause' | 'sav' | 'a_letude' | 'archive';
 
 export const STATUT_LABELS: Record<StatutChantier, string> = {
   actif: 'En cours',
@@ -83,6 +83,8 @@ export const STATUT_LABELS: Record<StatutChantier, string> = {
   termine: 'Terminé',
   en_pause: 'En pause',
   sav: 'SAV',
+  a_letude: "À l'étude",
+  archive: 'Archivé',
 };
 
 export const STATUT_COLORS: Record<StatutChantier, { bg: string; text: string }> = {
@@ -91,6 +93,8 @@ export const STATUT_COLORS: Record<StatutChantier, { bg: string; text: string }>
   termine:    { bg: '#D1ECF1', text: '#0C5460' },
   en_pause:   { bg: '#F8D7DA', text: '#721C24' },
   sav:        { bg: '#E8DAEF', text: '#6C3483' },
+  a_letude:   { bg: '#E2E3F0', text: '#3B3F7A' },
+  archive:    { bg: '#E9ECEF', text: '#6C757D' },
 };
 
 export const CHANTIER_COLORS = [
