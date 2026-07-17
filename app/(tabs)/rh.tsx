@@ -287,18 +287,22 @@ export default function RHScreen() {
   };
 
   // ─── Réponse RH ──────────────────────────────────────────────────────────
-  const handleSaveReponse = () => {
-    if (!reponseTarget) return;
-    const { type, id } = reponseTarget;
+  // Applique une réponse RH (approuve/refuse) — utilisé par la modale ET les boutons 1-tap.
+  const appliquerReponse = (
+    type: 'conge' | 'arret' | 'avance',
+    id: string,
+    statut: 'approuve' | 'refuse',
+    commentaire: string,
+  ) => {
     if (type === 'conge') {
       const d = conges.find(x => x.id === id);
-      if (d) updateDemandeConge({ ...d, statut: reponseForm.statut, commentaireRH: reponseForm.commentaire, updatedAt: now() });
+      if (d) updateDemandeConge({ ...d, statut, commentaireRH: commentaire, updatedAt: now() });
     } else if (type === 'arret') {
       const d = arrets.find(x => x.id === id);
       if (d) {
-        updateArretMaladie({ ...d, statut: reponseForm.statut, commentaireRH: reponseForm.commentaire, updatedAt: now() });
+        updateArretMaladie({ ...d, statut, commentaireRH: commentaire, updatedAt: now() });
         // À l'approbation : ouvrir un mail pour transmettre l'arrêt (+ justificatif) au comptable.
-        if (reponseForm.statut === 'approuve') {
+        if (statut === 'approuve') {
           const emp = data.employes.find(e => e.id === d.employeId);
           const nomComplet = emp ? `${emp.prenom} ${emp.nom}` : 'Salarié';
           envoyerArretAuComptable(nomComplet, d.dateDebut, d.dateFin, d.justificatif);
@@ -307,9 +311,9 @@ export default function RHScreen() {
     } else if (type === 'avance') {
       const d = avances.find(x => x.id === id);
       if (d) {
-        updateDemandeAvance({ ...d, statut: reponseForm.statut, commentaireRH: reponseForm.commentaire, updatedAt: now() });
+        updateDemandeAvance({ ...d, statut, commentaireRH: commentaire, updatedAt: now() });
         // Si approuvée, enregistrer comme acompte payé dans la table des acomptes
-        if (reponseForm.statut === 'approuve') {
+        if (statut === 'approuve') {
           addAcompte({
             id: genId(),
             employeId: d.employeId,
@@ -321,9 +325,14 @@ export default function RHScreen() {
         }
       }
     }
+    toast.success(statut === 'approuve' ? 'Demande approuvée' : 'Demande refusée');
+  };
+
+  const handleSaveReponse = () => {
+    if (!reponseTarget) return;
+    appliquerReponse(reponseTarget.type, reponseTarget.id, reponseForm.statut, reponseForm.commentaire);
     setShowReponseModal(false);
     setReponseTarget(null);
-    toast.success(reponseForm.statut === 'approuve' ? 'Demande approuvée' : 'Demande refusée');
   };
 
   // ─── Upload fiche de paie avec sélecteur mois/année ──────────────────────────────────────────────────────────
@@ -515,9 +524,14 @@ export default function RHScreen() {
                 {d.commentaireRH ? <Text style={styles.cardComment}>💬 {d.commentaireRH}</Text> : null}
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
+                    <>
+                    <Pressable style={styles.approuveBtn} onPress={() => appliquerReponse('conge', d.id, 'approuve', '')}>
+                      <Text style={styles.approuveBtnText}>✓</Text>
+                    </Pressable>
                     <Pressable style={styles.repondreBtn} onPress={() => { setReponseTarget({ type: 'conge', id: d.id }); setReponseForm({ statut: 'approuve', commentaire: '' }); setShowReponseModal(true); }}>
                       <Text style={styles.repondreBtnText}>{t.rh.reply}</Text>
                     </Pressable>
+                    </>
                   )}
                   {(!isRH || d.statut === 'en_attente') && (
                     <Pressable style={styles.deleteBtn} onPress={() => handleDeleteConge(d.id)}>
@@ -560,9 +574,14 @@ export default function RHScreen() {
                 {d.commentaireRH ? <Text style={styles.cardComment}>💬 {d.commentaireRH}</Text> : null}
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
+                    <>
+                    <Pressable style={styles.approuveBtn} onPress={() => appliquerReponse('arret', d.id, 'approuve', '')}>
+                      <Text style={styles.approuveBtnText}>✓</Text>
+                    </Pressable>
                     <Pressable style={styles.repondreBtn} onPress={() => { setReponseTarget({ type: 'arret', id: d.id }); setReponseForm({ statut: 'approuve', commentaire: '' }); setShowReponseModal(true); }}>
                       <Text style={styles.repondreBtnText}>{t.rh.reply}</Text>
                     </Pressable>
+                    </>
                   )}
                   {(!isRH || d.statut === 'en_attente') && (
                     <Pressable style={styles.deleteBtn} onPress={async () => {
@@ -603,9 +622,14 @@ export default function RHScreen() {
                 {d.commentaireRH ? <Text style={styles.cardComment}>💬 {d.commentaireRH}</Text> : null}
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
+                    <>
+                    <Pressable style={styles.approuveBtn} onPress={() => appliquerReponse('avance', d.id, 'approuve', '')}>
+                      <Text style={styles.approuveBtnText}>✓</Text>
+                    </Pressable>
                     <Pressable style={styles.repondreBtn} onPress={() => { setReponseTarget({ type: 'avance', id: d.id }); setReponseForm({ statut: 'approuve', commentaire: '' }); setShowReponseModal(true); }}>
                       <Text style={styles.repondreBtnText}>{t.rh.reply}</Text>
                     </Pressable>
+                    </>
                   )}
                   {isRH && (
                     <Pressable
@@ -1007,6 +1031,8 @@ const styles = StyleSheet.create({
   cardActions: { flexDirection: 'row', gap: 10, marginTop: 10 },
   repondreBtn: { backgroundColor: '#EEF2F8', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
   repondreBtnText: { color: '#2C2C2C', fontWeight: '600', fontSize: 13 },
+  approuveBtn: { backgroundColor: '#E8F5E9', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8 },
+  approuveBtnText: { color: '#27AE60', fontWeight: '800', fontSize: 15 },
   deleteBtn: { paddingHorizontal: 14, paddingVertical: 8 },
   deleteBtnText: { color: '#E74C3C', fontWeight: '600', fontSize: 13 },
   voirBtn: { backgroundColor: '#EEF2F8', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 },
