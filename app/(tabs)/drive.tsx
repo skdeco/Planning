@@ -28,7 +28,8 @@ const STATUT_FILTRES: { key: string; label: string }[] = [
 ];
 
 export default function DriveScreen() {
-  const { data } = useApp();
+  const { data, currentUser } = useApp();
+  const isAdmin = currentUser?.role === 'admin';
   const [filterStatut, setFilterStatut] = useState<string>('tous');
   const [filterCat, setFilterCat] = useState<ChantierDocCategorie | 'tous'>('tous');
   const [search, setSearch] = useState('');
@@ -49,6 +50,18 @@ export default function DriveScreen() {
     });
     return out.sort((a, b) => (b.doc.uploadedAt || '').localeCompare(a.doc.uploadedAt || ''));
   }, [data.chantiers, filterStatut, filterCat, search]);
+
+  // Garde de route : l'onglet est masqué (href:null) mais la route reste
+  // atteignable par URL (web) — on protège au rendu.
+  if (!isAdmin) {
+    return (
+      <ScreenContainer>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 14, color: '#8C8077' }}>Accès réservé aux administrateurs.</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>

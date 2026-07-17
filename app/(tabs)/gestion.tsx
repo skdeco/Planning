@@ -20,7 +20,8 @@ interface HubCard {
 }
 
 export default function GestionScreen() {
-  const { data } = useApp();
+  const { data, currentUser } = useApp();
+  const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
   const { refreshing, onRefresh } = useRefresh();
 
@@ -35,6 +36,17 @@ export default function GestionScreen() {
     { route: '/(tabs)/societe', title: 'Société', desc: 'Documents juridiques, fiscaux et assurances', icon: Building2 },
     { route: '/(tabs)/drive', title: 'Drive documentaire', desc: 'Tous les documents de tous les chantiers', icon: FolderOpen },
   ];
+
+  // Garde de route : hub réservé à l'admin (route atteignable par URL sur le web).
+  if (!isAdmin) {
+    return (
+      <ScreenContainer>
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Text style={{ fontSize: 14, color: '#8C8077' }}>Accès réservé aux administrateurs.</Text>
+        </View>
+      </ScreenContainer>
+    );
+  }
 
   return (
     <ScreenContainer>

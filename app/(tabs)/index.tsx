@@ -315,7 +315,9 @@ export default function DashboardScreen() {
             );
           })()}
 
-          {/* Pointage + statut rapide */}
+          {/* Pointage — masqué pour un employé dispensé de pointage (doitPointer === false),
+              cohérent avec l'onglet Pointage lui-même masqué dans ce cas. */}
+          {data.employes.find(e => e.id === myId)?.doitPointer !== false && (
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
             <Pressable style={{ flex: 2, backgroundColor: myPointagesDuJour.debut ? '#D4EDDA' : '#2C2C2C', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}
               onPress={() => router.push('/(tabs)/pointage' as any)}>
@@ -339,6 +341,7 @@ export default function DashboardScreen() {
               </Pressable>
             )}
           </View>
+          )}
 
           {/* Bouton "Je suis en retard" */}
           {!myPointagesDuJour.debut && myChantiers.length > 0 && (

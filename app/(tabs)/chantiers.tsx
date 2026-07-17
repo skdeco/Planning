@@ -229,6 +229,12 @@ export default function ChantiersScreen() {
 
   useEffect(() => {
     if (isHydrated && !currentUser) router.replace('/login');
+    // L'écran Chantiers est réservé à l'admin et aux apporteurs (vue filtrée).
+    // L'onglet est masqué à l'employé mais la route reste atteignable (bouton SAV
+    // du planning, URL web) → on le renvoie à l'accueil.
+    else if (isHydrated && currentUser && currentUser.role !== 'admin' && currentUser.role !== 'apporteur') {
+      router.replace('/(tabs)');
+    }
   }, [isHydrated, currentUser, router]);
 
   const isAdmin = currentUser?.role === 'admin';
