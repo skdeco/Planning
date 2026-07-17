@@ -79,7 +79,7 @@ const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contract
 ];
 
 export function PortailClient({ visible, onClose, chantierId }: PortailClientProps) {
-  const { data, currentUser, updateChantier, addPlanChantier, deletePlanChantier } = useApp();
+  const { data, currentUser, updateChantier, updateSupplementMarche, addPlanChantier, deletePlanChantier } = useApp();
   const isAdmin = currentUser?.role === 'admin';
   const isExterne = currentUser?.role === 'apporteur';
   const externAp = isExterne ? (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId) : undefined;
@@ -226,6 +226,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // ── Marches ──
   const marches = useMemo(() => (data.marchesChantier || []).filter(m => m.chantierId === chantierId), [data.marchesChantier, chantierId]);
   const supplements = useMemo(() => (data.supplementsMarche || []).filter(s => s.chantierId === chantierId && s.statut === 'accepte'), [data.supplementsMarche, chantierId]);
+  // Avenants en attente de validation client (Tier 3 B4).
+  const avenantsEnAttente = useMemo(() => (data.supplementsMarche || []).filter(s => s.chantierId === chantierId && s.statut === 'en_attente'), [data.supplementsMarche, chantierId]);
 
   // ── Situations facturées (snapshots) agrégées par date, tous marchés + supps ──
   const situationsFigees = useMemo(() => {
@@ -402,6 +404,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     });
   };
 
+  // Réponse du client à un avenant proposé (Tier 3 B4).
+  const repondreAvenant = (supp: NonNullable<typeof avenantsEnAttente>[number], accepte: boolean) => {
+    updateSupplementMarche({
+      ...supp,
+      statut: accepte ? 'accepte' : 'refuse',
+      dateAccord: accepte ? new Date().toISOString().slice(0, 10) : undefined,
+      updatedAt: new Date().toISOString(),
+    });
+  };
+
   // TVA extraite du devis — sinon fallback 20% uniforme
   const tvaBreakdown = chantier?.devisTVABreakdown || [];
   const totalChantierHT = useMemo(
@@ -445,6 +457,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const getApp = (id?: string) => id ? apporteurs.find(a => a.id === id) : undefined;
   const contactPrincipal = useMemo(() => {
     if (!chantier) return null;
+    // Un externe connecté voit SON propre espace (pas le contact prioritaire du chantier).
+    if (externAp) return { type: externAp.type, apporteur: externAp };
     const cl = getApp(chantier.clientApporteurId);
     if (cl) return { type: 'client' as const, apporteur: cl };
     const ar = getApp(chantier.architecteId);
@@ -454,7 +468,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     const ct = getApp(chantier.contractantId);
     if (ct) return { type: 'contractant' as const, apporteur: ct };
     return null;
-  }, [chantier, apporteurs]);
+  }, [chantier, apporteurs, externAp]);
 
   // ── Handlers ──
   const handleSelectContact = (type: 'architecte' | 'apporteur' | 'contractant' | 'client', apporteurId: string | null) => {
@@ -1266,6 +1280,32 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET CHIFFRES ─────────────── */}
             {ongletActif === 'chiffres' && (<>
+            {/* ── Avenants à valider (client) — Tier 3 B4 ── */}
+            {(isClient || isAdmin) && avenantsEnAttente.length > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>📝 Avenants à valider ({avenantsEnAttente.length})</Text>
+                {avenantsEnAttente.map(s => (
+                  <View key={s.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C', flex: 1 }} numberOfLines={2}>{s.libelle}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#8C6D2F' }}>{fmt(s.montantTTC)} €</Text>
+                    </View>
+                    {s.description ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{s.description}</Text> : null}
+                    {isClient && (
+                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+                        <Pressable onPress={() => repondreAvenant(s, true)} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: '#2E7D32', borderRadius: 8 }}>
+                          <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>✓ Accepter</Text>
+                        </Pressable>
+                        <Pressable onPress={() => repondreAvenant(s, false)} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#E74C3C' }}>
+                          <Text style={{ fontSize: 12, color: '#E74C3C', fontWeight: '700' }}>Refuser</Text>
+                        </Pressable>
+                      </View>
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+
             {/* ── Ma commission (apporteur / architecte) — Tier 3 C ── */}
             {peutVoirCommissions && !isClient && maCommission && (
               <View style={styles.card}>
@@ -1317,8 +1357,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               )}
 
-              {/* Détail comptable (HT / TVA / situations) — masqué au client, visible admin/architecte. */}
-              {totalChantierHT > 0 && !isClient && (
+              {/* Détail comptable (HT / TVA / situations = flux financiers client) — ADMIN uniquement.
+                  Le client a sa vue simplifiée ci-dessus ; l'architecte voit sa commission, pas les finances client. */}
+              {totalChantierHT > 0 && isAdmin && (
                 <View style={styles.pfsResumeBox}>
                   <View style={styles.pfsResumeRow}>
                     <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
