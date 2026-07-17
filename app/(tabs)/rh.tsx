@@ -461,9 +461,11 @@ export default function RHScreen() {
         {/* ── Congés ── */}
         {activeTab === 'conges' && (() => {
           // Calcul du solde de congés
-          const JOURS_PAR_AN = 25;
           const anneeRef = new Date().getFullYear(); // le solde se calcule sur l'année civile en cours
           const targetId = isRH ? null : myId; // Admin voit tous, employé voit le sien
+          // Droit à congés propre à l'employé concerné (défaut 25 si non renseigné).
+          const soldeEmp = (targetId || myId) ? data.employes.find(e => e.id === (targetId || myId)) : undefined;
+          const JOURS_PAR_AN = soldeEmp?.joursCongesAnnuels ?? 25;
           const congesApprouves = conges.filter(d => d.statut === 'approuve' && (!targetId || d.employeId === targetId));
           const joursPris = congesApprouves.reduce((total, d) => {
             const debut = new Date(d.dateDebut);

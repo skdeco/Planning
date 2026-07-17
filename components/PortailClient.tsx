@@ -1357,9 +1357,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               )}
 
-              {/* Détail comptable (HT / TVA / situations = flux financiers client) — ADMIN uniquement.
-                  Le client a sa vue simplifiée ci-dessus ; l'architecte voit sa commission, pas les finances client. */}
-              {totalChantierHT > 0 && isAdmin && (
+              {/* Détail comptable (HT / TVA / situations). Admin + architecte le voient ;
+                  client = vue simplifiée ci-dessus ; apporteur/contractant = accès géré par l'admin (toggle à venir). */}
+              {totalChantierHT > 0 && (isAdmin || (isExterne && externAp?.type === 'architecte')) && (
                 <View style={styles.pfsResumeBox}>
                   <View style={styles.pfsResumeRow}>
                     <Text style={styles.pfsResumeLabel}>Total lots HT</Text>

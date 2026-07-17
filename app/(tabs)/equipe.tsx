@@ -105,6 +105,7 @@ interface EmployeForm {
   salaireNet: string;
   modeSalaire: 'mensuel' | 'journalier';
   tarifJournalier: string;
+  joursCongesAnnuels: string;
   couleur: string;
   horaires: HorairesHebdo;
   isAcheteur: boolean;
@@ -126,6 +127,7 @@ const DEFAULT_FORM: EmployeForm = {
   salaireNet: '',
   modeSalaire: 'mensuel',
   tarifJournalier: '',
+  joursCongesAnnuels: '',
   couleur: EMPLOYE_COLORS[0],
   horaires: { ...HORAIRES_DEFAUT },
   isAcheteur: false,
@@ -315,6 +317,7 @@ export default function EquipeScreen() {
       salaireNet: emp.salaireNet != null ? String(emp.salaireNet) : '',
       modeSalaire: emp.modeSalaire || 'mensuel',
       tarifJournalier: emp.tarifJournalier != null ? String(emp.tarifJournalier) : '',
+      joursCongesAnnuels: emp.joursCongesAnnuels != null ? String(emp.joursCongesAnnuels) : '',
       couleur: emp.couleur || EMPLOYE_COLORS[0],
       horaires: emp.horaires ? { ...emp.horaires } : { ...HORAIRES_DEFAUT },
       isAcheteur: emp.isAcheteur || false,
@@ -350,6 +353,7 @@ export default function EquipeScreen() {
     if (!form.prenom.trim() || !form.identifiant.trim() || !form.motDePasse.trim()) return;
     const salaire = form.salaireNet.trim() ? parseFloat(form.salaireNet.replace(',', '.')) : undefined;
     const tarif = form.tarifJournalier.trim() ? parseFloat(form.tarifJournalier.replace(',', '.')) : undefined;
+    const jConges = form.joursCongesAnnuels.trim() ? parseInt(form.joursCongesAnnuels, 10) : undefined;
     const employe: Employe = {
       id: editId || genId(),
       prenom: form.prenom.trim(),
@@ -362,6 +366,7 @@ export default function EquipeScreen() {
       salaireNet: form.modeSalaire === 'mensuel' && salaire && !isNaN(salaire) ? salaire : undefined,
       modeSalaire: form.modeSalaire,
       tarifJournalier: form.modeSalaire === 'journalier' && tarif && !isNaN(tarif) ? tarif : undefined,
+      joursCongesAnnuels: jConges && !isNaN(jConges) ? jConges : undefined,
       horaires: form.horaires,
       isAcheteur: form.isAcheteur,
       isRH: form.isRH,
@@ -1689,6 +1694,10 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldHint}>{t.equipe.dailyRateHint}</Text>
                 </>
               )}
+
+              <Text style={[styles.fieldLabel, { marginTop: 12 }]}>Jours de congés / an</Text>
+              <TextInput style={styles.input} value={form.joursCongesAnnuels} onChangeText={v => setForm(f => ({ ...f, joursCongesAnnuels: v.replace(/[^0-9]/g, '') }))} placeholder="Ex: 25 (défaut)" placeholderTextColor="#B0BEC5" keyboardType="numeric" />
+              <Text style={styles.fieldHint}>Laisser vide = 25 jours par défaut.</Text>
 
               {/* Couleur */}
           <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.colorInPlanning}</Text>

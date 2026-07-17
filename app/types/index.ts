@@ -169,6 +169,7 @@ export interface Employe {
   salaireNet?: number;       // salaire net mensuel en euros (admin only)
   modeSalaire?: 'mensuel' | 'journalier'; // mensuel (fixe) ou journalier (nb jours ouvrables × tarif)
   tarifJournalier?: number;  // tarif journalier en euros (si modeSalaire === 'journalier')
+  joursCongesAnnuels?: number; // droit à congés payés par an (défaut 25 si non renseigné)
   horaires?: HorairesHebdo;  // horaires théoriques par jour de semaine
   isAcheteur?: boolean;      // peut voir et gérer les listes matériel
   isRH?: boolean;            // accès au module Ressources Humaines

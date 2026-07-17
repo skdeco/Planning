@@ -63,7 +63,7 @@ export function SectionTile({
           style={styles.tile}
         >
           <View style={[styles.iconWrap, { backgroundColor: iconBg }]}>
-            <Icon size={20} color={iconColor} strokeWidth={2.2} />
+            <Icon size={26} color={iconColor} strokeWidth={2.2} />
           </View>
           <Text style={styles.label} numberOfLines={2}>
             {label}
@@ -83,7 +83,7 @@ export function SectionTile({
 
 const styles = StyleSheet.create({
   touchable: {
-    aspectRatio: 1.4, // V10 — Option A validée Kevin : tuiles aplaties
+    aspectRatio: 1.8, // tuiles plus compactes (cadre réduit), icône agrandie à l'intérieur
   },
   tile: {
     flex: 1,
@@ -91,17 +91,17 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: DS.border,
     borderRadius: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     paddingHorizontal: 4,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    gap: 5,
     position: 'relative',
   },
   iconWrap: {
-    width: 24,
-    height: 24,
-    borderRadius: 7,
+    width: 32,
+    height: 32,
+    borderRadius: 9,
     alignItems: 'center',
     justifyContent: 'center',
   },
