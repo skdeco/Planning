@@ -1239,8 +1239,32 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               <Text style={styles.sectionTitle}>💰 Budget</Text>
               <Text style={styles.pfsSubtitle}>Total chantier, règlements perçus et restant à payer</Text>
 
-              {/* Résumé financier global — toujours visible */}
-              {totalChantierHT > 0 && (
+              {/* Vue simplifiée pour le client : prix TTC, déjà réglé, reste + progression. */}
+              {isClient && totalChantierTTC > 0 && (
+                <View style={styles.pfsResumeBox}>
+                  <View style={styles.pfsResumeRow}>
+                    <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>Prix total de vos travaux</Text>
+                    <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
+                  </View>
+                  <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
+                    <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontWeight: '700' }]}>Déjà réglé</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontWeight: '700' }]}>{fmt(dejaPayeTotal)} €</Text>
+                  </View>
+                  <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
+                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Reste à payer</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
+                  </View>
+                  <View style={{ height: 8, backgroundColor: '#E8DDD0', borderRadius: 4, overflow: 'hidden', marginTop: 10 }}>
+                    <View style={{ height: '100%', width: `${totalChantierTTC > 0 ? Math.min(100, Math.round((dejaPayeTotal / totalChantierTTC) * 100)) : 0}%`, backgroundColor: '#2E7D32' }} />
+                  </View>
+                  <Text style={{ fontSize: 11, color: '#687076', textAlign: 'center', marginTop: 4 }}>
+                    {totalChantierTTC > 0 ? Math.round((dejaPayeTotal / totalChantierTTC) * 100) : 0}% réglé
+                  </Text>
+                </View>
+              )}
+
+              {/* Détail comptable (HT / TVA / situations) — masqué au client, visible admin/architecte. */}
+              {totalChantierHT > 0 && !isClient && (
                 <View style={styles.pfsResumeBox}>
                   <View style={styles.pfsResumeRow}>
                     <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
@@ -1641,6 +1665,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET PROJET ─────────────── */}
             {ongletActif === 'projet' && (<>
+            {/* Accès rapide "Signaler un problème" pour l'externe (le SAV complet reste dans Fin de chantier). */}
+            {!isAdmin && (
+              <Pressable onPress={() => setShowNouveauSav(true)} style={{ backgroundColor: '#FBEEE9', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#E8C4B8' }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#B5531F' }}>⚠️  Signaler un problème</Text>
+              </Pressable>
+            )}
             {/* ── Lié à (admin only, format compact) ── */}
             {isAdmin && (
               <View style={styles.lieAcompact}>
