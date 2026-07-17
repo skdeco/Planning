@@ -229,6 +229,8 @@ export default function DashboardScreen() {
   const [showImport, setShowImport] = useState(false);
   // Alertes masquées (clé = texte de l'alerte)
   const [dismissedAlertes, setDismissedAlertes] = useState<Set<string>>(new Set());
+  // Dashboard admin : reporting financier détaillé replié par défaut (allègement du scroll).
+  const [showFinancesDetail, setShowFinancesDetail] = useState(false);
   // Recherche globale (modal dédié GlobalSearch)
   const [searchOpen, setSearchOpen] = useState(false);
   // Pense-bête
@@ -929,7 +931,8 @@ export default function DashboardScreen() {
                 icon: '💸',
                 text: `Relance : ${ch?.nom || ''} — ${resteFormatted}€ restant (${daysSince === 999 ? 'aucun paiement' : `${daysSince}j sans paiement`})`,
                 color: '#E5A840',
-                onPress: () => router.push('/(tabs)/chantiers' as any),
+                // Raccourci "Encaisser" : ouvre directement le modal Marchés du chantier (au lieu de la liste).
+                onPress: () => router.push({ pathname: '/(tabs)/chantiers', params: { action: 'marches', chantierId: m.chantierId } } as any),
               });
             }
           });
@@ -1199,6 +1202,12 @@ export default function DashboardScreen() {
           })}
         </View>
 
+        {/* Reporting financier détaillé — repliable pour alléger le dashboard (Rentabilité + CA). */}
+        <Pressable onPress={() => setShowFinancesDetail(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 4 }}>
+          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>💰 Finances (détail)</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: '#8C6D2F' }}>{showFinancesDetail ? '▲ Masquer' : '▼ Afficher'}</Text>
+        </Pressable>
+        {showFinancesDetail && (<>
         {/* Rentabilité par chantier */}
         {(() => {
           const chantiersActifs = data.chantiers.filter(c => c.statut !== 'termine');
@@ -1297,6 +1306,7 @@ export default function DashboardScreen() {
             </FadeInView>
           );
         })()}
+        </>)}
 
         {/* Alertes (messages + RH, sans matériel qui est déjà en haut) */}
         {(stats.msgsNonLus > 0 || stats.demandesRH > 0) && (
