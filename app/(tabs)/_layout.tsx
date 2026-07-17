@@ -274,6 +274,15 @@ export default function TabLayout() {
           href: null,
         }}
       />
+
+      {/* Drive documentaire général : accessible via le hub Gestion (caché du bar) */}
+      <Tabs.Screen
+        name="drive"
+        options={{
+          title: 'Drive',
+          href: null,
+        }}
+      />
     </Tabs>
     </View>
   );

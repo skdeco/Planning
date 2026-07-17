@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChartBar, Users, Building2, ChevronRight } from 'lucide-react-native';
+import { ChartBar, Users, Building2, FolderOpen, ChevronRight } from 'lucide-react-native';
 import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
@@ -33,6 +33,7 @@ export default function GestionScreen() {
     { route: '/(tabs)/reporting', title: 'Reporting', desc: 'Pointages, heures, paie et statistiques', icon: ChartBar },
     { route: '/(tabs)/rh', title: 'Ressources humaines', desc: 'Congés, avances, arrêts maladie', icon: Users, badge: nbDemandesEnAttente },
     { route: '/(tabs)/societe', title: 'Société', desc: 'Documents juridiques, fiscaux et assurances', icon: Building2 },
+    { route: '/(tabs)/drive', title: 'Drive documentaire', desc: 'Tous les documents de tous les chantiers', icon: FolderOpen },
   ];
 
   return (
