@@ -29,7 +29,7 @@ import { SectionTile } from './SectionTile';
  *
  * Composant purement présentationnel : counts + handlers passés en props,
  * toute la logique métier (récupération counts, ouverture modals) reste dans
- * le parent.
+ * le parent. Les tuiles sont regroupées par famille pour hiérarchiser la vue.
  */
 export interface ChantierDetailDashboardCounts {
   notes: number;
@@ -86,24 +86,44 @@ export function ChantierDetailDashboard({
   counts,
   handlers,
 }: ChantierDetailDashboardProps) {
-  const tiles: TileSpec[] = [
-    { icon: Info,           label: 'Infos utiles', variant: 'bordeaux', onPress: handlers.onPressFiche },
-    { icon: LayoutGrid,     label: 'Plans',        variant: 'bordeaux', onPress: handlers.onPressPlans,       badge: counts.plans },
-    { icon: CheckSquare,    label: 'Notes',        variant: 'bordeaux', onPress: handlers.onPressNotes,       badge: counts.notes },
-    { icon: ClipboardList,  label: 'Suivis CR',    variant: 'bordeaux', onPress: handlers.onPressSuivis,      badge: counts.notesPlanning },
-    { icon: Camera,         label: 'Photos',       variant: 'marron',   onPress: handlers.onPressPhotos,      badge: counts.photos },
-    { icon: Navigation,     label: 'Y aller',      variant: 'marron',   onPress: handlers.onPressYAller },
-    { icon: Briefcase,      label: 'Marchés',      variant: 'bordeaux', onPress: handlers.onPressMarches,     badge: counts.marches, adminOnly: true },
-    { icon: Wrench,         label: 'SAV',          variant: 'bordeaux', onPress: handlers.onPressSAV,         badge: counts.sav,     adminOnly: true },
-    { icon: ShoppingCart,   label: 'Achats',       variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
-    { icon: FileCheck,      label: 'PV réception', variant: 'bordeaux', onPress: handlers.onPressPV,          adminOnly: true },
-    { icon: TrendingUp,     label: 'Rentabilité',  variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
-    { icon: Truck,          label: 'Livraison',    variant: 'marron',   onPress: handlers.onPressLivraison,   badge: counts.livraisons },
-    { icon: MessageCircle,  label: 'Messagerie',   variant: 'bordeaux', onPress: handlers.onPressMessagerie,  adminOnly: true },
-    { icon: User,           label: 'Portail client', variant: 'marron', onPress: handlers.onPressPortailClient, adminOnly: true },
+  // Tuiles regroupées par famille pour hiérarchiser (plutôt que 14 tuiles à plat).
+  const groups: { titre: string; tiles: TileSpec[] }[] = [
+    {
+      titre: 'Suivi & terrain',
+      tiles: [
+        { icon: CheckSquare,   label: 'Notes',     variant: 'bordeaux', onPress: handlers.onPressNotes,  badge: counts.notes },
+        { icon: Camera,        label: 'Photos',    variant: 'marron',   onPress: handlers.onPressPhotos, badge: counts.photos },
+        { icon: ClipboardList, label: 'Suivis CR', variant: 'bordeaux', onPress: handlers.onPressSuivis, badge: counts.notesPlanning },
+        { icon: Navigation,    label: 'Y aller',   variant: 'marron',   onPress: handlers.onPressYAller },
+      ],
+    },
+    {
+      titre: 'Finances',
+      tiles: [
+        { icon: Briefcase,    label: 'Marchés',     variant: 'bordeaux', onPress: handlers.onPressMarches,     badge: counts.marches, adminOnly: true },
+        { icon: ShoppingCart, label: 'Achats',      variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
+        { icon: TrendingUp,   label: 'Rentabilité', variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
+      ],
+    },
+    {
+      titre: 'Documents & réception',
+      tiles: [
+        { icon: Info,       label: 'Infos utiles', variant: 'bordeaux', onPress: handlers.onPressFiche },
+        { icon: LayoutGrid, label: 'Plans',        variant: 'bordeaux', onPress: handlers.onPressPlans,     badge: counts.plans },
+        { icon: FileCheck,  label: 'PV réception', variant: 'bordeaux', onPress: handlers.onPressPV,        adminOnly: true },
+        { icon: Truck,      label: 'Livraison',    variant: 'marron',   onPress: handlers.onPressLivraison, badge: counts.livraisons },
+      ],
+    },
+    {
+      titre: 'Client & SAV',
+      tiles: [
+        { icon: Wrench,        label: 'SAV',            variant: 'bordeaux', onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
+        { icon: User,          label: 'Portail client', variant: 'marron',   onPress: handlers.onPressPortailClient, adminOnly: true },
+        { icon: MessageCircle, label: 'Messagerie',     variant: 'bordeaux', onPress: handlers.onPressMessagerie,    adminOnly: true },
+      ],
+    },
   ];
 
-  const visibleTiles = tiles.filter(t => !t.adminOnly || isAdmin);
   const hasFooterActions =
     isAdmin && (
       handlers.onPressEdit !== undefined ||
@@ -111,38 +131,30 @@ export function ChantierDetailDashboard({
       handlers.onPressSupprimer !== undefined
     );
 
-  // V10 — Centrer la dernière ligne si elle est incomplète (ex: 13 tuiles sur 3 colonnes
-  //        → la 13e seule sur la 5e ligne. Spacer avant pour la centrer.)
-  const totalTiles = visibleTiles.length;
-  const remainder = totalTiles % 3;
-  // Si reste = 1 (cas 13) : 1 spacer avant ; si reste = 2 (cas 14) : 0.5 spacer avant
-  // (en pratique on ajoute 1 spacer pour reste=1, 0 pour reste=2 ou 0)
-  const lastRowSpacers = remainder === 1 ? 1 : 0;
-
   return (
     <View style={styles.container}>
-      <View style={styles.grid}>
-        {visibleTiles.map((tile, i) => {
-          const isLastTile = i === totalTiles - 1;
-          return (
-            <React.Fragment key={`${tile.label}-${i}`}>
-              {/* Spacer invisible avant la dernière tuile si dernière ligne incomplète */}
-              {isLastTile && Array.from({ length: lastRowSpacers }).map((_, j) => (
-                <View key={`spacer-${j}`} style={styles.tileWrap} />
+      {groups.map((group) => {
+        const gTiles = group.tiles.filter(t => !t.adminOnly || isAdmin);
+        if (gTiles.length === 0) return null;
+        return (
+          <View key={group.titre} style={styles.group}>
+            <Text style={styles.groupTitle}>{group.titre}</Text>
+            <View style={styles.grid}>
+              {gTiles.map((tile, i) => (
+                <View key={`${tile.label}-${i}`} style={styles.tileWrap}>
+                  <SectionTile
+                    icon={tile.icon}
+                    label={tile.label}
+                    variant={tile.variant}
+                    onPress={tile.onPress}
+                    badge={tile.badge}
+                  />
+                </View>
               ))}
-              <View style={styles.tileWrap}>
-                <SectionTile
-                  icon={tile.icon}
-                  label={tile.label}
-                  variant={tile.variant}
-                  onPress={tile.onPress}
-                  badge={tile.badge}
-                />
-              </View>
-            </React.Fragment>
-          );
-        })}
-      </View>
+            </View>
+          </View>
+        );
+      })}
 
       {hasFooterActions && (
         <View style={styles.footer}>
@@ -175,6 +187,17 @@ export function ChantierDetailDashboard({
 const styles = StyleSheet.create({
   container: {
     gap: 16,
+  },
+  group: {
+    gap: 8,
+  },
+  groupTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: DS.marron,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 2,
   },
   grid: {
     flexDirection: 'row',
