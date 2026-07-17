@@ -17,6 +17,7 @@ import { BilanFinancierChantier } from '@/components/BilanFinancierChantier';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { MarchesChantier } from '@/components/MarchesChantier';
 import { DriveChantier } from '@/components/DriveChantier';
+import { SelectField } from '@/components/ui/SelectField';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PortailClient } from '@/components/PortailClient';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
@@ -1493,93 +1494,67 @@ export default function ChantiersScreen() {
         )}
       </View>
 
-      {/* Filtre par statut de chantier — défaut "En cours" pour garder la liste principale épurée */}
+      {/* Filtres liste — listes déroulantes (statut + contact) */}
       {isAdmin && (
-        <View style={{ paddingHorizontal: 16, marginBottom: 6, marginTop: 4 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-            {([
-              { key: 'en_cours', label: 'En cours' },
-              { key: 'a_letude', label: "À l'étude" },
-              { key: 'termine', label: 'Terminés' },
-              { key: 'archive', label: 'Archivés' },
-              { key: 'tous', label: 'Tous' },
-            ] as const).map(({ key, label }) => {
-              const active = filterStatut === key;
-              return (
-                <Pressable
-                  key={key}
-                  style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: active ? '#2C2C2C' : '#E8DDD0', backgroundColor: active ? '#2C2C2C' : '#F5EDE3' }}
-                  onPress={() => setFilterStatut(key)}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: active ? '#fff' : '#687076' }}>{label}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        </View>
-      )}
-
-      {/* Filtre par type de contact */}
-      {isAdmin && (
-        <View style={{ paddingHorizontal: 16, marginBottom: 6 }}>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-            <Pressable
-              style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: filterContactType === 'all' ? '#2C2C2C' : '#E8DDD0', backgroundColor: filterContactType === 'all' ? '#2C2C2C' : '#F5EDE3' }}
-              onPress={() => { setFilterContactType('all'); setFilterContactId('all'); }}
-            >
-              <Text style={{ fontSize: 12, fontWeight: '700', color: filterContactType === 'all' ? '#fff' : '#687076' }}>Tous les chantiers</Text>
-            </Pressable>
-            {(['architecte', 'apporteur', 'client'] as const).map(ty => {
-              const meta = APPORTEUR_TYPE_LABELS[ty];
-              const active = filterContactType === ty;
-              return (
-                <Pressable
-                  key={ty}
-                  style={{ paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: active ? meta.couleur : '#E8DDD0', backgroundColor: active ? meta.couleur : '#F5EDE3' }}
-                  onPress={() => { setFilterContactType(ty); setFilterContactId('all'); }}
-                >
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: active ? '#fff' : '#687076' }}>
-                    {meta.emoji} Par {meta.label.toLowerCase()}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
-          {/* Sous-sélecteur : liste des contacts de ce type */}
+        <View style={{ paddingHorizontal: 16, marginBottom: 6, marginTop: 4, gap: 8 }}>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <SelectField
+                compact
+                value={filterStatut}
+                title="Statut du chantier"
+                options={[
+                  { value: 'en_cours', label: 'En cours' },
+                  { value: 'a_letude', label: "À l'étude" },
+                  { value: 'termine', label: 'Terminés' },
+                  { value: 'archive', label: 'Archivés' },
+                  { value: 'tous', label: 'Tous les statuts' },
+                ]}
+                onSelect={v => setFilterStatut(v as typeof filterStatut)}
+              />
+            </View>
+            <View style={{ flex: 1 }}>
+              <SelectField
+                compact
+                value={filterContactType}
+                title="Filtrer par contact"
+                options={[
+                  { value: 'all', label: 'Tous les chantiers' },
+                  { value: 'architecte', label: 'Par architecte' },
+                  { value: 'apporteur', label: "Par apporteur d'affaires" },
+                  { value: 'client', label: 'Par client' },
+                ]}
+                onSelect={v => { setFilterContactType(v as typeof filterContactType); setFilterContactId('all'); }}
+              />
+            </View>
+          </View>
           {filterContactType !== 'all' && (() => {
             const listOfThisType = apporteursAll.filter(a => a.type === filterContactType);
             if (listOfThisType.length === 0) {
               return (
-                <Text style={{ fontSize: 11, color: '#8C8077', marginTop: 8, fontStyle: 'italic' }}>
+                <Text style={{ fontSize: 11, color: '#8C8077', fontStyle: 'italic' }}>
                   Aucun {APPORTEUR_TYPE_LABELS[filterContactType].label.toLowerCase()} enregistré.
                 </Text>
               );
             }
             return (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, marginTop: 8 }}>
-                <Pressable
-                  style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: filterContactId === 'all' ? '#2C2C2C' : '#E8DDD0', backgroundColor: filterContactId === 'all' ? '#E8DDD0' : '#fff' }}
-                  onPress={() => setFilterContactId('all')}
-                >
-                  <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Tous</Text>
-                </Pressable>
-                {listOfThisType.map(a => (
-                  <Pressable
-                    key={a.id}
-                    style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: filterContactId === a.id ? '#2C2C2C' : '#E8DDD0', backgroundColor: filterContactId === a.id ? '#2C2C2C' : '#fff' }}
-                    onPress={() => setFilterContactId(a.id)}
-                  >
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: filterContactId === a.id ? '#fff' : '#2C2C2C' }}>
-                      {a.prenom} {a.nom}
-                    </Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
+              <SelectField
+                compact
+                searchable
+                value={filterContactId}
+                title={`Choisir un ${APPORTEUR_TYPE_LABELS[filterContactType].label.toLowerCase()}`}
+                options={[
+                  { value: 'all', label: 'Tous' },
+                  ...listOfThisType.map(a => ({ value: a.id, label: `${a.prenom} ${a.nom}` })),
+                ]}
+                onSelect={v => setFilterContactId(v)}
+              />
             );
           })()}
         </View>
       )}
+
+      {/* Filtres contact intégrés dans les listes déroulantes ci-dessus. */}
 
       <FlatList
         data={chantiersFiltered}
@@ -1831,19 +1806,12 @@ export default function ChantiersScreen() {
               </View>
 
               <FormField label={t.common.status}>
-                <View style={styles.chipRow}>
-                  {STATUTS.map(s => (
-                    <Pressable
-                      key={s}
-                      style={[styles.chip, form.statut === s && styles.chipActive]}
-                      onPress={() => setForm(f => ({ ...f, statut: s }))}
-                    >
-                      <Text style={[styles.chipText, form.statut === s && styles.chipTextActive]}>
-                        {STATUT_LABELS[s]}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
+                <SelectField
+                  value={form.statut}
+                  title="Statut du chantier"
+                  options={STATUTS.map(s => ({ value: s, label: STATUT_LABELS[s], color: STATUT_COLORS[s].text }))}
+                  onSelect={v => setForm(f => ({ ...f, statut: v as StatutChantier }))}
+                />
               </FormField>
 
               <FormField label={t.common.color}>
@@ -1878,34 +1846,20 @@ export default function ChantiersScreen() {
                       <Text style={{ fontSize: 12, fontWeight: '700', color: meta.couleur, marginBottom: 6 }}>
                         {meta.emoji} {meta.label}
                       </Text>
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
-                        <Pressable
-                          onPress={() => setForm(f => ({ ...f, [field]: '' }))}
-                          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: !selectedId ? '#2C2C2C' : '#E8DDD0', backgroundColor: !selectedId ? '#E8DDD0' : '#fff' }}
-                        >
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Aucun</Text>
-                        </Pressable>
-                        {listOfThisType.map(a => {
-                          const active = selectedId === a.id;
-                          return (
-                            <Pressable
-                              key={a.id}
-                              onPress={() => setForm(f => ({ ...f, [field]: a.id }))}
-                              style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: active ? meta.couleur : '#E8DDD0', backgroundColor: active ? meta.couleur : '#fff' }}
-                            >
-                              <Text style={{ fontSize: 11, fontWeight: '600', color: active ? '#fff' : '#2C2C2C' }}>
-                                {a.prenom} {a.nom}{a.societe ? ` · ${a.societe}` : ''}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                        <Pressable
-                          onPress={() => goCreateApporteur(ty)}
-                          style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', borderColor: meta.couleur, backgroundColor: '#fff' }}
-                        >
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: meta.couleur }}>+ Ajouter</Text>
-                        </Pressable>
-                      </ScrollView>
+                      <SelectField
+                        searchable
+                        value={selectedId || ''}
+                        placeholder="Aucun"
+                        title={`Choisir un ${meta.label.toLowerCase()}`}
+                        options={[
+                          { value: '', label: 'Aucun' },
+                          ...listOfThisType.map(a => ({ value: a.id, label: `${a.prenom} ${a.nom}${a.societe ? ` · ${a.societe}` : ''}` })),
+                        ]}
+                        onSelect={v => setForm(f => ({ ...f, [field]: v }))}
+                      />
+                      <Pressable onPress={() => goCreateApporteur(ty)} style={{ marginTop: 6, alignSelf: 'flex-start' }}>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: meta.couleur }}>+ Ajouter un {meta.label.toLowerCase()}</Text>
+                      </Pressable>
                       {ty === 'client' && !selectedId && (
                         <Pressable
                           onPress={openQuickClient}
