@@ -16,6 +16,7 @@ import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
 import { BilanFinancierChantier } from '@/components/BilanFinancierChantier';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { MarchesChantier } from '@/components/MarchesChantier';
+import { DriveChantier } from '@/components/DriveChantier';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PortailClient } from '@/components/PortailClient';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
@@ -316,6 +317,7 @@ export default function ChantiersScreen() {
   const [showGalerie, setShowGalerie] = useState<string | null>(null);
   const [viewPhotoUri, setViewPhotoUri] = useState<string | null>(null);
   const [marchesChantierId, setMarchesChantierId] = useState<string | null>(null);
+  const [driveChantierId, setDriveChantierId] = useState<string | null>(null);
   const [savChantierId, setSavChantierId] = useState<string | null>(null);
   const [portailClientId, setPortailClientId] = useState<string | null>(null);
   // V10 — messagerie côté admin (modal ChatChantier dédiée, distincte du portail client)
@@ -1644,6 +1646,7 @@ export default function ChantiersScreen() {
                     handlers={{
                       onPressFiche:       () => { setActionChantier(null); setTimeout(() => openFicheUnifiee(ch), 100); },
                       onPressPlans:       () => { setActionChantier(null); setTimeout(() => openPlans(ch), 100); },
+                      onPressDrive:       () => { setActionChantier(null); setTimeout(() => setDriveChantierId(ch.id), 100); },
                       onPressNotes:       () => { setActionChantier(null); setTimeout(() => openNotes(ch), 100); },
                       onPressSuivis:      () => { setActionChantier(null); setTimeout(() => setSuiviChantierId(ch.id), 100); },
                       onPressPhotos:      () => { setActionChantier(null); setTimeout(() => setShowGalerie(ch.id), 100); },
@@ -3605,6 +3608,9 @@ export default function ChantiersScreen() {
 
       {marchesChantierId && (
         <MarchesChantier visible={!!marchesChantierId} onClose={() => setMarchesChantierId(null)} chantierId={marchesChantierId} />
+      )}
+      {driveChantierId && (
+        <DriveChantier visible={!!driveChantierId} onClose={() => setDriveChantierId(null)} chantierId={driveChantierId} />
       )}
       {portailClientId && (
         <PortailClient visible={!!portailClientId} onClose={() => setPortailClientId(null)} chantierId={portailClientId} />

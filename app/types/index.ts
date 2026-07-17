@@ -97,6 +97,28 @@ export const STATUT_COLORS: Record<StatutChantier, { bg: string; text: string }>
   archive:    { bg: '#E9ECEF', text: '#6C757D' },
 };
 
+// ── Drive documentaire par chantier (Tier 3 A2) ──
+export type ChantierDocCategorie =
+  | 'devis' | 'devis_st' | 'devis_concurrents' | 'photos_existant' | 'references' | 'factures';
+
+export const CHANTIER_DOC_CATEGORIES: { key: ChantierDocCategorie; label: string }[] = [
+  { key: 'devis',             label: 'Devis' },
+  { key: 'devis_st',          label: 'Devis TS' },
+  { key: 'devis_concurrents', label: 'Devis concurrents' },
+  { key: 'photos_existant',   label: "Photos de l'existant" },
+  { key: 'references',        label: 'Références diverses' },
+  { key: 'factures',          label: 'Factures' },
+];
+
+export interface ChantierDoc {
+  id: string;
+  categorie: ChantierDocCategorie;
+  nom: string;
+  fichierUrl: string;
+  uploadedAt: string;      // ISO
+  uploadedPar?: string;    // nom de l'uploader
+}
+
 export const CHANTIER_COLORS = [
   '#1A3A6B', '#9B59B6', '#27AE60', '#E74C3C',
   '#0088FF', '#FF6B35', '#FFB800', '#A0522D',
@@ -288,6 +310,8 @@ export interface Chantier {
     pieceJointe?: string;               // URI photo/PDF
     pieceJointeNom?: string;
   }>;
+  // Drive documentaire du chantier (devis, références, factures… — Tier 3 A2)
+  documents?: ChantierDoc[];
   // Procès-verbal de réception
   pvReception?: PVReception;
   /** Override des permissions portail par contact (clé = apporteur.id) */

@@ -14,6 +14,7 @@ import {
   TrendingUp,
   MessageCircle,
   Truck,
+  FolderOpen,
   CheckCircle2,
   Trash2,
   User,
@@ -56,6 +57,8 @@ export interface ChantierDetailDashboardHandlers {
   onPressRentabilite: () => void;
   onPressLivraison: () => void;
   onPressMessagerie: () => void;
+  /** Drive documentaire du chantier (devis, références, factures). */
+  onPressDrive: () => void;
   /** Aperçu du portail client (vue qu'aura le client connecté). */
   onPressPortailClient: () => void;
   /** Si undefined, bouton "Modifier" masqué. */
@@ -108,6 +111,7 @@ export function ChantierDetailDashboard({
     {
       titre: 'Documents & réception',
       tiles: [
+        { icon: FolderOpen, label: 'Documents',    variant: 'bordeaux', onPress: handlers.onPressDrive, adminOnly: true },
         { icon: Info,       label: 'Infos utiles', variant: 'bordeaux', onPress: handlers.onPressFiche },
         { icon: LayoutGrid, label: 'Plans',        variant: 'bordeaux', onPress: handlers.onPressPlans,     badge: counts.plans },
         { icon: FileCheck,  label: 'PV réception', variant: 'bordeaux', onPress: handlers.onPressPV,        adminOnly: true },
