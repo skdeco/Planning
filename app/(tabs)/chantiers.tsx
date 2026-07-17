@@ -189,6 +189,8 @@ interface ChantierForm {
   apporteurId: string;
   contractantId: string;
   clientApporteurId: string;
+  // ② Accès finances accordé par l'admin à l'apporteur d'affaires (architecte : toujours autorisé)
+  apporteurVoitFinances: boolean;
 }
 
 // Clé AsyncStorage pour préserver le formulaire chantier quand on va créer un Apporteur
@@ -212,6 +214,7 @@ const DEFAULT_FORM: ChantierForm = {
   apporteurId: '',
   contractantId: '',
   clientApporteurId: '',
+  apporteurVoitFinances: false,
 };
 
 export default function ChantiersScreen() {
@@ -369,6 +372,7 @@ export default function ChantiersScreen() {
       apporteurId: chantier.apporteurId || '',
       contractantId: chantier.contractantId || '',
       clientApporteurId: chantier.clientApporteurId || '',
+      apporteurVoitFinances: chantier.portailOverrides?.[chantier.apporteurId ?? '']?.voirChiffres === true,
     });
     setFicheOnglet('fiche');
     setShowFiche(true);
@@ -707,6 +711,7 @@ export default function ChantiersScreen() {
       apporteurId: chantier.apporteurId || '',
       contractantId: chantier.contractantId || '',
       clientApporteurId: chantier.clientApporteurId || '',
+      apporteurVoitFinances: chantier.portailOverrides?.[chantier.apporteurId ?? '']?.voirChiffres === true,
     });
     setShowForm(true);
   };
@@ -769,6 +774,17 @@ export default function ChantiersScreen() {
     }
 
     const existing = editId ? data.chantiers.find(c => c.id === editId) : null;
+
+    // ② Override finances de l'apporteur (l'admin décide) — préserve les autres overrides.
+    const baseOverrides: NonNullable<Chantier['portailOverrides']> = { ...(existing?.portailOverrides || {}) };
+    if (form.apporteurId) {
+      baseOverrides[form.apporteurId] = {
+        ...(baseOverrides[form.apporteurId] || {}),
+        voirChiffres: form.apporteurVoitFinances,
+      };
+    }
+    const portailOverrides = Object.keys(baseOverrides).length ? baseOverrides : undefined;
+
     // Géocoder l'adresse si elle a changé
     let coords = existing ? { latitude: existing.latitude, longitude: existing.longitude } : null;
     if (adresseComplete && (!existing || adresseComplete !== existing.adresse)) {
@@ -797,6 +813,7 @@ export default function ChantiersScreen() {
         apporteurId: form.apporteurId || undefined,
         contractantId: form.contractantId || undefined,
         clientApporteurId: form.clientApporteurId || undefined,
+        ...(portailOverrides ? { portailOverrides } : {}),
         ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       });
     } else {
@@ -819,6 +836,7 @@ export default function ChantiersScreen() {
         apporteurId: form.apporteurId || undefined,
         contractantId: form.contractantId || undefined,
         clientApporteurId: form.clientApporteurId || undefined,
+        ...(portailOverrides ? { portailOverrides } : {}),
         ...(coords ? { latitude: coords.latitude, longitude: coords.longitude } : {}),
       });
     }
@@ -1860,6 +1878,19 @@ export default function ChantiersScreen() {
                       <Pressable onPress={() => goCreateApporteur(ty)} style={{ marginTop: 6, alignSelf: 'flex-start' }}>
                         <Text style={{ fontSize: 12, fontWeight: '700', color: meta.couleur }}>+ Ajouter un {meta.label.toLowerCase()}</Text>
                       </Pressable>
+                      {ty === 'apporteur' && !!selectedId && (
+                        <Pressable
+                          onPress={() => setForm(f => ({ ...f, apporteurVoitFinances: !f.apporteurVoitFinances }))}
+                          style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 10 }}
+                        >
+                          <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }}>
+                            💶 Autoriser à voir les finances du chantier
+                          </Text>
+                          <View style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: form.apporteurVoitFinances ? '#2E7D32' : '#D8D0C6', alignItems: form.apporteurVoitFinances ? 'flex-end' : 'flex-start' }}>
+                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }} />
+                          </View>
+                        </Pressable>
+                      )}
                       {ty === 'client' && !selectedId && (
                         <Pressable
                           onPress={openQuickClient}
