@@ -312,6 +312,8 @@ export interface Chantier {
   }>;
   // Drive documentaire du chantier (devis, références, factures… — Tier 3 A2)
   documents?: ChantierDoc[];
+  // Validation d'étapes par le client (Tier 3 B) : nom du lot → date ISO de validation.
+  validationsEtapes?: Record<string, string>;
   // Procès-verbal de réception
   pvReception?: PVReception;
   /** Override des permissions portail par contact (clé = apporteur.id) */

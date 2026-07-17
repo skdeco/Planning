@@ -367,6 +367,24 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const dejaPayeAcompte = financials.totalPaye;
   const dejaPayeTotal = dejaPayeAcompte + totalPayeSituations;
 
+  // Versements du client (Tier 3 B) : tous les paiements reçus, du plus récent au plus ancien.
+  const versementsClient = useMemo(() => {
+    const list: { date: string; montant: number }[] = [];
+    marches.forEach(m => (m.paiements || []).forEach(p => list.push({ date: p.date, montant: p.montant })));
+    supplements.forEach(s => (s.paiements || []).forEach(p => list.push({ date: p.date, montant: p.montant })));
+    return list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  }, [marches, supplements]);
+
+  // Validation d'étape par le client (Tier 3 B) : horodate la validation d'un lot achevé.
+  const validerEtape = (lotNom: string) => {
+    if (!chantier) return;
+    updateChantier({
+      ...chantier,
+      validationsEtapes: { ...(chantier.validationsEtapes || {}), [lotNom]: new Date().toISOString() },
+      derniereMajContenu: new Date().toISOString(),
+    });
+  };
+
   // TVA extraite du devis — sinon fallback 20% uniforme
   const tvaBreakdown = chantier?.devisTVABreakdown || [];
   const totalChantierHT = useMemo(
@@ -1339,6 +1357,19 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
             {/* ── /Bannière Budget ── */}
 
+            {/* ── Vos versements (client) — échéancier des paiements reçus ── */}
+            {isClient && versementsClient.length > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>💳 Vos versements</Text>
+                {versementsClient.map((v, i) => (
+                  <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderTopWidth: i > 0 ? 1 : 0, borderTopColor: '#F2ECE4' }}>
+                    <Text style={{ fontSize: 13, color: '#687076' }}>{new Date(v.date + 'T12:00:00').toLocaleDateString('fr-FR')}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#2E7D32' }}>{fmt(v.montant)} €</Text>
+                  </View>
+                ))}
+              </View>
+            )}
+
             {/* ── Avancement (extrait en bannière séparée) ── */}
             <View style={styles.card}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
@@ -1480,6 +1511,25 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           <Text style={{ fontSize: 11, color: '#8C6D2F', fontWeight: '700' }}>💬 Ajouter un commentaire</Text>
                         </Pressable>
                       )}
+                      {/* Validation d'étape par le client sur un lot achevé — Tier 3 B */}
+                      {c.pourcentage >= 100 && (() => {
+                        const valideLe = chantier?.validationsEtapes?.[c.nom];
+                        if (valideLe) {
+                          return (
+                            <View style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#E8F5E9', borderRadius: 8 }}>
+                              <Text style={{ fontSize: 11, color: '#2E7D32', fontWeight: '700' }}>✓ Validé par le client le {new Date(valideLe).toLocaleDateString('fr-FR')}</Text>
+                            </View>
+                          );
+                        }
+                        if (isClient) {
+                          return (
+                            <Pressable onPress={() => validerEtape(c.nom)} style={{ marginTop: 6, paddingVertical: 8, alignItems: 'center', backgroundColor: '#2E7D32', borderRadius: 8 }}>
+                              <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>✓ Valider cette étape</Text>
+                            </Pressable>
+                          );
+                        }
+                        return null;
+                      })()}
                     </View>
                   ))}
                   {/* Totaux lots */}
