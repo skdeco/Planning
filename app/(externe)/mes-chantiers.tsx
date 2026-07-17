@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import { PortailClient } from '@/components/PortailClient';
+import { STATUT_LABELS, STATUT_COLORS } from '@/app/types';
 
 export default function MesChantiersExterne() {
   const { data, currentUser } = useApp();
@@ -40,6 +41,22 @@ export default function MesChantiersExterne() {
     return { actifs, clos };
   }, [mesChantiers]);
 
+  const fmt = (n: number) => n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+
+  // Récap portefeuille apporteur/architecte : commission à percevoir sur ses chantiers.
+  const recapApporteur = useMemo(() => {
+    if (!apporteur || apporteur.type === 'client') return null;
+    let totalCom = 0, dueCom = 0;
+    (data.marchesChantier || []).forEach(m => {
+      const c = m.commission;
+      if (!c || c.apporteurId !== apporteurId) return;
+      const montant = c.modeCommission === 'montant' ? c.valeur : (c.baseCalcul === 'TTC' ? m.montantTTC : m.montantHT) * (c.valeur / 100);
+      totalCom += montant;
+      if (c.statut !== 'paye') dueCom += montant;
+    });
+    return { totalCom, dueCom };
+  }, [data.marchesChantier, apporteurId, apporteur]);
+
   const renderCard = (c: typeof mesChantiers[number]) => {
     const derniereVue = apporteurId ? c.dernieresVuesParApporteur?.[apporteurId] : undefined;
     const derniereMaj = c.derniereMajContenu;
@@ -58,11 +75,21 @@ export default function MesChantiersExterne() {
           <Text style={styles.cardAddress}>
             {[c.rue, c.codePostal, c.ville].filter(Boolean).join(', ') || c.adresse || '—'}
           </Text>
-          {c.avancementCorps && c.avancementCorps.length > 0 && (
-            <Text style={styles.cardMeta}>
-              {c.avancementCorps.length} lot(s)
-            </Text>
-          )}
+          {(() => {
+            const lots = c.avancementCorps || [];
+            const pct = lots.length ? Math.round(lots.reduce((s, l) => s + (l.pourcentage || 0), 0) / lots.length) : null;
+            const st = STATUT_COLORS[c.statut];
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                {st && (
+                  <View style={{ backgroundColor: st.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: st.text }}>{STATUT_LABELS[c.statut]}</Text>
+                  </View>
+                )}
+                {pct !== null && <Text style={styles.cardMeta}>Avancement {pct}%</Text>}
+              </View>
+            );
+          })()}
         </View>
         <Text style={styles.cardArrow}>›</Text>
       </Pressable>
@@ -71,6 +98,19 @@ export default function MesChantiersExterne() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+      {recapApporteur && recapApporteur.totalCom > 0 && (
+        <View style={styles.recapBox}>
+          <View style={styles.recapItem}>
+            <Text style={styles.recapVal}>{actifs.length}</Text>
+            <Text style={styles.recapLbl}>Chantiers actifs</Text>
+          </View>
+          <View style={styles.recapSep} />
+          <View style={styles.recapItem}>
+            <Text style={[styles.recapVal, { color: '#8C6D2F' }]}>{fmt(recapApporteur.dueCom)} €</Text>
+            <Text style={styles.recapLbl}>Commission à percevoir</Text>
+          </View>
+        </View>
+      )}
       <Text style={styles.sectionTitle}>🏗️ Chantiers en cours ({actifs.length})</Text>
       {actifs.length === 0 ? (
         <Text style={styles.empty}>Aucun chantier actif.</Text>
@@ -136,6 +176,11 @@ const styles = StyleSheet.create({
   cardAddress: { fontSize: 12, color: '#8C8077', marginTop: 2 },
   cardMeta: { fontSize: 11, color: '#8C6D2F', fontWeight: '700', marginTop: 4 },
   cardArrow: { fontSize: 24, color: '#C9A96E', fontWeight: '300' },
+  recapBox: { flexDirection: 'row', backgroundColor: '#2C2C2C', borderRadius: 12, padding: 16, marginBottom: 16, alignItems: 'center' },
+  recapItem: { flex: 1, alignItems: 'center' },
+  recapSep: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(255,255,255,0.15)' },
+  recapVal: { fontSize: 20, fontWeight: '800', color: '#fff' },
+  recapLbl: { fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 2, textAlign: 'center' },
   empty: { fontSize: 13, color: '#8C8077', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 },
   toggleClos: {
     backgroundColor: '#fff',
