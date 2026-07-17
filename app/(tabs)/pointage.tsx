@@ -389,6 +389,8 @@ export default function PointageScreen() {
       let latitude: number | null = null;
       let longitude: number | null = null;
       let adresse: string | null = null;
+      let horsZone = false; // pointage hors du rayon chantier — marqué en silence (visible admin uniquement)
+      let distanceChantier: number | null = null;
 
       const chantier = data.chantiers.find(c => c.id === chantierId);
       const adresseChantier = chantier
@@ -416,14 +418,11 @@ export default function PointageScreen() {
           }
           if (coords) {
             const dist = haversineDistance(pos.latitude, pos.longitude, coords.lat, coords.lng);
+            // Contrôle silencieux : on ne bloque JAMAIS et on n'avertit PAS l'ouvrier.
+            // Hors du rayon (100 m) → pointage enregistré avec un drapeau visible par l'admin seulement.
             if (dist > 100) {
-              const msg = "Vous n'êtes pas sur le chantier, vous n'êtes pas autorisé à pointer.";
-              if (Platform.OS === 'web') {
-                alert(msg);
-              } else {
-                Alert.alert('Pointage refusé', msg);
-              }
-              return;
+              horsZone = true;
+              distanceChantier = Math.round(dist);
             }
           }
         }
@@ -452,6 +451,7 @@ export default function PointageScreen() {
         latitude,
         longitude,
         adresse,
+        ...(horsZone ? { horsZone: true, distanceChantier: distanceChantier ?? undefined } : {}),
       };
       addPointage(pointage);
 

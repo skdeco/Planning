@@ -897,6 +897,23 @@ export default function DashboardScreen() {
             });
           });
 
+          // 1b. Pointages hors zone du jour (contrôle GPS silencieux — visible admin uniquement,
+          // l'ouvrier n'est ni bloqué ni averti).
+          data.pointages
+            .filter(p => p.date === today && p.horsZone)
+            .forEach(p => {
+              const emp = data.employes.find(e => e.id === p.employeId);
+              const ch = data.chantiers.find(c => c.id === p.chantierId);
+              const label = p.type === 'debut' ? 'arrivée' : 'départ';
+              alertes.push({
+                id: `horszone_${p.id}`,
+                icon: '📍',
+                text: `${emp?.prenom || 'Employé'} a pointé son ${label} hors zone${p.distanceChantier ? ` (${p.distanceChantier} m)` : ''}${ch ? ` — ${ch.nom}` : ''}`,
+                color: '#E67E22',
+                onPress: () => router.push('/(tabs)/reporting' as any),
+              });
+            });
+
           // 2. Relances paiement (reste > 0 et dernier paiement > 30j ou aucun paiement)
           (data.marchesChantier || []).forEach(m => {
             const totalRecu = m.paiements.reduce((s, p) => s + p.montant, 0);

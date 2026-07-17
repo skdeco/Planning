@@ -642,6 +642,8 @@ export interface Pointage {
   saisieManuelle?: boolean; // alias pour saisiManuellement
   saisieParId?: string;    // id de l'admin/RH qui a saisi
   note?: string;           // note libre sur ce pointage
+  horsZone?: boolean;      // pointage hors du rayon chantier (contrôle silencieux, visible admin uniquement)
+  distanceChantier?: number; // distance au chantier en mètres, si hors zone
 }
 
 /** Retard planifié à l'avance par un employé */
