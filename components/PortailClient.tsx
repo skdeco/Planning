@@ -1142,7 +1142,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     { key: 'projet', label: 'Projet', icon: '🎨' },
     { key: 'chiffres', label: 'Chiffres', icon: '💰' },
     { key: 'planning', label: 'Planning', icon: '📅' },
-    { key: 'suivisCR', label: 'CR', icon: '📋' },
+    { key: 'suivisCR', label: 'Suivi', icon: '📋' },
     { key: 'finChantier', label: 'Fin de chantier', icon: '🏁' },
     { key: 'messages', label: 'Messages', icon: '💬' },
   ];
@@ -1185,9 +1185,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               <Text style={styles.kpiValue} numberOfLines={1}>{fmtCompact(dejaPayeTotal)} / {fmtCompact(totalChantierTTC)} €</Text>
             </View>
             <View style={styles.kpiCell}>
-              <Text style={styles.kpiLabel}>Reste</Text>
-              <Text style={styles.kpiValue}>
-                {joursRestants === null ? '—' : joursRestants >= 0 ? `J-${joursRestants}` : `J+${Math.abs(joursRestants)}`}
+              <Text style={styles.kpiLabel}>Fin prévue</Text>
+              <Text style={styles.kpiValue} numberOfLines={1}>
+                {chantier?.dateFin ? formatDate(chantier.dateFin) : (joursRestants === null ? '—' : joursRestants >= 0 ? `J-${joursRestants}` : `J+${Math.abs(joursRestants)}`)}
               </Text>
             </View>
           </View>
@@ -1609,7 +1609,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   <Text style={styles.equipeJourDate}>{formatDateShort(dateStr)}</Text>
                   {persons.length === 0 ? (
                     <View style={[styles.equipeBadge, styles.equipeBadgeRouge]}>
-                      <Text style={styles.equipeBadgeRougeText}>🔴 Personne prévu</Text>
+                      <Text style={styles.equipeBadgeRougeText}>🔴 Aucune intervention</Text>
                     </View>
                   ) : (
                     <View style={[styles.equipeBadge, styles.equipeBadgeVert]}>

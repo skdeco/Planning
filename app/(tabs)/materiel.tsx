@@ -680,8 +680,9 @@ export default function MaterielScreen() {
                 return (
                   <View key={item.id} style={styles.itemRow}>
                     <Pressable
-                      style={[styles.checkbox, isAcheteur && styles.checkboxAcheteur]}
-                      onPress={() => isAcheteur ? handleToggle(item.listeId, item.id) : undefined}
+                      style={[styles.checkbox, isAcheteur && styles.checkboxAcheteur, !isAcheteur && { opacity: 0.35 }]}
+                      onPress={isAcheteur ? () => handleToggle(item.listeId, item.id) : undefined}
+                      disabled={!isAcheteur}
                     >
                       <Text style={styles.checkboxInner}> </Text>
                     </Pressable>

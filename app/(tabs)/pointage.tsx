@@ -824,7 +824,7 @@ export default function PointageScreen() {
                   </View>
                   <View style={{ width: 1, backgroundColor: '#E2E6EA' }} />
                   <View style={{ alignItems: 'center', flex: 1 }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: heuresSup > 0 ? '#E74C3C' : '#27AE60' }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: heuresSup > 0 ? '#27AE60' : '#687076' }}>
                       {supH}h{String(supM).padStart(2, '0')}
                     </Text>
                     <Text style={{ fontSize: 11, color: '#687076' }}>heures sup</Text>
@@ -834,7 +834,7 @@ export default function PointageScreen() {
                 {heuresTheoriques > 0 && (
                   <View style={{ backgroundColor: '#F5EDE3', borderRadius: 8, padding: 8, marginTop: 4 }}>
                     <Text style={{ fontSize: 11, color: '#687076', textAlign: 'center' }}>
-                      Théorique : {theoriqueH}h{String(theoriqueM).padStart(2, '0')} • Réel : {totalH}h{String(totalM).padStart(2, '0')} • {heuresSup > 0 ? `+${supH}h${String(supM).padStart(2, '0')} sup` : 'Dans les temps'}
+                      Prévu : {theoriqueH}h{String(theoriqueM).padStart(2, '0')} • Fait : {totalH}h{String(totalM).padStart(2, '0')} • {heuresSup > 0 ? `+${supH}h${String(supM).padStart(2, '0')} sup` : 'Dans les temps'}
                     </Text>
                   </View>
                 )}
