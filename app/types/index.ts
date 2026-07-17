@@ -304,7 +304,8 @@ export interface Chantier {
     auteurId: string;                   // 'admin' ou apporteurId
     auteurNom: string;
     auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
-    destinataireId?: string;            // contact externe destinataire (messages admin) — cloisonne les conversations
+    destinataireId?: string;            // [legacy] contact externe destinataire unique — conservé pour compat
+    destinatairesIds?: string[];        // set des participants externes de la conversation (1 = privé, N = groupe)
     texte: string;
     createdAt: string;                  // ISO datetime
     luPar: string[];                    // ids qui ont lu (admin + apporteurIds)

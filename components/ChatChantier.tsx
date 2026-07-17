@@ -54,7 +54,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
   const monType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' =
     isAdmin ? 'admin' : (externAp?.type || 'client');
 
-  // ── Cloisonnement des conversations (admin ↔ un contact externe) ──
+  // ── Conversations par set de participants externes (privé = 1, groupe = N) ──
   // Contacts externes rattachés au chantier.
   const contactsExternes = useMemo(() => {
     const ids = [chantier.clientApporteurId, chantier.architecteId, chantier.apporteurId, chantier.contractantId]
@@ -62,28 +62,61 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     return (data.apporteurs || []).filter(a => ids.includes(a.id));
   }, [chantier.clientApporteurId, chantier.architecteId, chantier.apporteurId, chantier.contractantId, data.apporteurs]);
 
-  // Côté admin : contact dont on lit/écrit la conversation (auto-sélection du 1er).
-  const [contactSelId, setContactSelId] = useState('');
+  // Set de participants externes d'un message (normalise l'ancien modèle mono-destinataire).
+  const msgParticipants = (m: typeof messages[number]): string[] => {
+    if (m.destinatairesIds && m.destinatairesIds.length) return [...m.destinatairesIds].sort();
+    if (m.destinataireId) return [m.destinataireId];
+    if (m.auteurType !== 'admin') return [m.auteurId]; // ancien message externe = privé avec son auteur
+    return []; // ancien message admin sans destinataire = orphelin (masqué)
+  };
+  const keyOf = (ids: string[]) => ids.join('|');
+
+  // Côté admin : destinataires sélectionnés (1 = privé, plusieurs = groupe).
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   useEffect(() => {
-    if (isAdmin && contactsExternes.length > 0 && !contactsExternes.some(c => c.id === contactSelId)) {
-      setContactSelId(contactsExternes[0].id);
+    if (!isAdmin) return;
+    const valid = selectedIds.filter(id => contactsExternes.some(c => c.id === id));
+    if (valid.length === 0 && contactsExternes.length > 0) setSelectedIds([contactsExternes[0].id]);
+    else if (valid.length !== selectedIds.length) setSelectedIds(valid);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAdmin, contactsExternes]);
+  const toggleContact = (id: string) => setSelectedIds(prev =>
+    prev.includes(id) ? (prev.length > 1 ? prev.filter(x => x !== id) : prev) : [...prev, id],
+  );
+
+  // Côté externe : conversations auxquelles je participe (privé + groupes).
+  const externeConvs = useMemo(() => {
+    if (isAdmin) return [] as string[][];
+    const map = new Map<string, string[]>();
+    messages.forEach(m => {
+      const p = msgParticipants(m);
+      if (p.includes(monId)) { const k = keyOf(p); if (!map.has(k)) map.set(k, p); }
+    });
+    if (map.size === 0 && monId) map.set(keyOf([monId]), [monId]);
+    return [...map.values()];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, monId, isAdmin]);
+  const [externeConvKey, setExterneConvKey] = useState('');
+  useEffect(() => {
+    if (!isAdmin && externeConvs.length > 0 && !externeConvs.some(p => keyOf(p) === externeConvKey)) {
+      setExterneConvKey(keyOf(externeConvs[0]));
     }
-  }, [isAdmin, contactsExternes, contactSelId]);
+  }, [isAdmin, externeConvs, externeConvKey]);
 
-  // Conversation courante : admin ↔ contact sélectionné ; côté externe = soi-même.
-  const conversationId = isAdmin ? contactSelId : monId;
-  // Un message appartient à la conversation C si : écrit par C (externe), ou écrit
-  // par l'admin À DESTINATION de C. Les anciens messages admin sans destinataireId
-  // ne matchent aucune conversation externe → masqués aux externes (pas de fuite).
+  // Participants de la conversation active + sa clé.
+  const activeParticipants = useMemo(() => {
+    if (isAdmin) return [...selectedIds].sort();
+    return externeConvKey ? externeConvKey.split('|') : (monId ? [monId] : []);
+  }, [isAdmin, selectedIds, externeConvKey, monId]);
+  const activeKey = keyOf(activeParticipants);
+
   const messagesVisibles = useMemo(() => {
-    if (!conversationId) return [];
-    return messages.filter(m =>
-      (m.auteurType !== 'admin' && m.auteurId === conversationId) ||
-      (m.auteurType === 'admin' && m.destinataireId === conversationId),
-    );
-  }, [messages, conversationId]);
+    if (!activeParticipants.length) return [];
+    return messages.filter(m => keyOf(msgParticipants(m)) === activeKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, activeKey]);
 
-  // Marquer comme lus les messages de la conversation visible (à l'ouverture / au changement de contact)
+  // Marquer comme lus les messages de la conversation active (à l'ouverture / changement de fil)
   useEffect(() => {
     if (!monId) return;
     const visibleIds = new Set(messagesVisibles.map(m => m.id));
@@ -100,7 +133,8 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     const updated = data.chantiers.map(c => c.id === chantier.id ? { ...c, messagesChantier: next } : c);
     Notifications.setBadgeCountAsync(countUnreadChantierMessages(updated, monId)).catch(() => {});
     setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: false }), 100);
-  }, [chantier.id, conversationId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chantier.id, activeKey]);
 
   const ajouterPieceJointe = async () => {
     try {
@@ -125,13 +159,13 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
 
   const envoyer = () => {
     if (!texte.trim() && !pjUri) return;
-    if (isAdmin && !contactSelId) return; // l'admin doit adresser un contact
+    if (activeParticipants.length === 0) return; // il faut une conversation cible
     const newMsg = {
       id: genId('msg'),
       auteurId: monId,
       auteurNom: currentUserNom || (externAp ? `${externAp.prenom} ${externAp.nom}` : 'Admin'),
       auteurType: monType,
-      ...(isAdmin ? { destinataireId: contactSelId } : {}),
+      destinatairesIds: activeParticipants, // set des participants (identifie le fil, privé ou groupe)
       texte: texte.trim(),
       createdAt: new Date().toISOString(),
       luPar: [monId],
@@ -152,12 +186,14 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
         c.id === chantier.id ? { ...c, messagesChantier: [...messages, newMsg] } : c,
       );
       if (isAdmin) {
-        // Admin → uniquement le contact destinataire de la conversation courante
-        const target = (data.apporteurs || []).find(a => a.id === contactSelId);
-        if (target?.pushToken) {
-          const n = countUnreadChantierMessages(updatedChantiers, target.id);
-          sendPushNotification([target.pushToken!], titre, corps, undefined, n);
-        }
+        // Admin → chaque destinataire de la conversation (privé ou groupe)
+        activeParticipants.forEach(pid => {
+          const target = (data.apporteurs || []).find(a => a.id === pid);
+          if (target?.pushToken) {
+            const n = countUnreadChantierMessages(updatedChantiers, target.id);
+            sendPushNotification([target.pushToken!], titre, corps, undefined, n);
+          }
+        });
       } else {
         // Intervenant externe → admin
         const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
@@ -193,16 +229,44 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
       </View>
       <Text style={styles.subtitle}>Conversation admin ↔ intervenants externes</Text>
       {isAdmin && contactsExternes.length > 1 && (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactRow} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
-          {contactsExternes.map(c => (
-            <Pressable key={c.id} onPress={() => setContactSelId(c.id)} style={[styles.contactChip, contactSelId === c.id && styles.contactChipActive]}>
-              <Text style={[styles.contactChipText, contactSelId === c.id && styles.contactChipTextActive]}>{c.prenom} {c.nom}</Text>
-            </Pressable>
-          ))}
-        </ScrollView>
+        <>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactRow} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+            {contactsExternes.map(c => {
+              const on = selectedIds.includes(c.id);
+              return (
+                <Pressable key={c.id} onPress={() => toggleContact(c.id)} style={[styles.contactChip, on && styles.contactChipActive]}>
+                  <Text style={[styles.contactChipText, on && styles.contactChipTextActive]}>{on ? '✓ ' : ''}{c.prenom} {c.nom}</Text>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <Text style={styles.hintSel}>
+            {selectedIds.length > 1
+              ? `Message groupé — ${selectedIds.length} destinataires`
+              : 'Touchez pour ajouter/retirer des destinataires (groupe possible)'}
+          </Text>
+        </>
       )}
       {isAdmin && contactsExternes.length === 0 && (
         <Text style={styles.empty}>Aucun intervenant externe rattaché à ce chantier.</Text>
+      )}
+      {!isAdmin && externeConvs.length > 1 && (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactRow} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+          {externeConvs.map(p => {
+            const k = keyOf(p);
+            const on = k === externeConvKey;
+            const others = p.filter(id => id !== monId).map(id => {
+              const c = (data.apporteurs || []).find(a => a.id === id);
+              return c ? `${c.prenom} ${c.nom}` : '?';
+            });
+            const label = others.length ? `Groupe · ${others.join(', ')}` : 'Admin (privé)';
+            return (
+              <Pressable key={k} onPress={() => setExterneConvKey(k)} style={[styles.contactChip, on && styles.contactChipActive]}>
+                <Text style={[styles.contactChipText, on && styles.contactChipTextActive]} numberOfLines={1}>{label}</Text>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
       )}
 
       <ScrollView
@@ -257,7 +321,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
           placeholder="Votre message..."
           multiline
         />
-        <Pressable onPress={envoyer} disabled={(!texte.trim() && !pjUri) || (isAdmin && !contactSelId)} style={[styles.sendBtn, ((!texte.trim() && !pjUri) || (isAdmin && !contactSelId)) && { opacity: 0.4 }]}>
+        <Pressable onPress={envoyer} disabled={(!texte.trim() && !pjUri) || activeParticipants.length === 0} style={[styles.sendBtn, ((!texte.trim() && !pjUri) || activeParticipants.length === 0) && { opacity: 0.4 }]}>
           <Text style={styles.sendBtnText}>➤</Text>
         </Pressable>
       </View>
@@ -273,6 +337,7 @@ const styles = StyleSheet.create({
   contactChipActive: { backgroundColor: '#2C2C2C' },
   contactChipText: { fontSize: 12, color: '#687076', fontWeight: '600' },
   contactChipTextActive: { color: '#fff' },
+  hintSel: { fontSize: 10, color: '#8C8077', fontStyle: 'italic', marginBottom: 8, marginTop: 2 },
   title: { fontSize: 14, fontWeight: '800', color: '#2C2C2C' },
   subtitle: { fontSize: 11, color: '#8C8077', marginBottom: 8 },
   list: { maxHeight: 360, backgroundColor: '#FAF7F3', borderRadius: 10, paddingHorizontal: 10 },
