@@ -107,13 +107,6 @@ export function DashboardKPI() {
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 2 }}>
         <KpiCard
-          label="Chantiers actifs"
-          value={String(stats.chantiersActifs)}
-          color="#C9A96E"
-          icon="🏗️"
-          onPress={() => router.push('/(tabs)/chantiers' as any)}
-        />
-        <KpiCard
           label="CA signé HT"
           value={`${fmt(stats.caTotalHT)} €`}
           color="#2C2C2C"

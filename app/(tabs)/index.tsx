@@ -229,6 +229,7 @@ export default function DashboardScreen() {
   const [showImport, setShowImport] = useState(false);
   // Alertes masquées (clé = texte de l'alerte)
   const [dismissedAlertes, setDismissedAlertes] = useState<Set<string>>(new Set());
+  const [showAlertes, setShowAlertes] = useState(false);
   // Dashboard admin : reporting financier détaillé replié par défaut (allègement du scroll).
   const [showFinancesDetail, setShowFinancesDetail] = useState(false);
   // Recherche globale (modal dédié GlobalSearch)
@@ -857,13 +858,6 @@ export default function DashboardScreen() {
           </View>
         </FadeInView>
 
-        {/* Tableau de bord admin */}
-        {isAdmin && (
-          <FadeInView delay={50}>
-            <DashboardKPI />
-          </FadeInView>
-        )}
-
         {/* Recherche globale — ouvre le modal dédié (filtres par type) */}
         <FadeInView delay={100}>
         <Pressable onPress={() => setSearchOpen(true)} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 14, paddingVertical: 13, marginBottom: 12, shadowColor: '#2C2C2C', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
@@ -1069,22 +1063,28 @@ export default function DashboardScreen() {
           return (
             <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Text style={styles.sectionTitle}>⚠️ Alertes ({visibleAlertes.length})</Text>
-                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                  {hiddenCount > 0 && (
-                    <Pressable onPress={() => setDismissedAlertes(new Set())}
-                      style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                      <Text style={{ fontSize: 11, color: '#8C8077' }}>🔔 Afficher masquées ({hiddenCount})</Text>
-                    </Pressable>
-                  )}
-                  {visibleAlertes.length > 1 && (
-                    <Pressable onPress={() => setDismissedAlertes(new Set([...dismissedAlertes, ...visibleAlertes.map(a => a.id)]))}
-                      style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                      <Text style={{ fontSize: 11, color: '#687076' }}>Tout masquer</Text>
-                    </Pressable>
-                  )}
-                </View>
+                <Pressable onPress={() => setShowAlertes(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                  <Text style={styles.sectionTitle}>⚠️ Alertes ({visibleAlertes.length})</Text>
+                  <Text style={{ fontSize: 12, color: '#8C8077' }}>{showAlertes ? '▾' : '▸'}</Text>
+                </Pressable>
+                {showAlertes && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {hiddenCount > 0 && (
+                      <Pressable onPress={() => setDismissedAlertes(new Set())}
+                        style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 11, color: '#8C8077' }}>🔔 Afficher masquées ({hiddenCount})</Text>
+                      </Pressable>
+                    )}
+                    {visibleAlertes.length > 1 && (
+                      <Pressable onPress={() => setDismissedAlertes(new Set([...dismissedAlertes, ...visibleAlertes.map(a => a.id)]))}
+                        style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 11, color: '#687076' }}>Tout masquer</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                )}
               </View>
+              {showAlertes && (
               <View style={{ gap: 4, marginBottom: 8 }}>
                 {visibleAlertes.slice(0, 15).map((a) => (
                   <Pressable key={a.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: a.color + '12', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: a.color }}
@@ -1100,6 +1100,7 @@ export default function DashboardScreen() {
                   </Pressable>
                 ))}
               </View>
+              )}
             </>
           );
         })()}
@@ -1140,45 +1141,18 @@ export default function DashboardScreen() {
             <Text style={[styles.statValue, { color: '#2C2C2C' }]}>{stats.chantiersActifs}</Text>
             <Text style={styles.statLabel}>Chantiers actifs</Text>
           </Pressable>
-          <Pressable style={[styles.statCard, { borderLeftColor: '#27AE60', width: '48%' as any }]} onPress={() => router.push('/(tabs)/equipe' as any)}>
-            <Text style={[styles.statValue, { color: '#27AE60' }]}>{stats.employesTotal}</Text>
-            <Text style={styles.statLabel}>Employés</Text>
-          </Pressable>
           <Pressable style={[styles.statCard, { borderLeftColor: '#F59E0B', width: '48%' as any }]} onPress={() => router.push('/(tabs)/planning' as any)}>
-            <Text style={[styles.statValue, { color: '#F59E0B' }]}>{stats.employesAujourdhui}/{stats.employesTotal}</Text>
-            <Text style={styles.statLabel}>Affectés aujourd'hui</Text>
+            <Text style={[styles.statValue, { color: '#F59E0B' }]}>{stats.employesAujourdhui}</Text>
+            <Text style={styles.statLabel}>Personnes affectées</Text>
           </Pressable>
-          <Pressable style={[styles.statCard, { borderLeftColor: '#00BCD4', width: '48%' as any }]} onPress={() => router.push('/(tabs)/reporting' as any)}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View>
-                <Text style={[styles.statValue, { color: '#00BCD4' }]}>{stats.nbArrivees} / {stats.nbDeparts}</Text>
-                <Text style={styles.statLabel}>Arrivées / Départs</Text>
-              </View>
-              <Pressable
-                style={{ backgroundColor: '#2C2C2C', borderRadius: 8, width: 36, height: 36, alignItems: 'center', justifyContent: 'center' }}
-                onPress={() => router.push('/(tabs)/planning' as any)}
-              >
-                <Text style={{ fontSize: 16 }}>✏️</Text>
-              </Pressable>
-            </View>
+          <Pressable style={[styles.statCard, { borderLeftColor: '#00BCD4', width: '48%' as any }]} onPress={() => router.push('/(tabs)/planning' as any)}>
+            <Text style={[styles.statValue, { color: '#00BCD4' }]}>{stats.nbArrivees} / {stats.nbDeparts}</Text>
+            <Text style={styles.statLabel}>Arrivées / Départs</Text>
           </Pressable>
-        </View>
-
-        {/* Récap semaine */}
-        <Text style={styles.sectionTitle}>Résumé de la semaine</Text>
-        <View style={{ flexDirection: 'row', gap: 8 }}>
-          <View style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#2C2C2C' }}>{recapHebdo.totalHeures}h</Text>
-            <Text style={{ fontSize: 10, color: '#687076' }}>Heures travaillées</Text>
-          </View>
-          <View style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#27AE60' }}>{recapHebdo.nbJoursPointes}</Text>
-            <Text style={{ fontSize: 10, color: '#687076' }}>Pointages</Text>
-          </View>
-          <View style={[styles.statCard, { flex: 1, alignItems: 'center', paddingVertical: 10 }]}>
-            <Text style={{ fontSize: 20, fontWeight: '800', color: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60' }}>{recapHebdo.nbRetards}</Text>
-            <Text style={{ fontSize: 10, color: '#687076' }}>Retards</Text>
-          </View>
+          <Pressable style={[styles.statCard, { borderLeftColor: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60', width: '48%' as any }]} onPress={() => router.push('/(tabs)/reporting' as any)}>
+            <Text style={[styles.statValue, { color: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60' }]}>{recapHebdo.nbRetards}</Text>
+            <Text style={styles.statLabel}>Retards (semaine)</Text>
+          </Pressable>
         </View>
 
         {/* Couverture chantiers — 2 colonnes */}
@@ -1201,6 +1175,13 @@ export default function DashboardScreen() {
             );
           })}
         </View>
+
+        {/* Tableau de bord financier admin (CA signé / en cours / encaissé). */}
+        {isAdmin && (
+          <FadeInView delay={50}>
+            <DashboardKPI />
+          </FadeInView>
+        )}
 
         {/* Reporting financier détaillé — repliable pour alléger le dashboard (Rentabilité + CA). */}
         <Pressable onPress={() => setShowFinancesDetail(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 4 }}>
