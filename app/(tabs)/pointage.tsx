@@ -472,23 +472,22 @@ export default function PointageScreen() {
 
   const handlePointage = (type: 'debut' | 'fin', chantierId: string) => {
     const chantier = data.chantiers.find(c => c.id === chantierId);
-    const label = type === 'debut' ? 'Arrivée' : 'Départ';
-    const heure = toHM(new Date());
     const chantierNom = chantier?.nom || '';
+    const heure = toHM(new Date());
 
-    const msg = `Enregistrer votre ${label.toLowerCase()} à ${heure} sur "${chantierNom}" ?`;
-
+    // Arrivée : pointage direct (feedback par le toast). Départ : confirmation (fin de journée).
+    if (type === 'debut') {
+      doPointage(type, chantierId);
+      return;
+    }
+    const msg = `Enregistrer votre départ à ${heure} sur "${chantierNom}" ?`;
     if (Platform.OS === 'web') {
       if (window.confirm(msg)) doPointage(type, chantierId);
     } else {
-      Alert.alert(
-        `${label} — ${chantierNom}`,
-        msg,
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Confirmer', onPress: () => doPointage(type, chantierId) },
-        ]
-      );
+      Alert.alert(`Départ — ${chantierNom}`, msg, [
+        { text: 'Annuler', style: 'cancel' },
+        { text: 'Confirmer', onPress: () => doPointage(type, chantierId) },
+      ]);
     }
   };
 
