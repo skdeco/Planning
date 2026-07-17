@@ -683,17 +683,17 @@ export default function RHScreen() {
                       <Pressable style={styles.voirBtn} onPress={() => openDocPreview(f.fichier)}>
                         <Text style={styles.voirBtnText}>{t.common.view}</Text>
                       </Pressable>
-                      {/* Télécharger — TODO web-only ; iOS port via expo-file-system + expo-sharing prévu post-Tier 1 */}
-                      <Pressable style={[styles.voirBtn, { backgroundColor: '#EFF6FF' }]} onPress={() => {
-                        if (Platform.OS === 'web') {
+                      {/* Télécharger — web uniquement ; sur mobile "Voir" ouvre le PDF avec le partage natif iOS */}
+                      {Platform.OS === 'web' && (
+                        <Pressable style={[styles.voirBtn, { backgroundColor: '#EFF6FF' }]} onPress={() => {
                           const a = document.createElement('a');
                           a.href = f.fichier;
                           a.download = `fiche-paie-${f.mois}.pdf`;
                           a.click();
-                        }
-                      }}>
-                        <Text style={[styles.voirBtnText, { color: '#2C2C2C' }]}>{t.common.download}</Text>
-                      </Pressable>
+                        }}>
+                          <Text style={[styles.voirBtnText, { color: '#2C2C2C' }]}>{t.common.download}</Text>
+                        </Pressable>
+                      )}
                       {/* Suppression : admin uniquement (pas RH employé) */}
                       {isAdmin && (
                         <Pressable style={styles.deleteBtn} onPress={() => {

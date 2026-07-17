@@ -8,6 +8,7 @@ import { ImportExcel } from '@/components/ImportExcel';
 import { GlobalSearch } from '@/components/GlobalSearch';
 import { FadeInView, ScaleButton, StaggeredList, ProgressBar } from '@/components/ui/animated';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { toast } from 'sonner-native';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath } from '@/lib/share/inboxStore';
@@ -87,29 +88,6 @@ export default function DashboardScreen() {
   }, [isHydrated, currentUser, isST, router]);
 
   const today = toYMD(new Date());
-
-  // ── Météo (Paris par défaut, API Open-Meteo gratuite) ──
-  const [weather, setWeather] = useState<{ temp: number; description: string; icon: string } | null>(null);
-  useEffect(() => {
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=48.8566&longitude=2.3522&current=temperature_2m,weather_code&timezone=Europe/Paris')
-      .then(r => r.json())
-      .then(d => {
-        const code = d.current?.weather_code || 0;
-        const temp = Math.round(d.current?.temperature_2m || 0);
-        const icons: Record<number, [string, string]> = {
-          0: ['☀️', 'Ciel dégagé'], 1: ['🌤', 'Peu nuageux'], 2: ['⛅', 'Partiellement nuageux'], 3: ['☁️', 'Nuageux'],
-          45: ['🌫', 'Brouillard'], 48: ['🌫', 'Brouillard givrant'],
-          51: ['🌦', 'Bruine légère'], 53: ['🌦', 'Bruine'], 55: ['🌦', 'Bruine forte'],
-          61: ['🌧', 'Pluie légère'], 63: ['🌧', 'Pluie'], 65: ['🌧', 'Forte pluie'],
-          71: ['🌨', 'Neige légère'], 73: ['🌨', 'Neige'], 75: ['🌨', 'Forte neige'],
-          80: ['🌦', 'Averses'], 81: ['🌧', 'Averses modérées'], 82: ['⛈', 'Fortes averses'],
-          95: ['⛈', 'Orage'], 96: ['⛈', 'Orage + grêle'], 99: ['⛈', 'Orage violent'],
-        };
-        const [icon, description] = icons[code] || ['🌡', `Code ${code}`];
-        setWeather({ temp, description, icon });
-      })
-      .catch(() => {});
-  }, []);
 
   const stats = useMemo(() => {
     const chantiersActifs = data.chantiers.filter(c => c.statut === 'actif').length;
@@ -365,12 +343,15 @@ export default function DashboardScreen() {
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFF3E0', paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#FFE082', marginBottom: 8 }}
               onPress={() => {
                 const motifs = ['Bouchons / Transport', 'Problème véhicule', 'Rendez-vous médical', 'Raison personnelle', 'Autre'];
+                const signaler = (motif: string) => {
+                  addRetardPlanifie({ id: `ret_${Date.now()}_${Math.random().toString(36).slice(2)}`, employeId: myId || '', date: today, heureArrivee: '', motif, createdAt: new Date().toISOString() });
+                  toast.success('Retard signalé à l\'équipe');
+                };
                 if (Platform.OS === 'web') {
                   const choix = window.prompt('Motif du retard :\n' + motifs.map((m, i) => `${i + 1}. ${m}`).join('\n'), '1');
-                  const motif = motifs[parseInt(choix || '1') - 1] || motifs[0];
-                  addRetardPlanifie({ id: `ret_${Date.now()}_${Math.random().toString(36).slice(2)}`, employeId: myId || '', date: today, heureArrivee: '', motif, createdAt: new Date().toISOString() });
+                  signaler(motifs[parseInt(choix || '1') - 1] || motifs[0]);
                 } else {
-                  Alert.alert('Je suis en retard', 'Sélectionnez le motif', motifs.map(m => ({ text: m, onPress: () => addRetardPlanifie({ id: `ret_${Date.now()}_${Math.random().toString(36).slice(2)}`, employeId: myId || '', date: today, heureArrivee: '', motif: m, createdAt: new Date().toISOString() }) })));
+                  Alert.alert('Je suis en retard', 'Sélectionnez le motif', motifs.map(m => ({ text: m, onPress: () => signaler(m) })));
                 }
               }}>
               <Text style={{ fontSize: 14 }}>⚠️</Text>
@@ -411,7 +392,7 @@ export default function DashboardScreen() {
                                 const url = await uploadFileToStorage(file.uri, 'tasks/photos', `task_${task.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
                                 if (url) addTaskPhoto(note.affectationId, note.noteId, task.id, url);
                               }
-                            }}><Text style={{ fontSize: 14 }}>➕</Text></Pressable>
+                            }}><Text style={{ fontSize: 18 }}>📷</Text></Pressable>
                             <InboxPickerButton
                               label="📥"
                               buttonStyle={{ padding: 2, paddingHorizontal: 4, backgroundColor: 'transparent', borderWidth: 0 }}
@@ -859,12 +840,6 @@ export default function DashboardScreen() {
                 </Text>
               </View>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                {weather && (
-                  <View style={{ alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: 8 }}>
-                    <Text style={{ fontSize: 18 }}>{weather.icon}</Text>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff' }}>{weather.temp}°C</Text>
-                  </View>
-                )}
                 <LanguageFlag />
                 <Pressable
                   style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}
