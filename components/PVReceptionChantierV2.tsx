@@ -730,7 +730,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                         })
                       )}
 
-                      {isAdmin && !isClotured && (
+                      {(isAdmin || isClient) && !isClotured && (
                         <Pressable
                           onPress={() => openReserveEditor(piece.id, null)}
                           style={styles.addReserveBtn}

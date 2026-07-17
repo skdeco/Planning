@@ -375,6 +375,23 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     return list.sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   }, [marches, supplements]);
 
+  // Commission de l'apporteur / architecte connecté sur ce chantier (Tier 3 C).
+  const maCommission = useMemo(() => {
+    if (!externAp || isClient) return null;
+    let total = 0, paye = 0;
+    marches.forEach(m => {
+      const c = m.commission;
+      if (!c || c.apporteurId !== externAp.id) return;
+      const montant = c.modeCommission === 'montant'
+        ? c.valeur
+        : (c.baseCalcul === 'TTC' ? m.montantTTC : m.montantHT) * (c.valeur / 100);
+      total += montant;
+      if (c.statut === 'paye') paye += montant;
+    });
+    if (total === 0) return null;
+    return { total, paye, duDu: total - paye };
+  }, [marches, externAp, isClient]);
+
   // Validation d'étape par le client (Tier 3 B) : horodate la validation d'un lot achevé.
   const validerEtape = (lotNom: string) => {
     if (!chantier) return;
@@ -1249,6 +1266,25 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET CHIFFRES ─────────────── */}
             {ongletActif === 'chiffres' && (<>
+            {/* ── Ma commission (apporteur / architecte) — Tier 3 C ── */}
+            {peutVoirCommissions && !isClient && maCommission && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>💼 Ma commission</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
+                  <Text style={{ fontSize: 13, color: '#687076', fontWeight: '700' }}>Total</Text>
+                  <Text style={{ fontSize: 14, color: '#2C2C2C', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                  <Text style={{ fontSize: 13, color: '#2E7D32' }}>Déjà perçu</Text>
+                  <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '700' }}>{fmt(maCommission.paye)} €</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                  <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à percevoir</Text>
+                  <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(maCommission.duDu)} €</Text>
+                </View>
+              </View>
+            )}
+
             {/* C2 : bannière "Marchés" supprimée — info redondante avec "Budget".
                 Détails marché restent dans Marchés (admin) hors portail. */}
 
