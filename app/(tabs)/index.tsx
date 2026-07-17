@@ -109,7 +109,7 @@ export default function DashboardScreen() {
       (data.demandesAvance || []).filter(d => d.statut === 'en_attente').length
     );
 
-    const chantiersActifsIds = new Set(data.chantiers.filter(c => c.statut !== 'termine').map(c => c.id));
+    const chantiersActifsIds = new Set(data.chantiers.filter(c => c.statut !== 'termine' && c.statut !== 'archive').map(c => c.id));
     const materielNonAchete = (data.listesMateriaux || []).reduce(
       (acc, l) => chantiersActifsIds.has(l.chantierId) ? acc + l.items.filter(i => !i.achete).length : acc, 0
     );
@@ -1191,7 +1191,7 @@ export default function DashboardScreen() {
         {showFinancesDetail && (<>
         {/* Rentabilité par chantier */}
         {(() => {
-          const chantiersActifs = data.chantiers.filter(c => c.statut !== 'termine');
+          const chantiersActifs = data.chantiers.filter(c => c.statut !== 'termine' && c.statut !== 'archive');
           const rentaCards = chantiersActifs.map(c => {
             const recettes =
               (data.marchesChantier || []).filter(m => m.chantierId === c.id).reduce((s, m) => s + (m.montantTTC || 0), 0) +

@@ -395,23 +395,47 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   }, [marches, externAp, isClient]);
 
   // Validation d'étape par le client (Tier 3 B) : horodate la validation d'un lot achevé.
-  const validerEtape = (lotNom: string) => {
+  // Validation d'étape indexée par ID de lot (évite les collisions entre lots
+  // homonymes de marchés différents) + confirmation avant enregistrement.
+  const validerEtape = (lot: NonNullable<Chantier['avancementCorps']>[number]) => {
     if (!chantier) return;
-    updateChantier({
-      ...chantier,
-      validationsEtapes: { ...(chantier.validationsEtapes || {}), [lotNom]: new Date().toISOString() },
-      derniereMajContenu: new Date().toISOString(),
-    });
+    Alert.alert(
+      'Valider cette étape',
+      `Confirmer la validation de « ${lot.nom} » ? Cette validation est enregistrée et horodatée.`,
+      [
+        { text: 'Annuler', style: 'cancel' },
+        {
+          text: 'Valider', onPress: () => updateChantier({
+            ...chantier,
+            validationsEtapes: { ...(chantier.validationsEtapes || {}), [lot.id]: new Date().toISOString() },
+            derniereMajContenu: new Date().toISOString(),
+          }),
+        },
+      ],
+    );
   };
 
-  // Réponse du client à un avenant proposé (Tier 3 B4).
+  // Réponse du client à un avenant proposé (Tier 3 B4). Confirmation avant acceptation
+  // (engagement financier), refus immédiat.
   const repondreAvenant = (supp: NonNullable<typeof avenantsEnAttente>[number], accepte: boolean) => {
-    updateSupplementMarche({
+    const appliquer = () => updateSupplementMarche({
       ...supp,
       statut: accepte ? 'accepte' : 'refuse',
       dateAccord: accepte ? new Date().toISOString().slice(0, 10) : undefined,
       updatedAt: new Date().toISOString(),
     });
+    if (accepte) {
+      Alert.alert(
+        'Accepter cet avenant',
+        `Confirmer l'acceptation de « ${supp.libelle} » pour ${supp.montantTTC.toLocaleString('fr-FR')} € TTC ? Ce montant sera ajouté à votre marché.`,
+        [
+          { text: 'Annuler', style: 'cancel' },
+          { text: 'Accepter', onPress: appliquer },
+        ],
+      );
+    } else {
+      appliquer();
+    }
   };
 
   // TVA extraite du devis — sinon fallback 20% uniforme
@@ -1197,6 +1221,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   ];
   // Le planning n'est visible au client que si l'admin l'a activé (afficherPlanningAuClient).
   const ongletsVisibles = ongletsConfig.filter(o => canVoirOnglet(o.key, externAp, chantier, isAdmin) && (o.key !== 'planning' || peutVoirPlanning));
+  // Autorisation finances (source unique) : gouverne l'onglet Chiffres ET la barre KPI Budget.
+  const canVoirChiffres = canVoirOnglet('chiffres', externAp, chantier, isAdmin);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
@@ -1231,7 +1257,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
             <View style={styles.kpiCell}>
               <Text style={styles.kpiLabel}>Budget</Text>
-              <Text style={styles.kpiValue} numberOfLines={1}>{fmtCompact(dejaPayeTotal)} / {fmtCompact(totalChantierTTC)} €</Text>
+              <Text style={styles.kpiValue} numberOfLines={1}>{canVoirChiffres ? `${fmtCompact(dejaPayeTotal)} / ${fmtCompact(totalChantierTTC)} €` : '—'}</Text>
             </View>
             <View style={styles.kpiCell}>
               <Text style={styles.kpiLabel}>Fin prévue</Text>
@@ -1306,24 +1332,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </View>
             )}
 
-            {/* ── Ma commission (apporteur / architecte) — Tier 3 C ── */}
-            {peutVoirCommissions && !isClient && maCommission && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>💼 Ma commission</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
-                  <Text style={{ fontSize: 13, color: '#687076', fontWeight: '700' }}>Total</Text>
-                  <Text style={{ fontSize: 14, color: '#2C2C2C', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
-                  <Text style={{ fontSize: 13, color: '#2E7D32' }}>Déjà perçu</Text>
-                  <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '700' }}>{fmt(maCommission.paye)} €</Text>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
-                  <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à percevoir</Text>
-                  <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(maCommission.duDu)} €</Text>
-                </View>
-              </View>
-            )}
+            {/* "Ma commission" a été déplacée dans l'onglet Projet : elle ne dépend
+                pas de l'autorisation "voir finances" (règle propre : peutVoirCommissions). */}
 
             {/* C2 : bannière "Marchés" supprimée — info redondante avec "Budget".
                 Détails marché restent dans Marchés (admin) hors portail. */}
@@ -1357,9 +1367,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               )}
 
-              {/* Détail comptable (HT / TVA / situations). Admin + architecte le voient ;
-                  client = vue simplifiée ci-dessus ; apporteur/contractant = accès géré par l'admin (toggle à venir). */}
-              {totalChantierHT > 0 && (isAdmin || (isExterne && (externAp?.type === 'architecte' || chantier?.portailOverrides?.[externAp?.id ?? '']?.voirChiffres === true))) && (
+              {/* Détail comptable (HT / TVA / situations). L'onglet Chiffres est déjà en opt-in
+                  (canVoirChiffres) ; ici on réserve le détail HT aux non-clients. Le client garde
+                  la vue simplifiée TTC ci-dessus. */}
+              {totalChantierHT > 0 && (isAdmin || (isExterne && !isClient)) && (
                 <View style={styles.pfsResumeBox}>
                   <View style={styles.pfsResumeRow}>
                     <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
@@ -1488,7 +1499,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                             <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
-                              {c.nom}{c.montant ? ` — ${fmt(c.montant)} € HT` : ''}
+                              {c.nom}{c.montant && !isClient ? ` — ${fmt(c.montant)} € HT` : ''}
                             </Text>
                             {isLotEnCours(c) && (
                               <View style={styles.lotBadgeEnCours}>
@@ -1559,8 +1570,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       {/* Commentaires client/externes */}
                       {c.commentairesClient && c.commentairesClient.length > 0 && (
                         <View style={{ marginTop: 8, gap: 6 }}>
-                          {c.commentairesClient.map(cc => {
-                            const isMine = cc.auteurType === (isExterne ? externAp?.type : 'admin');
+                          {c.commentairesClient
+                            .filter(cc => isAdmin || cc.auteurType === 'admin' || cc.auteurId === externAp?.id)
+                            .map(cc => {
+                            const isMine = isExterne ? cc.auteurId === externAp?.id : cc.auteurType === 'admin';
                             const unreadByAdmin = isAdmin && cc.auteurType !== 'admin' && !cc.luParAdmin;
                             return (
                               <View key={cc.id} style={{
@@ -1590,7 +1603,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       )}
                       {/* Validation d'étape par le client sur un lot achevé — Tier 3 B */}
                       {c.pourcentage >= 100 && (() => {
-                        const valideLe = chantier?.validationsEtapes?.[c.nom];
+                        const valideLe = chantier?.validationsEtapes?.[c.id];
                         if (valideLe) {
                           return (
                             <View style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#E8F5E9', borderRadius: 8 }}>
@@ -1600,7 +1613,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         }
                         if (isClient) {
                           return (
-                            <Pressable onPress={() => validerEtape(c.nom)} style={{ marginTop: 6, paddingVertical: 8, alignItems: 'center', backgroundColor: '#2E7D32', borderRadius: 8 }}>
+                            <Pressable onPress={() => validerEtape(c)} style={{ marginTop: 6, paddingVertical: 8, alignItems: 'center', backgroundColor: '#2E7D32', borderRadius: 8 }}>
                               <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>✓ Valider cette étape</Text>
                             </Pressable>
                           );
@@ -1609,12 +1622,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       })()}
                     </View>
                   ))}
-                  {/* Totaux lots */}
-                  <View style={styles.totalLotsRow}>
-                    <Text style={styles.totalLotsLabel}>Total lots HT</Text>
-                    <Text style={styles.totalLotsValue}>{fmt(totalChantierHT)} €</Text>
-                  </View>
-                  {situation.totalHT > 0 && (
+                  {/* Totaux lots (HT réservé aux non-clients) */}
+                  {!isClient && (
+                    <View style={styles.totalLotsRow}>
+                      <Text style={styles.totalLotsLabel}>Total lots HT</Text>
+                      <Text style={styles.totalLotsValue}>{fmt(totalChantierHT)} €</Text>
+                    </View>
+                  )}
+                  {!isClient && situation.totalHT > 0 && (
                     <View style={[styles.totalLotsRow, { marginTop: 6, backgroundColor: '#F5EDE3' }]}>
                       <Text style={[styles.totalLotsLabel, { color: '#8C6D2F' }]}>Cumulé selon avancement</Text>
                       <Text style={[styles.totalLotsValue, { color: '#8C6D2F' }]}>{fmt(situation.totalHT)} € HT</Text>
@@ -1679,8 +1694,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </>
               )}
 
-            {/* V10 — Situations figées par marché/supplément (Phase B) */}
-            {situationsFigees.length > 0 && (
+            {/* V10 — Situations figées par marché/supplément (Phase B) — HT réservé aux non-clients */}
+            {!isClient && situationsFigees.length > 0 && (
               <>
                 <View style={styles.subSectionHeader}>
                   <Text style={styles.subSectionTitle}>📋 Situations facturées</Text>
@@ -1765,7 +1780,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   ) : (
                     <View style={[styles.equipeBadge, styles.equipeBadgeVert]}>
                       <Text style={styles.equipeBadgeVertText} numberOfLines={2}>
-                        🟢 {persons.map(p => p.label).join(' · ')} ({persons.length})
+                        🟢 {isAdmin ? persons.map(p => p.label).join(' · ') : 'Équipe sur place'} ({persons.length})
                       </Text>
                     </View>
                   )}
@@ -1792,6 +1807,24 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET PROJET ─────────────── */}
             {ongletActif === 'projet' && (<>
+            {/* ── Ma commission (apporteur / architecte) — indépendante des finances chantier ── */}
+            {peutVoirCommissions && !isClient && maCommission && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>💼 Ma commission</Text>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
+                  <Text style={{ fontSize: 13, color: '#687076', fontWeight: '700' }}>Total</Text>
+                  <Text style={{ fontSize: 14, color: '#2C2C2C', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                  <Text style={{ fontSize: 13, color: '#2E7D32' }}>Déjà perçu</Text>
+                  <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '700' }}>{fmt(maCommission.paye)} €</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                  <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à percevoir</Text>
+                  <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(maCommission.duDu)} €</Text>
+                </View>
+              </View>
+            )}
             {/* Accès rapide "Signaler un problème" pour l'externe (le SAV complet reste dans Fin de chantier). */}
             {!isAdmin && (
               <Pressable onPress={() => setShowNouveauSav(true)} style={{ backgroundColor: '#FBEEE9', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#E8C4B8' }}>

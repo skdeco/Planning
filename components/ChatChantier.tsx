@@ -195,10 +195,17 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
           }
         });
       } else {
-        // Intervenant externe → admin
+        // Intervenant externe → admin + les AUTRES participants du fil (cas groupe)
         const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
-        const n = countUnreadChantierMessages(updatedChantiers, 'admin');
-        sendPushNotification(adminTokens, titre, corps, undefined, n);
+        const nAdmin = countUnreadChantierMessages(updatedChantiers, 'admin');
+        sendPushNotification(adminTokens, titre, corps, undefined, nAdmin);
+        activeParticipants.filter(pid => pid !== monId).forEach(pid => {
+          const target = (data.apporteurs || []).find(a => a.id === pid);
+          if (target?.pushToken) {
+            const n = countUnreadChantierMessages(updatedChantiers, target.id);
+            sendPushNotification([target.pushToken!], titre, corps, undefined, n);
+          }
+        });
       }
     } catch (e) {
       console.warn('[Chat] push échoué', e);

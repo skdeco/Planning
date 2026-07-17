@@ -189,8 +189,10 @@ interface ChantierForm {
   apporteurId: string;
   contractantId: string;
   clientApporteurId: string;
-  // ② Accès finances accordé par l'admin à l'apporteur d'affaires (architecte : toujours autorisé)
+  // ② Accès finances au portail : opt-in pour l'apporteur (défaut caché),
+  //    opt-out pour l'architecte (défaut visible, l'admin peut révoquer).
   apporteurVoitFinances: boolean;
+  architecteVoitFinances: boolean;
 }
 
 // Clé AsyncStorage pour préserver le formulaire chantier quand on va créer un Apporteur
@@ -215,6 +217,7 @@ const DEFAULT_FORM: ChantierForm = {
   contractantId: '',
   clientApporteurId: '',
   apporteurVoitFinances: false,
+  architecteVoitFinances: true,
 };
 
 export default function ChantiersScreen() {
@@ -373,6 +376,7 @@ export default function ChantiersScreen() {
       contractantId: chantier.contractantId || '',
       clientApporteurId: chantier.clientApporteurId || '',
       apporteurVoitFinances: chantier.portailOverrides?.[chantier.apporteurId ?? '']?.voirChiffres === true,
+      architecteVoitFinances: chantier.portailOverrides?.[chantier.architecteId ?? '']?.voirChiffres !== false,
     });
     setFicheOnglet('fiche');
     setShowFiche(true);
@@ -712,6 +716,7 @@ export default function ChantiersScreen() {
       contractantId: chantier.contractantId || '',
       clientApporteurId: chantier.clientApporteurId || '',
       apporteurVoitFinances: chantier.portailOverrides?.[chantier.apporteurId ?? '']?.voirChiffres === true,
+      architecteVoitFinances: chantier.portailOverrides?.[chantier.architecteId ?? '']?.voirChiffres !== false,
     });
     setShowForm(true);
   };
@@ -775,12 +780,18 @@ export default function ChantiersScreen() {
 
     const existing = editId ? data.chantiers.find(c => c.id === editId) : null;
 
-    // ② Override finances de l'apporteur (l'admin décide) — préserve les autres overrides.
+    // ② Override finances portail (l'admin décide) — préserve les autres overrides.
     const baseOverrides: NonNullable<Chantier['portailOverrides']> = { ...(existing?.portailOverrides || {}) };
     if (form.apporteurId) {
       baseOverrides[form.apporteurId] = {
         ...(baseOverrides[form.apporteurId] || {}),
         voirChiffres: form.apporteurVoitFinances,
+      };
+    }
+    if (form.architecteId) {
+      baseOverrides[form.architecteId] = {
+        ...(baseOverrides[form.architecteId] || {}),
+        voirChiffres: form.architecteVoitFinances,
       };
     }
     const portailOverrides = Object.keys(baseOverrides).length ? baseOverrides : undefined;
@@ -880,7 +891,7 @@ export default function ChantiersScreen() {
     const notes = (data.notesChantier || []).filter(n => n.chantierId === chantier.id);
     const photos = (data.photosChantier || []).filter(p => p.chantierId === chantier.id);
     const docs = (data.docsSuiviChantier || []).filter(d => d.chantierId === chantier.id);
-    const depenses = (data.depensesChantier || []).filter(d => d.chantierId === chantier.id);
+    const depenses = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === chantier.id);
     const supplements = (data.supplementsChantier || []).filter(s => s.chantierId === chantier.id);
     const interventions = (data.interventions || []).filter(i => i.chantierId === chantier.id);
     const plans: any[] = data.plansChantier?.[chantier.id] || [];
@@ -1851,11 +1862,12 @@ export default function ChantiersScreen() {
               <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 10 }}>🤝 Contacts</Text>
 
-                {(['architecte', 'apporteur', 'client'] as const).map((ty) => {
+                {(['architecte', 'apporteur', 'contractant', 'client'] as const).map((ty) => {
                   const meta = APPORTEUR_TYPE_LABELS[ty];
                   const field: keyof ChantierForm =
                     ty === 'architecte'  ? 'architecteId' :
                     ty === 'apporteur'   ? 'apporteurId' :
+                    ty === 'contractant' ? 'contractantId' :
                                             'clientApporteurId';
                   const selectedId = form[field] as string;
                   const listOfThisType = apporteursAll.filter(a => a.type === ty);
@@ -1878,19 +1890,23 @@ export default function ChantiersScreen() {
                       <Pressable onPress={() => goCreateApporteur(ty)} style={{ marginTop: 6, alignSelf: 'flex-start' }}>
                         <Text style={{ fontSize: 12, fontWeight: '700', color: meta.couleur }}>+ Ajouter un {meta.label.toLowerCase()}</Text>
                       </Pressable>
-                      {ty === 'apporteur' && !!selectedId && (
-                        <Pressable
-                          onPress={() => setForm(f => ({ ...f, apporteurVoitFinances: !f.apporteurVoitFinances }))}
-                          style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 10 }}
-                        >
-                          <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }}>
-                            💶 Autoriser à voir les finances du chantier
-                          </Text>
-                          <View style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: form.apporteurVoitFinances ? '#2E7D32' : '#D8D0C6', alignItems: form.apporteurVoitFinances ? 'flex-end' : 'flex-start' }}>
-                            <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }} />
-                          </View>
-                        </Pressable>
-                      )}
+                      {(ty === 'apporteur' || ty === 'architecte') && !!selectedId && (() => {
+                        const finKey: keyof ChantierForm = ty === 'apporteur' ? 'apporteurVoitFinances' : 'architecteVoitFinances';
+                        const on = form[finKey] as boolean;
+                        return (
+                          <Pressable
+                            onPress={() => setForm(f => ({ ...f, [finKey]: !(f[finKey] as boolean) }))}
+                            style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 10 }}
+                          >
+                            <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }}>
+                              💶 Autoriser à voir les finances du chantier
+                            </Text>
+                            <View style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? '#2E7D32' : '#D8D0C6', alignItems: on ? 'flex-end' : 'flex-start' }}>
+                              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }} />
+                            </View>
+                          </Pressable>
+                        );
+                      })()}
                       {ty === 'client' && !selectedId && (
                         <Pressable
                           onPress={openQuickClient}

@@ -484,8 +484,11 @@ export default function RHScreen() {
 
           return (
           <>
-            {/* Solde de congés — visible par tous : l'employé voit SON propre solde (targetId=myId côté non-RH). */}
-            <View style={styles.soldeCard}>
+            {/* Solde de congés individuel — l'employé voit SON propre solde (targetId=myId).
+                En vue admin/RH (targetId=null), on masque : un solde unique agrégerait à tort
+                les jours pris de toute l'équipe. Le détail par employé reste dans la liste. */}
+            {targetId && (
+              <View style={styles.soldeCard}>
                 <View style={styles.soldeRow}>
                   <View style={styles.soldeItem}>
                     <Text style={styles.soldeValue}>{JOURS_PAR_AN}</Text>
@@ -503,6 +506,7 @@ export default function RHScreen() {
                   </View>
                 </View>
               </View>
+            )}
 
             <Pressable style={styles.addBtn} onPress={() => { setEditConge(null); setCongeForm({ dateDebut: '', dateFin: '', motif: '', employeId: '' }); setShowCongeModal(true); }}>
               <Text style={styles.addBtnText}>+ {t.rh.newLeaveRequest}</Text>

@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
+import { canVoirOnglet } from '@/lib/portail/permissions';
 
 function iso(d: Date) { return d.toISOString().slice(0, 10); }
 function parseISO(s: string): Date { return new Date(s + (s.length === 10 ? 'T12:00:00' : '')); }
@@ -70,6 +71,9 @@ export default function PlanningExterne() {
         c.contractantId === apporteurId;
       if (!lie) return false;
       if (estClient && c.afficherPlanningAuClient === false) return false;
+      // Respecte l'autorisation portail "planning" (comme PortailClient) : l'admin
+      // peut masquer le planning à un intervenant via override.
+      if (!canVoirOnglet('planning', apporteur, c, false)) return false;
       return true;
     });
   }, [data.chantiers, data.apporteurs, apporteurId]);

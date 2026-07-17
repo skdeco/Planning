@@ -934,6 +934,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       // Cascade : nettoyer toutes les données liées au chantier
       listesMateriaux: (p.listesMateriaux || []).filter(l => l.chantierId !== id),
       depensesChantier: (p.depensesChantier || []).filter(d => d.chantierId !== id),
+      depenses: (p.depenses || []).filter(d => d.chantierId !== id),
       supplementsChantier: (p.supplementsChantier || []).filter(s => s.chantierId !== id),
       photosChantier: (p.photosChantier || []).filter(ph => ph.chantierId !== id),
       notesChantier: (p.notesChantier || []).filter(n => n.chantierId !== id),
