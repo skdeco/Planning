@@ -407,24 +407,26 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     return { total, paye, duDu: total - paye };
   }, [marches, externAp, isClient]);
 
-  // Validation d'étape par le client (Tier 3 B) : horodate la validation d'un lot achevé.
+  // Confirmation cross-plateforme : Alert.alert n'affiche RIEN sur react-native-web
+  // (le portail est servi sur web) → on branche window.confirm comme le reste du fichier.
+  const confirmDialog = (titre: string, message: string, onConfirm: () => void, labelOK = 'Confirmer') => {
+    if (Platform.OS === 'web') { if (window.confirm(`${titre}\n\n${message}`)) onConfirm(); }
+    else Alert.alert(titre, message, [{ text: 'Annuler', style: 'cancel' }, { text: labelOK, onPress: onConfirm }]);
+  };
+
   // Validation d'étape indexée par ID de lot (évite les collisions entre lots
   // homonymes de marchés différents) + confirmation avant enregistrement.
   const validerEtape = (lot: NonNullable<Chantier['avancementCorps']>[number]) => {
     if (!chantier) return;
-    Alert.alert(
+    confirmDialog(
       'Valider cette étape',
       `Confirmer la validation de « ${lot.nom} » ? Cette validation est enregistrée et horodatée.`,
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Valider', onPress: () => updateChantier({
-            ...chantier,
-            validationsEtapes: { ...(chantier.validationsEtapes || {}), [lot.id]: new Date().toISOString() },
-            derniereMajContenu: new Date().toISOString(),
-          }),
-        },
-      ],
+      () => updateChantier({
+        ...chantier,
+        validationsEtapes: { ...(chantier.validationsEtapes || {}), [lot.id]: new Date().toISOString() },
+        derniereMajContenu: new Date().toISOString(),
+      }),
+      'Valider',
     );
   };
 
@@ -438,13 +440,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       updatedAt: new Date().toISOString(),
     });
     if (accepte) {
-      Alert.alert(
+      confirmDialog(
         'Accepter cet avenant',
         `Confirmer l'acceptation de « ${supp.libelle} » pour ${supp.montantTTC.toLocaleString('fr-FR')} € TTC ? Ce montant sera ajouté à votre marché.`,
-        [
-          { text: 'Annuler', style: 'cancel' },
-          { text: 'Accepter', onPress: appliquer },
-        ],
+        appliquer,
+        'Accepter',
       );
     } else {
       appliquer();
@@ -461,7 +461,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Source de vérité prioritaire si elle existe : évite la divergence
   // d'affichage entre "Marchés" et "Suivi financier" sur les chantiers
   // sans devisTVABreakdown (ancien stockage).
-  const marcheTTC = useMemo(() => marches.reduce((s, m) => s + (m.montantTTC || 0), 0), [marches]);
+  // Inclut les avenants ACCEPTÉS (supplements est déjà filtré statut==='accepte') : sinon le
+  // total et le "reste à payer" présentés au client sous-évaluent le marché du montant des avenants.
+  const marcheTTC = useMemo(
+    () => marches.reduce((s, m) => s + (m.montantTTC || 0), 0) + supplements.reduce((s, sup) => s + (sup.montantTTC || 0), 0),
+    [marches, supplements],
+  );
   // Cascade priorité : marcheTTC > devisTotalTTC > tvaBreakdown > fallback 20%
   const totalTVAFromDevis = tvaBreakdown.reduce((s, t) => s + t.montant, 0);
   const totalChantierTTC = marcheTTC > 0
@@ -827,12 +832,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
     let marchesHtml = '';
     // L'export financier respecte la même permission que l'onglet Chiffres (ne pas contourner canVoirOnglet).
+    // La colonne HT est réservée aux non-clients (le client ne voit jamais le HT, ici comme à l'écran).
+    const showHT = !isClient;
     if ((marches.length > 0 || supplements.length > 0) && canVoirOnglet('chiffres', externAp, chantier, isAdmin)) {
       marchesHtml = `<h2 style="color:#C9A96E;border-bottom:2px solid #C9A96E;padding-bottom:6px;">Marches &amp; Supplements</h2>
         <table style="width:100%;border-collapse:collapse;margin-bottom:16px;">
           <thead><tr style="background:#2C2C2C;color:#fff;">
             <th style="padding:8px;text-align:left;">Libelle</th>
-            <th style="padding:8px;text-align:right;">HT</th>
+            ${showHT ? '<th style="padding:8px;text-align:right;">HT</th>' : ''}
             <th style="padding:8px;text-align:right;">TTC</th>
             <th style="padding:8px;text-align:right;">Paye</th>
           </tr></thead>
@@ -841,7 +848,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               const paye = (m.paiements || []).reduce((s, p) => s + p.montant, 0);
               return `<tr style="border-bottom:1px solid #E2E6EA;">
                 <td style="padding:8px;">${m.libelle}</td>
-                <td style="padding:8px;text-align:right;">${fmt(m.montantHT)} EUR</td>
+                ${showHT ? `<td style="padding:8px;text-align:right;">${fmt(m.montantHT)} EUR</td>` : ''}
                 <td style="padding:8px;text-align:right;">${fmt(m.montantTTC)} EUR</td>
                 <td style="padding:8px;text-align:right;color:${paye >= m.montantTTC ? '#27AE60' : '#E74C3C'}">${fmt(paye)} EUR</td>
               </tr>`;
@@ -850,7 +857,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               const paye = (s.paiements || []).reduce((sum, p) => sum + p.montant, 0);
               return `<tr style="border-bottom:1px solid #E2E6EA;background:#FAFAFA;">
                 <td style="padding:8px;font-style:italic;">+ ${s.libelle}</td>
-                <td style="padding:8px;text-align:right;">${fmt(s.montantHT)} EUR</td>
+                ${showHT ? `<td style="padding:8px;text-align:right;">${fmt(s.montantHT)} EUR</td>` : ''}
                 <td style="padding:8px;text-align:right;">${fmt(s.montantTTC)} EUR</td>
                 <td style="padding:8px;text-align:right;color:${paye >= s.montantTTC ? '#27AE60' : '#E74C3C'}">${fmt(paye)} EUR</td>
               </tr>`;
@@ -858,12 +865,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           </tbody>
           <tfoot><tr style="background:#F5EDE3;font-weight:700;">
             <td style="padding:8px;">TOTAL</td>
-            <td style="padding:8px;text-align:right;">${fmt(financials.totalHT)} EUR</td>
+            ${showHT ? `<td style="padding:8px;text-align:right;">${fmt(financials.totalHT)} EUR</td>` : ''}
             <td style="padding:8px;text-align:right;">${fmt(financials.totalTTC)} EUR</td>
             <td style="padding:8px;text-align:right;">${fmt(financials.totalPaye)} EUR</td>
           </tr>
           <tr style="background:#2C2C2C;color:#C9A96E;font-weight:700;">
-            <td style="padding:8px;" colspan="3">Reste a payer</td>
+            <td style="padding:8px;" colspan="${showHT ? 3 : 2}">Reste a payer</td>
             <td style="padding:8px;text-align:right;">${fmt(financials.reste)} EUR</td>
           </tr></tfoot>
         </table>`;

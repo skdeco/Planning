@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react
 import { useApp } from '@/app/context/AppContext';
 import type { Chantier } from '@/app/types';
 import { canVoirOnglet } from '@/lib/portail/permissions';
+import { getChantierLots } from '@/lib/chantier/getChantierLots';
 
 function iso(d: Date) { return d.toISOString().slice(0, 10); }
 function parseISO(s: string): Date { return new Date(s + (s.length === 10 ? 'T12:00:00' : '')); }
@@ -16,8 +17,8 @@ function diffDays(a: Date, b: Date): number {
  * - Si le lot a dateDebutPrevue ET dateFinPrevue → on garde.
  * - Sinon : on répartit au prorata des montants HT sur la durée du chantier.
  */
-function computeLotPlanning(chantier: Chantier): Array<{ id: string; nom: string; start: string; end: string; montant: number; manuel: boolean }> {
-  const lots = (chantier.avancementCorps || []).filter(l => l.nom);
+function computeLotPlanning(chantier: Chantier, allLots: NonNullable<Chantier['avancementCorps']>): Array<{ id: string; nom: string; start: string; end: string; montant: number; manuel: boolean }> {
+  const lots = allLots.filter(l => l.nom);
   if (lots.length === 0) return [];
 
   // Durée : fenêtre du chantier
@@ -87,7 +88,7 @@ export default function PlanningExterne() {
   }, [mesChantiers, selectedChantierId]);
 
   const lotPlanning = useMemo(() => {
-    return selectedChantier ? computeLotPlanning(selectedChantier) : [];
+    return selectedChantier ? computeLotPlanning(selectedChantier, getChantierLots(selectedChantier, data.marchesChantier, data.supplementsMarche)) : [];
   }, [selectedChantier]);
 
   // Fenêtre Gantt : englobe tous les lots + marge

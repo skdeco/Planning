@@ -3,6 +3,7 @@ import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import { PortailClient } from '@/components/PortailClient';
 import { STATUT_LABELS, STATUT_COLORS } from '@/app/types';
+import { getChantierLots } from '@/lib/chantier/getChantierLots';
 
 export default function MesChantiersExterne() {
   const { data, currentUser } = useApp();
@@ -76,7 +77,7 @@ export default function MesChantiersExterne() {
             {[c.rue, c.codePostal, c.ville].filter(Boolean).join(', ') || c.adresse || '—'}
           </Text>
           {(() => {
-            const lots = c.avancementCorps || [];
+            const lots = getChantierLots(c, data.marchesChantier, data.supplementsMarche);
             const pct = lots.length ? Math.round(lots.reduce((s, l) => s + (l.pourcentage || 0), 0) / lots.length) : null;
             const st = STATUT_COLORS[c.statut];
             return (

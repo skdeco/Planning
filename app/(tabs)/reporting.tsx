@@ -10,6 +10,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { METIER_COLORS, type Acompte } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
+import { calcSalaireMensuel } from '@/lib/paie/calcSalaireMensuel';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -325,8 +326,10 @@ export default function ReportingScreen() {
       return { dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, isForcedPresent, joursFeriesTravaille: isFerie && (!!debut || !!fin) };
     });
 
-    // Calcul du salaire selon le mode
-    const joursOuvrablesMois = calcJoursOuvrablesMois(selectedYear, selectedMonth);
+    // Calcul du salaire selon le mode.
+    // Jours ouvrables selon les HORAIRES RÉELS de l'employé (hors fériés) — même
+    // référentiel que les absences ci-dessus (évite de payer des jours non travaillés).
+    const joursOuvrablesMois = lignes.filter(l => l.travailleTheo && !l.isFerie).length;
     let salaireBase: number | null = null;
     let salaireAvantAcompte: number | null = null;
 
@@ -504,16 +507,11 @@ export default function ReportingScreen() {
     html += `<h2>Récapitulatif mensuel</h2><table><tr><th>Employé</th><th>Heures travaillées</th><th>Acomptes</th><th>Salaire estimé</th></tr>`;
     data.employes.forEach(emp => {
       const pts = pointagesParEmpDate[emp.id] || {};
-      let totalMin = 0;
-      joursDuMois.forEach(d => {
-        const p = pts[d];
-        if (p?.debut && p?.fin) totalMin += calcDureeMin(p.debut.heure, p.fin.heure);
-      });
+      // Même calcul que la vue "Par employé" (source unique) : plus de divergence.
+      const sal = calcSalaireMensuel(emp, pts, joursDuMois, selectedYear, data.presencesForcees || []);
       const acomptesEmp = acomptesMois.filter(a => a.employeId === emp.id).reduce((s, a) => s + a.montant, 0);
-      const salaire = emp.modeSalaire === 'journalier' && emp.tarifJournalier
-        ? Math.round(totalMin / 60 / 8 * emp.tarifJournalier)
-        : emp.salaireNet || 0;
-      html += `<tr><td>${emp.prenom} ${emp.nom}</td><td>${formatDuree(totalMin)}</td><td>${acomptesEmp} €</td><td>${salaire > 0 ? `${salaire} €` : '—'}</td></tr>`;
+      const salaire = sal.salaireAvantAcompte != null ? Math.round(sal.salaireAvantAcompte) : 0;
+      html += `<tr><td>${emp.prenom} ${emp.nom}</td><td>${formatDuree(sal.totalMinutes)}</td><td>${acomptesEmp} €</td><td>${salaire > 0 ? `${salaire} €` : '—'}</td></tr>`;
     });
     html += `</table>`;
 

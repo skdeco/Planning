@@ -26,6 +26,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import * as FileSystem from 'expo-file-system/legacy';
 import { requireOptionalNativeModule } from 'expo-modules-core';
+import { getJoursFeriesFrance } from '@/lib/date/joursFeries';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (fiches de paie). Aligné avec equipe.tsx + financier-st.tsx + pointage.tsx.
@@ -466,6 +467,7 @@ export default function RHScreen() {
           // Droit à congés propre à l'employé concerné (défaut 25 si non renseigné).
           const soldeEmp = (targetId || myId) ? data.employes.find(e => e.id === (targetId || myId)) : undefined;
           const JOURS_PAR_AN = soldeEmp?.joursCongesAnnuels ?? 25;
+          const feriesRef = getJoursFeriesFrance(anneeRef); // exclus du décompte (comme le salaire)
           const congesApprouves = conges.filter(d => d.statut === 'approuve' && (!targetId || d.employeId === targetId));
           const joursPris = congesApprouves.reduce((total, d) => {
             const debut = new Date(d.dateDebut);
@@ -474,8 +476,9 @@ export default function RHScreen() {
             const current = new Date(debut);
             while (current <= fin) {
               const dow = current.getDay();
-              // Jours ouvrés de l'année de référence uniquement (réinitialisation annuelle du solde)
-              if (dow !== 0 && dow !== 6 && current.getFullYear() === anneeRef) jours++;
+              const ymd = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}-${String(current.getDate()).padStart(2, '0')}`;
+              // Jours ouvrés de l'année de référence, hors week-ends ET jours fériés.
+              if (dow !== 0 && dow !== 6 && current.getFullYear() === anneeRef && !feriesRef.has(ymd)) jours++;
               current.setDate(current.getDate() + 1);
             }
             return total + jours;
