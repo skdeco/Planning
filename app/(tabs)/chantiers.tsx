@@ -29,7 +29,7 @@ import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMess
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS } from '@/constants/design';
-import { MapPin, CalendarClock } from 'lucide-react-native';
+import { MapPin, CalendarClock, Building2 } from 'lucide-react-native';
 import { FadeInView } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
 import { ModalNotes } from '@/components/planning/ModalNotes';
@@ -1612,6 +1612,9 @@ export default function ChantiersScreen() {
         onRefresh={onRefresh}
         ListEmptyComponent={
           <View style={styles.emptyState}>
+            <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <Building2 size={34} color="#B8AA97" strokeWidth={1.6} />
+            </View>
             <Text style={styles.emptyText}>{t.chantiers.noChantiers}</Text>
             {isAdmin && <Text style={styles.emptyHint}>{t.chantiers.noChantierHint}</Text>}
           </View>
