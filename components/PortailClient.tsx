@@ -481,6 +481,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const tvaRatioEffectif = totalChantierHT > 0 ? (totalChantierTTC - totalChantierHT) / totalChantierHT : TVA_RATE_DEFAULT;
   const resteAPayerChantier = Math.max(0, totalChantierTTC - dejaPayeTotal);
 
+  // Reste à régler PAR situation figée (TTC), vu du client : le montant figé est
+  // immuable, mais on affiche dynamiquement ce qui a été réglé DEPUIS le figeage
+  // (= dejaPayeTotal actuel − dejaPayeAvant du snapshot) pour montrer le reste dû.
+  const situationsAReglerClient = useMemo(() => {
+    return [...situationsHistorique]
+      .sort((a, b) => (b.numero || '').localeCompare(a.numero || ''))
+      .map(s => {
+        const regle = s.statut === 'payee'
+          ? s.montantSituation
+          : Math.min(s.montantSituation, Math.max(0, dejaPayeTotal - (s.dejaPayeAvant || 0)));
+        return { s, regle, reste: Math.max(0, s.montantSituation - regle) };
+      });
+  }, [situationsHistorique, dejaPayeTotal]);
+
   const situation = useMemo(() => {
     const lignes = avancementCorps
       .filter(c => c.montant && c.montant > 0)
@@ -1476,6 +1490,37 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             </View>
             {/* ── /Bannière Budget ── */}
+
+            {/* ── Situations à régler : reste dû PAR situation figée + reste global ── */}
+            {(isClient || isAdmin) && situationsHistorique.length > 0 && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Situations à régler</Text>
+                {situationsAReglerClient.map(({ s, regle, reste }) => (
+                  <View key={s.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#2C2C2C' }}>{s.numero}</Text>
+                      <Text style={{ fontSize: 11, color: '#8C8077' }}>{formatDate(s.date)}{s.statut === 'payee' ? ' · réglée' : ''}</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
+                      <Text style={{ fontSize: 12, color: '#687076' }}>Montant de la situation</Text>
+                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{fmt(s.montantSituation)} €</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
+                      <Text style={{ fontSize: 12, color: '#2E7D32' }}>Déjà réglé sur cette situation</Text>
+                      <Text style={{ fontSize: 12, color: '#2E7D32', fontWeight: '600' }}>{fmt(regle)} €</Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
+                      <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à régler sur cette situation</Text>
+                      <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>{fmt(reste)} €</Text>
+                    </View>
+                  </View>
+                ))}
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTopWidth: 2, borderTopColor: '#E8DDD0' }}>
+                  <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '800' }}>Reste à payer (tout le chantier)</Text>
+                  <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(resteAPayerChantier)} €</Text>
+                </View>
+              </View>
+            )}
 
             {/* ── Vos versements (client) — échéancier des paiements reçus ── */}
             {isClient && versementsClient.length > 0 && (
