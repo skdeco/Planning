@@ -620,10 +620,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   };
   const deleteAllCorps = () => {
     if (!chantier) return;
-    const nb = (chantier.avancementCorps || []).length;
+    // Compte TOUS les lots (legacy + marchés + suppléments), pas seulement le legacy —
+    // sinon no-op silencieux sur un chantier migré.
+    const nb = avancementCorps.length;
     if (nb === 0) return;
     const msg = `Supprimer les ${nb} lots de ce chantier ?\n\nCette action est irréversible. L'historique des points financiers sera conservé.`;
-    const doDel = () => updateChantier({ ...chantier, avancementCorps: [] });
+    const doDel = () => {
+      updateChantier({ ...chantier, avancementCorps: [] });
+      marches.forEach(m => { if ((m.avancementCorps || []).length) updateMarcheChantier({ ...m, avancementCorps: [] }); });
+      supplements.forEach(s => { if ((s.avancementCorps || []).length) updateSupplementMarche({ ...s, avancementCorps: [] }); });
+    };
     if (Platform.OS === 'web') { if (window.confirm(msg)) doDel(); }
     else Alert.alert('Tout supprimer', msg, [{ text: 'Annuler', style: 'cancel' }, { text: 'Tout supprimer', style: 'destructive', onPress: doDel }]);
   };

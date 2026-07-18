@@ -313,9 +313,10 @@ export default function RHScreen() {
       }
     } else if (type === 'avance') {
       const d = avances.find(x => x.id === id);
-      if (d) {
+      // Garde d'idempotence : ne traiter qu'une demande encore en attente (évite la ré-approbation).
+      if (d && d.statut === 'en_attente') {
         updateDemandeAvance({ ...d, statut, commentaireRH: commentaire, updatedAt: now() });
-        // Si approuvée, enregistrer comme acompte payé dans la table des acomptes
+        // Si approuvée, enregistrer comme acompte payé (clé avanceId = anti-doublon).
         if (statut === 'approuve') {
           addAcompte({
             id: genId(),
@@ -324,6 +325,7 @@ export default function RHScreen() {
             date: now().slice(0, 10),
             commentaire: d.motif || 'Acompte approuvé (demande RH)',
             createdAt: now(),
+            avanceId: d.id,
           });
         }
       }

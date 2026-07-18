@@ -524,6 +524,7 @@ export interface Acompte {
   montant: number;     // en euros
   commentaire: string; // ex: "Acompte semaine 12"
   createdAt: string;   // ISO datetime
+  avanceId?: string;   // demande d'avance RH source (clé d'idempotence : évite le double acompte)
 }
 
 /** Catégories obligatoires de documents légaux sous-traitant */

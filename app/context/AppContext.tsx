@@ -1174,7 +1174,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Acomptes employés ──
   const addAcompte = (acompte: Acompte) =>
-    setData(p => ({ ...p, acomptes: [...p.acomptes, acompte] }));
+    setData(p => {
+      // Idempotence : ne pas recréer un acompte déjà généré pour la même demande d'avance
+      // (évite le double versement en cas d'approbation concurrente multi-admin).
+      if (acompte.avanceId && (p.acomptes || []).some(a => a.avanceId === acompte.avanceId)) return p;
+      return { ...p, acomptes: [...p.acomptes, acompte] };
+    });
   const deleteAcompte = (id: string) => {
     trackGenericDeletion(id);
     setData(p => ({ ...p, acomptes: p.acomptes.filter(a => a.id !== id) }));

@@ -405,7 +405,7 @@ export default function PointageScreen() {
         adresse = `${pos.latitude.toFixed(5)}, ${pos.longitude.toFixed(5)}`;
 
         // Vérification distance — utiliser GPS du chantier si disponible, sinon géocoder
-        const chantierGPS = chantier?.latitude && chantier?.longitude
+        const chantierGPS = chantier?.latitude != null && chantier?.longitude != null
           ? { lat: chantier.latitude, lng: chantier.longitude }
           : null;
         if (chantierGPS || adresseChantier) {
