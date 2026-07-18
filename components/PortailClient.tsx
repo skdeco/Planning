@@ -21,6 +21,7 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChatChantier } from '@/components/ChatChantier';
+import { Palette, Coins, CalendarDays, ClipboardList, Flag, MessageCircle } from 'lucide-react-native';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
@@ -1233,13 +1234,13 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   })();
 
   // ── Onglets : config + filtre permissions ──
-  const ongletsConfig: { key: OngletPortail; label: string; icon: string }[] = [
-    { key: 'projet', label: 'Projet', icon: '🎨' },
-    { key: 'chiffres', label: 'Chiffres', icon: '💰' },
-    { key: 'planning', label: 'Planning', icon: '📅' },
-    { key: 'suivisCR', label: 'Suivi', icon: '📋' },
-    { key: 'finChantier', label: 'Fin de chantier', icon: '🏁' },
-    { key: 'messages', label: 'Messages', icon: '💬' },
+  const ongletsConfig: { key: OngletPortail; label: string; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }> }[] = [
+    { key: 'projet', label: 'Projet', icon: Palette },
+    { key: 'chiffres', label: 'Chiffres', icon: Coins },
+    { key: 'planning', label: 'Planning', icon: CalendarDays },
+    { key: 'suivisCR', label: 'Suivi', icon: ClipboardList },
+    { key: 'finChantier', label: 'Fin de chantier', icon: Flag },
+    { key: 'messages', label: 'Messages', icon: MessageCircle },
   ];
   // Le planning n'est visible au client que si l'admin l'a activé (afficherPlanningAuClient).
   const ongletsVisibles = ongletsConfig.filter(o => canVoirOnglet(o.key, externAp, chantier, isAdmin) && (o.key !== 'planning' || peutVoirPlanning));
@@ -1296,17 +1297,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             contentContainerStyle={styles.tabBarContent}
             style={styles.tabBar}
           >
-            {ongletsVisibles.map(o => (
-              <Pressable
-                key={o.key}
-                onPress={() => setOngletActif(o.key)}
-                style={[styles.tab, ongletActif === o.key && styles.tabActive]}
-              >
-                <Text style={[styles.tabText, ongletActif === o.key && styles.tabTextActive]}>
-                  {o.icon} {o.label}
-                </Text>
-              </Pressable>
-            ))}
+            {ongletsVisibles.map(o => {
+              const Icon = o.icon;
+              const actif = ongletActif === o.key;
+              return (
+                <Pressable
+                  key={o.key}
+                  onPress={() => setOngletActif(o.key)}
+                  style={[styles.tab, actif && styles.tabActive, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}
+                >
+                  <Icon size={14} color={actif ? '#fff' : '#687076'} strokeWidth={2} />
+                  <Text style={[styles.tabText, actif && styles.tabTextActive]}>{o.label}</Text>
+                </Pressable>
+              );
+            })}
           </ScrollView>
 
           {/* C2 : Mode plein écran pour Messages (hors ScrollView) */}
@@ -1331,7 +1335,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ── Avenants à valider (client) — Tier 3 B4 ── */}
             {(isClient || isAdmin) && avenantsEnAttente.length > 0 && (
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>📝 Avenants à valider ({avenantsEnAttente.length})</Text>
+                <Text style={styles.sectionTitle}>Avenants à valider ({avenantsEnAttente.length})</Text>
                 {avenantsEnAttente.map(s => (
                   <View key={s.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
@@ -1362,7 +1366,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ── Budget ── */}
             <View style={styles.card}>
-              <Text style={styles.sectionTitle}>💰 Budget</Text>
+              <Text style={styles.sectionTitle}>Budget</Text>
               <Text style={styles.pfsSubtitle}>Total chantier, règlements perçus et restant à payer</Text>
 
               {/* Vue simplifiée pour le client : prix TTC, déjà réglé, reste + progression. */}
@@ -1470,7 +1474,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ── Vos versements (client) — échéancier des paiements reçus ── */}
             {isClient && versementsClient.length > 0 && (
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>💳 Vos versements</Text>
+                <Text style={styles.sectionTitle}>Vos versements</Text>
                 {versementsClient.map((v, i) => (
                   <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderTopWidth: i > 0 ? 1 : 0, borderTopColor: '#F2ECE4' }}>
                     <Text style={{ fontSize: 13, color: '#687076' }}>{new Date(v.date + 'T12:00:00').toLocaleDateString('fr-FR')}</Text>
@@ -1483,7 +1487,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ── Avancement (extrait en bannière séparée) ── */}
             <View style={styles.card}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={styles.sectionTitle}>🏗 Avancement</Text>
+                <Text style={styles.sectionTitle}>Avancement</Text>
                 {avancementGlobalCorps != null && (
                   <View style={{ backgroundColor: '#C9A96E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
                     <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
@@ -1810,7 +1814,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               );
               return (
                 <View style={styles.card}>
-                  <Text style={styles.sectionTitle}>👷 Équipe sur place</Text>
+                  <Text style={styles.sectionTitle}>Équipe sur place</Text>
                   {renderRow("AUJOURD'HUI", today, equipeJ0)}
                   {renderRow('DEMAIN', tomorrow, equipeJ1)}
                 </View>
@@ -1832,7 +1836,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ── Ma commission (apporteur / architecte) — indépendante des finances chantier ── */}
             {peutVoirCommissions && !isClient && maCommission && (
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>💼 Ma commission</Text>
+                <Text style={styles.sectionTitle}>Ma commission</Text>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
                   <Text style={{ fontSize: 13, color: '#687076', fontWeight: '700' }}>Total</Text>
                   <Text style={{ fontSize: 14, color: '#2C2C2C', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
@@ -1892,7 +1896,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 return (
                   <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-                <Text style={styles.sectionTitle}>📐 Plans</Text>
+                <Text style={styles.sectionTitle}>Plans</Text>
                 <Text style={{ fontSize: 11, color: '#8C8077' }}>
                   {activePlans.length} plan{activePlans.length > 1 ? 's' : ''}
                 </Text>
@@ -2079,7 +2083,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ── SAV ── */}
             <View style={styles.card}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={styles.sectionTitle}>🔧 SAV ({ticketsSAV.length})</Text>
+                <Text style={styles.sectionTitle}>SAV ({ticketsSAV.length})</Text>
                 <Pressable onPress={() => setShowNouveauSav(true)} style={styles.savCreerBtn}>
                   <Text style={styles.savCreerBtnText}>+ Signaler</Text>
                 </Pressable>
@@ -2708,10 +2712,12 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   sectionTitle: {
-    fontSize: 16,
+    fontSize: 13,
     fontWeight: '800',
     color: '#2C2C2C',
     marginBottom: 12,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
   progressLabel: {
     fontSize: 13,
