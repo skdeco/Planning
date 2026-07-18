@@ -30,6 +30,8 @@ import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS } from '@/constants/design';
 import { MapPin, CalendarClock } from 'lucide-react-native';
+import { FadeInView } from '@/components/ui/animated';
+import { hapticSelection } from '@/lib/haptics';
 import { ModalNotes } from '@/components/planning/ModalNotes';
 import { ChatChantier } from '@/components/ChatChantier';
 import type { NoteModalState } from '@/hooks/useNotesModalLogic';
@@ -1268,7 +1270,7 @@ export default function ChantiersScreen() {
     return list;
   }, [data.chantiers, searchQuery, filterContactType, filterContactId, filterStatut, isApporteurUser, currentUser?.apporteurId]);
 
-  const renderChantier = ({ item }: { item: Chantier }) => {
+  const renderChantier = ({ item, index }: { item: Chantier; index: number }) => {
     const statut = STATUT_COLORS[item.statut];
     const assignedEmps = data.employes.filter(e => item.employeIds.includes(e.id));
     const notesActives = getNotesActives(item.id);
@@ -1283,9 +1285,10 @@ export default function ChantiersScreen() {
     const hasAnyContact = !!(archContact || apContact || contractContact || clientContact);
 
     return (
+      <FadeInView delay={Math.min(index * 45, 360)}>
       <Pressable
         style={[styles.card, { borderLeftColor: item.couleur }]}
-        onPress={() => { if (!isApporteurUser) setActionChantier(item); }}
+        onPress={() => { hapticSelection(); if (!isApporteurUser) setActionChantier(item); }}
       >
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleRow}>
@@ -1388,6 +1391,7 @@ export default function ChantiersScreen() {
           )}
         </View>
       </Pressable>
+      </FadeInView>
     );
   };
 
