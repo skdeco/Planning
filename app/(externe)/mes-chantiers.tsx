@@ -6,6 +6,8 @@ import { STATUT_LABELS, STATUT_COLORS } from '@/app/types';
 import { getChantierLots } from '@/lib/chantier/getChantierLots';
 import { FadeInView } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Building2 } from 'lucide-react-native';
 
 export default function MesChantiersExterne() {
   const { data, currentUser } = useApp();
@@ -116,9 +118,9 @@ export default function MesChantiersExterne() {
           </View>
         </View>
       )}
-      <Text style={styles.sectionTitle}>🏗️ Chantiers en cours ({actifs.length})</Text>
+      <Text style={styles.sectionTitle}>Chantiers en cours ({actifs.length})</Text>
       {actifs.length === 0 ? (
-        <Text style={styles.empty}>Aucun chantier actif.</Text>
+        <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#B8AA97" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
       ) : (
         actifs.map(renderCard)
       )}

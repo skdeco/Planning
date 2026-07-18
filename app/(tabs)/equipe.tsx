@@ -1,7 +1,8 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { HardHat, Award, FolderOpen, Pencil, Trash2, Coins, FileText } from 'lucide-react-native';
+import { HardHat, Award, FolderOpen, Pencil, Trash2, Coins, FileText, Users, Truck } from 'lucide-react-native';
 import { FadeInView } from '@/components/ui/animated';
+import { EmptyState } from '@/components/ui/EmptyState';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal, Image,
   TextInput, ScrollView, Alert, Platform, Switch, RefreshControl,
@@ -1232,7 +1233,7 @@ export default function EquipeScreen() {
             contentContainerStyle={styles.list}
             refreshing={refreshing}
             onRefresh={onRefresh}
-            ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>{t.equipe.noEmployee}</Text></View>}
+            ListEmptyComponent={<EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center' }}><Users size={34} color="#B8AA97" strokeWidth={1.6} /></View>} title={t.equipe.noEmployee} />}
           />
         </>
       )}
@@ -1248,7 +1249,7 @@ export default function EquipeScreen() {
           contentContainerStyle={styles.list}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          ListEmptyComponent={<View style={styles.emptyState}><Text style={styles.emptyText}>{t.equipe.noSubcontractor}</Text></View>}
+          ListEmptyComponent={<EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center' }}><Truck size={34} color="#B8AA97" strokeWidth={1.6} /></View>} title={t.equipe.noSubcontractor} />}
         />
       )}
 
