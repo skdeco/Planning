@@ -482,19 +482,29 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const tvaRatioEffectif = totalChantierHT > 0 ? (totalChantierTTC - totalChantierHT) / totalChantierHT : TVA_RATE_DEFAULT;
   const resteAPayerChantier = Math.max(0, totalChantierTTC - dejaPayeTotal);
 
-  // Reste à régler PAR situation figée (TTC), vu du client : le montant figé est
-  // immuable, mais on affiche dynamiquement ce qui a été réglé DEPUIS le figeage
-  // (= dejaPayeTotal actuel − dejaPayeAvant du snapshot) pour montrer le reste dû.
+  // Situations à régler (vraies situations figées = snapshots marché/supplément).
+  // Montant facturé converti en TTC ; les acomptes reçus (financials.totalPaye) sont
+  // alloués en FIFO (les situations les plus anciennes réglées en premier) → chaque
+  // situation affiche facturé / réglé / reste, et se met à jour à chaque acompte.
   const situationsAReglerClient = useMemo(() => {
-    return [...situationsHistorique]
-      .sort((a, b) => (b.numero || '').localeCompare(a.numero || ''))
-      .map(s => {
-        const regle = s.statut === 'payee'
-          ? s.montantSituation
-          : Math.min(s.montantSituation, Math.max(0, dejaPayeTotal - (s.dejaPayeAvant || 0)));
-        return { s, regle, reste: Math.max(0, s.montantSituation - regle) };
-      });
-  }, [situationsHistorique, dejaPayeTotal]);
+    const ratio = 1 + tvaRatioEffectif;
+    const asc = [...situationsFigees].sort((a, b) => (a.dateGel || '').localeCompare(b.dateGel || ''));
+    let dispo = financials.totalPaye;
+    const rows = asc.map(s => {
+      const montantTTC = s.montantNouveau * ratio;
+      const regle = Math.min(montantTTC, Math.max(0, dispo));
+      dispo -= regle;
+      return { s, montantTTC, regle, reste: Math.max(0, montantTTC - regle) };
+    });
+    rows.reverse(); // la plus récente en haut
+    const factureTTC = situationsFigees.reduce((sum, s) => sum + s.montantNouveau, 0) * ratio;
+    return {
+      rows,
+      factureTTC,
+      paye: financials.totalPaye,
+      resteADate: Math.max(0, factureTTC - financials.totalPaye),
+    };
+  }, [situationsFigees, financials.totalPaye, tvaRatioEffectif]);
 
   const situation = useMemo(() => {
     const lignes = avancementCorps
@@ -1492,33 +1502,45 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
             {/* ── /Bannière Budget ── */}
 
-            {/* ── Situations à régler : reste dû PAR situation figée + reste global ── */}
-            {(isClient || isAdmin) && situationsHistorique.length > 0 && (
+            {/* ── Situations à régler : facturé / réglé / reste PAR situation + totaux à date ── */}
+            {(isClient || isAdmin) && situationsAReglerClient.rows.length > 0 && (
               <View style={styles.card}>
                 <Text style={styles.sectionTitle}>Situations à régler</Text>
-                {situationsAReglerClient.map(({ s, regle, reste }) => (
+                <Text style={styles.pfsSubtitle}>Montants TTC · les règlements sont imputés aux situations les plus anciennes</Text>
+                {situationsAReglerClient.rows.map(({ s, montantTTC, regle, reste }) => (
                   <View key={s.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#2C2C2C' }}>{s.numero}</Text>
-                      <Text style={{ fontSize: 11, color: '#8C8077' }}>{formatDate(s.date)}{s.statut === 'payee' ? ' · réglée' : ''}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#2C2C2C' }}>{s.intitule}</Text>
+                      <Text style={{ fontSize: 11, color: '#8C8077' }}>{new Date(s.dateGel).toLocaleDateString('fr-FR')}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
-                      <Text style={{ fontSize: 12, color: '#687076' }}>Montant de la situation</Text>
-                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{fmt(s.montantSituation)} €</Text>
+                      <Text style={{ fontSize: 12, color: '#687076' }}>Facturé sur cette situation</Text>
+                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{fmt(montantTTC)} €</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
-                      <Text style={{ fontSize: 12, color: '#2E7D32' }}>Déjà réglé sur cette situation</Text>
+                      <Text style={{ fontSize: 12, color: '#2E7D32' }}>Réglé</Text>
                       <Text style={{ fontSize: 12, color: '#2E7D32', fontWeight: '600' }}>{fmt(regle)} €</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
-                      <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à régler sur cette situation</Text>
-                      <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>{fmt(reste)} €</Text>
+                      <Text style={{ fontSize: 13, color: reste > 0.5 ? '#8C6D2F' : '#2E7D32', fontWeight: '800' }}>Reste à régler</Text>
+                      <Text style={{ fontSize: 13, color: reste > 0.5 ? '#8C6D2F' : '#2E7D32', fontWeight: '800' }}>{reste > 0.5 ? `${fmt(reste)} €` : 'Soldée'}</Text>
                     </View>
                   </View>
                 ))}
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 10, paddingTop: 10, borderTopWidth: 2, borderTopColor: '#E8DDD0' }}>
-                  <Text style={{ fontSize: 13, color: '#2C2C2C', fontWeight: '800' }}>Reste à payer (tout le chantier)</Text>
-                  <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(resteAPayerChantier)} €</Text>
+                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 2, borderTopColor: '#E8DDD0' }}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
+                    <Text style={{ fontSize: 12, color: '#687076' }}>Facturé à ce jour</Text>
+                    <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '700' }}>{fmt(situationsAReglerClient.factureTTC)} €</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
+                    <Text style={{ fontSize: 12, color: '#2E7D32' }}>Déjà réglé</Text>
+                    <Text style={{ fontSize: 12, color: '#2E7D32', fontWeight: '700' }}>{fmt(situationsAReglerClient.paye)} €</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
+                    <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>Reste à régler à ce jour</Text>
+                    <Text style={{ fontSize: 15, color: '#8C6D2F', fontWeight: '800' }}>{fmt(situationsAReglerClient.resteADate)} €</Text>
+                  </View>
+                  <Text style={{ fontSize: 11, color: '#B0A99F', marginTop: 6 }}>Montant total du contrat restant (fin de chantier) : {fmt(resteAPayerChantier)} €</Text>
                 </View>
               </View>
             )}
@@ -3140,6 +3162,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    gap: 10,
     backgroundColor: '#FAF7F3',
     borderRadius: 8,
     paddingHorizontal: 12,
@@ -3149,6 +3172,7 @@ const styles = StyleSheet.create({
     borderColor: '#E8DDD0',
   },
   totalLotsLabel: {
+    flex: 1,
     fontSize: 13,
     fontWeight: '800',
     color: '#2C2C2C',
@@ -3159,6 +3183,7 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '800',
     color: '#8C6D2F',
+    textAlign: 'right',
   },
   deleteAllLotsBtn: {
     backgroundColor: '#FBEFEC',
