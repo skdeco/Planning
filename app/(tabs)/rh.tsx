@@ -28,6 +28,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { getJoursFeriesFrance } from '@/lib/date/joursFeries';
 import { Palmtree, Thermometer, Banknote, FileText, Users } from 'lucide-react-native';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (fiches de paie). Aligné avec equipe.tsx + financier-st.tsx + pointage.tsx.
@@ -523,7 +524,7 @@ export default function RHScreen() {
             <Pressable style={styles.addBtn} onPress={() => { setEditConge(null); setCongeForm({ dateDebut: '', dateFin: '', motif: '', employeId: '' }); setShowCongeModal(true); }}>
               <Text style={styles.addBtnText}>+ {t.rh.newLeaveRequest}</Text>
             </Pressable>
-            {congesTries.length === 0 && <Text style={styles.emptyText}>{t.rh.noLeaves}</Text>}
+            {congesTries.length === 0 && <EmptyState iconComponent={Palmtree} title={t.rh.noLeaves} />}
             {congesTries.map(d => (
               <View key={d.id} style={[styles.card, d.statut === 'en_attente' && styles.cardEnAttente]}>
                 <View style={styles.cardHeader}>
@@ -569,7 +570,7 @@ export default function RHScreen() {
             <Pressable style={styles.addBtn} onPress={() => { setEditArret(null); setArretForm({ dateDebut: '', dateFin: '', commentaire: '', justificatif: '', justificatifNom: '', employeId: '' }); setShowArretModal(true); }}>
               <Text style={styles.addBtnText}>+ {t.rh.declareSick}</Text>
             </Pressable>
-            {arretsTries.length === 0 && <Text style={styles.emptyText}>{t.rh.noSick}</Text>}
+            {arretsTries.length === 0 && <EmptyState iconComponent={Thermometer} title={t.rh.noSick} />}
             {arretsTries.map(d => (
               <View key={d.id} style={[styles.card, d.statut === 'en_attente' && styles.cardEnAttente]}>
                 <View style={styles.cardHeader}>
@@ -621,7 +622,7 @@ export default function RHScreen() {
             <Pressable style={styles.addBtn} onPress={() => { setEditAvance(null); setAvanceForm({ montant: '', motif: '', employeId: '' }); setShowAvanceModal(true); }}>
               <Text style={styles.addBtnText}>+ {t.rh.requestAdvance}</Text>
             </Pressable>
-            {avancesTries.length === 0 && <Text style={styles.emptyText}>{t.rh.noAdvances}</Text>}
+            {avancesTries.length === 0 && <EmptyState iconComponent={Banknote} title={t.rh.noAdvances} />}
             {avancesTries.map(d => (
               <View key={d.id} style={[styles.card, d.statut === 'en_attente' && styles.cardEnAttente]}>
                 <View style={styles.cardHeader}>
@@ -708,7 +709,7 @@ export default function RHScreen() {
                 </ScrollView>
               </View>
             )}
-            {paies.length === 0 && <Text style={styles.emptyText}>{t.rh.noPayslips}</Text>}
+            {paies.length === 0 && <EmptyState iconComponent={FileText} title={t.rh.noPayslips} />}
             {paiesParAnnee.map(([annee, fichesAnnee]) => (
               <View key={annee}>
                 <View style={styles.anneeHeader}>

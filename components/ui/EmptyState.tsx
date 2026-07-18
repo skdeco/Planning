@@ -28,6 +28,12 @@ export interface EmptyStateProps {
   icon?: React.ReactNode;
 
   /**
+   * Icône lucide rendue automatiquement dans une pastille crème (rendu Palier 3).
+   * Alternative simple à `icon` : `iconComponent={Users}` au lieu du markup manuel.
+   */
+  iconComponent?: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+
+  /**
    * Bouton ou lien CTA affiché sous la description.
    * Absent du code actuel — forward-compatible pour Phase 2+.
    */
@@ -80,6 +86,7 @@ export function EmptyState({
   title,
   description,
   icon,
+  iconComponent: IconComponent,
   action,
   size = 'md',
   style,
@@ -94,9 +101,15 @@ export function EmptyState({
         style,
       ]}
     >
-      {icon !== undefined && (
+      {IconComponent ? (
+        <View style={styles.iconWrap}>
+          <View style={styles.pill}>
+            <IconComponent size={34} color="#B8AA97" strokeWidth={1.6} />
+          </View>
+        </View>
+      ) : icon !== undefined ? (
         <View style={styles.iconWrap}>{icon}</View>
-      )}
+      ) : null}
 
       <Text style={isMd ? styles.titleMd : styles.titleSm}>
         {title}
@@ -133,6 +146,15 @@ const styles = StyleSheet.create({
 
   iconWrap: {
     marginBottom: space.md,     // 12
+  },
+
+  pill: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: DS.cremeNude,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   titleMd: {
