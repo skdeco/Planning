@@ -181,7 +181,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               {allPhotos.length > 0 && (
                 <Pressable style={styles.downloadAllBtn} onPress={downloadAll}>
-                  <Text style={styles.downloadAllBtnText}>⬇ Tout ({allPhotos.length})</Text>
+                  <Text style={styles.downloadAllBtnText}>Tout ({allPhotos.length})</Text>
                 </Pressable>
               )}
               <Pressable style={styles.closeBtn} onPress={onClose}>
@@ -256,7 +256,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <Pressable style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
                   onPress={() => { allPhotos.filter(p => selectedIds.has(p.id)).forEach((p, i) => setTimeout(() => downloadPhoto(p), i * 300)); clearSelection(); }}>
-                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>⬇ Télécharger</Text>
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Télécharger</Text>
                 </Pressable>
                 {isAdmin && (
                   <Pressable style={{ backgroundColor: 'rgba(239,68,68,0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
@@ -265,7 +265,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
                       if (Platform.OS === 'web') { if (window.confirm(`Supprimer ${selectedIds.size} photo(s) ?`)) doDelete(); }
                       else Alert.alert('Supprimer', `Supprimer ${selectedIds.size} photo(s) ?`, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
                     }}>
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>🗑 Supprimer</Text>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Supprimer</Text>
                   </Pressable>
                 )}
                 <Pressable style={{ paddingHorizontal: 8, paddingVertical: 6 }} onPress={clearSelection}>

@@ -167,7 +167,7 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
         <View style={styles.sheet}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>🔧 Signaler un problème</Text>
+              <Text style={styles.headerTitle}>Signaler un problème</Text>
               <Text style={styles.headerSub}>{chantierNom}</Text>
             </View>
             <Pressable onPress={handleClose} style={styles.closeBtn}>
@@ -257,7 +257,7 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
               </ScrollView>
             )}
             <Pressable onPress={pickPhoto} style={[styles.btn, styles.btnSecondary, { marginBottom: 10 }]}>
-              <Text style={styles.btnSecondaryText}>📷 Ajouter une photo</Text>
+              <Text style={styles.btnSecondaryText}>Ajouter une photo</Text>
             </Pressable>
 
             {/* Fichiers PDF — bouton séparé pour distinction sémantique */}
@@ -276,7 +276,7 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
               </View>
             )}
             <Pressable onPress={pickPdf} style={[styles.btn, styles.btnSecondary, { marginBottom: 14 }]}>
-              <Text style={styles.btnSecondaryText}>📎 Ajouter un PDF</Text>
+              <Text style={styles.btnSecondaryText}>Ajouter un PDF</Text>
             </Pressable>
 
             <Pressable

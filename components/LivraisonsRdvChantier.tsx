@@ -323,7 +323,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
     <View style={styles.card}>
       {showLivraisons && (
       <>
-      <Text style={styles.sectionTitle}>🚚 Livraisons ({livraisons.length})</Text>
+      <Text style={styles.sectionTitle}>Livraisons ({livraisons.length})</Text>
       {livraisons.length === 0 ? (
         !isAdmin && prochaineLivraisonHorsHorizon ? (
           <Text style={styles.empty}>
@@ -338,13 +338,13 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
                 <Text style={styles.livTitre}>{l.titre}</Text>
-                {l.recue && <View style={styles.badgeDone}><Text style={styles.badgeDoneText}>✓ Reçue</Text></View>}
+                {l.recue && <View style={styles.badgeDone}><Text style={styles.badgeDoneText}>Reçue</Text></View>}
               </View>
               <Text style={styles.livMeta}>
                 📅 {formatFR(l.dateLivraison)}{l.heure ? ` · ${l.heure}` : ''}
               </Text>
               {l.transporteur && <Text style={styles.livDetail}>🚛 {l.transporteur}{l.numeroTransporteur ? ` · ${l.numeroTransporteur}` : ''}</Text>}
-              {l.numeroColis && <Text style={styles.livDetail}>📦 Colis {l.numeroColis}</Text>}
+              {l.numeroColis && <Text style={styles.livDetail}>Colis {l.numeroColis}</Text>}
               {l.nomContact && <Text style={styles.livDetail}>👤 {l.nomContact}{l.telephoneContact ? ` · ${l.telephoneContact}` : ''}</Text>}
               {l.note && <Text style={styles.livNote}>💬 {l.note}</Text>}
               {/* V10 — Workflow monte-charge (admin, si monteChargeRequis) — Option 3 validée Kevin */}
@@ -371,8 +371,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                           {l.demandeMairie?.fait ? '✓' : '○'}
                         </Text>
                       </View>
-                      <Text style={{ fontSize: 12, color: l.demandeMairie?.fait ? '#2A2622' : '#8A7B6E', fontWeight: '600', flex: 1 }}>
-                        📋 Demande mairie {l.demandeMairie?.fait ? 'envoyée' : 'à faire'}
+                      <Text style={{ fontSize: 12, color: l.demandeMairie?.fait ? '#2A2622' : '#8A7B6E', fontWeight: '600', flex: 1 }}>Demande mairie {l.demandeMairie?.fait ? 'envoyée' : 'à faire'}
                       </Text>
                     </Pressable>
                     {/* Détails (mini-tags inline) si cochée */}
@@ -473,8 +472,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                           {l.prevenirMonteCharge?.fait ? '✓' : '○'}
                         </Text>
                       </View>
-                      <Text style={{ fontSize: 12, color: l.prevenirMonteCharge?.fait ? '#2A2622' : '#8A7B6E', fontWeight: '600', flex: 1 }}>
-                        📞 Monte-charge {l.prevenirMonteCharge?.fait ? 'prévenu' : 'à prévenir'}
+                      <Text style={{ fontSize: 12, color: l.prevenirMonteCharge?.fait ? '#2A2622' : '#8A7B6E', fontWeight: '600', flex: 1 }}>Monte-charge {l.prevenirMonteCharge?.fait ? 'prévenu' : 'à prévenir'}
                       </Text>
                     </Pressable>
                     {l.prevenirMonteCharge?.fait && (
@@ -589,7 +587,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
       {showRdvs && (isAdmin || externRole) && (
         <>
           {showLivraisons && <View style={styles.divider} />}
-          <Text style={styles.sectionTitle}>📅 RDV de chantier ({rdvs.length})</Text>
+          <Text style={styles.sectionTitle}>RDV de chantier ({rdvs.length})</Text>
           {rdvs.length === 0 ? (
             !isAdmin && prochainRdvHorsHorizon ? (
               <Text style={styles.empty}>
@@ -612,7 +610,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                   <Text style={styles.rdvDetail}>
                     👤 {r.assigneNom}{r.lieu && r.lieu !== 'chantier' ? ` · ${r.lieu}` : ''}
                   </Text>
-                  <Text style={styles.rdvDetail}>📆 Dès {formatFR(r.dateDebut)}{r.dateFinRecurrence ? ` → ${formatFR(r.dateFinRecurrence)}` : ''}</Text>
+                  <Text style={styles.rdvDetail}>Dès {formatFR(r.dateDebut)}{r.dateFinRecurrence ? ` → ${formatFR(r.dateFinRecurrence)}` : ''}</Text>
                   {r.note && <Text style={styles.rdvNote}>💬 {r.note}</Text>}
                 </View>
                 {isAdmin && (
@@ -699,7 +697,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                 }}>
                   {livForm.monteChargeRequis && <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>✓</Text>}
                 </View>
-                <Text style={{ fontSize: 14, color: '#2A2622', fontWeight: '500' }}>🏗️ Monte-charge requis</Text>
+                <Text style={{ fontSize: 14, color: '#2A2622', fontWeight: '500' }}>Monte-charge requis</Text>
               </Pressable>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
                 <Pressable onPress={() => setShowLivForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
@@ -782,7 +780,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                   onPress={() => setRdvForm(f => ({ ...f, assigneA: 'admin', assigneNom: 'Admin' }))}
                   style={[styles.chip, rdvForm.assigneA === 'admin' && styles.chipActive]}
                 >
-                  <Text style={[styles.chipText, rdvForm.assigneA === 'admin' && { color: '#fff' }]}>👔 Admin (moi)</Text>
+                  <Text style={[styles.chipText, rdvForm.assigneA === 'admin' && { color: '#fff' }]}>Admin (moi)</Text>
                 </Pressable>
                 {employes.map(e => (
                   <Pressable

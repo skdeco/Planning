@@ -28,8 +28,7 @@ export function SignaturePad({ width = 300, height = 150, onCancel, onSave }: Si
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <Text style={{ fontSize: 12, color: '#8C6D2F', fontWeight: '600' }}>
-            ✍️ Signature uniquement disponible sur mobile
+          <Text style={{ fontSize: 12, color: '#8C6D2F', fontWeight: '600' }}>Signature uniquement disponible sur mobile
           </Text>
         </View>
         <Pressable

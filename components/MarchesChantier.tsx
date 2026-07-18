@@ -523,7 +523,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
             <View>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>💼 Marchés</Text>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>Marchés</Text>
               <Text style={{ fontSize: 12, color: '#687076' }}>{chantier?.nom}</Text>
             </View>
             <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
@@ -551,7 +551,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
             {/* ── MARCHÉS ── */}
             <View style={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>📋 Marchés ({marches.length})</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>Marchés ({marches.length})</Text>
               <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }} onPress={openNewMarche}>
                 <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ Marché</Text>
               </Pressable>
@@ -580,7 +580,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         <Text style={{ fontSize: 11, color: resteM > 0 ? '#DC2626' : '#27AE60', fontWeight: '600', marginTop: 2 }}>
                           Reçu : {fmt(totalRecuM)} € · Reste : {fmt(resteM)} €
                         </Text>
-                        {m.dateSignature && <Text style={{ fontSize: 10, color: '#27AE60', marginTop: 2 }}>✓ Signé le {m.dateSignature}</Text>}
+                        {m.dateSignature && <Text style={{ fontSize: 10, color: '#27AE60', marginTop: 2 }}>Signé le {m.dateSignature}</Text>}
                         {m.commission && (() => {
                           const app = apporteurs.find(a => a.id === m.commission!.apporteurId);
                           const montantC = getCommissionAmount(m);
@@ -712,12 +712,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                               </View>
                               {p.factureUri && (
                                 <Pressable onPress={() => openDoc(p.factureUri)} style={{ backgroundColor: '#EBF0FF', borderRadius: 6, padding: 6 }}>
-                                  <Text style={{ fontSize: 10, color: '#1A3A6B', fontWeight: '700' }}>📄 Acompte</Text>
+                                  <Text style={{ fontSize: 10, color: '#1A3A6B', fontWeight: '700' }}>Acompte</Text>
                                 </Pressable>
                               )}
                               {p.commissionFactureUri && (
                                 <Pressable onPress={() => openDoc(p.commissionFactureUri)} style={{ backgroundColor: '#FAF3E6', borderRadius: 6, padding: 6 }}>
-                                  <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700' }}>💼 Commission</Text>
+                                  <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700' }}>Commission</Text>
                                 </Pressable>
                               )}
                               <Pressable onPress={() => handleDeletePaiement('marche', m.id, p.id)}>
@@ -755,10 +755,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                       {/* Actions marché */}
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
                         <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditMarche(m)}>
-                          <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>✏️ Modifier</Text>
+                          <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Modifier</Text>
                         </Pressable>
                         <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => handleDeleteMarche(m)}>
-                          <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>🗑 Supprimer</Text>
+                          <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>Supprimer</Text>
                         </Pressable>
                       </View>
                     </View>
@@ -769,7 +769,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
             {/* ── SUPPLÉMENTS ── */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>➕ Suppléments ({supplements.length})</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>Suppléments ({supplements.length})</Text>
               <Pressable style={{ backgroundColor: '#F59E0B', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }} onPress={openNewSupp}>
                 <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ Supplément</Text>
               </Pressable>
@@ -914,10 +914,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                       {/* Actions */}
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
                         <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditSupp(s)}>
-                          <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>✏️ Modifier</Text>
+                          <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Modifier</Text>
                         </Pressable>
                         <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => handleDeleteSupp(s)}>
-                          <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>🗑 Supprimer</Text>
+                          <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>Supprimer</Text>
                         </Pressable>
                       </View>
                     </View>
@@ -1010,7 +1010,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 </View>
               </View>
 
-              <Text style={lbl}>📄 Devis initial</Text>
+              <Text style={lbl}>Devis initial</Text>
               <Pressable style={fileBtn} onPress={async () => {
                 const f = await pickFile('devis');
                 if (!f) return;
@@ -1063,8 +1063,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{marcheDevisInitial ? `📎 ${marcheDevisInitial.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
               {devisAutoExtractLoading && (
-                <Text style={{ fontSize: 11, color: '#687076', fontStyle: 'italic', marginTop: 4 }}>
-                  🤖 Analyse du devis pour pré-remplir HT/TTC...
+                <Text style={{ fontSize: 11, color: '#687076', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis pour pré-remplir HT/TTC...
                 </Text>
               )}
               {devisAutoExtractMsg && (
@@ -1073,7 +1072,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 </Text>
               )}
 
-              <Text style={lbl}>✍️ Devis signé</Text>
+              <Text style={lbl}>Devis signé</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis-signe'); if (f) setMarcheDevisSigne(f); }}>
                 <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{marcheDevisSigne ? `📎 ${marcheDevisSigne.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
@@ -1084,8 +1083,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   onPress={() => setCommissionEnabled(v => !v)}
                   style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: commissionEnabled ? '#FAF3E6' : '#F5EDE3', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: commissionEnabled ? '#C9A96E' : '#E8DDD0' }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
-                    💼 Commission apporteur / architecte
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>Commission apporteur / architecte
                   </Text>
                   <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: commissionEnabled ? '#C9A96E' : '#B0BEC5', justifyContent: 'center', paddingHorizontal: 2 }}>
                     <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignSelf: commissionEnabled ? 'flex-end' : 'flex-start' }} />
@@ -1310,12 +1308,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 )}
               </View>
 
-              <Text style={lbl}>📄 Devis</Text>
+              <Text style={lbl}>Devis</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis'); if (f) setSuppDevis(f); }}>
                 <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{suppDevis ? `📎 ${suppDevis.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
-              <Text style={lbl}>🧾 Facture</Text>
+              <Text style={lbl}>Facture</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture'); if (f) setSuppFacture(f); }}>
                 <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{suppFacture ? `📎 ${suppFacture.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
@@ -1334,7 +1332,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           <Pressable style={{ flex: 1 }} onPress={() => setShowPaiementForm(false)} />
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' }}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 12 }}>💰 Nouveau paiement</Text>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 12 }}>Nouveau paiement</Text>
               <Text style={lbl}>Date</Text>
               <TextInput style={inp} value={paiementForm.date} onChangeText={v => setPaiementForm(f => ({ ...f, date: v }))} placeholder="2026-04-09" />
               <Text style={lbl}>Montant (€) *</Text>
@@ -1351,7 +1349,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               <TextInput style={inp} value={paiementForm.reference} onChangeText={v => setPaiementForm(f => ({ ...f, reference: v }))} placeholder="Ex: 123456" />
               <Text style={lbl}>Note</Text>
               <TextInput style={inp} value={paiementForm.note} onChangeText={v => setPaiementForm(f => ({ ...f, note: v }))} placeholder="Note libre" />
-              <Text style={lbl}>📎 Facture d'acompte</Text>
+              <Text style={lbl}>Facture d'acompte</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture'); if (f) setPaiementFacture(f); }}>
                 <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{paiementFacture ? `📎 ${paiementFacture.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
@@ -1366,13 +1364,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 const apporteurNom = app ? `${app.prenom} ${app.nom}` : 'Apporteur';
                 return (
                   <View style={{ marginTop: 14, backgroundColor: '#FAF3E6', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#C9A96E', borderLeftWidth: 4, borderLeftColor: '#C9A96E' }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#8C6D2F' }}>
-                      💼 Commission due sur cet acompte : {fmt(commissionDue)} €
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#8C6D2F' }}>Commission due sur cet acompte : {fmt(commissionDue)} €
                     </Text>
                     <Text style={{ fontSize: 11, color: '#8C6D2F', marginTop: 2 }}>
                       ({apporteurNom}{m.commission.modeCommission === 'pourcentage' ? ` — ${m.commission.valeur}%` : ''})
                     </Text>
-                    <Text style={lbl}>📄 Facture commission (optionnel)</Text>
+                    <Text style={lbl}>Facture commission (optionnel)</Text>
                     <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture-commission'); if (f) setPaiementCommissionFacture(f); }}>
                       <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{paiementCommissionFacture ? `📎 ${paiementCommissionFacture.nom}` : '+ Choisir un fichier'}</Text>
                     </Pressable>

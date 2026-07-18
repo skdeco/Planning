@@ -693,7 +693,7 @@ export default function ReportingScreen() {
                             }}
                             style={styles.gpsBtn}
                           >
-                            <Text style={styles.gpsBtnText}>📍 Voir position</Text>
+                            <Text style={styles.gpsBtnText}>Voir position</Text>
                           </Pressable>
                         ) : null}
                       </View>
@@ -721,7 +721,7 @@ export default function ReportingScreen() {
                             }}
                             style={styles.gpsBtn}
                           >
-                            <Text style={styles.gpsBtnText}>📍 Voir position</Text>
+                            <Text style={styles.gpsBtnText}>Voir position</Text>
                           </Pressable>
                         ) : null}
                       </View>
@@ -951,7 +951,7 @@ export default function ReportingScreen() {
                       }
                     }
                   }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>📄 Exporter fiche de paie</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>Exporter fiche de paie</Text>
                 </Pressable>
               )}
 
@@ -1291,7 +1291,7 @@ export default function ReportingScreen() {
                     else Alert.alert('Supprimer le pointage', 'Supprimer le pointage de ce jour ? Cette action est irréversible.', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
                   }}
                 >
-                  <Text style={{ color: '#DC2626', fontWeight: '700', fontSize: 13 }}>🗑 Supprimer le pointage</Text>
+                  <Text style={{ color: '#DC2626', fontWeight: '700', fontSize: 13 }}>Supprimer le pointage</Text>
                 </Pressable>
               );
             })()}

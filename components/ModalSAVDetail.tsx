@@ -290,7 +290,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
           {/* Header */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.headerTitle}>🔧 Ticket SAV</Text>
+              <Text style={styles.headerTitle}>Ticket SAV</Text>
               {ticket.creePar && ticket.creePar.type !== 'admin' && (
                 <Text style={styles.headerSub}>Signalé par {ticket.creePar.nom}</Text>
               )}
@@ -422,7 +422,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
 
             {/* Photos du problème */}
             <View style={styles.card}>
-              <Text style={styles.sectionTitle}>📷 Photos du problème</Text>
+              <Text style={styles.sectionTitle}>Photos du problème</Text>
               {(ticket.photos || []).length === 0 && !isAdminMode ? (
                 <Text style={styles.empty}>Aucune photo</Text>
               ) : (
@@ -444,7 +444,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
             {/* Fichiers PDF — section séparée des photos */}
             {(isAdminMode || (ticket.fichiers || []).length > 0) && (
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>📎 Fichiers PDF</Text>
+                <Text style={styles.sectionTitle}>Fichiers PDF</Text>
                 {(ticket.fichiers || []).length === 0 ? (
                   <Text style={styles.empty}>Aucun fichier</Text>
                 ) : (
@@ -477,7 +477,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
             {/* Section Résolution */}
             {(isAdminMode || ticket.statut === 'resolu') && (
               <View style={styles.card}>
-                <Text style={styles.sectionTitle}>✓ Résolution</Text>
+                <Text style={styles.sectionTitle}>Résolution</Text>
                 {ticket.statut === 'resolu' && (
                   <Text style={styles.meta}>
                     Résolu{ticket.resoluPar ? ` par ${ticket.resoluPar}` : ''}
@@ -505,7 +505,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
 
             {/* Commentaires */}
             <View style={styles.card}>
-              <Text style={styles.sectionTitle}>💬 Commentaires ({(ticket.commentaires || []).length})</Text>
+              <Text style={styles.sectionTitle}>Commentaires ({(ticket.commentaires || []).length})</Text>
               {(ticket.commentaires || []).length === 0 ? (
                 <Text style={styles.empty}>Aucun commentaire</Text>
               ) : (
@@ -544,7 +544,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                 )}
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   <Pressable onPress={pickCommentPhoto} style={[styles.btn, styles.btnSecondary]}>
-                    <Text style={styles.btnSecondaryText}>📷 Photo</Text>
+                    <Text style={styles.btnSecondaryText}>Photo</Text>
                   </Pressable>
                   <Pressable
                     onPress={submitComment}
@@ -565,7 +565,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                   disabled={ticket.statut === 'resolu' || ticket.statut === 'clos'}
                   style={[styles.actionBtn, styles.actionResolu, (ticket.statut === 'resolu' || ticket.statut === 'clos') && { opacity: 0.4 }]}
                 >
-                  <Text style={styles.actionResoluText}>✓ Résolu</Text>
+                  <Text style={styles.actionResoluText}>Résolu</Text>
                 </Pressable>
                 <Pressable
                   onPress={() => changeStatut('en_cours')}

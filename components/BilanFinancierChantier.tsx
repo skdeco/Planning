@@ -236,12 +236,12 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
             <View>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C' }}>💰 Bilan financier</Text>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C' }}>Bilan financier</Text>
               <Text style={{ fontSize: 13, color: '#687076' }}>{chantier.nom}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable style={{ backgroundColor: '#2E7D32', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' }} onPress={exportExcel}>
-                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 11 }}>📊 Excel</Text>
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 11 }}>Excel</Text>
               </Pressable>
               <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
                 <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
@@ -263,7 +263,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             </View>
 
             {/* Main d'oeuvre */}
-            <Text style={sectionS}>👷 Main d'oeuvre — {fmt(bilan.totalMainOeuvre)}</Text>
+            <Text style={sectionS}>Main d'oeuvre — {fmt(bilan.totalMainOeuvre)}</Text>
             <View style={tableS}>
               {bilan.mainOeuvre.map((m, i) => (
                 <View key={i} style={rowS}>
@@ -276,7 +276,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             </View>
 
             {/* Matériel */}
-            <Text style={sectionS}>🛒 Matériel — {fmt(bilan.totalMateriel)} ({bilan.nbArticles} articles)</Text>
+            <Text style={sectionS}>Matériel — {fmt(bilan.totalMateriel)} ({bilan.nbArticles} articles)</Text>
             <View style={tableS}>
               {bilan.materielDetail.filter(m => m.prix > 0).map((m, i) => (
                 <View key={i} style={rowS}>
@@ -293,7 +293,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             </View>
 
             {/* Sous-traitance */}
-            <Text style={sectionS}>🔧 Sous-traitance — {fmt(bilan.totalAcomptesST)} versés / {fmt(bilan.totalDevis)} engagés</Text>
+            <Text style={sectionS}>Sous-traitance — {fmt(bilan.totalAcomptesST)} versés / {fmt(bilan.totalDevis)} engagés</Text>
             <View style={tableS}>
               {bilan.devisChantier.map((d, i) => {
                 const st = data.sousTraitants.find(s => s.id === d.soustraitantId);
@@ -312,7 +312,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             {/* Dépenses directes */}
             {bilan.depenses.length > 0 && (
               <>
-                <Text style={sectionS}>💳 Dépenses directes — {fmt(bilan.totalDepenses)}</Text>
+                <Text style={sectionS}>Dépenses directes — {fmt(bilan.totalDepenses)}</Text>
                 <View style={tableS}>
                   {bilan.depenses.map((d, i) => (
                     <View key={i} style={rowS}>
@@ -328,7 +328,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             {/* Commissions apporteurs */}
             {bilan.commissionsDetail.length > 0 && (
               <>
-                <Text style={sectionS}>💼 Commissions apporteurs — {fmt(bilan.totalCommissions)}</Text>
+                <Text style={sectionS}>Commissions apporteurs — {fmt(bilan.totalCommissions)}</Text>
                 <View style={tableS}>
                   {bilan.commissionsDetail.map((c, i) => (
                     <View key={i} style={rowS}>

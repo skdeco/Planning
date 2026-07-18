@@ -73,7 +73,7 @@ export function DriveChantier({ visible, onClose, chantierId }: DriveChantierPro
         <View style={styles.sheet}>
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>📁 Documents</Text>
+              <Text style={styles.title}>Documents</Text>
               <Text style={styles.subtitle} numberOfLines={1}>{chantier?.nom || ''}</Text>
             </View>
             <Pressable onPress={onClose} hitSlop={12}>

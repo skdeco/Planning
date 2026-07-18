@@ -240,7 +240,7 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
             </Pressable>
           )}
           <View>
-            <Text style={styles.title}>📋 Suivis CR</Text>
+            <Text style={styles.title}>Suivis CR</Text>
             <Text style={styles.subtitle}>{chantier?.nom || ''}</Text>
           </View>
         </View>
@@ -1006,7 +1006,7 @@ function RDVForm({ rdv, isAdmin, readOnly, onSave, onDelete }: RDVFormProps) {
 
   return (
     <ScrollView style={{ flex: 1 }} contentContainerStyle={{ padding: 14, paddingBottom: 40 }} keyboardShouldPersistTaps="handled">
-      <Text style={[styles.title, { marginBottom: 12 }]}>📅 RDV de chantier</Text>
+      <Text style={[styles.title, { marginBottom: 12 }]}>RDV de chantier</Text>
 
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>

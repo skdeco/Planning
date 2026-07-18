@@ -349,8 +349,7 @@ export function ModalNotesChantier({
 
           {/* Header */}
           <View style={styles.headerRow}>
-            <Text style={styles.title}>
-              📝 Notes — {chantierNom}
+            <Text style={styles.title}>Notes — {chantierNom}
             </Text>
             <Pressable
               onPress={onClose}
@@ -603,8 +602,7 @@ function NoteCard({
 
       {/* Destinataires (admin only, si pas "tous") */}
       {hasDestinatairesList && (
-        <Text style={styles.destinatairesText}>
-          👤 Pour : {destinatairesLabels}
+        <Text style={styles.destinatairesText}>Pour : {destinatairesLabels}
         </Text>
       )}
 
@@ -615,7 +613,7 @@ function NoteCard({
           onPress={() => onArchive(note.id)}
           accessibilityRole="button"
         >
-          <Text style={styles.archiveBtnText}>✓ Archiver</Text>
+          <Text style={styles.archiveBtnText}>Archiver</Text>
         </Pressable>
         {isAdmin && (
           <Pressable
@@ -623,7 +621,7 @@ function NoteCard({
             onPress={() => confirmDelete(note.id, onDelete)}
             accessibilityRole="button"
           >
-            <Text style={styles.deleteBtnText}>🗑 Supprimer</Text>
+            <Text style={styles.deleteBtnText}>Supprimer</Text>
           </Pressable>
         )}
       </View>

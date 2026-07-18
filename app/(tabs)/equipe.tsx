@@ -1258,7 +1258,7 @@ export default function EquipeScreen() {
           {/* Récap commissions en attente */}
           {marchesWithCommission.length > 0 && (
             <View style={styles.commissionRecap}>
-              <Text style={styles.commissionRecapTitle}>💼 Commissions en attente</Text>
+              <Text style={styles.commissionRecapTitle}>Commissions en attente</Text>
               {apporteurs
                 .map(a => ({ a, calc: calcCommissionAmount(a.id) }))
                 .filter(x => x.calc.duDu > 0)
@@ -1342,7 +1342,7 @@ export default function EquipeScreen() {
                           </View>
                           {a.accesApp && (
                             <View style={{ backgroundColor: '#10B98122', borderRadius: 8, paddingHorizontal: 6, paddingVertical: 2 }}>
-                              <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981' }}>🔑 Accès app</Text>
+                              <Text style={{ fontSize: 9, fontWeight: '700', color: '#10B981' }}>Accès app</Text>
                             </View>
                           )}
                         </View>
@@ -1439,7 +1439,7 @@ export default function EquipeScreen() {
               <View style={{ marginTop: 18, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.fieldLabel}>🔑 Accès à l'application</Text>
+                    <Text style={styles.fieldLabel}>Accès à l'application</Text>
                     <Text style={styles.fieldHint}>Permet au contact de se connecter et voir ses chantiers.</Text>
                   </View>
                   <Switch
@@ -1482,7 +1482,7 @@ export default function EquipeScreen() {
                         style={{ flex: 1, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#C9A96E', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
                         onPress={genererMdpPourForm}
                       >
-                        <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>🎲 Générer un mot de passe</Text>
+                        <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>Générer un mot de passe</Text>
                       </Pressable>
                       {apporteurForm.motDePasse && Platform.OS === 'web' && (
                         <Pressable
@@ -1494,7 +1494,7 @@ export default function EquipeScreen() {
                             } catch {}
                           }}
                         >
-                          <Text style={{ color: '#C9A96E', fontWeight: '700', fontSize: 12 }}>📋 Copier</Text>
+                          <Text style={{ color: '#C9A96E', fontWeight: '700', fontSize: 12 }}>Copier</Text>
                         </Pressable>
                       )}
                     </View>
@@ -1516,7 +1516,7 @@ export default function EquipeScreen() {
                 const currentApporteurType = apporteurForm.type || 'apporteur';
                 return (
                   <View style={{ marginTop: 18, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
-                    <Text style={styles.fieldLabel}>🏗 Chantiers liés ({linkedChantiers.length})</Text>
+                    <Text style={styles.fieldLabel}>Chantiers liés ({linkedChantiers.length})</Text>
                     {linkedChantiers.length === 0 ? (
                       <Text style={styles.fieldHint}>Aucun chantier lié à ce contact pour le moment.</Text>
                     ) : (
@@ -1562,8 +1562,7 @@ export default function EquipeScreen() {
                         });
                       }}
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#8C6D2F' }}>
-                        ➕ Nouveau chantier lié
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#8C6D2F' }}>Nouveau chantier lié
                       </Text>
                     </Pressable>
                   </View>
@@ -1975,8 +1974,7 @@ export default function EquipeScreen() {
           <Pressable style={stStyles.sheet} onPress={() => {}}>
             <View style={stStyles.handle} />
             <View style={stStyles.sheetHeader}>
-              <Text style={stStyles.sheetTitle}>
-                💰 Finances {currentFinancesST ? `— ${currentFinancesST.prenom} ${currentFinancesST.nom}` : ''}
+              <Text style={stStyles.sheetTitle}>Finances {currentFinancesST ? `— ${currentFinancesST.prenom} ${currentFinancesST.nom}` : ''}
               </Text>
               <Pressable onPress={() => setFinancesSTId(null)}><Text style={stStyles.closeX}>✕</Text></Pressable>
             </View>
@@ -2035,20 +2033,20 @@ export default function EquipeScreen() {
                             <View style={stStyles.devisRow}>
                               {devis.devisFichier ? (
                                 <Pressable style={stStyles.devisBtn} onPress={() => openDocPreview(devis.devisFichier!)}>
-                                  <Text style={stStyles.devisBtnText}>📄 Devis</Text>
+                                  <Text style={stStyles.devisBtnText}>Devis</Text>
                                 </Pressable>
                               ) : (
                                 <Pressable style={[stStyles.devisBtn, stStyles.devisBtnUpload]} onPress={() => handleUploadDevisFichier(devis.id)}>
-                                  <Text style={stStyles.devisBtnText}>⬆ Charger devis</Text>
+                                  <Text style={stStyles.devisBtnText}>Charger devis</Text>
                                 </Pressable>
                               )}
                               {devis.devisSigne ? (
                                 <Pressable style={[stStyles.devisBtn, stStyles.devisBtnSigne]} onPress={() => openDocPreview(devis.devisSigne!)}>
-                                  <Text style={stStyles.devisBtnText}>✅ Signé</Text>
+                                  <Text style={stStyles.devisBtnText}>Signé</Text>
                                 </Pressable>
                               ) : (
                                 <Pressable style={[stStyles.devisBtn, stStyles.devisBtnUpload]} onPress={() => handleUploadDevisSigne(devis.id)}>
-                                  <Text style={stStyles.devisBtnText}>⬆ Signé</Text>
+                                  <Text style={stStyles.devisBtnText}>Signé</Text>
                                 </Pressable>
                               )}
                             </View>
@@ -2087,12 +2085,12 @@ export default function EquipeScreen() {
                                       <Text style={stStyles.acompteDate}>{a.date}{a.commentaire ? ` — ${a.commentaire}` : ''}</Text>
                                       {a.facture ? (
                                         <Pressable onPress={() => openDocPreview(a.facture!)}>
-                                          <Text style={stStyles.factureLink}>📄 Facture</Text>
+                                          <Text style={stStyles.factureLink}>Facture</Text>
                                         </Pressable>
                                       ) : (
                                         <>
                                           <Pressable onPress={() => handleUploadFacture(a.id)}>
-                                            <Text style={stStyles.factureUpload}>⬆ Facture</Text>
+                                            <Text style={stStyles.factureUpload}>Facture</Text>
                                           </Pressable>
                                           <View style={{ marginTop: 4 }}>
                                             <InboxPickerButton
@@ -2130,8 +2128,7 @@ export default function EquipeScreen() {
           <Pressable style={stStyles.sheet} onPress={() => {}}>
             <View style={stStyles.handle} />
             <View style={stStyles.sheetHeader}>
-              <Text style={stStyles.sheetTitle}>
-                📄 Documents légaux {currentDocsST ? `— ${currentDocsST.prenom} ${currentDocsST.nom}` : ''}
+              <Text style={stStyles.sheetTitle}>Documents légaux {currentDocsST ? `— ${currentDocsST.prenom} ${currentDocsST.nom}` : ''}
               </Text>
               <Pressable onPress={() => setDocsSTId(null)}><Text style={stStyles.closeX}>✕</Text></Pressable>
             </View>
@@ -2161,7 +2158,7 @@ export default function EquipeScreen() {
                             </View>
                           ) : (
                             <Pressable style={[stStyles.docMiniBtn, stStyles.docMiniBtnUpload]} onPress={() => handleUploadDocForType(td.label)}>
-                              <Text style={[stStyles.docMiniBtnText, { color: '#fff' }]}>⬆ Charger</Text>
+                              <Text style={[stStyles.docMiniBtnText, { color: '#fff' }]}>Charger</Text>
                             </Pressable>
                           )}
                         </View>
@@ -2299,7 +2296,7 @@ export default function EquipeScreen() {
           <Pressable style={[styles.modalSheet, { maxHeight: '80%' }]} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🏗 Historique chantiers</Text>
+              <Text style={styles.modalTitle}>Historique chantiers</Text>
               <Pressable onPress={() => setHistoriqueEmployeId(null)}><Text style={styles.modalClose}>✕</Text></Pressable>
             </View>
             {historiqueEmployeId && (() => {
@@ -2511,7 +2508,7 @@ export default function EquipeScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '80%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>📅 Disponibilité</Text>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>Disponibilité</Text>
               <Pressable onPress={() => setShowDispo(false)}>
                 <Text style={{ fontSize: 20, color: '#687076' }}>✕</Text>
               </Pressable>
@@ -2556,8 +2553,7 @@ export default function EquipeScreen() {
 
             <ScrollView style={{ maxHeight: 400 }}>
               {/* Libres */}
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#27AE60', marginBottom: 8 }}>
-                ✅ Libres ({disponibilite.libres.length})
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#27AE60', marginBottom: 8 }}>Libres ({disponibilite.libres.length})
               </Text>
               {disponibilite.libres.length === 0 ? (
                 <Text style={{ fontSize: 12, color: '#687076', marginBottom: 16 }}>Aucun employé libre ce jour.</Text>
@@ -2578,8 +2574,7 @@ export default function EquipeScreen() {
               )}
 
               {/* Occupés */}
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C', marginBottom: 8 }}>
-                🔴 Occupés ({disponibilite.occupes.length})
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C', marginBottom: 8 }}>Occupés ({disponibilite.occupes.length})
               </Text>
               {disponibilite.occupes.length === 0 ? (
                 <Text style={{ fontSize: 12, color: '#687076' }}>Aucun employé occupé ce jour.</Text>

@@ -666,7 +666,7 @@ export default function RHScreen() {
                         }
                       }}
                     >
-                      <Text style={[styles.deleteBtnText, { color: '#E74C3C' }]}>🗑 Supprimer</Text>
+                      <Text style={[styles.deleteBtnText, { color: '#E74C3C' }]}>Supprimer</Text>
                     </Pressable>
                   )}
                   {!isRH && d.statut === 'en_attente' && (

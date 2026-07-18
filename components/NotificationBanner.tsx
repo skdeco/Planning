@@ -46,9 +46,9 @@ export function NotificationBanner() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>🔔 Notifications</Text>
+              <Text style={styles.modalTitle}>Notifications</Text>
               <Pressable onPress={handleClose} style={styles.closeBtn}>
-                <Text style={styles.closeBtnText}>✕ Fermer</Text>
+                <Text style={styles.closeBtnText}>Fermer</Text>
               </Pressable>
             </View>
             <ScrollView style={styles.notifList}>

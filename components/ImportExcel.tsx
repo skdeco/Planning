@@ -172,7 +172,7 @@ export function ImportExcel({ visible, onClose }: Props) {
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', flex: 1, padding: 16 }}>
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>📥 Import Excel</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>Import Excel</Text>
             <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }} onPress={() => { onClose(); setPreview(null); setResult(null); }}>
               <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
             </Pressable>
@@ -199,11 +199,11 @@ export function ImportExcel({ visible, onClose }: Props) {
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
             <Pressable style={{ flex: 1, backgroundColor: '#EBF0FF', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
               onPress={handleDownloadTemplate}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>⬇ Télécharger modèle</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>Télécharger modèle</Text>
             </Pressable>
             <Pressable style={{ flex: 1, backgroundColor: '#2C2C2C', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
               onPress={handlePickFile}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#fff' }}>📂 Charger un fichier</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#fff' }}>Charger un fichier</Text>
             </Pressable>
           </View>
 

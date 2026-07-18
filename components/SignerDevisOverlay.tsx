@@ -135,7 +135,7 @@ export function SignerDevisOverlay({
       <Pressable style={styles.backdrop} onPress={busy ? undefined : onClose} />
       <View style={styles.sheet}>
         <ScrollView contentContainerStyle={{ padding: 18 }} keyboardShouldPersistTaps="handled">
-          <Text style={styles.title}>✍️ Signer le devis</Text>
+          <Text style={styles.title}>Signer le devis</Text>
           <Text style={styles.subtitle}>
             Remplis le cadre "Pour le client" en bas de la dernière page du devis.
           </Text>
@@ -188,7 +188,7 @@ export function SignerDevisOverlay({
             </View>
           ) : (
             <Pressable style={styles.signBtn} onPress={() => setShowPad(true)}>
-              <Text style={styles.signBtnText}>✍️ Signer maintenant</Text>
+              <Text style={styles.signBtnText}>Signer maintenant</Text>
             </Pressable>
           )}
 

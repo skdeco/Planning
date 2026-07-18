@@ -345,7 +345,7 @@ export function PlanningDirection() {
                 <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>{editId ? 'Modifier' : 'Nouveau RDV'}</Text>
                 {editId && (
                   <Pressable onPress={() => { deleteAgendaEvent(editId); setShowForm(false); }} style={{ padding: 6 }}>
-                    <Text style={{ color: '#E74C3C', fontWeight: '600' }}>🗑 Supprimer</Text>
+                    <Text style={{ color: '#E74C3C', fontWeight: '600' }}>Supprimer</Text>
                   </Pressable>
                 )}
               </View>

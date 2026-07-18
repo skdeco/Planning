@@ -545,13 +545,13 @@ export default function DashboardScreen() {
                             {/* Photos resolution */}
                             {t.photosResolution && t.photosResolution.length > 0 && (
                               <View style={{ backgroundColor: '#D4EDDA', borderRadius: 6, padding: 6 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: '#155724', marginBottom: 4 }}>✓ Photos résolution :</Text>
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: '#155724', marginBottom: 4 }}>Photos résolution :</Text>
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
                                   {t.photosResolution.map((uri, i) => <Image key={i} source={{ uri }} style={{ width: 50, height: 50, borderRadius: 4 }} resizeMode="cover" />)}
                                 </ScrollView>
                               </View>
                             )}
-                            {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60', fontWeight: '600' }}>✓ Résolu par {t.resoluPar} le {t.dateResolution}</Text>}
+                            {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60', fontWeight: '600' }}>Résolu par {t.resoluPar} le {t.dateResolution}</Text>}
                             <Text style={{ fontSize: 9, color: '#B0BEC5' }}>Ouvert le {t.dateOuverture}</Text>
 
                             {/* Actions employe */}
@@ -731,7 +731,7 @@ export default function DashboardScreen() {
                       <Text style={{ fontSize: 14 }}>🏖</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }}>Congé {d.dateDebut} → {d.dateFin}</Text>
-                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>⏳ En attente</Text>
+                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>En attente</Text>
                       </View>
                     </View>
                   ))}
@@ -740,7 +740,7 @@ export default function DashboardScreen() {
                       <Text style={{ fontSize: 14 }}>💰</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }}>Avance de {d.montant} €</Text>
-                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>⏳ En attente</Text>
+                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>En attente</Text>
                       </View>
                     </View>
                   ))}
@@ -749,7 +749,7 @@ export default function DashboardScreen() {
                       <Text style={{ fontSize: 14 }}>🏥</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }}>Arrêt maladie {d.dateDebut}</Text>
-                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>⏳ En attente</Text>
+                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>En attente</Text>
                       </View>
                     </View>
                   ))}
@@ -1068,7 +1068,7 @@ export default function DashboardScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                 <Pressable onPress={() => setDismissedAlertes(new Set())}
                   style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#8C8077' }}>🔔 Afficher les alertes masquées ({hiddenCount})</Text>
+                  <Text style={{ fontSize: 11, color: '#8C8077' }}>Afficher les alertes masquées ({hiddenCount})</Text>
                 </Pressable>
               </View>
             );
@@ -1085,7 +1085,7 @@ export default function DashboardScreen() {
                     {hiddenCount > 0 && (
                       <Pressable onPress={() => setDismissedAlertes(new Set())}
                         style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 11, color: '#8C8077' }}>🔔 Afficher masquées ({hiddenCount})</Text>
+                        <Text style={{ fontSize: 11, color: '#8C8077' }}>Afficher masquées ({hiddenCount})</Text>
                       </Pressable>
                     )}
                     {visibleAlertes.length > 1 && (

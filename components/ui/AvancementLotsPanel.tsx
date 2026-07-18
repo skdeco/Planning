@@ -273,8 +273,7 @@ export function AvancementLotsPanel({
           {canFiger && (
             <Pressable onPress={handleFiger} style={styles.figerBtn}>
               <Camera size={14} color={DS.cremeFond} strokeWidth={2.5} />
-              <Text style={styles.figerBtnText}>
-                📸 Figer ce point ({fmt(calc.montantFacturableNouveau)} € à facturer)
+              <Text style={styles.figerBtnText}>Figer ce point ({fmt(calc.montantFacturableNouveau)} € à facturer)
               </Text>
             </Pressable>
           )}
@@ -294,8 +293,7 @@ export function AvancementLotsPanel({
       {/* V10 Phase B — Historique des situations figées (visible admin + client) */}
       {snapshotsArr.length > 0 && (
         <View style={styles.snapshotsSection}>
-          <Text style={styles.snapshotsTitle}>
-            📋 Historique facturation ({snapshotsArr.length})
+          <Text style={styles.snapshotsTitle}>Historique facturation ({snapshotsArr.length})
           </Text>
           {snapshotsArr.map(snap => (
             <View key={snap.id} style={styles.snapshotCard}>

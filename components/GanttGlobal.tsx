@@ -68,7 +68,7 @@ export function GanttGlobal({ visible, onClose }: Props) {
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '94%', flex: 1 }}>
           <View style={styles.header}>
-            <Text style={styles.headerTitle}>📅 Planning Gantt — tous les chantiers</Text>
+            <Text style={styles.headerTitle}>Planning Gantt — tous les chantiers</Text>
             <Pressable onPress={onClose} style={styles.closeBtn}>
               <Text style={{ fontSize: 14, fontWeight: '800' }}>✕</Text>
             </Pressable>

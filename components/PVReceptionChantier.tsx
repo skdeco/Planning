@@ -109,10 +109,10 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
   return (
     <View style={styles.card}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-        <Text style={styles.title}>🏁 PV de réception</Text>
+        <Text style={styles.title}>PV de réception</Text>
         {cloture && (
           <View style={{ backgroundColor: '#2E7D32', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 12 }}>
-            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>✓ Clôturé</Text>
+            <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>Clôturé</Text>
           </View>
         )}
       </View>
@@ -121,11 +121,11 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
         <Text style={styles.empty}>Aucun PV de réception démarré.</Text>
       ) : (
         <View style={{ marginTop: 8 }}>
-          <Text style={styles.meta}>📅 Réception : {pv?.dateReception || '—'}</Text>
+          <Text style={styles.meta}>Réception : {pv?.dateReception || '—'}</Text>
           <Text style={styles.meta}>✓ {nbConformes} conforme{nbConformes > 1 ? 's' : ''} · 🔴 {nbReserves} réserve{nbReserves > 1 ? 's' : ''}</Text>
           {cloture && pv?.signatureClientDate && (
             <View style={{ marginTop: 8 }}>
-              <Text style={styles.meta}>✍️ Signé le {new Date(pv.signatureClientDate).toLocaleString('fr-FR')}</Text>
+              <Text style={styles.meta}>Signé le {new Date(pv.signatureClientDate).toLocaleString('fr-FR')}</Text>
               {pv.nomSignataire && <Text style={styles.meta}>Par {pv.nomSignataire}</Text>}
               {pv.signatureClientUri && <Image source={{ uri: pv.signatureClientUri }} style={{ width: 160, height: 80, marginTop: 6, borderWidth: 1, borderColor: '#E8DDD0', borderRadius: 6 }} resizeMode="contain" />}
             </View>
@@ -141,7 +141,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
         )}
         {hasPv && !cloture && canSign && (
           <Pressable style={[styles.btn, styles.btnSign]} onPress={() => setSignaturePadVisible(true)}>
-            <Text style={[styles.btnText, { color: '#fff' }]}>✍️ Signer le PV</Text>
+            <Text style={[styles.btnText, { color: '#fff' }]}>Signer le PV</Text>
           </Pressable>
         )}
       </View>
@@ -211,7 +211,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
       <Modal visible={signaturePadVisible} animationType="fade" transparent onRequestClose={() => setSignaturePadVisible(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16 }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', marginBottom: 10, color: '#2C2C2C' }}>✍️ Signature client — PV de réception</Text>
+            <Text style={{ fontSize: 15, fontWeight: '800', marginBottom: 10, color: '#2C2C2C' }}>Signature client — PV de réception</Text>
             <SignaturePad
               onSave={(b64) => signerClient(b64)}
               onCancel={() => setSignaturePadVisible(false)}

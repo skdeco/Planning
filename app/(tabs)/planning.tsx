@@ -1113,7 +1113,7 @@ export default function PlanningScreen() {
 
               {ficheModal?.chantier.fiche && ficheModal.chantier.fiche.photos.length > 0 && (
                 <View style={styles.fichePhotosSection}>
-                  <Text style={styles.ficheRowLabel}>📸 Photos & documents</Text>
+                  <Text style={styles.ficheRowLabel}>Photos & documents</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                     {ficheModal.chantier.fiche.photos.map((uri, idx) => {
                       const isPdf = uri.startsWith('data:application/pdf');
@@ -1247,11 +1247,11 @@ export default function PlanningScreen() {
                     setInterventionModal(null);
                   }}
                 >
-                  <Text style={styles.intervDeleteBtnText}>🗑 Supprimer cette intervention</Text>
+                  <Text style={styles.intervDeleteBtnText}>Supprimer cette intervention</Text>
                 </Pressable>
               )}
               <Pressable style={styles.intervSaveBtn} onPress={handleSaveIntervention}>
-                <Text style={styles.intervSaveBtnText}>✓ Enregistrer</Text>
+                <Text style={styles.intervSaveBtnText}>Enregistrer</Text>
               </Pressable>
             </ScrollView>
           </Pressable>
@@ -1317,7 +1317,7 @@ export default function PlanningScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', maxWidth: 420 }}>
             <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>⚙️ Paramètres du compte admin</Text>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>Paramètres du compte admin</Text>
 
               {/* Identifiant */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Identifiant de connexion</Text>

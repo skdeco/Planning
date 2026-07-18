@@ -240,7 +240,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
   return (
     <View style={[styles.card, fullScreen && styles.cardFull, fullScreen && kbHeight > 0 && { paddingBottom: kbHeight }]}>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={styles.title}>💬 Messagerie du chantier</Text>
+        <Text style={styles.title}>Messagerie du chantier</Text>
         {nbNonLus > 0 && (
           <View style={styles.unreadBadge}>
             <Text style={styles.unreadBadgeText}>{nbNonLus}</Text>

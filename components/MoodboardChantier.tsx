@@ -89,7 +89,7 @@ export function MoodboardChantier({ chantier, isAdmin, externAp }: Props) {
   return (
     <View style={styles.card}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <Text style={styles.title}>🎨 Moodboard inspirations ({inspirations.length})</Text>
+        <Text style={styles.title}>Moodboard inspirations ({inspirations.length})</Text>
       </View>
 
       {inspirations.length === 0 ? (
@@ -145,7 +145,7 @@ export function MoodboardChantier({ chantier, isAdmin, externAp }: Props) {
       <Modal visible={showModal} animationType="fade" transparent onRequestClose={() => setShowModal(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 }}>🎨 Nouvelle inspiration</Text>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 }}>Nouvelle inspiration</Text>
             {pickedUri && (pickedUri.toLowerCase().endsWith('.pdf') || pickedUri.startsWith('data:application/pdf')
               ? <View style={{ width: '100%', height: 180, borderRadius: 10, marginBottom: 12, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 48 }}>📄</Text>

@@ -1346,7 +1346,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     {isClient && (
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                         <Pressable onPress={() => repondreAvenant(s, true)} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: '#2E7D32', borderRadius: 8 }}>
-                          <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>✓ Accepter</Text>
+                          <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>Accepter</Text>
                         </Pressable>
                         <Pressable onPress={() => repondreAvenant(s, false)} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, borderWidth: 1, borderColor: '#E74C3C' }}>
                           <Text style={{ fontSize: 12, color: '#E74C3C', fontWeight: '700' }}>Refuser</Text>
@@ -1500,7 +1500,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               {autoExtractLoading && (
                 <View style={styles.autoExtractRow}>
                   <ActivityIndicator size="small" color="#C9A96E" />
-                  <Text style={styles.autoExtractText}>🤖 Extraction automatique des lots...</Text>
+                  <Text style={styles.autoExtractText}>Extraction automatique des lots...</Text>
                 </View>
               )}
               {/* Toast succès */}
@@ -1529,7 +1529,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             </Text>
                             {isLotEnCours(c) && (
                               <View style={styles.lotBadgeEnCours}>
-                                <Text style={styles.lotBadgeEnCoursText}>🔨 En cours</Text>
+                                <Text style={styles.lotBadgeEnCoursText}>En cours</Text>
                               </View>
                             )}
                           </View>
@@ -1573,7 +1573,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         <View style={{ marginTop: 8 }}>
                           {c.photosAvant && c.photosAvant.length > 0 && (
                             <View style={{ marginBottom: 6 }}>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C8077', marginBottom: 4 }}>📸 AVANT</Text>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C8077', marginBottom: 4 }}>AVANT</Text>
                               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                                 {c.photosAvant.map((p, i) => (
                                   <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#8C8077' }} />
@@ -1583,7 +1583,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           )}
                           {c.photosApres && c.photosApres.length > 0 && (
                             <View>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#2E7D32', marginBottom: 4 }}>✨ APRÈS</Text>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#2E7D32', marginBottom: 4 }}>APRÈS</Text>
                               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                                 {c.photosApres.map((p, i) => (
                                   <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#2E7D32' }} />
@@ -1624,7 +1624,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           onPress={() => openCommentaireClient(c.id)}
                           style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#FAF7F3', borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' }}
                         >
-                          <Text style={{ fontSize: 11, color: '#8C6D2F', fontWeight: '700' }}>💬 Ajouter un commentaire</Text>
+                          <Text style={{ fontSize: 11, color: '#8C6D2F', fontWeight: '700' }}>Ajouter un commentaire</Text>
                         </Pressable>
                       )}
                       {/* Validation d'étape par le client sur un lot achevé — Tier 3 B */}
@@ -1633,14 +1633,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         if (valideLe) {
                           return (
                             <View style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#E8F5E9', borderRadius: 8 }}>
-                              <Text style={{ fontSize: 11, color: '#2E7D32', fontWeight: '700' }}>✓ Validé par le client le {new Date(valideLe).toLocaleDateString('fr-FR')}</Text>
+                              <Text style={{ fontSize: 11, color: '#2E7D32', fontWeight: '700' }}>Validé par le client le {new Date(valideLe).toLocaleDateString('fr-FR')}</Text>
                             </View>
                           );
                         }
                         if (isClient) {
                           return (
                             <Pressable onPress={() => validerEtape(c)} style={{ marginTop: 6, paddingVertical: 8, alignItems: 'center', backgroundColor: '#2E7D32', borderRadius: 8 }}>
-                              <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>✓ Valider cette étape</Text>
+                              <Text style={{ fontSize: 12, color: '#fff', fontWeight: '700' }}>Valider cette étape</Text>
                             </Pressable>
                           );
                         }
@@ -1663,7 +1663,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   )}
                   {isAdmin && (
                     <Pressable style={styles.deleteAllLotsBtn} onPress={deleteAllCorps}>
-                      <Text style={styles.deleteAllLotsBtnText}>🗑 Supprimer tous les lots</Text>
+                      <Text style={styles.deleteAllLotsBtnText}>Supprimer tous les lots</Text>
                     </Pressable>
                   )}
                 </>
@@ -1680,18 +1680,17 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         onPress={() => runAutoExtract({ silent: false })}
                         disabled={autoExtractLoading}
                       >
-                        <Text style={styles.reanalyserBtnText}>🔄 Re-analyser le devis</Text>
+                        <Text style={styles.reanalyserBtnText}>Re-analyser le devis</Text>
                       </Pressable>
                     )}
                   </View>
                   <Pressable style={styles.importDevisBtn} onPress={openImportDevis}>
-                    <Text style={styles.importDevisBtnText}>📋 Extraire les lots du devis</Text>
+                    <Text style={styles.importDevisBtnText}>Extraire les lots du devis</Text>
                   </Pressable>
                   {premierDevisUri ? (
                     <>
                       <View style={styles.devisLinkRow}>
-                        <Text style={styles.devisLinkText} numberOfLines={1}>
-                          📄 Devis : {premierDevisNom || 'devis'}
+                        <Text style={styles.devisLinkText} numberOfLines={1}>Devis : {premierDevisNom || 'devis'}
                         </Text>
                         <Pressable onPress={ouvrirDevis}>
                           <Text style={styles.devisLinkAction}>Ouvrir</Text>
@@ -1712,8 +1711,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </>
                   ) : (
                     <View style={{ backgroundColor: '#FFF8E1', borderRadius: 10, padding: 12, marginTop: 6 }}>
-                      <Text style={{ fontSize: 11, color: '#8C6D2F' }}>
-                        💡 Aucun devis lié à ce chantier. Uploadez-en un dans 💼 Marchés pour voir l'aperçu ici et extraire automatiquement les lots.
+                      <Text style={{ fontSize: 11, color: '#8C6D2F' }}>Aucun devis lié à ce chantier. Uploadez-en un dans 💼 Marchés pour voir l'aperçu ici et extraire automatiquement les lots.
                       </Text>
                     </View>
                   )}
@@ -1724,7 +1722,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {!isClient && situationsFigees.length > 0 && (
               <>
                 <View style={styles.subSectionHeader}>
-                  <Text style={styles.subSectionTitle}>📋 Situations facturées</Text>
+                  <Text style={styles.subSectionTitle}>Situations facturées</Text>
                 </View>
                 <Text style={styles.pfsSubtitle}>
                   {situationsFigees.length} situation{situationsFigees.length > 1 ? 's' : ''} figée{situationsFigees.length > 1 ? 's' : ''} par marché/supplément
@@ -1801,7 +1799,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   <Text style={styles.equipeJourDate}>{formatDateShort(dateStr)}</Text>
                   {persons.length === 0 ? (
                     <View style={[styles.equipeBadge, styles.equipeBadgeRouge]}>
-                      <Text style={styles.equipeBadgeRougeText}>🔴 Aucune intervention</Text>
+                      <Text style={styles.equipeBadgeRougeText}>Aucune intervention</Text>
                     </View>
                   ) : (
                     <View style={[styles.equipeBadge, styles.equipeBadgeVert]}>
@@ -1854,7 +1852,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* Accès rapide "Signaler un problème" pour l'externe (le SAV complet reste dans Fin de chantier). */}
             {!isAdmin && (
               <Pressable onPress={() => setShowNouveauSav(true)} style={{ backgroundColor: '#FBEEE9', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#E8C4B8' }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#B5531F' }}>⚠️  Signaler un problème</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#B5531F' }}>Signaler un problème</Text>
               </Pressable>
             )}
             {/* ── Lié à (admin only, format compact) ── */}
@@ -2040,7 +2038,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   <View style={{ flexDirection: 'row', gap: 6 }}>
                     {toutesPhotos.length > 0 && (
                       <Pressable style={styles.gererPhotosBtn} onPress={openPhotosPicker}>
-                        <Text style={styles.gererPhotosBtnText}>📸 Sélectionner</Text>
+                        <Text style={styles.gererPhotosBtnText}>Sélectionner</Text>
                       </Pressable>
                     )}
                   </View>
@@ -2133,7 +2131,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           {/* ── Boutons sticky bottom (hors ScrollView, toujours visibles) ── */}
           <View style={styles.buttonsRow}>
             <Pressable style={styles.partagerBtn} onPress={handlePartager}>
-              <Text style={styles.partagerBtnText}>📄 Partager le rapport</Text>
+              <Text style={styles.partagerBtnText}>Partager le rapport</Text>
             </Pressable>
             <Pressable style={styles.fermerBtn} onPress={onClose}>
               <Text style={styles.fermerBtnText}>Fermer</Text>
@@ -2279,7 +2277,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
 
             {/* Planning prévu (visible par externes) */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>📅 Planning prévu</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Planning prévu</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>Début</Text>
@@ -2304,7 +2302,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </Text>
 
             {/* Commentaire admin (visible par externes) */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>💬 Commentaire (visible par le client / apporteur)</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Commentaire (visible par le client / apporteur)</Text>
             <TextInput
               style={[styles.corpsInp, { minHeight: 70, textAlignVertical: 'top' }]}
               value={corpsForm.commentaire}
@@ -2314,7 +2312,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             />
 
             {/* Photos */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>📷 Photos attachées ({corpsForm.photos.length})</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Photos attachées ({corpsForm.photos.length})</Text>
             {corpsForm.photos.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                 {corpsForm.photos.map(uri => (
@@ -2338,7 +2336,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </Pressable>
 
             {/* Photos avant / après */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>📸 Comparatif Avant / Après</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Comparatif Avant / Après</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1, backgroundColor: '#FAF7F3', borderRadius: 10, padding: 8 }}>
                 <Text style={{ fontSize: 11, fontWeight: '800', color: '#8C8077', marginBottom: 6 }}>AVANT ({lotPhotosAvant.length})</Text>
@@ -2395,7 +2393,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <Modal visible={!!commentaireLotId} animationType="fade" transparent onRequestClose={() => setCommentaireLotId(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 4 }}>💬 Nouveau commentaire</Text>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 4 }}>Nouveau commentaire</Text>
             <Text style={{ fontSize: 12, color: '#8C8077', marginBottom: 12 }}>
               Visible par l'admin et les autres intervenants de ce chantier.
             </Text>
@@ -2429,7 +2427,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', flex: 1 }}>
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#E8DDD0', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C' }}>📋 Importer les lots du devis</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C' }}>Importer les lots du devis</Text>
                 <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>
                   Détection automatique des corps de métier et montants
                 </Text>
@@ -2446,8 +2444,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   onPress={() => { setImportMode('pdf'); setLotsDetectes([]); }}
                   style={[styles.importTab, importMode === 'pdf' && styles.importTabActive]}
                 >
-                  <Text style={[styles.importTabText, importMode === 'pdf' && styles.importTabTextActive]}>
-                    🤖 PDF auto
+                  <Text style={[styles.importTabText, importMode === 'pdf' && styles.importTabTextActive]}>PDF auto
                   </Text>
                 </Pressable>
               )}
@@ -2515,7 +2512,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   disabled={!importTexte.trim()}
                   style={[styles.detecterBtn, !importTexte.trim() && { opacity: 0.5 }]}
                 >
-                  <Text style={styles.detecterBtnText}>🔍 Détecter les lots</Text>
+                  <Text style={styles.detecterBtnText}>Détecter les lots</Text>
                 </Pressable>
               )}
 
@@ -2557,8 +2554,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   opacity: (lotsDetectes.length === 0 || Object.values(lotsSelection).every(v => !v)) ? 0.5 : 1,
                 }}
               >
-                <Text style={{ color: '#fff', fontWeight: '700' }}>
-                  ✓ Importer {Object.values(lotsSelection).filter(Boolean).length} lot(s)
+                <Text style={{ color: '#fff', fontWeight: '700' }}>Importer {Object.values(lotsSelection).filter(Boolean).length} lot(s)
                 </Text>
               </Pressable>
             </View>

@@ -309,8 +309,7 @@ export function ModalAjoutEmployesST({
                 style={[styles.modalSectionTab, modalSection === 'externe' && styles.modalSectionTabActive]}
                 onPress={() => setModalSection('externe')}
               >
-                <Text style={[styles.modalSectionTabText, modalSection === 'externe' && styles.modalSectionTabTextActive]}>
-                  ⚡ Externe
+                <Text style={[styles.modalSectionTabText, modalSection === 'externe' && styles.modalSectionTabTextActive]}>Externe
                 </Text>
               </Pressable>
             </View>
@@ -507,7 +506,7 @@ export function ModalAjoutEmployesST({
                     onClose();
                   }}
                 >
-                  <Text style={styles.intervSaveBtnText}>✓ Ajouter l'intervention</Text>
+                  <Text style={styles.intervSaveBtnText}>Ajouter l'intervention</Text>
                 </Pressable>
                 {/* Liste des interventions existantes sur ce chantier */}
                 {(data.interventions || []).filter(i => i.chantierId === modal.chantierId).length > 0 && (

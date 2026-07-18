@@ -474,7 +474,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
     <View style={styles.container}>
       <View style={styles.header}>
         <View style={{ flex: 1 }}>
-          <Text style={styles.title}>📋 PV de réception</Text>
+          <Text style={styles.title}>PV de réception</Text>
           {numeroPV
             ? <Text style={styles.numeroPV}>{numeroPV}</Text>
             : <Text style={styles.numeroPV}>Numéro auto-généré à la sauvegarde</Text>}
@@ -506,13 +506,13 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                 <Text style={styles.pdfBtnText}>Génération en cours…</Text>
               </View>
             ) : (
-              <Text style={styles.pdfBtnText}>📄  Télécharger le PDF</Text>
+              <Text style={styles.pdfBtnText}>Télécharger le PDF</Text>
             )}
           </Pressable>
         )}
 
         <View style={styles.infoCard}>
-          <Text style={styles.infoLabel}>📅 Date de réception</Text>
+          <Text style={styles.infoLabel}>Date de réception</Text>
           <Text style={styles.infoValue}>
             {dateReception ? dateReception.split('-').reverse().join('/') : '—'}
           </Text>
@@ -577,8 +577,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                           </Text>
                         )}
                         {reserves.length === 0 && (
-                          <Text style={[styles.pieceStat, { color: '#27AE60' }]}>
-                            ✓ Aucune réserve
+                          <Text style={[styles.pieceStat, { color: '#27AE60' }]}>Aucune réserve
                           </Text>
                         )}
                       </View>
@@ -666,7 +665,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                               {/* Photos initiales (constat) */}
                               {reserve.photos && reserve.photos.length > 0 && (
                                 <View style={styles.photosBlock}>
-                                  <Text style={styles.photosLabel}>📷 Constat ({reserve.photos.length})</Text>
+                                  <Text style={styles.photosLabel}>Constat ({reserve.photos.length})</Text>
                                   <ScrollView horizontal showsHorizontalScrollIndicator={false}>
                                     <View style={styles.photosRow}>
                                       {reserve.photos.map((url, i) => (
@@ -686,8 +685,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                               {/* Photos de levée */}
                               {isLevee && reserve.levee && (
                                 <View style={styles.photosBlock}>
-                                  <Text style={styles.photosLabel}>
-                                    ✅ Levée le {new Date(reserve.levee.le).toLocaleDateString('fr-FR')}
+                                  <Text style={styles.photosLabel}>Levée le {new Date(reserve.levee.le).toLocaleDateString('fr-FR')}
                                     {reserve.levee.photos && reserve.levee.photos.length > 0
                                       ? ` (${reserve.levee.photos.length} photo${reserve.levee.photos.length > 1 ? 's' : ''})`
                                       : ''}
@@ -749,7 +747,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
         {/* Bloc Paiement retenue garantie (visible si au moins 1 pièce) */}
         {pieces.length > 0 && (
           <View style={styles.paiementBlock}>
-            <Text style={styles.paiementLabel}>💳 Paiement de la retenue garantie</Text>
+            <Text style={styles.paiementLabel}>Paiement de la retenue garantie</Text>
             <Text style={styles.paiementHint}>
               Modalité de règlement après levée des réserves
             </Text>
@@ -774,7 +772,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
             {/* Récap chiffré (conditionnel — toggle admin) */}
             {afficherRecap && (
               <View style={styles.recapBlock}>
-                <Text style={styles.recapTitle}>📋 Détail des montants</Text>
+                <Text style={styles.recapTitle}>Détail des montants</Text>
 
                 {recapPaiement.marches.map((ligne, i) => (
                   <View key={`m_${i}`} style={styles.recapLigne}>
@@ -822,15 +820,14 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                     <View style={styles.recapSep} />
 
                     <View style={styles.recapLigne}>
-                      <Text style={styles.recapResteLabel}>🟢 Reste à payer aujourd&apos;hui</Text>
+                      <Text style={styles.recapResteLabel}>Reste à payer aujourd&apos;hui</Text>
                       <Text style={styles.recapResteMontant}>
                         {formatEUR(recapPaiement.resteAPayer)}
                       </Text>
                     </View>
 
                     <View style={styles.recapNote}>
-                      <Text style={styles.recapNoteText}>
-                        🔒 Retenue garantie : {formatEUR(recapPaiement.retenueGarantieMontant)} à verser après la levée des réserves
+                      <Text style={styles.recapNoteText}>Retenue garantie : {formatEUR(recapPaiement.retenueGarantieMontant)} à verser après la levée des réserves
                       </Text>
                     </View>
                   </>
@@ -857,7 +854,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
         {/* Bloc signatures (visible si au moins 1 pièce) */}
         {pieces.length > 0 && (
           <View style={styles.signaturesBlock}>
-            <Text style={styles.signaturesTitle}>✍️ Signatures</Text>
+            <Text style={styles.signaturesTitle}>Signatures</Text>
 
             {/* Signature entreprise */}
             <View style={styles.signatureCard}>
@@ -865,8 +862,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               {pv?.signatureEntrepriseUri ? (
                 <View style={styles.signatureImageBox}>
                   <Pressable onPress={() => setPreviewSignatureUri(pv.signatureEntrepriseUri!)}>
-                    <Text style={styles.signaturePlaceholder}>
-                      ✓ Signée le {pv.signatureEntrepriseDate
+                    <Text style={styles.signaturePlaceholder}>Signée le {pv.signatureEntrepriseDate
                         ? new Date(pv.signatureEntrepriseDate).toLocaleDateString('fr-FR')
                         : ''}
                     </Text>
@@ -880,7 +876,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                       onPress={() => setShowSignaturePad('entreprise')}
                       style={[styles.btn, styles.btnPrimary, { marginTop: 8 }]}
                     >
-                      <Text style={styles.btnPrimaryText}>✍️ Signer (entreprise)</Text>
+                      <Text style={styles.btnPrimaryText}>Signer (entreprise)</Text>
                     </Pressable>
                   )}
                 </View>
@@ -893,8 +889,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               {pv?.signatureClientUri ? (
                 <View style={styles.signatureImageBox}>
                   <Pressable onPress={() => setPreviewSignatureUri(pv.signatureClientUri!)}>
-                    <Text style={styles.signaturePlaceholder}>
-                      ✓ Signée le {pv.signatureClientDate
+                    <Text style={styles.signaturePlaceholder}>Signée le {pv.signatureClientDate
                         ? new Date(pv.signatureClientDate).toLocaleDateString('fr-FR')
                         : ''}
                       {pv.nomSignataire ? ` — ${pv.nomSignataire}` : ''}
@@ -928,8 +923,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
 
         {isClotured && (
           <View style={styles.cloturedBadge}>
-            <Text style={styles.cloturedText}>
-              ✅ PV clôturé le {pv?.clotureLe ? new Date(pv.clotureLe).toLocaleDateString('fr-FR') : '—'}
+            <Text style={styles.cloturedText}>PV clôturé le {pv?.clotureLe ? new Date(pv.clotureLe).toLocaleDateString('fr-FR') : '—'}
             </Text>
           </View>
         )}
@@ -1192,8 +1186,7 @@ function ReserveEditorModal({
               <Text style={styles.sheetClose}>✕</Text>
             </Pressable>
           </View>
-          <Text style={styles.editorPieceLabel}>
-            🏠 Pièce : {piece.nom}
+          <Text style={styles.editorPieceLabel}>Pièce : {piece.nom}
           </Text>
 
           <ScrollView contentContainerStyle={styles.editorContent}>
@@ -1239,8 +1232,7 @@ function ReserveEditorModal({
                     onPress={() => { setLotDevisId(''); }}
                     style={[styles.lotChip, !lotDevisId && !!categorieLibre && styles.lotChipActive]}
                   >
-                    <Text style={[styles.lotChipText, !lotDevisId && !!categorieLibre && styles.lotChipTextActive]}>
-                      ✏️ Autre
+                    <Text style={[styles.lotChipText, !lotDevisId && !!categorieLibre && styles.lotChipTextActive]}>Autre
                     </Text>
                   </Pressable>
                 </View>
@@ -1267,7 +1259,7 @@ function ReserveEditorModal({
               </>
             )}
 
-            <Text style={styles.editorLabel}>📷 Photos du constat (optionnel, max 5)</Text>
+            <Text style={styles.editorLabel}>Photos du constat (optionnel, max 5)</Text>
             <View style={styles.photosRow}>
               {photos.map((url, i) => (
                 <View key={url + i} style={styles.photoThumbWrap}>

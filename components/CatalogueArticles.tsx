@@ -95,7 +95,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '95%', flex: 1 }}>
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>📦 Catalogue articles</Text>
+            <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>Catalogue articles</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={openNew}>
                 <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>+ Article</Text>

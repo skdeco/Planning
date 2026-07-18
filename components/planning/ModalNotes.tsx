@@ -248,10 +248,10 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                         {canEdit && (
                           <View style={styles.noteCardActions}>
                             <Pressable style={styles.noteActionBtn} onPress={() => actions.startEdit(note)}>
-                              <Text style={styles.noteActionBtnText}>✏ Modifier</Text>
+                              <Text style={styles.noteActionBtnText}>Modifier</Text>
                             </Pressable>
                             <Pressable style={[styles.noteActionBtn, styles.noteActionBtnDanger]} onPress={() => actions.delete(note)}>
-                              <Text style={[styles.noteActionBtnText, { color: '#E74C3C' }]}>🗑 Supprimer</Text>
+                              <Text style={[styles.noteActionBtnText, { color: '#E74C3C' }]}>Supprimer</Text>
                             </Pressable>
                           </View>
                         )}
@@ -280,7 +280,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     if (savTickets.length === 0) return null;
                     return (
                       <View style={{ marginBottom: 8 }}>
-                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#687076', marginBottom: 4 }}>🔧 Lier à un SAV :</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Lier à un SAV :</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
                           <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' }, !draft.savTicketId && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
                             onPress={() => setDraft({ savTicketId: null })}>
@@ -310,7 +310,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                       pour rétrocompat mais n'est plus éditable via cette modal. */}
 
                   {/* Section checklist */}
-                  <Text style={styles.noteLabel}>📋 Tâches à faire</Text>
+                  <Text style={styles.noteLabel}>Tâches à faire</Text>
                   {/* Tâches dans l'éditeur : editingNote.tasks (note existante) ou draft.tasks (nouvelle note) */}
                   {(() => {
                     const editorTasks = noteModal?.editingNote ? (noteModal.editingNote.tasks || []) : draft.tasks;

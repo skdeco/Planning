@@ -278,7 +278,7 @@ export function AssistantIA({ visible, onClose }: AssistantIAProps) {
           {/* Header */}
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
-              <Text style={styles.title}>🤖 Assistant SK DECO</Text>
+              <Text style={styles.title}>Assistant SK DECO</Text>
               <Text style={styles.subtitle}>Voici ce que je recommande aujourd'hui :</Text>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn}>

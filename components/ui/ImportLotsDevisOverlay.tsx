@@ -180,7 +180,7 @@ export function ImportLotsDevisOverlay({
           contentContainerStyle={{ padding: 18 }}
           keyboardShouldPersistTaps="handled"
         >
-          <Text style={styles.title}>🤖 Importer les lots depuis le devis</Text>
+          <Text style={styles.title}>Importer les lots depuis le devis</Text>
 
           {/* Choix mode */}
           <View style={styles.modeRow}>
@@ -189,8 +189,7 @@ export function ImportLotsDevisOverlay({
                 onPress={() => { setImportMode('pdf'); setLotsDetectes([]); }}
                 style={[styles.modeChip, importMode === 'pdf' && styles.modeChipActive]}
               >
-                <Text style={[styles.modeChipText, importMode === 'pdf' && styles.modeChipTextActive]}>
-                  🤖 PDF auto
+                <Text style={[styles.modeChipText, importMode === 'pdf' && styles.modeChipTextActive]}>PDF auto
                 </Text>
               </Pressable>
             )}
@@ -198,24 +197,21 @@ export function ImportLotsDevisOverlay({
               onPress={() => setImportMode('coller')}
               style={[styles.modeChip, importMode === 'coller' && styles.modeChipActive]}
             >
-              <Text style={[styles.modeChipText, importMode === 'coller' && styles.modeChipTextActive]}>
-                📋 Coller texte
+              <Text style={[styles.modeChipText, importMode === 'coller' && styles.modeChipTextActive]}>Coller texte
               </Text>
             </Pressable>
             <Pressable
               onPress={() => setImportMode('rapide')}
               style={[styles.modeChip, importMode === 'rapide' && styles.modeChipActive]}
             >
-              <Text style={[styles.modeChipText, importMode === 'rapide' && styles.modeChipTextActive]}>
-                ⚡ Saisie
+              <Text style={[styles.modeChipText, importMode === 'rapide' && styles.modeChipTextActive]}>Saisie
               </Text>
             </Pressable>
           </View>
 
           {importMode === 'pdf' ? (
             <>
-              <Text style={styles.fieldLabel}>
-                🤖 Extraction automatique depuis le devis PDF lié à ce chantier
+              <Text style={styles.fieldLabel}>Extraction automatique depuis le devis PDF lié à ce chantier
               </Text>
               <View style={styles.pdfInfoBox}>
                 <Text style={styles.pdfInfoText} numberOfLines={2}>
