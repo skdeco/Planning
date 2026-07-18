@@ -11,6 +11,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { METIER_COLORS, type Acompte } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
 import { calcSalaireMensuel } from '@/lib/paie/calcSalaireMensuel';
+import { FileSpreadsheet, FileText, CalendarDays, HardHat } from 'lucide-react-native';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -564,11 +565,13 @@ export default function ReportingScreen() {
         </View>
         {Platform.OS === 'web' && (
           <View style={styles.exportBtns}>
-            <Pressable style={styles.exportBtn} onPress={handleExportCSV}>
-              <Text style={styles.exportBtnText}>📊 Excel</Text>
+            <Pressable style={[styles.exportBtn, { flexDirection: 'row', alignItems: 'center', gap: 5 }]} onPress={handleExportCSV}>
+              <FileSpreadsheet size={14} color="#2C2C2C" strokeWidth={2} />
+              <Text style={styles.exportBtnText}>Excel</Text>
             </Pressable>
-            <Pressable style={[styles.exportBtn, styles.exportBtnPDF]} onPress={handleExportPDF}>
-              <Text style={styles.exportBtnText}>📄 PDF</Text>
+            <Pressable style={[styles.exportBtn, styles.exportBtnPDF, { flexDirection: 'row', alignItems: 'center', gap: 5 }]} onPress={handleExportPDF}>
+              <FileText size={14} color="#2C2C2C" strokeWidth={2} />
+              <Text style={styles.exportBtnText}>PDF</Text>
             </Pressable>
           </View>
         )}
@@ -577,16 +580,18 @@ export default function ReportingScreen() {
       {/* Filtres */}
       <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 8, gap: 6 }}>
         <Pressable
-          style={[styles.filterChip, { flex: 1, alignItems: 'center' }, vue === 'journalier' && styles.filterChipActive]}
+          style={[styles.filterChip, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }, vue === 'journalier' && styles.filterChipActive]}
           onPress={() => setVue('journalier')}
         >
-          <Text style={[styles.filterChipText, vue === 'journalier' && styles.filterChipTextActive]}>📅 Par jour</Text>
+          <CalendarDays size={14} color={vue === 'journalier' ? '#2C2C2C' : '#687076'} strokeWidth={2} />
+          <Text style={[styles.filterChipText, vue === 'journalier' && styles.filterChipTextActive]}>Par jour</Text>
         </Pressable>
         <Pressable
-          style={[styles.filterChip, { flex: 1, alignItems: 'center' }, vue === 'employe' && styles.filterChipActive]}
+          style={[styles.filterChip, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }, vue === 'employe' && styles.filterChipActive]}
           onPress={() => setVue('employe')}
         >
-          <Text style={[styles.filterChipText, vue === 'employe' && styles.filterChipTextActive]}>👷 Par employé</Text>
+          <HardHat size={14} color={vue === 'employe' ? '#2C2C2C' : '#687076'} strokeWidth={2} />
+          <Text style={[styles.filterChipText, vue === 'employe' && styles.filterChipTextActive]}>Par employé</Text>
         </Pressable>
       </View>
 
