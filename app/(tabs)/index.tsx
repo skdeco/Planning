@@ -368,7 +368,7 @@ export default function DashboardScreen() {
           {/* Notes du jour */}
           {myNotesJour.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>📋 Consignes du jour ({myNotesJour.length})</Text>
+              <Text style={styles.sectionTitle}>Consignes du jour ({myNotesJour.length})</Text>
               {myNotesJour.map((note, i) => {
                 const empName = emp?.prenom || '';
                 return (
@@ -499,7 +499,7 @@ export default function DashboardScreen() {
           {/* SAV assignés */}
           {mesSavTickets.length > 0 && (
             <>
-            <Text style={styles.sectionTitle}>🔧 SAV assignés ({mesSavTickets.length})</Text>
+            <Text style={styles.sectionTitle}>SAV assignés ({mesSavTickets.length})</Text>
             <View style={{ marginBottom: 8 }}>
               <Pressable
                 style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF2F2', borderRadius: savExpanded ? 12 : 12, borderBottomLeftRadius: savExpanded ? 0 : 12, borderBottomRightRadius: savExpanded ? 0 : 12, padding: 12, borderWidth: 1, borderColor: '#FECACA', gap: 10 }}
@@ -749,7 +749,7 @@ export default function DashboardScreen() {
           })()}
 
           {/* Pense-bête par chantier */}
-          <Text style={styles.sectionTitle}>📌 Pense-bête</Text>
+          <Text style={styles.sectionTitle}>Pense-bête</Text>
           <View style={styles.statCard}>
             {/* Notes existantes */}
             {(emp?.penseBetes || []).map(pb => {
@@ -1067,7 +1067,7 @@ export default function DashboardScreen() {
             <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Pressable onPress={() => setShowAlertes(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                  <Text style={styles.sectionTitle}>⚠️ Alertes ({visibleAlertes.length})</Text>
+                  <Text style={styles.sectionTitle}>Alertes ({visibleAlertes.length})</Text>
                   <Text style={{ fontSize: 12, color: '#8C8077' }}>{showAlertes ? '▾' : '▸'}</Text>
                 </Pressable>
                 {showAlertes && (
@@ -1114,7 +1114,7 @@ export default function DashboardScreen() {
           if (rdvJour.length === 0) return null;
           return (
             <>
-              <Text style={styles.sectionTitle}>📅 Agenda du jour ({rdvJour.length})</Text>
+              <Text style={styles.sectionTitle}>Agenda du jour ({rdvJour.length})</Text>
               {rdvJour.map(evt => {
                 const ch = evt.chantierId ? data.chantiers.find(c => c.id === evt.chantierId) : null;
                 return (
@@ -1213,7 +1213,7 @@ export default function DashboardScreen() {
 
           return (
             <>
-              <Text style={styles.sectionTitle}>💰 Rentabilité par chantier</Text>
+              <Text style={styles.sectionTitle}>Rentabilité par chantier</Text>
               {rentaCards.map((item, idx) => {
                 const margeColor = item.marge >= 0 ? '#27AE60' : '#E74C3C';
                 return (
@@ -1277,7 +1277,7 @@ export default function DashboardScreen() {
 
           return (
             <FadeInView delay={100}>
-              <Text style={styles.sectionTitle}>📊 Chiffre d'affaires</Text>
+              <Text style={styles.sectionTitle}>Chiffre d'affaires</Text>
               <View style={[styles.statCard, { borderWidth: 1.5, borderColor: '#C9A96E', marginBottom: 8 }]}>
                 <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>{fmtCA(caMonth)} <Text style={{ fontSize: 13, fontWeight: '500', color: '#687076' }}>ce mois</Text></Text>
                 <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>vs {fmtCA(caPrev)} le mois dernier</Text>
@@ -1351,7 +1351,7 @@ export default function DashboardScreen() {
           if (allNotesJour.length === 0) return null;
           return (
             <>
-              <Text style={styles.sectionTitle}>📝 Notes du jour ({allNotesJour.length})</Text>
+              <Text style={styles.sectionTitle}>Notes du jour ({allNotesJour.length})</Text>
               {allNotesJour.map(n => (
                 <View key={n.id} style={[styles.statCard, { borderLeftWidth: 3, borderLeftColor: n.savTicketId ? '#E74C3C' : '#687076' }]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
@@ -1472,7 +1472,7 @@ const styles = StyleSheet.create({
   header: { marginBottom: 24 },
   greeting: { fontSize: 28, fontWeight: '800', color: '#1A1A1A', letterSpacing: -0.5 },
   date: { fontSize: 14, color: '#8C8077', marginTop: 4, textTransform: 'capitalize', fontWeight: '400' },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#1A1A1A', marginTop: 24, marginBottom: 10, letterSpacing: -0.2 },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#8C8077', marginTop: 24, marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statCard: {
     backgroundColor: '#fff', borderRadius: 14, padding: 16,
