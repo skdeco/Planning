@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert, Linking, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock, CircleCheck, Navigation } from 'lucide-react-native';
+import { Clock, CircleCheck, Navigation, Check, Camera } from 'lucide-react-native';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
 import { LanguageFlag } from '@/components/LanguageFlag';
@@ -298,7 +298,7 @@ export default function DashboardScreen() {
             if (mesBadges.length === 0) return null;
             return (
               <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 }}>🏆 Mes badges</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 }}>Mes badges</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                   {mesBadges.map(b => {
                     const bt = BADGE_TYPES[b.type];
@@ -578,7 +578,10 @@ export default function DashboardScreen() {
                                       ]);
                                     }
                                   }}>
-                                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#155724' }}>✓ Marquer résolu</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                    <Check size={13} color="#155724" strokeWidth={2.4} />
+                                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#155724' }}>Marquer résolu</Text>
+                                  </View>
                                 </Pressable>
                                 <Pressable style={{ backgroundColor: '#EBF0FF', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, alignItems: 'center' }}
                                   onPress={async () => {
@@ -587,7 +590,10 @@ export default function DashboardScreen() {
                                     const url = await uploadFileToStorage(files[0].uri, `chantiers/${t.chantierId}/sav-resolution`, `cr_${t.id}_${Date.now()}`);
                                     if (url) updateTicketSAV({ ...t, photosResolution: [...(t.photosResolution || []), url], updatedAt: new Date().toISOString() });
                                   }}>
-                                  <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>📷 Photo</Text>
+                                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                                    <Camera size={13} color="#2C2C2C" strokeWidth={2} />
+                                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Photo</Text>
+                                  </View>
                                 </Pressable>
                               </View>
                             )}
@@ -614,9 +620,9 @@ export default function DashboardScreen() {
               {c.adresse ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{c.adresse}</Text> : null}
               {c.fiche && (
                 <View style={{ marginTop: 8, gap: 4 }}>
-                  {c.fiche.codeAcces ? <Text style={{ fontSize: 12, color: '#2C2C2C' }}>🔑 Code : {c.fiche.codeAcces}</Text> : null}
-                  {c.fiche.emplacementCle ? <Text style={{ fontSize: 12, color: '#2C2C2C' }}>🗝 Clé : {c.fiche.emplacementCle}</Text> : null}
-                  {c.fiche.codeAlarme ? <Text style={{ fontSize: 12, color: '#2C2C2C' }}>🔔 Alarme : {c.fiche.codeAlarme}</Text> : null}
+                  {c.fiche.codeAcces ? <Text style={{ fontSize: 12, color: '#2C2C2C' }}>Code : {c.fiche.codeAcces}</Text> : null}
+                  {c.fiche.emplacementCle ? <Text style={{ fontSize: 12, color: '#2C2C2C' }}>Clé : {c.fiche.emplacementCle}</Text> : null}
+                  {c.fiche.codeAlarme ? <Text style={{ fontSize: 12, color: '#2C2C2C' }}>Alarme : {c.fiche.codeAlarme}</Text> : null}
                 </View>
               )}
               {/* Boutons actions */}
@@ -1405,7 +1411,7 @@ export default function DashboardScreen() {
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
             <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', padding: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>📋 Historique complet</Text>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>Historique complet</Text>
                 <Pressable onPress={() => setShowHistorique(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
                 </Pressable>
@@ -1429,7 +1435,7 @@ export default function DashboardScreen() {
                         {isMyEntry && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {lectures.length === 0 ? (
-                              <Text style={{ fontSize: 10, color: '#B0BEC5', fontStyle: 'italic' }}>👁 Pas encore lu</Text>
+                              <Text style={{ fontSize: 10, color: '#B0BEC5', fontStyle: 'italic' }}>Pas encore lu</Text>
                             ) : (
                               lectures.map(l => {
                                 const emp = data.employes.find(e => e.id === l.userId);
