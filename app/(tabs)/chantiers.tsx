@@ -1507,10 +1507,10 @@ export default function ChantiersScreen() {
                       </View>
                       {t.description && <Text style={{ fontSize: 11, color: '#687076', marginTop: 4 }} numberOfLines={2}>{t.description}</Text>}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                        <Text style={{ fontSize: 10, color: '#B0BEC5' }}>📅 {t.dateOuverture}</Text>
-                        {assigneEmp && <Text style={{ fontSize: 10, color: '#2C2C2C' }}>👷 {assigneEmp.prenom} {assigneEmp.nom}</Text>}
-                        {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60' }}>✓ {t.resoluPar}</Text>}
-                        {t.photos && t.photos.length > 0 && <Text style={{ fontSize: 10, color: '#687076' }}>📷 {t.photos.length}</Text>}
+                        <Text style={{ fontSize: 10, color: '#B0BEC5' }}>{t.dateOuverture}</Text>
+                        {assigneEmp && <Text style={{ fontSize: 10, color: '#2C2C2C' }}>{assigneEmp.prenom} {assigneEmp.nom}</Text>}
+                        {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60' }}>{t.resoluPar}</Text>}
+                        {t.photos && t.photos.length > 0 && <Text style={{ fontSize: 10, color: '#687076' }}>{t.photos.length}</Text>}
                       </View>
                     </Pressable>
                   );
@@ -2111,7 +2111,7 @@ export default function ChantiersScreen() {
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.modalTitle}>🪪 {t.chantiers.ficheChantier}</Text>
+                <Text style={styles.modalTitle}>{t.chantiers.ficheChantier}</Text>
                 <Text style={styles.modalSubtitle}>
                   {data.chantiers.find(c => c.id === ficheId)?.nom ?? ''}
                 </Text>
@@ -2498,8 +2498,7 @@ export default function ChantiersScreen() {
                       const sansFichier = achats.filter(a => !a.fichier).length;
                       if (sansFichier === 0) return null;
                       return (
-                        <Text style={{ fontSize: 11, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: '600' }}>
-                          ⚠️ {sansFichier} achat{sansFichier > 1 ? 's' : ''} sans facture
+                        <Text style={{ fontSize: 11, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: '600' }}>{sansFichier} achat{sansFichier > 1 ? 's' : ''} sans facture
                         </Text>
                       );
                     })()}
@@ -2776,7 +2775,7 @@ export default function ChantiersScreen() {
                   {/* Notes archivées */}
                   {notesChantierId && getNotesArchivees(notesChantierId).length > 0 && (
                     <>
-                      <Text style={styles.noteHistSection}>🗃️ {t.chantiers.archivedNotes}</Text>
+                      <Text style={styles.noteHistSection}>{t.chantiers.archivedNotes}</Text>
                       {getNotesArchivees(notesChantierId).map(note => (
                         <View key={note.id} style={[styles.noteCard, { opacity: 0.85, borderLeftColor: '#B0BEC5' }]}>
                           <View style={styles.noteHeader}>
@@ -2850,7 +2849,7 @@ export default function ChantiersScreen() {
                                 }
                               }}
                             >
-                              <Text style={styles.noteDeleteBtnText}>🗑 {t.common.delete}</Text>
+                              <Text style={styles.noteDeleteBtnText}>{t.common.delete}</Text>
                             </Pressable>
                           )}
                         </View>
@@ -2860,7 +2859,7 @@ export default function ChantiersScreen() {
                   {/* Notes supprimées */}
                   {notesChantierId && getNotesSupprimees(notesChantierId).length > 0 && (
                     <>
-                      <Text style={[styles.noteHistSection, { color: '#E74C3C' }]}>🗑️ {t.chantiers.deletedNotes}</Text>
+                      <Text style={[styles.noteHistSection, { color: '#E74C3C' }]}>{t.chantiers.deletedNotes}</Text>
                       {getNotesSupprimees(notesChantierId).map(note => (
                         <View key={note.id} style={[styles.noteCard, { opacity: 0.65, borderLeftColor: '#E74C3C' }]}>
                           <View style={styles.noteHeader}>
@@ -3175,8 +3174,7 @@ export default function ChantiersScreen() {
                       const sansFichier = achats.filter(a => !a.fichier).length;
                       if (sansFichier === 0) return null;
                       return (
-                        <Text style={{ fontSize: 11, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: '600' }}>
-                          ⚠️ {sansFichier} achat{sansFichier > 1 ? 's' : ''} sans facture
+                        <Text style={{ fontSize: 11, color: '#F59E0B', textAlign: 'center', marginTop: 10, fontWeight: '600' }}>{sansFichier} achat{sansFichier > 1 ? 's' : ''} sans facture
                         </Text>
                       );
                     })()}
@@ -3250,8 +3248,7 @@ export default function ChantiersScreen() {
                     <View key={group.lotKey} style={{ marginBottom: 12 }}>
                       {/* Header du groupe lot */}
                       <View style={{ paddingHorizontal: 16, paddingVertical: 8 }}>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: DS.bordeaux, letterSpacing: 0.6, textTransform: 'uppercase' }}>
-                          🏷️ {group.lotNom} ({group.plansActifs.length})
+                        <Text style={{ fontSize: 11, fontWeight: '700', color: DS.bordeaux, letterSpacing: 0.6, textTransform: 'uppercase' }}>{group.lotNom} ({group.plansActifs.length})
                         </Text>
                       </View>
                       {/* Plans actifs du groupe */}
@@ -3541,8 +3538,7 @@ export default function ChantiersScreen() {
                         onPress={() => { setNewPlanLotId(lot.id); setShowLotPicker(false); }}
                         style={{ paddingHorizontal: 20, paddingVertical: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: DS.border, backgroundColor: newPlanLotId === lot.id ? DS.cremeNude : 'transparent' }}
                       >
-                        <Text style={{ fontSize: 15, color: DS.sombre, fontWeight: newPlanLotId === lot.id ? '600' : '400' }}>
-                          🏷️ {lot.nom}
+                        <Text style={{ fontSize: 15, color: DS.sombre, fontWeight: newPlanLotId === lot.id ? '600' : '400' }}>{lot.nom}
                         </Text>
                         {newPlanLotId === lot.id && <Text style={{ color: DS.bordeaux, fontWeight: '700' }}>✓</Text>}
                       </Pressable>
@@ -3709,7 +3705,7 @@ export default function ChantiersScreen() {
                           <Text style={savListeStyles.cardPriorite}>· Priorité {t.priorite}</Text>
                         </View>
                         {employe && (
-                          <Text style={savListeStyles.cardAssigne}>👤 {employe.prenom} {employe.nom}</Text>
+                          <Text style={savListeStyles.cardAssigne}>{employe.prenom} {employe.nom}</Text>
                         )}
                         {t.creePar && t.creePar.type !== 'admin' && (
                           <Text style={savListeStyles.cardCreepar}>Signalé par {t.creePar.nom}</Text>

@@ -727,8 +727,7 @@ export default function PointageScreen() {
                         {/* Indicateur si modifié par admin */}
                         {(debut?.saisieManuelle || fin?.saisieManuelle) && (
                           <View style={{ marginTop: 4, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#FFF3CD', borderRadius: 4, alignSelf: 'flex-start' }}>
-                            <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }}>
-                              ✏️ {debut?.saisieManuelle ? 'Arrivée' : ''}{debut?.saisieManuelle && fin?.saisieManuelle ? ' + ' : ''}{fin?.saisieManuelle ? 'Départ' : ''} modifié par {(() => {
+                            <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }}>{debut?.saisieManuelle ? 'Arrivée' : ''}{debut?.saisieManuelle && fin?.saisieManuelle ? ' + ' : ''}{fin?.saisieManuelle ? 'Départ' : ''} modifié par {(() => {
                                 const modId = (debut?.saisieManuelle ? debut?.saisieParId : fin?.saisieParId) || 'admin';
                                 const mod = data.employes.find(e => e.id === modId);
                                 return mod ? mod.prenom : 'Admin';
@@ -886,7 +885,7 @@ export default function PointageScreen() {
                       if (win) { win.document.write(html); win.document.close(); }
                     }}
                   >
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>📄 Exporter PDF</Text>
+                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Exporter PDF</Text>
                   </Pressable>
                 )}
               </View>
@@ -955,7 +954,7 @@ export default function PointageScreen() {
             )}
 
             <Pressable style={styles.pickPhotosBtn} onPress={handlePickPhotos}>
-              <Text style={styles.pickPhotosBtnText}>📎 Ajouter des photos / PDF</Text>
+              <Text style={styles.pickPhotosBtnText}>Ajouter des photos / PDF</Text>
             </Pressable>
             <View style={{ marginTop: 4 }}>
               <InboxPickerButton

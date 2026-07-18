@@ -340,13 +340,12 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                 <Text style={styles.livTitre}>{l.titre}</Text>
                 {l.recue && <View style={styles.badgeDone}><Text style={styles.badgeDoneText}>Reçue</Text></View>}
               </View>
-              <Text style={styles.livMeta}>
-                📅 {formatFR(l.dateLivraison)}{l.heure ? ` · ${l.heure}` : ''}
+              <Text style={styles.livMeta}>{formatFR(l.dateLivraison)}{l.heure ? ` · ${l.heure}` : ''}
               </Text>
-              {l.transporteur && <Text style={styles.livDetail}>🚛 {l.transporteur}{l.numeroTransporteur ? ` · ${l.numeroTransporteur}` : ''}</Text>}
+              {l.transporteur && <Text style={styles.livDetail}>{l.transporteur}{l.numeroTransporteur ? ` · ${l.numeroTransporteur}` : ''}</Text>}
               {l.numeroColis && <Text style={styles.livDetail}>Colis {l.numeroColis}</Text>}
-              {l.nomContact && <Text style={styles.livDetail}>👤 {l.nomContact}{l.telephoneContact ? ` · ${l.telephoneContact}` : ''}</Text>}
-              {l.note && <Text style={styles.livNote}>💬 {l.note}</Text>}
+              {l.nomContact && <Text style={styles.livDetail}>{l.nomContact}{l.telephoneContact ? ` · ${l.telephoneContact}` : ''}</Text>}
+              {l.note && <Text style={styles.livNote}>{l.note}</Text>}
               {/* V10 — Workflow monte-charge (admin, si monteChargeRequis) — Option 3 validée Kevin */}
               {isAdmin && l.monteChargeRequis && (
                 <View style={{ marginTop: 10, paddingLeft: 10, borderLeftWidth: 3, borderLeftColor: '#5C1F2E' }}>
@@ -607,11 +606,10 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                     {r.heureDebut ? ` · ${r.heureDebut}` : ''}
                     {r.dureeMinutes ? ` (${r.dureeMinutes}min)` : ''}
                   </Text>
-                  <Text style={styles.rdvDetail}>
-                    👤 {r.assigneNom}{r.lieu && r.lieu !== 'chantier' ? ` · ${r.lieu}` : ''}
+                  <Text style={styles.rdvDetail}>{r.assigneNom}{r.lieu && r.lieu !== 'chantier' ? ` · ${r.lieu}` : ''}
                   </Text>
                   <Text style={styles.rdvDetail}>Dès {formatFR(r.dateDebut)}{r.dateFinRecurrence ? ` → ${formatFR(r.dateFinRecurrence)}` : ''}</Text>
-                  {r.note && <Text style={styles.rdvNote}>💬 {r.note}</Text>}
+                  {r.note && <Text style={styles.rdvNote}>{r.note}</Text>}
                 </View>
                 {isAdmin && (
                   <View style={styles.livActions}>

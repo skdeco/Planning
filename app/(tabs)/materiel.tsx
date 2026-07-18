@@ -499,7 +499,7 @@ export default function MaterielScreen() {
           ) : <View />}
           {isAdmin && (
             <Pressable onPress={() => handleDeleteListe(liste.id)} style={styles.deleteListeBtn}>
-              <Text style={styles.deleteListeBtnText}>🗑 {t.materiel.deleteListBtn}</Text>
+              <Text style={styles.deleteListeBtnText}>{t.materiel.deleteListBtn}</Text>
             </Pressable>
           )}
         </View>
@@ -525,7 +525,7 @@ export default function MaterielScreen() {
               </View>
               {/* Fournisseur masqué dans la vue employé — visible uniquement pour l'acheteur */}
               {item.commentaire ? (
-                <Text style={styles.itemCommentaire}>💬 {item.commentaire}</Text>
+                <Text style={styles.itemCommentaire}>{item.commentaire}</Text>
               ) : null}
               {/* Badge disponibilité */}
               {isAcheteur && (() => {
@@ -591,7 +591,7 @@ export default function MaterielScreen() {
                 </Text>
               </View>
               <View style={styles.archiveBadge}>
-                <Text style={styles.archiveBadgeText}>✅ {itemsAchetes.length}</Text>
+                <Text style={styles.archiveBadgeText}>{itemsAchetes.length}</Text>
               </View>
             </Pressable>
 
@@ -614,10 +614,10 @@ export default function MaterielScreen() {
                         <Text style={[styles.itemTexte, styles.itemTexteBarre]} numberOfLines={2}>{item.texte}</Text>
                       </View>
                       {item.commentaire ? (
-                        <Text style={[styles.itemCommentaire, styles.itemTexteBarre]}>💬 {item.commentaire}</Text>
+                        <Text style={[styles.itemCommentaire, styles.itemTexteBarre]}>{item.commentaire}</Text>
                       ) : null}
                       {item.achetePar && (
-                        <Text style={styles.achetePar}>✓ {item.achetePar}{item.prixReel != null ? ` · ${item.prixReel}€` : ''}{item.fournisseurReel ? ` · ${item.fournisseurReel}` : ''}</Text>
+                        <Text style={styles.achetePar}>{item.achetePar}{item.prixReel != null ? ` · ${item.prixReel}€` : ''}{item.fournisseurReel ? ` · ${item.fournisseurReel}` : ''}</Text>
                       )}
                     </View>
                     {canEdit && (
@@ -693,7 +693,7 @@ export default function MaterielScreen() {
                         <Text style={{ fontSize: 10, color: '#999' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
                       </View>
                       {/* Fournisseur masqué dans la vue employé */}
-                      {item.commentaire ? <Text style={styles.itemCommentaire}>💬 {item.commentaire}</Text> : null}
+                      {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
                     </View>
                     {isMine && (
                       <Pressable onPress={() => handleDeleteItem(item.listeId, item.id)} style={styles.deleteBtn}>
@@ -718,7 +718,7 @@ export default function MaterielScreen() {
                       </View>
                       <View style={styles.itemContent}>
                         <Text style={[styles.itemTexte, styles.itemTexteBarre]} numberOfLines={1}>{item.quantite ? `${item.quantite} · ` : ''}{item.texte}</Text>
-                        {item.achetePar && <Text style={styles.achetePar}>✓ {item.achetePar}</Text>}
+                        {item.achetePar && <Text style={styles.achetePar}>{item.achetePar}</Text>}
                       </View>
                     </View>
                   ))}
@@ -810,7 +810,7 @@ export default function MaterielScreen() {
                         <Pressable onPress={() => setFournisseurPickerModal({ listeId: item.listeId, itemId: item.id, nom: item.texte, currentFournisseur: item.fournisseur || '' })}>
                           <Text style={{ fontSize: 10, color: '#2C2C2C', fontWeight: '600' }}>{item.fournisseur ? `🏪 ${item.fournisseur}` : '🏪 Assigner fournisseur'}</Text>
                         </Pressable>
-                        {item.commentaire ? <Text style={styles.itemCommentaire}>💬 {item.commentaire}</Text> : null}
+                        {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
                       </View>
                       {(isAdmin || isAcheteur) && (
                         <Pressable onPress={() => handleDeleteItem(item.listeId, item.id)} style={styles.deleteBtn}>
@@ -864,7 +864,7 @@ export default function MaterielScreen() {
                           </Pressable>
                           <View style={styles.itemContent}>
                             <Text style={[styles.itemTexte, styles.itemTexteBarre]} numberOfLines={1}>{item.quantite ? `${item.quantite} · ` : ''}{item.texte}</Text>
-                            {item.achetePar && <Text style={styles.achetePar}>✓ {item.achetePar}</Text>}
+                            {item.achetePar && <Text style={styles.achetePar}>{item.achetePar}</Text>}
                           </View>
                         </View>
                       ))}
@@ -892,7 +892,7 @@ export default function MaterielScreen() {
     <ScreenContainer>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>🛒 {t.materiel.title}</Text>
+        <Text style={styles.title}>{t.materiel.title}</Text>
         {nbNonAchetes > 0 && isAcheteur && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>{nbNonAchetes}</Text>
@@ -1036,7 +1036,7 @@ export default function MaterielScreen() {
                     <Pressable key={f}
                       style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: newFournisseur === f ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: newFournisseur === f ? '#2C2C2C' : '#E2E6EA' }}
                       onPress={() => setNewFournisseur(f)}>
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: newFournisseur === f ? '#fff' : '#11181C' }}>🏪 {f}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: newFournisseur === f ? '#fff' : '#11181C' }}>{f}</Text>
                     </Pressable>
                   ))}
                   {isAdmin && (
@@ -1098,7 +1098,7 @@ export default function MaterielScreen() {
               ) : (
                 (data.fournisseurs || []).map(f => (
                   <View key={f} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}>
-                    <Text style={{ fontSize: 14, color: '#11181C' }}>🏪 {f}</Text>
+                    <Text style={{ fontSize: 14, color: '#11181C' }}>{f}</Text>
                     <Pressable onPress={() => {
                       if (Platform.OS === 'web') {
                         if (window.confirm(`Supprimer "${f}" ?`)) deleteFournisseur(f);
@@ -1143,7 +1143,7 @@ export default function MaterielScreen() {
                 <Pressable key={f}
                   style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: fournisseurPickerModal?.currentFournisseur === f ? '#2C2C2C' : '#F5EDE3' }}
                   onPress={() => fournisseurPickerModal && handleChangeFournisseur(fournisseurPickerModal.listeId, fournisseurPickerModal.itemId, f)}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: fournisseurPickerModal?.currentFournisseur === f ? '#fff' : '#11181C' }}>🏪 {f}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: fournisseurPickerModal?.currentFournisseur === f ? '#fff' : '#11181C' }}>{f}</Text>
                 </Pressable>
               ))}
             </ScrollView>

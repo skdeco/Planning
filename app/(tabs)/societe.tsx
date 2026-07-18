@@ -296,7 +296,7 @@ export default function SocieteScreen() {
                           )}
                         </Text>
                       )}
-                      {d.note && <Text style={styles.docNote}>💬 {d.note}</Text>}
+                      {d.note && <Text style={styles.docNote}>{d.note}</Text>}
                     </View>
                   </View>
                 </Pressable>

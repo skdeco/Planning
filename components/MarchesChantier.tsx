@@ -589,8 +589,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             : '';
                           return (
                             <View style={{ backgroundColor: '#FAF3E6', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginTop: 6, borderLeftWidth: 3, borderLeftColor: '#C9A96E', alignSelf: 'flex-start' }}>
-                              <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700' }}>
-                                💼 {app ? `${app.prenom} ${app.nom}` : 'Apporteur'} — {fmt(montantC)} €{suffixe} — {m.commission!.statut === 'paye' ? '✓ Payé' : '⏳ À payer'}
+                              <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700' }}>{app ? `${app.prenom} ${app.nom}` : 'Apporteur'} — {fmt(montantC)} €{suffixe} — {m.commission!.statut === 'paye' ? '✓ Payé' : '⏳ À payer'}
                               </Text>
                             </View>
                           );

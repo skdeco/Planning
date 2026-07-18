@@ -122,7 +122,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
       ) : (
         <View style={{ marginTop: 8 }}>
           <Text style={styles.meta}>Réception : {pv?.dateReception || '—'}</Text>
-          <Text style={styles.meta}>✓ {nbConformes} conforme{nbConformes > 1 ? 's' : ''} · 🔴 {nbReserves} réserve{nbReserves > 1 ? 's' : ''}</Text>
+          <Text style={styles.meta}>{nbConformes} conforme{nbConformes > 1 ? 's' : ''} · 🔴 {nbReserves} réserve{nbReserves > 1 ? 's' : ''}</Text>
           {cloture && pv?.signatureClientDate && (
             <View style={{ marginTop: 8 }}>
               <Text style={styles.meta}>Signé le {new Date(pv.signatureClientDate).toLocaleString('fr-FR')}</Text>

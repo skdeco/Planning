@@ -103,7 +103,7 @@ export function DriveChantier({ visible, onClose, chantierId }: DriveChantierPro
                   ) : docs.map(doc => (
                     <View key={doc.id} style={styles.docRow}>
                       <Pressable style={{ flex: 1, minWidth: 0 }} onPress={() => openDocPreview(doc.fichierUrl)}>
-                        <Text style={styles.docNom} numberOfLines={1}>📄 {doc.nom}</Text>
+                        <Text style={styles.docNom} numberOfLines={1}>{doc.nom}</Text>
                         <Text style={styles.docMeta}>
                           {new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}{doc.uploadedPar ? ` · ${doc.uploadedPar}` : ''}
                         </Text>

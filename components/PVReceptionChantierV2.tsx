@@ -539,8 +539,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
         ) : (
           <View>
             <View style={styles.piecesHeader}>
-              <Text style={styles.piecesTitle}>
-                🏠 {pieces.length} pièce{pieces.length > 1 ? 's' : ''}
+              <Text style={styles.piecesTitle}>{pieces.length} pièce{pieces.length > 1 ? 's' : ''}
               </Text>
               {isAdmin && !isClotured && (
                 <Pressable onPress={openPickerSheet} style={styles.addPiecesBtn}>
@@ -567,13 +566,11 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                       </Text>
                       <View style={styles.pieceStats}>
                         {nbATraiter > 0 && (
-                          <Text style={[styles.pieceStat, { color: '#E74C3C' }]}>
-                            🔴 {nbATraiter} à traiter
+                          <Text style={[styles.pieceStat, { color: '#E74C3C' }]}>{nbATraiter} à traiter
                           </Text>
                         )}
                         {nbLevees > 0 && (
-                          <Text style={[styles.pieceStat, { color: '#27AE60' }]}>
-                            ✓ {nbLevees} levée{nbLevees > 1 ? 's' : ''}
+                          <Text style={[styles.pieceStat, { color: '#27AE60' }]}>{nbLevees} levée{nbLevees > 1 ? 's' : ''}
                           </Text>
                         )}
                         {reserves.length === 0 && (
@@ -639,8 +636,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                                     {reserve.description}
                                   </Text>
                                   {categorie && (
-                                    <Text style={styles.reserveCategorie}>
-                                      📂 {categorie}
+                                    <Text style={styles.reserveCategorie}>{categorie}
                                     </Text>
                                   )}
                                 </View>
@@ -906,8 +902,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                       onPress={handleClientSignatureClick}
                       style={[styles.btn, styles.btnPrimary, { marginTop: 8 }]}
                     >
-                      <Text style={styles.btnPrimaryText}>
-                        ✍️ {isAdmin ? 'Faire signer le client' : 'Je signe comme client'}
+                      <Text style={styles.btnPrimaryText}>{isAdmin ? 'Faire signer le client' : 'Je signe comme client'}
                       </Text>
                     </Pressable>
                   )}

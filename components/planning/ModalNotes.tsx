@@ -291,7 +291,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                               onPress={() => {
                                 setDraft({ savTicketId: t.id, ...(draft.texte.trim() ? {} : { texte: `SAV: ${t.objet}` }) });
                               }}>
-                              <Text style={{ fontSize: 10, fontWeight: '600', color: draft.savTicketId === t.id ? '#fff' : '#687076' }} numberOfLines={1}>🔧 {t.objet}</Text>
+                              <Text style={{ fontSize: 10, fontWeight: '600', color: draft.savTicketId === t.id ? '#fff' : '#687076' }} numberOfLines={1}>{t.objet}</Text>
                             </Pressable>
                           ))}
                         </ScrollView>

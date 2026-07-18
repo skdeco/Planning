@@ -214,8 +214,7 @@ export function ImportLotsDevisOverlay({
               <Text style={styles.fieldLabel}>Extraction automatique depuis le devis PDF lié à ce chantier
               </Text>
               <View style={styles.pdfInfoBox}>
-                <Text style={styles.pdfInfoText} numberOfLines={2}>
-                  📄 {devisNom || 'Devis lié à ce chantier'}
+                <Text style={styles.pdfInfoText} numberOfLines={2}>{devisNom || 'Devis lié à ce chantier'}
                 </Text>
               </View>
               <Pressable
@@ -263,8 +262,7 @@ export function ImportLotsDevisOverlay({
 
           {lotsDetectes.length > 0 && (
             <>
-              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>
-                ✓ {lotsDetectes.length} lot{lotsDetectes.length > 1 ? 's' : ''} détecté{lotsDetectes.length > 1 ? 's' : ''} — sélectionne ceux à importer
+              <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{lotsDetectes.length} lot{lotsDetectes.length > 1 ? 's' : ''} détecté{lotsDetectes.length > 1 ? 's' : ''} — sélectionne ceux à importer
               </Text>
               <View style={{ maxHeight: 240, marginTop: 4 }}>
                 <ScrollView nestedScrollEnabled keyboardShouldPersistTaps="handled">

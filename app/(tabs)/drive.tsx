@@ -111,9 +111,9 @@ export default function DriveScreen() {
             <Text style={styles.empty}>Aucun document ne correspond aux filtres.</Text>
           ) : rows.map(({ doc, chantierNom }) => (
             <Pressable key={doc.id} onPress={() => openDocPreview(doc.fichierUrl)} style={styles.row}>
-              <Text style={styles.docNom} numberOfLines={1}>📄 {doc.nom}</Text>
+              <Text style={styles.docNom} numberOfLines={1}>{doc.nom}</Text>
               <View style={styles.metaRow}>
-                <Text style={styles.chantier} numberOfLines={1}>🏗 {chantierNom}</Text>
+                <Text style={styles.chantier} numberOfLines={1}>{chantierNom}</Text>
                 <Text style={styles.cat}>{catLabel(doc.categorie)}</Text>
               </View>
               <Text style={styles.date}>{new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}{doc.uploadedPar ? ` · ${doc.uploadedPar}` : ''}</Text>

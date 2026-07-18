@@ -249,8 +249,8 @@ export function PlanningDirection() {
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>{evt.titre}</Text>
                         {evt.description ? <Text style={{ fontSize: 13, color: '#687076', marginTop: 2 }}>{evt.description}</Text> : null}
-                        {evt.lieu ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>📍 {evt.lieu}</Text> : null}
-                        {ch ? <Text style={{ fontSize: 12, color: ch.couleur, fontWeight: '600', marginTop: 2 }}>🏗 {ch.nom}</Text> : null}
+                        {evt.lieu ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{evt.lieu}</Text> : null}
+                        {ch ? <Text style={{ fontSize: 12, color: ch.couleur, fontWeight: '600', marginTop: 2 }}>{ch.nom}</Text> : null}
                         {evt.invites.length > 0 && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {evt.invites.map(id => {

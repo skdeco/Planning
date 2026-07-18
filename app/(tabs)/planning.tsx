@@ -941,7 +941,7 @@ export default function PlanningScreen() {
               <>
                 <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>{nbPointes}/{nbAffectes} pointés</Text>
                 {nbRetards > 0 && <Text style={{ fontSize: 11, color: '#E74C3C', fontWeight: '600' }}>{nbRetards} retard{nbRetards > 1 ? 's' : ''}</Text>}
-                {nbEnConge > 0 && <Text style={{ fontSize: 11, color: '#F59E0B', fontWeight: '600' }}>🏖 {nbEnConge} en congé</Text>}
+                {nbEnConge > 0 && <Text style={{ fontSize: 11, color: '#F59E0B', fontWeight: '600' }}>{nbEnConge} en congé</Text>}
               </>
             );
           })()}
@@ -1086,7 +1086,7 @@ export default function PlanningScreen() {
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
               <View style={{ flex: 1 }}>
-                <Text style={styles.modalTitle}>🪪 {ficheModal?.chantier.nom}</Text>
+                <Text style={styles.modalTitle}>{ficheModal?.chantier.nom}</Text>
                 <Text style={styles.modalSubtitle}>{ficheModal?.chantier.adresse}</Text>
               </View>
               <Pressable onPress={() => setFicheModal(null)} style={styles.modalXBtn}>
@@ -1181,7 +1181,7 @@ export default function PlanningScreen() {
           <Pressable style={styles.interventionSheet} onPress={() => {}}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeaderRow}>
-              <Text style={styles.modalTitle}>⚡ {interventionModal?.editId ? 'Modifier' : 'Ajouter'} une intervention</Text>
+              <Text style={styles.modalTitle}>{interventionModal?.editId ? 'Modifier' : 'Ajouter'} une intervention</Text>
               <Pressable onPress={() => setInterventionModal(null)} style={styles.modalXBtn}>
                 <Text style={styles.modalXText}>✕</Text>
               </Pressable>

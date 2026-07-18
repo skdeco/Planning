@@ -1540,8 +1540,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             )}
                           </View>
                           {(c.dateDebutPrevue || c.dateFinPrevue) && (
-                            <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 2 }}>
-                              📅 {c.dateDebutPrevue || '?'} → {c.dateFinPrevue || '?'}
+                            <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 2 }}>{c.dateDebutPrevue || '?'} → {c.dateFinPrevue || '?'}
                             </Text>
                           )}
                         </Pressable>
@@ -1564,7 +1563,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       </View>
                       {c.commentaire && (
                         <View style={styles.lotCommentaireBox}>
-                          <Text style={styles.lotCommentaireText}>💬 {c.commentaire}</Text>
+                          <Text style={styles.lotCommentaireText}>{c.commentaire}</Text>
                         </View>
                       )}
                       {c.photos && c.photos.length > 0 && (
@@ -1809,8 +1808,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </View>
                   ) : (
                     <View style={[styles.equipeBadge, styles.equipeBadgeVert]}>
-                      <Text style={styles.equipeBadgeVertText} numberOfLines={2}>
-                        🟢 {isAdmin ? persons.map(p => p.label).join(' · ') : 'Équipe sur place'} ({persons.length})
+                      <Text style={styles.equipeBadgeVertText} numberOfLines={2}>{isAdmin ? persons.map(p => p.label).join(' · ') : 'Équipe sur place'} ({persons.length})
                       </Text>
                     </View>
                   )}

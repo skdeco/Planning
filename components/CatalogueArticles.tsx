@@ -154,7 +154,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
                       {a.description && <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{a.description}</Text>}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                         {a.prixUnitaire != null && <Text style={{ fontSize: 11, fontWeight: '700', color: '#27AE60' }}>{a.prixUnitaire} €/{a.unite || 'u'}</Text>}
-                        {a.fournisseur && <Text style={{ fontSize: 11, color: '#687076' }}>🏪 {a.fournisseur}</Text>}
+                        {a.fournisseur && <Text style={{ fontSize: 11, color: '#687076' }}>{a.fournisseur}</Text>}
                       </View>
                     </View>
                     <Pressable onPress={() => handleDelete(a.id, a.nom)} style={{ padding: 4 }}>

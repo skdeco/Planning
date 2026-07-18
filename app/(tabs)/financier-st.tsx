@@ -307,7 +307,7 @@ export default function FinancierSTScreen() {
                 {/* En-tête chantier */}
                 <View style={styles.chantierHeader}>
                   <Text style={styles.chantierNom}>{chantier?.nom || 'Chantier inconnu'}</Text>
-                  {chantier?.adresse ? <Text style={styles.chantierAdresse}>📍 {chantier.adresse}</Text> : null}
+                  {chantier?.adresse ? <Text style={styles.chantierAdresse}>{chantier.adresse}</Text> : null}
                 </View>
 
                 {/* Récapitulatif chantier */}

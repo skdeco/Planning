@@ -541,7 +541,7 @@ export default function MessagerieScreen() {
     return (
       <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>💬 {t.messagerie.title}</Text>
+          <Text style={styles.headerTitle}>{t.messagerie.title}</Text>
           {totalNonLus > 0 && (
             <View style={styles.headerBadge}>
               <Text style={styles.headerBadgeText}>{totalNonLus} {t.messagerie.unread}</Text>
@@ -809,7 +809,7 @@ export default function MessagerieScreen() {
             <Text style={styles.backBtnText}>← {t.common.back}</Text>
           </Pressable>
         )}
-        <Text style={styles.headerTitle} numberOfLines={1}>💬 {convNom}</Text>
+        <Text style={styles.headerTitle} numberOfLines={1}>{convNom}</Text>
         {isAdmin && (
           <Pressable
             style={[styles.archiveToggle, showArchive && styles.archiveToggleActive]}
@@ -936,7 +936,7 @@ export default function MessagerieScreen() {
                       {/* Badge groupe */}
                       {msg.isGroupe && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-                          <Text style={{ fontSize: 10, color: isMine ? 'rgba(255,255,255,0.6)' : '#9CA3AF' }}>📢 {msg.groupeType === 'chantier' ? 'Diffusion chantier' : 'Diffusion équipe'}</Text>
+                          <Text style={{ fontSize: 10, color: isMine ? 'rgba(255,255,255,0.6)' : '#9CA3AF' }}>{msg.groupeType === 'chantier' ? 'Diffusion chantier' : 'Diffusion équipe'}</Text>
                         </View>
                       )}
                       {/* Audio (message vocal) */}
@@ -951,7 +951,7 @@ export default function MessagerieScreen() {
                         const ch = data.chantiers.find(c => c.id === msg.chantierId);
                         return ch ? (
                           <View style={[styles.msgChantierTag, { backgroundColor: (ch.couleur || '#2C2C2C') + '20', borderColor: ch.couleur || '#2C2C2C' }]}>
-                            <Text style={[styles.msgChantierTagText, { color: ch.couleur || '#2C2C2C' }]}>📍 {ch.nom}</Text>
+                            <Text style={[styles.msgChantierTagText, { color: ch.couleur || '#2C2C2C' }]}>{ch.nom}</Text>
                           </View>
                         ) : null;
                       })()}
@@ -976,7 +976,7 @@ export default function MessagerieScreen() {
                         )}
                         {msg.archive && <Text style={styles.msgArchiveBadge}>📁</Text>}
                         {msg.scheduledAt && new Date(msg.scheduledAt) > new Date() && (
-                          <Text style={{ fontSize: 9, color: '#F59E0B', fontWeight: '600' }}>⏰ {msg.scheduledAt.slice(0, 16).replace('T', ' ')}</Text>
+                          <Text style={{ fontSize: 9, color: '#F59E0B', fontWeight: '600' }}>{msg.scheduledAt.slice(0, 16).replace('T', ' ')}</Text>
                         )}
                       </View>
                       {/* Actions rapides */}

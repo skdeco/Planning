@@ -653,7 +653,7 @@ export default function ReportingScreen() {
                       <Text style={styles.empName}>{emp.prenom} {emp.nom}</Text>
                       <Text style={[styles.empMetier, { color: mc.color }]}>{mc.label}</Text>
                       {horairesJour?.actif && (
-                        <Text style={styles.horairesTheo}>⏰ {horairesJour.debut}–{horairesJour.fin}</Text>
+                        <Text style={styles.horairesTheo}>{horairesJour.debut}–{horairesJour.fin}</Text>
                       )}
                     </View>
                     {dureeMin && dureeMin > 0 ? (
@@ -850,7 +850,7 @@ export default function ReportingScreen() {
                     )}
                     {rapportEmploye.joursFeriesTravailles > 0 && (
                       <View style={[styles.resumeMensuelRow, { backgroundColor: '#E8F5E9', borderRadius: 6, paddingHorizontal: 8 }]}>
-                        <Text style={[styles.resumeMensuelLabel, { color: '#27AE60' }]}>🎉 {t.reporting.holidaysWorked}</Text>
+                        <Text style={[styles.resumeMensuelLabel, { color: '#27AE60' }]}>{t.reporting.holidaysWorked}</Text>
                         <Text style={[styles.resumeMensuelValue, { color: '#27AE60' }]}>+{rapportEmploye.joursFeriesTravailles} j (+{(rapportEmploye.joursFeriesTravailles * (rapportEmploye.tarifJournalier ?? 0)).toLocaleString('fr-FR')} €)</Text>
                       </View>
                     )}
@@ -1238,7 +1238,7 @@ export default function ReportingScreen() {
         <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setEditPointageModal(false)} />
           <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>✏️ {t.reporting.editTimesheet}</Text>
+            <Text style={styles.modalTitle}>{t.reporting.editTimesheet}</Text>
             {editEmpId && (
               <Text style={styles.modalSubtitle}>
                 {data.employes.find(e => e.id === editEmpId)?.prenom}{' '}

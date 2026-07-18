@@ -539,7 +539,7 @@ export default function DashboardScreen() {
                             )}
                             {t.fichiers && t.fichiers.length > 0 && (
                               <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
-                                {t.fichiers.map((f, i) => <View key={i} style={{ backgroundColor: '#EBF0FF', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}><Text style={{ fontSize: 10, color: '#2C2C2C' }}>📄 {f.nom}</Text></View>)}
+                                {t.fichiers.map((f, i) => <View key={i} style={{ backgroundColor: '#EBF0FF', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}><Text style={{ fontSize: 10, color: '#2C2C2C' }}>{f.nom}</Text></View>)}
                               </View>
                             )}
                             {/* Photos resolution */}
@@ -1371,8 +1371,7 @@ export default function DashboardScreen() {
                   </View>
                   {n.texte ? <Text style={{ fontSize: 12, color: '#11181C' }} numberOfLines={2}>{n.texte}</Text> : null}
                   {n.tasks && n.tasks.length > 0 && (
-                    <Text style={{ fontSize: 10, color: '#687076', marginTop: 2 }}>
-                      ✓ {n.tasks.filter((t: any) => t.fait).length}/{n.tasks.length} tâches
+                    <Text style={{ fontSize: 10, color: '#687076', marginTop: 2 }}>{n.tasks.filter((t: any) => t.fait).length}/{n.tasks.length} tâches
                     </Text>
                   )}
                 </View>
@@ -1443,7 +1442,7 @@ export default function DashboardScreen() {
                                 const lDate = new Date(l.lu);
                                 return (
                                   <View key={l.userId} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#D4EDDA', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
-                                    <Text style={{ fontSize: 10, color: '#155724', fontWeight: '600' }}>✓ {nom} {lDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} {lDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
+                                    <Text style={{ fontSize: 10, color: '#155724', fontWeight: '600' }}>{nom} {lDate.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })} {lDate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}</Text>
                                   </View>
                                 );
                               })

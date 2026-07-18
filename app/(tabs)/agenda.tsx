@@ -127,7 +127,7 @@ export default function AgendaScreen() {
     <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>📅 Agenda</Text>
+        <Text style={styles.headerTitle}>Agenda</Text>
         <Pressable style={styles.addBtn} onPress={openNew}>
           <Text style={styles.addBtnText}>+ Nouveau</Text>
         </Pressable>
@@ -159,7 +159,7 @@ export default function AgendaScreen() {
                 <Text style={styles.eventTime}>{evt.heureDebut}{evt.heureFin ? ` — ${evt.heureFin}` : ''}</Text>
                 <Text style={styles.eventTitle}>{evt.titre}</Text>
                 {evt.description ? <Text style={styles.eventDesc}>{evt.description}</Text> : null}
-                {evt.lieu ? <Text style={styles.eventLieu}>📍 {evt.lieu}</Text> : null}
+                {evt.lieu ? <Text style={styles.eventLieu}>{evt.lieu}</Text> : null}
               </View>
               <Pressable onPress={() => handleDelete(evt.id)} style={{ padding: 4 }}>
                 <Text style={{ color: '#E74C3C', fontSize: 14 }}>🗑</Text>

@@ -161,8 +161,7 @@ export function AlertesChantiersRetard({
       ]}
     >
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: titleColor }]}>
-          ⚠️ {totalAlertes} alerte{totalAlertes > 1 ? 's' : ''} chantier{totalAlertes > 1 ? 's' : ''}
+        <Text style={[styles.title, { color: titleColor }]}>{totalAlertes} alerte{totalAlertes > 1 ? 's' : ''} chantier{totalAlertes > 1 ? 's' : ''}
           {hasRetard ? ` (${chantiersEnRetard.length} en retard)` : ''}
         </Text>
         <Text style={styles.toggleArrow}>{expanded ? '▲' : '▼'}</Text>

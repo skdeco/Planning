@@ -1057,7 +1057,7 @@ export default function EquipeScreen() {
           {/* Pense-bêtes (visible admin uniquement) */}
           {isAdmin && (item.penseBetes || []).length > 0 && (
             <View style={{ backgroundColor: '#FFF3CD', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginRight: 4 }}>
-              <Text style={{ fontSize: 10, color: '#856404' }} numberOfLines={1}>📌 {(item.penseBetes || []).length} note{(item.penseBetes || []).length > 1 ? 's' : ''}</Text>
+              <Text style={{ fontSize: 10, color: '#856404' }} numberOfLines={1}>{(item.penseBetes || []).length} note{(item.penseBetes || []).length > 1 ? 's' : ''}</Text>
             </View>
           )}
           <View style={{ flex: 1 }} />
@@ -1347,7 +1347,7 @@ export default function EquipeScreen() {
                           )}
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
-                          {a.societe ? <Text style={styles.contactInfo}>🏢 {a.societe}</Text> : null}
+                          {a.societe ? <Text style={styles.contactInfo}>{a.societe}</Text> : null}
                           {a.telephone ? <Text style={styles.contactInfo}>· 📞 {a.telephone}</Text> : null}
                           {a.email ? <Text style={styles.contactInfo}>· ✉ {a.email}</Text> : null}
                         </View>
@@ -1637,7 +1637,7 @@ export default function EquipeScreen() {
                       input.click(); setTimeout(() => input.remove(), 60000);
                     }}
                   >
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>📷 {form.photoProfil ? 'Changer la photo' : 'Ajouter une photo'}</Text>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>{form.photoProfil ? 'Changer la photo' : 'Ajouter une photo'}</Text>
                   </Pressable>
                   {form.photoProfil && (
                     <Pressable
@@ -1871,8 +1871,7 @@ export default function EquipeScreen() {
                             style={docStyles.docName}
                             onPress={() => openDocPreview(doc.fichier)}
                           >
-                            <Text style={docStyles.docNameText} numberOfLines={1}>
-                              📄 {doc.libelle || DOC_RH_LABELS[doc.type]}
+                            <Text style={docStyles.docNameText} numberOfLines={1}>{doc.libelle || DOC_RH_LABELS[doc.type]}
                             </Text>
                             <Text style={docStyles.docDate}>
                               {new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}
@@ -2183,8 +2182,7 @@ export default function EquipeScreen() {
                           <View key={doc.id} style={stStyles.docTypeRow}>
                             <View style={{ flex: 1, marginRight: 10 }}>
                               <Text style={stStyles.docTypeLabel}>{doc.libelle}</Text>
-                              <Text style={[stStyles.docTypeStatus, { color: '#27AE60' }]}>
-                                ✅ {new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}
+                              <Text style={[stStyles.docTypeStatus, { color: '#27AE60' }]}>{new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}
                               </Text>
                             </View>
                             <View style={{ flexDirection: 'row', gap: 6 }}>

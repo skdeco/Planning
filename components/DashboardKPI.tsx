@@ -118,8 +118,7 @@ export function DashboardKPI() {
 
       {stats.retardsPaiement.length > 0 && (
         <View style={styles.retardsBox}>
-          <Text style={styles.retardsTitle}>
-            🔴 {stats.retardsPaiement.length} situation{stats.retardsPaiement.length > 1 ? 's' : ''} en attente &gt; 30j
+          <Text style={styles.retardsTitle}>{stats.retardsPaiement.length} situation{stats.retardsPaiement.length > 1 ? 's' : ''} en attente &gt; 30j
           </Text>
           {stats.retardsPaiement.slice(0, 3).map((r, i) => (
             <View key={i} style={styles.retardRow}>

@@ -542,7 +542,7 @@ export default function RHScreen() {
                     )}
                   </View>
                 </View>
-                {d.commentaireRH ? <Text style={styles.cardComment}>💬 {d.commentaireRH}</Text> : null}
+                {d.commentaireRH ? <Text style={styles.cardComment}>{d.commentaireRH}</Text> : null}
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
                     <>
@@ -592,7 +592,7 @@ export default function RHScreen() {
                     )}
                   </View>
                 </View>
-                {d.commentaireRH ? <Text style={styles.cardComment}>💬 {d.commentaireRH}</Text> : null}
+                {d.commentaireRH ? <Text style={styles.cardComment}>{d.commentaireRH}</Text> : null}
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
                     <>
@@ -640,7 +640,7 @@ export default function RHScreen() {
                     )}
                   </View>
                 </View>
-                {d.commentaireRH ? <Text style={styles.cardComment}>💬 {d.commentaireRH}</Text> : null}
+                {d.commentaireRH ? <Text style={styles.cardComment}>{d.commentaireRH}</Text> : null}
                 <View style={styles.cardActions}>
                   {isRH && d.statut === 'en_attente' && (
                     <>
@@ -715,13 +715,13 @@ export default function RHScreen() {
             {paiesParAnnee.map(([annee, fichesAnnee]) => (
               <View key={annee}>
                 <View style={styles.anneeHeader}>
-                  <Text style={styles.anneeTitle}>📅 {annee}</Text>
+                  <Text style={styles.anneeTitle}>{annee}</Text>
                   <Text style={styles.anneeSub}>{fichesAnnee.length} fiche{fichesAnnee.length > 1 ? 's' : ''}</Text>
                 </View>
                 {fichesAnnee.map(f => (
                   <View key={f.id} style={styles.card}>
                     {isRH && <Text style={styles.cardEmploye}>{getEmployeNom(f.employeId)}</Text>}
-                    <Text style={styles.cardTitle}>📄 {formatMois(f.mois)}</Text>
+                    <Text style={styles.cardTitle}>{formatMois(f.mois)}</Text>
                     <Text style={styles.cardSub}>Déposée le {new Date(f.uploadedAt).toLocaleDateString('fr-FR')}</Text>
                     <View style={styles.cardActions}>
                       {/* Voir le document */}

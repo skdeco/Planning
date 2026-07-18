@@ -244,7 +244,7 @@ export function AvancementLotsPanel({
                 {fmt(((l.montant || 0) * l.pourcentage) / 100)} / {fmt(l.montant || 0)} € HT
               </Text>
             )}
-            {!!l.commentaire && <Text style={styles.lotComment}>💬 {l.commentaire}</Text>}
+            {!!l.commentaire && <Text style={styles.lotComment}>{l.commentaire}</Text>}
             {isAdmin && (
               <View style={styles.lotActions}>
                 <Pressable onPress={() => openEdit(l)} style={styles.actionBtn}>

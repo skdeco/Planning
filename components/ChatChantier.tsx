@@ -337,7 +337,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
                   )}
                   {m.pieceJointe && (
                     <Pressable onPress={() => openDocPreview(m.pieceJointe!)} style={styles.pjBubble}>
-                      <Text style={[styles.pjLink, isMine && { color: '#fff' }]} numberOfLines={1}>📎 {m.pieceJointeNom || 'Document'}</Text>
+                      <Text style={[styles.pjLink, isMine && { color: '#fff' }]} numberOfLines={1}>{m.pieceJointeNom || 'Document'}</Text>
                     </Pressable>
                   )}
                   <Text style={[styles.date, isMine && { color: 'rgba(255,255,255,0.7)' }]}>{formatDate(m.createdAt)}</Text>
@@ -350,7 +350,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
 
       {pjUri && (
         <View style={styles.pjPending}>
-          <Text style={styles.pjPendingText} numberOfLines={1}>📎 {pjNom || 'Document'}</Text>
+          <Text style={styles.pjPendingText} numberOfLines={1}>{pjNom || 'Document'}</Text>
           <Pressable onPress={() => { setPjUri(null); setPjNom(null); }} hitSlop={8}>
             <Text style={styles.pjPendingRemove}>✕</Text>
           </Pressable>

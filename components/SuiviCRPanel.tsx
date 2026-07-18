@@ -761,7 +761,7 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove 
           />
         ) : (
           <Pressable onPress={() => !ro && setEditingTitre(true)} style={{ flex: 1 }}>
-            <Text style={styles.subTitre}>📍 {sub.titre}</Text>
+            <Text style={styles.subTitre}>{sub.titre}</Text>
           </Pressable>
         )}
         {!ro && (
@@ -854,7 +854,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
                 {photoList.map((p, i) => (
                   <View key={`ph-${i}`} style={styles.attachmentItem}>
                     <Pressable onPress={() => openDocPreview(p.uri)}>
-                      <Text style={styles.attachmentPdf}>📷 {p.nom || 'Photo'}</Text>
+                      <Text style={styles.attachmentPdf}>{p.nom || 'Photo'}</Text>
                     </Pressable>
                     {!ro && (
                       <Pressable onPress={() => removePhotoAt(i)} hitSlop={6}>
@@ -866,7 +866,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
                 {pdfList.map((p, i) => (
                   <View key={`pdf-${i}`} style={styles.attachmentItem}>
                     <Pressable onPress={() => openDocPreview(p.uri)}>
-                      <Text style={styles.attachmentPdf}>📄 {p.nom || 'PDF'}</Text>
+                      <Text style={styles.attachmentPdf}>{p.nom || 'PDF'}</Text>
                     </Pressable>
                     {!ro && (
                       <Pressable onPress={() => removePdfAt(i)} hitSlop={6}>
@@ -923,7 +923,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
                 {photoList.map((p, i) => (
                   <View key={`ph-${i}`} style={styles.attachmentItem}>
                     <Pressable onPress={() => openDocPreview(p.uri)}>
-                      <Text style={styles.attachmentPdf}>📷 {p.nom || 'Photo'}</Text>
+                      <Text style={styles.attachmentPdf}>{p.nom || 'Photo'}</Text>
                     </Pressable>
                     {!ro && (
                       <Pressable onPress={() => removePhotoAt(i)} hitSlop={6}>
@@ -935,7 +935,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
                 {pdfList.map((p, i) => (
                   <View key={`pdf-${i}`} style={styles.attachmentItem}>
                     <Pressable onPress={() => openDocPreview(p.uri)}>
-                      <Text style={styles.attachmentPdf}>📄 {p.nom || 'PDF'}</Text>
+                      <Text style={styles.attachmentPdf}>{p.nom || 'PDF'}</Text>
                     </Pressable>
                     {!ro && (
                       <Pressable onPress={() => removePdfAt(i)} hitSlop={6}>
