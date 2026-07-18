@@ -30,7 +30,7 @@ import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS } from '@/constants/design';
 import { MapPin, CalendarClock, Building2 } from 'lucide-react-native';
-import { FadeInView } from '@/components/ui/animated';
+import { FadeInView, Skeleton } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
 import { ModalNotes } from '@/components/planning/ModalNotes';
 import { ChatChantier } from '@/components/ChatChantier';
@@ -1611,13 +1611,25 @@ export default function ChantiersScreen() {
         refreshing={refreshing}
         onRefresh={onRefresh}
         ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-              <Building2 size={34} color="#B8AA97" strokeWidth={1.6} />
+          !isHydrated ? (
+            <View>
+              {[0, 1, 2, 3].map(i => (
+                <View key={i} style={[styles.card, { borderLeftColor: '#EDE5DA', marginBottom: 10 }]}>
+                  <Skeleton width="55%" height={16} borderRadius={6} />
+                  <Skeleton width="80%" height={11} borderRadius={5} style={{ marginTop: 14 }} />
+                  <Skeleton width="45%" height={11} borderRadius={5} style={{ marginTop: 7 }} />
+                </View>
+              ))}
             </View>
-            <Text style={styles.emptyText}>{t.chantiers.noChantiers}</Text>
-            {isAdmin && <Text style={styles.emptyHint}>{t.chantiers.noChantierHint}</Text>}
-          </View>
+          ) : (
+            <View style={styles.emptyState}>
+              <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Building2 size={34} color="#B8AA97" strokeWidth={1.6} />
+              </View>
+              <Text style={styles.emptyText}>{t.chantiers.noChantiers}</Text>
+              {isAdmin && <Text style={styles.emptyHint}>{t.chantiers.noChantierHint}</Text>}
+            </View>
+          )
         }
       />
       </>
