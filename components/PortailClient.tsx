@@ -105,6 +105,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   // ── UI state ──
   const [ongletActif, setOngletActif] = useState<OngletPortail>('projet');
+  const [showAvancementDetail, setShowAvancementDetail] = useState(false); // détail des lots replié par défaut
   const [savDetailId, setSavDetailId] = useState<string | null>(null);
   const [showNouveauSav, setShowNouveauSav] = useState(false);
   // Revert au premier onglet visible si l'actif disparaît (changement permissions).
@@ -1537,14 +1538,18 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ── Avancement (extrait en bannière séparée) ── */}
             <View style={styles.card}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
-                <Text style={styles.sectionTitle}>Avancement</Text>
+              <Pressable onPress={() => setShowAvancementDetail(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={styles.sectionTitle}>Avancement</Text>
+                  <Text style={{ fontSize: 13, color: '#8C8077' }}>{showAvancementDetail ? '▾' : '▸'}</Text>
+                </View>
                 {avancementGlobalCorps != null && (
                   <View style={{ backgroundColor: '#C9A96E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
                     <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
                   </View>
                 )}
-              </View>
+              </Pressable>
+              {showAvancementDetail && (<>
               <Text style={styles.pfsSubtitle}>Lots du chantier et situation financière</Text>
 
               {/* Auto-extraction en cours */}
@@ -1767,6 +1772,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   )}
                 </>
               )}
+              </>)}
 
             {/* V10 — Situations figées par marché/supplément (Phase B) — HT réservé aux non-clients */}
             {!isClient && situationsFigees.length > 0 && (
