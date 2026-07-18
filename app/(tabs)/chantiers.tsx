@@ -28,7 +28,8 @@ import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
-import { DS } from '@/constants/design';
+import { DS, font } from '@/constants/design';
+import { MapPin, CalendarClock } from 'lucide-react-native';
 import { ModalNotes } from '@/components/planning/ModalNotes';
 import { ChatChantier } from '@/components/ChatChantier';
 import type { NoteModalState } from '@/hooks/useNotesModalLogic';
@@ -1298,8 +1299,14 @@ export default function ChantiersScreen() {
         </View>
 
         <View style={styles.cardMeta}>
-          <Text style={styles.cardMetaText}>📍 {[item.rue, item.ville].filter(Boolean).join(', ') || item.adresse || '—'}</Text>
-          <Text style={styles.cardMetaText}>🕐 {item.dateDebut} → {item.dateFin}</Text>
+          <View style={styles.cardMetaRow}>
+            <MapPin size={13} color={DS.textAlt} strokeWidth={2} />
+            <Text style={styles.cardMetaText}>{[item.rue, item.ville].filter(Boolean).join(', ') || item.adresse || '—'}</Text>
+          </View>
+          <View style={styles.cardMetaRow}>
+            <CalendarClock size={13} color={DS.textAlt} strokeWidth={2} />
+            <Text style={styles.cardMetaText}>{item.dateDebut} → {item.dateFin}</Text>
+          </View>
         </View>
 
         {/* Badges contacts liés — masqués à l'apporteur (pas d'exposition des autres intervenants) */}
@@ -3870,13 +3877,13 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
+    borderRadius: 18,
+    padding: 16,
     borderLeftWidth: 4,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    shadowColor: '#2A2622',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.07,
+    shadowRadius: 14,
     elevation: 2,
   },
   cardHeader: {
@@ -3893,9 +3900,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   cardName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#11181C',
+    fontFamily: font.serif,
+    fontSize: 18,
+    fontWeight: '600',
+    color: DS.sombre,
+    letterSpacing: -0.2,
   },
   statutBadge: {
     paddingHorizontal: 8,
@@ -3929,12 +3938,17 @@ const styles = StyleSheet.create({
     color: '#E74C3C',
   },
   cardMeta: {
-    gap: 3,
+    gap: 5,
     marginBottom: 8,
+  },
+  cardMetaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   cardMetaText: {
     fontSize: 12,
-    color: '#687076',
+    color: DS.textAlt,
   },
   empTags: {
     flexDirection: 'row',
