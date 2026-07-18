@@ -6,6 +6,7 @@ import { View, Text, StyleSheet, Pressable, ScrollView, Platform } from 'react-n
 import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
 import { GanttGlobal } from '@/components/GanttGlobal';
+import { PenLine, HardHat, Wallet, Hourglass, CalendarDays } from 'lucide-react-native';
 
 function fmt(n: number) {
   return n.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
@@ -86,11 +87,11 @@ export function DashboardKPI() {
     };
   }, [data.chantiers, data.marchesChantier, data.supplementsMarche]);
 
-  const KpiCard = ({ label, value, color, icon, onPress }: { label: string; value: string; color: string; icon: string; onPress?: () => void }) => {
+  const KpiCard = ({ label, value, color, icon: Icon, onPress }: { label: string; value: string; color: string; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>; onPress?: () => void }) => {
     const Comp: any = onPress ? Pressable : View;
     return (
       <Comp onPress={onPress} style={[styles.kpiCard, { borderLeftColor: color }]}>
-        <Text style={styles.kpiIcon}>{icon}</Text>
+        <View style={{ marginBottom: 6 }}><Icon size={18} color={color} strokeWidth={2} /></View>
         <Text style={styles.kpiLabel}>{label}</Text>
         <Text style={[styles.kpiValue, { color }]}>{value}</Text>
       </Comp>
@@ -100,36 +101,17 @@ export function DashboardKPI() {
   return (
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
-        <Text style={styles.title}>📊 Tableau de bord</Text>
-        <Pressable onPress={() => setShowGantt(true)} style={{ backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
-          <Text style={{ color: '#C9A96E', fontSize: 11, fontWeight: '800' }}>📅 Planning Gantt</Text>
+        <Text style={styles.title}>Tableau de bord</Text>
+        <Pressable onPress={() => setShowGantt(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+          <CalendarDays size={13} color="#C9A96E" strokeWidth={2.2} />
+          <Text style={{ color: '#C9A96E', fontSize: 11, fontWeight: '800' }}>Planning Gantt</Text>
         </Pressable>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 2 }}>
-        <KpiCard
-          label="CA signé HT"
-          value={`${fmt(stats.caTotalHT)} €`}
-          color="#2C2C2C"
-          icon="✍️"
-        />
-        <KpiCard
-          label="En cours TTC"
-          value={`${fmt(stats.caEnCoursTTC)} €`}
-          color="#8C6D2F"
-          icon="🚧"
-        />
-        <KpiCard
-          label="Encaissé"
-          value={`${fmt(stats.caEncaisse)} €`}
-          color="#2E7D32"
-          icon="💰"
-        />
-        <KpiCard
-          label="À encaisser"
-          value={`${fmt(stats.caARecevoir)} €`}
-          color="#8C6D2F"
-          icon="⏳"
-        />
+        <KpiCard label="CA signé HT" value={`${fmt(stats.caTotalHT)} €`} color="#2C2C2C" icon={PenLine} />
+        <KpiCard label="En cours TTC" value={`${fmt(stats.caEnCoursTTC)} €`} color="#8C6D2F" icon={HardHat} />
+        <KpiCard label="Encaissé" value={`${fmt(stats.caEncaisse)} €`} color="#2E7D32" icon={Wallet} />
+        <KpiCard label="À encaisser" value={`${fmt(stats.caARecevoir)} €`} color="#8C6D2F" icon={Hourglass} />
       </ScrollView>
 
       <GanttGlobal visible={showGantt} onClose={() => setShowGantt(false)} />
