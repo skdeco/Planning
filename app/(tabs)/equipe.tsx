@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { HardHat, Award, FolderOpen, Pencil, Trash2, Coins, FileText } from 'lucide-react-native';
+import { FadeInView } from '@/components/ui/animated';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal, Image,
   TextInput, ScrollView, Alert, Platform, Switch, RefreshControl,
@@ -996,7 +997,7 @@ export default function EquipeScreen() {
 
   const fmtEur = (n: number) => n.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 
-  const renderEmploye = ({ item }: { item: Employe }) => {
+  const renderEmploye = ({ item, index }: { item: Employe; index: number }) => {
     const mc = metierColors[item.metier] || metierColors['autre'];
     const avatarColor = item.couleur || getAvatarColor(item.prenom);
     const count = getChantierCount(item.id);
@@ -1006,6 +1007,7 @@ export default function EquipeScreen() {
       : item.salaireNet != null ? `${item.salaireNet.toLocaleString('fr-FR')} €/mois` : '';
 
     return (
+      <FadeInView delay={Math.min(index * 40, 300)}>
       <View style={styles.card}>
         {/* Ligne principale : avatar + infos + tarif */}
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
@@ -1081,15 +1083,17 @@ export default function EquipeScreen() {
           </Pressable>
         </View>
       </View>
+      </FadeInView>
     );
   };
 
-  const renderST = ({ item }: { item: SousTraitant }) => {
+  const renderST = ({ item, index }: { item: SousTraitant; index: number }) => {
     const docsFournis = DOCUMENTS_LEGAUX_TYPES.filter(td => findDocForType(item.documents || [], td.id, td.label)).length;
     const docsTotal = DOCUMENTS_LEGAUX_TYPES.length;
     const docsComplet = docsFournis === docsTotal;
     const stMarchesCount = (data.devis || []).filter(d => d.soustraitantId === item.id).length;
     return (
+      <FadeInView delay={Math.min(index * 40, 300)}>
       <View style={styles.card}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <View style={[styles.avatar, { backgroundColor: item.couleur || '#00BCD4' }]}>
@@ -1140,6 +1144,7 @@ export default function EquipeScreen() {
           </View>
         )}
       </View>
+      </FadeInView>
     );
   };
 
