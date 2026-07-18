@@ -17,6 +17,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { ScreenContainer } from '@/components/screen-container';
 import type { ListeMateriau, MateriauItem } from '@/app/types';
 import { CatalogueArticles } from '@/components/CatalogueArticles';
+import { SelectField } from '@/components/ui/SelectField';
 import { router } from 'expo-router';
 import { apiCall } from '@/lib/_core/api';
 
@@ -194,6 +195,10 @@ export default function MaterielScreen() {
 
   // Groupement par fournisseur dans la vue acheteur
   const [groupByFournisseur, setGroupByFournisseur] = useState(false);
+
+  // Filtres vue acheteur (comme l'écran chantiers) : statut d'achat + fournisseur.
+  const [filterStatut, setFilterStatut] = useState<'a_acheter' | 'achete' | 'tous'>('a_acheter');
+  const [filterFournisseur, setFilterFournisseur] = useState(''); // '' = tous
 
   // Modal gestion fournisseurs
   const [showFournisseurModal, setShowFournisseurModal] = useState(false);
@@ -744,9 +749,18 @@ export default function MaterielScreen() {
       )}
       {listesParChantier.map(({ chantier, listes }) => {
         // Fusionner tous les items de toutes les listes du chantier
-        const allItems = listes.flatMap(l => l.items.map(i => ({ ...i, listeId: l.id, employeId: l.employeId })));
-        const itemsActifs = allItems.filter(i => !i.achete);
-        const itemsAchetes = allItems.filter(i => i.achete);
+        const allItemsRaw = listes.flatMap(l => l.items.map(i => ({ ...i, listeId: l.id, employeId: l.employeId })));
+        // Filtre fournisseur ('' = tous)
+        const allItems = filterFournisseur
+          ? allItemsRaw.filter(i => (i.fournisseur || '') === filterFournisseur)
+          : allItemsRaw;
+        // Filtre statut d'achat
+        const showActifs = filterStatut === 'a_acheter' || filterStatut === 'tous';
+        const showAchetes = filterStatut === 'achete' || filterStatut === 'tous';
+        const itemsActifs = showActifs ? allItems.filter(i => !i.achete) : [];
+        const itemsAchetes = showAchetes ? allItems.filter(i => i.achete) : [];
+        // Masquer un chantier qui n'a plus rien à afficher après filtre
+        if (itemsActifs.length === 0 && itemsAchetes.length === 0) return null;
         const archiveKey = `chantier_${chantier.id}`;
 
         return (
@@ -855,7 +869,7 @@ export default function MaterielScreen() {
                       <Text style={styles.archiveToggleText}>{t.materiel.archived} ({itemsAchetes.length})</Text>
                     </View>
                   </Pressable>
-                  {openArchives[archiveKey] && (
+                  {(openArchives[archiveKey] || filterStatut === 'achete') && (
                     <View style={styles.archiveContent}>
                       {itemsAchetes.map(item => (
                         <View key={item.id} style={[styles.itemRow, styles.itemAchete]}>
@@ -954,6 +968,39 @@ export default function MaterielScreen() {
           </Pressable>
         )}
       </View>
+
+      {/* Filtres vue acheteur (statut d'achat + fournisseur) */}
+      {viewMode === 'acheteur' && (
+        <View style={{ flexDirection: 'row', gap: 8, paddingHorizontal: 16, marginBottom: 8 }}>
+          <View style={{ flex: 1 }}>
+            <SelectField
+              compact
+              value={filterStatut}
+              options={[
+                { value: 'a_acheter', label: 'À acheter' },
+                { value: 'achete', label: 'Achetés' },
+                { value: 'tous', label: 'Tous' },
+              ]}
+              onSelect={v => setFilterStatut(v as 'a_acheter' | 'achete' | 'tous')}
+              title="Statut d'achat"
+            />
+          </View>
+          <View style={{ flex: 1 }}>
+            <SelectField
+              compact
+              searchable
+              value={filterFournisseur}
+              placeholder="Tous fournisseurs"
+              options={[
+                { value: '', label: 'Tous fournisseurs' },
+                ...fournisseursList.map(f => ({ value: f, label: f })),
+              ]}
+              onSelect={setFilterFournisseur}
+              title="Fournisseur"
+            />
+          </View>
+        </View>
+      )}
 
       {viewMode === 'mes_listes' ? renderMesListes() : renderVueAcheteur()}
 
