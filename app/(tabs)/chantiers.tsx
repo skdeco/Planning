@@ -29,7 +29,7 @@ import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMess
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS } from '@/constants/design';
-import { MapPin, CalendarClock, Building2 } from 'lucide-react-native';
+import { MapPin, CalendarClock, Building2, StickyNote, Ruler, Camera, ShoppingCart, X, Wrench, Receipt } from 'lucide-react-native';
 import { FadeInView, Skeleton } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
 import { ModalNotes } from '@/components/planning/ModalNotes';
@@ -1366,26 +1366,26 @@ export default function ChantiersScreen() {
         {/* Indicateurs rapides */}
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
           {notesActives.length > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Text style={{ fontSize: 12 }}>📝</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <StickyNote size={12} color="#8C8077" strokeWidth={2} />
               <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{notesActives.length}</Text>
             </View>
           )}
           {nbPlans > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Text style={{ fontSize: 12 }}>📐</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Ruler size={12} color="#8C8077" strokeWidth={2} />
               <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbPlans}</Text>
             </View>
           )}
           {nbPhotos > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Text style={{ fontSize: 12 }}>📸</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Camera size={12} color="#8C8077" strokeWidth={2} />
               <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbPhotos}</Text>
             </View>
           )}
           {nbAchats > 0 && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
-              <Text style={{ fontSize: 12 }}>🛒</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <ShoppingCart size={12} color="#8C8077" strokeWidth={2} />
               <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbAchats}</Text>
             </View>
           )}
@@ -1455,7 +1455,7 @@ export default function ChantiersScreen() {
 
             if (allTickets.length === 0) return (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontSize: 36, marginBottom: 8 }}>🔧</Text>
+                <View style={{ marginBottom: 12 }}><Wrench size={38} color="#B8AA97" strokeWidth={1.6} /></View>
                 <Text style={{ fontSize: 15, color: '#687076' }}>Aucun ticket SAV</Text>
               </View>
             );
@@ -1768,7 +1768,7 @@ export default function ChantiersScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editId ? t.chantiers.edit : t.chantiers.add}</Text>
               <Pressable onPress={() => setShowForm(false)}>
-                <Text style={styles.modalClose}>✕</Text>
+                <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -2128,7 +2128,7 @@ export default function ChantiersScreen() {
                 })()}
               </View>
               <Pressable onPress={() => setShowFiche(false)}>
-                <Text style={styles.modalClose}>✕</Text>
+                <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -2490,7 +2490,7 @@ export default function ChantiersScreen() {
                     )}
                     {achats.length === 0 && (
                       <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-                        <Text style={{ fontSize: 32, marginBottom: 8 }}>🧾</Text>
+                        <View style={{ marginBottom: 12 }}><Receipt size={36} color="#B8AA97" strokeWidth={1.6} /></View>
                         <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
@@ -2537,7 +2537,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === notesChantierId)?.nom ?? ''}</Text>
               </View>
               <Pressable onPress={() => setShowNotes(false)}>
-                <Text style={styles.modalClose}>✕</Text>
+                <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -2942,7 +2942,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === achatsChantierId)?.nom ?? ''}</Text>
               </View>
               <Pressable onPress={() => setAchatsChantierId(null)}>
-                <Text style={styles.modalClose}>✕</Text>
+                <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
@@ -3166,7 +3166,7 @@ export default function ChantiersScreen() {
                     )}
                     {achats.length === 0 && (
                       <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-                        <Text style={{ fontSize: 32, marginBottom: 8 }}>🧾</Text>
+                        <View style={{ marginBottom: 12 }}><Receipt size={36} color="#B8AA97" strokeWidth={1.6} /></View>
                         <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
@@ -3200,7 +3200,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === plansChantierId)?.nom ?? ''}</Text>
               </View>
               <Pressable onPress={() => setShowPlans(false)}>
-                <Text style={styles.modalClose}>✕</Text>
+                <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
 
