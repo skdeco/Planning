@@ -59,8 +59,9 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
 
   const chantier = data.chantiers.find(c => c.id === chantierId);
   const allCRs = useMemo(
-    () => (data.suivisCR || []).filter(c => c.chantierId === chantierId),
-    [data.suivisCR, chantierId]
+    // En lecture seule (externes), on ne montre que les CR finalisés : pas de brouillons internes.
+    () => (data.suivisCR || []).filter(c => c.chantierId === chantierId && (!readOnly || c.statut === 'finalise')),
+    [data.suivisCR, chantierId, readOnly]
   );
   const allRDVs = useMemo(
     () => (data.rdvsChantier || []).filter(r => r.chantierId === chantierId),
@@ -463,7 +464,7 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
           <View style={styles.chipsRow}>
             {draft.personnesPresentes.map(p => (
               <View key={p.id} style={styles.chipSelected}>
-                <Text style={styles.chipSelectedText}>{p.nom}</Text>
+                <Text style={styles.chipSelectedText}>{fullRO && (p.type === 'employe' || p.type === 'admin') ? 'Équipe SK DECO' : p.nom}</Text>
                 {!ro && (
                   <Pressable onPress={() => togglePersonne(p)} style={{ marginLeft: 4 }}>
                     <X size={11} color={DS.cremeFond} strokeWidth={2.5} />

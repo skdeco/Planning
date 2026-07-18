@@ -1301,8 +1301,8 @@ export default function ChantiersScreen() {
           <Text style={styles.cardMetaText}>🕐 {item.dateDebut} → {item.dateFin}</Text>
         </View>
 
-        {/* Badges contacts liés */}
-        {hasAnyContact && (
+        {/* Badges contacts liés — masqués à l'apporteur (pas d'exposition des autres intervenants) */}
+        {!isApporteurUser && hasAnyContact && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
             {archContact && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.architecte.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
@@ -1339,7 +1339,7 @@ export default function ChantiersScreen() {
           </View>
         )}
 
-        {assignedEmps.length > 0 && (
+        {!isApporteurUser && assignedEmps.length > 0 && (
           <View style={styles.empTags}>
             {assignedEmps.map(emp => {
               const mc = METIER_COLORS[emp.metier];
