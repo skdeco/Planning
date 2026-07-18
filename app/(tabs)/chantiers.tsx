@@ -28,7 +28,7 @@ import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
-import { DS, font } from '@/constants/design';
+import { DS } from '@/constants/design';
 import { MapPin, CalendarClock } from 'lucide-react-native';
 import { ModalNotes } from '@/components/planning/ModalNotes';
 import { ChatChantier } from '@/components/ChatChantier';
@@ -3900,11 +3900,11 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   cardName: {
-    fontFamily: font.serif,
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 15,
+    fontWeight: '700',
     color: DS.sombre,
-    letterSpacing: -0.2,
+    letterSpacing: 0.6,
+    textTransform: 'uppercase',
   },
   statutBadge: {
     paddingHorizontal: 8,

@@ -135,11 +135,6 @@ export const font = {
   semibold: '600' as const,
   bold:     '700' as const,
   heavy:    '800' as const,
-
-  // Famille serif pour les titres (touche éditoriale/premium, fidèle au logo SK Deco).
-  // Georgia est présent nativement iOS/Android/Web → aucune dépendance à installer.
-  // (Migration possible vers Fraunces via @expo-google-fonts plus tard.)
-  serif: Platform.select({ ios: 'Georgia', android: 'serif', default: 'Georgia' }) as string,
 };
 
 // ── Hauteurs de ligne ───────────────────────────────────────────────────────
