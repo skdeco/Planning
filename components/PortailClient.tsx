@@ -1398,28 +1398,40 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ── Budget ── */}
             <View style={styles.card}>
               <Text style={styles.sectionTitle}>Budget</Text>
-              <Text style={styles.pfsSubtitle}>Total chantier, règlements perçus et restant à payer</Text>
+              <Text style={styles.pfsSubtitle}>Prix des travaux, avancement, et reste à régler</Text>
 
-              {/* Vue simplifiée pour le client : prix TTC, déjà réglé, reste + progression. */}
-              {isClient && totalChantierTTC > 0 && (
+              {/* Résumé clair (tout le monde) : prix total → avancement → facturé à ce jour → réglé → reste à régler. */}
+              {totalChantierTTC > 0 && (
                 <View style={styles.pfsResumeBox}>
                   <View style={styles.pfsResumeRow}>
                     <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>Prix total de vos travaux</Text>
                     <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
                   </View>
-                  <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
+                  {avancementGlobalCorps != null && (
+                    <>
+                      <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
+                        <Text style={styles.pfsResumeLabel}>Avancement des travaux</Text>
+                        <Text style={styles.pfsResumeValue}>{avancementGlobalCorps}%</Text>
+                      </View>
+                      <View style={{ height: 8, backgroundColor: '#E8DDD0', borderRadius: 4, overflow: 'hidden', marginTop: 6 }}>
+                        <View style={{ height: '100%', width: `${Math.min(100, Math.max(0, avancementGlobalCorps))}%`, backgroundColor: '#C9A96E' }} />
+                      </View>
+                    </>
+                  )}
+                  <View style={[styles.pfsResumeRow, { marginTop: 10, borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 8 }]}>
+                    <Text style={styles.pfsResumeLabel}>Facturé à ce jour</Text>
+                    <Text style={styles.pfsResumeValue}>{fmt(situationsAReglerClient.factureTTC)} €</Text>
+                  </View>
+                  <View style={styles.pfsResumeRow}>
                     <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontWeight: '700' }]}>Déjà réglé</Text>
-                    <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontWeight: '700' }]}>{fmt(dejaPayeTotal)} €</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontWeight: '700' }]}>{fmt(situationsAReglerClient.paye)} €</Text>
                   </View>
                   <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
-                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Reste à payer</Text>
-                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
+                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Reste à régler</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(situationsAReglerClient.resteADate)} €</Text>
                   </View>
-                  <View style={{ height: 8, backgroundColor: '#E8DDD0', borderRadius: 4, overflow: 'hidden', marginTop: 10 }}>
-                    <View style={{ height: '100%', width: `${totalChantierTTC > 0 ? Math.min(100, Math.round((dejaPayeTotal / totalChantierTTC) * 100)) : 0}%`, backgroundColor: '#2E7D32' }} />
-                  </View>
-                  <Text style={{ fontSize: 11, color: '#687076', textAlign: 'center', marginTop: 4 }}>
-                    {totalChantierTTC > 0 ? Math.round((dejaPayeTotal / totalChantierTTC) * 100) : 0}% réglé
+                  <Text style={{ fontSize: 11, color: '#B0A99F', marginTop: 8 }}>
+                    À terme, reste à régler sur l'ensemble du contrat : {fmt(resteAPayerChantier)} €
                   </Text>
                 </View>
               )}
@@ -1527,21 +1539,6 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </View>
                   </View>
                 ))}
-                <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 2, borderTopColor: '#E8DDD0' }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
-                    <Text style={{ fontSize: 12, color: '#687076' }}>Facturé à ce jour</Text>
-                    <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '700' }}>{fmt(situationsAReglerClient.factureTTC)} €</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
-                    <Text style={{ fontSize: 12, color: '#2E7D32' }}>Déjà réglé</Text>
-                    <Text style={{ fontSize: 12, color: '#2E7D32', fontWeight: '700' }}>{fmt(situationsAReglerClient.paye)} €</Text>
-                  </View>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3 }}>
-                    <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>Reste à régler à ce jour</Text>
-                    <Text style={{ fontSize: 15, color: '#8C6D2F', fontWeight: '800' }}>{fmt(situationsAReglerClient.resteADate)} €</Text>
-                  </View>
-                  <Text style={{ fontSize: 11, color: '#B0A99F', marginTop: 6 }}>Montant total du contrat restant (fin de chantier) : {fmt(resteAPayerChantier)} €</Text>
-                </View>
               </View>
             )}
 
