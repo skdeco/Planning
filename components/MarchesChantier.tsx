@@ -3,6 +3,7 @@ import {
   View, Text, ScrollView, Pressable, Modal, TextInput, Platform, Alert, Image, Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { FileText, PenLine, Upload, Receipt, Paperclip } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const PENDING_MARCHE_KEY = 'sk_pending_marche_form';
@@ -163,7 +164,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     const montantNouveau = (dernier.lots || []).reduce((s, l) => s + l.montantFactureNouveau, 0);
     sendPushNotification(
       [client.pushToken],
-      `📋 Nouvelle situation figée — ${chantier?.nom || ''}`.trim(),
+      `Nouvelle situation figée — ${chantier?.nom || ''}`.trim(),
       `${dernier.intitule || 'Situation'} sur ${libelleParent} : ${fmt(montantNouveau)} € HT à facturer.`,
       { type: 'snapshot', chantierId, snapshotId: dernier.id }
     );
@@ -223,7 +224,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     // 3 plus récents pour respecter la limite iOS Alert (~5 boutons visibles)
     const recentMarches = marches.slice(-3);
     const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = recentMarches.map(m => ({
-      text: `✏️ Modifier "${m.libelle}"`,
+      text: `Modifier "${m.libelle}"`,
       onPress: () => openEditMarche(m),
     }));
     buttons.push({ text: '+ Créer un nouveau marché', onPress: proceedNewMarche });
@@ -335,7 +336,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     }
     const recentSupps = supplements.slice(-3);
     const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = recentSupps.map(s => ({
-      text: `✏️ Modifier "${s.libelle}"`,
+      text: `Modifier "${s.libelle}"`,
       onPress: () => openEditSupp(s),
     }));
     buttons.push({ text: '+ Créer un nouveau supplément', onPress: proceedNewSupp });
@@ -589,7 +590,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             : '';
                           return (
                             <View style={{ backgroundColor: '#FAF3E6', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginTop: 6, borderLeftWidth: 3, borderLeftColor: '#C9A96E', alignSelf: 'flex-start' }}>
-                              <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700' }}>{app ? `${app.prenom} ${app.nom}` : 'Apporteur'} — {fmt(montantC)} €{suffixe} — {m.commission!.statut === 'paye' ? '✓ Payé' : '⏳ À payer'}
+                              <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700' }}>{app ? `${app.prenom} ${app.nom}` : 'Apporteur'} — {fmt(montantC)} €{suffixe} — {m.commission!.statut === 'paye' ? 'Payé' : 'À payer'}
                               </Text>
                             </View>
                           );
@@ -606,7 +607,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         {m.devisInitialUri ? (
                           <View style={{ flex: 1, backgroundColor: '#EBF0FF', borderRadius: 6, position: 'relative' }}>
                             <Pressable style={{ padding: 8, alignItems: 'center' }} onPress={() => openDoc(m.devisInitialUri)}>
-                              <Text style={{ fontSize: 16 }}>📄</Text>
+                              <FileText size={17} color="#2C2C2C" strokeWidth={2} />
                               <Text style={{ fontSize: 9, color: '#2C2C2C', fontWeight: '600' }} numberOfLines={1}>Devis initial</Text>
                             </Pressable>
                             <Pressable
@@ -632,7 +633,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         {m.devisSigneUri ? (
                           <View style={{ flex: 1, backgroundColor: '#D4EDDA', borderRadius: 6, position: 'relative' }}>
                             <Pressable style={{ padding: 8, alignItems: 'center' }} onPress={() => openDoc(m.devisSigneUri)}>
-                              <Text style={{ fontSize: 16 }}>✍️</Text>
+                              <PenLine size={17} color="#155724" strokeWidth={2} />
                               <Text style={{ fontSize: 9, color: '#155724', fontWeight: '600' }} numberOfLines={1}>Devis signé</Text>
                             </Pressable>
                             <Pressable
@@ -652,7 +653,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                               style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 6, padding: 8, alignItems: 'center' }}
                               onPress={() => setSignerTarget({ type: 'marche', id: m.id, devisUri: m.devisInitialUri!, devisNom: m.devisInitialNom })}
                             >
-                              <Text style={{ fontSize: 16 }}>✍️</Text>
+                              <PenLine size={17} color="#FBF7F2" strokeWidth={2} />
                               <Text style={{ fontSize: 9, color: '#FBF7F2', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
                             </Pressable>
                             {/* Toujours laisser la possibilité d'uploader un devis signé externe (client chez lui) */}
@@ -665,7 +666,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 if (uploaded.uri) updateMarcheChantier({ ...m, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
                               }}
                             >
-                              <Text style={{ fontSize: 16 }}>📥</Text>
+                              <Upload size={17} color="#DC2626" strokeWidth={2} />
                               <Text style={{ fontSize: 9, color: '#DC2626', fontWeight: '700' }} numberOfLines={1}>Uploader signé</Text>
                             </Pressable>
                           </>
@@ -679,7 +680,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           isAdmin={isAdmin}
                           onChangeLots={(lots) => updateMarcheChantier({ ...m, avancementCorps: lots })}
                           onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'marche', id: m.id, devisUri: m.devisInitialUri, devisNom: m.devisInitialNom }) : undefined}
-                          title="📊 Avancement de ce marché"
+                          title="Avancement de ce marché"
                           compact
                           snapshots={m.snapshots}
                           onChangeSnapshots={(s) => {
@@ -740,7 +741,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 }}
                               >
                                 <Text style={{ fontSize: 10, fontWeight: '700', color: p.commissionPaye ? '#155724' : '#856404' }}>
-                                  {p.commissionPaye ? '✅ Commission payée' : '💼 Commission à payer'} — {fmt(p.commissionMontant || 0)} €
+                                  {p.commissionPaye ? 'Commission payée' : 'Commission à payer'} — {fmt(p.commissionMontant || 0)} €
                                 </Text>
                                 <Text style={{ fontSize: 9, color: p.commissionPaye ? '#155724' : '#856404', fontStyle: 'italic' }}>
                                   (tapez pour basculer)
@@ -781,7 +782,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               const resteS = s.montantTTC - totalRecuS;
               const isOpen = openSuppId === s.id;
               const statutColor = s.statut === 'accepte' ? '#27AE60' : s.statut === 'refuse' ? '#E74C3C' : '#F59E0B';
-              const statutLabel = s.statut === 'accepte' ? '✓ Accepté' : s.statut === 'refuse' ? '✗ Refusé' : '⏳ En attente';
+              const statutLabel = s.statut === 'accepte' ? 'Accepté' : s.statut === 'refuse' ? 'Refusé' : 'En attente';
               return (
                 <View key={s.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E2E6EA', borderLeftWidth: 4, borderLeftColor: statutColor }}>
                   <Pressable onPress={() => setOpenSuppId(isOpen ? null : s.id)}>
@@ -818,13 +819,13 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                         {s.devisUri ? (
                           <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#EBF0FF', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.devisUri)}>
-                            <Text style={{ fontSize: 16 }}>📄</Text>
+                            <FileText size={17} color="#2C2C2C" strokeWidth={2} />
                             <Text style={{ fontSize: 9, color: '#2C2C2C', fontWeight: '600' }} numberOfLines={1}>Devis</Text>
                           </Pressable>
                         ) : null}
                         {s.devisSigneUri ? (
                           <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#D4EDDA', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.devisSigneUri)}>
-                            <Text style={{ fontSize: 16 }}>✍️</Text>
+                            <PenLine size={17} color="#155724" strokeWidth={2} />
                             <Text style={{ fontSize: 9, color: '#155724', fontWeight: '600' }} numberOfLines={1}>Devis signé</Text>
                           </Pressable>
                         ) : s.devisUri ? (
@@ -833,7 +834,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                               style={{ flex: 1, minWidth: 70, backgroundColor: '#5C1F2E', borderRadius: 6, padding: 8, alignItems: 'center' }}
                               onPress={() => setSignerTarget({ type: 'supplement', id: s.id, devisUri: s.devisUri!, devisNom: s.devisNom })}
                             >
-                              <Text style={{ fontSize: 16 }}>✍️</Text>
+                              <PenLine size={17} color="#FBF7F2" strokeWidth={2} />
                               <Text style={{ fontSize: 9, color: '#FBF7F2', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
                             </Pressable>
                             <Pressable
@@ -845,14 +846,14 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 if (uploaded.uri) updateSupplementMarche({ ...s, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom, updatedAt: new Date().toISOString() });
                               }}
                             >
-                              <Text style={{ fontSize: 16 }}>📥</Text>
+                              <Upload size={17} color="#DC2626" strokeWidth={2} />
                               <Text style={{ fontSize: 9, color: '#DC2626', fontWeight: '700' }} numberOfLines={1}>Uploader signé</Text>
                             </Pressable>
                           </>
                         ) : null}
                         {s.factureUri ? (
                           <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#FFF3CD', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.factureUri)}>
-                            <Text style={{ fontSize: 16 }}>🧾</Text>
+                            <Receipt size={17} color="#2C2C2C" strokeWidth={2} />
                             <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }} numberOfLines={1}>Facture</Text>
                           </Pressable>
                         ) : null}
@@ -866,7 +867,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             isAdmin={isAdmin}
                             onChangeLots={(lots) => updateSupplementMarche({ ...s, avancementCorps: lots, updatedAt: new Date().toISOString() })}
                             onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'supplement', id: s.id, devisUri: s.devisUri, devisNom: s.devisNom }) : undefined}
-                            title="📊 Avancement de ce supplément"
+                            title="Avancement de ce supplément"
                             compact
                             snapshots={s.snapshots}
                             onChangeSnapshots={(snaps) => {
@@ -898,7 +899,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 </View>
                                 {p.factureUri && (
                                   <Pressable onPress={() => openDoc(p.factureUri)}>
-                                    <Text style={{ fontSize: 14 }}>📎</Text>
+                                    <Paperclip size={15} color="#2C2C2C" strokeWidth={2} />
                                   </Pressable>
                                 )}
                                 <Pressable onPress={() => handleDeletePaiement('supplement', s.id, p.id)}>
@@ -1049,9 +1050,9 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                     filled.push(`TTC ${totalTTC.toLocaleString('fr-FR')} €`);
                   }
                   if (filled.length > 0) {
-                    setDevisAutoExtractMsg(`✓ Auto-rempli : ${filled.join(' · ')}`);
+                    setDevisAutoExtractMsg(`Auto-rempli : ${filled.join(' · ')}`);
                   } else if (!totalHT && !totalTTC) {
-                    setDevisAutoExtractMsg('⚠ HT/TTC non détectés dans le devis');
+                    setDevisAutoExtractMsg('HT/TTC non détectés dans le devis');
                   }
                 } catch (e) {
                   console.warn('[MarchesChantier] auto-extract devis échoué:', e);
@@ -1059,7 +1060,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   setDevisAutoExtractLoading(false);
                 }
               }}>
-                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{marcheDevisInitial ? `📎 ${marcheDevisInitial.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{marcheDevisInitial ? `${marcheDevisInitial.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
               {devisAutoExtractLoading && (
                 <Text style={{ fontSize: 11, color: '#687076', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis pour pré-remplir HT/TTC...
@@ -1073,7 +1074,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
               <Text style={lbl}>Devis signé</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis-signe'); if (f) setMarcheDevisSigne(f); }}>
-                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{marcheDevisSigne ? `📎 ${marcheDevisSigne.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{marcheDevisSigne ? `${marcheDevisSigne.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
               {/* ── Commission apporteur ── */}
@@ -1127,7 +1128,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                               onPress={() => setCommissionForm(f => ({ ...f, apporteurId: a.id }))}
                             >
                               <Text style={{ fontSize: 12, fontWeight: '600', color: commissionForm.apporteurId === a.id ? '#fff' : '#2C2C2C' }}>
-                                {a.type === 'architecte' ? '🏛' : '🤝'} {a.prenom} {a.nom}
+                                {a.prenom} {a.nom}
                               </Text>
                             </Pressable>
                           ))}
@@ -1217,7 +1218,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           }}
                         >
                           <Text style={{ fontSize: 12, fontWeight: '700', color: commissionForm.statut === st ? (st === 'paye' ? '#155724' : '#856404') : '#687076' }}>
-                            {st === 'a_payer' ? '⏳ À payer' : '✓ Payé'}
+                            {st === 'a_payer' ? 'À payer' : 'Payé'}
                           </Text>
                         </Pressable>
                       ))}
@@ -1288,7 +1289,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                     onPress={() => setSuppForm(f => ({ ...f, statut: st }))}
                   >
                     <Text style={{ fontSize: 11, fontWeight: '700', color: suppForm.statut === st ? (st === 'accepte' ? '#155724' : st === 'refuse' ? '#DC2626' : '#856404') : '#687076' }}>
-                      {st === 'en_attente' ? '⏳ En attente' : st === 'accepte' ? '✓ Accepté' : '✗ Refusé'}
+                      {st === 'en_attente' ? 'En attente' : st === 'accepte' ? 'Accepté' : 'Refusé'}
                     </Text>
                   </Pressable>
                 ))}
@@ -1309,12 +1310,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
               <Text style={lbl}>Devis</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis'); if (f) setSuppDevis(f); }}>
-                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{suppDevis ? `📎 ${suppDevis.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{suppDevis ? `${suppDevis.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
               <Text style={lbl}>Facture</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture'); if (f) setSuppFacture(f); }}>
-                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{suppFacture ? `📎 ${suppFacture.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{suppFacture ? `${suppFacture.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
               <Pressable style={[saveBtn, !suppForm.libelle.trim() && { opacity: 0.5 }]} onPress={handleSaveSupp} disabled={!suppForm.libelle.trim()}>
@@ -1350,7 +1351,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               <TextInput style={inp} value={paiementForm.note} onChangeText={v => setPaiementForm(f => ({ ...f, note: v }))} placeholder="Note libre" />
               <Text style={lbl}>Facture d'acompte</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture'); if (f) setPaiementFacture(f); }}>
-                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{paiementFacture ? `📎 ${paiementFacture.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{paiementFacture ? `${paiementFacture.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
               {/* Commission due sur cet acompte (si marché parent avec commission) */}
@@ -1370,7 +1371,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                     </Text>
                     <Text style={lbl}>Facture commission (optionnel)</Text>
                     <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture-commission'); if (f) setPaiementCommissionFacture(f); }}>
-                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{paiementCommissionFacture ? `📎 ${paiementCommissionFacture.nom}` : '+ Choisir un fichier'}</Text>
+                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{paiementCommissionFacture ? `${paiementCommissionFacture.nom}` : '+ Choisir un fichier'}</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => setPaiementCommissionPaye(v => !v)}
@@ -1387,7 +1388,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                       }}
                     >
                       <Text style={{ fontSize: 12, fontWeight: '700', color: paiementCommissionPaye ? '#155724' : '#687076' }}>
-                        {paiementCommissionPaye ? '✅ Commission payée à l\'apporteur' : '⏳ Commission à payer'}
+                        {paiementCommissionPaye ? 'Commission payée à l\'apporteur' : 'Commission à payer'}
                       </Text>
                       <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: paiementCommissionPaye ? '#27AE60' : '#B0BEC5', justifyContent: 'center', paddingHorizontal: 2 }}>
                         <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignSelf: paiementCommissionPaye ? 'flex-end' : 'flex-start' }} />
