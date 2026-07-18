@@ -1436,11 +1436,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               )}
 
-              {/* Détail comptable (HT / TVA / situations). L'onglet Chiffres est déjà en opt-in
-                  (canVoirChiffres) ; ici on réserve le détail HT aux non-clients. Le client garde
-                  la vue simplifiée TTC ci-dessus. */}
+              {/* Décomposition HT/TVA (admin/architecte uniquement) — le TTC est déjà dans le résumé. */}
               {totalChantierHT > 0 && (isAdmin || (isExterne && !isClient)) && (
-                <View style={styles.pfsResumeBox}>
+                <View style={[styles.pfsResumeBox, { backgroundColor: 'transparent', paddingTop: 4 }]}>
+                  <Text style={[styles.pfsSubtitle, { marginBottom: 4 }]}>Décomposition HT / TVA</Text>
                   <View style={styles.pfsResumeRow}>
                     <Text style={styles.pfsResumeLabel}>Total lots HT</Text>
                     <Text style={styles.pfsResumeValue}>{fmt(totalChantierHT)} €</Text>
@@ -1484,30 +1483,6 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       </View>
                     );
                   })()}
-                  <View style={[styles.pfsResumeRow, { borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 6, marginTop: 2 }]}>
-                    <Text style={[styles.pfsResumeLabel, { fontWeight: '800' }]}>= Total chantier TTC</Text>
-                    <Text style={[styles.pfsResumeValue, { fontWeight: '800' }]}>{fmt(totalChantierTTC)} €</Text>
-                  </View>
-                  <View style={[styles.pfsResumeRow, { marginTop: 6 }]}>
-                    <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontWeight: '700' }]}>Règlements perçus</Text>
-                    <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontWeight: '700' }]}>{fmt(dejaPayeTotal)} €</Text>
-                  </View>
-                  {dejaPayeAcompte > 0 && (
-                    <View style={styles.pfsResumeRow}>
-                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontSize: 11 }]}>   ↳ dont acompte(s) client</Text>
-                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontSize: 11 }]}>{fmt(dejaPayeAcompte)} €</Text>
-                    </View>
-                  )}
-                  {totalPayeSituations > 0 && (
-                    <View style={styles.pfsResumeRow}>
-                      <Text style={[styles.pfsResumeLabel, { color: '#2E7D32', fontSize: 11 }]}>   ↳ dont situations payées</Text>
-                      <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontSize: 11 }]}>{fmt(totalPayeSituations)} €</Text>
-                    </View>
-                  )}
-                  <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
-                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Restant à payer TTC</Text>
-                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(resteAPayerChantier)} €</Text>
-                  </View>
                 </View>
               )}
 
@@ -1793,42 +1768,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               )}
               </>)}
 
-            {/* V10 — Situations figées par marché/supplément (Phase B) — HT réservé aux non-clients */}
-            {!isClient && situationsFigees.length > 0 && (
-              <>
-                <View style={styles.subSectionHeader}>
-                  <Text style={styles.subSectionTitle}>Situations facturées</Text>
-                </View>
-                <Text style={styles.pfsSubtitle}>
-                  {situationsFigees.length} situation{situationsFigees.length > 1 ? 's' : ''} figée{situationsFigees.length > 1 ? 's' : ''} par marché/supplément
-                </Text>
-                {situationsFigees.map(s => {
-                  const dateFr = new Date(s.dateGel).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' });
-                  return (
-                    <View key={s.id} style={styles.pfsHistItem}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.pfsHistNumero}>{s.intitule}</Text>
-                          <Text style={styles.pfsHistDate}>{dateFr} · {s.source}</Text>
-                        </View>
-                      </View>
-                      <View style={styles.pfsHistRow}>
-                        <Text style={styles.pfsHistLabel}>Facturé sur cette situation :</Text>
-                        <Text style={styles.pfsHistMontant}>{fmt(s.montantNouveau)} € HT</Text>
-                      </View>
-                      <View style={styles.pfsHistRow}>
-                        <Text style={styles.pfsHistLabel}>Cumul à cette date :</Text>
-                        <Text style={[styles.pfsHistLabel, { fontWeight: '700' }]}>{fmt(s.cumulFacture)} € HT</Text>
-                      </View>
-                    </View>
-                  );
-                })}
-              </>
-            )}
-
-            {/* PFS legacy retiré : remplacé par les snapshots Phase B
-                (section "Situations facturées" plus haut). Les anciennes
-                situations en base sont conservées mais plus visibles ici. */}
+            {/* "Situations facturées" (HT) retiré du portail : doublon de la section
+                "Situations à régler" (TTC) plus haut. Le détail HT reste dans le modal
+                Marchés admin ("Historique facturation"). */}
             </View>
             </>)}
             {/* ─────────────── /ONGLET CHIFFRES ─────────────── */}
