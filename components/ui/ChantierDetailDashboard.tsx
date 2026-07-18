@@ -41,6 +41,7 @@ export interface ChantierDetailDashboardCounts {
   notesPlanning: number;
   sav: number;
   livraisons: number;
+  messages?: number;
 }
 
 export interface ChantierDetailDashboardHandlers {
@@ -123,7 +124,7 @@ export function ChantierDetailDashboard({
       tiles: [
         { icon: Wrench,        label: 'SAV',            variant: 'bordeaux', onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
         { icon: User,          label: 'Portail client', variant: 'marron',   onPress: handlers.onPressPortailClient, adminOnly: true },
-        { icon: MessageCircle, label: 'Messagerie',     variant: 'bordeaux', onPress: handlers.onPressMessagerie,    adminOnly: true },
+        { icon: MessageCircle, label: 'Messagerie',     variant: 'bordeaux', onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
       ],
     },
   ];

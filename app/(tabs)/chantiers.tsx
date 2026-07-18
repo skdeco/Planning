@@ -25,6 +25,7 @@ import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard';
+import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS } from '@/constants/design';
@@ -1652,6 +1653,7 @@ export default function ChantiersScreen() {
                       notesPlanning: notesPlanningCount,
                       sav: savCount,
                       livraisons: livraisonsCount,
+                      messages: countUnreadChantierMessages([ch], 'admin'),
                     }}
                     handlers={{
                       onPressFiche:       () => { setActionChantier(null); setTimeout(() => openFicheUnifiee(ch), 100); },

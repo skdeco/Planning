@@ -103,6 +103,19 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     }
   }, [isAdmin, externeConvs, externeConvKey]);
 
+  // Côté admin : fils déjà existants (dérivés des sets de participants des messages),
+  // pour retrouver un fil de groupe sans re-cocher la sélection exacte.
+  const adminConvs = useMemo(() => {
+    if (!isAdmin) return [] as string[][];
+    const map = new Map<string, string[]>();
+    messages.forEach(m => {
+      const p = msgParticipants(m);
+      if (p.length) { const k = keyOf(p); if (!map.has(k)) map.set(k, p); }
+    });
+    return [...map.values()];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, isAdmin]);
+
   // Participants de la conversation active + sa clé.
   const activeParticipants = useMemo(() => {
     if (isAdmin) return [...selectedIds].sort();
@@ -134,7 +147,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
     Notifications.setBadgeCountAsync(countUnreadChantierMessages(updated, monId)).catch(() => {});
     setTimeout(() => scrollRef.current?.scrollToEnd?.({ animated: false }), 100);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chantier.id, activeKey]);
+  }, [chantier.id, activeKey, messages.length]);
 
   const ajouterPieceJointe = async () => {
     try {
@@ -256,6 +269,32 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
       )}
       {isAdmin && contactsExternes.length === 0 && (
         <Text style={styles.empty}>Aucun intervenant externe rattaché à ce chantier.</Text>
+      )}
+      {isAdmin && adminConvs.length > 0 && (
+        <>
+          <Text style={styles.hintSel}>Fils existants (toucher pour ouvrir)</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactRow} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
+            {adminConvs.map(p => {
+              const k = keyOf(p);
+              const on = k === activeKey;
+              const label = p.map(id => {
+                const c = (data.apporteurs || []).find(a => a.id === id);
+                return c ? `${c.prenom} ${c.nom}` : '?';
+              }).join(', ');
+              const unread = messages.filter(m => keyOf(msgParticipants(m)) === k && m.auteurType !== 'admin' && !(m.luPar || []).includes('admin')).length;
+              return (
+                <Pressable key={k} onPress={() => setSelectedIds([...p])} style={[styles.contactChip, on && styles.contactChipActive, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}>
+                  <Text style={[styles.contactChipText, on && styles.contactChipTextActive]} numberOfLines={1}>{p.length > 1 ? `Groupe · ${label}` : label}</Text>
+                  {unread > 0 && (
+                    <View style={{ backgroundColor: '#E74C3C', borderRadius: 8, minWidth: 16, paddingHorizontal: 4, alignItems: 'center' }}>
+                      <Text style={{ color: '#fff', fontSize: 9, fontWeight: '800' }}>{unread}</Text>
+                    </View>
+                  )}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+        </>
       )}
       {!isAdmin && externeConvs.length > 1 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.contactRow} contentContainerStyle={{ gap: 6, paddingVertical: 2 }}>
