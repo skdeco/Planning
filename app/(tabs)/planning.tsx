@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
+import { Copy, Camera, FileText, Download, Settings } from 'lucide-react-native';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
@@ -774,7 +775,7 @@ export default function PlanningScreen() {
           <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
           {isAdmin && (
             <Pressable style={{ marginLeft: 4 }} onPress={openAdminSettings}>
-              <Text style={{ fontSize: 14 }}>⚙️</Text>
+              <Settings size={15} color="#8C8077" strokeWidth={2} />
             </Pressable>
           )}
         </View>
@@ -862,23 +863,23 @@ export default function PlanningScreen() {
               if (Platform.OS === 'web') { if (window.confirm(msg)) doDuplicate(); }
               else Alert.alert('Dupliquer', msg, [{ text: 'Annuler', style: 'cancel' }, { text: 'Dupliquer', onPress: doDuplicate }]);
             }} accessibilityLabel="Dupliquer semaine">
-              <Text style={styles.galerieBtnText}>📋</Text>
+              <Copy size={17} color="#2C2C2C" strokeWidth={2} />
             </Pressable>
           )}
           {/* Bouton galerie photos — visible pour tous */}
           <Pressable style={styles.galerieBtn} onPress={() => { setGalerieChantierId(undefined); setShowGalerieGlobale(true); }}>
-            <Text style={styles.galerieBtnText}>📷</Text>
+            <Camera size={17} color="#2C2C2C" strokeWidth={2} />
           </Pressable>
           {/* Bouton PDF planning — admin uniquement */}
           {isAdmin && (
             <Pressable style={styles.galerieBtn} onPress={handleExportPDF} accessibilityLabel="Exporter planning PDF">
-              <Text style={styles.galerieBtnText}>📄</Text>
+              <FileText size={17} color="#2C2C2C" strokeWidth={2} />
             </Pressable>
           )}
           {/* Bouton export/sauvegarde — admin uniquement */}
           {isAdmin && (
             <Pressable style={styles.galerieBtn} onPress={handleExportData} accessibilityLabel="Exporter les données">
-              <Text style={styles.galerieBtnText}>💾</Text>
+              <Download size={17} color="#2C2C2C" strokeWidth={2} />
             </Pressable>
           )}
           <LanguageFlag />
