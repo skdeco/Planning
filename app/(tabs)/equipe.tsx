@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { HardHat, Award, FolderOpen, Pencil, Trash2 } from 'lucide-react-native';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal, Image,
   TextInput, ScrollView, Alert, Platform, Switch, RefreshControl,
@@ -1059,24 +1060,24 @@ export default function EquipeScreen() {
           <View style={{ flex: 1 }} />
           {isAdmin && (
             <Pressable style={styles.actionBtnRound} onPress={() => setHistoriqueEmployeId(item.id)}>
-              <Text style={{ fontSize: 14 }}>🏗</Text>
+              <HardHat size={15} color="#2C2C2C" strokeWidth={2} />
             </Pressable>
           )}
           {isAdmin && (
             <Pressable style={[styles.actionBtnRound, { backgroundColor: '#FFF8E1' }]} onPress={() => { setBadgeEmployeId(item.id); setBadgeType('ponctualite'); setBadgeMessage(''); }}>
-              <Text style={{ fontSize: 14 }}>🏆</Text>
+              <Award size={15} color="#8C6D2F" strokeWidth={2} />
             </Pressable>
           )}
           {(isAdmin || isRH) && (
             <Pressable style={styles.actionBtnRound} onPress={() => openDocsModal(item.id)}>
-              <Text style={{ fontSize: 14 }}>📂</Text>
+              <FolderOpen size={15} color="#2C2C2C" strokeWidth={2} />
             </Pressable>
           )}
           <Pressable style={styles.actionBtnRound} onPress={() => openEdit(item)}>
-            <Text style={{ fontSize: 14 }}>✏️</Text>
+            <Pencil size={15} color="#2C2C2C" strokeWidth={2} />
           </Pressable>
           <Pressable style={[styles.actionBtnRound, { backgroundColor: '#FEF2F2' }]} onPress={() => handleDelete(item.id, `${item.prenom} ${item.nom}`)}>
-            <Text style={{ fontSize: 14 }}>🗑</Text>
+            <Trash2 size={15} color="#E74C3C" strokeWidth={2} />
           </Pressable>
         </View>
       </View>
