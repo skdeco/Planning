@@ -4,6 +4,7 @@ import {
   Platform, Linking, Alert,
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
+import { IdCard, StickyNote, Ruler, Camera, Navigation, Package, Wrench, ShoppingCart, Briefcase, Coins, UserRound, BarChart3, Trash2, X } from 'lucide-react-native';
 
 export interface ChantierActionsModalProps {
   visible: boolean;
@@ -115,25 +116,26 @@ export function ChantierActionsModal(props: ChantierActionsModalProps) {
   };
 
   // ── Boutons par rôle ──────────────────────────────────────────────────────
-  type ActionBtn = { icon: string; label: string; onPress: () => void; danger?: boolean };
+  type LucideIcon = React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }>;
+  type ActionBtn = { icon: LucideIcon; label: string; onPress: () => void; danger?: boolean };
 
   const commonBtns: ActionBtn[] = [
-    { icon: '🪪', label: 'Fiche',   onPress: () => run(onOpenFiche) },
-    { icon: '📝', label: 'Notes',   onPress: () => run(onOpenNotes) },
-    { icon: '📐', label: 'Plans',   onPress: () => run(onOpenPlans) },
-    { icon: '📸', label: 'Photos',  onPress: () => run(onOpenPhotos) },
-    { icon: '📍', label: 'Y aller', onPress: () => { onClose(); setTimeout(() => openDirections(chantier.adresse || ''), 120); } },
-    { icon: '🧰', label: 'Matériel', onPress: () => run(onOpenMateriel) },
-    { icon: '🛠', label: 'SAV',     onPress: () => run(onOpenSAV) },
+    { icon: IdCard, label: 'Fiche',   onPress: () => run(onOpenFiche) },
+    { icon: StickyNote, label: 'Notes',   onPress: () => run(onOpenNotes) },
+    { icon: Ruler, label: 'Plans',   onPress: () => run(onOpenPlans) },
+    { icon: Camera, label: 'Photos',  onPress: () => run(onOpenPhotos) },
+    { icon: Navigation, label: 'Y aller', onPress: () => { onClose(); setTimeout(() => openDirections(chantier.adresse || ''), 120); } },
+    { icon: Package, label: 'Matériel', onPress: () => run(onOpenMateriel) },
+    { icon: Wrench, label: 'SAV',     onPress: () => run(onOpenSAV) },
   ];
 
   const adminBtns: ActionBtn[] = [
-    { icon: '🛒', label: 'Achats',         onPress: () => run(onOpenAchats) },
-    { icon: '💼', label: 'Marchés',        onPress: () => run(onOpenMarches) },
-    { icon: '💰', label: 'Finances',       onPress: () => run(onOpenFinances) },
-    { icon: '👤', label: 'Portail client', onPress: () => run(onOpenPortailClient) },
-    { icon: '📊', label: 'Budget',         onPress: () => run(onOpenBudget) },
-    { icon: '🗑', label: 'Supprimer',      onPress: handleDelete, danger: true },
+    { icon: ShoppingCart, label: 'Achats',         onPress: () => run(onOpenAchats) },
+    { icon: Briefcase, label: 'Marchés',        onPress: () => run(onOpenMarches) },
+    { icon: Coins, label: 'Finances',       onPress: () => run(onOpenFinances) },
+    { icon: UserRound, label: 'Portail client', onPress: () => run(onOpenPortailClient) },
+    { icon: BarChart3, label: 'Budget',         onPress: () => run(onOpenBudget) },
+    { icon: Trash2, label: 'Supprimer',      onPress: handleDelete, danger: true },
   ];
 
   const btns: ActionBtn[] = role === 'admin' ? [...commonBtns, ...adminBtns] : commonBtns;
@@ -155,13 +157,15 @@ export function ChantierActionsModal(props: ChantierActionsModalProps) {
               </View>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
-              <Text style={styles.closeTxt}>✕</Text>
+              <X size={18} color="#8C8077" strokeWidth={2} />
             </Pressable>
           </View>
 
           <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: 480 }}>
             <View style={styles.grid}>
-              {btns.map((b, idx) => (
+              {btns.map((b, idx) => {
+                const Icon = b.icon;
+                return (
                 <Pressable
                   key={idx}
                   style={({ pressed }) => [
@@ -171,10 +175,11 @@ export function ChantierActionsModal(props: ChantierActionsModalProps) {
                   ]}
                   onPress={b.onPress}
                 >
-                  <Text style={styles.btnIcon}>{b.icon}</Text>
+                  <View style={{ marginBottom: 6 }}><Icon size={24} color={b.danger ? '#E74C3C' : '#2C2C2C'} strokeWidth={1.9} /></View>
                   <Text style={[styles.btnLabel, b.danger && styles.btnLabelDanger]} numberOfLines={1}>{b.label}</Text>
                 </Pressable>
-              ))}
+                );
+              })}
             </View>
           </ScrollView>
         </View>
