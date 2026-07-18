@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert, Linking, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Clock, CircleCheck, Navigation } from 'lucide-react-native';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
 import { LanguageFlag } from '@/components/LanguageFlag';
@@ -321,7 +322,7 @@ export default function DashboardScreen() {
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
             <Pressable style={{ flex: 2, backgroundColor: myPointagesDuJour.debut ? '#D4EDDA' : '#2C2C2C', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}
               onPress={() => router.push('/(tabs)/pointage' as any)}>
-              <Text style={{ fontSize: 24 }}>{myPointagesDuJour.debut ? '✅' : '🕐'}</Text>
+              {myPointagesDuJour.debut ? <CircleCheck size={24} color="#155724" strokeWidth={2} /> : <Clock size={24} color="#fff" strokeWidth={2} />}
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: myPointagesDuJour.debut ? '#155724' : '#fff' }}>
                   {myPointagesDuJour.debut ? `${myPointagesDuJour.debut}${myPointagesDuJour.fin ? ` → ${myPointagesDuJour.fin}` : ' (en cours)'}` : 'Pointer mon arrivée'}
@@ -632,7 +633,10 @@ export default function DashboardScreen() {
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#2C2C2C', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}
                     onPress={() => openDirections(c.adresse || '')}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>📍 Y aller</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                      <Navigation size={11} color="#fff" strokeWidth={2.2} />
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>Y aller</Text>
+                    </View>
                   </Pressable>
                 )}
               </View>
@@ -1188,7 +1192,7 @@ export default function DashboardScreen() {
 
         {/* Reporting financier détaillé — repliable pour alléger le dashboard (Rentabilité + CA). */}
         <Pressable onPress={() => setShowFinancesDetail(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 4 }}>
-          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>💰 Finances (détail)</Text>
+          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Finances (détail)</Text>
           <Text style={{ fontSize: 13, fontWeight: '600', color: '#8C6D2F' }}>{showFinancesDetail ? '▲ Masquer' : '▼ Afficher'}</Text>
         </Pressable>
         {showFinancesDetail && (<>
