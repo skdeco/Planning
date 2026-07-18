@@ -373,9 +373,9 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
   //   - edit : édition complète (admin sur brouillon)
   const fullRO: boolean = !isAdmin || !!readOnly;
   const finalise: boolean = !fullRO && draft.statut === 'finalise';
-  // ro propagé aux composants enfants = read-only pour le META (text, ajout, attach, suppr)
-  // → vrai si fullRO OU finalise
-  const ro: boolean = fullRO || finalise;
+  // L'admin peut TOUJOURS modifier son CR (même finalisé) — demande Kevin. Seul l'externe
+  // (fullRO) est en lecture seule. `finalise` ne sert plus qu'à masquer le bouton "Finaliser".
+  const ro: boolean = fullRO;
   // allowToggle = peut cocher les cases ? Admin partout sauf si explicitement readOnly.
   const allowToggle: boolean = !fullRO;
   const [showPersonnesPicker, setShowPersonnesPicker] = useState(false);
@@ -694,19 +694,15 @@ interface CRSubSectionBoxProps {
 function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove }: CRSubSectionBoxProps) {
   const [editingTitre, setEditingTitre] = useState(false);
   const [titreDraft, setTitreDraft] = useState(sub.titre);
-  const [newItemText, setNewItemText] = useState('');
 
+  // On choisit le type EN PREMIER : un item vide est ajouté, éditable directement.
   const addTask = () => {
-    if (!newItemText.trim()) return;
-    const task: CRTaskItem = { id: genId('task'), texte: newItemText.trim(), fait: false };
+    const task: CRTaskItem = { id: genId('task'), texte: '', fait: false };
     onUpdate({ items: [...(sub.items || []), { kind: 'task', task }] });
-    setNewItemText('');
   };
   const addTexte = () => {
-    if (!newItemText.trim()) return;
-    const texte: CRTexteItem = { id: genId('txt'), texte: newItemText.trim() };
+    const texte: CRTexteItem = { id: genId('txt'), texte: '' };
     onUpdate({ items: [...(sub.items || []), { kind: 'texte', texte }] });
-    setNewItemText('');
   };
   const updateItem = (idx: number, patch: CRItem) => {
     onUpdate({ items: (sub.items || []).map((it, i) => i === idx ? patch : it) });
@@ -785,28 +781,17 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove 
         />
       ))}
 
-      {/* Ajouter item */}
+      {/* Ajouter item : on choisit le type, l'item vide apparaît et se remplit directement */}
       {!ro && (
-        <View style={{ marginTop: 4 }}>
-          <TextInput
-            style={styles.newItemInput}
-            value={newItemText}
-            onChangeText={setNewItemText}
-            placeholder="Texte de l'item…"
-            placeholderTextColor={DS.textSecondary}
-          />
-          {newItemText.trim().length > 0 && (
-            <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
-              <Pressable onPress={addTask} style={styles.addItemBtn}>
-                <CheckSquare size={11} color={DS.cremeFond} strokeWidth={2.5} />
-                <Text style={styles.addItemBtnText}>Ajouter case à cocher</Text>
-              </Pressable>
-              <Pressable onPress={addTexte} style={[styles.addItemBtn, { backgroundColor: DS.marron }]}>
-                <FileText size={11} color={DS.cremeFond} strokeWidth={2.5} />
-                <Text style={styles.addItemBtnText}>Ajouter texte</Text>
-              </Pressable>
-            </View>
-          )}
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
+          <Pressable onPress={addTask} style={styles.addItemBtn}>
+            <CheckSquare size={12} color={DS.cremeFond} strokeWidth={2.5} />
+            <Text style={styles.addItemBtnText}>Case à cocher</Text>
+          </Pressable>
+          <Pressable onPress={addTexte} style={[styles.addItemBtn, { backgroundColor: DS.marron }]}>
+            <FileText size={12} color={DS.cremeFond} strokeWidth={2.5} />
+            <Text style={styles.addItemBtnText}>Texte libre</Text>
+          </Pressable>
         </View>
       )}
     </View>
@@ -841,6 +826,8 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
             value={t.texte}
             onChangeText={editText}
             editable={!ro}
+            placeholder="Écrire la tâche…"
+            placeholderTextColor={DS.textSecondary}
             multiline
           />
           {(() => {
