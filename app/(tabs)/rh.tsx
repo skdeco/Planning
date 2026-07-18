@@ -27,6 +27,7 @@ import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import * as FileSystem from 'expo-file-system/legacy';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { getJoursFeriesFrance } from '@/lib/date/joursFeries';
+import { Palmtree, Thermometer, Banknote, FileText, Users } from 'lucide-react-native';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (fiches de paie). Aligné avec equipe.tsx + financier-st.tsx + pointage.tsx.
@@ -424,8 +425,9 @@ export default function RHScreen() {
   return (
     <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
       {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>👥 {t.rh.title}</Text>
+      <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
+        <Users size={18} color="#2C2C2C" strokeWidth={2} />
+        <Text style={styles.headerTitle}>{t.rh.title}</Text>
         {nbEnAttente > 0 && (
           <View style={styles.headerBadge}>
             <Text style={styles.headerBadgeText}>{nbEnAttente} {t.rh.pending}</Text>
@@ -436,22 +438,29 @@ export default function RHScreen() {
       {/* Onglets */}
       <View style={styles.tabs}>
         {([
-          { key: 'conges', label: `🏖 ${t.rh.leaves}`, count: isRH ? conges.filter(d => d.statut === 'en_attente').length : 0 },
-          { key: 'maladie', label: `🤒 ${t.rh.sick}`, count: isRH ? arrets.filter(d => d.statut === 'en_attente').length : 0 },
-          { key: 'avances', label: `💶 ${t.rh.advances}`, count: isRH ? avances.filter(d => d.statut === 'en_attente').length : 0 },
-          { key: 'paies', label: `📄 ${t.rh.payslips}`, count: 0 },
-        ] as const).map(tab => (
+          { key: 'conges', label: t.rh.leaves, icon: Palmtree, count: isRH ? conges.filter(d => d.statut === 'en_attente').length : 0 },
+          { key: 'maladie', label: t.rh.sick, icon: Thermometer, count: isRH ? arrets.filter(d => d.statut === 'en_attente').length : 0 },
+          { key: 'avances', label: t.rh.advances, icon: Banknote, count: isRH ? avances.filter(d => d.statut === 'en_attente').length : 0 },
+          { key: 'paies', label: t.rh.payslips, icon: FileText, count: 0 },
+        ] as const).map(tab => {
+          const Icon = tab.icon;
+          const actif = activeTab === tab.key;
+          return (
           <Pressable
             key={tab.key}
-            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            style={[styles.tab, actif && styles.tabActive]}
             onPress={() => setActiveTab(tab.key)}
           >
-            <Text style={[styles.tabText, activeTab === tab.key && styles.tabTextActive]}>{tab.label}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+              <Icon size={13} color={actif ? '#2C2C2C' : '#687076'} strokeWidth={2} />
+              <Text style={[styles.tabText, actif && styles.tabTextActive]}>{tab.label}</Text>
+            </View>
             {tab.count > 0 && (
               <View style={styles.tabBadge}><Text style={styles.tabBadgeText}>{tab.count}</Text></View>
             )}
           </Pressable>
-        ))}
+          );
+        })}
       </View>
 
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
