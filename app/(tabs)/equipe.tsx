@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { HardHat, Award, FolderOpen, Pencil, Trash2 } from 'lucide-react-native';
+import { HardHat, Award, FolderOpen, Pencil, Trash2, Coins, FileText } from 'lucide-react-native';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal, Image,
   TextInput, ScrollView, Alert, Platform, Switch, RefreshControl,
@@ -1035,10 +1035,10 @@ export default function EquipeScreen() {
         {/* Badges accréditations (compact) */}
         {(item.isAcheteur || item.isRH || item.isCommercial || item.doitPointer === false) && (
           <View style={styles.badgesRow}>
-            {item.isAcheteur && <View style={styles.badge}><Text style={styles.badgeText}>🛒 Acheteur</Text></View>}
-            {item.isRH && <View style={[styles.badge, { backgroundColor: '#D4EDDA' }]}><Text style={[styles.badgeText, { color: '#155724' }]}>👥 RH</Text></View>}
-            {item.isCommercial && <View style={[styles.badge, { backgroundColor: '#FFF3CD' }]}><Text style={[styles.badgeText, { color: '#856404' }]}>💼 Commercial</Text></View>}
-            {item.doitPointer === false && <View style={[styles.badge, { backgroundColor: '#F8D7DA' }]}><Text style={[styles.badgeText, { color: '#721C24' }]}>⏱ Sans pointage</Text></View>}
+            {item.isAcheteur && <View style={styles.badge}><Text style={styles.badgeText}>Acheteur</Text></View>}
+            {item.isRH && <View style={[styles.badge, { backgroundColor: '#D4EDDA' }]}><Text style={[styles.badgeText, { color: '#155724' }]}>RH</Text></View>}
+            {item.isCommercial && <View style={[styles.badge, { backgroundColor: '#FFF3CD' }]}><Text style={[styles.badgeText, { color: '#856404' }]}>Commercial</Text></View>}
+            {item.doitPointer === false && <View style={[styles.badge, { backgroundColor: '#F8D7DA' }]}><Text style={[styles.badgeText, { color: '#721C24' }]}>Sans pointage</Text></View>}
           </View>
         )}
 
@@ -1108,22 +1108,22 @@ export default function EquipeScreen() {
             </View>
           </View>
           <Pressable style={[styles.actionBtnRound, { backgroundColor: '#FEF2F2' }]} onPress={() => handleDeleteST(item.id, item.societe || `${item.prenom} ${item.nom}`)}>
-            <Text style={{ fontSize: 14 }}>🗑</Text>
+            <Trash2 size={15} color="#E74C3C" strokeWidth={2} />
           </Pressable>
         </View>
 
         {/* Boutons 3-actions (Infos / Finances / Docs) */}
         <View style={stStyles.actionButtonsRow}>
           <Pressable style={[stStyles.actionButton, stStyles.actionButtonEdit]} onPress={() => openEditST(item)}>
-            <Text style={stStyles.actionButtonIcon}>✏️</Text>
+            <Pencil size={15} color="#2C2C2C" strokeWidth={2} />
             <Text style={stStyles.actionButtonLabel}>Infos</Text>
           </Pressable>
           <Pressable style={[stStyles.actionButton, stStyles.actionButtonMoney]} onPress={() => openFinancesFor(item)}>
-            <Text style={stStyles.actionButtonIcon}>💰</Text>
+            <Coins size={15} color="#8C6D2F" strokeWidth={2} />
             <Text style={stStyles.actionButtonLabel}>Finances</Text>
           </Pressable>
           <Pressable style={[stStyles.actionButton, stStyles.actionButtonDocs, docsComplet && stStyles.actionButtonDocsOk]} onPress={() => openDocsFor(item)}>
-            <Text style={stStyles.actionButtonIcon}>📄</Text>
+            <FileText size={15} color="#2C2C2C" strokeWidth={2} />
             <Text style={stStyles.actionButtonLabel}>Docs {docsFournis}/{docsTotal}</Text>
           </Pressable>
         </View>
@@ -1358,10 +1358,10 @@ export default function EquipeScreen() {
                     <View style={styles.cardBottomRow}>
                       <View style={{ flex: 1 }} />
                       <Pressable style={styles.actionBtnRound} onPress={() => openEditApporteur(a)}>
-                        <Text style={{ fontSize: 14 }}>✏️</Text>
+                        <Pencil size={15} color="#2C2C2C" strokeWidth={2} />
                       </Pressable>
                       <Pressable style={[styles.actionBtnRound, { backgroundColor: '#FEF2F2' }]} onPress={() => handleDeleteApporteur(a)}>
-                        <Text style={{ fontSize: 14 }}>🗑</Text>
+                        <Trash2 size={15} color="#E74C3C" strokeWidth={2} />
                       </Pressable>
                     </View>
                   </Pressable>
