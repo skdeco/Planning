@@ -4,6 +4,8 @@ import { useApp } from '@/app/context/AppContext';
 import { PortailClient } from '@/components/PortailClient';
 import { STATUT_LABELS, STATUT_COLORS } from '@/app/types';
 import { getChantierLots } from '@/lib/chantier/getChantierLots';
+import { FadeInView } from '@/components/ui/animated';
+import { hapticSelection } from '@/lib/haptics';
 
 export default function MesChantiersExterne() {
   const { data, currentUser } = useApp();
@@ -58,12 +60,13 @@ export default function MesChantiersExterne() {
     return { totalCom, dueCom };
   }, [data.marchesChantier, apporteurId, apporteur]);
 
-  const renderCard = (c: typeof mesChantiers[number]) => {
+  const renderCard = (c: typeof mesChantiers[number], index: number) => {
     const derniereVue = apporteurId ? c.dernieresVuesParApporteur?.[apporteurId] : undefined;
     const derniereMaj = c.derniereMajContenu;
     const isNew = derniereMaj && (!derniereVue || derniereMaj > derniereVue);
     return (
-      <Pressable key={c.id} style={styles.card} onPress={() => setOpenChantier(c.id)}>
+      <FadeInView key={c.id} delay={Math.min(index * 45, 360)}>
+      <Pressable style={styles.card} onPress={() => { hapticSelection(); setOpenChantier(c.id); }}>
         <View style={{ flex: 1 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <Text style={styles.cardTitle}>{c.nom}</Text>
@@ -94,6 +97,7 @@ export default function MesChantiersExterne() {
         </View>
         <Text style={styles.cardArrow}>›</Text>
       </Pressable>
+      </FadeInView>
     );
   };
 
