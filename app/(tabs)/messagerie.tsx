@@ -551,7 +551,7 @@ export default function MessagerieScreen() {
             style={{ backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}
             onPress={() => { setGroupType('equipe'); setGroupChantierId(null); setGroupMessage(''); setShowGroupModal(true); }}
           >
-            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>📢 Diffusion</Text>
+            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Diffusion</Text>
           </Pressable>
         </View>
 
@@ -668,7 +668,7 @@ export default function MessagerieScreen() {
           <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }} onPress={() => setShowGroupModal(false)}>
             <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 420, maxHeight: '80%' }} onPress={() => {}}>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', textAlign: 'center', marginBottom: 16 }}>📢 Message de groupe</Text>
+                <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', textAlign: 'center', marginBottom: 16 }}>Message de groupe</Text>
 
                 {/* Type de diffusion */}
                 <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 8 }}>Envoyer à</Text>
@@ -677,13 +677,13 @@ export default function MessagerieScreen() {
                     style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'equipe' ? '#2C2C2C' : '#F5EDE3' }}
                     onPress={() => { setGroupType('equipe'); setGroupChantierId(null); }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'equipe' ? '#fff' : '#687076' }}>👷 Toute l'équipe</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'equipe' ? '#fff' : '#687076' }}>Toute l'équipe</Text>
                   </Pressable>
                   <Pressable
                     style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'chantier' ? '#2C2C2C' : '#F5EDE3' }}
                     onPress={() => setGroupType('chantier')}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'chantier' ? '#fff' : '#687076' }}>🏗 Par chantier</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'chantier' ? '#fff' : '#687076' }}>Par chantier</Text>
                   </Pressable>
                 </View>
 
@@ -841,7 +841,7 @@ export default function MessagerieScreen() {
               style={[styles.chantierChip, showFilters && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
               onPress={() => setShowFilters(v => !v)}
             >
-              <Text style={[styles.chantierChipText, showFilters && { color: '#fff' }]}>🔍 Filtres</Text>
+              <Text style={[styles.chantierChipText, showFilters && { color: '#fff' }]}>Filtres</Text>
             </Pressable>
           )}
         </ScrollView>
@@ -1009,14 +1009,14 @@ export default function MessagerieScreen() {
               ]);
             }
           }}>
-            <Text style={styles.archiveDiscussionBtnText}>📁 Clore et archiver cette discussion</Text>
+            <Text style={styles.archiveDiscussionBtnText}>Clore et archiver cette discussion</Text>
           </Pressable>
         )}
 
         {/* Bouton désarchiver */}
         {showArchive && selectedChantierId && messages.length > 0 && (
           <Pressable style={[styles.archiveDiscussionBtn, { backgroundColor: '#EEF2F8' }]} onPress={handleUnarchiveDiscussion}>
-            <Text style={[styles.archiveDiscussionBtnText, { color: '#2C2C2C' }]}>📂 Restaurer cette discussion</Text>
+            <Text style={[styles.archiveDiscussionBtnText, { color: '#2C2C2C' }]}>Restaurer cette discussion</Text>
           </Pressable>
         )}
 
@@ -1041,7 +1041,7 @@ export default function MessagerieScreen() {
           return (
           <View style={styles.scheduleBar}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#2C2C2C' }}>⏰ Programmer l'envoi</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#2C2C2C' }}>Programmer l'envoi</Text>
               <Pressable onPress={() => { setShowSchedule(false); setScheduleDate(''); setScheduleTime(''); }} style={{ padding: 4 }}>
                 <Text style={{ color: '#E74C3C', fontSize: 14, fontWeight: '600' }}>✕</Text>
               </Pressable>
@@ -1189,7 +1189,7 @@ export default function MessagerieScreen() {
                 style={[styles.contextBtn, styles.contextBtnDanger]}
                 onPress={() => { handleDelete(contextMsg); setContextMsg(null); }}
               >
-                <Text style={[styles.contextBtnText, { color: '#EF4444' }]}>🗑 Supprimer</Text>
+                <Text style={[styles.contextBtnText, { color: '#EF4444' }]}>Supprimer</Text>
               </Pressable>
               <Pressable style={styles.contextBtn} onPress={() => setContextMsg(null)}>
                 <Text style={[styles.contextBtnText, { color: '#687076' }]}>Annuler</Text>

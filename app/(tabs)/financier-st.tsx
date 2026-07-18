@@ -237,7 +237,7 @@ export default function FinancierSTScreen() {
           return (
             <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 12, marginTop: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#1A1A1A' }}>📄 Mes documents légaux</Text>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#1A1A1A' }}>Mes documents légaux</Text>
                 <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: complete ? '#D4EDDA' : '#FFF3CD' }}>
                   <Text style={{ fontSize: 11, fontWeight: '700', color: complete ? '#155724' : '#856404' }}>{nbFournis}/{DOCUMENTS_LEGAUX_TYPES.length}</Text>
                 </View>
@@ -267,7 +267,7 @@ export default function FinancierSTScreen() {
                         </View>
                       ) : (
                         <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2C2C2C' }} onPress={() => handleUploadDocLegal(t.label)}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>⬆ Charger</Text>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>Charger</Text>
                         </Pressable>
                       )}
                     </View>
@@ -349,20 +349,20 @@ export default function FinancierSTScreen() {
                       <View style={styles.devisDocsRow}>
                         {devis.devisFichier ? (
                           <Pressable style={styles.docBtn} onPress={() => openDoc(devis.devisFichier!)}>
-                            <Text style={styles.docBtnText}>📄 Mon devis</Text>
+                            <Text style={styles.docBtnText}>Mon devis</Text>
                           </Pressable>
                         ) : (
                           <Pressable style={[styles.docBtn, styles.docBtnUpload]} onPress={() => handleUploadDevisFichier(devis.id)}>
-                            <Text style={styles.docBtnText}>⬆ Envoyer mon devis</Text>
+                            <Text style={styles.docBtnText}>Envoyer mon devis</Text>
                           </Pressable>
                         )}
                         {devis.devisSigne ? (
                           <Pressable style={[styles.docBtn, styles.docBtnSigne]} onPress={() => openDoc(devis.devisSigne!)}>
-                            <Text style={styles.docBtnText}>✅ Devis signé reçu</Text>
+                            <Text style={styles.docBtnText}>Devis signé reçu</Text>
                           </Pressable>
                         ) : (
                           <View style={[styles.docBtn, styles.docBtnAttente]}>
-                            <Text style={styles.docBtnTextGrey}>⏳ En attente de signature</Text>
+                            <Text style={styles.docBtnTextGrey}>En attente de signature</Text>
                           </View>
                         )}
                       </View>
@@ -390,12 +390,12 @@ export default function FinancierSTScreen() {
                                 {a.commentaire ? <Text style={styles.acompteComment}>{a.commentaire}</Text> : null}
                                 {a.facture ? (
                                   <Pressable onPress={() => openDoc(a.facture!)}>
-                                    <Text style={styles.factureLink}>📄 Ma facture</Text>
+                                    <Text style={styles.factureLink}>Ma facture</Text>
                                   </Pressable>
                                 ) : (
                                   <>
                                     <Pressable onPress={() => handleUploadFacture(a.id)}>
-                                      <Text style={styles.factureUpload}>⬆ Joindre ma facture</Text>
+                                      <Text style={styles.factureUpload}>Joindre ma facture</Text>
                                     </Pressable>
                                     <View style={{ marginTop: 4 }}>
                                       <InboxPickerButton

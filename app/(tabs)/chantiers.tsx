@@ -1427,12 +1427,11 @@ export default function ChantiersScreen() {
         <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, gap: 8 }}>
           <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#F5EDE3' }, vueChantiersTab === 'chantiers' && { borderColor: '#2C2C2C', backgroundColor: '#2C2C2C' }]}
             onPress={() => setVueChantiersTab('chantiers')}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'chantiers' ? '#fff' : '#687076' }}>🏗 Chantiers</Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'chantiers' ? '#fff' : '#687076' }}>Chantiers</Text>
           </Pressable>
           <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#F5EDE3' }, vueChantiersTab === 'sav' && { borderColor: '#E74C3C', backgroundColor: '#E74C3C' }]}
             onPress={() => setVueChantiersTab('sav')}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'sav' ? '#fff' : '#687076' }}>
-              🔧 SAV ({(data.ticketsSAV || []).filter(t => t.statut !== 'clos').length})
+            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'sav' ? '#fff' : '#687076' }}>SAV ({(data.ticketsSAV || []).filter(t => t.statut !== 'clos').length})
             </Text>
           </Pressable>
         </View>
@@ -1894,7 +1893,7 @@ export default function ChantiersScreen() {
 
               {/* ═══ Section Contacts (4 types) ═══ */}
               <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 10 }}>🤝 Contacts</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 10 }}>Contacts</Text>
 
                 {(['architecte', 'apporteur', 'contractant', 'client'] as const).map((ty) => {
                   const meta = APPORTEUR_TYPE_LABELS[ty];
@@ -1932,8 +1931,7 @@ export default function ChantiersScreen() {
                             onPress={() => setForm(f => ({ ...f, [finKey]: !(f[finKey] as boolean) }))}
                             style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 10 }}
                           >
-                            <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }}>
-                              💶 Autoriser à voir les finances du chantier
+                            <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }}>Autoriser à voir les finances du chantier
                             </Text>
                             <View style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? '#2E7D32' : '#D8D0C6', alignItems: on ? 'flex-end' : 'flex-start' }}>
                               <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }} />
@@ -1946,8 +1944,7 @@ export default function ChantiersScreen() {
                           onPress={openQuickClient}
                           style={{ marginTop: 8, backgroundColor: meta.couleur, borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
                         >
-                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>
-                            ⚡ Créer un client + espace client immédiat
+                          <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>Créer un client + espace client immédiat
                           </Text>
                         </Pressable>
                       )}
@@ -2000,7 +1997,7 @@ export default function ChantiersScreen() {
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
               {!quickClientCreds ? (
                 <>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 6 }}>⚡ Nouveau client</Text>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 6 }}>Nouveau client</Text>
                   <Text style={{ fontSize: 12, color: '#687076', marginBottom: 14 }}>
                     Créez un client et son accès en une étape. Un identifiant + mot de passe sont générés automatiquement.
                   </Text>
@@ -2062,7 +2059,7 @@ export default function ChantiersScreen() {
                 </>
               ) : (
                 <>
-                  <Text style={{ fontSize: 20, fontWeight: '800', color: '#2E7D32', marginBottom: 6 }}>✓ Client créé</Text>
+                  <Text style={{ fontSize: 20, fontWeight: '800', color: '#2E7D32', marginBottom: 6 }}>Client créé</Text>
                   <Text style={{ fontSize: 12, color: '#687076', marginBottom: 14 }}>
                     Le client a été créé et rattaché à ce chantier. Transmettez-lui les identifiants ci-dessous.
                   </Text>
@@ -2090,7 +2087,7 @@ export default function ChantiersScreen() {
                       }}
                       style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 12 }}
                     >
-                      <Text style={{ color: '#C9A96E', fontWeight: '800' }}>📋 Copier (lien + identifiants)</Text>
+                      <Text style={{ color: '#C9A96E', fontWeight: '800' }}>Copier (lien + identifiants)</Text>
                     </Pressable>
                   )}
                   <Pressable
@@ -2338,14 +2335,14 @@ export default function ChantiersScreen() {
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Ajouter une facture</Text>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Ajouter une facture</Text>
                           </Pressable>
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
                             <Pressable onPress={() => openDocPreview(achatFichierUri)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                               <Text style={{ fontSize: 14 }}>📄</Text>
-                              <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint (toucher pour voir)</Text>
+                              <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>Document joint (toucher pour voir)</Text>
                             </Pressable>
                             <Pressable onPress={() => { setAchatFichierUri(null); setAchatFichierLocalUri(null); }}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
                           </View>
@@ -2631,8 +2628,7 @@ export default function ChantiersScreen() {
                         </ScrollView>
                       )}
                       {note.destinataires !== 'tous' && isAdmin && (
-                        <Text style={styles.noteDest}>
-                          👤 Pour : {(note.destinataires as string[]).map(id => {
+                        <Text style={styles.noteDest}>Pour : {(note.destinataires as string[]).map(id => {
                             const emp = data.employes.find(e => e.id === id);
                             const st = data.sousTraitants?.find(s => s.id === id);
                             return emp ? emp.prenom : (st ? st.nom : id);
@@ -2943,7 +2939,7 @@ export default function ChantiersScreen() {
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <View>
-                <Text style={styles.modalTitle}>🛒 Achats</Text>
+                <Text style={styles.modalTitle}>Achats</Text>
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === achatsChantierId)?.nom ?? ''}</Text>
               </View>
               <Pressable onPress={() => setAchatsChantierId(null)}>
@@ -3006,14 +3002,14 @@ export default function ChantiersScreen() {
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>📷 Ajouter une facture</Text>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Ajouter une facture</Text>
                           </Pressable>
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
                             <Pressable onPress={() => openDocPreview(achatFichierUri)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                               <Text style={{ fontSize: 14 }}>📄</Text>
-                              <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>✓ Document joint (toucher pour voir)</Text>
+                              <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>Document joint (toucher pour voir)</Text>
                             </Pressable>
                             <Pressable onPress={() => { setAchatFichierUri(null); setAchatFichierLocalUri(null); }}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
                           </View>
@@ -3334,8 +3330,7 @@ export default function ChantiersScreen() {
                             <Text style={styles.planIcon}>{(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
                             <View style={{ flex: 1 }}>
                               <Text style={styles.planNom}>{plan.nom}</Text>
-                              <Text style={styles.planMeta}>
-                                ⚪ Archivé · {plan.archivedAt ? new Date(plan.archivedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
+                              <Text style={styles.planMeta}>Archivé · {plan.archivedAt ? new Date(plan.archivedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
                               </Text>
                             </View>
                             <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
@@ -3584,7 +3579,7 @@ export default function ChantiersScreen() {
                 <>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 10 }}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>🚚 Livraisons</Text>
+                      <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>Livraisons</Text>
                       <Text style={{ fontSize: 13, color: DS.textSecondary, marginTop: 2 }}>{ch.nom}</Text>
                     </View>
                     <Pressable onPress={() => setLivraisonsChantierId(null)} accessibilityRole="button" accessibilityLabel="Fermer">
@@ -3624,7 +3619,7 @@ export default function ChantiersScreen() {
                 <>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 20, paddingBottom: 10 }}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>💬 Messagerie</Text>
+                      <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>Messagerie</Text>
                       <Text style={{ fontSize: 13, color: DS.textSecondary, marginTop: 2 }}>{ch.nom}</Text>
                     </View>
                     <Pressable onPress={() => setMessagerieChantierId(null)} accessibilityRole="button" accessibilityLabel="Fermer">
@@ -3665,7 +3660,7 @@ export default function ChantiersScreen() {
           <View style={savListeStyles.container}>
             <View style={savListeStyles.header}>
               <View style={{ flex: 1 }}>
-                <Text style={savListeStyles.title}>🔧 SAV</Text>
+                <Text style={savListeStyles.title}>SAV</Text>
                 <Text style={savListeStyles.chantierNom}>{data.chantiers.find(c => c.id === savChantierId)?.nom}</Text>
               </View>
               <Pressable
@@ -3728,7 +3723,7 @@ export default function ChantiersScreen() {
                           disabled={t.statut === 'resolu' || t.statut === 'clos'}
                           style={[savListeStyles.actionBtn, savListeStyles.actionResolu, (t.statut === 'resolu' || t.statut === 'clos') && { opacity: 0.4 }]}
                         >
-                          <Text style={savListeStyles.actionResoluText}>✓ Résolu</Text>
+                          <Text style={savListeStyles.actionResoluText}>Résolu</Text>
                         </Pressable>
                         <Pressable
                           onPress={() => updateTicketSAV({ ...t, statut: 'en_cours', updatedAt: new Date().toISOString() })}

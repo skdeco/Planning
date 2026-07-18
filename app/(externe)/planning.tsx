@@ -261,7 +261,7 @@ export default function PlanningExterne() {
         {/* Équipes sur place : indication jour par jour (sans nombre, sans noms) */}
         {selectedChantier && joursAvecEquipe.size > 0 && (
           <View style={styles.equipeBox}>
-            <Text style={styles.equipeTitle}>👷 Jours avec équipe sur place</Text>
+            <Text style={styles.equipeTitle}>Jours avec équipe sur place</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {Array.from(joursAvecEquipe).sort().slice(0, 30).map(d => (
                 <View key={d} style={styles.equipeChip}>

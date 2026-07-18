@@ -538,7 +538,7 @@ export default function MaterielScreen() {
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EEF2F8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
                         onPress={() => handleCheckDispo(item.id, item.texte)}
                       >
-                        <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>🔍 Vérifier dispo</Text>
+                        <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Vérifier dispo</Text>
                       </Pressable>
                     )}
                     {loading && <ActivityIndicator size="small" color="#2C2C2C" />}
@@ -772,7 +772,7 @@ export default function MaterielScreen() {
               </View>
               {isAdmin && listes.length > 0 && (
                 <Pressable onPress={async () => { if (await confirm('Supprimer cette liste ?')) listes.forEach(l => deleteListeMateriau(l.id)); }} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#E74C3C' }}>🗑 Supprimer cette liste</Text>
+                  <Text style={{ fontSize: 11, color: '#E74C3C' }}>Supprimer cette liste</Text>
                 </Pressable>
               )}
             </View>
@@ -934,7 +934,7 @@ export default function MaterielScreen() {
       {viewMode === 'acheteur' && isAdmin && (
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
           <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, backgroundColor: '#F5EDE3', borderRadius: 8, alignSelf: 'flex-start' }} onPress={() => setShowFournisseurModal(true)}>
-            <Text style={{ fontSize: 12, color: '#8C8077' }}>⚙️ Gérer les fournisseurs</Text>
+            <Text style={{ fontSize: 12, color: '#8C8077' }}>Gérer les fournisseurs</Text>
           </Pressable>
         </View>
       )}

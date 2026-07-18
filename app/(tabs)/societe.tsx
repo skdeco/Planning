@@ -198,13 +198,13 @@ export default function SocieteScreen() {
   return (
     <ScreenContainer>
       <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <Text style={styles.title}>📁 Documents société</Text>
+        <Text style={styles.title}>Documents société</Text>
         <Text style={styles.subtitle}>Juridique, fiscal, social, assurances, certifications…</Text>
 
         {/* Alertes expiration */}
         {alertes.length > 0 && (
           <View style={styles.alertesBox}>
-            <Text style={styles.alertesTitle}>⚠️ Échéances à venir</Text>
+            <Text style={styles.alertesTitle}>Échéances à venir</Text>
             {alertes.slice(0, 5).map(a => {
               const expired = a.jours < 0;
               return (
@@ -291,8 +291,7 @@ export default function SocieteScreen() {
                           {d.dateEmission && `📅 Émis ${formatFR(d.dateEmission)}`}
                           {d.dateEmission && d.dateExpiration && '  ·  '}
                           {d.dateExpiration && (
-                            <Text style={expExpired ? { color: '#B83A2E', fontWeight: '700' } : expSoon ? { color: '#F57C00', fontWeight: '700' } : undefined}>
-                              ⏳ Expire {formatFR(d.dateExpiration)}
+                            <Text style={expExpired ? { color: '#B83A2E', fontWeight: '700' } : expSoon ? { color: '#F57C00', fontWeight: '700' } : undefined}>Expire {formatFR(d.dateExpiration)}
                             </Text>
                           )}
                         </Text>
