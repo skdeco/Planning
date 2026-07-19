@@ -227,6 +227,8 @@ const DEFAULT_FORM: ChantierForm = {
 export default function ChantiersScreen() {
   const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, updateDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
+  const statutLabel = (k: string) => (t.statutChantier as Record<string, string>)[k] || STATUT_LABELS[k as keyof typeof STATUT_LABELS] || k;
+  const metierLabel = (k: string) => (t.cats.metier as Record<string, string>)[k] || METIER_COLORS[k]?.label || k;
   const { refreshing, onRefresh } = useRefresh();
   const router = useRouter();
   const params = useLocalSearchParams<{ action?: string; chantierId?: string; apporteurId?: string; apporteurType?: string }>();
@@ -1295,7 +1297,7 @@ export default function ChantiersScreen() {
             <Text style={styles.cardName}>{item.nom}</Text>
             <View style={[styles.statutBadge, { backgroundColor: statut.bg }]}>
               <Text style={[styles.statutText, { color: statut.text }]}>
-                {STATUT_LABELS[item.statut]}
+                {statutLabel(item.statut)}
               </Text>
             </View>
           </View>
@@ -1528,7 +1530,7 @@ export default function ChantiersScreen() {
       <View style={styles.searchBar}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Rechercher un chantier..."
+          placeholder={t.chantiers.searchPlaceholder}
           placeholderTextColor="#999"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -1550,11 +1552,11 @@ export default function ChantiersScreen() {
                 value={filterStatut}
                 title="Statut du chantier"
                 options={[
-                  { value: 'en_cours', label: 'En cours' },
+                  { value: 'en_cours', label: t.statutChantier.actif },
                   { value: 'a_letude', label: "À l'étude" },
-                  { value: 'termine', label: 'Terminés' },
-                  { value: 'archive', label: 'Archivés' },
-                  { value: 'tous', label: 'Tous les statuts' },
+                  { value: 'termine', label: t.chantiers.filterTermine },
+                  { value: 'archive', label: t.chantiers.filterArchive },
+                  { value: 'tous', label: t.chantiers.filterAllStatuts },
                 ]}
                 onSelect={v => setFilterStatut(v as typeof filterStatut)}
               />
@@ -1565,10 +1567,10 @@ export default function ChantiersScreen() {
                 value={filterContactType}
                 title="Filtrer par contact"
                 options={[
-                  { value: 'all', label: 'Tous les chantiers' },
-                  { value: 'architecte', label: 'Par architecte' },
+                  { value: 'all', label: t.chantiers.filterAllChantiers },
+                  { value: 'architecte', label: t.chantiers.byArchitecte },
                   { value: 'apporteur', label: "Par apporteur d'affaires" },
-                  { value: 'client', label: 'Par client' },
+                  { value: 'client', label: t.chantiers.byClient },
                 ]}
                 onSelect={v => { setFilterContactType(v as typeof filterContactType); setFilterContactId('all'); }}
               />
@@ -1590,7 +1592,7 @@ export default function ChantiersScreen() {
                 value={filterContactId}
                 title={`Choisir un ${APPORTEUR_TYPE_LABELS[filterContactType].label.toLowerCase()}`}
                 options={[
-                  { value: 'all', label: 'Tous' },
+                  { value: 'all', label: t.common.all },
                   ...listOfThisType.map(a => ({ value: a.id, label: `${a.prenom} ${a.nom}` })),
                 ]}
                 onSelect={v => setFilterContactId(v)}
@@ -1662,7 +1664,7 @@ export default function ChantiersScreen() {
                       <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>{ch.nom}</Text>
                     </View>
                     <View style={[styles.statutBadge, { backgroundColor: statut.bg, marginTop: 6 }]}>
-                      <Text style={[styles.statutText, { color: statut.text }]}>{STATUT_LABELS[ch.statut]}</Text>
+                      <Text style={[styles.statutText, { color: statut.text }]}>{statutLabel(ch.statut)}</Text>
                     </View>
                   </View>
 
@@ -1719,7 +1721,7 @@ export default function ChantiersScreen() {
                           return (
                             <Pressable key={s} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: active ? st.bg : '#F5EDE3', borderWidth: 1.5, borderColor: active ? st.text : '#E2E6EA' }}
                               onPress={() => { updateChantier({ ...ch, statut: s }); setActionChantier(null); }}>
-                              <Text style={{ fontSize: 11, fontWeight: '700', color: active ? st.text : '#687076' }}>{STATUT_LABELS[s]}</Text>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: active ? st.text : '#687076' }}>{statutLabel(s)}</Text>
                             </Pressable>
                           );
                         })}
@@ -1871,7 +1873,7 @@ export default function ChantiersScreen() {
                 <SelectField
                   value={form.statut}
                   title="Statut du chantier"
-                  options={STATUTS.map(s => ({ value: s, label: STATUT_LABELS[s], color: STATUT_COLORS[s].text }))}
+                  options={STATUTS.map(s => ({ value: s, label: statutLabel(s), color: STATUT_COLORS[s].text }))}
                   onSelect={v => setForm(f => ({ ...f, statut: v as StatutChantier }))}
                 />
               </FormField>
@@ -1915,7 +1917,7 @@ export default function ChantiersScreen() {
                         placeholder="Aucun"
                         title={`Choisir un ${meta.label.toLowerCase()}`}
                         options={[
-                          { value: '', label: 'Aucun' },
+                          { value: '', label: t.common.none },
                           ...listOfThisType.map(a => ({ value: a.id, label: `${a.prenom} ${a.nom}${a.societe ? ` · ${a.societe}` : ''}` })),
                         ]}
                         onSelect={v => setForm(f => ({ ...f, [field]: v }))}
@@ -2122,7 +2124,7 @@ export default function ChantiersScreen() {
                   const statut = STATUT_COLORS[ch.statut];
                   return (
                     <View style={[styles.statutBadge, { backgroundColor: statut.bg, alignSelf: 'flex-start', marginTop: 6 }]}>
-                      <Text style={[styles.statutText, { color: statut.text }]}>{STATUT_LABELS[ch.statut]}</Text>
+                      <Text style={[styles.statutText, { color: statut.text }]}>{statutLabel(ch.statut)}</Text>
                     </View>
                   );
                 })()}

@@ -225,6 +225,16 @@ export default {
     },
   },
 
+  statutChantier: {
+    actif: "جارٍ",
+    en_attente: "قيد الانتظار",
+    termine: "منتهٍ",
+    en_pause: "متوقف مؤقتًا",
+    sav: "خدمة",
+    a_letude: "قيد الدراسة",
+    archive: "مؤرشف",
+  },
+
   common: {
     monthsShort: ["ينا", "فبر", "مار", "أبر", "ماي", "يون", "يول", "أغس", "سبت", "أكت", "نوف", "ديس"],
     save: "حفظ",
@@ -416,6 +426,13 @@ export default {
     addNew: "إضافة",
   },
   chantiers: {
+    searchPlaceholder: "ابحث عن موقع...",
+    filterTermine: "منتهية",
+    filterArchive: "مؤرشفة",
+    filterAllStatuts: "كل الحالات",
+    filterAllChantiers: "كل المواقع",
+    byArchitecte: "حسب المهندس",
+    byClient: "حسب العميل",
     title: "المواقع",
     add: "موقع جديد",
     edit: "تعديل الموقع",

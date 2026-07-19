@@ -225,6 +225,16 @@ export default {
     },
   },
 
+  statutChantier: {
+    actif: "En curso",
+    en_attente: "En espera",
+    termine: "Terminada",
+    en_pause: "En pausa",
+    sav: "Postventa",
+    a_letude: "En estudio",
+    archive: "Archivada",
+  },
+
   common: {
     monthsShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
     save: "Guardar",
@@ -416,6 +426,13 @@ export default {
     addNew: "Añadir",
   },
   chantiers: {
+    searchPlaceholder: "Buscar una obra...",
+    filterTermine: "Terminadas",
+    filterArchive: "Archivadas",
+    filterAllStatuts: "Todos los estados",
+    filterAllChantiers: "Todas las obras",
+    byArchitecte: "Por arquitecto",
+    byClient: "Por cliente",
     title: "Obras",
     add: "Nueva obra",
     edit: "Editar obra",

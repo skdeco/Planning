@@ -225,6 +225,16 @@ export default {
     },
   },
 
+  statutChantier: {
+    actif: "В работе",
+    en_attente: "Ожидание",
+    termine: "Завершён",
+    en_pause: "На паузе",
+    sav: "Сервис",
+    a_letude: "На изучении",
+    archive: "В архиве",
+  },
+
   common: {
     monthsShort: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
     save: "Сохранить",
@@ -416,6 +426,13 @@ export default {
     addNew: "Добавить",
   },
   chantiers: {
+    searchPlaceholder: "Поиск объекта...",
+    filterTermine: "Завершённые",
+    filterArchive: "Архивные",
+    filterAllStatuts: "Все статусы",
+    filterAllChantiers: "Все объекты",
+    byArchitecte: "По архитектору",
+    byClient: "По клиенту",
     title: "Объекты",
     add: "Новый объект",
     edit: "Изменить объект",

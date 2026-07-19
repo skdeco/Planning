@@ -225,6 +225,16 @@ export default {
     },
   },
 
+  statutChantier: {
+    actif: "In progress",
+    en_attente: "Pending",
+    termine: "Finished",
+    en_pause: "Paused",
+    sav: "After-sales",
+    a_letude: "Under study",
+    archive: "Archived",
+  },
+
   common: {
     monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     save: "Save",
@@ -416,6 +426,13 @@ export default {
     addNew: "Add",
   },
   chantiers: {
+    searchPlaceholder: "Search a site...",
+    filterTermine: "Finished",
+    filterArchive: "Archived",
+    filterAllStatuts: "All statuses",
+    filterAllChantiers: "All sites",
+    byArchitecte: "By architect",
+    byClient: "By client",
     title: "Sites",
     add: "New site",
     edit: "Edit site",

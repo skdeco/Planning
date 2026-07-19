@@ -229,6 +229,16 @@ export default {
     },
   },
 
+  statutChantier: {
+    actif: "En cours",
+    en_attente: "En attente",
+    termine: "Terminé",
+    en_pause: "En pause",
+    sav: "SAV",
+    a_letude: "À l'étude",
+    archive: "Archivé",
+  },
+
   common: {
     monthsShort: ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
     save: "Enregistrer",
@@ -426,6 +436,13 @@ export default {
 
   // Chantiers
   chantiers: {
+    searchPlaceholder: "Rechercher un chantier...",
+    filterTermine: "Terminés",
+    filterArchive: "Archivés",
+    filterAllStatuts: "Tous les statuts",
+    filterAllChantiers: "Tous les chantiers",
+    byArchitecte: "Par architecte",
+    byClient: "Par client",
     title: "Chantiers",
     add: "Nouveau chantier",
     edit: "Modifier le chantier",
