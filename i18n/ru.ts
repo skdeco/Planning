@@ -58,6 +58,7 @@ export default {
   },
 
   common: {
+    monthsShort: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
     save: "Сохранить",
     cancel: "Отмена",
     delete: "Удалить",
@@ -202,6 +203,7 @@ export default {
     employeeHint: "Демо-сотрудники: имя (напр.:",
   },
   planning: {
+    weekDaysShort: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
     title: "Планирование",
     week: "Неделя",
     addAffectation: "Добавить назначение",

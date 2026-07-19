@@ -58,6 +58,7 @@ export default {
   },
 
   common: {
+    monthsShort: ["ينا", "فبر", "مار", "أبر", "ماي", "يون", "يول", "أغس", "سبت", "أكت", "نوف", "ديس"],
     save: "حفظ",
     cancel: "إلغاء",
     delete: "حذف",
@@ -202,6 +203,7 @@ export default {
     employeeHint: "موظفون تجريبيون: الاسم (مثال:",
   },
   planning: {
+    weekDaysShort: ["اثن", "ثلا", "أرب", "خمي", "جمع", "سبت", "أحد"],
     title: "التخطيط",
     week: "الأسبوع",
     addAffectation: "إضافة تعيين",

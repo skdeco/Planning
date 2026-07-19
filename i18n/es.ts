@@ -58,6 +58,7 @@ export default {
   },
 
   common: {
+    monthsShort: ["Ene", "Feb", "Mar", "Abr", "May", "Jun", "Jul", "Ago", "Sep", "Oct", "Nov", "Dic"],
     save: "Guardar",
     cancel: "Cancelar",
     delete: "Eliminar",
@@ -202,6 +203,7 @@ export default {
     employeeHint: "Empleados demo: nombre (ej.:",
   },
   planning: {
+    weekDaysShort: ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"],
     title: "Planificación",
     week: "Semana",
     addAffectation: "Añadir asignación",

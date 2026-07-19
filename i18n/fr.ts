@@ -62,6 +62,7 @@ export default {
 
   // Commun
   common: {
+    monthsShort: ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
     save: "Enregistrer",
     cancel: "Annuler",
     delete: "Supprimer",
@@ -210,6 +211,7 @@ export default {
 
   // Planning
   planning: {
+    weekDaysShort: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
     title: "Planning",
     week: "Semaine",
     addAffectation: "Ajouter une affectation",

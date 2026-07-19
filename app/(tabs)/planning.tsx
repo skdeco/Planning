@@ -908,14 +908,14 @@ export default function PlanningScreen() {
             <Text style={{ fontSize: 16, color: '#2C2C2C' }}>‹</Text>
           </Pressable>
           <Pressable style={{ backgroundColor: '#F5EDE3', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }} onPress={() => setShowDatePicker(true)}>
-            <Text style={{ fontSize: 10, fontWeight: '600', color: '#2C2C2C' }}>Auj.</Text>
+            <Text style={{ fontSize: 10, fontWeight: '600', color: '#2C2C2C' }}>{t.common.today_short}</Text>
           </Pressable>
           <Pressable style={{ padding: 4 }} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}>
             <Text style={{ fontSize: 16, color: '#2C2C2C' }}>›</Text>
           </Pressable>
         </View>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <Text style={styles.chantierCount}>{visibleChantiers.length} chantier{visibleChantiers.length !== 1 ? 's' : ''}</Text>
+          <Text style={styles.chantierCount}>{visibleChantiers.length} {t.nav.chantiers}</Text>
           {isAdmin && viewMode === 'semaine' && (() => {
             const todayStr = toYMD(new Date());
             // Employés en congé cette semaine
@@ -952,7 +952,7 @@ export default function PlanningScreen() {
       <Modal visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
         <Pressable style={styles.datePickerOverlay} onPress={() => setShowDatePicker(false)}>
           <Pressable style={styles.datePickerSheet} onPress={() => {}}>
-            <Text style={styles.datePickerTitle}>Aller à la semaine du…</Text>
+            <Text style={styles.datePickerTitle}>{t.common.goToWeek}</Text>
             <DatePickerCalendar
               value={toYMD(days[0])}
               onChange={(ymd) => {

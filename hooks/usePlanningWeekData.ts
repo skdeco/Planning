@@ -1,5 +1,6 @@
 import { useMemo, useCallback } from 'react';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import type {
   Chantier,
   Employe,
@@ -14,8 +15,6 @@ import type {
 // dans le repo. Voir REFACTOR_NOTES.md "Dette technique — Helpers de date
 // dupliqués" pour l'extraction future.
 
-/** Mois abrégés FR (3 lettres). Identique à `MOIS` de planning.tsx. */
-const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 /** Ajoute `n` jours à une date (retourne un nouvel objet, sans mutation). */
 function addDays(date: Date, n: number): Date {
@@ -111,6 +110,8 @@ export interface PlanningWeekData {
  */
 export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
   const { data, currentUser } = useApp();
+  const { t } = useLanguage();
+  const MOIS = t.common.monthsShort;
   const isAdmin = currentUser?.role === 'admin';
   const isST    = currentUser?.role === 'soustraitant';
 
@@ -131,7 +132,7 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
       return `${first.getDate()} – ${last.getDate()} ${MOIS[first.getMonth()]}`;
     }
     return `${first.getDate()} ${MOIS[first.getMonth()]} – ${last.getDate()} ${MOIS[last.getMonth()]}`;
-  }, [days]);
+  }, [days, MOIS]);
 
   // Chantiers visibles sur le planning
   const visibleChantiers = useMemo(() => {

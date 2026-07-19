@@ -8,6 +8,7 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
 import { useRefresh } from '@/hooks/useRefresh';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -16,8 +17,6 @@ import { getEmployeColor, METIER_COLORS } from '@/app/types';
 import { WeekGridCell, type CellModalOpeners } from './WeekGridCell';
 
 // ─── Helpers de date locaux ───────────────────────────────────────────────────
-
-const JOURS = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
 
 /** Convertit une `Date` en string `YYYY-MM-DD` en heure locale. */
 function toYMD(date: Date): string {
@@ -105,6 +104,8 @@ export function WeekGridView({
   onOpenOrdreModal,
 }: WeekGridViewProps): React.ReactElement {
   const { data, currentUser } = useApp();
+  const { t } = useLanguage();
+  const JOURS = t.planning.weekDaysShort;
   const isAdmin = currentUser?.role === 'admin';
   const {
     days,
