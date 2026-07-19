@@ -839,8 +839,8 @@ export default function DashboardScreen() {
           onPress={() => router.push('/(tabs)/materiel' as any)}
         >
           <Text style={{ fontSize: 18 }}>🛒</Text>
-          <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#fff' }}>{stats.materielNonAchete} article{stats.materielNonAchete > 1 ? 's' : ''} à acheter</Text>
-          <Text style={{ fontSize: 14, color: '#fff', fontWeight: '700' }}>Voir →</Text>
+          <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#fff' }}>{stats.materielNonAchete} {t.dash.itemsToBuyLabel}</Text>
+          <Text style={{ fontSize: 14, color: '#fff', fontWeight: '700' }}>{t.dash.see}</Text>
         </Pressable>
       )}
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
@@ -851,7 +851,7 @@ export default function DashboardScreen() {
           >
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 }}>Bonjour 👋</Text>
+                <Text style={{ fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 }}>{t.home.hello} 👋</Text>
                 <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, textTransform: 'capitalize', fontWeight: '400' }}>
                   {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
                 </Text>
@@ -861,8 +861,8 @@ export default function DashboardScreen() {
                 <Pressable
                   style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}
                   onPress={() => {
-                    if (Platform.OS === 'web') { if (window.confirm('Se déconnecter ?')) logout(); }
-                    else Alert.alert('Déconnexion', 'Voulez-vous vous déconnecter ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Se déconnecter', style: 'destructive', onPress: logout }]);
+                    if (Platform.OS === 'web') { if (window.confirm(t.home.logoutTitle)) logout(); }
+                    else Alert.alert(t.home.logoutTitle, t.home.logoutMsg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.home.logout, style: 'destructive', onPress: logout }]);
                   }}
                 >
                   <Text style={{ fontSize: 16, color: '#fff' }}>⏻</Text>
@@ -876,7 +876,7 @@ export default function DashboardScreen() {
         <FadeInView delay={100}>
         <Pressable onPress={() => setSearchOpen(true)} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 14, paddingVertical: 13, marginBottom: 12, shadowColor: '#2C2C2C', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
           <Text style={{ fontSize: 14, color: '#B0A89E', marginRight: 8 }}>🔍</Text>
-          <Text style={{ flex: 1, fontSize: 14, color: '#B0A89E' }}>Rechercher partout (chantiers, SAV, devis…)</Text>
+          <Text style={{ flex: 1, fontSize: 14, color: '#B0A89E' }}>{t.dash.searchEverywhere}</Text>
         </Pressable>
         </FadeInView>
 
@@ -914,11 +914,11 @@ export default function DashboardScreen() {
             .forEach(p => {
               const emp = data.employes.find(e => e.id === p.employeId);
               const ch = data.chantiers.find(c => c.id === p.chantierId);
-              const label = p.type === 'debut' ? 'arrivée' : 'départ';
+              const label = p.type === 'debut' ? t.dash.arrivalLc : t.dash.departureLc;
               alertes.push({
                 id: `horszone_${p.id}`,
                 icon: '📍',
-                text: `${emp?.prenom || 'Employé'} a pointé son ${label} hors zone${p.distanceChantier ? ` (${p.distanceChantier} m)` : ''}${ch ? ` — ${ch.nom}` : ''}`,
+                text: `${emp?.prenom || t.home.employeeLabel} ${t.dash.clockedHis} ${label} ${t.dash.outOfZone}${p.distanceChantier ? ` (${p.distanceChantier} m)` : ''}${ch ? ` — ${ch.nom}` : ''}`,
                 color: '#E67E22',
                 onPress: () => router.push('/(tabs)/reporting' as any),
               });
@@ -1078,7 +1078,7 @@ export default function DashboardScreen() {
             <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Pressable onPress={() => setShowAlertes(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                  <Text style={styles.sectionTitle}>Alertes ({visibleAlertes.length})</Text>
+                  <Text style={styles.sectionTitle}>{t.dash.alerts} ({visibleAlertes.length})</Text>
                   <Text style={{ fontSize: 12, color: '#8C8077' }}>{showAlertes ? '▾' : '▸'}</Text>
                 </Pressable>
                 {showAlertes && (
@@ -1092,7 +1092,7 @@ export default function DashboardScreen() {
                     {visibleAlertes.length > 1 && (
                       <Pressable onPress={() => setDismissedAlertes(new Set([...dismissedAlertes, ...visibleAlertes.map(a => a.id)]))}
                         style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 11, color: '#687076' }}>Tout masquer</Text>
+                        <Text style={{ fontSize: 11, color: '#687076' }}>{t.dash.hideAll}</Text>
                       </Pressable>
                     )}
                   </View>
@@ -1149,28 +1149,28 @@ export default function DashboardScreen() {
           );
         })()}
 
-        <Text style={styles.sectionTitle}>Vue d'ensemble</Text>
+        <Text style={styles.sectionTitle}>{t.dash.overview}</Text>
         <View style={styles.statsGrid}>
           <Pressable style={[styles.statCard, { borderLeftColor: '#2C2C2C', width: '48%' as any }]} onPress={() => router.push('/(tabs)/chantiers' as any)}>
             <Text style={[styles.statValue, { color: '#2C2C2C' }]}>{stats.chantiersActifs}</Text>
-            <Text style={styles.statLabel}>Chantiers actifs</Text>
+            <Text style={styles.statLabel}>{t.dash.activeChantiers}</Text>
           </Pressable>
           <Pressable style={[styles.statCard, { borderLeftColor: '#F59E0B', width: '48%' as any }]} onPress={() => router.push('/(tabs)/planning' as any)}>
             <Text style={[styles.statValue, { color: '#F59E0B' }]}>{stats.employesAujourdhui}</Text>
-            <Text style={styles.statLabel}>Personnes affectées</Text>
+            <Text style={styles.statLabel}>{t.dash.assignedPeople}</Text>
           </Pressable>
           <Pressable style={[styles.statCard, { borderLeftColor: '#00BCD4', width: '48%' as any }]} onPress={() => router.push('/(tabs)/planning' as any)}>
             <Text style={[styles.statValue, { color: '#00BCD4' }]}>{stats.nbArrivees} / {stats.nbDeparts}</Text>
-            <Text style={styles.statLabel}>Arrivées / Départs</Text>
+            <Text style={styles.statLabel}>{t.dash.arrivalsDepartures}</Text>
           </Pressable>
           <Pressable style={[styles.statCard, { borderLeftColor: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60', width: '48%' as any }]} onPress={() => router.push('/(tabs)/reporting' as any)}>
             <Text style={[styles.statValue, { color: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60' }]}>{recapHebdo.nbRetards}</Text>
-            <Text style={styles.statLabel}>Retards (semaine)</Text>
+            <Text style={styles.statLabel}>{t.dash.delaysWeek}</Text>
           </Pressable>
         </View>
 
         {/* Couverture chantiers — 2 colonnes */}
-        <Text style={styles.sectionTitle}>Couverture du jour</Text>
+        <Text style={styles.sectionTitle}>{t.dash.dayCoverage}</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {data.chantiers.filter(c => c.statut === 'actif').map(c => {
             const nbAffectes = new Set(
@@ -1184,7 +1184,7 @@ export default function DashboardScreen() {
             return (
               <View key={c.id} style={[styles.statCard, { width: '48%' as any, borderLeftWidth: 4, borderLeftColor: color, paddingVertical: 8, paddingHorizontal: 10 }]}>
                 <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{c.nom}</Text>
-                <Text style={{ fontSize: 11, color, fontWeight: '700', marginTop: 2 }}>{nbPointes}/{nbAffectes} pointés</Text>
+                <Text style={{ fontSize: 11, color, fontWeight: '700', marginTop: 2 }}>{nbPointes}/{nbAffectes} {t.dash.clocked}</Text>
               </View>
             );
           })}
@@ -1199,7 +1199,7 @@ export default function DashboardScreen() {
 
         {/* Reporting financier détaillé — repliable pour alléger le dashboard (Rentabilité + CA). */}
         <Pressable onPress={() => setShowFinancesDetail(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 4 }}>
-          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Finances (détail)</Text>
+          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>{t.dash.financesDetail}</Text>
           <Text style={{ fontSize: 13, fontWeight: '600', color: '#8C6D2F' }}>{showFinancesDetail ? '▲ Masquer' : '▼ Afficher'}</Text>
         </Pressable>
         {showFinancesDetail && (<>
@@ -1224,7 +1224,7 @@ export default function DashboardScreen() {
 
           return (
             <>
-              <Text style={styles.sectionTitle}>Rentabilité par chantier</Text>
+              <Text style={styles.sectionTitle}>{t.dash.profitabilityByChantier}</Text>
               {rentaCards.map((item, idx) => {
                 const margeColor = item.marge >= 0 ? '#27AE60' : '#E74C3C';
                 return (
@@ -1236,22 +1236,22 @@ export default function DashboardScreen() {
                       </View>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 10, color: '#687076' }}>Recettes</Text>
+                          <Text style={{ fontSize: 10, color: '#687076' }}>{t.dash.revenue}</Text>
                           <Text style={{ fontSize: 14, fontWeight: '700', color: '#27AE60' }}>{fmt(item.recettes)}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'center' }}>
-                          <Text style={{ fontSize: 10, color: '#687076' }}>Dépenses</Text>
+                          <Text style={{ fontSize: 10, color: '#687076' }}>{t.dash.expenses}</Text>
                           <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C' }}>{fmt(item.depenses)}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                          <Text style={{ fontSize: 10, color: '#687076' }}>Marge</Text>
+                          <Text style={{ fontSize: 10, color: '#687076' }}>{t.dash.margin}</Text>
                           <Text style={{ fontSize: 14, fontWeight: '800', color: margeColor }}>{fmt(item.marge)}</Text>
                         </View>
                       </View>
                       {item.pctConsomme !== null && (
                         <View style={{ marginTop: 4 }}>
                           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                            <Text style={{ fontSize: 10, color: '#687076' }}>Budget consommé</Text>
+                            <Text style={{ fontSize: 10, color: '#687076' }}>{t.dash.budgetUsed}</Text>
                             <Text style={{ fontSize: 10, fontWeight: '700', color: item.pctConsomme > 90 ? '#E74C3C' : item.pctConsomme > 70 ? '#F59E0B' : '#27AE60' }}>{item.pctConsomme.toFixed(0)}%</Text>
                           </View>
                           <ProgressBar progress={item.pctConsomme / 100} color={item.pctConsomme > 90 ? '#E74C3C' : item.pctConsomme > 70 ? '#F59E0B' : '#27AE60'} />
@@ -1288,9 +1288,9 @@ export default function DashboardScreen() {
 
           return (
             <FadeInView delay={100}>
-              <Text style={styles.sectionTitle}>Chiffre d'affaires</Text>
+              <Text style={styles.sectionTitle}>{t.dash.turnover}</Text>
               <View style={[styles.statCard, { borderWidth: 1.5, borderColor: '#C9A96E', marginBottom: 8 }]}>
-                <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>{fmtCA(caMonth)} <Text style={{ fontSize: 13, fontWeight: '500', color: '#687076' }}>ce mois</Text></Text>
+                <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>{fmtCA(caMonth)} <Text style={{ fontSize: 13, fontWeight: '500', color: '#687076' }}>{t.dash.thisMonth}</Text></Text>
                 <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>vs {fmtCA(caPrev)} le mois dernier</Text>
                 {(caMonth > 0 || caPrev > 0) && (
                   <View style={{ marginTop: 8, height: 8, backgroundColor: '#F0EBE3', borderRadius: 4, overflow: 'hidden' }}>
@@ -1306,7 +1306,7 @@ export default function DashboardScreen() {
         {/* Alertes (messages + RH, sans matériel qui est déjà en haut) */}
         {(stats.msgsNonLus > 0 || stats.demandesRH > 0) && (
           <>
-            <Text style={styles.sectionTitle}>Alertes</Text>
+            <Text style={styles.sectionTitle}>{t.dash.alerts}</Text>
             <View style={styles.alertsContainer}>
               {/* Messagerie désactivée côté UI — bloc neutralisé (réversible : retirer false &&) */}
               {false && stats.msgsNonLus > 0 && (
@@ -1335,14 +1335,14 @@ export default function DashboardScreen() {
             onPress={() => router.push('/(tabs)/reporting' as any)}
           >
             <Text style={{ fontSize: 16 }}>📄</Text>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C' }}>Export rapport</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C' }}>{t.dash.exportReport}</Text>
           </Pressable>
           <Pressable
             style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderLeftWidth: 4, borderLeftColor: '#27AE60' }]}
             onPress={() => setShowImport(true)}
           >
             <Text style={{ fontSize: 16 }}>📥</Text>
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>Import Excel</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>{t.dash.importExcel}</Text>
           </Pressable>
         </View>
 
@@ -1385,9 +1385,9 @@ export default function DashboardScreen() {
         {activiteRecente.length > 0 && (
           <>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 10 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>Activité récente</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>{t.dash.recentActivity}</Text>
               <Pressable onPress={() => setShowHistorique(true)}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>Voir tout →</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>{t.dash.seeAll}</Text>
               </Pressable>
             </View>
             <View style={styles.activityContainer}>
@@ -1411,7 +1411,7 @@ export default function DashboardScreen() {
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
             <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', padding: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>Historique complet</Text>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>{t.dash.fullHistory}</Text>
                 <Pressable onPress={() => setShowHistorique(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 14, color: '#687076', fontWeight: '700' }}>✕</Text>
                 </Pressable>
@@ -1435,7 +1435,7 @@ export default function DashboardScreen() {
                         {isMyEntry && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {lectures.length === 0 ? (
-                              <Text style={{ fontSize: 10, color: '#B0BEC5', fontStyle: 'italic' }}>Pas encore lu</Text>
+                              <Text style={{ fontSize: 10, color: '#B0BEC5', fontStyle: 'italic' }}>{t.dash.notReadYet}</Text>
                             ) : (
                               lectures.map(l => {
                                 const emp = data.employes.find(e => e.id === l.userId);
@@ -1455,7 +1455,7 @@ export default function DashboardScreen() {
                   );
                 })}
                 {(data.activityLog || []).length === 0 && (
-                  <Text style={{ textAlign: 'center', color: '#687076', paddingVertical: 32 }}>Aucune activité enregistrée</Text>
+                  <Text style={{ textAlign: 'center', color: '#687076', paddingVertical: 32 }}>{t.dash.noActivity}</Text>
                 )}
               </ScrollView>
             </View>

@@ -123,7 +123,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: isAdmin ? 'Accueil' : 'Ma journée',
+          title: isAdmin ? t.nav.home : t.nav.myDay,
           href: (isST || isApporteur) ? null : undefined,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="house.fill" color={color} />
@@ -149,7 +149,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="chantiers"
         options={{
-          title: isApporteur ? 'Mes chantiers' : t.nav.chantiers,
+          title: isApporteur ? t.nav.myChantiers : t.nav.chantiers,
           href: (isAdmin || isApporteur) ? undefined : null,
           tabBarIcon: ({ color }) => (
             <IconSymbol size={26} name="hammer.fill" color={color} />
@@ -195,7 +195,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="gestion"
         options={{
-          title: 'Gestion',
+          title: t.nav.gestion,
           href: isAdmin ? undefined : null,
           tabBarBadge: isAdmin && nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
@@ -270,7 +270,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="societe"
         options={{
-          title: 'Société',
+          title: t.nav.societe,
           href: null,
         }}
       />
@@ -279,7 +279,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="drive"
         options={{
-          title: 'Drive',
+          title: t.nav.drive,
           href: null,
         }}
       />
