@@ -297,7 +297,7 @@ export default function MaterielScreen() {
       : 'Admin';
     sendNotificationEmail(acheteurs, employeNom, addModal.chantierNom, [item.texte]);
 
-    toast.success(`"${item.texte}" ajouté`);
+    toast.success(`"${item.texte}" ${t.materiel.itemAdded}`);
     setNewArticle('');
     setNewQuantite('');
     setNewCommentaire('');
@@ -315,7 +315,7 @@ export default function MaterielScreen() {
     );
     upsertListeMateriau({ ...liste, items: updatedItems, updatedAt: new Date().toISOString() });
     setFournisseurPickerModal(null);
-    toast.success('Fournisseur mis à jour');
+    toast.success(t.materiel.fournisseurUpdated);
   };
 
   // ── Modal achat (prix réel) ──
@@ -393,18 +393,18 @@ export default function MaterielScreen() {
     };
     if (Platform.OS === 'web') {
       // Sur le web Alert.alert avec 3 boutons n'affiche pas toujours tout : utiliser window.confirm + window.prompt
-      const choix = window.confirm(`Avez-vous acheté la totalité (${item.quantite}) ?\n\nOK = Tout acheté\nAnnuler = Achat partiel`);
+      const choix = window.confirm(`${t.materiel.boughtAllQ} (${item.quantite}) ?\n\nOK = ${t.materiel.boughtAll}\n${t.common.cancel} = ${t.materiel.partialBuy}`);
       if (choix) onTout();
       else onPartiel();
       return;
     }
     Alert.alert(
       item.texte,
-      `Quantité demandée : ${item.quantite}\nCombien avez-vous acheté ?`,
+      `${t.materiel.qtyRequested} : ${item.quantite}\n${t.materiel.howMuchBought}`,
       [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Partiellement', onPress: onPartiel },
-        { text: 'Tout acheté', onPress: onTout },
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.materiel.partially, onPress: onPartiel },
+        { text: t.materiel.boughtAll, onPress: onTout },
       ]
     );
   };
@@ -414,7 +414,7 @@ export default function MaterielScreen() {
     if (!partielModal) return;
     const qtyAchete = parseFloat(partielQty.replace(',', '.'));
     if (isNaN(qtyAchete) || qtyAchete <= 0) {
-      Alert.alert('Quantité invalide', 'Veuillez saisir un nombre supérieur à 0.');
+      Alert.alert(t.materiel.invalidQtyTitle, t.materiel.invalidQtyMsg);
       return;
     }
     const { listeId, itemId, quantiteTotale, quantiteUnite } = partielModal;
@@ -458,7 +458,7 @@ export default function MaterielScreen() {
 
     setPartielModal(null);
     setPartielQty('');
-    toast.success(`${qtyAchete}${uniteStr} acheté, ${reste}${uniteStr} restant`);
+    toast.success(`${qtyAchete}${uniteStr} ${t.materiel.boughtWord}, ${reste}${uniteStr} ${t.materiel.remainingWord}`);
   };
 
   // ── Supprimer un article (admin, acheteur, ou créateur de la liste) ──
@@ -469,7 +469,7 @@ export default function MaterielScreen() {
     if (!canDelete) return;
     if (await confirm(t.materiel.deleteItem)) {
       deleteMateriauItem(listeId, itemId);
-      toast.success('Article supprimé');
+      toast.success(t.materiel.itemDeleted);
     }
   };
 
@@ -477,7 +477,7 @@ export default function MaterielScreen() {
   const handleDeleteListe = async (listeId: string) => {
     if (await confirm(t.materiel.deleteList)) {
       deleteListeMateriau(listeId);
-      toast.success('Liste supprimée');
+      toast.success(t.materiel.listDeleted);
     }
   };
 
@@ -543,7 +543,7 @@ export default function MaterielScreen() {
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EEF2F8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
                         onPress={() => handleCheckDispo(item.id, item.texte)}
                       >
-                        <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Vérifier dispo</Text>
+                        <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{t.materiel.checkAvailability}</Text>
                       </Pressable>
                     )}
                     {loading && <ActivityIndicator size="small" color="#2C2C2C" />}
@@ -785,8 +785,8 @@ export default function MaterielScreen() {
                 </View>
               </View>
               {isAdmin && listes.length > 0 && (
-                <Pressable onPress={async () => { if (await confirm('Supprimer cette liste ?')) listes.forEach(l => deleteListeMateriau(l.id)); }} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#E74C3C' }}>Supprimer cette liste</Text>
+                <Pressable onPress={async () => { if (await confirm(t.materiel.deleteThisListConfirm)) listes.forEach(l => deleteListeMateriau(l.id)); }} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
+                  <Text style={{ fontSize: 11, color: '#E74C3C' }}>{t.materiel.deleteThisList}</Text>
                 </Pressable>
               )}
             </View>
@@ -850,7 +850,7 @@ export default function MaterielScreen() {
                       <View style={{ marginBottom: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F5EDE3', borderRadius: 6, marginBottom: 4 }}>
                           <Text style={{ fontSize: 12 }}>📦</Text>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#8C8077' }}>Sans fournisseur</Text>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#8C8077' }}>{t.materiel.noFournisseur}</Text>
                           <Text style={{ fontSize: 10, color: '#8C8077' }}>({sansFournisseur.length})</Text>
                         </View>
                       </View>
@@ -948,7 +948,7 @@ export default function MaterielScreen() {
       {viewMode === 'acheteur' && isAdmin && (
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
           <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, backgroundColor: '#F5EDE3', borderRadius: 8, alignSelf: 'flex-start' }} onPress={() => setShowFournisseurModal(true)}>
-            <Text style={{ fontSize: 12, color: '#8C8077' }}>Gérer les fournisseurs</Text>
+            <Text style={{ fontSize: 12, color: '#8C8077' }}>{t.materiel.manageFournisseurs}</Text>
           </Pressable>
         </View>
       )}
@@ -957,7 +957,7 @@ export default function MaterielScreen() {
       <View style={styles.searchBar}>
         <TextInput
           style={styles.searchInput}
-          placeholder="Rechercher un article ou chantier..."
+          placeholder={t.materiel.searchPlaceholder}
           placeholderTextColor="#999"
           value={searchQuery}
           onChangeText={setSearchQuery}
@@ -977,12 +977,12 @@ export default function MaterielScreen() {
               compact
               value={filterStatut}
               options={[
-                { value: 'a_acheter', label: 'À acheter' },
-                { value: 'achete', label: 'Achetés' },
-                { value: 'tous', label: 'Tous' },
+                { value: 'a_acheter', label: t.materiel.statusToBuy },
+                { value: 'achete', label: t.materiel.statusBought },
+                { value: 'tous', label: t.common.all },
               ]}
               onSelect={v => setFilterStatut(v as 'a_acheter' | 'achete' | 'tous')}
-              title="Statut d'achat"
+              title={t.materiel.filterStatutTitle}
             />
           </View>
           <View style={{ flex: 1 }}>
@@ -990,13 +990,13 @@ export default function MaterielScreen() {
               compact
               searchable
               value={filterFournisseur}
-              placeholder="Tous fournisseurs"
+              placeholder={t.materiel.allFournisseurs}
               options={[
-                { value: '', label: 'Tous fournisseurs' },
+                { value: '', label: t.materiel.allFournisseurs },
                 ...fournisseursList.map(f => ({ value: f, label: f })),
               ]}
               onSelect={setFilterFournisseur}
-              title="Fournisseur"
+              title={t.materiel.fournisseur}
             />
           </View>
         </View>
@@ -1061,7 +1061,7 @@ export default function MaterielScreen() {
             <Text style={styles.inputLabel}>{t.common.comment} ({t.common.optional})</Text>
             <TextInput
               style={[styles.input, styles.inputMultiline]}
-              placeholder="Ex: Marque Leroy Merlin, ref. 12345, couleur RAL 9010..."
+              placeholder={t.materiel.commentExample}
               value={newCommentaire}
               onChangeText={setNewCommentaire}
               multiline
@@ -1077,7 +1077,7 @@ export default function MaterielScreen() {
                   <Pressable
                     style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: !newFournisseur ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: !newFournisseur ? '#2C2C2C' : '#E2E6EA' }}
                     onPress={() => setNewFournisseur('')}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: !newFournisseur ? '#fff' : '#687076' }}>Aucun</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: !newFournisseur ? '#fff' : '#687076' }}>{t.common.none}</Text>
                   </Pressable>
                   {fournisseursList.map(f => (
                     <Pressable key={f}
@@ -1117,13 +1117,13 @@ export default function MaterielScreen() {
       <ModalKeyboard visible={showFournisseurModal} transparent animationType="fade" onRequestClose={() => setShowFournisseurModal(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowFournisseurModal(false)}>
           <Pressable style={[styles.modalContent, { maxHeight: '70%' }]} onPress={e => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>Fournisseurs</Text>
-            <Text style={{ fontSize: 12, color: '#687076', marginBottom: 12 }}>Gérez votre liste de fournisseurs prédéfinis.</Text>
+            <Text style={styles.modalTitle}>{t.materiel.fournisseursTitle}</Text>
+            <Text style={{ fontSize: 12, color: '#687076', marginBottom: 12 }}>{t.materiel.manageFournisseursDesc}</Text>
 
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
               <TextInput
                 style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                placeholder="Ex: Leroy Merlin, Point P, Rexel..."
+                placeholder={t.materiel.fournisseurExample}
                 placeholderTextColor="#B0BEC5"
                 value={newFournisseurName}
                 onChangeText={setNewFournisseurName}
@@ -1141,16 +1141,16 @@ export default function MaterielScreen() {
 
             <ScrollView style={{ maxHeight: 300 }}>
               {(data.fournisseurs || []).length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#B0BEC5', textAlign: 'center', padding: 20 }}>Aucun fournisseur. Ajoutez-en un ci-dessus.</Text>
+                <Text style={{ fontSize: 12, color: '#B0BEC5', textAlign: 'center', padding: 20 }}>{t.materiel.noFournisseurYet}</Text>
               ) : (
                 (data.fournisseurs || []).map(f => (
                   <View key={f} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}>
                     <Text style={{ fontSize: 14, color: '#11181C' }}>{f}</Text>
                     <Pressable onPress={() => {
                       if (Platform.OS === 'web') {
-                        if (window.confirm(`Supprimer "${f}" ?`)) deleteFournisseur(f);
+                        if (window.confirm(`${t.common.delete} "${f}" ?`)) deleteFournisseur(f);
                       } else {
-                        Alert.alert('Supprimer', `Supprimer "${f}" ?`, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: () => deleteFournisseur(f) }]);
+                        Alert.alert(t.common.delete, `${t.common.delete} "${f}" ?`, [{ text: t.common.cancel, style: 'cancel' }, { text: t.common.delete, style: 'destructive', onPress: () => deleteFournisseur(f) }]);
                       }
                     }}>
                       <Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text>
@@ -1161,7 +1161,7 @@ export default function MaterielScreen() {
             </ScrollView>
 
             <Pressable style={[styles.btnSave, { marginTop: 12 }]} onPress={() => setShowFournisseurModal(false)}>
-              <Text style={styles.btnSaveText}>Fermer</Text>
+              <Text style={styles.btnSaveText}>{t.common.close}</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -1172,7 +1172,7 @@ export default function MaterielScreen() {
         <Pressable style={styles.modalOverlay} onPress={() => setFournisseurPickerModal(null)}>
           <Pressable style={[styles.modalContent, { maxHeight: '60%' }]} onPress={e => e.stopPropagation()}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-              <Text style={styles.modalTitle}>Fournisseur</Text>
+              <Text style={styles.modalTitle}>{t.materiel.fournisseur}</Text>
               <Pressable onPress={() => setFournisseurPickerModal(null)}>
                 <Text style={{ fontSize: 18, color: '#687076' }}>✕</Text>
               </Pressable>
@@ -1184,7 +1184,7 @@ export default function MaterielScreen() {
               <Pressable
                 style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: !fournisseurPickerModal?.currentFournisseur ? '#2C2C2C' : '#F5EDE3' }}
                 onPress={() => fournisseurPickerModal && handleChangeFournisseur(fournisseurPickerModal.listeId, fournisseurPickerModal.itemId, '')}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: !fournisseurPickerModal?.currentFournisseur ? '#fff' : '#687076' }}>Aucun</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: !fournisseurPickerModal?.currentFournisseur ? '#fff' : '#687076' }}>{t.common.none}</Text>
               </Pressable>
               {fournisseursList.map(f => (
                 <Pressable key={f}
@@ -1202,13 +1202,13 @@ export default function MaterielScreen() {
       <ModalKeyboard visible={!!partielModal} transparent animationType="fade" onRequestClose={() => { setPartielModal(null); setPartielQty(''); }}>
         <Pressable style={styles.modalOverlay} onPress={() => { setPartielModal(null); setPartielQty(''); }}>
           <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>Achat partiel</Text>
+            <Text style={styles.modalTitle}>{t.materiel.partialBuy}</Text>
             <Text style={styles.modalSubtitle}>{partielModal?.nom}</Text>
             <Text style={{ fontSize: 13, color: '#555', marginBottom: 12 }}>
               Quantité demandée : <Text style={{ fontWeight: '700', color: '#2C2C2C' }}>{partielModal?.quantiteTotale}{partielModal?.quantiteUnite ? ` ${partielModal.quantiteUnite}` : ''}</Text>
             </Text>
 
-            <Text style={styles.inputLabel}>Nombre acheté *</Text>
+            <Text style={styles.inputLabel}>{t.materiel.qtyBoughtLabel}</Text>
             <TextInput
               style={styles.input}
               keyboardType="numeric"
