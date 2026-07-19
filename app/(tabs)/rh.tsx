@@ -507,17 +507,17 @@ export default function RHScreen() {
                 <View style={styles.soldeRow}>
                   <View style={styles.soldeItem}>
                     <Text style={styles.soldeValue}>{JOURS_PAR_AN}</Text>
-                    <Text style={styles.soldeLabel}>Acquis</Text>
+                    <Text style={styles.soldeLabel}>{t.rh.accrued}</Text>
                   </View>
                   <View style={styles.soldeSeparator} />
                   <View style={styles.soldeItem}>
                     <Text style={[styles.soldeValue, { color: '#E74C3C' }]}>{joursPris}</Text>
-                    <Text style={styles.soldeLabel}>Pris</Text>
+                    <Text style={styles.soldeLabel}>{t.rh.taken}</Text>
                   </View>
                   <View style={styles.soldeSeparator} />
                   <View style={styles.soldeItem}>
                     <Text style={[styles.soldeValue, { color: solde >= 0 ? '#27AE60' : '#E74C3C' }]}>{solde}</Text>
-                    <Text style={styles.soldeLabel}>Restants</Text>
+                    <Text style={styles.soldeLabel}>{t.rh.remaining}</Text>
                   </View>
                 </View>
               </View>
@@ -668,7 +668,7 @@ export default function RHScreen() {
                         }
                       }}
                     >
-                      <Text style={[styles.deleteBtnText, { color: '#E74C3C' }]}>Supprimer</Text>
+                      <Text style={[styles.deleteBtnText, { color: '#E74C3C' }]}>{t.common.delete}</Text>
                     </Pressable>
                   )}
                   {!isRH && d.statut === 'en_attente' && (
@@ -683,7 +683,7 @@ export default function RHScreen() {
                         }
                       }}
                     >
-                      <Text style={styles.deleteBtnText}>Annuler</Text>
+                      <Text style={styles.deleteBtnText}>{t.common.cancel}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -932,7 +932,7 @@ export default function RHScreen() {
               </>
             )}
             <Text style={styles.fieldLabel}>{t.rh.amount} *</Text>
-            <TextInput style={styles.input} placeholder="Ex: 500" keyboardType="numeric" value={avanceForm.montant} onChangeText={v => setAvanceForm(f => ({ ...f, montant: v }))} />
+            <TextInput style={styles.input} placeholder={t.rh.amountExample} keyboardType="numeric" value={avanceForm.montant} onChangeText={v => setAvanceForm(f => ({ ...f, montant: v }))} />
             <Text style={styles.fieldLabel}>{t.rh.reason} ({t.common.optional})</Text>
             <TextInput style={[styles.input, styles.inputMulti]} placeholder={t.rh.explainNeed} value={avanceForm.motif} onChangeText={v => setAvanceForm(f => ({ ...f, motif: v }))} multiline />
             <Pressable style={styles.saveBtn} onPress={handleSaveAvance}>
@@ -981,7 +981,7 @@ export default function RHScreen() {
               onPress={handleConfirmPaieUpload}
               disabled={!paieMois || !paieAnnee}
             >
-              <Text style={styles.saveBtnText}>Choisir le fichier</Text>
+              <Text style={styles.saveBtnText}>{t.common.chooseFile}</Text>
             </Pressable>
             {paieMois && paieAnnee && (
               <View style={{ marginTop: 4 }}>
@@ -999,7 +999,7 @@ export default function RHScreen() {
       <ModalKeyboard visible={showReponseModal} transparent animationType="slide" onRequestClose={() => setShowReponseModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowReponseModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Répondre à la demande</Text>
+            <Text style={styles.sheetTitle}>{t.rh.respondToRequest}</Text>
             <View style={styles.statutRow}>
               {(['approuve', 'refuse'] as const).map(s => (
                 <Pressable key={s} style={[styles.statutBtn, reponseForm.statut === s && styles.statutBtnActive, { borderColor: s === 'approuve' ? '#27AE60' : '#E74C3C' }]} onPress={() => setReponseForm(f => ({ ...f, statut: s }))}>
@@ -1007,10 +1007,10 @@ export default function RHScreen() {
                 </Pressable>
               ))}
             </View>
-            <Text style={styles.fieldLabel}>Commentaire (optionnel)</Text>
-            <TextInput style={[styles.input, styles.inputMulti]} placeholder="Message pour l'employé..." value={reponseForm.commentaire} onChangeText={v => setReponseForm(f => ({ ...f, commentaire: v }))} multiline />
+            <Text style={styles.fieldLabel}>{t.rh.commentOptional}</Text>
+            <TextInput style={[styles.input, styles.inputMulti]} placeholder={t.rh.messageToEmployee} value={reponseForm.commentaire} onChangeText={v => setReponseForm(f => ({ ...f, commentaire: v }))} multiline />
             <Pressable style={styles.saveBtn} onPress={handleSaveReponse}>
-              <Text style={styles.saveBtnText}>Enregistrer la réponse</Text>
+              <Text style={styles.saveBtnText}>{t.rh.saveResponse}</Text>
             </Pressable>
           </Pressable>
         </Pressable>

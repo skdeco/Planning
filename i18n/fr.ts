@@ -472,6 +472,14 @@ export default {
 
   // RH
   rh: {
+    accrued: "Acquis",
+    taken: "Pris",
+    remaining: "Restants",
+    respondToRequest: "Répondre à la demande",
+    commentOptional: "Commentaire (optionnel)",
+    messageToEmployee: "Message pour l'employé...",
+    saveResponse: "Enregistrer la réponse",
+    amountExample: "Ex: 500",
     title: "Ressources Humaines",
     leaveRequest: "Demande de congé",
     newLeaveRequest: "Nouvelle demande de congé",
