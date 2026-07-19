@@ -57,6 +57,24 @@ export default {
     myTasksToday: "Мои задачи на сегодня",
   },
 
+  galerie: {
+    title: "📷 Галерея фото",
+    sort: "Сортировка:",
+    byChantier: "Объект",
+    byEmploye: "Сотрудник",
+    byWeek: "Неделя",
+    selectionRequired: "Требуется выбор",
+    selectChantier: "Выберите объект",
+    uploadError: "Не удалось загрузить фото. Проверьте соединение.",
+    captionPlaceholder: "Подпись (необязательно)...",
+    add: "Добавить",
+    selected: "выбрано",
+    photosWord: "фото",
+    noPhoto: "Нет фото",
+    noPhotoHint: "Нажмите «Добавить фото», чтобы начать.",
+    photoUnavailable: "Фото недоступно",
+  },
+
   common: {
     monthsShort: ["Янв", "Фев", "Мар", "Апр", "Май", "Июн", "Июл", "Авг", "Сен", "Окт", "Ноя", "Дек"],
     save: "Сохранить",

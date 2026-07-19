@@ -57,6 +57,24 @@ export default {
     myTasksToday: "My tasks today",
   },
 
+  galerie: {
+    title: "📷 Photo gallery",
+    sort: "Sort:",
+    byChantier: "Site",
+    byEmploye: "Employee",
+    byWeek: "Week",
+    selectionRequired: "Selection required",
+    selectChantier: "Please select a site",
+    uploadError: "Unable to upload the photo. Check your connection.",
+    captionPlaceholder: "Caption (optional)...",
+    add: "Add",
+    selected: "selected",
+    photosWord: "photo(s)",
+    noPhoto: "No photo",
+    noPhotoHint: "Click \"Add photos\" to start.",
+    photoUnavailable: "Photo unavailable",
+  },
+
   common: {
     monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     save: "Save",

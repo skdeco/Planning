@@ -4,6 +4,7 @@ import {
   Image, Platform, TextInput, Alert, useWindowDimensions,
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { todayYMD } from '@/lib/date/today';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
@@ -19,17 +20,14 @@ interface GaleriePhotosProps {
   chantierId?: string;
 }
 
-const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-const JOURS = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'];
-
-function formatDatePhoto(iso: string | undefined): string {
+function formatDatePhoto(iso: string | undefined, locale: string): string {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  return `${JOURS[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]}`;
+  return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
-function getWeekLabel(dateStr: string): string {
+function getWeekLabel(dateStr: string, locale: string): string {
   const d = new Date(dateStr + 'T12:00:00');
   const day = d.getDay();
   const mondayOffset = day === 0 ? -6 : 1 - day;
@@ -37,7 +35,9 @@ function getWeekLabel(dateStr: string): string {
   monday.setDate(d.getDate() + mondayOffset);
   const friday = new Date(monday);
   friday.setDate(monday.getDate() + 4);
-  return `${monday.getDate()} ${MOIS[monday.getMonth()]} — ${friday.getDate()} ${MOIS[friday.getMonth()]}`;
+  const mon = monday.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  const fri = friday.toLocaleDateString(locale, { day: 'numeric', month: 'short' });
+  return `${mon} — ${fri}`;
 }
 
 function getWeekKey(dateStr: string): string {
@@ -49,8 +49,10 @@ function getWeekKey(dateStr: string): string {
   return `${monday.getFullYear()}-${String(monday.getMonth() + 1).padStart(2, '0')}-${String(monday.getDate()).padStart(2, '0')}`;
 }
 
-export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos', chantierId }: GaleriePhotosProps) {
+export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePhotosProps) {
   const { data, currentUser, deletePhotoChantier, addPhotoChantier } = useApp();
+  const { t, language } = useLanguage();
+  const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
   const { width: screenW } = useWindowDimensions();
   const [selectedPhoto, setSelectedPhoto] = useState<PhotoChantier | null>(null);
   const [triMode, setTriMode] = useState<TriMode>('chantier');
@@ -115,13 +117,13 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
       } else if (triMode === 'employe') {
         key = p.employeId; label = getEmployeNom(p.employeId);
       } else {
-        key = getWeekKey(p.date || (p.createdAt || '').slice(0, 10) || '2026-01-01'); label = getWeekLabel(p.date || (p.createdAt || '').slice(0, 10) || '2026-01-01');
+        key = getWeekKey(p.date || (p.createdAt || '').slice(0, 10) || '2026-01-01'); label = getWeekLabel(p.date || (p.createdAt || '').slice(0, 10) || '2026-01-01', dateLocale);
       }
       if (!map.has(key)) map.set(key, { label, color, photos: [] });
       map.get(key)!.photos.push(p);
     });
     return Array.from(map.entries()).map(([key, val]) => ({ key, ...val }));
-  }, [allPhotos, triMode]);
+  }, [allPhotos, triMode, dateLocale]);
 
   // Taille des miniatures
   const numCols = screenW > 900 ? 8 : screenW > 600 ? 6 : 4;
@@ -131,14 +133,14 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
   const handlePickNative = useCallback(async (file: PickedFile): Promise<boolean> => {
     const targetChantierId = uploadChantierId || chantierId || data.chantiers.find(c => c.statut === 'actif')?.id;
     if (!targetChantierId) {
-      if (Platform.OS === 'web') alert('Veuillez sélectionner un chantier');
-      else Alert.alert('Sélection requise', 'Veuillez sélectionner un chantier');
+      if (Platform.OS === 'web') alert(t.galerie.selectChantier);
+      else Alert.alert(t.galerie.selectionRequired, t.galerie.selectChantier);
       return false;
     }
     const photoId = `ph_${Date.now()}_${Math.random().toString(36).slice(2)}`;
     const storageUrl = await uploadFileToStorage(file.uri, `chantiers/${targetChantierId}/photos`, photoId);
     if (!storageUrl) {
-      if (Platform.OS !== 'web') Alert.alert('Erreur', "Impossible d'uploader la photo. Vérifiez votre connexion.");
+      if (Platform.OS !== 'web') Alert.alert(t.common.error, t.galerie.uploadError);
       return false;
     }
     addPhotoChantier({
@@ -177,7 +179,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
         <View style={[styles.sheet, { maxHeight: '95%' }]}>
           {/* Header */}
           <View style={styles.header}>
-            <Text style={styles.titre}>{titre}</Text>
+            <Text style={styles.titre}>{titre || t.galerie.title}</Text>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               {allPhotos.length > 0 && (
                 <Pressable style={styles.downloadAllBtn} onPress={downloadAll}>
@@ -206,7 +208,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
             )}
             <TextInput
               style={[styles.legendeInput, { marginBottom: 6 }]}
-              placeholder="Légende (optionnel)..."
+              placeholder={t.galerie.captionPlaceholder}
               placeholderTextColor="#999"
               value={uploadLegende}
               onChangeText={setUploadLegende}
@@ -218,7 +220,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
               acceptPdf={false}
               multiple
               compressImages
-              label="📸 Ajouter"
+              label={`📸 ${t.galerie.add}`}
               disabled={!chantierId && !uploadChantierId}
             />
           </View>
@@ -226,19 +228,19 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
           {/* Barre de tri + filtre employé */}
           <View style={styles.triBar}>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, alignItems: 'center' }}>
-              <Text style={styles.triLabel}>Tri :</Text>
+              <Text style={styles.triLabel}>{t.galerie.sort}</Text>
               {([['chantier', '🏗'], ['employe', '👷'], ['semaine', '📅']] as [TriMode, string][]).map(([mode, icon]) => (
                 <Pressable key={mode} style={[styles.triBtn, triMode === mode && styles.triBtnActive]}
                   onPress={() => { setTriMode(mode); setExpandedGroup(null); }}>
                   <Text style={[styles.triBtnText, triMode === mode && styles.triBtnTextActive]}>
-                    {icon} {mode === 'chantier' ? 'Chantier' : mode === 'employe' ? 'Employé' : 'Semaine'}
+                    {icon} {mode === 'chantier' ? t.galerie.byChantier : mode === 'employe' ? t.galerie.byEmploye : t.galerie.byWeek}
                   </Text>
                 </Pressable>
               ))}
               <View style={{ width: 1, height: 20, backgroundColor: '#E2E6EA', marginHorizontal: 4 }} />
               <Pressable style={[styles.triBtn, filterEmployeId === 'all' && styles.triBtnActive]}
                 onPress={() => setFilterEmployeId('all')}>
-                <Text style={[styles.triBtnText, filterEmployeId === 'all' && styles.triBtnTextActive]}>Tous</Text>
+                <Text style={[styles.triBtnText, filterEmployeId === 'all' && styles.triBtnTextActive]}>{t.common.all}</Text>
               </Pressable>
               {photographes.map(p => (
                 <Pressable key={p.id} style={[styles.triBtn, filterEmployeId === p.id && styles.triBtnActive]}
@@ -252,20 +254,20 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
           {/* Barre de sélection */}
           {isSelecting && (
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#2C2C2C' }}>
-              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{selectedIds.size} sélectionnée{selectedIds.size > 1 ? 's' : ''}</Text>
+              <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{selectedIds.size} {t.galerie.selected}</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <Pressable style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
                   onPress={() => { allPhotos.filter(p => selectedIds.has(p.id)).forEach((p, i) => setTimeout(() => downloadPhoto(p), i * 300)); clearSelection(); }}>
-                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Télécharger</Text>
+                  <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t.common.download}</Text>
                 </Pressable>
                 {isAdmin && (
                   <Pressable style={{ backgroundColor: 'rgba(239,68,68,0.8)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
                     onPress={() => {
                       const doDelete = () => { selectedIds.forEach(id => deletePhotoChantier(id)); clearSelection(); };
-                      if (Platform.OS === 'web') { if (window.confirm(`Supprimer ${selectedIds.size} photo(s) ?`)) doDelete(); }
-                      else Alert.alert('Supprimer', `Supprimer ${selectedIds.size} photo(s) ?`, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
+                      if (Platform.OS === 'web') { if (window.confirm(`${t.common.delete} ${selectedIds.size} ${t.galerie.photosWord} ?`)) doDelete(); }
+                      else Alert.alert(t.common.delete, `${t.common.delete} ${selectedIds.size} ${t.galerie.photosWord} ?`, [{ text: t.common.cancel, style: 'cancel' }, { text: t.common.delete, style: 'destructive', onPress: doDelete }]);
                     }}>
-                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Supprimer</Text>
+                    <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>{t.common.delete}</Text>
                   </Pressable>
                 )}
                 <Pressable style={{ paddingHorizontal: 8, paddingVertical: 6 }} onPress={clearSelection}>
@@ -278,9 +280,9 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
           {allPhotos.length === 0 ? (
             <View style={styles.empty}>
               <Text style={{ fontSize: 48, marginBottom: 12 }}>📷</Text>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C', marginBottom: 8 }}>Aucune photo</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C', marginBottom: 8 }}>{t.galerie.noPhoto}</Text>
               <Text style={{ fontSize: 13, color: '#687076', textAlign: 'center' }}>
-                Cliquez sur "Ajouter des photos" pour commencer.
+                {t.galerie.noPhotoHint}
               </Text>
             </View>
           ) : (
@@ -319,7 +321,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
                             )}
                             <View style={styles.thumbOverlay}>
                               <Text style={styles.thumbInfo} numberOfLines={1}>
-                                {triMode === 'chantier' ? getEmployeNom(item.employeId).split(' ')[0] : triMode === 'employe' ? getChantierNom(item.chantierId) : formatDatePhoto(item.createdAt || item.date)}
+                                {triMode === 'chantier' ? getEmployeNom(item.employeId).split(' ')[0] : triMode === 'employe' ? getChantierNom(item.chantierId) : formatDatePhoto(item.createdAt || item.date, dateLocale)}
                               </Text>
                             </View>
                             {item.legende && (
@@ -354,7 +356,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
             ) : (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: 48 }}>📷</Text>
-                <Text style={{ color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>Photo non disponible</Text>
+                <Text style={{ color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>{t.galerie.photoUnavailable}</Text>
               </View>
             )}
             {/* Navigation prev/next */}
@@ -379,7 +381,7 @@ export function GaleriePhotos({ visible, onClose, titre = '📷 Galerie photos',
                   <Text style={{ fontSize: 16, fontWeight: '700', color: '#fff', marginBottom: 4 }}>{selectedPhoto.legende}</Text>
                 )}
                 <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.8)' }}>
-                  {getEmployeNom(selectedPhoto.employeId)} — {formatDatePhoto(selectedPhoto.createdAt || selectedPhoto.date)}
+                  {getEmployeNom(selectedPhoto.employeId)} — {formatDatePhoto(selectedPhoto.createdAt || selectedPhoto.date, dateLocale)}
                 </Text>
                 <Text style={{ fontSize: 12, color: 'rgba(255,255,255,0.6)', marginTop: 2 }}>
                   {getChantierNom(selectedPhoto.chantierId)}

@@ -61,6 +61,24 @@ export default {
   },
 
   // Commun
+  galerie: {
+    title: "📷 Galerie photos",
+    sort: "Tri :",
+    byChantier: "Chantier",
+    byEmploye: "Employé",
+    byWeek: "Semaine",
+    selectionRequired: "Sélection requise",
+    selectChantier: "Veuillez sélectionner un chantier",
+    uploadError: "Impossible d'uploader la photo. Vérifiez votre connexion.",
+    captionPlaceholder: "Légende (optionnel)...",
+    add: "Ajouter",
+    selected: "sélectionnée(s)",
+    photosWord: "photo(s)",
+    noPhoto: "Aucune photo",
+    noPhotoHint: "Cliquez sur \"Ajouter des photos\" pour commencer.",
+    photoUnavailable: "Photo non disponible",
+  },
+
   common: {
     monthsShort: ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
     save: "Enregistrer",

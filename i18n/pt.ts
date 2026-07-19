@@ -57,6 +57,24 @@ export default {
     myTasksToday: "As minhas tarefas de hoje",
   },
 
+  galerie: {
+    title: "📷 Galeria de fotos",
+    sort: "Ordenar:",
+    byChantier: "Obra",
+    byEmploye: "Funcionário",
+    byWeek: "Semana",
+    selectionRequired: "Seleção necessária",
+    selectChantier: "Selecione uma obra",
+    uploadError: "Não foi possível enviar a foto. Verifique a ligação.",
+    captionPlaceholder: "Legenda (opcional)...",
+    add: "Adicionar",
+    selected: "selecionada(s)",
+    photosWord: "foto(s)",
+    noPhoto: "Nenhuma foto",
+    noPhotoHint: "Clique em \"Adicionar fotos\" para começar.",
+    photoUnavailable: "Foto indisponível",
+  },
+
   common: {
     monthsShort: ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"],
     save: "Guardar",

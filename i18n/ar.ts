@@ -57,6 +57,24 @@ export default {
     myTasksToday: "مهامي اليوم",
   },
 
+  galerie: {
+    title: "📷 معرض الصور",
+    sort: "الترتيب:",
+    byChantier: "الموقع",
+    byEmploye: "الموظف",
+    byWeek: "الأسبوع",
+    selectionRequired: "يلزم التحديد",
+    selectChantier: "يرجى اختيار موقع",
+    uploadError: "تعذّر رفع الصورة. تحقق من اتصالك.",
+    captionPlaceholder: "تعليق (اختياري)...",
+    add: "إضافة",
+    selected: "محددة",
+    photosWord: "صورة",
+    noPhoto: "لا توجد صورة",
+    noPhotoHint: "اضغط على \"إضافة صور\" للبدء.",
+    photoUnavailable: "الصورة غير متاحة",
+  },
+
   common: {
     monthsShort: ["ينا", "فبر", "مار", "أبر", "ماي", "يون", "يول", "أغس", "سبت", "أكت", "نوف", "ديس"],
     save: "حفظ",
