@@ -120,6 +120,17 @@ export default {
   },
 
   cats: {
+    metier: {
+      electricien: "Électricien",
+      plombier: "Plombier",
+      macon: "Maçon",
+      peintre: "Peintre",
+      menuisier: "Menuisier",
+      plaquiste: "Plaquiste",
+      carreleur: "Carreleur",
+      chef_chantier: "Chef de chantier",
+      autre: "Autre",
+    },
     chantierDoc: {
       devis: "Devis",
       devis_st: "Devis TS",
@@ -748,6 +759,14 @@ export default {
 
   // Reporting
   reporting: {
+    byDay: "Par jour",
+    present: "Présent",
+    seePosition: "Voir position",
+    exportPayslip: "Exporter fiche de paie",
+    chantierCol: "Chantier",
+    deletePointageTitle: "Supprimer le pointage",
+    deletePointageMsg: "Supprimer le pointage de ce jour ? Cette action est irréversible.",
+    deletePointageWebMsg: "Supprimer le pointage de ce jour ?",
     title: "Reporting",
     revenue: "Chiffre d'affaires",
     expenses: "Dépenses",

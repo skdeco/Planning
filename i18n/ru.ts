@@ -116,6 +116,17 @@ export default {
   },
 
   cats: {
+    metier: {
+      electricien: "Электрик",
+      plombier: "Сантехник",
+      macon: "Каменщик",
+      peintre: "Маляр",
+      menuisier: "Столяр",
+      plaquiste: "Гипсокартонщик",
+      carreleur: "Плиточник",
+      chef_chantier: "Прораб",
+      autre: "Другое",
+    },
     chantierDoc: {
       devis: "Смета",
       devis_st: "Смета субподряда",
@@ -720,6 +731,14 @@ export default {
     ongoing: "В процессе",
   },
   reporting: {
+    byDay: "По дням",
+    present: "Присутствует",
+    seePosition: "Показать местоположение",
+    exportPayslip: "Экспорт расчётного листа",
+    chantierCol: "Объект",
+    deletePointageTitle: "Удалить отметку",
+    deletePointageMsg: "Удалить отметку за этот день? Действие необратимо.",
+    deletePointageWebMsg: "Удалить отметку за этот день?",
     title: "Отчёты",
     revenue: "Выручка",
     expenses: "Расходы",

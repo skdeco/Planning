@@ -25,9 +25,9 @@ function genId(): string {
   return `ac_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-function formatDateFr(dateStr: string): string {
+function formatDateFr(dateStr: string, locale = 'fr-FR'): string {
   const d = new Date(dateStr + 'T12:00:00');
-  return `${JOURS_COURT[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]}`;
+  return d.toLocaleDateString(locale, { weekday: 'short', day: 'numeric', month: 'short' });
 }
 
 function calcDureeMin(debut: string, fin: string): number {
@@ -120,7 +120,10 @@ function calcJoursOuvrablesMois(year: number, month: number): number {
 
 export default function ReportingScreen() {
   const { data, currentUser, isHydrated, addAcompte, deleteAcompte, addPointage, updatePointage, deletePointage, togglePresenceForcee } = useApp();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
+  const metierLabel = (k: string) => (t.cats.metier as Record<string, string>)[k] || METIER_COLORS[k]?.label || k;
+  const monthLabel = (m: number, y: number) => new Date(y, m, 1).toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' });
   const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
@@ -584,14 +587,14 @@ export default function ReportingScreen() {
           onPress={() => setVue('journalier')}
         >
           <CalendarDays size={14} color={vue === 'journalier' ? '#2C2C2C' : '#687076'} strokeWidth={2} />
-          <Text style={[styles.filterChipText, vue === 'journalier' && styles.filterChipTextActive]}>Par jour</Text>
+          <Text style={[styles.filterChipText, vue === 'journalier' && styles.filterChipTextActive]}>{t.reporting.byDay}</Text>
         </Pressable>
         <Pressable
           style={[styles.filterChip, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }, vue === 'employe' && styles.filterChipActive]}
           onPress={() => setVue('employe')}
         >
           <HardHat size={14} color={vue === 'employe' ? '#2C2C2C' : '#687076'} strokeWidth={2} />
-          <Text style={[styles.filterChipText, vue === 'employe' && styles.filterChipTextActive]}>Par employé</Text>
+          <Text style={[styles.filterChipText, vue === 'employe' && styles.filterChipTextActive]}>{t.reporting.byEmployee}</Text>
         </Pressable>
       </View>
 
@@ -603,7 +606,7 @@ export default function ReportingScreen() {
             <Pressable style={styles.navBtn} onPress={prevDay}>
               <Text style={styles.navArrow}>‹</Text>
             </Pressable>
-            <Text style={styles.navLabel}>{formatDateFr(selectedDate)}</Text>
+            <Text style={styles.navLabel}>{formatDateFr(selectedDate, dateLocale)}</Text>
             <Pressable style={styles.navBtn} onPress={nextDay}>
               <Text style={styles.navArrow}>›</Text>
             </Pressable>
@@ -615,7 +618,7 @@ export default function ReportingScreen() {
               style={[styles.filterChip, filterChantierId === 'all' && styles.filterChipActive]}
               onPress={() => setFilterChantierId('all')}
             >
-              <Text style={[styles.filterChipText, filterChantierId === 'all' && styles.filterChipTextActive]}>Tous</Text>
+              <Text style={[styles.filterChipText, filterChantierId === 'all' && styles.filterChipTextActive]}>{t.common.all}</Text>
             </Pressable>
             {data.chantiers.filter(c => c.statut === 'actif').map(c => (
               <Pressable
@@ -651,7 +654,7 @@ export default function ReportingScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.empName}>{emp.prenom} {emp.nom}</Text>
-                      <Text style={[styles.empMetier, { color: mc.color }]}>{mc.label}</Text>
+                      <Text style={[styles.empMetier, { color: mc.color }]}>{metierLabel(emp.metier)}</Text>
                       {horairesJour?.actif && (
                         <Text style={styles.horairesTheo}>{horairesJour.debut}–{horairesJour.fin}</Text>
                       )}
@@ -663,7 +666,7 @@ export default function ReportingScreen() {
                     ) : isForcedPresent ? (
                       <Pressable onPress={() => isAdmin ? togglePresenceForcee(emp.id, selectedDate) : undefined}>
                         <View style={[styles.dureeBadge, { backgroundColor: '#F0FFF4', borderColor: '#C6F6D5' }]}>
-                          <Text style={[styles.dureeBadgeText, { color: '#27AE60' }]}>Présent ✓</Text>
+                          <Text style={[styles.dureeBadgeText, { color: '#27AE60' }]}>{t.reporting.present} ✓</Text>
                         </View>
                       </Pressable>
                     ) : isAbsent ? (
@@ -693,7 +696,7 @@ export default function ReportingScreen() {
                             }}
                             style={styles.gpsBtn}
                           >
-                            <Text style={styles.gpsBtnText}>Voir position</Text>
+                            <Text style={styles.gpsBtnText}>{t.reporting.seePosition}</Text>
                           </Pressable>
                         ) : null}
                       </View>
@@ -721,7 +724,7 @@ export default function ReportingScreen() {
                             }}
                             style={styles.gpsBtn}
                           >
-                            <Text style={styles.gpsBtnText}>Voir position</Text>
+                            <Text style={styles.gpsBtnText}>{t.reporting.seePosition}</Text>
                           </Pressable>
                         ) : null}
                       </View>
@@ -779,7 +782,7 @@ export default function ReportingScreen() {
             <Pressable style={styles.navBtn} onPress={prevMonth}>
               <Text style={styles.navArrow}>‹</Text>
             </Pressable>
-            <Text style={styles.navLabel}>{MOIS_LONG[selectedMonth]} {selectedYear}</Text>
+            <Text style={styles.navLabel}>{monthLabel(selectedMonth, selectedYear)}</Text>
             <Pressable style={styles.navBtn} onPress={nextMonth}>
               <Text style={styles.navArrow}>›</Text>
             </Pressable>
@@ -951,7 +954,7 @@ export default function ReportingScreen() {
                       }
                     }
                   }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>Exporter fiche de paie</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>{t.reporting.exportPayslip}</Text>
                 </Pressable>
               )}
 
@@ -962,7 +965,7 @@ export default function ReportingScreen() {
                   {rapportEmploye.acomptesMois.map(ac => (
                     <View key={ac.id} style={styles.acompteRow}>
                       <Text style={styles.acompteIcon}>💶</Text>
-                      <Text style={styles.acompteDate}>{formatDateFr(ac.date)}</Text>
+                      <Text style={styles.acompteDate}>{formatDateFr(ac.date, dateLocale)}</Text>
                       <Text style={styles.acompteMontant}>{ac.montant} €</Text>
                       {ac.commentaire ? <Text style={styles.acompteComment}>{ac.commentaire}</Text> : null}
                       <Pressable onPress={() => handleDeleteAcompte(ac)} style={styles.acompteDelete}>
@@ -979,7 +982,7 @@ export default function ReportingScreen() {
                 {/* En-tête */}
                 <View style={[styles.tableauRow, styles.tableauHeader]}>
                   <Text style={[styles.tableauCell, styles.tableauCellDate, styles.tableauHeaderText]}>{t.common.date}</Text>
-                  <Text style={[styles.tableauCell, { flex: 1.5 }, styles.tableauHeaderText]}>Chantier</Text>
+                  <Text style={[styles.tableauCell, { flex: 1.5 }, styles.tableauHeaderText]}>{t.reporting.chantierCol}</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.arrival}</Text>
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.departure}</Text>
                   {isAdmin && <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.pointedBy}</Text>}
@@ -1011,7 +1014,7 @@ export default function ReportingScreen() {
                     >
                       <View style={[styles.tableauCell, styles.tableauCellDate]}>
                         <Text style={[styles.tableauDateText, isWeekend && styles.tableauDateWeekend, isFerie && { color: '#27AE60', fontWeight: '700' }]}>
-                          {formatDateFr(dateStr)}{isFerie ? ' 🎉' : ''}
+                          {formatDateFr(dateStr, dateLocale)}{isFerie ? ' 🎉' : ''}
                         </Text>
                         {travailleTheo && horairesJour && (
                           <Text style={styles.tableauTheoText}>
@@ -1123,7 +1126,7 @@ export default function ReportingScreen() {
             <Pressable style={styles.navBtn} onPress={prevMonth}>
               <Text style={styles.navArrow}>‹</Text>
             </Pressable>
-            <Text style={styles.navLabel}>{MOIS_LONG[selectedMonth]} {selectedYear}</Text>
+            <Text style={styles.navLabel}>{monthLabel(selectedMonth, selectedYear)}</Text>
             <Pressable style={styles.navBtn} onPress={nextMonth}>
               <Text style={styles.navArrow}>›</Text>
             </Pressable>
@@ -1141,7 +1144,7 @@ export default function ReportingScreen() {
                     <Text style={{ color: mc.textColor, fontWeight: '800', fontSize: 14 }}>{emp.prenom?.[0] || '?'}</Text>
                   </View>
                   <Text style={styles.saisieEmpName}>{emp.prenom} {emp.nom}</Text>
-                  <Text style={[styles.saisieEmpMetier, { color: mc.color }]}>{mc.label}</Text>
+                  <Text style={[styles.saisieEmpMetier, { color: mc.color }]}>{metierLabel(emp.metier)}</Text>
                 </View>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                   <View>
@@ -1186,7 +1189,7 @@ export default function ReportingScreen() {
                           </Text>
                           <View style={[styles.saisieCellHeure, debut?.saisieManuelle && styles.saisieCellManuelle]}>
                             <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : isForcedPres ? '#27AE60' : '#B0BEC5', fontWeight: (isAbsent || isForcedPres) ? '700' : '400' }]}>
-                              {debut ? debut.heure : isAbsent ? t.reporting.absent : isForcedPres ? 'Présent' : '—'}
+                              {debut ? debut.heure : isAbsent ? t.reporting.absent : isForcedPres ? t.reporting.present : '—'}
                             </Text>
                             {debut?.saisieManuelle && <Text style={styles.saisieManuelleIcon}>✏️</Text>}
                           </View>
@@ -1287,11 +1290,11 @@ export default function ReportingScreen() {
                       existingPts.forEach(p => deletePointage(p.id));
                       setEditPointageModal(false);
                     };
-                    if (Platform.OS === 'web') { if (window.confirm('Supprimer le pointage de ce jour ?')) doDelete(); }
-                    else Alert.alert('Supprimer le pointage', 'Supprimer le pointage de ce jour ? Cette action est irréversible.', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
+                    if (Platform.OS === 'web') { if (window.confirm(t.reporting.deletePointageWebMsg)) doDelete(); }
+                    else Alert.alert(t.reporting.deletePointageTitle, t.reporting.deletePointageMsg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.common.delete, style: 'destructive', onPress: doDelete }]);
                   }}
                 >
-                  <Text style={{ color: '#DC2626', fontWeight: '700', fontSize: 13 }}>Supprimer le pointage</Text>
+                  <Text style={{ color: '#DC2626', fontWeight: '700', fontSize: 13 }}>{t.reporting.deletePointageTitle}</Text>
                 </Pressable>
               );
             })()}

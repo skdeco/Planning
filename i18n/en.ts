@@ -116,6 +116,17 @@ export default {
   },
 
   cats: {
+    metier: {
+      electricien: "Electrician",
+      plombier: "Plumber",
+      macon: "Mason",
+      peintre: "Painter",
+      menuisier: "Carpenter",
+      plaquiste: "Drywaller",
+      carreleur: "Tiler",
+      chef_chantier: "Site manager",
+      autre: "Other",
+    },
     chantierDoc: {
       devis: "Quote",
       devis_st: "Subcontractor quote",
@@ -730,6 +741,14 @@ export default {
     ongoing: "In progress",
   },
   reporting: {
+    byDay: "By day",
+    present: "Present",
+    seePosition: "View location",
+    exportPayslip: "Export payslip",
+    chantierCol: "Site",
+    deletePointageTitle: "Delete time entry",
+    deletePointageMsg: "Delete this day's time entry? This action is irreversible.",
+    deletePointageWebMsg: "Delete this day's time entry?",
     title: "Reporting",
     revenue: "Revenue",
     expenses: "Expenses",

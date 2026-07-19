@@ -116,6 +116,17 @@ export default {
   },
 
   cats: {
+    metier: {
+      electricien: "Eletricista",
+      plombier: "Canalizador",
+      macon: "Pedreiro",
+      peintre: "Pintor",
+      menuisier: "Carpinteiro",
+      plaquiste: "Instalador de pladur",
+      carreleur: "Ladrilhador",
+      chef_chantier: "Chefe de obra",
+      autre: "Outro",
+    },
     chantierDoc: {
       devis: "Orçamento",
       devis_st: "Orçamento subempreiteiro",
@@ -720,6 +731,14 @@ export default {
     ongoing: "Em curso",
   },
   reporting: {
+    byDay: "Por dia",
+    present: "Presente",
+    seePosition: "Ver localização",
+    exportPayslip: "Exportar recibo",
+    chantierCol: "Obra",
+    deletePointageTitle: "Eliminar registo",
+    deletePointageMsg: "Eliminar o registo deste dia? Esta ação é irreversível.",
+    deletePointageWebMsg: "Eliminar o registo deste dia?",
     title: "Relatórios",
     revenue: "Receita",
     expenses: "Despesas",

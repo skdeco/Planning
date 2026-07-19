@@ -116,6 +116,17 @@ export default {
   },
 
   cats: {
+    metier: {
+      electricien: "كهربائي",
+      plombier: "سبّاك",
+      macon: "بنّاء",
+      peintre: "دهّان",
+      menuisier: "نجّار",
+      plaquiste: "مركّب جبس",
+      carreleur: "مبلّط",
+      chef_chantier: "مدير موقع",
+      autre: "أخرى",
+    },
     chantierDoc: {
       devis: "عرض سعر",
       devis_st: "عرض سعر مقاول",
@@ -720,6 +731,14 @@ export default {
     ongoing: "قيد التنفيذ",
   },
   reporting: {
+    byDay: "حسب اليوم",
+    present: "حاضر",
+    seePosition: "عرض الموقع",
+    exportPayslip: "تصدير كشف الراتب",
+    chantierCol: "الموقع",
+    deletePointageTitle: "حذف التسجيل",
+    deletePointageMsg: "حذف تسجيل هذا اليوم؟ لا يمكن التراجع.",
+    deletePointageWebMsg: "حذف تسجيل هذا اليوم؟",
     title: "التقارير",
     revenue: "الإيرادات",
     expenses: "المصاريف",
