@@ -30,7 +30,8 @@ function toYMD(d: Date): string {
 
 export default function DashboardScreen() {
   const { data, currentUser, isHydrated, logout, toggleTask, addTaskPhoto, removeTaskPhoto, addRetardPlanifie, updateTicketSAV, upsertNote, updateEmploye, updateApporteur, addBadgeEmploye } = useApp();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
   const router = useRouter();
   const { pushToken } = useNotifications();
 
@@ -278,15 +279,15 @@ export default function DashboardScreen() {
           {/* Header compact */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>Bonjour {emp?.prenom || ''} 👋</Text>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>{t.home.hello} {emp?.prenom || ''} 👋</Text>
               <Text style={{ fontSize: 12, color: '#687076', textTransform: 'capitalize' }}>
-                {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+                {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
               </Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
               <LanguageFlag />
               <Pressable style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FECACA' }}
-                onPress={() => { if (Platform.OS === 'web') { if (window.confirm('Se déconnecter ?')) logout(); } else Alert.alert('Déconnexion', 'Voulez-vous vous déconnecter ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Se déconnecter', style: 'destructive', onPress: logout }]); }}>
+                onPress={() => { if (Platform.OS === 'web') { if (window.confirm(t.home.logoutTitle)) logout(); } else Alert.alert(t.home.logoutTitle, t.home.logoutMsg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.home.logout, style: 'destructive', onPress: logout }]); }}>
                 <Text style={{ fontSize: 14, color: '#EF4444' }}>⏻</Text>
               </Pressable>
             </View>
@@ -298,7 +299,7 @@ export default function DashboardScreen() {
             if (mesBadges.length === 0) return null;
             return (
               <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 }}>Mes badges</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 }}>{t.home.myBadges}</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                   {mesBadges.map(b => {
                     const bt = BADGE_TYPES[b.type];
@@ -307,7 +308,7 @@ export default function DashboardScreen() {
                         <Text style={{ fontSize: 22, textAlign: 'center' }}>{bt?.emoji || '🏆'}</Text>
                         <Text style={{ fontSize: 11, fontWeight: '700', color: '#C9A96E', textAlign: 'center', marginTop: 2 }}>{bt?.label || b.type}</Text>
                         {b.message ? <Text style={{ fontSize: 10, color: '#687076', textAlign: 'center', marginTop: 2 }} numberOfLines={2}>{b.message}</Text> : null}
-                        <Text style={{ fontSize: 9, color: '#B0BEC5', textAlign: 'center', marginTop: 4 }}>par {b.envoyePar} · {b.createdAt.slice(0, 10)}</Text>
+                        <Text style={{ fontSize: 9, color: '#B0BEC5', textAlign: 'center', marginTop: 4 }}>{t.home.by} {b.envoyePar} · {b.createdAt.slice(0, 10)}</Text>
                       </View>
                     );
                   })}
@@ -325,10 +326,10 @@ export default function DashboardScreen() {
               {myPointagesDuJour.debut ? <CircleCheck size={24} color="#155724" strokeWidth={2} /> : <Clock size={24} color="#fff" strokeWidth={2} />}
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: myPointagesDuJour.debut ? '#155724' : '#fff' }}>
-                  {myPointagesDuJour.debut ? `${myPointagesDuJour.debut}${myPointagesDuJour.fin ? ` → ${myPointagesDuJour.fin}` : ' (en cours)'}` : 'Pointer mon arrivée'}
+                  {myPointagesDuJour.debut ? `${myPointagesDuJour.debut}${myPointagesDuJour.fin ? ` → ${myPointagesDuJour.fin}` : ` (${t.home.inProgress})`}` : t.home.clockMyArrival}
                 </Text>
                 <Text style={{ fontSize: 10, color: myPointagesDuJour.debut ? '#27AE60' : 'rgba(255,255,255,0.7)' }}>
-                  {myPointagesDuJour.debut ? 'Pointage OK' : 'Appuyez pour pointer'}
+                  {myPointagesDuJour.debut ? t.home.clockOk : t.home.tapToClock}
                 </Text>
               </View>
             </Pressable>
@@ -349,20 +350,20 @@ export default function DashboardScreen() {
             <Pressable
               style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFF3E0', paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#FFE082', marginBottom: 8 }}
               onPress={() => {
-                const motifs = ['Bouchons / Transport', 'Problème véhicule', 'Rendez-vous médical', 'Raison personnelle', 'Autre'];
+                const motifs = [t.home.lateReasonTraffic, t.home.lateReasonVehicle, t.home.lateReasonMedical, t.home.lateReasonPersonal, t.home.lateReasonOther];
                 const signaler = (motif: string) => {
                   addRetardPlanifie({ id: `ret_${Date.now()}_${Math.random().toString(36).slice(2)}`, employeId: myId || '', date: today, heureArrivee: '', motif, createdAt: new Date().toISOString() });
-                  toast.success('Retard signalé à l\'équipe');
+                  toast.success(t.home.lateReported);
                 };
                 if (Platform.OS === 'web') {
-                  const choix = window.prompt('Motif du retard :\n' + motifs.map((m, i) => `${i + 1}. ${m}`).join('\n'), '1');
+                  const choix = window.prompt(t.home.lateReasonPrompt + '\n' + motifs.map((m, i) => `${i + 1}. ${m}`).join('\n'), '1');
                   signaler(motifs[parseInt(choix || '1') - 1] || motifs[0]);
                 } else {
-                  Alert.alert('Je suis en retard', 'Sélectionnez le motif', motifs.map(m => ({ text: m, onPress: () => signaler(m) })));
+                  Alert.alert(t.home.imLate, t.home.selectReason, motifs.map(m => ({ text: m, onPress: () => signaler(m) })));
                 }
               }}>
               <Text style={{ fontSize: 14 }}>⚠️</Text>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#E65100' }}>Je suis en retard</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#E65100' }}>{t.home.imLate}</Text>
             </Pressable>
           )}
 
@@ -423,7 +424,7 @@ export default function DashboardScreen() {
                                     <Pressable
                                       onPress={() => openDocPreview(uri)}
                                       accessibilityRole="button"
-                                      accessibilityLabel={isPdf ? 'Ouvrir le PDF' : 'Ouvrir la photo'}
+                                      accessibilityLabel={isPdf ? t.home.openPdf : t.home.openPhoto}
                                     >
                                       {isPdf ? (
                                         <View style={{ width: 44, height: 44, borderRadius: 4, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
@@ -437,17 +438,17 @@ export default function DashboardScreen() {
                                       onPress={() => {
                                         const doDelete = () => removeTaskPhoto(note.affectationId, note.noteId, task.id, uri);
                                         if (Platform.OS === 'web') {
-                                          if (typeof window !== 'undefined' && window.confirm && window.confirm('Supprimer cette photo ?')) doDelete();
+                                          if (typeof window !== 'undefined' && window.confirm && window.confirm(t.home.deletePhotoTitle)) doDelete();
                                         } else {
-                                          Alert.alert('Supprimer la photo ?', 'Cette action est irréversible.', [
-                                            { text: 'Annuler', style: 'cancel' },
-                                            { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+                                          Alert.alert(t.home.deletePhotoTitle, t.home.irreversible, [
+                                            { text: t.common.cancel, style: 'cancel' },
+                                            { text: t.common.delete, style: 'destructive', onPress: doDelete },
                                           ]);
                                         }
                                       }}
                                       style={{ position: 'absolute', top: -6, right: -6, width: 14, height: 14, borderRadius: 7, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}
                                       accessibilityRole="button"
-                                      accessibilityLabel="Supprimer la photo"
+                                      accessibilityLabel={t.common.delete}
                                     >
                                       <Text style={{ color: '#fff', fontSize: 9, fontWeight: '700' }}>✕</Text>
                                     </Pressable>
@@ -489,7 +490,7 @@ export default function DashboardScreen() {
                       }
                     }}>
                     <Text style={{ fontSize: 12 }}>📷</Text>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Ajouter photo</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>{t.home.addPhoto}</Text>
                   </Pressable>
                 </View>
                 );
@@ -507,92 +508,92 @@ export default function DashboardScreen() {
                 onPress={() => { setSavExpanded(v => !v); setSavDetailId(null); }}
               >
                 <Text style={{ fontSize: 18 }}>🔧</Text>
-                <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#DC2626' }}>Voir le détail</Text>
+                <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#DC2626' }}>{t.home.seeDetail}</Text>
                 <Text style={{ fontSize: 14, color: '#DC2626' }}>{savExpanded ? '▾' : '▸'}</Text>
               </Pressable>
               {savExpanded && (
                 <View style={{ backgroundColor: '#fff', borderWidth: 1, borderTopWidth: 0, borderColor: '#FECACA', borderBottomLeftRadius: 12, borderBottomRightRadius: 12, padding: 8 }}>
-                  {mesSavTickets.map(t => {
-                    const ch = data.chantiers.find(c => c.id === t.chantierId);
-                    const isOpen = savDetailId === t.id;
+                  {mesSavTickets.map(ticket => {
+                    const ch = data.chantiers.find(c => c.id === ticket.chantierId);
+                    const isOpen = savDetailId === ticket.id;
                     const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#2C2C2C', haute: '#F59E0B', urgente: '#E74C3C' };
-                    const statutLabel = t.statut === 'ouvert' ? '🔴' : t.statut === 'en_cours' ? '🟡' : '🟢';
+                    const statutLabel = ticket.statut === 'ouvert' ? '🔴' : ticket.statut === 'en_cours' ? '🟡' : '🟢';
                     return (
-                      <View key={t.id} style={{ borderBottomWidth: t.id !== mesSavTickets[mesSavTickets.length - 1].id ? 0.5 : 0, borderBottomColor: '#F5EDE3' }}>
+                      <View key={ticket.id} style={{ borderBottomWidth: ticket.id !== mesSavTickets[mesSavTickets.length - 1].id ? 0.5 : 0, borderBottomColor: '#F5EDE3' }}>
                         <Pressable style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, gap: 8 }}
-                          onPress={() => setSavDetailId(isOpen ? null : t.id)}>
+                          onPress={() => setSavDetailId(isOpen ? null : ticket.id)}>
                           <Text style={{ fontSize: 12 }}>{statutLabel}</Text>
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{t.objet}</Text>
-                            <Text style={{ fontSize: 10, color: '#687076' }}>{ch?.nom} · {t.priorite}</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{ticket.objet}</Text>
+                            <Text style={{ fontSize: 10, color: '#687076' }}>{ch?.nom} · {ticket.priorite}</Text>
                           </View>
                           <Text style={{ fontSize: 12, color: '#B0BEC5' }}>{isOpen ? '▾' : '▸'}</Text>
                         </Pressable>
 
                         {isOpen && (
                           <View style={{ paddingHorizontal: 4, paddingBottom: 10, gap: 6 }}>
-                            {t.description && <Text style={{ fontSize: 12, color: '#11181C', lineHeight: 17 }}>{t.description}</Text>}
-                            {t.photos && t.photos.length > 0 && (
+                            {ticket.description && <Text style={{ fontSize: 12, color: '#11181C', lineHeight: 17 }}>{ticket.description}</Text>}
+                            {ticket.photos && ticket.photos.length > 0 && (
                               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-                                {t.photos.map((uri, i) => <Image key={i} source={{ uri }} style={{ width: 60, height: 60, borderRadius: 6 }} resizeMode="cover" />)}
+                                {ticket.photos.map((uri, i) => <Image key={i} source={{ uri }} style={{ width: 60, height: 60, borderRadius: 6 }} resizeMode="cover" />)}
                               </ScrollView>
                             )}
-                            {t.fichiers && t.fichiers.length > 0 && (
+                            {ticket.fichiers && ticket.fichiers.length > 0 && (
                               <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
-                                {t.fichiers.map((f, i) => <View key={i} style={{ backgroundColor: '#EBF0FF', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}><Text style={{ fontSize: 10, color: '#2C2C2C' }}>{f.nom}</Text></View>)}
+                                {ticket.fichiers.map((f, i) => <View key={i} style={{ backgroundColor: '#EBF0FF', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}><Text style={{ fontSize: 10, color: '#2C2C2C' }}>{f.nom}</Text></View>)}
                               </View>
                             )}
                             {/* Photos resolution */}
-                            {t.photosResolution && t.photosResolution.length > 0 && (
+                            {ticket.photosResolution && ticket.photosResolution.length > 0 && (
                               <View style={{ backgroundColor: '#D4EDDA', borderRadius: 6, padding: 6 }}>
-                                <Text style={{ fontSize: 10, fontWeight: '600', color: '#155724', marginBottom: 4 }}>Photos résolution :</Text>
+                                <Text style={{ fontSize: 10, fontWeight: '600', color: '#155724', marginBottom: 4 }}>{t.home.resolutionPhotos}</Text>
                                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-                                  {t.photosResolution.map((uri, i) => <Image key={i} source={{ uri }} style={{ width: 50, height: 50, borderRadius: 4 }} resizeMode="cover" />)}
+                                  {ticket.photosResolution.map((uri, i) => <Image key={i} source={{ uri }} style={{ width: 50, height: 50, borderRadius: 4 }} resizeMode="cover" />)}
                                 </ScrollView>
                               </View>
                             )}
-                            {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60', fontWeight: '600' }}>Résolu par {t.resoluPar} le {t.dateResolution}</Text>}
-                            <Text style={{ fontSize: 9, color: '#B0BEC5' }}>Ouvert le {t.dateOuverture}</Text>
+                            {ticket.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60', fontWeight: '600' }}>Résolu par {ticket.resoluPar} le {ticket.dateResolution}</Text>}
+                            <Text style={{ fontSize: 9, color: '#B0BEC5' }}>Ouvert le {ticket.dateOuverture}</Text>
 
                             {/* Actions employe */}
-                            {t.statut !== 'resolu' && t.statut !== 'clos' && (
+                            {ticket.statut !== 'resolu' && ticket.statut !== 'clos' && (
                               <View style={{ flexDirection: 'row', gap: 6, marginTop: 4 }}>
                                 <Pressable style={{ flex: 1, backgroundColor: '#D4EDDA', paddingVertical: 8, borderRadius: 8, alignItems: 'center' }}
                                   onPress={async () => {
-                                    const userName = currentUser?.nom || emp?.prenom || 'Employé';
+                                    const userName = currentUser?.nom || emp?.prenom || t.home.employeeLabel;
                                     if (Platform.OS === 'web') {
-                                      data.ticketsSAV && updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() });
+                                      data.ticketsSAV && updateTicketSAV({ ...ticket, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() });
                                     } else {
-                                      Alert.alert('Résoudre le SAV', 'Ajouter une photo/document ?', [
+                                      Alert.alert(t.home.resolveSavTitle, t.home.resolveSavMsg, [
                                         { text: 'Annuler', style: 'cancel' },
-                                        { text: 'Résoudre sans photo', onPress: () => updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() }) },
-                                        { text: '📷 Ajouter photo', onPress: async () => {
+                                        { text: t.home.resolveWithoutPhoto, onPress: () => updateTicketSAV({ ...ticket, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() }) },
+                                        { text: `📷 ${t.home.addPhoto}`, onPress: async () => {
                                           const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
                                           if (!files || files.length === 0) {
-                                            updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() });
+                                            updateTicketSAV({ ...ticket, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() });
                                             return;
                                           }
-                                          const url = await uploadFileToStorage(files[0].uri, `chantiers/${t.chantierId}/sav-resolution`, `res_${t.id}_${Date.now()}`);
-                                          updateTicketSAV({ ...t, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, photosResolution: [...(t.photosResolution || []), ...(url ? [url] : [])], updatedAt: new Date().toISOString() });
+                                          const url = await uploadFileToStorage(files[0].uri, `chantiers/${ticket.chantierId}/sav-resolution`, `res_${ticket.id}_${Date.now()}`);
+                                          updateTicketSAV({ ...ticket, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, photosResolution: [...(ticket.photosResolution || []), ...(url ? [url] : [])], updatedAt: new Date().toISOString() });
                                         }},
                                       ]);
                                     }
                                   }}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                                     <Check size={13} color="#155724" strokeWidth={2.4} />
-                                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#155724' }}>Marquer résolu</Text>
+                                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#155724' }}>{t.home.markResolved}</Text>
                                   </View>
                                 </Pressable>
                                 <Pressable style={{ backgroundColor: '#EBF0FF', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, alignItems: 'center' }}
                                   onPress={async () => {
                                     const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
                                     if (!files || files.length === 0) return;
-                                    const url = await uploadFileToStorage(files[0].uri, `chantiers/${t.chantierId}/sav-resolution`, `cr_${t.id}_${Date.now()}`);
-                                    if (url) updateTicketSAV({ ...t, photosResolution: [...(t.photosResolution || []), url], updatedAt: new Date().toISOString() });
+                                    const url = await uploadFileToStorage(files[0].uri, `chantiers/${ticket.chantierId}/sav-resolution`, `cr_${ticket.id}_${Date.now()}`);
+                                    if (url) updateTicketSAV({ ...ticket, photosResolution: [...(ticket.photosResolution || []), url], updatedAt: new Date().toISOString() });
                                   }}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
                                     <Camera size={13} color="#2C2C2C" strokeWidth={2} />
-                                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Photo</Text>
+                                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>{t.home.photo}</Text>
                                   </View>
                                 </Pressable>
                               </View>
@@ -609,9 +610,9 @@ export default function DashboardScreen() {
           )}
 
           {/* Chantiers du jour */}
-          <Text style={styles.sectionTitle}>Mes chantiers aujourd'hui</Text>
+          <Text style={styles.sectionTitle}>{t.home.myChantiersToday}</Text>
           {myChantiers.length === 0 && (
-            <View style={styles.statCard}><Text style={{ color: '#687076', textAlign: 'center' }}>Aucun chantier prévu aujourd'hui</Text></View>
+            <View style={styles.statCard}><Text style={{ color: '#687076', textAlign: 'center' }}>{t.home.noChantierToday}</Text></View>
           )}
           {myChantiers.map(c => (
             <Pressable key={c.id} style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: c.couleur || '#2C2C2C' }]}
@@ -641,7 +642,7 @@ export default function DashboardScreen() {
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <Navigation size={11} color="#fff" strokeWidth={2.2} />
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>Y aller</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>{t.home.goThere}</Text>
                     </View>
                   </Pressable>
                 )}
@@ -652,7 +653,7 @@ export default function DashboardScreen() {
           {/* Tâches en cours */}
           {myTasks.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>Mes tâches du jour ({myTasks.length})</Text>
+              <Text style={styles.sectionTitle}>{t.home.myTasksToday} ({myTasks.length})</Text>
               <View style={styles.statCard}>
                 {myTasks.map(({ task, affectationId, noteId }) => {
                   const empName = data.employes.find(e => e.id === myId)?.prenom || '';
@@ -671,7 +672,7 @@ export default function DashboardScreen() {
           )}
 
           {/* Planning de la semaine */}
-          <Text style={styles.sectionTitle}>Mon planning de la semaine</Text>
+          <Text style={styles.sectionTitle}>{t.home.myWeekPlanning}</Text>
           <View style={styles.statCard}>
             {(() => {
               const now = new Date();
@@ -724,14 +725,14 @@ export default function DashboardScreen() {
             if (total === 0) return null;
             return (
               <>
-                <Text style={styles.sectionTitle}>Mes demandes en cours ({total})</Text>
+                <Text style={styles.sectionTitle}>{t.home.myPendingRequests} ({total})</Text>
                 <View style={styles.statCard}>
                   {mesConges.map(d => (
                     <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}>
                       <Text style={{ fontSize: 14 }}>🏖</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }}>Congé {d.dateDebut} → {d.dateFin}</Text>
-                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>En attente</Text>
+                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>
                   ))}
@@ -740,7 +741,7 @@ export default function DashboardScreen() {
                       <Text style={{ fontSize: 14 }}>💰</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }}>Avance de {d.montant} €</Text>
-                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>En attente</Text>
+                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>
                   ))}
@@ -749,7 +750,7 @@ export default function DashboardScreen() {
                       <Text style={{ fontSize: 14 }}>🏥</Text>
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#11181C' }}>Arrêt maladie {d.dateDebut}</Text>
-                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>En attente</Text>
+                        <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>
                   ))}
@@ -759,7 +760,7 @@ export default function DashboardScreen() {
           })()}
 
           {/* Pense-bête par chantier */}
-          <Text style={styles.sectionTitle}>Pense-bête</Text>
+          <Text style={styles.sectionTitle}>{t.home.reminder}</Text>
           <View style={styles.statCard}>
             {/* Notes existantes */}
             {(emp?.penseBetes || []).map(pb => {
@@ -767,7 +768,7 @@ export default function DashboardScreen() {
               return (
                 <View key={pb.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}>
                   {ch && <View style={{ backgroundColor: (ch.couleur || '#2C2C2C') + '22', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2 }}><Text style={{ fontSize: 9, fontWeight: '700', color: ch.couleur || '#2C2C2C' }}>{ch.nom}</Text></View>}
-                  {!ch && <Text style={{ fontSize: 9, color: '#B0BEC5', marginTop: 2 }}>Général</Text>}
+                  {!ch && <Text style={{ fontSize: 9, color: '#B0BEC5', marginTop: 2 }}>{t.home.general}</Text>}
                   <Text style={{ fontSize: 13, color: '#11181C', flex: 1 }}>{pb.texte}</Text>
                   <Pressable onPress={() => {
                     if (!emp) return;
@@ -776,14 +777,14 @@ export default function DashboardScreen() {
                 </View>
               );
             })}
-            {(emp?.penseBetes || []).length === 0 && <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', marginBottom: 6 }}>Aucune note</Text>}
+            {(emp?.penseBetes || []).length === 0 && <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', marginBottom: 6 }}>{t.home.noNote}</Text>}
 
             {/* Formulaire ajout */}
             <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: '#F5EDE3', paddingTop: 8 }}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
                 <Pressable style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: !penseBeteChantierId ? '#2C2C2C' : '#F5EDE3' }}
                   onPress={() => setPenseBeteChantierId(null)}>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: !penseBeteChantierId ? '#fff' : '#687076' }}>Général</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: !penseBeteChantierId ? '#fff' : '#687076' }}>{t.home.general}</Text>
                 </Pressable>
                 {myTousChantiers.map(c => (
                   <Pressable key={c.id} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: penseBeteChantierId === c.id ? (c.couleur || '#2C2C2C') : '#F5EDE3' }}
@@ -797,7 +798,7 @@ export default function DashboardScreen() {
                   style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA' }}
                   value={penseBeteText}
                   onChangeText={setPenseBeteText}
-                  placeholder="À ne pas oublier..."
+                  placeholder={t.home.reminderPlaceholder}
                   placeholderTextColor="#B0BEC5"
                 />
                 <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 12, justifyContent: 'center', opacity: penseBeteText.trim() ? 1 : 0.5 }}
