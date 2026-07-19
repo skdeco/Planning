@@ -6,6 +6,7 @@ import {
 import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
@@ -50,6 +51,7 @@ function findDocForType(documents: any[], typeLabel: string): any | undefined {
 
 export default function FinancierSTScreen() {
   const { data, currentUser, isHydrated, updateDevis, updateAcompteST, updateSousTraitant } = useApp();
+  const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const router = useRouter();
   const { confirm, ConfirmModal } = useConfirm();
@@ -215,10 +217,10 @@ export default function FinancierSTScreen() {
 
   const handleDeleteDocLegal = async (docId: string) => {
     if (!monST) return;
-    if (!(await confirm('Supprimer ce document ?'))) return;
+    if (!(await confirm(t.equipe.deleteDocConfirm))) return;
     const newDocs = (monST.documents || []).filter(d => d.id !== docId);
     updateSousTraitant({ ...monST, documents: newDocs });
-    toast.success('Document supprimé');
+    toast.success(t.financierSt.docDeleted);
   };
 
   const chantiersIds = Object.keys(devisByChantier);
@@ -226,55 +228,55 @@ export default function FinancierSTScreen() {
   return (
     <ScreenContainer containerClassName="bg-[#F5EDE3]">
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Mes finances</Text>
+        <Text style={styles.headerTitle}>{t.nav.finances}</Text>
       </View>
 
       <ScrollView style={styles.scroll} showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         {/* ─── Mes documents légaux ─── */}
         {monST && (() => {
-          const nbFournis = DOCUMENTS_LEGAUX_TYPES.filter(t => findDocForType(monST.documents || [], t.label)).length;
+          const nbFournis = DOCUMENTS_LEGAUX_TYPES.filter(docType => findDocForType(monST.documents || [], docType.label)).length;
           const complete = nbFournis === DOCUMENTS_LEGAUX_TYPES.length;
           return (
             <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 12, marginTop: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#1A1A1A' }}>Mes documents légaux</Text>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#1A1A1A' }}>{t.financierSt.myLegalDocs}</Text>
                 <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: complete ? '#D4EDDA' : '#FFF3CD' }}>
                   <Text style={{ fontSize: 11, fontWeight: '700', color: complete ? '#155724' : '#856404' }}>{nbFournis}/{DOCUMENTS_LEGAUX_TYPES.length}</Text>
                 </View>
               </View>
               <Text style={{ fontSize: 11, color: '#8C8077', marginBottom: 10 }}>
-                Chargez ici vos documents légaux. L'admin les verra automatiquement.
+                {t.financierSt.uploadHint}
               </Text>
-              {DOCUMENTS_LEGAUX_TYPES.map(t => {
-                const doc = findDocForType(monST.documents || [], t.label);
+              {DOCUMENTS_LEGAUX_TYPES.map(docType => {
+                const doc = findDocForType(monST.documents || [], docType.label);
                 return (
-                  <View key={t.id} style={{ borderBottomWidth: 0.5, borderBottomColor: '#F0E8DE' }}>
+                  <View key={docType.id} style={{ borderBottomWidth: 0.5, borderBottomColor: '#F0E8DE' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A1A1A' }}>{t.label}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A1A1A' }}>{docType.label}</Text>
                         <Text style={{ fontSize: 10, color: doc ? '#10B981' : '#C9A96E', marginTop: 2 }}>
-                          {doc ? `✅ Fourni le ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : '⚠️ Manquant'}
+                          {doc ? `✅ ${t.financierSt.providedOn} ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : `⚠️ ${t.financierSt.missing}`}
                         </Text>
                       </View>
                       {doc ? (
                         <View style={{ flexDirection: 'row', gap: 6 }}>
                           <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#F5EDE3' }} onPress={() => openDoc(doc.fichier)}>
-                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>Voir</Text>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>{t.common.view}</Text>
                           </Pressable>
                           <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#FEE2E2' }} onPress={() => handleDeleteDocLegal(doc.id)}>
-                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#D94F4F' }}>Suppr.</Text>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#D94F4F' }}>{t.equipe.suppr}</Text>
                           </Pressable>
                         </View>
                       ) : (
-                        <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2C2C2C' }} onPress={() => handleUploadDocLegal(t.label)}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>Charger</Text>
+                        <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2C2C2C' }} onPress={() => handleUploadDocLegal(docType.label)}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>{t.equipe.load}</Text>
                         </Pressable>
                       )}
                     </View>
                     {!doc && (
                       <View style={{ marginTop: 4, marginBottom: 8 }}>
                         <InboxPickerButton
-                          onPick={(item) => addFromInboxDocLegal(t.label, item)}
+                          onPick={(item) => addFromInboxDocLegal(docType.label, item)}
                           mimeFilter={inboxMimeFilterImagePdf}
                         />
                       </View>
@@ -288,8 +290,8 @@ export default function FinancierSTScreen() {
 
         {chantiersIds.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>Aucun devis associé.</Text>
-            <Text style={styles.emptyHint}>Contactez votre administrateur.</Text>
+            <Text style={styles.emptyText}>{t.financierSt.noDevisAssoc}</Text>
+            <Text style={styles.emptyHint}>{t.financierSt.contactAdmin}</Text>
           </View>
         ) : (
           chantiersIds.map(chantierId => {
@@ -336,11 +338,11 @@ export default function FinancierSTScreen() {
                       {/* Résumé financier devis */}
                       <View style={styles.devisFinanceRow}>
                         <View style={styles.devisFinanceCell}>
-                          <Text style={styles.devisFinanceCellLabel}>Acomptes reçus</Text>
+                          <Text style={styles.devisFinanceCellLabel}>{t.financierSt.depositsReceived}</Text>
                           <Text style={[styles.devisFinanceCellValue, { color: '#E67E22' }]}>{fmt(totalAcomptesDevis)}</Text>
                         </View>
                         <View style={styles.devisFinanceCell}>
-                          <Text style={styles.devisFinanceCellLabel}>Reste à recevoir</Text>
+                          <Text style={styles.devisFinanceCellLabel}>{t.financierSt.remainingToReceive}</Text>
                           <Text style={[styles.devisFinanceCellValue, { color: resteDevis > 0 ? '#E74C3C' : '#27AE60' }]}>{fmt(resteDevis)}</Text>
                         </View>
                       </View>
@@ -349,20 +351,20 @@ export default function FinancierSTScreen() {
                       <View style={styles.devisDocsRow}>
                         {devis.devisFichier ? (
                           <Pressable style={styles.docBtn} onPress={() => openDoc(devis.devisFichier!)}>
-                            <Text style={styles.docBtnText}>Mon devis</Text>
+                            <Text style={styles.docBtnText}>{t.financierSt.myDevis}</Text>
                           </Pressable>
                         ) : (
                           <Pressable style={[styles.docBtn, styles.docBtnUpload]} onPress={() => handleUploadDevisFichier(devis.id)}>
-                            <Text style={styles.docBtnText}>Envoyer mon devis</Text>
+                            <Text style={styles.docBtnText}>{t.financierSt.sendMyDevis}</Text>
                           </Pressable>
                         )}
                         {devis.devisSigne ? (
                           <Pressable style={[styles.docBtn, styles.docBtnSigne]} onPress={() => openDoc(devis.devisSigne!)}>
-                            <Text style={styles.docBtnText}>Devis signé reçu</Text>
+                            <Text style={styles.docBtnText}>{t.financierSt.signedDevisReceived}</Text>
                           </Pressable>
                         ) : (
                           <View style={[styles.docBtn, styles.docBtnAttente]}>
-                            <Text style={styles.docBtnTextGrey}>En attente de signature</Text>
+                            <Text style={styles.docBtnTextGrey}>{t.financierSt.awaitingSignature}</Text>
                           </View>
                         )}
                       </View>
@@ -379,7 +381,7 @@ export default function FinancierSTScreen() {
                       {/* Acomptes reçus */}
                       {acomptes.length > 0 && (
                         <View style={styles.acomptesSection}>
-                          <Text style={styles.sectionTitle}>Acomptes reçus</Text>
+                          <Text style={styles.sectionTitle}>{t.financierSt.depositsReceived}</Text>
                           {acomptes.map(a => (
                             <View key={a.id} style={styles.acompteRow}>
                               <View style={{ flex: 1 }}>
@@ -390,12 +392,12 @@ export default function FinancierSTScreen() {
                                 {a.commentaire ? <Text style={styles.acompteComment}>{a.commentaire}</Text> : null}
                                 {a.facture ? (
                                   <Pressable onPress={() => openDoc(a.facture!)}>
-                                    <Text style={styles.factureLink}>Ma facture</Text>
+                                    <Text style={styles.factureLink}>{t.financierSt.myInvoice}</Text>
                                   </Pressable>
                                 ) : (
                                   <>
                                     <Pressable onPress={() => handleUploadFacture(a.id)}>
-                                      <Text style={styles.factureUpload}>Joindre ma facture</Text>
+                                      <Text style={styles.factureUpload}>{t.financierSt.attachMyInvoice}</Text>
                                     </Pressable>
                                     <View style={{ marginTop: 4 }}>
                                       <InboxPickerButton

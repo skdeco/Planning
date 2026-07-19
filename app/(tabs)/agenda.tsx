@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { useRefresh } from '@/hooks/useRefresh';
 import type { AgendaEvent } from '@/app/types';
 
@@ -26,6 +27,7 @@ function genId() { return `evt_${Date.now()}_${Math.random().toString(36).slice(
 
 export default function AgendaScreen() {
   const { data, currentUser, isHydrated, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent } = useApp();
+  const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const router = useRouter();
 
@@ -105,7 +107,7 @@ export default function AgendaScreen() {
   const handleDelete = (id: string) => {
     const doDelete = () => deleteAgendaEvent(id);
     if (Platform.OS === 'web') { if (window.confirm('Supprimer ce rendez-vous ?')) doDelete(); }
-    else Alert.alert('Supprimer', 'Supprimer ce rendez-vous ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
+    else Alert.alert(t.common.delete, 'Supprimer ce rendez-vous ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
   };
 
   const toggleInvite = (id: string) => {
@@ -127,7 +129,7 @@ export default function AgendaScreen() {
     <ScreenContainer containerClassName="bg-[#F2F4F7]" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Agenda</Text>
+        <Text style={styles.headerTitle}>{t.agenda.title}</Text>
         <Pressable style={styles.addBtn} onPress={openNew}>
           <Text style={styles.addBtnText}>+ Nouveau</Text>
         </Pressable>
@@ -149,7 +151,7 @@ export default function AgendaScreen() {
         {events.length === 0 && (
           <View style={{ alignItems: 'center', paddingVertical: 32 }}>
             <Text style={{ fontSize: 36, marginBottom: 8 }}>📭</Text>
-            <Text style={{ fontSize: 15, color: '#687076' }}>Aucun rendez-vous ce jour</Text>
+            <Text style={{ fontSize: 15, color: '#687076' }}>{t.agenda.noRdvToday}</Text>
           </View>
         )}
         {events.map(evt => (
@@ -189,7 +191,7 @@ export default function AgendaScreen() {
         {/* Prochains RDV */}
         {prochains.length > 0 && selectedDate === today && (
           <>
-            <Text style={styles.sectionTitle}>Prochains rendez-vous</Text>
+            <Text style={styles.sectionTitle}>{t.agenda.nextRdv}</Text>
             {prochains.filter(e => e.date > today).map(evt => (
               <Pressable key={evt.id} style={[styles.eventCardSmall, { borderLeftColor: evt.couleur }]} onPress={() => { setSelectedDate(evt.date); }}>
                 <Text style={{ fontSize: 11, color: '#687076' }}>{formatDateFr(evt.date)}</Text>
@@ -207,19 +209,19 @@ export default function AgendaScreen() {
             <ScrollView showsVerticalScrollIndicator={false}>
               <Text style={styles.modalTitle}>{editId ? 'Modifier' : 'Nouveau rendez-vous'}</Text>
 
-              <Text style={styles.label}>Titre *</Text>
-              <TextInput style={styles.input} value={form.titre} onChangeText={v => setForm(f => ({ ...f, titre: v }))} placeholder="Ex: Réunion chantier FOCH" />
+              <Text style={styles.label}>{t.agenda.titleReq}</Text>
+              <TextInput style={styles.input} value={form.titre} onChangeText={v => setForm(f => ({ ...f, titre: v }))} placeholder={t.agenda.titlePh} />
 
-              <Text style={styles.label}>Description</Text>
-              <TextInput style={[styles.input, { minHeight: 60 }]} value={form.description} onChangeText={v => setForm(f => ({ ...f, description: v }))} multiline placeholder="Détails..." />
+              <Text style={styles.label}>{t.common.description}</Text>
+              <TextInput style={[styles.input, { minHeight: 60 }]} value={form.description} onChangeText={v => setForm(f => ({ ...f, description: v }))} multiline placeholder={t.agenda.descPh} />
 
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Date</Text>
+                  <Text style={styles.label}>{t.common.date}</Text>
                   <TextInput style={styles.input} value={form.date} onChangeText={v => setForm(f => ({ ...f, date: v }))} placeholder="AAAA-MM-JJ" />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Début</Text>
+                  <Text style={styles.label}>{t.common.start}</Text>
                   <TextInput style={styles.input} value={form.heureDebut} onChangeText={v => setForm(f => ({ ...f, heureDebut: v }))} placeholder="HH:MM" />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -228,10 +230,10 @@ export default function AgendaScreen() {
                 </View>
               </View>
 
-              <Text style={styles.label}>Lieu</Text>
-              <TextInput style={styles.input} value={form.lieu} onChangeText={v => setForm(f => ({ ...f, lieu: v }))} placeholder="Adresse ou chantier" />
+              <Text style={styles.label}>{t.agenda.place}</Text>
+              <TextInput style={styles.input} value={form.lieu} onChangeText={v => setForm(f => ({ ...f, lieu: v }))} placeholder={t.agenda.placePh} />
 
-              <Text style={styles.label}>Couleur</Text>
+              <Text style={styles.label}>{t.common.color}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
                 {COULEURS.map(c => (
                   <Pressable key={c} onPress={() => setForm(f => ({ ...f, couleur: c }))}
@@ -241,7 +243,7 @@ export default function AgendaScreen() {
 
               {admins.length > 0 && (
                 <>
-                  <Text style={styles.label}>Inviter</Text>
+                  <Text style={styles.label}>{t.agenda.invite}</Text>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
                     {admins.map(adm => (
                       <Pressable key={adm.id}
