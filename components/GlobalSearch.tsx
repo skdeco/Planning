@@ -15,6 +15,7 @@ import {
   FileText, Users, ChevronRight, ListFilter,
 } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, space, font } from '@/constants/design';
 
 type FilterType = 'chantier' | 'employe' | 'st' | 'article' | 'sav' | 'devis' | 'docSociete' | 'apporteur';
@@ -32,15 +33,15 @@ interface Props {
   onClose: () => void;
 }
 
-const FILTERS: { type: FilterType; label: string; icon: React.ComponentType<{ size?: number; color?: string }> }[] = [
-  { type: 'chantier', label: 'Chantiers', icon: Building2 },
-  { type: 'employe', label: 'Employés', icon: HardHat },
-  { type: 'st', label: 'Sous-traitants', icon: Briefcase },
-  { type: 'article', label: 'Articles', icon: Package },
-  { type: 'sav', label: 'SAV', icon: Wrench },
-  { type: 'devis', label: 'Devis ST', icon: FilePen },
-  { type: 'docSociete', label: 'Docs société', icon: FileText },
-  { type: 'apporteur', label: 'Contacts', icon: Users },
+const FILTERS: { type: FilterType; icon: React.ComponentType<{ size?: number; color?: string }> }[] = [
+  { type: 'chantier', icon: Building2 },
+  { type: 'employe', icon: HardHat },
+  { type: 'st', icon: Briefcase },
+  { type: 'article', icon: Package },
+  { type: 'sav', icon: Wrench },
+  { type: 'devis', icon: FilePen },
+  { type: 'docSociete', icon: FileText },
+  { type: 'apporteur', icon: Users },
 ];
 
 const ICONS: Record<FilterType, React.ComponentType<{ size?: number; color?: string }>> = {
@@ -50,6 +51,7 @@ const ICONS: Record<FilterType, React.ComponentType<{ size?: number; color?: str
 
 export function GlobalSearch({ visible, onClose }: Props) {
   const { data } = useApp();
+  const { t } = useLanguage();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [active, setActive] = useState<Set<FilterType>>(new Set());
@@ -138,7 +140,7 @@ export function GlobalSearch({ visible, onClose }: Props) {
           <Search size={18} color={DS.textMuted} />
           <TextInput
             style={styles.input}
-            placeholder="Rechercher partout…"
+            placeholder={t.search.placeholder}
             placeholderTextColor={DS.textMuted}
             value={query}
             onChangeText={setQuery}
@@ -151,7 +153,7 @@ export function GlobalSearch({ visible, onClose }: Props) {
             </Pressable>
           )}
           <Pressable onPress={close} hitSlop={8} style={styles.cancelBtn}>
-            <Text style={styles.cancelTxt}>Fermer</Text>
+            <Text style={styles.cancelTxt}>{t.common.close}</Text>
           </Pressable>
         </View>
 
@@ -163,14 +165,14 @@ export function GlobalSearch({ visible, onClose }: Props) {
             return (
               <Pressable key={f.type} onPress={() => toggleFilter(f.type)} style={[styles.chip, on && styles.chipOn]}>
                 <Icon size={13} color={on ? DS.surface : DS.bordeaux} />
-                <Text style={[styles.chipTxt, on && styles.chipTxtOn]}>{f.label}</Text>
+                <Text style={[styles.chipTxt, on && styles.chipTxtOn]}>{(t.search.filters as Record<string,string>)[f.type]}</Text>
               </Pressable>
             );
           })}
           {active.size > 0 && (
             <Pressable onPress={() => setActive(new Set())} style={styles.chipClear}>
               <ListFilter size={13} color={DS.textAlt} />
-              <Text style={styles.chipClearTxt}>Tous</Text>
+              <Text style={styles.chipClearTxt}>{t.common.all}</Text>
             </Pressable>
           )}
         </ScrollView>
@@ -178,7 +180,7 @@ export function GlobalSearch({ visible, onClose }: Props) {
         {/* Résultats */}
         <ScrollView style={styles.results} keyboardShouldPersistTaps="handled">
           {query.trim().length < 2 ? (
-            <Text style={styles.hint}>Tape au moins 2 caractères pour rechercher.</Text>
+            <Text style={styles.hint}>{t.search.min2Chars}</Text>
           ) : results.length === 0 ? (
             <Text style={styles.hint}>Aucun résultat pour « {query} ».</Text>
           ) : (

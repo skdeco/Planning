@@ -300,6 +300,21 @@ export default {
     lateCount: "late",
   },
 
+  search: {
+    placeholder: "Search everywhere…",
+    min2Chars: "Type at least 2 characters to search.",
+    filters: {
+      chantier: "Sites",
+      employe: "Employees",
+      st: "Subcontractors",
+      article: "Items",
+      sav: "After-sales",
+      devis: "Sub. quotes",
+      docSociete: "Company docs",
+      apporteur: "Contacts",
+    },
+  },
+
   common: {
     monthsShort: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
     save: "Save",

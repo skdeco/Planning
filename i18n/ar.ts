@@ -300,6 +300,21 @@ export default {
     lateCount: "متأخر",
   },
 
+  search: {
+    placeholder: "ابحث في كل شيء…",
+    min2Chars: "اكتب حرفين على الأقل للبحث.",
+    filters: {
+      chantier: "المواقع",
+      employe: "الموظفون",
+      st: "المقاولون",
+      article: "المواد",
+      sav: "خدمة",
+      devis: "عروض المقاول",
+      docSociete: "وثائق الشركة",
+      apporteur: "جهات الاتصال",
+    },
+  },
+
   common: {
     monthsShort: ["ينا", "فبر", "مار", "أبر", "ماي", "يون", "يول", "أغس", "سبت", "أكت", "نوف", "ديس"],
     save: "حفظ",

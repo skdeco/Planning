@@ -304,6 +304,21 @@ export default {
     lateCount: "en retard",
   },
 
+  search: {
+    placeholder: "Rechercher partout…",
+    min2Chars: "Tape au moins 2 caractères pour rechercher.",
+    filters: {
+      chantier: "Chantiers",
+      employe: "Employés",
+      st: "Sous-traitants",
+      article: "Articles",
+      sav: "SAV",
+      devis: "Devis ST",
+      docSociete: "Docs société",
+      apporteur: "Contacts",
+    },
+  },
+
   common: {
     monthsShort: ["Jan", "Fév", "Mar", "Avr", "Mai", "Jun", "Jul", "Aoû", "Sep", "Oct", "Nov", "Déc"],
     save: "Enregistrer",
