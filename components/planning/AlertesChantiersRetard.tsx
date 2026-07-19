@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { DS, font, space } from '../../constants/design';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -28,8 +29,8 @@ function daysBetween(fromYmd: string, toYmd: string): number {
 }
 
 /** Format FR "JJ/MM/AAAA" depuis un YYYY-MM-DD. Ancrage 12h locale (cohérent avec daysBetween). */
-function formatDateFR(ymd: string): string {
-  return new Date(ymd + 'T12:00:00').toLocaleDateString('fr-FR');
+function formatDateFR(ymd: string, locale = 'fr-FR'): string {
+  return new Date(ymd + 'T12:00:00').toLocaleDateString(locale);
 }
 
 /** Type-guard : chantier actif avec une `dateFin` définie et bien formée. */
@@ -129,6 +130,8 @@ const ALERTE_GAP = 6;
 export function AlertesChantiersRetard({
   chantiers,
 }: AlertesChantiersRetardProps): React.ReactElement | null {
+  const { t, language } = useLanguage();
+  const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
   const [expanded, setExpanded] = useState(false);
 
   const today = toYMDLocal(new Date());
@@ -161,8 +164,8 @@ export function AlertesChantiersRetard({
       ]}
     >
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: titleColor }]}>{totalAlertes} alerte{totalAlertes > 1 ? 's' : ''} chantier{totalAlertes > 1 ? 's' : ''}
-          {hasRetard ? ` (${chantiersEnRetard.length} en retard)` : ''}
+        <Text style={[styles.title, { color: titleColor }]}>{totalAlertes} t.planningAdmin.alertsChantiers
+          {hasRetard ? ` (${chantiersEnRetard.length} ${t.planningAdmin.lateCount})` : ''}
         </Text>
         <Text style={styles.toggleArrow}>{expanded ? '▲' : '▼'}</Text>
       </View>
@@ -176,7 +179,7 @@ export function AlertesChantiersRetard({
                 key={c.id}
                 style={[styles.detailLine, { color: ALERTE_TEXT_ERROR }]}
               >
-                • {c.nom} — fin prévue le {formatDateFR(c.dateFin)} ({jours}j de retard)
+                • {c.nom} — {t.planningAdmin.dueOn} {formatDateFR(c.dateFin, dateLocale)} ({jours}{t.planningAdmin.daysAbbr2} {t.planningAdmin.ofLate})
               </Text>
             );
           })}
@@ -187,7 +190,7 @@ export function AlertesChantiersRetard({
                 key={c.id}
                 style={[styles.detailLine, { color: ALERTE_TEXT_WARNING }]}
               >
-                • {c.nom} — fin le {formatDateFR(c.dateFin)} ({jours}j restant{jours > 1 ? 's' : ''})
+                • {c.nom} — {t.planningAdmin.endOn} {formatDateFR(c.dateFin, dateLocale)} ({jours}{t.planningAdmin.daysAbbr2} {t.planningAdmin.remainingDays})
               </Text>
             );
           })}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { DS, font, radius, space } from '../../constants/design';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -72,6 +73,7 @@ export function AdminPlanningModeSwitcher({
   value,
   onChange,
 }: AdminPlanningModeSwitcherProps): React.ReactElement {
+  const { t } = useLanguage();
   const isEquipeActive    = value === 'equipe';
   const isDirectionActive = value === 'direction';
 
@@ -92,7 +94,7 @@ export function AdminPlanningModeSwitcher({
             { color: isEquipeActive ? DS.textInverse : DS.textAlt },
           ]}
         >
-          {MODE_META.equipe.emoji} {MODE_META.equipe.label}
+          {MODE_META.equipe.emoji} {t.planningAdmin.teamPlanning}
         </Text>
       </Pressable>
 
@@ -111,7 +113,7 @@ export function AdminPlanningModeSwitcher({
             { color: isDirectionActive ? DS.textInverse : DS.textAlt },
           ]}
         >
-          {MODE_META.direction.emoji} {MODE_META.direction.label}
+          {MODE_META.direction.emoji} {t.planningAdmin.directionPlanning}
         </Text>
       </Pressable>
     </View>

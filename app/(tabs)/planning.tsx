@@ -788,11 +788,11 @@ export default function PlanningScreen() {
                   <Text style={[styles.viewToggleBtnText, viewMode === 'semaine' && styles.viewToggleBtnTextActive]}>7j</Text>
                 </Pressable>
                 <Pressable style={[styles.viewToggleBtn, viewMode === 'mois' && styles.viewToggleBtnActive]} onPress={() => setViewMode('mois')}>
-                  <Text style={[styles.viewToggleBtnText, viewMode === 'mois' && styles.viewToggleBtnTextActive]}>Mois</Text>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'mois' && styles.viewToggleBtnTextActive]}>{t.planning.monthView}</Text>
                 </Pressable>
                 {isAdmin && (
                   <Pressable style={[styles.viewToggleBtn, viewMode === 'gantt' && styles.viewToggleBtnActive]} onPress={() => setViewMode('gantt')}>
-                    <Text style={[styles.viewToggleBtnText, viewMode === 'gantt' && styles.viewToggleBtnTextActive]}>Chantiers</Text>
+                    <Text style={[styles.viewToggleBtnText, viewMode === 'gantt' && styles.viewToggleBtnTextActive]}>{t.nav.chantiers}</Text>
                   </Pressable>
                 )}
               </View>
@@ -832,10 +832,10 @@ export default function PlanningScreen() {
               );
               if (prevAffectations.length === 0) {
                 if (Platform.OS === 'web') alert('Aucune affectation la semaine précédente');
-                else Alert.alert('Info', 'Aucune affectation la semaine précédente');
+                else Alert.alert(t.common.information, t.planningAdmin.noAffectationPrevWeek);
                 return;
               }
-              const msg = `Dupliquer ${prevAffectations.length} affectation(s) de la semaine précédente vers cette semaine ?`;
+              const msg = `${t.planningAdmin.duplicate} ${prevAffectations.length} ${t.planningAdmin.duplicatePromptA}`;
               const doDuplicate = () => {
                 prevAffectations.forEach(a => {
                   const debutDate = new Date(a.dateDebut + 'T12:00:00');
@@ -861,7 +861,7 @@ export default function PlanningScreen() {
                 });
               };
               if (Platform.OS === 'web') { if (window.confirm(msg)) doDuplicate(); }
-              else Alert.alert('Dupliquer', msg, [{ text: 'Annuler', style: 'cancel' }, { text: 'Dupliquer', onPress: doDuplicate }]);
+              else Alert.alert(t.planningAdmin.duplicate, msg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.planningAdmin.duplicate, onPress: doDuplicate }]);
             }} accessibilityLabel="Dupliquer semaine">
               <Copy size={17} color="#2C2C2C" strokeWidth={2} />
             </Pressable>
@@ -1113,7 +1113,7 @@ export default function PlanningScreen() {
 
               {ficheModal?.chantier.fiche && ficheModal.chantier.fiche.photos.length > 0 && (
                 <View style={styles.fichePhotosSection}>
-                  <Text style={styles.ficheRowLabel}>Photos & documents</Text>
+                  <Text style={styles.ficheRowLabel}>{t.planningAdmin.photosDocuments}</Text>
                   <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 8 }}>
                     {ficheModal.chantier.fiche.photos.map((uri, idx) => {
                       const isPdf = uri.startsWith('data:application/pdf');
@@ -1150,7 +1150,7 @@ export default function PlanningScreen() {
             </ScrollView>
 
             <Pressable style={styles.modalCloseBtn} onPress={() => setFicheModal(null)}>
-              <Text style={styles.modalCloseBtnText}>Fermer</Text>
+              <Text style={styles.modalCloseBtnText}>{t.common.close}</Text>
             </Pressable>
           </Pressable>
         </View>
@@ -1187,21 +1187,21 @@ export default function PlanningScreen() {
               </Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <Text style={styles.intervFormLabel}>Libellé *</Text>
+              <Text style={styles.intervFormLabel}>{t.equipe.labelReq}</Text>
               <TextInput
                 style={styles.intervFormInput}
                 value={interventionForm.libelle}
                 onChangeText={v => setInterventionForm(f => ({ ...f, libelle: v }))}
-                placeholder="Ex: Menuiserie Dupont, Livraison matériaux..."
+                placeholder={t.planningAdmin.interventionPh}
                 placeholderTextColor="#B0BEC5"
                 autoFocus
               />
-              <Text style={[styles.intervFormLabel, { marginTop: 12 }]}>Description (optionnel)</Text>
+              <Text style={[styles.intervFormLabel, { marginTop: 12 }]}>{t.planningAdmin.descOptional}</Text>
               <TextInput
                 style={[styles.intervFormInput, { minHeight: 60 }]}
                 value={interventionForm.description}
                 onChangeText={v => setInterventionForm(f => ({ ...f, description: v }))}
-                placeholder="Détails, contact, numéro de téléphone..."
+                placeholder={t.planningAdmin.interventionDescPh}
                 placeholderTextColor="#B0BEC5"
                 multiline
               />
@@ -1229,7 +1229,7 @@ export default function PlanningScreen() {
                   />
                 </View>
               </View>
-              <Text style={[styles.intervFormLabel, { marginTop: 12 }]}>Couleur</Text>
+              <Text style={[styles.intervFormLabel, { marginTop: 12 }]}>{t.common.color}</Text>
               <View style={styles.intervColorRow}>
                 {INTERVENTION_COLORS.map(c => (
                   <Pressable
@@ -1247,11 +1247,11 @@ export default function PlanningScreen() {
                     setInterventionModal(null);
                   }}
                 >
-                  <Text style={styles.intervDeleteBtnText}>Supprimer cette intervention</Text>
+                  <Text style={styles.intervDeleteBtnText}>{t.planningAdmin.deleteIntervention}</Text>
                 </Pressable>
               )}
               <Pressable style={styles.intervSaveBtn} onPress={handleSaveIntervention}>
-                <Text style={styles.intervSaveBtnText}>Enregistrer</Text>
+                <Text style={styles.intervSaveBtnText}>{t.common.save}</Text>
               </Pressable>
             </ScrollView>
           </Pressable>
@@ -1317,30 +1317,30 @@ export default function PlanningScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', maxWidth: 420 }}>
             <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>Paramètres du compte admin</Text>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>{t.planningAdmin.adminSettings}</Text>
 
               {/* Identifiant */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Identifiant de connexion</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.loginId}</Text>
               <TextInput
                 style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
                 value={adminIdEdit}
                 onChangeText={v => { setAdminIdEdit(v); setPwdError(''); }}
                 autoCapitalize="none"
                 autoCorrect={false}
-                placeholder="Identifiant admin"
+                placeholder={t.planningAdmin.adminIdPh}
                 placeholderTextColor="#687076"
               />
 
               {/* Employé lié */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Employé associé au compte admin</Text>
-              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>Les autres utilisateurs verront ce nom.</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.employeLinked}</Text>
+              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>{t.planningAdmin.othersWillSee}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   <Pressable
                     style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: !adminEmployeIdEdit ? '#2C2C2C' : '#F5EDE3' }}
                     onPress={() => setAdminEmployeIdEdit(undefined)}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: !adminEmployeIdEdit ? '#fff' : '#687076' }}>Aucun</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: !adminEmployeIdEdit ? '#fff' : '#687076' }}>{t.common.none}</Text>
                   </Pressable>
                   {data.employes.map(e => (
                     <Pressable
@@ -1355,21 +1355,21 @@ export default function PlanningScreen() {
               </ScrollView>
 
               {/* Magasin préféré */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6, marginTop: 8 }}>Magasin préféré (vérification dispo)</Text>
-              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>Utilisé pour vérifier la disponibilité des articles chez Leroy Merlin, etc.</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6, marginTop: 8 }}>{t.planningAdmin.preferredStore}</Text>
+              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>{t.planningAdmin.preferredStoreHint}</Text>
               <TextInput
                 style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
                 value={magasinEdit}
                 onChangeText={setMagasinEdit}
-                placeholder="Ex: Leroy Merlin Ivry-sur-Seine"
+                placeholder={t.planningAdmin.storePh}
                 placeholderTextColor="#687076"
               />
 
               {/* Séparateur */}
               <View style={{ height: 1, backgroundColor: '#E2E6EA', marginVertical: 10 }} />
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#11181C', marginBottom: 12 }}>Changer le mot de passe (optionnel)</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#11181C', marginBottom: 12 }}>{t.planningAdmin.changePassword}</Text>
 
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Mot de passe actuel</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.currentPassword}</Text>
               <TextInput
                 style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
                 value={pwdActuel}
@@ -1379,7 +1379,7 @@ export default function PlanningScreen() {
                 placeholder="Mot de passe actuel"
                 placeholderTextColor="#687076"
               />
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Nouveau mot de passe</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.newPassword}</Text>
               <TextInput
                 style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
                 value={pwdNouveau}
@@ -1389,7 +1389,7 @@ export default function PlanningScreen() {
                 placeholder="Nouveau mot de passe"
                 placeholderTextColor="#687076"
               />
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Confirmer le mot de passe</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.confirmPassword}</Text>
               <TextInput
                 style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
                 value={pwdConfirm}
@@ -1400,13 +1400,13 @@ export default function PlanningScreen() {
                 placeholderTextColor="#687076"
               />
               {pwdError !== '' && <Text style={{ color: '#E74C3C', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{pwdError}</Text>}
-              {pwdSuccess && <Text style={{ color: '#27AE60', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>Paramètres enregistrés !</Text>}
+              {pwdSuccess && <Text style={{ color: '#27AE60', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{t.planningAdmin.settingsSaved}</Text>}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
                 <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
-                  <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>Annuler</Text>
+                  <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>{t.common.cancel}</Text>
                 </Pressable>
                 <Pressable style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={handleSaveAdminSettings}>
-                  <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Enregistrer</Text>
+                  <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>{t.common.save}</Text>
                 </Pressable>
               </View>
             </ScrollView>
@@ -1439,7 +1439,7 @@ export default function PlanningScreen() {
                     Depuis : {fromChantier?.nom} — {new Date(moveModal.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                   </Text>
 
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 8 }}>Vers quel chantier ?</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 8 }}>{t.planningAdmin.moveToWhichChantier}</Text>
                   <View style={{ gap: 4, marginBottom: 16 }}>
                     {/* Même chantier (changer juste la date) */}
                     <Pressable
@@ -1459,7 +1459,7 @@ export default function PlanningScreen() {
                     ))}
                   </View>
 
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>Date de destination</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.destinationDate}</Text>
                   <View style={{ gap: 3, marginBottom: 16 }}>
                     {dateChoices.map(d => (
                       <Pressable key={d.value} style={{ padding: 10, borderRadius: 8, backgroundColor: moveTargetDate === d.value ? '#2C2C2C' : '#F5EDE3' }}
@@ -1471,7 +1471,7 @@ export default function PlanningScreen() {
 
                   <View style={{ flexDirection: 'row', gap: 10 }}>
                     <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setMoveModal(null)}>
-                      <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>Annuler</Text>
+                      <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>{t.common.cancel}</Text>
                     </Pressable>
                     <Pressable
                       style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: moveTargetChantierId ? 1 : 0.5 }}
@@ -1488,7 +1488,7 @@ export default function PlanningScreen() {
                       }}
                       disabled={!moveTargetChantierId}
                     >
-                      <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Déplacer</Text>
+                      <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>{t.planningAdmin.move}</Text>
                     </Pressable>
                   </View>
                 </ScrollView>
@@ -1557,7 +1557,7 @@ export default function PlanningScreen() {
                   })}
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
                     <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
-                      <Text style={{ color: '#687076', fontWeight: '600' }}>Annuler</Text>
+                      <Text style={{ color: '#687076', fontWeight: '600' }}>{t.common.cancel}</Text>
                     </Pressable>
                     <Pressable
                       style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
@@ -1566,7 +1566,7 @@ export default function PlanningScreen() {
                         setOrdreModal(null);
                       }}
                     >
-                      <Text style={{ color: '#fff', fontWeight: '700' }}>Enregistrer</Text>
+                      <Text style={{ color: '#fff', fontWeight: '700' }}>{t.common.save}</Text>
                     </Pressable>
                   </View>
                 </>
