@@ -197,6 +197,7 @@ interface ChantierCardProps {
 }
 
 function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loading }: ChantierCardProps) {
+  const { t } = useLanguage();
   const couleur = chantier.couleur || '#2C2C2C';
   const adresse = [chantier.rue, chantier.codePostal, chantier.ville].filter(Boolean).join(', ') || chantier.adresse || '';
 
@@ -221,7 +222,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
         {isComplete && (
           <View style={styles.completeBadge}>
             <IconCheck size={14} color="#27AE60" />
-            <Text style={styles.completeBadgeText}>Terminé</Text>
+            <Text style={styles.completeBadgeText}>{t.pointage.done}</Text>
           </View>
         )}
       </View>
@@ -231,7 +232,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
         <View style={styles.horaireItem}>
           <View style={styles.horaireLabel}>
             <IconArrivee size={14} color={debutPointage ? '#27AE60' : '#B0B8C1'} />
-            <Text style={[styles.horaireLabelText, debutPointage && styles.horaireLabelDone]}>Arrivée</Text>
+            <Text style={[styles.horaireLabelText, debutPointage && styles.horaireLabelDone]}>{t.pointage.arrival}</Text>
           </View>
           <Text style={[styles.horaireHeure, debutPointage && styles.horaireHeureDone]}>
             {debutPointage ? debutPointage.heure : '—'}
@@ -241,7 +242,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
         <View style={styles.horaireItem}>
           <View style={styles.horaireLabel}>
             <IconDepart size={14} color={finPointage ? '#E74C3C' : '#B0B8C1'} />
-            <Text style={[styles.horaireLabelText, finPointage && styles.horaireLabelDone]}>Départ</Text>
+            <Text style={[styles.horaireLabelText, finPointage && styles.horaireLabelDone]}>{t.pointage.departure}</Text>
           </View>
           <Text style={[styles.horaireHeure, finPointage && styles.horaireHeureDone]}>
             {finPointage ? finPointage.heure : '—'}
@@ -253,7 +254,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
             <View style={styles.horaireItem}>
               <View style={styles.horaireLabel}>
                 <IconClock size={14} color="#2C2C2C" />
-                <Text style={[styles.horaireLabelText, { color: '#2C2C2C' }]}>Durée</Text>
+                <Text style={[styles.horaireLabelText, { color: '#2C2C2C' }]}>{t.pointage.duration}</Text>
               </View>
               <Text style={[styles.horaireHeure, { color: '#2C2C2C' }]}>
                 {(() => {
@@ -283,7 +284,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
               <>
                 <IconArrivee size={20} color={canDebut ? '#fff' : 'rgba(255,255,255,0.4)'} />
                 <Text style={[styles.actionBtnText, !canDebut && styles.actionBtnTextDisabled]}>
-                  {debutPointage ? 'Arrivée enregistrée' : 'Pointer l\'arrivée'}
+                  {debutPointage ? t.pointage.arrivalDone : t.pointage.clockArrival}
                 </Text>
               </>
             )}
@@ -300,7 +301,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
               <>
                 <IconDepart size={20} color={canFin ? '#fff' : 'rgba(255,255,255,0.4)'} />
                 <Text style={[styles.actionBtnText, !canFin && styles.actionBtnTextDisabled]}>
-                  {!debutPointage ? 'Pointez d\'abord l\'arrivée' : 'Pointer le départ'}
+                  {!debutPointage ? t.pointage.clockArrivalFirst : t.pointage.clockDeparture}
                 </Text>
               </>
             )}
@@ -428,13 +429,11 @@ export default function PointageScreen() {
         }
       } catch {
         // Géolocalisation refusée ou indisponible : avertir mais permettre le pointage
-        const msg =
-          'La géolocalisation n\'est pas disponible.\n\n' +
-          'Le pointage sera enregistré sans position GPS.';
+        const msg = t.pointage.geoUnavailableMsg;
         if (Platform.OS === 'web') {
           alert(msg);
         } else {
-          Alert.alert('Géolocalisation indisponible', msg);
+          Alert.alert(t.pointage.geoUnavailableTitle, msg);
         }
         // Continuer sans coordonnées GPS
       }
@@ -456,8 +455,8 @@ export default function PointageScreen() {
       addPointage(pointage);
 
       // Feedback visuel
-      const label = type === 'debut' ? 'Arrivée' : 'Départ';
-      toast.success(`${label} enregistré${type === 'fin' ? 'e' : ''} à ${toHM(ts)}`);
+      const label = type === 'debut' ? t.pointage.arrivalRecordedAt : t.pointage.departureRecordedAt;
+      toast.success(`${label} ${toHM(ts)}`);
 
       // Ouvrir modal photos après fin de journée
       if (type === 'fin') {
@@ -480,13 +479,13 @@ export default function PointageScreen() {
       doPointage(type, chantierId);
       return;
     }
-    const msg = `Enregistrer votre départ à ${heure} sur "${chantierNom}" ?`;
+    const msg = `${t.pointage.departurePromptPrefix} ${heure} ?`;
     if (Platform.OS === 'web') {
       if (window.confirm(msg)) doPointage(type, chantierId);
     } else {
-      Alert.alert(`Départ — ${chantierNom}`, msg, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Confirmer', onPress: () => doPointage(type, chantierId) },
+      Alert.alert(`${t.pointage.departure} — ${chantierNom}`, msg, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.confirm, onPress: () => doPointage(type, chantierId) },
       ]);
     }
   };
@@ -543,7 +542,7 @@ export default function PointageScreen() {
       return;
     }
     if (!photosChantierId) {
-      Alert.alert('Erreur', 'Veuillez sélectionner un chantier.');
+      Alert.alert(t.common.error, t.pointage.selectChantierError);
       return;
     }
     setUploadingPhotos(true);
@@ -571,9 +570,9 @@ export default function PointageScreen() {
       }
       if (newPhotos.length > 0) addPhotosChantier(newPhotos);
       if (failCount > 0) {
-        const msg = `${failCount} photo(s) n'ont pas pu être envoyées. Veuillez réessayer.`;
+        const msg = `${failCount} ${t.pointage.uploadFailSuffix}`;
         if (Platform.OS === 'web') alert(msg);
-        else Alert.alert('Erreur upload', msg);
+        else Alert.alert(t.pointage.uploadErrorTitle, msg);
       }
     } finally {
       setUploadingPhotos(false);
@@ -643,7 +642,7 @@ export default function PointageScreen() {
         {/* Chantiers du jour */}
         {uniqueChantiers.length > 0 ? (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mes chantiers du jour</Text>
+            <Text style={styles.sectionTitle}>{t.pointage.myChantiersToday}</Text>
             {uniqueChantiers.map(chantier => (
               <ChantierCard
                 key={chantier.id}
@@ -658,7 +657,7 @@ export default function PointageScreen() {
         ) : (
           <View style={styles.noChantierBox}>
             <IconCalendar size={32} color="#B0B8C1" />
-            <Text style={styles.noChantierText}>Aucun chantier affecté aujourd'hui</Text>
+            <Text style={styles.noChantierText}>{t.pointage.noChantierToday}</Text>
           </View>
         )}
 
@@ -745,7 +744,7 @@ export default function PointageScreen() {
         )}
         {/* ─── Récap mensuel ─────────────────────────────────────────────── */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Récapitulatif mensuel</Text>
+          <Text style={styles.sectionTitle}>{t.pointage.monthlyRecap}</Text>
           {(() => {
             const moisActuel = now.getMonth();
             const annee = now.getFullYear();
@@ -813,19 +812,19 @@ export default function PointageScreen() {
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                   <View style={{ alignItems: 'center', flex: 1 }}>
                     <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>{joursComplets}</Text>
-                    <Text style={{ fontSize: 11, color: '#687076' }}>jours pointés</Text>
+                    <Text style={{ fontSize: 11, color: '#687076' }}>{t.pointage.daysClocked}</Text>
                   </View>
                   <View style={{ width: 1, backgroundColor: '#E2E6EA' }} />
                   <View style={{ alignItems: 'center', flex: 1 }}>
                     <Text style={{ fontSize: 22, fontWeight: '800', color: '#2C2C2C' }}>{totalH}h{String(totalM).padStart(2, '0')}</Text>
-                    <Text style={{ fontSize: 11, color: '#687076' }}>heures travaillées</Text>
+                    <Text style={{ fontSize: 11, color: '#687076' }}>{t.pointage.hoursWorked}</Text>
                   </View>
                   <View style={{ width: 1, backgroundColor: '#E2E6EA' }} />
                   <View style={{ alignItems: 'center', flex: 1 }}>
                     <Text style={{ fontSize: 22, fontWeight: '800', color: heuresSup > 0 ? '#27AE60' : '#687076' }}>
                       {supH}h{String(supM).padStart(2, '0')}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#687076' }}>heures sup</Text>
+                    <Text style={{ fontSize: 11, color: '#687076' }}>{t.pointage.overtimeHours}</Text>
                   </View>
                 </View>
 
@@ -885,7 +884,7 @@ export default function PointageScreen() {
                       if (win) { win.document.write(html); win.document.close(); }
                     }}
                   >
-                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>Exporter PDF</Text>
+                    <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>{t.pointage.exportPdf}</Text>
                   </Pressable>
                 )}
               </View>
@@ -899,7 +898,7 @@ export default function PointageScreen() {
         <View style={styles.modalOverlay}>
           <View style={styles.modalBox}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Photos de la journée</Text>
+              <Text style={styles.modalTitle}>{t.pointage.dayPhotos}</Text>
               <Pressable onPress={() => setShowPhotosModal(false)} style={styles.modalCloseBtn}>
                 <Text style={styles.modalCloseText}>✕</Text>
               </Pressable>
@@ -911,7 +910,7 @@ export default function PointageScreen() {
 
             {uniqueChantiers.length > 1 && (
               <View style={styles.chantierSelectSection}>
-                <Text style={styles.chantierSelectLabel}>Chantier :</Text>
+                <Text style={styles.chantierSelectLabel}>{t.pointage.chantierLabel} :</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierSelectScroll}>
                   {uniqueChantiers.map(c => (
                     <Pressable
@@ -954,7 +953,7 @@ export default function PointageScreen() {
             )}
 
             <Pressable style={styles.pickPhotosBtn} onPress={handlePickPhotos}>
-              <Text style={styles.pickPhotosBtnText}>Ajouter des photos / PDF</Text>
+              <Text style={styles.pickPhotosBtnText}>{t.pointage.addPhotosPdf}</Text>
             </Pressable>
             <View style={{ marginTop: 4 }}>
               <InboxPickerButton
@@ -965,7 +964,7 @@ export default function PointageScreen() {
 
             <View style={styles.modalActions}>
               <Pressable style={styles.skipBtn} onPress={() => setShowPhotosModal(false)}>
-                <Text style={styles.skipBtnText}>Passer</Text>
+                <Text style={styles.skipBtnText}>{t.pointage.skip}</Text>
               </Pressable>
               <Pressable
                 style={[styles.savePhotosBtn, uploadingPhotos && { opacity: 0.6 }]}
@@ -976,7 +975,7 @@ export default function PointageScreen() {
                   <ActivityIndicator color="#fff" size="small" />
                 ) : (
                   <Text style={styles.savePhotosBtnText}>
-                    Enregistrer {photosEnAttente.length > 0 ? `(${photosEnAttente.length})` : ''}
+                    {t.common.save} {photosEnAttente.length > 0 ? `(${photosEnAttente.length})` : ''}
                   </Text>
                 )}
               </Pressable>
