@@ -7,6 +7,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import {
   CHANTIER_DOC_CATEGORIES,
@@ -29,12 +30,15 @@ const STATUT_FILTRES: { key: string; label: string }[] = [
 
 export default function DriveScreen() {
   const { data, currentUser } = useApp();
+  const { t, language } = useLanguage();
+  const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
   const isAdmin = currentUser?.role === 'admin';
   const [filterStatut, setFilterStatut] = useState<string>('tous');
   const [filterCat, setFilterCat] = useState<ChantierDocCategorie | 'tous'>('tous');
   const [search, setSearch] = useState('');
 
-  const catLabel = (k: ChantierDocCategorie) => CHANTIER_DOC_CATEGORIES.find(c => c.key === k)?.label || k;
+  const catLabel = (k: ChantierDocCategorie) => (t.cats.chantierDoc as Record<string, string>)[k] || k;
+  const statutLabel = (k: string) => k === 'tous' ? t.common.all : k === 'en_cours' ? t.common.ongoing : k === 'a_letude' ? t.statut.aLetude : t.statut.archives;
 
   const rows = useMemo(() => {
     const allowed = STATUT_GROUPES[filterStatut];
@@ -57,7 +61,7 @@ export default function DriveScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 14, color: '#8C8077' }}>Accès réservé aux administrateurs.</Text>
+          <Text style={{ fontSize: 14, color: '#8C8077' }}>{t.common.accessReserved}</Text>
         </View>
       </ScreenContainer>
     );
@@ -66,13 +70,13 @@ export default function DriveScreen() {
   return (
     <ScreenContainer>
       <ScrollView style={{ flex: 1, backgroundColor: '#FBF7F2' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
-        <Text style={styles.title}>Drive documentaire</Text>
-        <Text style={styles.subtitle}>{rows.length} document{rows.length > 1 ? 's' : ''} — tous chantiers</Text>
+        <Text style={styles.title}>{t.drive.title}</Text>
+        <Text style={styles.subtitle}>{rows.length} {t.drive.documents} — {t.drive.allChantiers}</Text>
 
         <View style={styles.searchWrap}>
           <TextInput
             style={styles.search}
-            placeholder="Rechercher un document ou un chantier…"
+            placeholder={t.drive.searchPlaceholder}
             placeholderTextColor="#B0A99F"
             value={search}
             onChangeText={setSearch}
@@ -85,7 +89,7 @@ export default function DriveScreen() {
             const active = filterStatut === f.key;
             return (
               <Pressable key={f.key} onPress={() => setFilterStatut(f.key)} style={[styles.chip, active && styles.chipActive]}>
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{f.label}</Text>
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{statutLabel(f.key)}</Text>
               </Pressable>
             );
           })}
@@ -94,13 +98,13 @@ export default function DriveScreen() {
         {/* Filtre catégorie */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingVertical: 4 }}>
           <Pressable onPress={() => setFilterCat('tous')} style={[styles.chip, filterCat === 'tous' && styles.chipActive]}>
-            <Text style={[styles.chipText, filterCat === 'tous' && styles.chipTextActive]}>Toutes catégories</Text>
+            <Text style={[styles.chipText, filterCat === 'tous' && styles.chipTextActive]}>{t.drive.allCategories}</Text>
           </Pressable>
           {CHANTIER_DOC_CATEGORIES.map(c => {
             const active = filterCat === c.key;
             return (
               <Pressable key={c.key} onPress={() => setFilterCat(c.key)} style={[styles.chip, active && styles.chipActive]}>
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{c.label}</Text>
+                <Text style={[styles.chipText, active && styles.chipTextActive]}>{catLabel(c.key)}</Text>
               </Pressable>
             );
           })}
@@ -108,7 +112,7 @@ export default function DriveScreen() {
 
         <View style={{ marginTop: 12, gap: 8 }}>
           {rows.length === 0 ? (
-            <Text style={styles.empty}>Aucun document ne correspond aux filtres.</Text>
+            <Text style={styles.empty}>{t.drive.empty}</Text>
           ) : rows.map(({ doc, chantierNom }) => (
             <Pressable key={doc.id} onPress={() => openDocPreview(doc.fichierUrl)} style={styles.row}>
               <Text style={styles.docNom} numberOfLines={1}>{doc.nom}</Text>
@@ -116,7 +120,7 @@ export default function DriveScreen() {
                 <Text style={styles.chantier} numberOfLines={1}>{chantierNom}</Text>
                 <Text style={styles.cat}>{catLabel(doc.categorie)}</Text>
               </View>
-              <Text style={styles.date}>{new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}{doc.uploadedPar ? ` · ${doc.uploadedPar}` : ''}</Text>
+              <Text style={styles.date}>{new Date(doc.uploadedAt).toLocaleDateString(dateLocale)}{doc.uploadedPar ? ` · ${doc.uploadedPar}` : ''}</Text>
             </Pressable>
           ))}
         </View>

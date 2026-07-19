@@ -13,6 +13,7 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { toast } from 'sonner-native';
 import { DatabaseBackup, Upload, Download } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { useConfirm } from '@/hooks/useConfirm';
 import { exportDataBackup, parseBackup, summarizeBackup } from '@/lib/backup/dataBackup';
 import { hapticSuccess, hapticError } from '@/lib/haptics';
@@ -20,6 +21,7 @@ import { DS, radius, space, font } from '@/constants/design';
 
 export function DataBackupCard() {
   const { data, importAllData } = useApp();
+  const { t } = useLanguage();
   const { confirm, ConfirmModal } = useConfirm();
   const [busy, setBusy] = useState<'export' | 'import' | null>(null);
 
@@ -27,8 +29,8 @@ export function DataBackupCard() {
     setBusy('export');
     try {
       const res = await exportDataBackup(data);
-      if (res.ok) { hapticSuccess(); toast.success('Sauvegarde exportée'); }
-      else { hapticError(); toast.error(res.error || "Échec de l'export"); }
+      if (res.ok) { hapticSuccess(); toast.success(t.societe.backupExported); }
+      else { hapticError(); toast.error(res.error || t.societe.exportFailed); }
     } finally {
       setBusy(null);
     }
@@ -53,22 +55,22 @@ export function DataBackupCard() {
 
       const parsed = parseBackup(text);
       if (!parsed) {
-        toast.error('Fichier de sauvegarde invalide');
+        toast.error(t.societe.invalidBackup);
         return;
       }
 
       const ok = await confirm(
-        `Restaurer cette sauvegarde ?\n\n${summarizeBackup(parsed)}\n\nToutes les données actuelles seront remplacées.`,
+        `${t.societe.restoreConfirmPrefix}\n\n${summarizeBackup(parsed)}\n\n${t.societe.restoreConfirmSuffix}`,
       );
       if (!ok) return;
 
       setBusy('import');
       importAllData(parsed);
       hapticSuccess();
-      toast.success('Sauvegarde restaurée');
+      toast.success(t.societe.backupRestored);
     } catch {
       hapticError();
-      toast.error('Échec de la restauration');
+      toast.error(t.societe.restoreFailed);
     } finally {
       setBusy(null);
     }
@@ -78,25 +80,22 @@ export function DataBackupCard() {
     <View style={styles.card}>
       <View style={styles.header}>
         <DatabaseBackup size={18} color={DS.bordeaux} />
-        <Text style={styles.title}>Sauvegarde des données</Text>
+        <Text style={styles.title}>{t.societe.backupTitle}</Text>
       </View>
-      <Text style={styles.desc}>
-        Exportez un fichier de sauvegarde complet (données + photos liées au cloud)
-        ou restaurez une sauvegarde existante.
-      </Text>
+      <Text style={styles.desc}>{t.societe.backupDesc}</Text>
 
       <View style={styles.row}>
         <Pressable style={[styles.btn, styles.btnPrimary]} onPress={handleExport} disabled={busy !== null}>
           {busy === 'export'
             ? <ActivityIndicator size="small" color={DS.surface} />
             : <Download size={16} color={DS.surface} />}
-          <Text style={styles.btnPrimaryTxt}>Exporter</Text>
+          <Text style={styles.btnPrimaryTxt}>{t.societe.export}</Text>
         </Pressable>
         <Pressable style={[styles.btn, styles.btnSecondary]} onPress={handleImport} disabled={busy !== null}>
           {busy === 'import'
             ? <ActivityIndicator size="small" color={DS.bordeaux} />
             : <Upload size={16} color={DS.bordeaux} />}
-          <Text style={styles.btnSecondaryTxt}>Restaurer</Text>
+          <Text style={styles.btnSecondaryTxt}>{t.societe.restore}</Text>
         </Pressable>
       </View>
 

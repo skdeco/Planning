@@ -9,25 +9,26 @@ import React from 'react';
 import { View, Text, StyleSheet, Switch } from 'react-native';
 import { Bell, Package, CalendarClock, HeartPulse, Clock } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { DS } from '@/constants/design';
 import type { NotificationPrefKey } from '@/app/types';
 
 interface ToggleRow {
   key: NotificationPrefKey;
-  label: string;
-  desc: string;
   icon: React.ReactNode;
 }
 
 const ROWS: ToggleRow[] = [
-  { key: 'livraisonRecue', label: 'Livraison reçue', desc: 'Quand une livraison est marquée reçue', icon: <Package size={18} color={DS.bordeaux} /> },
-  { key: 'rdvRappel', label: 'Rappels de RDV', desc: 'Rappels chantier la veille (J-1) et 1h avant (H-1)', icon: <CalendarClock size={18} color={DS.bordeaux} /> },
-  { key: 'arretMaladie', label: 'Arrêt maladie', desc: 'Quand un employé déclare un arrêt maladie', icon: <HeartPulse size={18} color={DS.bordeaux} /> },
-  { key: 'pointageRetard', label: 'Pointage en retard', desc: 'Quand un employé affecté n’a pas pointé à l’heure', icon: <Clock size={18} color={DS.bordeaux} /> },
+  { key: 'livraisonRecue', icon: <Package size={18} color={DS.bordeaux} /> },
+  { key: 'rdvRappel', icon: <CalendarClock size={18} color={DS.bordeaux} /> },
+  { key: 'arretMaladie', icon: <HeartPulse size={18} color={DS.bordeaux} /> },
+  { key: 'pointageRetard', icon: <Clock size={18} color={DS.bordeaux} /> },
 ];
 
 export function NotificationSettings() {
   const { data, currentUser, updateNotificationPrefs } = useApp();
+  const { t } = useLanguage();
+  const notif = t.societe.notif as Record<string, string>;
   const isAdmin = currentUser?.role === 'admin';
   const userKey = isAdmin ? 'admin' : (currentUser?.employeId || '');
 
@@ -44,14 +45,14 @@ export function NotificationSettings() {
     <View style={styles.card}>
       <View style={styles.header}>
         <Bell size={18} color={DS.bordeaux} />
-        <Text style={styles.title}>Notifications</Text>
+        <Text style={styles.title}>{t.societe.notifications}</Text>
       </View>
       {ROWS.map((row, idx) => (
         <View key={row.key} style={[styles.row, idx < ROWS.length - 1 && styles.rowBorder]}>
           <View style={styles.rowIcon}>{row.icon}</View>
           <View style={styles.rowText}>
-            <Text style={styles.rowLabel}>{row.label}</Text>
-            <Text style={styles.rowDesc}>{row.desc}</Text>
+            <Text style={styles.rowLabel}>{notif[`${row.key}Label`]}</Text>
+            <Text style={styles.rowDesc}>{notif[`${row.key}Desc`]}</Text>
           </View>
           <Switch
             value={isOn(row.key)}

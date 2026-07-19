@@ -8,6 +8,7 @@ import { ScreenContainer } from '@/components/screen-container';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { DataBackupCard } from '@/components/DataBackupCard';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { DOC_SOCIETE_CATEGORIES, type DocSocieteCategorie, type DocumentSociete } from '@/app/types';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
@@ -17,13 +18,15 @@ function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random()
 function daysBetween(a: string, b: string): number {
   return Math.round((new Date(b + 'T12:00:00').getTime() - new Date(a + 'T12:00:00').getTime()) / 86400000);
 }
-function formatFR(iso?: string): string {
+function formatFR(iso?: string, locale = 'fr-FR'): string {
   if (!iso) return '—';
-  return new Date(iso + 'T12:00:00').toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return new Date(iso + 'T12:00:00').toLocaleDateString(locale, { day: '2-digit', month: 'short', year: 'numeric' });
 }
 
 export default function SocieteScreen() {
   const { data, currentUser, addDocumentSociete, updateDocumentSociete, deleteDocumentSociete } = useApp();
+  const { t, language } = useLanguage();
+  const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
   const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
   const [selectedCat, setSelectedCat] = useState<DocSocieteCategorie | 'toutes'>('toutes');
@@ -70,7 +73,7 @@ export default function SocieteScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 14, color: '#8C8077' }}>Accès réservé aux administrateurs.</Text>
+          <Text style={{ fontSize: 14, color: '#8C8077' }}>{t.common.accessReserved}</Text>
         </View>
       </ScreenContainer>
     );
@@ -117,7 +120,7 @@ export default function SocieteScreen() {
       const nom = f.filename || `doc_${Date.now()}`;
       setForm(form => ({ ...form, fichierUri: f.uri, fichierNom: nom, fichierType: type }));
     } catch {
-      Alert.alert('Erreur', 'Impossible d\'ouvrir le fichier.');
+      Alert.alert(t.common.error, t.societe.cantOpenFile);
     }
   };
 
@@ -172,18 +175,18 @@ export default function SocieteScreen() {
     if (Platform.OS === 'web') {
       window.open(uri, '_blank');
     } else {
-      Linking.openURL(uri).catch(() => Alert.alert('Erreur', 'Impossible d\'ouvrir le fichier.'));
+      Linking.openURL(uri).catch(() => Alert.alert(t.common.error, t.societe.cantOpenFile));
     }
   };
 
   const confirmDelete = (d: DocumentSociete) => {
-    const msg = `Supprimer "${d.nom}" ?`;
+    const msg = `${t.common.delete} "${d.nom}" ?`;
     if (Platform.OS === 'web') {
       if (window.confirm(msg)) deleteDocumentSociete(d.id);
     } else {
-      Alert.alert('Supprimer', msg, [
-        { text: 'Annuler', style: 'cancel' },
-        { text: 'Supprimer', style: 'destructive', onPress: () => deleteDocumentSociete(d.id) },
+      Alert.alert(t.common.delete, msg, [
+        { text: t.common.cancel, style: 'cancel' },
+        { text: t.common.delete, style: 'destructive', onPress: () => deleteDocumentSociete(d.id) },
       ]);
     }
   };
@@ -198,13 +201,13 @@ export default function SocieteScreen() {
   return (
     <ScreenContainer>
       <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <Text style={styles.title}>Documents société</Text>
-        <Text style={styles.subtitle}>Juridique, fiscal, social, assurances, certifications…</Text>
+        <Text style={styles.title}>{t.societe.title}</Text>
+        <Text style={styles.subtitle}>{t.societe.subtitle}</Text>
 
         {/* Alertes expiration */}
         {alertes.length > 0 && (
           <View style={styles.alertesBox}>
-            <Text style={styles.alertesTitle}>Échéances à venir</Text>
+            <Text style={styles.alertesTitle}>{t.societe.deadlines}</Text>
             {alertes.slice(0, 5).map(a => {
               const expired = a.jours < 0;
               return (
@@ -213,7 +216,7 @@ export default function SocieteScreen() {
                     {expired ? '🔴' : '🟠'} {a.doc.nom}
                   </Text>
                   <Text style={[styles.alerteDate, expired && { color: '#B83A2E' }]}>
-                    {expired ? `Expiré depuis ${-a.jours}j` : `Dans ${a.jours}j`}
+                    {expired ? `${t.societe.expiredSince} ${-a.jours}${t.societe.daysAbbr}` : `${t.societe.inDays} ${a.jours}${t.societe.daysAbbr}`}
                   </Text>
                 </Pressable>
               );
@@ -228,7 +231,7 @@ export default function SocieteScreen() {
             style={[styles.catChip, selectedCat === 'toutes' && styles.catChipActive]}
           >
             <Text style={[styles.catChipText, selectedCat === 'toutes' && { color: '#fff' }]}>
-              Tout ({(data.documentsSociete || []).length})
+              {t.societe.tout} ({(data.documentsSociete || []).length})
             </Text>
           </Pressable>
           {categoriesWithCount.map(c => (
@@ -238,7 +241,7 @@ export default function SocieteScreen() {
               style={[styles.catChip, selectedCat === c.key && styles.catChipActive]}
             >
               <Text style={[styles.catChipText, selectedCat === c.key && { color: '#fff' }]}>
-                {c.emoji} {c.label} ({c.count})
+                {c.emoji} {(t.cats.docSociete as Record<string,string>)[c.key]} ({c.count})
               </Text>
             </Pressable>
           ))}
@@ -247,7 +250,7 @@ export default function SocieteScreen() {
         {/* Suggestions */}
         {selectedCat !== 'toutes' && selectedCatMeta && (
           <View style={styles.suggestionsBox}>
-            <Text style={styles.suggestionsTitle}>Suggestions {selectedCatMeta.emoji} {selectedCatMeta.label}</Text>
+            <Text style={styles.suggestionsTitle}>{t.societe.suggestions} {selectedCatMeta.emoji} {(t.cats.docSociete as Record<string,string>)[selectedCatMeta.key]}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {selectedCatMeta.suggestions.map(s => (
                 <Pressable
@@ -268,7 +271,7 @@ export default function SocieteScreen() {
 
         {/* Liste des documents */}
         {docs.length === 0 ? (
-          <Text style={styles.empty}>Aucun document dans cette catégorie.</Text>
+          <Text style={styles.empty}>{t.societe.emptyCategory}</Text>
         ) : (
           docs.map(d => {
             const cat = DOC_SOCIETE_CATEGORIES.find(c => c.key === d.categorie);
@@ -288,10 +291,10 @@ export default function SocieteScreen() {
                       </Text>
                       {(d.dateEmission || d.dateExpiration) && (
                         <Text style={styles.docDates}>
-                          {d.dateEmission && `📅 Émis ${formatFR(d.dateEmission)}`}
+                          {d.dateEmission && `📅 ${t.societe.issued} ${formatFR(d.dateEmission, dateLocale)}`}
                           {d.dateEmission && d.dateExpiration && '  ·  '}
                           {d.dateExpiration && (
-                            <Text style={expExpired ? { color: '#B83A2E', fontWeight: '700' } : expSoon ? { color: '#F57C00', fontWeight: '700' } : undefined}>Expire {formatFR(d.dateExpiration)}
+                            <Text style={expExpired ? { color: '#B83A2E', fontWeight: '700' } : expSoon ? { color: '#F57C00', fontWeight: '700' } : undefined}>{t.societe.expires} {formatFR(d.dateExpiration, dateLocale)}
                             </Text>
                           )}
                         </Text>
@@ -314,7 +317,7 @@ export default function SocieteScreen() {
         )}
 
         <Pressable style={styles.addBtn} onPress={() => openNew()}>
-          <Text style={styles.addBtnText}>+ Ajouter un document</Text>
+          <Text style={styles.addBtnText}>{t.societe.addDoc}</Text>
         </Pressable>
 
         {/* Sauvegarde / restauration des données (admin) */}
@@ -332,10 +335,10 @@ export default function SocieteScreen() {
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
               <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 }}>
-                {editId ? 'Modifier le document' : 'Nouveau document société'}
+                {editId ? t.societe.editDoc : t.societe.newDoc}
               </Text>
 
-              <Text style={styles.label}>Catégorie *</Text>
+              <Text style={styles.label}>{t.societe.category}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 10 }} contentContainerStyle={{ gap: 6 }}>
                 {DOC_SOCIETE_CATEGORIES.map(c => (
                   <Pressable
@@ -344,24 +347,24 @@ export default function SocieteScreen() {
                     style={[styles.catChip, form.categorie === c.key && styles.catChipActive]}
                   >
                     <Text style={[styles.catChipText, form.categorie === c.key && { color: '#fff' }]}>
-                      {c.emoji} {c.label}
+                      {c.emoji} {(t.cats.docSociete as Record<string,string>)[c.key]}
                     </Text>
                   </Pressable>
                 ))}
               </ScrollView>
 
-              <Text style={styles.label}>Nom du document *</Text>
+              <Text style={styles.label}>{t.societe.docName}</Text>
               <TextInput
                 style={styles.input}
                 value={form.nom}
                 onChangeText={v => setForm(f => ({ ...f, nom: v }))}
-                placeholder="Ex : Décennale AXA 2026"
+                placeholder={t.societe.docNamePlaceholder}
               />
 
-              <Text style={[styles.label, { marginTop: 10 }]}>Fichier *</Text>
+              <Text style={[styles.label, { marginTop: 10 }]}>{t.societe.file}</Text>
               <Pressable onPress={pickFichier} style={styles.filePickerBtn}>
                 <Text style={styles.filePickerText}>
-                  {form.fichierUri ? `📎 ${form.fichierNom || 'fichier sélectionné'}` : '+ Sélectionner un fichier (PDF ou image)'}
+                  {form.fichierUri ? `📎 ${form.fichierNom || t.societe.fileSelected}` : t.societe.selectFile}
                 </Text>
               </Pressable>
               {form.fichierUri && form.fichierType === 'image' && (
@@ -370,35 +373,35 @@ export default function SocieteScreen() {
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 10 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Émis le</Text>
+                  <Text style={styles.label}>{t.societe.issuedOn}</Text>
                   <DatePickerField
                     value={form.dateEmission}
                     onChange={v => setForm(f => ({ ...f, dateEmission: v }))}
-                    placeholder="Optionnel"
+                    placeholder={t.societe.optionalPh}
                   />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Expire le</Text>
+                  <Text style={styles.label}>{t.societe.expiresOn}</Text>
                   <DatePickerField
                     value={form.dateExpiration}
                     onChange={v => setForm(f => ({ ...f, dateExpiration: v }))}
-                    placeholder="Optionnel"
+                    placeholder={t.societe.optionalPh}
                   />
                 </View>
               </View>
 
-              <Text style={[styles.label, { marginTop: 10 }]}>Note (optionnel)</Text>
+              <Text style={[styles.label, { marginTop: 10 }]}>{t.societe.note}</Text>
               <TextInput
                 style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]}
                 value={form.note}
                 onChangeText={v => setForm(f => ({ ...f, note: v }))}
-                placeholder="Remarques..."
+                placeholder={t.societe.notePlaceholder}
                 multiline
               />
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
                 <Pressable onPress={() => setShowForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+                  <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>{t.common.cancel}</Text>
                 </Pressable>
                 <Pressable
                   onPress={save}
@@ -406,7 +409,7 @@ export default function SocieteScreen() {
                   style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (!form.nom.trim() || !form.fichierUri || uploading) ? 0.5 : 1 }}
                 >
                   <Text style={{ color: '#C9A96E', fontWeight: '800' }}>
-                    {uploading ? 'Envoi...' : editId ? 'Enregistrer' : 'Ajouter'}
+                    {uploading ? t.societe.sending : editId ? t.common.save : t.common.add}
                   </Text>
                 </Pressable>
               </View>

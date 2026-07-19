@@ -9,6 +9,7 @@ import { ChartBar, Users, Building2, FolderOpen, ChevronRight } from 'lucide-rea
 import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, space, font } from '@/constants/design';
 
 interface HubCard {
@@ -21,6 +22,7 @@ interface HubCard {
 
 export default function GestionScreen() {
   const { data, currentUser } = useApp();
+  const { t } = useLanguage();
   const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
   const { refreshing, onRefresh } = useRefresh();
@@ -31,10 +33,10 @@ export default function GestionScreen() {
     (data.demandesAvance || []).filter(d => d.statut === 'en_attente').length;
 
   const cards: HubCard[] = [
-    { route: '/(tabs)/reporting', title: 'Reporting', desc: 'Pointages, heures, paie et statistiques', icon: ChartBar },
-    { route: '/(tabs)/rh', title: 'Ressources humaines', desc: 'Congés, avances, arrêts maladie', icon: Users, badge: nbDemandesEnAttente },
-    { route: '/(tabs)/societe', title: 'Société', desc: 'Documents juridiques, fiscaux et assurances', icon: Building2 },
-    { route: '/(tabs)/drive', title: 'Drive documentaire', desc: 'Tous les documents de tous les chantiers', icon: FolderOpen },
+    { route: '/(tabs)/reporting', title: t.gestion.reportingTitle, desc: t.gestion.reportingDesc, icon: ChartBar },
+    { route: '/(tabs)/rh', title: t.gestion.rhTitle, desc: t.gestion.rhDesc, icon: Users, badge: nbDemandesEnAttente },
+    { route: '/(tabs)/societe', title: t.gestion.societeTitle, desc: t.gestion.societeDesc, icon: Building2 },
+    { route: '/(tabs)/drive', title: t.gestion.driveTitle, desc: t.gestion.driveDesc, icon: FolderOpen },
   ];
 
   // Garde de route : hub réservé à l'admin (route atteignable par URL sur le web).
@@ -42,7 +44,7 @@ export default function GestionScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 14, color: '#8C8077' }}>Accès réservé aux administrateurs.</Text>
+          <Text style={{ fontSize: 14, color: '#8C8077' }}>{t.common.accessReserved}</Text>
         </View>
       </ScreenContainer>
     );
@@ -55,8 +57,8 @@ export default function GestionScreen() {
         contentContainerStyle={{ padding: space.lg, paddingBottom: 120 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
-        <Text style={styles.title}>Gestion</Text>
-        <Text style={styles.subtitle}>Reporting, ressources humaines et documents société</Text>
+        <Text style={styles.title}>{t.nav.gestion}</Text>
+        <Text style={styles.subtitle}>{t.gestion.subtitle}</Text>
 
         <View style={{ gap: space.md, marginTop: space.lg }}>
           {cards.map(c => {
