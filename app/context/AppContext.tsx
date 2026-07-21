@@ -243,6 +243,28 @@ interface AppContextType {
   addSuiviCR: (cr: import('@/app/types').SuiviCR) => void;
   updateSuiviCR: (cr: import('@/app/types').SuiviCR) => void;
   deleteSuiviCR: (id: string) => void;
+  // Module Architecte / Maîtrise d'œuvre (mono-tenant)
+  addPieceChantier: (x: import('@/app/types').PieceChantier) => void;
+  updatePieceChantier: (x: import('@/app/types').PieceChantier) => void;
+  deletePieceChantier: (id: string) => void;
+  addPrescription: (x: import('@/app/types').Prescription) => void;
+  updatePrescription: (x: import('@/app/types').Prescription) => void;
+  deletePrescription: (id: string) => void;
+  addDevisHonoraires: (x: import('@/app/types').DevisHonoraires) => void;
+  updateDevisHonoraires: (x: import('@/app/types').DevisHonoraires) => void;
+  deleteDevisHonoraires: (id: string) => void;
+  addPhaseChantier: (x: import('@/app/types').PhaseChantier) => void;
+  updatePhaseChantier: (x: import('@/app/types').PhaseChantier) => void;
+  deletePhaseChantier: (id: string) => void;
+  addJalonChantier: (x: import('@/app/types').JalonChantier) => void;
+  updateJalonChantier: (x: import('@/app/types').JalonChantier) => void;
+  deleteJalonChantier: (id: string) => void;
+  addDemarcheAdmin: (x: import('@/app/types').DemarcheAdministrative) => void;
+  updateDemarcheAdmin: (x: import('@/app/types').DemarcheAdministrative) => void;
+  deleteDemarcheAdmin: (id: string) => void;
+  addConsultationLot: (x: import('@/app/types').ConsultationLot) => void;
+  updateConsultationLot: (x: import('@/app/types').ConsultationLot) => void;
+  deleteConsultationLot: (id: string) => void;
   // RDV de chantier
   addRDVChantier: (rdv: import('@/app/types').RDVChantier) => void;
   updateRDVChantier: (rdv: import('@/app/types').RDVChantier) => void;
@@ -437,6 +459,14 @@ function migrateData(parsed: Record<string, any>): AppData {
     suivisCR: parsed.suivisCR || [],
     // RDV de chantier (entité séparée, intercalée dans la liste des CR)
     rdvsChantier: parsed.rdvsChantier || [],
+    // Module Architecte / Maîtrise d'œuvre (mono-tenant)
+    piecesChantier: parsed.piecesChantier || [],
+    prescriptions: parsed.prescriptions || [],
+    devisHonoraires: parsed.devisHonoraires || [],
+    phasesChantier: parsed.phasesChantier || [],
+    jalonsChantier: parsed.jalonsChantier || [],
+    demarchesAdmin: parsed.demarchesAdmin || [],
+    consultationsLot: parsed.consultationsLot || [],
     // Tickets SAV
     ticketsSAV: parsed.ticketsSAV || [],
     // Présences forcées
@@ -840,6 +870,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             apporteurs: (result.apporteurs || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             catalogueArticles: (result.catalogueArticles || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             agendaEvents: (result.agendaEvents || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            // Module Architecte / Maîtrise d'œuvre
+            piecesChantier: (result.piecesChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            prescriptions: (result.prescriptions || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            devisHonoraires: (result.devisHonoraires || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            phasesChantier: (result.phasesChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            jalonsChantier: (result.jalonsChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            demarchesAdmin: (result.demarchesAdmin || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            consultationsLot: (result.consultationsLot || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             // Conserver les données locales qui ne sont pas dans Supabase (plans, fiches)
             fichesChantier: { ...(result.fichesChantier || {}), ...(prev.fichesChantier || {}) },
             plansChantier: { ...(result.plansChantier || {}), ...(prev.plansChantier || {}) },
@@ -945,6 +983,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       rdvsChantier: (p.rdvsChantier || []).filter(r => r.chantierId !== id),
       ticketsSAV: (p.ticketsSAV || []).filter(t => t.chantierId !== id),
       interventions: (p.interventions || []).filter(i => i.chantierId !== id),
+      // Module Architecte / Maîtrise d'œuvre
+      piecesChantier: (p.piecesChantier || []).filter(x => x.chantierId !== id),
+      prescriptions: (p.prescriptions || []).filter(x => x.chantierId !== id),
+      devisHonoraires: (p.devisHonoraires || []).filter(x => x.chantierId !== id),
+      phasesChantier: (p.phasesChantier || []).filter(x => x.chantierId !== id),
+      jalonsChantier: (p.jalonsChantier || []).filter(x => x.chantierId !== id),
+      demarchesAdmin: (p.demarchesAdmin || []).filter(x => x.chantierId !== id),
+      consultationsLot: (p.consultationsLot || []).filter(x => x.chantierId !== id),
     }));
   };
 
@@ -1820,6 +1866,99 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, rdvsChantier: (p.rdvsChantier || []).filter(x => x.id !== id) }));
   };
 
+  // ── Module Architecte / Maîtrise d'œuvre ──
+  // Pièces + métrés
+  const addPieceChantier = (x: import('@/app/types').PieceChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, piecesChantier: [...(p.piecesChantier || []), x] }));
+  };
+  const updatePieceChantier = (x: import('@/app/types').PieceChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, piecesChantier: (p.piecesChantier || []).map(i => i.id === x.id ? x : i) }));
+  };
+  const deletePieceChantier = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, piecesChantier: (p.piecesChantier || []).filter(i => i.id !== id) }));
+  };
+  // Prescriptions matériaux & déco
+  const addPrescription = (x: import('@/app/types').Prescription) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, prescriptions: [...(p.prescriptions || []), x] }));
+  };
+  const updatePrescription = (x: import('@/app/types').Prescription) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, prescriptions: (p.prescriptions || []).map(i => i.id === x.id ? x : i) }));
+  };
+  const deletePrescription = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, prescriptions: (p.prescriptions || []).filter(i => i.id !== id) }));
+  };
+  // Honoraires (flux privé archi ↔ client)
+  const addDevisHonoraires = (x: import('@/app/types').DevisHonoraires) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, devisHonoraires: [...(p.devisHonoraires || []), x] }));
+  };
+  const updateDevisHonoraires = (x: import('@/app/types').DevisHonoraires) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, devisHonoraires: (p.devisHonoraires || []).map(i => i.id === x.id ? x : i) }));
+  };
+  const deleteDevisHonoraires = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, devisHonoraires: (p.devisHonoraires || []).filter(i => i.id !== id) }));
+  };
+  // Planning de phases
+  const addPhaseChantier = (x: import('@/app/types').PhaseChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, phasesChantier: [...(p.phasesChantier || []), x] }));
+  };
+  const updatePhaseChantier = (x: import('@/app/types').PhaseChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, phasesChantier: (p.phasesChantier || []).map(i => i.id === x.id ? x : i) }));
+  };
+  const deletePhaseChantier = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, phasesChantier: (p.phasesChantier || []).filter(i => i.id !== id) }));
+  };
+  // Jalons
+  const addJalonChantier = (x: import('@/app/types').JalonChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, jalonsChantier: [...(p.jalonsChantier || []), x] }));
+  };
+  const updateJalonChantier = (x: import('@/app/types').JalonChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, jalonsChantier: (p.jalonsChantier || []).map(i => i.id === x.id ? x : i) }));
+  };
+  const deleteJalonChantier = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, jalonsChantier: (p.jalonsChantier || []).filter(i => i.id !== id) }));
+  };
+  // Démarches administratives
+  const addDemarcheAdmin = (x: import('@/app/types').DemarcheAdministrative) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, demarchesAdmin: [...(p.demarchesAdmin || []), x] }));
+  };
+  const updateDemarcheAdmin = (x: import('@/app/types').DemarcheAdministrative) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, demarchesAdmin: (p.demarchesAdmin || []).map(i => i.id === x.id ? x : i) }));
+  };
+  const deleteDemarcheAdmin = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, demarchesAdmin: (p.demarchesAdmin || []).filter(i => i.id !== id) }));
+  };
+  // Consultation entreprises (DCE)
+  const addConsultationLot = (x: import('@/app/types').ConsultationLot) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, consultationsLot: [...(p.consultationsLot || []), x] }));
+  };
+  const updateConsultationLot = (x: import('@/app/types').ConsultationLot) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, consultationsLot: (p.consultationsLot || []).map(i => i.id === x.id ? x : i) }));
+  };
+  const deleteConsultationLot = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, consultationsLot: (p.consultationsLot || []).filter(i => i.id !== id) }));
+  };
+
   const addMarcheChantier = (m: import('@/app/types').MarcheChantier) => {
     lastLocalChangeRef.current = Date.now();
     if (saveTimer.current) clearTimeout(saveTimer.current);
@@ -1907,6 +2046,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       togglePresenceForcee,
       addTicketSAV, updateTicketSAV, deleteTicketSAV,
       addSuiviCR, updateSuiviCR, deleteSuiviCR,
+      // Module Architecte / Maîtrise d'œuvre
+      addPieceChantier, updatePieceChantier, deletePieceChantier,
+      addPrescription, updatePrescription, deletePrescription,
+      addDevisHonoraires, updateDevisHonoraires, deleteDevisHonoraires,
+      addPhaseChantier, updatePhaseChantier, deletePhaseChantier,
+      addJalonChantier, updateJalonChantier, deleteJalonChantier,
+      addDemarcheAdmin, updateDemarcheAdmin, deleteDemarcheAdmin,
+      addConsultationLot, updateConsultationLot, deleteConsultationLot,
       addRDVChantier, updateRDVChantier, deleteRDVChantier,
       addMarcheChantier, updateMarcheChantier, deleteMarcheChantier,
       addSupplementMarche, updateSupplementMarche, deleteSupplementMarche,

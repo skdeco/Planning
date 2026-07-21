@@ -1,10 +1,27 @@
 import type { PVReception } from './pv';
+import type {
+  PieceChantier, Prescription, DevisHonoraires,
+  PhaseChantier, JalonChantier, DemarcheAdministrative, ConsultationLot,
+} from './architecte';
 
 export type {
   PVReception, PVItem, PVPaiement, PVMailEnvoi,
-  PVPiece, PVReserve, PVLevee,
+  PVPiece, PVReserve, PVLevee, PVAvenant,
 } from './pv';
 export { PIECES_DEFAULT } from './pv';
+
+// Module Architecte / Maîtrise d'œuvre (mono-tenant)
+export type {
+  PieceChantier, VisibiliteRessource,
+  Prescription, PrescriptionNature, PrescriptionStatut,
+  PrescriptionDocument, PrescriptionAlternative,
+  DevisHonoraires, HonorairesLigne, HonorairesAppel,
+  HonorairesMode, HonorairesAssiette, HonorairesPhaseStatut,
+  PhaseChantier, JalonChantier,
+  DemarcheAdministrative, DemarchePhase, DemarcheStatut,
+  ConsultationLot, OffreLot,
+} from './architecte';
+export { PRESCRIPTION_STATUT_LABELS } from './architecte';
 
 /**
  * Métier : string libre pour permettre à l'admin d'ajouter ses propres métiers.
@@ -234,6 +251,10 @@ export interface PlanChantier {
   version?: number;         // 1, 2, 3… — incrémenté à chaque réupload du même nom
   // V10 (refonte mai 2026) — rattachement à un lot/corps de métier (cf. constants/lots.ts)
   lotId?: string;           // ex: 'cloisons', 'electricite'. Optionnel pour rétrocompat plans existants.
+  // Module Architecte — type de ressource, pièce, et vues 3D
+  typeRessource?: 'plan2d' | 'vue3d' | 'document'; // défaut 'plan2d' si absent
+  pieceId?: string;         // pièce concernée (pour ranger les vues 3D par pièce)
+  lien3D?: string;          // lien externe visite 3D (Matterport/Kuula/panorama) — alternatif à `fichier` (glb/usdz)
 }
 
 export interface Chantier {
@@ -295,6 +316,7 @@ export interface Chantier {
     ajoutParNom?: string;
     ajoutParType?: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
     lotId?: string;                     // lié à un lot (optionnel)
+    pieceId?: string;                   // lié à une pièce (moodboard par pièce)
     note?: string;
     createdAt: string;
   }>;
@@ -355,6 +377,12 @@ export interface SituationFigee {
   numeroFacture?: string;         // n° de facture créée dans le logiciel externe
   paidAt?: string;                // ISO datetime de paiement
   notes?: string;
+  // ─── Visa maître d'œuvre : l'architecte valide/ajuste la situation avant paiement client ───
+  statutVisa?: 'a_viser' | 'vise';
+  montantViseHT?: number;         // montant proposé au paiement après ajustement de l'archi
+  viseParArchitecteId?: string;   // apporteurId (Apporteur type 'architecte')
+  viseAt?: string;                // ISO datetime du visa
+  noteVisa?: string;              // justification de l'ajustement
 }
 
 /** Une tâche dans la checklist d'une note */
@@ -386,6 +414,9 @@ export interface CRAttachment {
 export interface CRTexteItem {
   id: string;
   texte: string;
+  // Co-édition archi ↔ entreprise (byline par point). Absent = admin/entreprise.
+  auteurId?: string;        // 'admin' ou apporteurId (architecte)
+  auteurType?: 'admin' | 'architecte';
   photos?: CRAttachment[];  // photos attachées (multiples)
   pdfs?: CRAttachment[];    // PDF attachés (multiples)
   // ── Legacy (CR créés avant le multi-pièces jointes) — lecture seule ──
@@ -402,6 +433,9 @@ export interface CRTaskItem {
   fait: boolean;
   faitAt?: string;
   faitPar?: string;
+  // Co-édition archi ↔ entreprise (byline par point). Absent = admin/entreprise.
+  auteurId?: string;        // 'admin' ou apporteurId (architecte)
+  auteurType?: 'admin' | 'architecte';
   photos?: CRAttachment[];  // photos attachées (multiples)
   pdfs?: CRAttachment[];    // PDF attachés (multiples)
   // ── Legacy (CR créés avant le multi-pièces jointes) — lecture seule ──
@@ -471,9 +505,11 @@ export interface SuiviCR {
   chantierId: string;
   /** Date du CR (modifiable, ex "2026-05-26"). */
   date: string;
-  /** Auteur (admin) qui a rédigé ce CR. */
+  /** Auteur qui a rédigé ce CR (admin/entreprise par défaut, ou architecte). */
   auteurId: string;
   auteurNom: string;
+  /** Type d'auteur — module partagé archi ↔ entreprise. Absent = admin/entreprise. */
+  auteurType?: 'admin' | 'architecte';
   /** Personnes présentes sur le chantier ce jour-là. */
   personnesPresentes: CRPersonnePresente[];
   /** @deprecated retiré (jamais utilisé en pratique). */
@@ -962,6 +998,7 @@ export interface DocumentSociete {
 export interface LivraisonChantier {
   id: string;
   chantierId: string;
+  prescriptionId?: string;         // si créée depuis une prescription architecte (lien retour)
   titre: string;
   dateLivraison: string;          // YYYY-MM-DD
   heure?: string;                 // HH:MM
@@ -1400,6 +1437,14 @@ export interface AppData {
   supplementsMarche?: SupplementMarche[];
   suivisCR?: SuiviCR[];
   rdvsChantier?: RDVChantier[];
+  // Module Architecte / Maîtrise d'œuvre (mono-tenant)
+  piecesChantier?: PieceChantier[];   // pièces + métrés (partagées entre modules)
+  prescriptions?: Prescription[];     // prescriptions matériaux & décoration
+  devisHonoraires?: DevisHonoraires[];// honoraires archi (flux privé archi ↔ client)
+  phasesChantier?: PhaseChantier[];   // planning de phases (prévu vs réel)
+  jalonsChantier?: JalonChantier[];   // jalons clés (hors d'eau/air, réception)
+  demarchesAdmin?: DemarcheAdministrative[]; // démarches & échéances administratives
+  consultationsLot?: ConsultationLot[];      // consultation entreprises par lot (DCE)
   // Tickets SAV
   ticketsSAV?: TicketSAV[];
   // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour

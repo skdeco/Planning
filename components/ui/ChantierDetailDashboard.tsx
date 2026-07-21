@@ -19,6 +19,18 @@ import {
   Trash2,
   User,
   Pencil,
+  Package,
+  Wallet,
+  Receipt,
+  CalendarRange,
+  Ruler,
+  Landmark,
+  Scale,
+  Users,
+  History,
+  Flag,
+  HardHat,
+  FilePlus,
   type LucideIcon,
 } from 'lucide-react-native';
 import { DS } from '@/constants/design';
@@ -49,6 +61,18 @@ export interface ChantierDetailDashboardHandlers {
   onPressPlans: () => void;
   onPressNotes: () => void;
   onPressSuivis: () => void;
+  onPressPrescriptions: () => void;
+  onPressBudget: () => void;
+  onPressMetres: () => void;
+  onPressHonoraires: () => void;
+  onPressPhases: () => void;
+  onPressAdministratif: () => void;
+  onPressConsultation: () => void;
+  onPressAnnuaire: () => void;
+  onPressJournal: () => void;
+  onPressReserves: () => void;
+  onPressSousTraitants: () => void;
+  onPressAvenantPv: () => void;
   onPressPhotos: () => void;
   onPressYAller: () => void;
   onPressMarches: () => void;
@@ -93,11 +117,21 @@ export function ChantierDetailDashboard({
   // Tuiles regroupées par famille pour hiérarchiser (plutôt que 14 tuiles à plat).
   const groups: { titre: string; tiles: TileSpec[] }[] = [
     {
+      titre: 'Conception',
+      tiles: [
+        { icon: Package, label: 'Prescriptions', variant: 'bordeaux', onPress: handlers.onPressPrescriptions },
+        { icon: Wallet,  label: 'Budget',        variant: 'bordeaux', onPress: handlers.onPressBudget },
+        { icon: Ruler,   label: 'Métrés',        variant: 'bordeaux', onPress: handlers.onPressMetres },
+      ],
+    },
+    {
       titre: 'Suivi & terrain',
       tiles: [
         { icon: CheckSquare,   label: 'Notes',     variant: 'bordeaux', onPress: handlers.onPressNotes,  badge: counts.notes },
         { icon: Camera,        label: 'Photos',    variant: 'marron',   onPress: handlers.onPressPhotos, badge: counts.photos },
         { icon: ClipboardList, label: 'Suivis CR', variant: 'bordeaux', onPress: handlers.onPressSuivis, badge: counts.notesPlanning },
+        { icon: CalendarRange, label: 'Phases',    variant: 'bordeaux', onPress: handlers.onPressPhases },
+        { icon: History,       label: 'Journal',   variant: 'bordeaux', onPress: handlers.onPressJournal },
         { icon: Navigation,    label: 'Y aller',   variant: 'marron',   onPress: handlers.onPressYAller },
       ],
     },
@@ -107,6 +141,9 @@ export function ChantierDetailDashboard({
         { icon: Briefcase,    label: 'Marchés',     variant: 'bordeaux', onPress: handlers.onPressMarches,     badge: counts.marches, adminOnly: true },
         { icon: ShoppingCart, label: 'Achats',      variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
         { icon: TrendingUp,   label: 'Rentabilité', variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
+        { icon: HardHat,      label: 'Sous-traitants', variant: 'marron', onPress: handlers.onPressSousTraitants, adminOnly: true },
+        { icon: Receipt,      label: 'Honoraires',  variant: 'bordeaux', onPress: handlers.onPressHonoraires,  adminOnly: true },
+        { icon: Scale,        label: 'Consultation',variant: 'bordeaux', onPress: handlers.onPressConsultation, adminOnly: true },
       ],
     },
     {
@@ -116,6 +153,9 @@ export function ChantierDetailDashboard({
         { icon: Info,       label: 'Infos utiles', variant: 'bordeaux', onPress: handlers.onPressFiche },
         { icon: LayoutGrid, label: 'Plans',        variant: 'bordeaux', onPress: handlers.onPressPlans,     badge: counts.plans },
         { icon: FileCheck,  label: 'PV réception', variant: 'bordeaux', onPress: handlers.onPressPV,        adminOnly: true },
+        { icon: FilePlus,   label: 'Avenant PV',   variant: 'bordeaux', onPress: handlers.onPressAvenantPv, adminOnly: true },
+        { icon: Landmark,   label: 'Administratif',variant: 'bordeaux', onPress: handlers.onPressAdministratif, adminOnly: true },
+        { icon: Flag,       label: 'Réserves',     variant: 'bordeaux', onPress: handlers.onPressReserves },
         { icon: Truck,      label: 'Livraison',    variant: 'marron',   onPress: handlers.onPressLivraison, badge: counts.livraisons },
       ],
     },
@@ -124,6 +164,7 @@ export function ChantierDetailDashboard({
       tiles: [
         { icon: Wrench,        label: 'SAV',            variant: 'bordeaux', onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
         { icon: User,          label: 'Portail client', variant: 'marron',   onPress: handlers.onPressPortailClient, adminOnly: true },
+        { icon: Users,         label: 'Annuaire',       variant: 'bordeaux', onPress: handlers.onPressAnnuaire },
         { icon: MessageCircle, label: 'Messagerie',     variant: 'bordeaux', onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
       ],
     },

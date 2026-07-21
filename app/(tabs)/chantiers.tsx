@@ -21,6 +21,18 @@ import { SelectField } from '@/components/ui/SelectField';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PortailClient } from '@/components/PortailClient';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
+import { PrescriptionsPanel } from '@/components/architecte/PrescriptionsPanel';
+import { BudgetPanel } from '@/components/architecte/BudgetPanel';
+import { HonorairesPanel } from '@/components/architecte/HonorairesPanel';
+import { PhasePanel } from '@/components/architecte/PhasePanel';
+import { MetresPanel } from '@/components/architecte/MetresPanel';
+import { DemarchePanel } from '@/components/architecte/DemarchePanel';
+import { ConsultationPanel } from '@/components/architecte/ConsultationPanel';
+import { AnnuairePanel } from '@/components/architecte/AnnuairePanel';
+import { JournalPanel } from '@/components/architecte/JournalPanel';
+import { ReservesPanel } from '@/components/architecte/ReservesPanel';
+import { SousTraitantsChantier } from '@/components/SousTraitantsChantier';
+import { AvenantPvPanel } from '@/components/AvenantPvPanel';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
@@ -344,6 +356,18 @@ export default function ChantiersScreen() {
   // V10 — modal Livraisons côté admin (wrapper de LivraisonsRdvChantier)
   const [livraisonsChantierId, setLivraisonsChantierId] = useState<string | null>(null);
   const [suiviChantierId, setSuiviChantierId] = useState<string | null>(null);
+  const [prescriptionsChantierId, setPrescriptionsChantierId] = useState<string | null>(null);
+  const [budgetPanelChantierId, setBudgetPanelChantierId] = useState<string | null>(null);
+  const [honorairesChantierId, setHonorairesChantierId] = useState<string | null>(null);
+  const [phasesChantierId, setPhasesChantierId] = useState<string | null>(null);
+  const [metresChantierId, setMetresChantierId] = useState<string | null>(null);
+  const [administratifChantierId, setAdministratifChantierId] = useState<string | null>(null);
+  const [consultationChantierId, setConsultationChantierId] = useState<string | null>(null);
+  const [annuaireChantierId, setAnnuaireChantierId] = useState<string | null>(null);
+  const [journalChantierId, setJournalChantierId] = useState<string | null>(null);
+  const [reservesChantierId, setReservesChantierId] = useState<string | null>(null);
+  const [sousTraitantsChantierId, setSousTraitantsChantierId] = useState<string | null>(null);
+  const [avenantPvChantierId, setAvenantPvChantierId] = useState<string | null>(null);
   const [suiviFilterEmp, setSuiviFilterEmp] = useState<string>('all');
   const [suiviFilterSemaine, setSuiviFilterSemaine] = useState<'tout' | 'semaine' | 'mois'>('semaine');
   const [suiviShowForm, setSuiviShowForm] = useState(false);
@@ -1688,6 +1712,18 @@ export default function ChantiersScreen() {
                       onPressDrive:       () => { setActionChantier(null); setTimeout(() => setDriveChantierId(ch.id), 100); },
                       onPressNotes:       () => { setActionChantier(null); setTimeout(() => openNotes(ch), 100); },
                       onPressSuivis:      () => { setActionChantier(null); setTimeout(() => setSuiviChantierId(ch.id), 100); },
+                      onPressPrescriptions: () => { setActionChantier(null); setTimeout(() => setPrescriptionsChantierId(ch.id), 100); },
+                      onPressBudget:      () => { setActionChantier(null); setTimeout(() => setBudgetPanelChantierId(ch.id), 100); },
+                      onPressHonoraires:  () => { setActionChantier(null); setTimeout(() => setHonorairesChantierId(ch.id), 100); },
+                      onPressPhases:      () => { setActionChantier(null); setTimeout(() => setPhasesChantierId(ch.id), 100); },
+                      onPressMetres:      () => { setActionChantier(null); setTimeout(() => setMetresChantierId(ch.id), 100); },
+                      onPressAdministratif: () => { setActionChantier(null); setTimeout(() => setAdministratifChantierId(ch.id), 100); },
+                      onPressConsultation:() => { setActionChantier(null); setTimeout(() => setConsultationChantierId(ch.id), 100); },
+                      onPressAnnuaire:    () => { setActionChantier(null); setTimeout(() => setAnnuaireChantierId(ch.id), 100); },
+                      onPressJournal:     () => { setActionChantier(null); setTimeout(() => setJournalChantierId(ch.id), 100); },
+                      onPressReserves:    () => { setActionChantier(null); setTimeout(() => setReservesChantierId(ch.id), 100); },
+                      onPressSousTraitants:() => { setActionChantier(null); setTimeout(() => setSousTraitantsChantierId(ch.id), 100); },
+                      onPressAvenantPv:   () => { setActionChantier(null); setTimeout(() => setAvenantPvChantierId(ch.id), 100); },
                       onPressPhotos:      () => { setActionChantier(null); setTimeout(() => setShowGalerie(ch.id), 100); },
                       onPressYAller:      () => { setActionChantier(null); setTimeout(() => openDirectionsHelper(ch.adresse), 100); },
                       onPressMarches:     () => { setActionChantier(null); setTimeout(() => setMarchesChantierId(ch.id), 100); },
@@ -3649,6 +3685,66 @@ export default function ChantiersScreen() {
         onClose={() => setSuiviChantierId(null)}
         chantierId={suiviChantierId || ''}
         isAdmin={isAdmin}
+      />
+      <PrescriptionsPanel
+        visible={prescriptionsChantierId !== null}
+        onClose={() => setPrescriptionsChantierId(null)}
+        chantierId={prescriptionsChantierId || ''}
+      />
+      <BudgetPanel
+        visible={budgetPanelChantierId !== null}
+        onClose={() => setBudgetPanelChantierId(null)}
+        chantierId={budgetPanelChantierId || ''}
+      />
+      <HonorairesPanel
+        visible={honorairesChantierId !== null}
+        onClose={() => setHonorairesChantierId(null)}
+        chantierId={honorairesChantierId || ''}
+      />
+      <PhasePanel
+        visible={phasesChantierId !== null}
+        onClose={() => setPhasesChantierId(null)}
+        chantierId={phasesChantierId || ''}
+      />
+      <MetresPanel
+        visible={metresChantierId !== null}
+        onClose={() => setMetresChantierId(null)}
+        chantierId={metresChantierId || ''}
+      />
+      <DemarchePanel
+        visible={administratifChantierId !== null}
+        onClose={() => setAdministratifChantierId(null)}
+        chantierId={administratifChantierId || ''}
+      />
+      <ConsultationPanel
+        visible={consultationChantierId !== null}
+        onClose={() => setConsultationChantierId(null)}
+        chantierId={consultationChantierId || ''}
+      />
+      <AnnuairePanel
+        visible={annuaireChantierId !== null}
+        onClose={() => setAnnuaireChantierId(null)}
+        chantierId={annuaireChantierId || ''}
+      />
+      <JournalPanel
+        visible={journalChantierId !== null}
+        onClose={() => setJournalChantierId(null)}
+        chantierId={journalChantierId || ''}
+      />
+      <ReservesPanel
+        visible={reservesChantierId !== null}
+        onClose={() => setReservesChantierId(null)}
+        chantierId={reservesChantierId || ''}
+      />
+      <SousTraitantsChantier
+        visible={sousTraitantsChantierId !== null}
+        onClose={() => setSousTraitantsChantierId(null)}
+        chantierId={sousTraitantsChantierId || ''}
+      />
+      <AvenantPvPanel
+        visible={avenantPvChantierId !== null}
+        onClose={() => setAvenantPvChantierId(null)}
+        chantierId={avenantPvChantierId || ''}
       />
 
       {/* ── Modal SAV (refacto C3b : utilise ModalSAVDetail + ModalNouveauTicketSAV) ── */}

@@ -64,10 +64,23 @@ export interface PVMailEnvoi {
   subject?: string;
 }
 
+/** Avenant / annexe complémentaire au PV de réception (document produit à la demande). */
+export interface PVAvenant {
+  id: string;
+  numero?: string;        // ex "Avenant n°1"
+  date: string;           // YYYY-MM-DD
+  objet: string;          // titre de l'avenant
+  contenu: string;        // corps libre (observations, réserves complémentaires…)
+  createdAt: string;      // ISO datetime
+}
+
 /** PV de réception complet */
 export interface PVReception {
   numeroPV?: string;
   dateReception?: string;
+
+  /** Avenants / annexes complémentaires produits après le PV initial. */
+  avenants?: PVAvenant[];
 
   // Checklist :
   // - Anciens PV V1 : items[] (legacy)
