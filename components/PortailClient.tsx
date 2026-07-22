@@ -21,8 +21,9 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChatChantier } from '@/components/ChatChantier';
-import { Palette, Coins, CalendarDays, ClipboardList, Flag, MessageCircle, Package } from 'lucide-react-native';
+import { Palette, Coins, CalendarDays, ClipboardList, Flag, MessageCircle, Package, Wallet } from 'lucide-react-native';
 import { PrescriptionsPanel } from '@/components/architecte/PrescriptionsPanel';
+import { HonorairesPanel } from '@/components/architecte/HonorairesPanel';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
@@ -113,7 +114,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Revert au premier onglet visible si l'actif disparaît (changement permissions).
   useEffect(() => {
     if (!chantier) return;
-    const keys: OngletPortail[] = ['projet', 'materiaux', 'chiffres', 'planning', 'suivisCR', 'finChantier', 'messages'];
+    const keys: OngletPortail[] = ['projet', 'materiaux', 'honoraires', 'chiffres', 'planning', 'suivisCR', 'finChantier', 'messages'];
     const visibles = keys.filter(k => canVoirOnglet(k, externAp, chantier, isAdmin) && (k !== 'planning' || peutVoirPlanning));
     if (visibles.length > 0 && !visibles.includes(ongletActif)) {
       setOngletActif(visibles[0]);
@@ -1270,6 +1271,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const ongletsConfig: { key: OngletPortail; label: string; icon: React.ComponentType<{ size?: number; color?: string; strokeWidth?: number }> }[] = [
     { key: 'projet', label: 'Projet', icon: Palette },
     { key: 'materiaux', label: 'Matériaux', icon: Package },
+    { key: 'honoraires', label: 'Honoraires', icon: Wallet },
     { key: 'chiffres', label: 'Chiffres', icon: Coins },
     { key: 'planning', label: 'Planning', icon: CalendarDays },
     { key: 'suivisCR', label: 'Suivi', icon: ClipboardList },
@@ -1351,6 +1353,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           {ongletActif === 'materiaux' ? (
             <View style={{ flex: 1 }}>
               <PrescriptionsPanel embedded chantierId={chantierId} auteurId={externAp?.id || 'admin'} />
+            </View>
+          ) : ongletActif === 'honoraires' ? (
+            <View style={{ flex: 1 }}>
+              <HonorairesPanel embedded visible onClose={() => {}} chantierId={chantierId} auteurId={externAp?.id || 'admin'} />
             </View>
           ) : ongletActif === 'messages' ? (
             <View style={{ flex: 1, padding: 12 }}>

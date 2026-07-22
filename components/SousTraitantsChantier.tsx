@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, Linking, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, Linking, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { X, Plus, Trash2, FileText, Paperclip } from 'lucide-react-native';
 import type { DevisST, AcompteST } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
@@ -161,8 +161,9 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
         {form && (
           <View style={styles.formOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setForm(null)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <View style={styles.formSheet}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {form.kind === 'devis' ? (
                   <>
                     <Text style={styles.formTitle}>Affilier un sous-traitant · devis</Text>
@@ -200,6 +201,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
                 )}
               </ScrollView>
             </View>
+            </KeyboardAvoidingView>
           </View>
         )}
       </View>

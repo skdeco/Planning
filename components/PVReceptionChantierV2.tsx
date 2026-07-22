@@ -20,6 +20,7 @@ import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { SignaturePad } from '@/components/SignaturePad';
+import { AvenantPvPanel } from '@/components/AvenantPvPanel';
 
 const DEFAULT_PAIEMENT = 'chèque ou virement instantané, avant de quitter le chantier';
 
@@ -865,6 +866,13 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                 </Text>
               </Pressable>
             )}
+          </View>
+        )}
+
+        {/* Avenants au PV (annexes complémentaires) — admin uniquement */}
+        {isAdmin && (
+          <View style={styles.avenantsBlock}>
+            <AvenantPvPanel embedded chantierId={chantier.id} />
           </View>
         )}
 
@@ -1768,6 +1776,12 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   // Bloc signatures
+  avenantsBlock: {
+    marginTop: 20,
+    padding: 12,
+    backgroundColor: '#F8F9FA',
+    borderRadius: 8,
+  },
   signaturesBlock: {
     marginTop: 20,
     padding: 12,

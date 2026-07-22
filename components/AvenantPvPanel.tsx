@@ -14,16 +14,18 @@ import { EmptyState } from '@/components/ui/EmptyState';
  * Palette V10. Persiste dans Chantier.pvReception.avenants.
  */
 export interface AvenantPvPanelProps {
-  visible: boolean;
-  onClose: () => void;
+  visible?: boolean;
+  onClose?: () => void;
   chantierId: string;
+  /** Rendu inline (section intégrée dans le PV de réception) — sans Modal, sans overlay. */
+  embedded?: boolean;
 }
 
 function genId(p: string): string {
   return `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
 }
 
-export function AvenantPvPanel({ visible, onClose, chantierId }: AvenantPvPanelProps) {
+export function AvenantPvPanel({ visible, onClose, chantierId, embedded = false }: AvenantPvPanelProps) {
   const { data, updateChantier } = useApp();
   const chantier = useMemo(() => data.chantiers.find(c => c.id === chantierId), [data.chantiers, chantierId]);
   const avenants = useMemo<PVAvenant[]>(() => chantier?.pvReception?.avenants || [], [chantier]);
@@ -77,8 +79,57 @@ export function AvenantPvPanel({ visible, onClose, chantierId }: AvenantPvPanelP
     }
   };
 
+  const cards = avenants.length === 0 ? (
+    <EmptyState iconComponent={FileText} title="Aucun avenant" description="Créez une annexe complémentaire au PV de réception, puis produisez son PDF." />
+  ) : (
+    avenants.map(a => (
+      <View key={a.id} style={styles.card}>
+        <View style={styles.cardTop}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.numero}>{a.numero}</Text>
+            <Text style={styles.objet} numberOfLines={2}>{a.objet}</Text>
+            <Text style={styles.date}>{a.date.split('-').reverse().join('/')}</Text>
+          </View>
+          <Pressable hitSlop={8} onPress={() => confirmDelete(a)} style={styles.iconBtn}><Trash2 size={14} color={DS.marron} /></Pressable>
+        </View>
+        {a.contenu ? <Text style={styles.contenu} numberOfLines={3}>{a.contenu}</Text> : null}
+        <Pressable style={styles.produceBtn} onPress={() => produce(a)} disabled={busyId === a.id}>
+          {busyId === a.id ? <ActivityIndicator size="small" color={DS.cremeFond} /> : <FileDown size={16} color={DS.cremeFond} />}
+          <Text style={styles.produceText}>Produire le PDF</Text>
+        </Pressable>
+      </View>
+    ))
+  );
+
+  if (embedded) {
+    return (
+      <View style={styles.embeddedWrap}>
+        <View style={styles.embeddedHead}>
+          <Text style={styles.embeddedTitle}>Avenants au PV</Text>
+          {!showForm && (
+            <Pressable style={styles.addBtnSm} onPress={() => { setForm({ objet: '', contenu: '' }); setShowForm(true); }}>
+              <Plus size={15} color={DS.cremeFond} /><Text style={styles.addBtnSmText}>Ajouter</Text>
+            </Pressable>
+          )}
+        </View>
+        {cards}
+        {showForm && (
+          <View style={styles.inlineForm}>
+            <Text style={styles.formTitle}>Nouvel avenant</Text>
+            <TextInput style={styles.input} placeholder="Objet (ex: Réserves complémentaires)" placeholderTextColor={DS.textAlt} value={form.objet} onChangeText={t => set({ objet: t })} />
+            <TextInput style={[styles.input, styles.multiline]} placeholder="Contenu de l'avenant (observations, réserves…)" placeholderTextColor={DS.textAlt} multiline value={form.contenu} onChangeText={t => set({ contenu: t })} />
+            <View style={styles.inlineActions}>
+              <Pressable style={styles.cancelBtn} onPress={() => setShowForm(false)}><Text style={styles.cancelText}>Annuler</Text></Pressable>
+              <Pressable style={[styles.saveBtn, styles.saveBtnFlex, !form.objet.trim() && styles.saveBtnDisabled]} onPress={save}><Text style={styles.saveText}>Créer l'avenant</Text></Pressable>
+            </View>
+          </View>
+        )}
+      </View>
+    );
+  }
+
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <Modal visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
@@ -157,4 +208,15 @@ const styles = StyleSheet.create({
   saveBtn: { backgroundColor: DS.bordeaux, borderRadius: radius.xl, paddingVertical: space.md, alignItems: 'center', marginTop: space.sm },
   saveBtnDisabled: { opacity: 0.4 },
   saveText: { color: DS.cremeFond, fontSize: font.md, fontWeight: font.bold },
+  // Mode embedded (section intégrée au PV)
+  embeddedWrap: { gap: space.sm },
+  embeddedHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: space.xs },
+  embeddedTitle: { fontSize: font.md, fontWeight: font.heavy, color: DS.sombre, textTransform: 'uppercase', letterSpacing: 0.4 },
+  addBtnSm: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: DS.bordeaux, borderRadius: radius.md, paddingHorizontal: space.md, paddingVertical: space.xs },
+  addBtnSmText: { color: DS.cremeFond, fontSize: font.compact, fontWeight: font.bold },
+  inlineForm: { backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border, borderRadius: radius.lg, padding: space.md, marginTop: space.xs },
+  inlineActions: { flexDirection: 'row', gap: space.sm, marginTop: space.sm },
+  saveBtnFlex: { flex: 1, marginTop: 0, borderRadius: radius.md },
+  cancelBtn: { paddingHorizontal: space.lg, paddingVertical: space.md, borderRadius: radius.md, backgroundColor: DS.cremeNude, alignItems: 'center', justifyContent: 'center' },
+  cancelText: { color: DS.marron, fontSize: font.md, fontWeight: font.bold },
 });

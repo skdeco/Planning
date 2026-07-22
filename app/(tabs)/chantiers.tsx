@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal,
@@ -23,16 +23,13 @@ import { PortailClient } from '@/components/PortailClient';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
 import { PrescriptionsPanel } from '@/components/architecte/PrescriptionsPanel';
 import { BudgetPanel } from '@/components/architecte/BudgetPanel';
-import { HonorairesPanel } from '@/components/architecte/HonorairesPanel';
 import { PhasePanel } from '@/components/architecte/PhasePanel';
 import { MetresPanel } from '@/components/architecte/MetresPanel';
 import { DemarchePanel } from '@/components/architecte/DemarchePanel';
 import { ConsultationPanel } from '@/components/architecte/ConsultationPanel';
 import { AnnuairePanel } from '@/components/architecte/AnnuairePanel';
 import { JournalPanel } from '@/components/architecte/JournalPanel';
-import { ReservesPanel } from '@/components/architecte/ReservesPanel';
 import { SousTraitantsChantier } from '@/components/SousTraitantsChantier';
-import { AvenantPvPanel } from '@/components/AvenantPvPanel';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
@@ -341,6 +338,20 @@ export default function ChantiersScreen() {
   const [achatForm, setAchatForm] = useState({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
   // Menu actions chantier
   const [actionChantier, setActionChantier] = useState<Chantier | null>(null);
+  // Retour au dashboard chantier après fermeture d'un onglet (panel) — mémorise
+  // le chantier ouvert pour rouvrir la vue d'ensemble plutôt que la liste générale.
+  const returnChantierRef = useRef<Chantier | null>(null);
+  const goPanel = useCallback((ch: Chantier, open: () => void) => {
+    returnChantierRef.current = ch;
+    setActionChantier(null);
+    setTimeout(open, 100);
+  }, []);
+  const backToDash = useCallback((clear: () => void) => {
+    clear();
+    const ch = returnChantierRef.current;
+    returnChantierRef.current = null;
+    if (ch) setTimeout(() => setActionChantier(ch), 120);
+  }, []);
   const [showPVChantier, setShowPVChantier] = useState<string | null>(null);
   // Modal Achats séparé
   const [achatsChantierId, setAchatsChantierId] = useState<string | null>(null);
@@ -358,16 +369,13 @@ export default function ChantiersScreen() {
   const [suiviChantierId, setSuiviChantierId] = useState<string | null>(null);
   const [prescriptionsChantierId, setPrescriptionsChantierId] = useState<string | null>(null);
   const [budgetPanelChantierId, setBudgetPanelChantierId] = useState<string | null>(null);
-  const [honorairesChantierId, setHonorairesChantierId] = useState<string | null>(null);
   const [phasesChantierId, setPhasesChantierId] = useState<string | null>(null);
   const [metresChantierId, setMetresChantierId] = useState<string | null>(null);
   const [administratifChantierId, setAdministratifChantierId] = useState<string | null>(null);
   const [consultationChantierId, setConsultationChantierId] = useState<string | null>(null);
   const [annuaireChantierId, setAnnuaireChantierId] = useState<string | null>(null);
   const [journalChantierId, setJournalChantierId] = useState<string | null>(null);
-  const [reservesChantierId, setReservesChantierId] = useState<string | null>(null);
   const [sousTraitantsChantierId, setSousTraitantsChantierId] = useState<string | null>(null);
-  const [avenantPvChantierId, setAvenantPvChantierId] = useState<string | null>(null);
   const [suiviFilterEmp, setSuiviFilterEmp] = useState<string>('all');
   const [suiviFilterSemaine, setSuiviFilterSemaine] = useState<'tout' | 'semaine' | 'mois'>('semaine');
   const [suiviShowForm, setSuiviShowForm] = useState(false);
@@ -1708,33 +1716,30 @@ export default function ChantiersScreen() {
                       messages: countUnreadChantierMessages([ch], 'admin'),
                     }}
                     handlers={{
-                      onPressFiche:       () => { setActionChantier(null); setTimeout(() => openFicheUnifiee(ch), 100); },
-                      onPressPlans:       () => { setActionChantier(null); setTimeout(() => openPlans(ch), 100); },
-                      onPressDrive:       () => { setActionChantier(null); setTimeout(() => setDriveChantierId(ch.id), 100); },
-                      onPressNotes:       () => { setActionChantier(null); setTimeout(() => openNotes(ch), 100); },
-                      onPressSuivis:      () => { setActionChantier(null); setTimeout(() => setSuiviChantierId(ch.id), 100); },
-                      onPressPrescriptions: () => { setActionChantier(null); setTimeout(() => setPrescriptionsChantierId(ch.id), 100); },
-                      onPressBudget:      () => { setActionChantier(null); setTimeout(() => setBudgetPanelChantierId(ch.id), 100); },
-                      onPressHonoraires:  () => { setActionChantier(null); setTimeout(() => setHonorairesChantierId(ch.id), 100); },
-                      onPressPhases:      () => { setActionChantier(null); setTimeout(() => setPhasesChantierId(ch.id), 100); },
-                      onPressMetres:      () => { setActionChantier(null); setTimeout(() => setMetresChantierId(ch.id), 100); },
-                      onPressAdministratif: () => { setActionChantier(null); setTimeout(() => setAdministratifChantierId(ch.id), 100); },
-                      onPressConsultation:() => { setActionChantier(null); setTimeout(() => setConsultationChantierId(ch.id), 100); },
-                      onPressAnnuaire:    () => { setActionChantier(null); setTimeout(() => setAnnuaireChantierId(ch.id), 100); },
-                      onPressJournal:     () => { setActionChantier(null); setTimeout(() => setJournalChantierId(ch.id), 100); },
-                      onPressReserves:    () => { setActionChantier(null); setTimeout(() => setReservesChantierId(ch.id), 100); },
-                      onPressSousTraitants:() => { setActionChantier(null); setTimeout(() => setSousTraitantsChantierId(ch.id), 100); },
-                      onPressAvenantPv:   () => { setActionChantier(null); setTimeout(() => setAvenantPvChantierId(ch.id), 100); },
-                      onPressPhotos:      () => { setActionChantier(null); setTimeout(() => setShowGalerie(ch.id), 100); },
+                      onPressFiche:       () => goPanel(ch, () => openFicheUnifiee(ch)),
+                      onPressPlans:       () => goPanel(ch, () => openPlans(ch)),
+                      onPressDrive:       () => goPanel(ch, () => setDriveChantierId(ch.id)),
+                      onPressNotes:       () => goPanel(ch, () => openNotes(ch)),
+                      onPressSuivis:      () => goPanel(ch, () => setSuiviChantierId(ch.id)),
+                      onPressPrescriptions: () => goPanel(ch, () => setPrescriptionsChantierId(ch.id)),
+                      onPressBudget:      () => goPanel(ch, () => setBudgetPanelChantierId(ch.id)),
+                      onPressPhases:      () => goPanel(ch, () => setPhasesChantierId(ch.id)),
+                      onPressMetres:      () => goPanel(ch, () => setMetresChantierId(ch.id)),
+                      onPressAdministratif: () => goPanel(ch, () => setAdministratifChantierId(ch.id)),
+                      onPressConsultation:() => goPanel(ch, () => setConsultationChantierId(ch.id)),
+                      onPressAnnuaire:    () => goPanel(ch, () => setAnnuaireChantierId(ch.id)),
+                      onPressJournal:     () => goPanel(ch, () => setJournalChantierId(ch.id)),
+                      onPressSousTraitants:() => goPanel(ch, () => setSousTraitantsChantierId(ch.id)),
+                      onPressPhotos:      () => goPanel(ch, () => setShowGalerie(ch.id)),
                       onPressYAller:      () => { setActionChantier(null); setTimeout(() => openDirectionsHelper(ch.adresse), 100); },
-                      onPressMarches:     () => { setActionChantier(null); setTimeout(() => setMarchesChantierId(ch.id), 100); },
-                      onPressSAV:         () => { setActionChantier(null); setTimeout(() => setSavChantierId(ch.id), 100); },
-                      onPressAchats:      () => { setActionChantier(null); setTimeout(() => setAchatsChantierId(ch.id), 100); },
-                      onPressPV:          () => { setActionChantier(null); setTimeout(() => setShowPVChantier(ch.id), 100); },
-                      onPressRentabilite: () => { setActionChantier(null); setTimeout(() => setBilanChantierId(ch.id), 100); },
-                      onPressLivraison:   () => { setActionChantier(null); setTimeout(() => setLivraisonsChantierId(ch.id), 100); },
-                      onPressMessagerie:  () => { setActionChantier(null); setTimeout(() => setMessagerieChantierId(ch.id), 100); },
-                      onPressPortailClient: () => { setActionChantier(null); setTimeout(() => setPortailClientId(ch.id), 100); },
+                      onPressMarches:     () => goPanel(ch, () => setMarchesChantierId(ch.id)),
+                      onPressSAV:         () => goPanel(ch, () => setSavChantierId(ch.id)),
+                      onPressAchats:      () => goPanel(ch, () => setAchatsChantierId(ch.id)),
+                      onPressPV:          () => goPanel(ch, () => setShowPVChantier(ch.id)),
+                      onPressRentabilite: () => goPanel(ch, () => setBilanChantierId(ch.id)),
+                      onPressLivraison:   () => goPanel(ch, () => setLivraisonsChantierId(ch.id)),
+                      onPressMessagerie:  () => goPanel(ch, () => setMessagerieChantierId(ch.id)),
+                      onPressPortailClient: () => goPanel(ch, () => setPortailClientId(ch.id)),
                       onPressEdit:        isAdmin
                         ? () => { setActionChantier(null); setTimeout(() => openEdit(ch), 100); }
                         : undefined,
@@ -1778,10 +1783,10 @@ export default function ChantiersScreen() {
         visible={showPVChantier !== null}
         animationType="slide"
         transparent
-        onRequestClose={() => setShowPVChantier(null)}
+        onRequestClose={() => backToDash(() => setShowPVChantier(null))}
       >
         <View style={styles.modalOverlay}>
-          <Pressable style={{ flex: 0.05 }} onPress={() => setShowPVChantier(null)} />
+          <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setShowPVChantier(null))} />
           <View style={[styles.modalSheet, { maxHeight: '90%', flex: 1 }]}>
             <View style={styles.modalHandle} />
             {showPVChantier && (() => {
@@ -1791,7 +1796,7 @@ export default function ChantiersScreen() {
                 <PVReceptionChantierV2
                   chantier={ch}
                   isAdmin={true}
-                  onClose={() => setShowPVChantier(null)}
+                  onClose={() => backToDash(() => setShowPVChantier(null))}
                 />
               );
             })()}
@@ -2144,9 +2149,9 @@ export default function ChantiersScreen() {
       </ModalKeyboard>
 
       {/* ── Modal Fiche Chantier Unifié (Fiche + Modifier) ── */}
-      <ModalKeyboard visible={showFiche} animationType="slide" transparent onRequestClose={() => setShowFiche(false)}>
+      <ModalKeyboard visible={showFiche} animationType="slide" transparent onRequestClose={() => backToDash(() => setShowFiche(false))}>
         <View style={styles.modalOverlay}>
-          <Pressable style={{ flex: 0.05 }} onPress={() => setShowFiche(false)} />
+          <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setShowFiche(false))} />
           <View style={styles.modalSheetFiche}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
@@ -2167,7 +2172,7 @@ export default function ChantiersScreen() {
                   );
                 })()}
               </View>
-              <Pressable onPress={() => setShowFiche(false)}>
+              <Pressable onPress={() => backToDash(() => setShowFiche(false))}>
                 <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
@@ -2971,9 +2976,9 @@ export default function ChantiersScreen() {
 
       {/* ── Modal Plans Chantier ── */}
       {/* ── Modal Achats séparé ── */}
-      <ModalKeyboard visible={achatsChantierId !== null} animationType="slide" transparent onRequestClose={() => setAchatsChantierId(null)}>
+      <ModalKeyboard visible={achatsChantierId !== null} animationType="slide" transparent onRequestClose={() => backToDash(() => setAchatsChantierId(null))}>
         <View style={styles.modalOverlay}>
-          <Pressable style={{ flex: 0.05 }} onPress={() => setAchatsChantierId(null)} />
+          <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setAchatsChantierId(null))} />
           <View style={[styles.modalSheet, { maxHeight: '92%' }]}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
@@ -2981,7 +2986,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalTitle}>Achats</Text>
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === achatsChantierId)?.nom ?? ''}</Text>
               </View>
-              <Pressable onPress={() => setAchatsChantierId(null)}>
+              <Pressable onPress={() => backToDash(() => setAchatsChantierId(null))}>
                 <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
@@ -3229,9 +3234,9 @@ export default function ChantiersScreen() {
 
       {/* Modal Photos chantier legacy retirée (commit C8.1bis) — la galerie réelle est <GaleriePhotos> rendu plus bas */}
 
-      <ModalKeyboard visible={showPlans} animationType="slide" transparent onRequestClose={() => setShowPlans(false)}>
+      <ModalKeyboard visible={showPlans} animationType="slide" transparent onRequestClose={() => backToDash(() => setShowPlans(false))}>
         <View style={styles.modalOverlay}>
-          <Pressable style={{ flex: 0.05 }} onPress={() => setShowPlans(false)} />
+          <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setShowPlans(false))} />
           <View style={[styles.modalSheet, { maxHeight: '90%' }]}>
             <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
@@ -3239,7 +3244,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalTitle}>{t.chantiers.plansTitle}</Text>
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === plansChantierId)?.nom ?? ''}</Text>
               </View>
-              <Pressable onPress={() => setShowPlans(false)}>
+              <Pressable onPress={() => backToDash(() => setShowPlans(false))}>
                 <X size={20} color="#8C8077" strokeWidth={2} />
               </Pressable>
             </View>
@@ -3591,9 +3596,9 @@ export default function ChantiersScreen() {
       </ModalKeyboard>
 
       {bilanChantierId && (
-        <BilanFinancierChantier visible={!!bilanChantierId} onClose={() => setBilanChantierId(null)} chantierId={bilanChantierId} />
+        <BilanFinancierChantier visible={!!bilanChantierId} onClose={() => backToDash(() => setBilanChantierId(null))} chantierId={bilanChantierId} />
       )}
-      <GaleriePhotos visible={showGalerie !== null} onClose={() => setShowGalerie(null)} chantierId={showGalerie || undefined} titre={`📷 Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
+      <GaleriePhotos visible={showGalerie !== null} onClose={() => backToDash(() => setShowGalerie(null))} chantierId={showGalerie || undefined} titre={`📷 Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
       {/* V10 — Modal Notes unifiée (planning), ouverte depuis tuile Notes du dashboard chantier */}
       <ModalNotes noteModal={noteModalChantier} setNoteModal={setNoteModalChantier} />
 
@@ -3602,10 +3607,10 @@ export default function ChantiersScreen() {
         visible={livraisonsChantierId !== null}
         animationType="slide"
         transparent
-        onRequestClose={() => setLivraisonsChantierId(null)}
+        onRequestClose={() => backToDash(() => setLivraisonsChantierId(null))}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <Pressable style={{ flex: 0.05 }} onPress={() => setLivraisonsChantierId(null)} />
+          <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setLivraisonsChantierId(null))} />
           <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12 }}>
             <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 8 }} />
             {(() => {
@@ -3618,7 +3623,7 @@ export default function ChantiersScreen() {
                       <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>Livraisons</Text>
                       <Text style={{ fontSize: 13, color: DS.textSecondary, marginTop: 2 }}>{ch.nom}</Text>
                     </View>
-                    <Pressable onPress={() => setLivraisonsChantierId(null)} accessibilityRole="button" accessibilityLabel="Fermer">
+                    <Pressable onPress={() => backToDash(() => setLivraisonsChantierId(null))} accessibilityRole="button" accessibilityLabel="Fermer">
                       <Text style={{ fontSize: 18, color: DS.textSecondary }}>✕</Text>
                     </Pressable>
                   </View>
@@ -3642,10 +3647,10 @@ export default function ChantiersScreen() {
         visible={messagerieChantierId !== null}
         animationType="slide"
         transparent
-        onRequestClose={() => setMessagerieChantierId(null)}
+        onRequestClose={() => backToDash(() => setMessagerieChantierId(null))}
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
-          <Pressable style={{ flex: 0.05 }} onPress={() => setMessagerieChantierId(null)} />
+          <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setMessagerieChantierId(null))} />
           <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12 }}>
             <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 8 }} />
             {(() => {
@@ -3658,7 +3663,7 @@ export default function ChantiersScreen() {
                       <Text style={{ fontSize: 18, fontWeight: '700', color: DS.sombre }}>Messagerie</Text>
                       <Text style={{ fontSize: 13, color: DS.textSecondary, marginTop: 2 }}>{ch.nom}</Text>
                     </View>
-                    <Pressable onPress={() => setMessagerieChantierId(null)} accessibilityRole="button" accessibilityLabel="Fermer">
+                    <Pressable onPress={() => backToDash(() => setMessagerieChantierId(null))} accessibilityRole="button" accessibilityLabel="Fermer">
                       <Text style={{ fontSize: 18, color: DS.textSecondary }}>✕</Text>
                     </Pressable>
                   </View>
@@ -3673,86 +3678,71 @@ export default function ChantiersScreen() {
       </Modal>
 
       {marchesChantierId && (
-        <MarchesChantier visible={!!marchesChantierId} onClose={() => setMarchesChantierId(null)} chantierId={marchesChantierId} />
+        <MarchesChantier visible={!!marchesChantierId} onClose={() => backToDash(() => setMarchesChantierId(null))} chantierId={marchesChantierId} />
       )}
       {driveChantierId && (
-        <DriveChantier visible={!!driveChantierId} onClose={() => setDriveChantierId(null)} chantierId={driveChantierId} />
+        <DriveChantier visible={!!driveChantierId} onClose={() => backToDash(() => setDriveChantierId(null))} chantierId={driveChantierId} />
       )}
       {portailClientId && (
-        <PortailClient visible={!!portailClientId} onClose={() => setPortailClientId(null)} chantierId={portailClientId} />
+        <PortailClient visible={!!portailClientId} onClose={() => backToDash(() => setPortailClientId(null))} chantierId={portailClientId} />
       )}
       {/* V10 G — Nouveau panel CR (compte-rendu) — remplace l'ancien Suivi & Notes */}
       <SuiviCRPanel
         visible={suiviChantierId !== null}
-        onClose={() => setSuiviChantierId(null)}
+        onClose={() => backToDash(() => setSuiviChantierId(null))}
         chantierId={suiviChantierId || ''}
         isAdmin={isAdmin}
       />
       <PrescriptionsPanel
         visible={prescriptionsChantierId !== null}
-        onClose={() => setPrescriptionsChantierId(null)}
+        onClose={() => backToDash(() => setPrescriptionsChantierId(null))}
         chantierId={prescriptionsChantierId || ''}
       />
       <BudgetPanel
         visible={budgetPanelChantierId !== null}
-        onClose={() => setBudgetPanelChantierId(null)}
+        onClose={() => backToDash(() => setBudgetPanelChantierId(null))}
         chantierId={budgetPanelChantierId || ''}
-      />
-      <HonorairesPanel
-        visible={honorairesChantierId !== null}
-        onClose={() => setHonorairesChantierId(null)}
-        chantierId={honorairesChantierId || ''}
       />
       <PhasePanel
         visible={phasesChantierId !== null}
-        onClose={() => setPhasesChantierId(null)}
+        onClose={() => backToDash(() => setPhasesChantierId(null))}
         chantierId={phasesChantierId || ''}
       />
       <MetresPanel
         visible={metresChantierId !== null}
-        onClose={() => setMetresChantierId(null)}
+        onClose={() => backToDash(() => setMetresChantierId(null))}
         chantierId={metresChantierId || ''}
       />
       <DemarchePanel
         visible={administratifChantierId !== null}
-        onClose={() => setAdministratifChantierId(null)}
+        onClose={() => backToDash(() => setAdministratifChantierId(null))}
         chantierId={administratifChantierId || ''}
       />
       <ConsultationPanel
         visible={consultationChantierId !== null}
-        onClose={() => setConsultationChantierId(null)}
+        onClose={() => backToDash(() => setConsultationChantierId(null))}
         chantierId={consultationChantierId || ''}
       />
       <AnnuairePanel
         visible={annuaireChantierId !== null}
-        onClose={() => setAnnuaireChantierId(null)}
+        onClose={() => backToDash(() => setAnnuaireChantierId(null))}
         chantierId={annuaireChantierId || ''}
       />
       <JournalPanel
         visible={journalChantierId !== null}
-        onClose={() => setJournalChantierId(null)}
+        onClose={() => backToDash(() => setJournalChantierId(null))}
         chantierId={journalChantierId || ''}
-      />
-      <ReservesPanel
-        visible={reservesChantierId !== null}
-        onClose={() => setReservesChantierId(null)}
-        chantierId={reservesChantierId || ''}
       />
       <SousTraitantsChantier
         visible={sousTraitantsChantierId !== null}
-        onClose={() => setSousTraitantsChantierId(null)}
+        onClose={() => backToDash(() => setSousTraitantsChantierId(null))}
         chantierId={sousTraitantsChantierId || ''}
-      />
-      <AvenantPvPanel
-        visible={avenantPvChantierId !== null}
-        onClose={() => setAvenantPvChantierId(null)}
-        chantierId={avenantPvChantierId || ''}
       />
 
       {/* ── Modal SAV (refacto C3b : utilise ModalSAVDetail + ModalNouveauTicketSAV) ── */}
-      <Modal visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => setSavChantierId(null)}>
+      <Modal visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => backToDash(() => setSavChantierId(null))}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <Pressable style={{ flex: 1 }} onPress={() => setSavChantierId(null)} />
+          <Pressable style={{ flex: 1 }} onPress={() => backToDash(() => setSavChantierId(null))} />
           <View style={savListeStyles.container}>
             <View style={savListeStyles.header}>
               <View style={{ flex: 1 }}>
@@ -3765,7 +3755,7 @@ export default function ChantiersScreen() {
               >
                 <Text style={savListeStyles.nouveauBtnText}>+ Nouveau</Text>
               </Pressable>
-              <Pressable onPress={() => setSavChantierId(null)} style={savListeStyles.closeBtn}>
+              <Pressable onPress={() => backToDash(() => setSavChantierId(null))} style={savListeStyles.closeBtn}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>✕</Text>
               </Pressable>
             </View>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { X, Plus, Pencil, Trash2, Ruler } from 'lucide-react-native';
 import type { PieceChantier } from '@/app/types';
 import { PIECES_DEFAULT } from '@/app/types';
@@ -136,8 +136,9 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
         {showForm && (
           <View style={styles.formOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowForm(false)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <View style={styles.formSheet}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={styles.formTitle}>{editId ? 'Modifier la pièce' : 'Nouvelle pièce'}</Text>
                 <TextInput style={styles.input} placeholder="Nom de la pièce" placeholderTextColor={DS.textAlt} value={form.nom} onChangeText={t => set({ nom: t })} />
                 {!editId ? (
@@ -157,6 +158,7 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
                 </Pressable>
               </ScrollView>
             </View>
+            </KeyboardAvoidingView>
           </View>
         )}
       </View>

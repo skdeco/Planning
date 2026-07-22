@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { X, Plus, Pencil, Trash2, Flag, Check } from 'lucide-react-native';
 import type { PhaseChantier, JalonChantier } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
@@ -209,8 +209,9 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
         {showForm && (
           <View style={styles.formOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowForm(false)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <View style={styles.formSheet}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={styles.formTitle}>{editId ? 'Modifier' : form.kind === 'jalon' ? 'Nouveau jalon' : 'Nouvelle phase'}</Text>
                 <TextInput style={styles.input} placeholder={form.kind === 'jalon' ? 'Libellé (ex: Hors d’eau)' : 'Libellé (ex: Menuiseries ext.)'} placeholderTextColor={DS.textAlt} value={form.libelle} onChangeText={t => set({ libelle: t })} />
                 {form.kind === 'phase' ? (
@@ -229,6 +230,7 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
                 </Pressable>
               </ScrollView>
             </View>
+            </KeyboardAvoidingView>
           </View>
         )}
       </View>

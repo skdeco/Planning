@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { X, Plus, Pencil, Trash2, Check, Clock, Landmark, AlertTriangle } from 'lucide-react-native';
 import type { DemarcheAdministrative, DemarchePhase, DemarcheStatut } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
@@ -140,8 +140,9 @@ export function DemarchePanel({ visible, onClose, chantierId }: DemarchePanelPro
         {showForm && (
           <View style={styles.formOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowForm(false)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <View style={styles.formSheet}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={styles.formTitle}>{editId ? 'Modifier' : 'Nouvelle démarche'}</Text>
                 <Text style={styles.formLabel}>Phase</Text>
                 <View style={styles.chipRow}>
@@ -166,6 +167,7 @@ export function DemarchePanel({ visible, onClose, chantierId }: DemarchePanelPro
                 </Pressable>
               </ScrollView>
             </View>
+            </KeyboardAvoidingView>
           </View>
         )}
       </View>

@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { X, Plus, Pencil, Trash2, Check, Scale } from 'lucide-react-native';
 import type { ConsultationLot, OffreLot } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
@@ -145,8 +145,9 @@ export function ConsultationPanel({ visible, onClose, chantierId }: Consultation
         {showForm && (
           <View style={styles.formOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowForm(false)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <View style={styles.formSheet}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={styles.formTitle}>{form.kind === 'offre' ? 'Nouvelle offre' : editLotId ? 'Modifier le lot' : 'Nouveau lot'}</Text>
                 {form.kind === 'lot' ? (
                   <>
@@ -167,6 +168,7 @@ export function ConsultationPanel({ visible, onClose, chantierId }: Consultation
                 </Pressable>
               </ScrollView>
             </View>
+            </KeyboardAvoidingView>
           </View>
         )}
       </View>

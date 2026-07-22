@@ -64,15 +64,12 @@ export interface ChantierDetailDashboardHandlers {
   onPressPrescriptions: () => void;
   onPressBudget: () => void;
   onPressMetres: () => void;
-  onPressHonoraires: () => void;
   onPressPhases: () => void;
   onPressAdministratif: () => void;
   onPressConsultation: () => void;
   onPressAnnuaire: () => void;
   onPressJournal: () => void;
-  onPressReserves: () => void;
   onPressSousTraitants: () => void;
-  onPressAvenantPv: () => void;
   onPressPhotos: () => void;
   onPressYAller: () => void;
   onPressMarches: () => void;
@@ -142,7 +139,6 @@ export function ChantierDetailDashboard({
         { icon: ShoppingCart, label: 'Achats',      variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
         { icon: TrendingUp,   label: 'Rentabilité', variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
         { icon: HardHat,      label: 'Sous-traitants', variant: 'marron', onPress: handlers.onPressSousTraitants, adminOnly: true },
-        { icon: Receipt,      label: 'Honoraires',  variant: 'bordeaux', onPress: handlers.onPressHonoraires,  adminOnly: true },
         { icon: Scale,        label: 'Consultation',variant: 'bordeaux', onPress: handlers.onPressConsultation, adminOnly: true },
       ],
     },
@@ -153,9 +149,7 @@ export function ChantierDetailDashboard({
         { icon: Info,       label: 'Infos utiles', variant: 'bordeaux', onPress: handlers.onPressFiche },
         { icon: LayoutGrid, label: 'Plans',        variant: 'bordeaux', onPress: handlers.onPressPlans,     badge: counts.plans },
         { icon: FileCheck,  label: 'PV réception', variant: 'bordeaux', onPress: handlers.onPressPV,        adminOnly: true },
-        { icon: FilePlus,   label: 'Avenant PV',   variant: 'bordeaux', onPress: handlers.onPressAvenantPv, adminOnly: true },
         { icon: Landmark,   label: 'Administratif',variant: 'bordeaux', onPress: handlers.onPressAdministratif, adminOnly: true },
-        { icon: Flag,       label: 'Réserves',     variant: 'bordeaux', onPress: handlers.onPressReserves },
         { icon: Truck,      label: 'Livraison',    variant: 'marron',   onPress: handlers.onPressLivraison, badge: counts.livraisons },
       ],
     },
