@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { Plus, Pencil, Trash2, Link2, Paperclip, X } from 'lucide-react-native';
 import type { Prescription, PrescriptionNature, PrescriptionStatut } from '@/app/types';
 import { PRESCRIPTION_STATUT_LABELS } from '@/app/types';
@@ -135,7 +135,6 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
   };
 
   const save = () => {
-    if (!form.designation.trim() || !form.categorie.trim()) return;
     const now = new Date().toISOString();
     const existing = editId ? items.find(i => i.id === editId) : undefined;
     const num = (v: string) => (v.trim() ? parseFloat(v.replace(',', '.')) || undefined : undefined);
@@ -143,8 +142,8 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
       id: editId || genId('presc'),
       chantierId,
       nature: form.nature,
-      categorie: form.categorie.trim(),
-      designation: form.designation.trim(),
+      categorie: form.categorie.trim() || 'Divers',
+      designation: form.designation.trim() || 'Sans titre',
       marque: form.marque.trim() || undefined,
       reference: form.reference.trim() || undefined,
       lien: form.lien.trim() || undefined,
@@ -255,8 +254,9 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
         {showForm && (
           <View style={styles.formOverlay}>
             <Pressable style={StyleSheet.absoluteFill} onPress={() => setShowForm(false)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <View style={styles.formSheet}>
-              <ScrollView showsVerticalScrollIndicator={false}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 <Text style={styles.formTitle}>{editId ? 'Modifier' : 'Nouvelle prescription'}</Text>
 
                 <View style={styles.segRow}>
@@ -285,11 +285,12 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                   ))}
                 </View>
 
-                <Pressable style={[styles.saveBtn, (!form.designation.trim() || !form.categorie.trim()) && styles.saveBtnDisabled]} onPress={save}>
+                <Pressable style={styles.saveBtn} onPress={save}>
                   <Text style={styles.saveText}>{editId ? 'Enregistrer' : 'Ajouter'}</Text>
                 </Pressable>
               </ScrollView>
             </View>
+            </KeyboardAvoidingView>
           </View>
         )}
       </View>

@@ -1663,7 +1663,8 @@ export default function ChantiersScreen() {
       {/* ── Modal menu actions chantier ── */}
       <Modal visible={actionChantier !== null} transparent animationType="fade" onRequestClose={() => setActionChantier(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }} onPress={() => setActionChantier(null)}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20, paddingHorizontal: 16 }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, maxHeight: '92%' }}>
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20 }}>
             {actionChantier && (() => {
               const ch = actionChantier;
               const statut = STATUT_COLORS[ch.statut];
@@ -1767,6 +1768,7 @@ export default function ChantiersScreen() {
                 </>
               );
             })()}
+            </ScrollView>
           </View>
         </Pressable>
       </Modal>
