@@ -1,6 +1,6 @@
 import type { Apporteur, Chantier } from '@/app/types';
 
-export type OngletPortail = 'projet' | 'chiffres' | 'planning' | 'suivisCR' | 'finChantier' | 'messages';
+export type OngletPortail = 'projet' | 'chiffres' | 'planning' | 'suivisCR' | 'finChantier' | 'messages' | 'materiaux';
 
 type PermKey = 'voirProjet' | 'voirChiffres' | 'voirPlanning' | 'voirSuivisCR' | 'voirFinChantier' | 'voirMessages';
 
@@ -23,6 +23,10 @@ export function canVoirOnglet(
 ): boolean {
   if (isAdmin) return true;
   if (!contact || !chantier) return false;
+
+  // Matériaux (prescriptions) : réservé à l'architecte (prescripteur). Le client
+  // a sa propre vue de validation ailleurs ; apporteur/contractant n'y ont pas accès.
+  if (onglet === 'materiaux') return contact.type === 'architecte';
 
   const key = `voir${onglet.charAt(0).toUpperCase()}${onglet.slice(1)}` as PermKey;
 

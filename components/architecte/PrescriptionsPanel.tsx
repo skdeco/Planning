@@ -18,11 +18,13 @@ import { EmptyState } from '@/components/ui/EmptyState';
  * en overlay inline — jamais en <Modal> imbriquée (fix bug Modal-on-Modal iOS).
  */
 export interface PrescriptionsPanelProps {
-  visible: boolean;
-  onClose: () => void;
+  visible?: boolean;
+  onClose?: () => void;
   chantierId: string;
   /** Auteur des prescriptions créées ('admin' ou apporteurId architecte). */
   auteurId?: string;
+  /** Rendu sans Modal (intégré dans un onglet, ex. portail architecte). */
+  embedded?: boolean;
 }
 
 function genId(prefix: string): string {
@@ -67,7 +69,7 @@ const EMPTY_FORM: FormState = {
   lien: '', prixUnitaire: '', unite: '', quantite: '', statut: 'a_proposer',
 };
 
-export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin' }: PrescriptionsPanelProps) {
+export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false }: PrescriptionsPanelProps) {
   const { data, addPrescription, updatePrescription, deletePrescription } = useApp();
 
   const [filter, setFilter] = useState<string | null>(null); // null = toutes
@@ -172,19 +174,20 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
 
   const set = (patch: Partial<FormState>) => setForm(f => ({ ...f, ...patch }));
 
-  return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={styles.screen}>
-        {/* En-tête */}
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Prescriptions</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
+  const body = (
+      <View style={[styles.screen, embedded && styles.embedded]}>
+        {/* En-tête (masqué en mode intégré : le portail affiche déjà le contexte) */}
+        {!embedded && (
+          <View style={styles.header}>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.hTitle}>Prescriptions</Text>
+              {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
+            </View>
+            <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}>
+              <X size={20} color={DS.sombre} />
+            </Pressable>
           </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}>
-            <X size={20} color={DS.sombre} />
-          </Pressable>
-        </View>
+        )}
 
         {/* Filtres par catégorie */}
         {categories.length > 0 && (
@@ -290,12 +293,18 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
           </View>
         )}
       </View>
+  );
+  if (embedded) return body;
+  return (
+    <Modal visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
+      {body}
     </Modal>
   );
 }
 
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: DS.cremeFond },
+  embedded: { paddingTop: space.md },
   header: { flexDirection: 'row', alignItems: 'flex-start', paddingHorizontal: space.lg, paddingTop: space.xxxl, paddingBottom: space.md },
   hTitle: { fontSize: font.xl, fontWeight: font.heavy, color: DS.sombre, textTransform: 'uppercase' },
   hSub: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, textTransform: 'uppercase', marginTop: 2 },
