@@ -106,6 +106,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   // ── UI state ──
   const [ongletActif, setOngletActif] = useState<OngletPortail>('projet');
+  const [showRetrocession, setShowRetrocession] = useState(false); // section "Rétrocession" repliable (Chiffres)
   const [showAvancementDetail, setShowAvancementDetail] = useState(false); // détail des lots replié par défaut
   const [savDetailId, setSavDetailId] = useState<string | null>(null);
   const [showNouveauSav, setShowNouveauSav] = useState(false);
@@ -235,8 +236,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       // Garder uniquement celles qui existent encore
       return toutesPhotos.filter(p => curatedIds.includes(p.id));
     }
-    // Défaut : 6 dernières photos
-    return toutesPhotos.slice(0, 6);
+    // Défaut : toutes les photos du chantier (l'admin peut restreindre via "Sélectionner")
+    return toutesPhotos;
   }, [toutesPhotos, chantier?.photosPortailClient]);
 
   // ── Marches ──
@@ -1778,6 +1779,30 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 "Situations à régler" (TTC) plus haut. Le détail HT reste dans le modal
                 Marchés admin ("Historique facturation"). */}
             </View>
+
+            {/* ── Rétrocession (commission apporteur/architecte) — section repliable, masquée par défaut ── */}
+            {peutVoirCommissions && !isClient && maCommission && (
+              <View style={styles.card}>
+                <Pressable onPress={() => setShowRetrocession(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <Text style={styles.sectionTitle}>Rétrocession</Text>
+                  <Text style={{ fontSize: 16, color: '#8C6D2F', fontWeight: '800' }}>{showRetrocession ? '▾' : '▸'}</Text>
+                </Pressable>
+                {showRetrocession && (<>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
+                    <Text style={{ fontSize: 13, color: '#687076', fontWeight: '700' }}>Total</Text>
+                    <Text style={{ fontSize: 14, color: '#2C2C2C', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                    <Text style={{ fontSize: 13, color: '#2E7D32' }}>Déjà perçu</Text>
+                    <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '700' }}>{fmt(maCommission.paye)} €</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
+                    <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à percevoir</Text>
+                    <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(maCommission.duDu)} €</Text>
+                  </View>
+                </>)}
+              </View>
+            )}
             </>)}
             {/* ─────────────── /ONGLET CHIFFRES ─────────────── */}
 
@@ -1853,24 +1878,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET PROJET ─────────────── */}
             {ongletActif === 'projet' && (<>
-            {/* ── Ma commission (apporteur / architecte) — indépendante des finances chantier ── */}
-            {peutVoirCommissions && !isClient && maCommission && (
-              <View style={styles.card}>
-                <Text style={styles.sectionTitle}>Ma commission</Text>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
-                  <Text style={{ fontSize: 13, color: '#687076', fontWeight: '700' }}>Total</Text>
-                  <Text style={{ fontSize: 14, color: '#2C2C2C', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
-                  <Text style={{ fontSize: 13, color: '#2E7D32' }}>Déjà perçu</Text>
-                  <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '700' }}>{fmt(maCommission.paye)} €</Text>
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
-                  <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à percevoir</Text>
-                  <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(maCommission.duDu)} €</Text>
-                </View>
-              </View>
-            )}
+            {/* "Ma commission" déplacée dans l'onglet Chiffres → section repliable "Rétrocession". */}
             {/* Accès rapide "Signaler un problème" pour l'externe (le SAV complet reste dans Fin de chantier). */}
             {!isAdmin && (
               <Pressable onPress={() => setShowNouveauSav(true)} style={{ backgroundColor: '#FBEEE9', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#E8C4B8' }}>
@@ -2090,7 +2098,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               ) : (
                 <View style={styles.photosGrid}>
                   {photosPortail.map((p, i) => (
-                    <Image key={p.id || i} source={{ uri: p.uri }} style={[styles.photo, { width: photoSize, height: photoSize }]} resizeMode="cover" />
+                    <Pressable key={p.id || i} onPress={() => openDocPreview(p.uri)} style={[styles.photo, { width: photoSize, height: photoSize, overflow: 'hidden' }]}>
+                      <Image source={{ uri: p.uri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                    </Pressable>
                   ))}
                 </View>
               )}

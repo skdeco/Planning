@@ -200,6 +200,7 @@ interface AppContextType {
   deletePlanChantier: (chantierId: string, planId: string) => void;
   // PV de réception
   upsertPVReception: (chantierId: string, pv: PVReception) => void;
+  deletePVReception: (chantierId: string) => void;
   // Identifiants admin
   updateAdminPassword: (pwd: string) => void;
   updateAdminIdentifiant: (id: string) => void;
@@ -1687,6 +1688,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         c.id === chantierId ? { ...c, pvReception: pv } : c
       ),
     }));
+  const deletePVReception = (chantierId: string) =>
+    setData(p => ({
+      ...p,
+      chantiers: p.chantiers.map(c =>
+        c.id === chantierId ? { ...c, pvReception: undefined } : c
+      ),
+    }));
 
   const updateAdminPassword = (pwd: string) =>
     setData(p => ({ ...p, adminPassword: pwd, adminPasswordUpdatedAt: new Date().toISOString() }));
@@ -2036,6 +2044,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
       addPlanChantier, deletePlanChantier,
       upsertPVReception,
+      deletePVReception,
       updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere,
       addMetierPerso, deleteMetierPerso, updateBudgetChantier,
       addFournisseur, deleteFournisseur,

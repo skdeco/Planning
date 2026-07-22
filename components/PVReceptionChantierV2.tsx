@@ -31,7 +31,7 @@ interface Props {
 }
 
 export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: Props) {
-  const { data, upsertPVReception } = useApp();
+  const { data, upsertPVReception, deletePVReception } = useApp();
   const pv = chantier.pvReception;
   const [pieces, setPieces] = useState<PVPiece[]>(pv?.pieces || []);
   const [dateReception] = useState<string>(pv?.dateReception || todayYMD());
@@ -470,6 +470,17 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
     }
   };
 
+  // Suppression du PV tant qu'il n'est pas signé/clôturé (admin uniquement)
+  const handleDeletePV = () => {
+    const doDelete = () => { deletePVReception(chantier.id); onClose?.(); };
+    const msg = 'Supprimer ce PV de réception ? Cette action est définitive.';
+    if (Platform.OS === 'web') { if (window.confirm(msg)) doDelete(); }
+    else Alert.alert('Supprimer le PV', msg, [
+      { text: 'Annuler', style: 'cancel' },
+      { text: 'Supprimer', style: 'destructive', onPress: doDelete },
+    ]);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -492,6 +503,16 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent}>
+        {isAdmin && !isClotured && (
+          <Pressable
+            onPress={handleDeletePV}
+            accessibilityRole="button"
+            accessibilityLabel="Supprimer le PV"
+            style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E74C3C', backgroundColor: '#FEE2E2', marginBottom: 12 }}
+          >
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C' }}>🗑  Supprimer ce PV</Text>
+          </Pressable>
+        )}
         {isClotured && (
           <Pressable
             onPress={handleDownloadPdf}
