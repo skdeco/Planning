@@ -1670,7 +1670,9 @@ export default function ChantiersScreen() {
 
       {/* ── Modal menu actions chantier ── */}
       <Modal visible={actionChantier !== null} transparent animationType="fade" onRequestClose={() => setActionChantier(null)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }} onPress={() => setActionChantier(null)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          {/* Fermeture uniquement en tapant en dehors de la feuille (zone sombre), pas sur un vide de la grille */}
+          <Pressable style={StyleSheet.absoluteFill} onPress={() => setActionChantier(null)} />
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, maxHeight: '92%' }}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20 }}>
             {actionChantier && (() => {
@@ -1775,7 +1777,7 @@ export default function ChantiersScreen() {
             })()}
             </ScrollView>
           </View>
-        </Pressable>
+        </View>
       </Modal>
 
       {/* ── Modal PV de réception V2 (admin) ── */}

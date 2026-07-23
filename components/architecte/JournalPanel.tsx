@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native';
 import { X, Lock } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -40,13 +41,7 @@ export function JournalPanel({ visible, onClose, chantierId }: JournalPanelProps
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Journal</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Journal" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {entries.length === 0 ? (

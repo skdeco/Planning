@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { View, Text, Pressable, ScrollView, Modal, Linking, StyleSheet } from 'react-native';
 import { X, Phone, Mail, Users } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -77,13 +78,7 @@ export function AnnuairePanel({ visible, onClose, chantierId }: AnnuairePanelPro
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Annuaire</Text>
-            {chantier?.nom ? <Text style={styles.hSub}>{chantier.nom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Annuaire" sub={chantier?.nom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {groupes.length === 0 ? (

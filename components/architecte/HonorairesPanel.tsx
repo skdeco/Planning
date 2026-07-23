@@ -5,6 +5,7 @@ import type {
   DevisHonoraires, HonorairesLigne, HonorairesMode, HonorairesAssiette, HonorairesPhaseStatut, Prescription,
 } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { FilterChip } from '@/components/ui/FilterChip';
 import { StatusPill, type StatusType } from '@/components/ui/StatusPill';
@@ -198,13 +199,7 @@ export function HonorairesPanel({ visible, onClose, chantierId, auteurId = 'admi
   const body = (
       <View style={[styles.screen, embedded && styles.embedded]}>
         {!embedded && (
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.hTitle}>Honoraires</Text>
-              {chantierNom ? <Text style={styles.hSub}>{chantierNom} · privé</Text> : null}
-            </View>
-            <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-          </View>
+          <PanelHeader title="Honoraires" sub={chantierNom ? `${chantierNom} · privé` : undefined} onClose={onClose} />
         )}
 
         {!devis ? (

@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, Linking, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { X, Plus, Trash2, FileText, Paperclip } from 'lucide-react-native';
+import { X, Plus, Trash2, FileText, Paperclip, Pencil } from 'lucide-react-native';
 import type { DevisST, AcompteST } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { DS, radius, space, font } from '@/constants/design';
@@ -28,11 +29,11 @@ const num = (v: string): number => (v.trim() ? parseFloat(v.replace(',', '.')) |
 const openFile = (url?: string) => { if (url && url.startsWith('http')) Linking.openURL(url).catch(() => {}); };
 
 type FormState =
-  | { kind: 'devis'; soustraitantId: string; objet: string; prix: string; fichier?: string }
+  | { kind: 'devis'; editId?: string; soustraitantId: string; objet: string; prix: string; fichier?: string; note: string }
   | { kind: 'acompte'; devisId: string; montant: string; date: string; commentaire: string; facture?: string };
 
 export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTraitantsChantierProps) {
-  const { data, addDevis, deleteDevis, addAcompteST, deleteAcompteST } = useApp();
+  const { data, addDevis, updateDevis, deleteDevis, addAcompteST, deleteAcompteST } = useApp();
   const chantierNom = useMemo(() => data.chantiers.find(c => c.id === chantierId)?.nom ?? '', [data.chantiers, chantierId]);
 
   const devisChantier = useMemo(() => (data.devis || []).filter(d => d.chantierId === chantierId), [data.devis, chantierId]);
@@ -69,13 +70,24 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
     } catch { setUploading(false); }
   };
 
+  const openEditDevis = (d: DevisST) => setForm({
+    kind: 'devis', editId: d.id, soustraitantId: d.soustraitantId,
+    objet: d.objet, prix: d.prixConvenu ? String(d.prixConvenu) : '', fichier: d.devisFichier, note: d.note || '',
+  });
+
   const saveDevis = () => {
     if (!form || form.kind !== 'devis' || !form.soustraitantId || !form.objet.trim()) return;
-    addDevis({
-      id: genId('devis'), soustraitantId: form.soustraitantId, chantierId,
-      objet: form.objet.trim(), prixConvenu: num(form.prix),
-      devisFichier: form.fichier, createdAt: new Date().toISOString(),
-    });
+    const note = form.note.trim() || undefined;
+    if (form.editId) {
+      const ex = devisChantier.find(d => d.id === form.editId);
+      if (ex) updateDevis({ ...ex, soustraitantId: form.soustraitantId, objet: form.objet.trim(), prixConvenu: num(form.prix), devisFichier: form.fichier, note });
+    } else {
+      addDevis({
+        id: genId('devis'), soustraitantId: form.soustraitantId, chantierId,
+        objet: form.objet.trim(), prixConvenu: num(form.prix),
+        devisFichier: form.fichier, note, createdAt: new Date().toISOString(),
+      });
+    }
     setForm(null);
   };
 
@@ -101,13 +113,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Sous-traitants</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Sous-traitants" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {parST.length === 0 ? (
@@ -127,8 +133,10 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
                       <View style={styles.devisTop}>
                         <Text style={styles.devisObjet} numberOfLines={1}>{d.objet}</Text>
                         <Text style={styles.devisPrix}>{fmt(d.prixConvenu)} €</Text>
+                        <Pressable hitSlop={8} onPress={() => openEditDevis(d)} style={styles.iconBtn}><Pencil size={13} color={DS.bordeaux} /></Pressable>
                         <Pressable hitSlop={8} onPress={() => confirmDeleteDevis(d)} style={styles.iconBtn}><Trash2 size={13} color={DS.marron} /></Pressable>
                       </View>
+                      {d.note ? <Text style={styles.devisNote}>{d.note}</Text> : null}
                       <View style={styles.devisMeta}>
                         {d.devisFichier ? (
                           <Pressable onPress={() => openFile(d.devisFichier)} style={styles.fileChip}><FileText size={12} color={DS.bordeaux} /><Text style={styles.fileChipText}>Devis</Text></Pressable>
@@ -156,7 +164,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
           )}
         </ScrollView>
 
-        <Pressable style={styles.fab} onPress={() => setForm({ kind: 'devis', soustraitantId: '', objet: '', prix: '' })}><Plus size={22} color={DS.cremeFond} /></Pressable>
+        <Pressable style={styles.fab} onPress={() => setForm({ kind: 'devis', soustraitantId: '', objet: '', prix: '', note: '' })}><Plus size={22} color={DS.cremeFond} /></Pressable>
 
         {form && (
           <View style={styles.formOverlay}>
@@ -166,7 +174,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
                 {form.kind === 'devis' ? (
                   <>
-                    <Text style={styles.formTitle}>Affilier un sous-traitant · devis</Text>
+                    <Text style={styles.formTitle}>{form.editId ? 'Modifier le devis' : 'Affilier un sous-traitant · devis'}</Text>
                     <Text style={styles.formLabel}>Sous-traitant</Text>
                     <View style={styles.chipRow}>
                       {(data.sousTraitants || []).map(s => (
@@ -182,7 +190,8 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
                       {uploading ? <ActivityIndicator size="small" color={DS.bordeaux} /> : <FileText size={16} color={DS.bordeaux} />}
                       <Text style={styles.attachText}>{form.fichier ? '✓ Devis joint' : 'Joindre le devis (PDF)'}</Text>
                     </Pressable>
-                    <Pressable style={[styles.saveBtn, (!form.soustraitantId || !form.objet.trim()) && styles.saveBtnDisabled]} onPress={saveDevis}><Text style={styles.saveText}>Ajouter</Text></Pressable>
+                    <TextInput style={[styles.input, styles.multiline]} placeholder="Note (optionnel — précision, condition…)" placeholderTextColor={DS.textAlt} multiline value={form.note} onChangeText={t => setForm({ ...form, note: t })} />
+                    <Pressable style={[styles.saveBtn, (!form.soustraitantId || !form.objet.trim()) && styles.saveBtnDisabled]} onPress={saveDevis}><Text style={styles.saveText}>{form.editId ? 'Enregistrer' : 'Ajouter'}</Text></Pressable>
                   </>
                 ) : (
                   <>
@@ -223,6 +232,7 @@ const styles = StyleSheet.create({
   devis: { backgroundColor: DS.surface, borderRadius: radius.md, borderWidth: 1, borderColor: DS.border, padding: space.md, marginBottom: space.sm },
   devisTop: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
   devisObjet: { flex: 1, fontSize: font.body, fontWeight: font.bold, color: DS.sombre },
+  devisNote: { fontSize: font.compact, color: DS.textSecondary, fontStyle: 'italic', marginTop: 4 },
   devisPrix: { fontSize: font.body, fontWeight: font.heavy, color: DS.sombre },
   iconBtn: { width: 28, height: 28, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
   devisMeta: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginTop: space.xs },
@@ -250,6 +260,7 @@ const styles = StyleSheet.create({
   chipTextOn: { color: DS.cremeFond },
   hint: { fontSize: font.compact, color: DS.textSecondary },
   input: { backgroundColor: DS.surfaceHover, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md, paddingHorizontal: space.lg, paddingVertical: space.md, fontSize: font.md, color: DS.text, marginBottom: space.sm },
+  multiline: { minHeight: 72, textAlignVertical: 'top' },
   row2: { flexDirection: 'row', gap: space.sm },
   flex1: { flex: 1 },
   attach: { flexDirection: 'row', alignItems: 'center', gap: space.sm, backgroundColor: DS.cremeNude, borderRadius: radius.md, paddingVertical: space.md, paddingHorizontal: space.lg, marginBottom: space.md },

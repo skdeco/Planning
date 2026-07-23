@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvo
 import { X, Plus, Pencil, Trash2, Check, Clock, Landmark, AlertTriangle } from 'lucide-react-native';
 import type { DemarcheAdministrative, DemarchePhase, DemarcheStatut } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -86,13 +87,7 @@ export function DemarchePanel({ visible, onClose, chantierId }: DemarchePanelPro
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Administratif</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Administratif" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {enAttente.length > 0 ? (

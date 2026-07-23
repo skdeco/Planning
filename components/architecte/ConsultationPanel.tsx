@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvo
 import { X, Plus, Pencil, Trash2, Check, Scale } from 'lucide-react-native';
 import type { ConsultationLot, OffreLot } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -82,13 +83,7 @@ export function ConsultationPanel({ visible, onClose, chantierId }: Consultation
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Consultation</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom} · DCE</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Consultation" sub={chantierNom ? `${chantierNom} · DCE` : undefined} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {lots.length === 0 ? (

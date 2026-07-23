@@ -618,6 +618,7 @@ export interface DevisST {
   prixConvenu: number;    // montant total convenu en euros
   devisFichier?: string;  // base64 URI du devis uploadé par le ST
   devisSigne?: string;    // base64 URI du devis signé retourné par l'admin
+  note?: string;          // note libre ajoutée par l'admin (ex: précision, condition)
   createdAt: string;
 }
 

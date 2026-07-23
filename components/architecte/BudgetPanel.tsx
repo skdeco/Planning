@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, ScrollView, Modal, StyleSheet } from 
 import { X } from 'lucide-react-native';
 import type { Prescription, PrescriptionStatut } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -82,15 +83,7 @@ export function BudgetPanel({ visible, onClose, chantierId }: BudgetPanelProps) 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Budget</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}>
-            <X size={20} color={DS.sombre} />
-          </Pressable>
-        </View>
+        <PanelHeader title="Budget" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {items.length === 0 ? (

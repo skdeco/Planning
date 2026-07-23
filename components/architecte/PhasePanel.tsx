@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { X, Plus, Pencil, Trash2, Flag, Check } from 'lucide-react-native';
-import type { PhaseChantier, JalonChantier } from '@/app/types';
+import { X, Plus, Pencil, Trash2 } from 'lucide-react-native';
+import type { PhaseChantier } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -55,22 +56,16 @@ function statutPhase(p: PhaseChantier, today: Date): { label: string; tone: Tone
   return av > 0 ? { label: 'En cours', tone: 'ontime' } : { label: 'À venir', tone: 'soon' };
 }
 
-type FormKind = 'phase' | 'jalon';
 type FormState = {
-  kind: FormKind;
   libelle: string;
   dateDebut: string;
   dateFin: string;
   avancement: string;
-  datePrevue: string;
 };
-const EMPTY: FormState = { kind: 'phase', libelle: '', dateDebut: '', dateFin: '', avancement: '', datePrevue: '' };
+const EMPTY: FormState = { libelle: '', dateDebut: '', dateFin: '', avancement: '' };
 
 export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
-  const {
-    data, addPhaseChantier, updatePhaseChantier, deletePhaseChantier,
-    addJalonChantier, updateJalonChantier, deleteJalonChantier,
-  } = useApp();
+  const { data, addPhaseChantier, updatePhaseChantier, deletePhaseChantier } = useApp();
 
   const chantierNom = useMemo(() => data.chantiers.find(c => c.id === chantierId)?.nom ?? '', [data.chantiers, chantierId]);
   const today = useMemo(() => new Date(), []);
@@ -79,100 +74,53 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
     () => (data.phasesChantier || []).filter(p => p.chantierId === chantierId).sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0)),
     [data.phasesChantier, chantierId],
   );
-  const jalons = useMemo(
-    () => (data.jalonsChantier || []).filter(j => j.chantierId === chantierId).sort((a, b) => (a.ordre ?? 0) - (b.ordre ?? 0)),
-    [data.jalonsChantier, chantierId],
-  );
 
   const [editId, setEditId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const set = (p: Partial<FormState>) => setForm(f => ({ ...f, ...p }));
 
-  const openNew = (kind: FormKind) => { setEditId(null); setForm({ ...EMPTY, kind }); setShowForm(true); };
+  const openNew = () => { setEditId(null); setForm(EMPTY); setShowForm(true); };
   const openEditPhase = (p: PhaseChantier) => {
     setEditId(p.id);
-    setForm({ kind: 'phase', libelle: p.libelle, dateDebut: p.dateDebutPrevue || '', dateFin: p.dateFinPrevue || '', avancement: p.avancementPct != null ? String(p.avancementPct) : '', datePrevue: '' });
-    setShowForm(true);
-  };
-  const openEditJalon = (j: JalonChantier) => {
-    setEditId(j.id);
-    setForm({ kind: 'jalon', libelle: j.libelle, dateDebut: '', dateFin: '', avancement: '', datePrevue: j.datePrevue || '' });
+    setForm({ libelle: p.libelle, dateDebut: p.dateDebutPrevue || '', dateFin: p.dateFinPrevue || '', avancement: p.avancementPct != null ? String(p.avancementPct) : '' });
     setShowForm(true);
   };
 
   const save = () => {
     if (!form.libelle.trim()) return;
     const now = new Date().toISOString();
-    if (form.kind === 'phase') {
-      const ex = editId ? phases.find(p => p.id === editId) : undefined;
-      const av = form.avancement.trim() ? Math.max(0, Math.min(100, Math.round(parseFloat(form.avancement.replace(',', '.')) || 0))) : undefined;
-      const entry: PhaseChantier = {
-        id: editId || genId('phase'), chantierId, libelle: form.libelle.trim(),
-        ordre: ex?.ordre ?? phases.length,
-        dateDebutPrevue: form.dateDebut.trim() || undefined,
-        dateFinPrevue: form.dateFin.trim() || undefined,
-        avancementPct: av,
-        createdAt: ex?.createdAt || now, updatedAt: now,
-      };
-      editId ? updatePhaseChantier(entry) : addPhaseChantier(entry);
-    } else {
-      const ex = editId ? jalons.find(j => j.id === editId) : undefined;
-      const entry: JalonChantier = {
-        id: editId || genId('jalon'), chantierId, libelle: form.libelle.trim(),
-        datePrevue: form.datePrevue.trim() || undefined,
-        atteintLe: ex?.atteintLe, ordre: ex?.ordre ?? jalons.length,
-      };
-      editId ? updateJalonChantier(entry) : addJalonChantier(entry);
-    }
+    const ex = editId ? phases.find(p => p.id === editId) : undefined;
+    const av = form.avancement.trim() ? Math.max(0, Math.min(100, Math.round(parseFloat(form.avancement.replace(',', '.')) || 0))) : undefined;
+    const entry: PhaseChantier = {
+      id: editId || genId('phase'), chantierId, libelle: form.libelle.trim(),
+      ordre: ex?.ordre ?? phases.length,
+      dateDebutPrevue: form.dateDebut.trim() || undefined,
+      dateFinPrevue: form.dateFin.trim() || undefined,
+      avancementPct: av,
+      createdAt: ex?.createdAt || now, updatedAt: now,
+    };
+    editId ? updatePhaseChantier(entry) : addPhaseChantier(entry);
     setShowForm(false);
   };
 
-  const toggleJalon = (j: JalonChantier) =>
-    updateJalonChantier({ ...j, atteintLe: j.atteintLe ? undefined : new Date().toISOString().slice(0, 10) });
-
-  const confirmDelete = (kind: FormKind, id: string, nom: string) => {
+  const confirmDelete = (id: string, nom: string) => {
     Alert.alert('Supprimer', `Supprimer « ${nom} » ?`, [
       { text: 'Annuler', style: 'cancel' },
-      { text: 'Supprimer', style: 'destructive', onPress: () => (kind === 'phase' ? deletePhaseChantier(id) : deleteJalonChantier(id)) },
+      { text: 'Supprimer', style: 'destructive', onPress: () => deletePhaseChantier(id) },
     ]);
   };
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Planning</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Planning" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
-          {/* Jalons */}
-          <View style={styles.jHead}>
-            <Text style={styles.sectionTitle}>Jalons</Text>
-            <Pressable hitSlop={8} onPress={() => openNew('jalon')} style={styles.miniAdd}><Plus size={15} color={DS.bordeaux} /></Pressable>
-          </View>
-          <View style={styles.jalonWrap}>
-            {jalons.length === 0 ? <Text style={styles.hint}>Aucun jalon (hors d'eau, hors d'air, réception…)</Text> : null}
-            {jalons.map(j => {
-              const atteint = !!j.atteintLe;
-              return (
-                <Pressable key={j.id} onPress={() => toggleJalon(j)} onLongPress={() => openEditJalon(j)}
-                  style={[styles.jalon, atteint && styles.jalonDone]}>
-                  {atteint ? <Check size={12} color={DS.cremeFond} /> : <Flag size={12} color={DS.marron} />}
-                  <Text style={[styles.jalonText, atteint && styles.jalonTextDone]}>{j.libelle}{j.datePrevue ? ` · ${j.datePrevue.slice(5)}` : ''}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-
           {/* Phases */}
           <View style={styles.jHead}>
             <Text style={styles.sectionTitle}>Phases / lots</Text>
-            <Pressable hitSlop={8} onPress={() => openNew('phase')} style={styles.miniAdd}><Plus size={15} color={DS.bordeaux} /></Pressable>
+            <Pressable hitSlop={8} onPress={openNew} style={styles.miniAdd}><Plus size={15} color={DS.bordeaux} /></Pressable>
           </View>
           {phases.length === 0 ? (
             <EmptyState iconComponent={Plus} title="Aucune phase" description="Ajoutez les phases du chantier pour suivre l'avancement." />
@@ -197,7 +145,7 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
                   </View>
                   <View style={styles.phaseActions}>
                     <Pressable hitSlop={8} onPress={() => openEditPhase(p)} style={styles.iconBtn}><Pencil size={14} color={DS.bordeaux} /></Pressable>
-                    <Pressable hitSlop={8} onPress={() => confirmDelete('phase', p.id, p.libelle)} style={styles.iconBtn}><Trash2 size={14} color={DS.marron} /></Pressable>
+                    <Pressable hitSlop={8} onPress={() => confirmDelete(p.id, p.libelle)} style={styles.iconBtn}><Trash2 size={14} color={DS.marron} /></Pressable>
                   </View>
                 </View>
               );
@@ -212,19 +160,13 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
             <View style={styles.formSheet}>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <Text style={styles.formTitle}>{editId ? 'Modifier' : form.kind === 'jalon' ? 'Nouveau jalon' : 'Nouvelle phase'}</Text>
-                <TextInput style={styles.input} placeholder={form.kind === 'jalon' ? 'Libellé (ex: Hors d’eau)' : 'Libellé (ex: Menuiseries ext.)'} placeholderTextColor={DS.textAlt} value={form.libelle} onChangeText={t => set({ libelle: t })} />
-                {form.kind === 'phase' ? (
-                  <>
-                    <View style={styles.row2}>
-                      <TextInput style={[styles.input, styles.flex1]} placeholder="Début (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateDebut} onChangeText={t => set({ dateDebut: t })} />
-                      <TextInput style={[styles.input, styles.flex1]} placeholder="Fin (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateFin} onChangeText={t => set({ dateFin: t })} />
-                    </View>
-                    <TextInput style={styles.input} placeholder="Avancement % (0-100)" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.avancement} onChangeText={t => set({ avancement: t })} />
-                  </>
-                ) : (
-                  <TextInput style={styles.input} placeholder="Date prévue (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.datePrevue} onChangeText={t => set({ datePrevue: t })} />
-                )}
+                <Text style={styles.formTitle}>{editId ? 'Modifier' : 'Nouvelle phase'}</Text>
+                <TextInput style={styles.input} placeholder="Libellé (ex: Menuiseries ext.)" placeholderTextColor={DS.textAlt} value={form.libelle} onChangeText={t => set({ libelle: t })} />
+                <View style={styles.row2}>
+                  <TextInput style={[styles.input, styles.flex1]} placeholder="Début (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateDebut} onChangeText={t => set({ dateDebut: t })} />
+                  <TextInput style={[styles.input, styles.flex1]} placeholder="Fin (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateFin} onChangeText={t => set({ dateFin: t })} />
+                </View>
+                <TextInput style={styles.input} placeholder="Avancement % (0-100)" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.avancement} onChangeText={t => set({ avancement: t })} />
                 <Pressable style={[styles.saveBtn, !form.libelle.trim() && styles.saveBtnDisabled]} onPress={save}>
                   <Text style={styles.saveText}>{editId ? 'Enregistrer' : 'Ajouter'}</Text>
                 </Pressable>

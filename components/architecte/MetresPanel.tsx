@@ -4,6 +4,7 @@ import { X, Plus, Pencil, Trash2, Ruler } from 'lucide-react-native';
 import type { PieceChantier } from '@/app/types';
 import { PIECES_DEFAULT } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -85,13 +86,7 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Métrés</Text>
-            {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Métrés" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {pieces.length === 0 ? (

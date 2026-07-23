@@ -4,6 +4,7 @@ import { Plus, Pencil, Trash2, Link2, Paperclip, X } from 'lucide-react-native';
 import type { Prescription, PrescriptionNature, PrescriptionStatut } from '@/app/types';
 import { PRESCRIPTION_STATUT_LABELS } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { FilterChip } from '@/components/ui/FilterChip';
@@ -177,15 +178,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
       <View style={[styles.screen, embedded && styles.embedded]}>
         {/* En-tête (masqué en mode intégré : le portail affiche déjà le contexte) */}
         {!embedded && (
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.hTitle}>Prescriptions</Text>
-              {chantierNom ? <Text style={styles.hSub}>{chantierNom}</Text> : null}
-            </View>
-            <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}>
-              <X size={20} color={DS.sombre} />
-            </Pressable>
-          </View>
+          <PanelHeader title="Prescriptions" sub={chantierNom} onClose={onClose ?? (() => {})} />
         )}
 
         {/* Filtres par catégorie */}
