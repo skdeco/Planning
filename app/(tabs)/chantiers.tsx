@@ -1694,6 +1694,15 @@ export default function ChantiersScreen() {
                   {/* En-tête chantier */}
                   <View style={{ alignItems: 'center', marginBottom: 16 }}>
                     <View style={{ width: 40, height: 4, backgroundColor: '#E2E6EA', borderRadius: 2, marginBottom: 12 }} />
+                    <Pressable
+                      onPress={() => setActionChantier(null)}
+                      hitSlop={12}
+                      accessibilityRole="button"
+                      accessibilityLabel="Fermer"
+                      style={{ position: 'absolute', top: 0, right: 0, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.successSoft }}
+                    >
+                      <X size={24} color={DS.success} strokeWidth={2.5} />
+                    </Pressable>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: ch.couleur }} />
                       <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>{ch.nom}</Text>
