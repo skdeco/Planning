@@ -52,6 +52,16 @@ export function BudgetPanel({ visible, onClose, chantierId }: BudgetPanelProps) 
     [items],
   );
 
+  // Comparaison au devis : écart pour les articles « au devis », total des ajouts « hors devis »
+  const cmp = useMemo(() => {
+    const devisItems = items.filter(p => p.auDevis && p.montantDevis != null);
+    const prevu = devisItems.reduce((s, p) => s + (p.montantDevis || 0), 0);
+    const reel = devisItems.reduce((s, p) => s + montantOf(p), 0);
+    const horsItems = items.filter(p => !p.auDevis);
+    const hors = horsItems.reduce((s, p) => s + montantOf(p), 0);
+    return { nbDevis: devisItems.length, prevu, reel, ecart: reel - prevu, nbHors: horsItems.length, hors };
+  }, [items]);
+
   // Répartition par catégorie (triée par montant décroissant)
   const parCategorie = useMemo(() => {
     const map = new Map<string, { count: number; montant: number }>();
@@ -132,6 +142,26 @@ export function BudgetPanel({ visible, onClose, chantierId }: BudgetPanelProps) 
                 </View>
               </View>
 
+              {/* Comparaison au devis */}
+              <View style={styles.cmpCard}>
+                <Text style={styles.sectionTitle}>Comparaison au devis</Text>
+                {cmp.nbDevis > 0 ? (
+                  <>
+                    <View style={styles.cmpRow}><Text style={styles.cmpLabel}>Prévu au devis ({cmp.nbDevis})</Text><Text style={styles.cmpVal}>{fmt(cmp.prevu)} €</Text></View>
+                    <View style={styles.cmpRow}><Text style={styles.cmpLabel}>Réel prescrit</Text><Text style={styles.cmpVal}>{fmt(cmp.reel)} €</Text></View>
+                    <View style={[styles.cmpRow, styles.cmpEcartRow]}>
+                      <Text style={styles.cmpEcartLabel}>{cmp.ecart > 0 ? 'Dépassement' : cmp.ecart < 0 ? 'Économie' : 'À l’équilibre'}</Text>
+                      <Text style={[styles.cmpEcartVal, { color: cmp.ecart > 0 ? DS.error : DS.bordeaux }]}>{cmp.ecart > 0 ? '+' : ''}{fmt(cmp.ecart)} €</Text>
+                    </View>
+                  </>
+                ) : (
+                  <Text style={styles.cmpHint}>Coche « Prévu au devis » sur une prescription pour comparer l'écart de prix.</Text>
+                )}
+                {cmp.nbHors > 0 ? (
+                  <View style={[styles.cmpRow, styles.cmpHorsRow]}><Text style={styles.cmpLabel}>Ajouts hors devis ({cmp.nbHors})</Text><Text style={styles.cmpVal}>+{fmt(cmp.hors)} €</Text></View>
+                ) : null}
+              </View>
+
               {/* Répartition par catégorie */}
               <Text style={styles.sectionTitle}>Répartition</Text>
               {parCategorie.map(cat => {
@@ -182,6 +212,15 @@ const styles = StyleSheet.create({
   deltaLabel: { fontSize: font.tiny, fontWeight: font.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
   deltaValue: { fontSize: font.subhead, fontWeight: font.heavy, marginTop: 2 },
   sectionTitle: { fontSize: font.compact, fontWeight: font.bold, color: DS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: space.sm },
+  cmpCard: { backgroundColor: DS.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: DS.border, padding: space.lg, marginBottom: space.lg },
+  cmpRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: space.xs },
+  cmpLabel: { fontSize: font.body, color: DS.textSecondary },
+  cmpVal: { fontSize: font.body, fontWeight: font.bold, color: DS.sombre },
+  cmpEcartRow: { borderTopWidth: 1, borderTopColor: DS.border, marginTop: space.xs, paddingTop: space.sm },
+  cmpEcartLabel: { fontSize: font.body, fontWeight: font.bold, color: DS.sombre, textTransform: 'uppercase', letterSpacing: 0.4 },
+  cmpEcartVal: { fontSize: font.subhead, fontWeight: font.heavy },
+  cmpHint: { fontSize: font.compact, color: DS.textSecondary, lineHeight: font.compact * 1.4 },
+  cmpHorsRow: { borderTopWidth: 1, borderTopColor: DS.border, marginTop: space.xs, paddingTop: space.sm },
   catRow: { marginBottom: space.md },
   catHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: space.xs },
   catNom: { flex: 1, fontSize: font.body, fontWeight: font.semibold, color: DS.sombre },

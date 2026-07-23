@@ -1,10 +1,13 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { Plus, Pencil, Trash2, Link2, Paperclip, X } from 'lucide-react-native';
-import type { Prescription, PrescriptionNature, PrescriptionStatut } from '@/app/types';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { Plus, Pencil, Trash2, Link2, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react-native';
+import type { Prescription, PrescriptionNature, PrescriptionStatut, PrescriptionDocument } from '@/app/types';
 import { PRESCRIPTION_STATUT_LABELS } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { PanelHeader } from '@/components/ui/PanelHeader';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { uploadFileToStorage } from '@/lib/supabase';
+import { openDocPreview } from '@/lib/share/openDocPreview';
 import { DS, radius, space, font } from '@/constants/design';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { FilterChip } from '@/components/ui/FilterChip';
@@ -30,6 +33,52 @@ export interface PrescriptionsPanelProps {
 
 function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+}
+
+/** Éditeur de liens multiples (une ligne = input + suppression). */
+function LinksEditor({ liens, onChange }: { liens: string[]; onChange: (l: string[]) => void }) {
+  return (
+    <>
+      {liens.map((l, i) => (
+        <View key={i} style={styles.linkRow}>
+          <TextInput
+            style={[styles.input, styles.linkInput]} placeholder="https://…" autoCapitalize="none"
+            placeholderTextColor={DS.textAlt} value={l}
+            onChangeText={t => onChange(liens.map((x, j) => (j === i ? t : x)))}
+          />
+          <Pressable hitSlop={8} onPress={() => onChange(liens.filter((_, j) => j !== i))} style={styles.miniDel}><X size={16} color={DS.marron} /></Pressable>
+        </View>
+      ))}
+      <Pressable style={styles.addLine} onPress={() => onChange([...liens, ''])}>
+        <Link2 size={15} color={DS.bordeaux} /><Text style={styles.addLineText}>Ajouter un lien</Text>
+      </Pressable>
+    </>
+  );
+}
+
+/** Éditeur de documents (chips + bouton fichier/photo/caméra). */
+function DocsEditor({ docs, onChange, onPick, busy }: { docs: PrescriptionDocument[]; onChange: (d: PrescriptionDocument[]) => void; onPick: () => void; busy: boolean }) {
+  return (
+    <>
+      {docs.length > 0 && (
+        <View style={styles.docWrap}>
+          {docs.map(d => (
+            <View key={d.id} style={styles.docChip}>
+              <Pressable style={styles.docChipMain} onPress={() => openDocPreview(d.uri)}>
+                {d.type === 'pdf' ? <FileText size={13} color={DS.bordeaux} /> : <ImageIcon size={13} color={DS.bordeaux} />}
+                <Text style={styles.docChipText} numberOfLines={1}>{d.nom}</Text>
+              </Pressable>
+              <Pressable hitSlop={6} onPress={() => onChange(docs.filter(x => x.id !== d.id))}><X size={13} color={DS.marron} /></Pressable>
+            </View>
+          ))}
+        </View>
+      )}
+      <Pressable style={styles.addLine} onPress={onPick} disabled={busy}>
+        {busy ? <ActivityIndicator size="small" color={DS.bordeaux} /> : <Paperclip size={15} color={DS.bordeaux} />}
+        <Text style={styles.addLineText}>Ajouter fichier / photo</Text>
+      </Pressable>
+    </>
+  );
 }
 
 function fmt(n: number): string {
@@ -58,16 +107,22 @@ type FormState = {
   designation: string;
   marque: string;
   reference: string;
-  lien: string;
+  liens: string[];
+  documents: PrescriptionDocument[];
+  ftLiens: string[];
+  ftDocuments: PrescriptionDocument[];
   prixUnitaire: string;
   unite: string;
   quantite: string;
+  auDevis: boolean;
+  montantDevis: string;
   statut: PrescriptionStatut;
 };
 
 const EMPTY_FORM: FormState = {
   nature: 'materiau', categorie: '', designation: '', marque: '', reference: '',
-  lien: '', prixUnitaire: '', unite: '', quantite: '', statut: 'a_proposer',
+  liens: [], documents: [], ftLiens: [], ftDocuments: [],
+  prixUnitaire: '', unite: '', quantite: '', auDevis: false, montantDevis: '', statut: 'a_proposer',
 };
 
 export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false }: PrescriptionsPanelProps) {
@@ -120,16 +175,23 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
 
   const openEdit = (p: Prescription) => {
     setEditId(p.id);
+    // Migration : l'ancien champ `lien` unique est repris dans `liens`.
+    const liens = p.liens && p.liens.length ? [...p.liens] : (p.lien ? [p.lien] : []);
     setForm({
       nature: p.nature,
       categorie: p.categorie,
       designation: p.designation,
       marque: p.marque || '',
       reference: p.reference || '',
-      lien: p.lien || '',
+      liens,
+      documents: p.documents ? [...p.documents] : [],
+      ftLiens: p.ficheTechnique?.liens ? [...p.ficheTechnique.liens] : [],
+      ftDocuments: p.ficheTechnique?.documents ? [...p.ficheTechnique.documents] : [],
       prixUnitaire: p.prixUnitaire != null ? String(p.prixUnitaire) : '',
       unite: p.unite || '',
       quantite: p.quantite != null ? String(p.quantite) : '',
+      auDevis: !!p.auDevis,
+      montantDevis: p.montantDevis != null ? String(p.montantDevis) : '',
       statut: p.statut,
     });
     setShowForm(true);
@@ -139,6 +201,11 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
     const now = new Date().toISOString();
     const existing = editId ? items.find(i => i.id === editId) : undefined;
     const num = (v: string) => (v.trim() ? parseFloat(v.replace(',', '.')) || undefined : undefined);
+    const liens = form.liens.map(l => l.trim()).filter(Boolean);
+    const ftLiens = form.ftLiens.map(l => l.trim()).filter(Boolean);
+    const ficheTechnique = (ftLiens.length || form.ftDocuments.length)
+      ? { liens: ftLiens.length ? ftLiens : undefined, documents: form.ftDocuments.length ? form.ftDocuments : undefined }
+      : undefined;
     const entry: Prescription = {
       id: editId || genId('presc'),
       chantierId,
@@ -147,14 +214,18 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
       designation: form.designation.trim() || 'Sans titre',
       marque: form.marque.trim() || undefined,
       reference: form.reference.trim() || undefined,
-      lien: form.lien.trim() || undefined,
+      lien: liens[0],                                   // compat ascendante (1er lien)
+      liens: liens.length ? liens : undefined,
+      documents: form.documents.length ? form.documents : undefined,
+      ficheTechnique,
       prixUnitaire: num(form.prixUnitaire),
       unite: form.unite.trim() || undefined,
       quantite: num(form.quantite),
+      auDevis: form.auDevis || undefined,
+      montantDevis: form.auDevis ? num(form.montantDevis) : undefined,
       statut: form.statut,
       visibilite: existing?.visibilite,
       alternatives: existing?.alternatives,
-      documents: existing?.documents,
       livraisonId: existing?.livraisonId,
       createParId: existing?.createParId || auteurId,
       createdAt: existing?.createdAt || now,
@@ -163,6 +234,24 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
     if (editId) updatePrescription(entry);
     else addPrescription(entry);
     setShowForm(false);
+  };
+
+  // Upload de fichiers/photos (caméra incluse) → documents
+  const [uploading, setUploading] = useState(false);
+  const pickDocs = async (onAdd: (docs: PrescriptionDocument[]) => void) => {
+    try {
+      const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: true });
+      if (!files.length) return;
+      setUploading(true);
+      const uploaded: PrescriptionDocument[] = [];
+      for (const f of files) {
+        const url = await uploadFileToStorage(f.uri, `chantiers/${chantierId}/prescriptions`, genId('pdoc'));
+        if (url) uploaded.push({ id: genId('pdoc'), nom: f.filename || 'Document', uri: url, type: f.mimeType?.includes('pdf') ? 'pdf' : 'image' });
+      }
+      setUploading(false);
+      if (uploaded.length) onAdd(uploaded);
+      else Alert.alert('Upload', "Le fichier n'a pas pu être envoyé.");
+    } catch { setUploading(false); }
   };
 
   const confirmDelete = (p: Prescription) => {
@@ -215,8 +304,8 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                               {p.quantite != null && sousTotal ? ` · ${fmt(sousTotal)} €` : ''}
                             </Text>
                           ) : null}
-                          {p.lien ? <Link2 size={13} color={DS.textSecondary} /> : null}
-                          {p.documents && p.documents.length > 0 ? <Paperclip size={13} color={DS.textSecondary} /> : null}
+                          {(p.lien || p.liens?.length || p.ficheTechnique?.liens?.length) ? <Link2 size={13} color={DS.textSecondary} /> : null}
+                          {(p.documents?.length || p.ficheTechnique?.documents?.length) ? <Paperclip size={13} color={DS.textSecondary} /> : null}
                         </View>
                         <View style={styles.pillRow}>
                           <StatusPill label={PRESCRIPTION_STATUT_LABELS[p.statut]} status={statutToPill(p.statut)} />
@@ -264,12 +353,27 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Marque" placeholderTextColor={DS.textAlt} value={form.marque} onChangeText={t => set({ marque: t })} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Référence" placeholderTextColor={DS.textAlt} value={form.reference} onChangeText={t => set({ reference: t })} />
                 </View>
-                <TextInput style={styles.input} placeholder="Lien fournisseur (https://…)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.lien} onChangeText={t => set({ lien: t })} />
                 <View style={styles.row2}>
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Prix €" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.prixUnitaire} onChangeText={t => set({ prixUnitaire: t })} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Unité" placeholderTextColor={DS.textAlt} value={form.unite} onChangeText={t => set({ unite: t })} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Qté" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.quantite} onChangeText={t => set({ quantite: t })} />
                 </View>
+
+                <Pressable style={styles.devisToggle} onPress={() => set({ auDevis: !form.auDevis })}>
+                  <View style={[styles.checkbox, form.auDevis && styles.checkboxOn]} />
+                  <Text style={styles.devisToggleText}>Prévu au devis (comparer l'écart de prix)</Text>
+                </Pressable>
+                {form.auDevis && (
+                  <TextInput style={styles.input} placeholder="Montant prévu au devis € HT" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.montantDevis} onChangeText={t => set({ montantDevis: t })} />
+                )}
+
+                <Text style={styles.formLabel}>Références & visuels de l'article</Text>
+                <LinksEditor liens={form.liens} onChange={l => set({ liens: l })} />
+                <DocsEditor docs={form.documents} onChange={d => set({ documents: d })} onPick={() => pickDocs(docs => set({ documents: [...form.documents, ...docs] }))} busy={uploading} />
+
+                <Text style={styles.formLabel}>Fiche technique</Text>
+                <LinksEditor liens={form.ftLiens} onChange={l => set({ ftLiens: l })} />
+                <DocsEditor docs={form.ftDocuments} onChange={d => set({ ftDocuments: d })} onPick={() => pickDocs(docs => set({ ftDocuments: [...form.ftDocuments, ...docs] }))} busy={uploading} />
 
                 <Text style={styles.formLabel}>Statut</Text>
                 <View style={styles.segWrap}>
@@ -336,7 +440,20 @@ const styles = StyleSheet.create({
   },
   row2: { flexDirection: 'row', gap: space.sm },
   flex1: { flex: 1 },
-  formLabel: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, textTransform: 'uppercase', marginBottom: space.sm },
+  formLabel: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, textTransform: 'uppercase', marginBottom: space.sm, marginTop: space.xs },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm },
+  linkInput: { flex: 1 },
+  miniDel: { width: 34, height: 34, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude, marginBottom: space.sm },
+  devisToggle: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.xs, marginBottom: space.sm },
+  checkbox: { width: 22, height: 22, borderRadius: radius.xs, borderWidth: 1.5, borderColor: DS.border, backgroundColor: DS.surface },
+  checkboxOn: { backgroundColor: DS.bordeaux, borderColor: DS.bordeaux },
+  devisToggleText: { fontSize: font.compact, fontWeight: font.semibold, color: DS.sombre, flex: 1 },
+  addLine: { flexDirection: 'row', alignItems: 'center', gap: space.xs, paddingVertical: space.sm, marginBottom: space.sm },
+  addLineText: { fontSize: font.compact, fontWeight: font.bold, color: DS.bordeaux },
+  docWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.xs, marginBottom: space.xs },
+  docChip: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: DS.cremeNude, borderRadius: radius.sm, paddingVertical: 6, paddingHorizontal: 10, maxWidth: '100%' },
+  docChipMain: { flexDirection: 'row', alignItems: 'center', gap: 6, flexShrink: 1 },
+  docChipText: { fontSize: font.compact, fontWeight: font.semibold, color: DS.bordeaux, flexShrink: 1 },
   saveBtn: { backgroundColor: DS.bordeaux, borderRadius: radius.xl, paddingVertical: space.md, alignItems: 'center', marginTop: space.sm },
   saveBtnDisabled: { opacity: 0.4 },
   saveText: { color: DS.cremeFond, fontSize: font.md, fontWeight: font.bold },

@@ -99,13 +99,20 @@ export interface Prescription {
   reference?: string;             // ex: "AZ-0912"
   coloris?: string;
   imageUri?: string;              // visuel produit (Storage)
-  lien?: string;                  // lien vers la page fournisseur
-  documents?: PrescriptionDocument[];
+  lien?: string;                  // (legacy) lien principal — repris dans `liens`
+  liens?: string[];              // liens fournisseur multiples
+  documents?: PrescriptionDocument[];  // visuels / fichiers de l'article (pdf/photo/caméra)
+  /** Fiche technique dédiée : lien(s) + documents (DoP, notice, etc.). */
+  ficheTechnique?: { liens?: string[]; documents?: PrescriptionDocument[] };
 
   // ─── Prix & quantité (sous-total = prixUnitaire × quantite) ───
   prixUnitaire?: number;          // € HT
   unite?: string;                 // 'm²' | 'ml' | 'u' | 'forfait'… (libre)
   quantite?: number;
+
+  // ─── Comparaison au devis (budget) ───
+  auDevis?: boolean;              // true = article prévu au devis (compare l'écart) ; sinon = hors devis (simple ajout au budget)
+  montantDevis?: number;          // € HT prévu au devis pour cet article (si auDevis)
 
   // ─── Cycle de validation ───
   statut: PrescriptionStatut;

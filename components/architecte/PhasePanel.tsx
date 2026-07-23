@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { X, Plus, Pencil, Trash2 } from 'lucide-react-native';
+import { Plus, Pencil, Trash2, Wand2 } from 'lucide-react-native';
 import type { PhaseChantier } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
+import { todayYMD } from '@/lib/date/today';
 import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { ProgressBar } from '@/components/ui/ProgressBar';
@@ -25,6 +26,15 @@ function parseDate(s?: string): Date | null {
   if (!s) return null;
   const d = new Date(s);
   return isNaN(d.getTime()) ? null : d;
+}
+/** Date locale → YYYY-MM-DD (évite le décalage UTC de toISOString). */
+function ymd(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+function addDays(d: Date, n: number): Date {
+  const r = new Date(d);
+  r.setDate(r.getDate() + n);
+  return r;
 }
 function joursEntre(a: Date, b: Date): number {
   return Math.round((a.getTime() - b.getTime()) / 86400000);
@@ -75,10 +85,58 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
     [data.phasesChantier, chantierId],
   );
 
+  // Lots du devis (repris de la section Marchés : marché + suppléments)
+  const lots = useMemo(() => {
+    const out: { nom: string; montant: number }[] = [];
+    const marches = (data.marchesChantier || []).filter(m => m.chantierId === chantierId);
+    const supps = (data.supplementsMarche || []).filter(s => s.chantierId === chantierId);
+    for (const m of [...marches, ...supps]) {
+      for (const l of (m.avancementCorps || [])) out.push({ nom: l.nom, montant: l.montant || 0 });
+    }
+    return out;
+  }, [data.marchesChantier, data.supplementsMarche, chantierId]);
+
   const [editId, setEditId] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const set = (p: Partial<FormState>) => setForm(f => ({ ...f, ...p }));
+
+  // Génération auto du planning depuis les lots (répartition au prorata du montant)
+  const [genOpen, setGenOpen] = useState(false);
+  const [genDebut, setGenDebut] = useState(todayYMD());
+  const [genDuree, setGenDuree] = useState('');
+
+  const apercuGen = useMemo(() => {
+    const duree = parseInt(genDuree, 10);
+    const start = parseDate(genDebut);
+    if (!lots.length || !duree || duree < 1 || !start) return [];
+    const totalMontant = lots.reduce((s, l) => s + l.montant, 0);
+    const useMontant = totalMontant > 0;
+    let cursor = new Date(start);
+    return lots.map(l => {
+      const weight = useMontant ? l.montant / totalMontant : 1 / lots.length;
+      const dur = Math.max(1, Math.round(duree * weight));
+      const debut = new Date(cursor);
+      const fin = addDays(cursor, dur - 1);
+      cursor = addDays(fin, 1);
+      return { nom: l.nom, debut: ymd(debut), fin: ymd(fin), dur };
+    });
+  }, [lots, genDebut, genDuree]);
+
+  const confirmGen = () => {
+    if (!apercuGen.length) return;
+    const now = new Date().toISOString();
+    let ordre = phases.length;
+    apercuGen.forEach(p => {
+      addPhaseChantier({
+        id: genId('phase'), chantierId, libelle: p.nom, ordre: ordre++,
+        dateDebutPrevue: p.debut, dateFinPrevue: p.fin, avancementPct: undefined,
+        createdAt: now, updatedAt: now,
+      });
+    });
+    setGenOpen(false);
+    setGenDuree('');
+  };
 
   const openNew = () => { setEditId(null); setForm(EMPTY); setShowForm(true); };
   const openEditPhase = (p: PhaseChantier) => {
@@ -117,6 +175,13 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
         <PanelHeader title="Planning" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          {lots.length > 0 && (
+            <Pressable style={styles.genBtn} onPress={() => setGenOpen(true)}>
+              <Wand2 size={16} color={DS.bordeaux} />
+              <Text style={styles.genText}>Générer depuis les lots du devis ({lots.length})</Text>
+            </Pressable>
+          )}
+
           {/* Phases */}
           <View style={styles.jHead}>
             <Text style={styles.sectionTitle}>Phases / lots</Text>
@@ -153,6 +218,38 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
           )}
         </ScrollView>
 
+        {/* Génération auto depuis les lots */}
+        {genOpen && (
+          <View style={styles.formOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setGenOpen(false)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
+            <View style={styles.formSheet}>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                <Text style={styles.formTitle}>Générer le planning</Text>
+                <Text style={styles.hint}>Répartition automatique des {lots.length} lots du devis au prorata de leur montant. Tu ajusteras ensuite chaque phase si besoin.</Text>
+                <View style={styles.row2}>
+                  <TextInput style={[styles.input, styles.flex1]} placeholder="Début (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={genDebut} onChangeText={setGenDebut} />
+                  <TextInput style={[styles.input, styles.flex1]} placeholder="Durée totale (jours)" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={genDuree} onChangeText={setGenDuree} />
+                </View>
+                {apercuGen.length > 0 && (
+                  <View style={styles.apercu}>
+                    {apercuGen.map((p, i) => (
+                      <View key={i} style={styles.apercuRow}>
+                        <Text style={styles.apercuNom} numberOfLines={1}>{p.nom}</Text>
+                        <Text style={styles.apercuDates}>{p.debut.slice(5)} → {p.fin.slice(5)} · {p.dur}j</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                <Pressable style={[styles.saveBtn, apercuGen.length === 0 && styles.saveBtnDisabled]} onPress={confirmGen}>
+                  <Text style={styles.saveText}>Créer {apercuGen.length} phase(s)</Text>
+                </Pressable>
+              </ScrollView>
+            </View>
+            </KeyboardAvoidingView>
+          </View>
+        )}
+
         {/* Formulaire overlay inline */}
         {showForm && (
           <View style={styles.formOverlay}>
@@ -187,6 +284,12 @@ const styles = StyleSheet.create({
   hSub: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, textTransform: 'uppercase', marginTop: 2 },
   closeBtn: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
   scroll: { paddingHorizontal: space.lg, paddingBottom: space.xxxl },
+  genBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, backgroundColor: DS.cremeNude, borderRadius: radius.md, paddingVertical: space.md, marginBottom: space.md },
+  genText: { fontSize: font.body, fontWeight: font.bold, color: DS.bordeaux },
+  apercu: { backgroundColor: DS.surfaceHover, borderRadius: radius.md, borderWidth: 1, borderColor: DS.border, padding: space.sm, marginBottom: space.sm },
+  apercuRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.sm, paddingVertical: 4 },
+  apercuNom: { flex: 1, fontSize: font.compact, fontWeight: font.semibold, color: DS.sombre },
+  apercuDates: { fontSize: font.tiny, fontWeight: font.semibold, color: DS.textSecondary, fontVariant: ['tabular-nums'] },
   jHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: space.sm, marginBottom: space.sm },
   sectionTitle: { fontSize: font.tiny, fontWeight: font.bold, color: DS.bordeaux, textTransform: 'uppercase', letterSpacing: 0.6 },
   miniAdd: { width: 28, height: 28, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
