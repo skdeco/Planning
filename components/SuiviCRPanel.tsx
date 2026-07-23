@@ -1,12 +1,14 @@
 import React, { useState, useMemo } from 'react';
 import {
   View, Text, Pressable, TextInput, ScrollView, Modal,
-  KeyboardAvoidingView, Platform, Alert, StyleSheet,
+  KeyboardAvoidingView, Platform, Alert, ActivityIndicator, StyleSheet,
 } from 'react-native';
 import {
   Plus, Calendar, ChevronLeft, Trash2, CheckSquare, Square, X,
-  Users, Paperclip, FileText, Image as ImageIcon, Clock,
+  Users, Paperclip, FileText, Image as ImageIcon, Clock, FileDown,
 } from 'lucide-react-native';
+import * as Sharing from 'expo-sharing';
+import { genererCRPdf } from '@/lib/pv/genererCRPdf';
 import { useApp } from '@/app/context/AppContext';
 import { DS } from '@/constants/design';
 import type {
@@ -96,6 +98,24 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
   const [mode, setMode] = useState<ViewMode>('list');
   const [editingCR, setEditingCR] = useState<SuiviCR | null>(null);
   const [editingRDV, setEditingRDV] = useState<RDVChantier | null>(null);
+  const [exportingId, setExportingId] = useState<string | null>(null);
+
+  const handleExportCR = async (cr: SuiviCR) => {
+    if (!chantier || exportingId) return;
+    try {
+      setExportingId(cr.id);
+      const { uri } = await genererCRPdf(chantier, cr);
+      if (await Sharing.isAvailableAsync()) {
+        await Sharing.shareAsync(uri, { mimeType: 'application/pdf', dialogTitle: `CR ${chantier.nom} — ${formatDateFR(cr.date)}`, UTI: 'com.adobe.pdf' });
+      } else {
+        Alert.alert('PDF généré', uri);
+      }
+    } catch {
+      Alert.alert('Erreur', "Impossible de générer le PDF du compte-rendu.");
+    } finally {
+      setExportingId(null);
+    }
+  };
 
   React.useEffect(() => {
     if (visible) { setMode('list'); setEditingCR(null); setEditingRDV(null); }
@@ -267,6 +287,12 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
                   {item.cr.statut === 'brouillon' && (
                     <View style={styles.draftBadge}><Text style={styles.draftBadgeText}>Brouillon</Text></View>
                   )}
+                  <View style={{ flex: 1 }} />
+                  <Pressable hitSlop={10} onPress={() => handleExportCR(item.cr)} disabled={exportingId === item.cr.id} style={styles.crExportBtn}>
+                    {exportingId === item.cr.id
+                      ? <ActivityIndicator size="small" color={DS.bordeaux} />
+                      : <FileDown size={16} color={DS.bordeaux} strokeWidth={2.2} />}
+                  </Pressable>
                 </View>
                 <Text style={styles.crAuteur}>CR par {item.cr.auteurNom}</Text>
                 {(() => {
@@ -1068,6 +1094,7 @@ const styles = StyleSheet.create({
   subtitle: { fontSize: 11, color: DS.textSecondary, marginTop: 1 },
   empty: { fontSize: 12, color: DS.textSecondary, fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 },
   crCard: { backgroundColor: DS.surface, borderRadius: 12, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: DS.border, gap: 3 },
+  crExportBtn: { width: 32, height: 32, borderRadius: 8, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
   crDate: { fontSize: 13, fontWeight: '700', color: DS.sombre },
   crAuteur: { fontSize: 11, color: DS.textSecondary },
   crStats: { fontSize: 10, color: DS.textSecondary, marginTop: 2 },
