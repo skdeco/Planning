@@ -1,10 +1,14 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { X, Plus, Pencil, Trash2, Ruler } from 'lucide-react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { X, Plus, Pencil, Trash2, Ruler, FileScan, Check } from 'lucide-react-native';
 import type { PieceChantier } from '@/app/types';
 import { PIECES_DEFAULT } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { PanelHeader } from '@/components/ui/PanelHeader';
+import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { uploadFileToStorage } from '@/lib/supabase';
+import { extractTextFromPdfUrl } from '@/lib/pdfExtract';
+import { extrairePiecesDuTexte } from '@/lib/plansMetresParser';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -44,6 +48,42 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState<FormState>(EMPTY);
   const set = (p: Partial<FormState>) => setForm(f => ({ ...f, ...p }));
+
+  // Import depuis un plan PDF (extraction texte gratuite + parsing local)
+  const [importing, setImporting] = useState(false);
+  const [detected, setDetected] = useState<{ nom: string; surface: string; on: boolean }[] | null>(null);
+
+  const importerPlan = async () => {
+    try {
+      const files = await pickNativeFile({ acceptPdf: true, acceptImages: false, multiple: false });
+      if (!files.length) return;
+      setImporting(true);
+      const url = await uploadFileToStorage(files[0].uri, `chantiers/${chantierId}/plans`, genId('plan'));
+      if (!url) { setImporting(false); Alert.alert('Import', "Le plan n'a pas pu être lu."); return; }
+      const texte = await extractTextFromPdfUrl(url);
+      setImporting(false);
+      const found = extrairePiecesDuTexte(texte || '');
+      if (!found.length) {
+        Alert.alert('Aucune pièce détectée', "Le plan ne contient pas de surfaces en texte (c'est peut-être un scan / une image). Ajoute les pièces manuellement.");
+        return;
+      }
+      setDetected(found.map(p => ({ nom: p.nom, surface: String(p.surfaceM2), on: true })));
+    } catch { setImporting(false); }
+  };
+
+  const confirmImport = () => {
+    if (!detected) return;
+    const now = new Date().toISOString();
+    let ordre = pieces.length;
+    detected.filter(d => d.on && d.nom.trim()).forEach(d => {
+      addPieceChantier({
+        id: genId('piece'), chantierId, nom: d.nom.trim(), ordre: ordre++,
+        surfaceSolM2: d.surface.trim() ? parseFloat(d.surface.replace(',', '.')) || undefined : undefined,
+        createdAt: now, updatedAt: now,
+      });
+    });
+    setDetected(null);
+  };
 
   const openNew = () => { setEditId(null); setForm(EMPTY); setShowForm(true); };
   const openEdit = (p: PieceChantier) => {
@@ -89,8 +129,13 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
         <PanelHeader title="Métrés" sub={chantierNom} onClose={onClose} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
+          <Pressable style={styles.importBtn} onPress={importerPlan} disabled={importing}>
+            {importing ? <ActivityIndicator size="small" color={DS.bordeaux} /> : <FileScan size={16} color={DS.bordeaux} />}
+            <Text style={styles.importText}>{importing ? 'Lecture du plan…' : 'Importer depuis un plan (PDF)'}</Text>
+          </Pressable>
+
           {pieces.length === 0 ? (
-            <EmptyState iconComponent={Ruler} title="Aucune pièce" description="Ajoutez les pièces et leurs surfaces (sol, HSP, murs)." />
+            <EmptyState iconComponent={Ruler} title="Aucune pièce" description="Importez un plan PDF coté (surfaces détectées automatiquement) ou ajoutez les pièces à la main." />
           ) : (
             <>
               <View style={styles.banner}>
@@ -127,6 +172,33 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
         </ScrollView>
 
         <Pressable style={styles.fab} onPress={openNew}><Plus size={22} color={DS.cremeFond} /></Pressable>
+
+        {/* Revue des pièces détectées dans le plan */}
+        {detected && (
+          <View style={styles.formOverlay}>
+            <Pressable style={StyleSheet.absoluteFill} onPress={() => setDetected(null)} />
+            <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ width: '100%' }}>
+            <View style={styles.formSheet}>
+              <Text style={styles.formTitle}>Pièces détectées ({detected.filter(d => d.on).length}/{detected.length})</Text>
+              <Text style={styles.detHint}>Vérifie les surfaces, décoche ce qui n'est pas une pièce, puis ajoute.</Text>
+              <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" style={{ maxHeight: 360 }}>
+                {detected.map((d, i) => (
+                  <View key={i} style={styles.detRow}>
+                    <Pressable hitSlop={8} onPress={() => setDetected(arr => arr!.map((x, j) => j === i ? { ...x, on: !x.on } : x))} style={[styles.check, d.on && styles.checkOn]}>
+                      {d.on ? <Check size={13} color={DS.cremeFond} /> : null}
+                    </Pressable>
+                    <TextInput style={[styles.input, styles.detNom]} value={d.nom} onChangeText={t => setDetected(arr => arr!.map((x, j) => j === i ? { ...x, nom: t } : x))} placeholder="Pièce" placeholderTextColor={DS.textAlt} />
+                    <TextInput style={[styles.input, styles.detSurf]} value={d.surface} onChangeText={t => setDetected(arr => arr!.map((x, j) => j === i ? { ...x, surface: t } : x))} keyboardType="decimal-pad" placeholder="m²" placeholderTextColor={DS.textAlt} />
+                  </View>
+                ))}
+              </ScrollView>
+              <Pressable style={[styles.saveBtn, detected.filter(d => d.on).length === 0 && styles.saveBtnDisabled]} onPress={confirmImport}>
+                <Text style={styles.saveText}>Ajouter {detected.filter(d => d.on).length} pièce(s)</Text>
+              </Pressable>
+            </View>
+            </KeyboardAvoidingView>
+          </View>
+        )}
 
         {showForm && (
           <View style={styles.formOverlay}>
@@ -168,6 +240,14 @@ const styles = StyleSheet.create({
   hSub: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, textTransform: 'uppercase', marginTop: 2 },
   closeBtn: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
   scroll: { paddingHorizontal: space.lg, paddingBottom: 120 },
+  importBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, backgroundColor: DS.cremeNude, borderRadius: radius.md, paddingVertical: space.md, marginBottom: space.md },
+  importText: { fontSize: font.body, fontWeight: font.bold, color: DS.bordeaux },
+  detHint: { fontSize: font.compact, color: DS.textSecondary, marginBottom: space.sm },
+  detRow: { flexDirection: 'row', alignItems: 'center', gap: space.sm, marginBottom: space.xs },
+  check: { width: 26, height: 26, borderRadius: radius.sm, borderWidth: 1.5, borderColor: DS.border, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.surface },
+  checkOn: { backgroundColor: DS.bordeaux, borderColor: DS.bordeaux },
+  detNom: { flex: 1, marginBottom: 0 },
+  detSurf: { width: 76, marginBottom: 0, textAlign: 'right' },
   banner: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: DS.bordeaux, borderRadius: radius.lg, paddingVertical: space.md, paddingHorizontal: space.lg, marginBottom: space.md },
   bannerLabel: { fontSize: font.tiny, fontWeight: font.bold, color: DS.cremeNude, textTransform: 'uppercase', letterSpacing: 0.6, opacity: 0.85 },
   bannerValue: { fontSize: font.xxl, fontWeight: font.heavy, color: DS.cremeFond },
