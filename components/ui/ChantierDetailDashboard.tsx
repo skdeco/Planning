@@ -35,6 +35,7 @@ import {
 } from 'lucide-react-native';
 import { DS } from '@/constants/design';
 import { SectionTile } from './SectionTile';
+import type { TileKey, TileMode } from '@/lib/portail/dashboardAccess';
 
 /**
  * ChantierDetailDashboard — Grille de tuiles pour la vue d'ensemble d'un chantier (palette V10).
@@ -83,6 +84,10 @@ export interface ChantierDetailDashboardHandlers {
   onPressDrive: () => void;
   /** Aperçu du portail client (vue qu'aura le client connecté). */
   onPressPortailClient: () => void;
+  /** Portail uniquement : honoraires architecte (privé archi↔client). */
+  onPressHonoraires?: () => void;
+  /** Portail uniquement : finances client (Travaux + Honoraires, lecture). */
+  onPressFinances?: () => void;
   /** Si undefined, bouton "Modifier" masqué. */
   onPressEdit?: () => void;
   /** Si undefined, bouton "Clôturer" masqué (ex: chantier déjà terminé ou pas admin) */
@@ -95,6 +100,11 @@ export interface ChantierDetailDashboardProps {
   isAdmin: boolean;
   counts: ChantierDetailDashboardCounts;
   handlers: ChantierDetailDashboardHandlers;
+  /**
+   * Mode PORTAIL : si fourni, la visibilité de chaque tuile suit ce résolveur
+   * (agir / lecture / masqué) au lieu du filtre admin. L'admin ne passe pas ce prop.
+   */
+  access?: (key: TileKey) => TileMode;
 }
 
 interface TileSpec {
@@ -104,62 +114,75 @@ interface TileSpec {
   onPress: () => void;
   badge?: number;
   adminOnly?: boolean;
+  /** Clé pour le résolveur d'accès portail (absente = jamais affichée au portail). */
+  key?: TileKey;
+  /** Tuile réservée au portail (jamais affichée à l'admin), ex. Honoraires, Mes finances. */
+  portalOnly?: boolean;
 }
 
 export function ChantierDetailDashboard({
   isAdmin,
   counts,
   handlers,
+  access,
 }: ChantierDetailDashboardProps) {
+  const noop = () => {};
+  const resolveMode = (tile: TileSpec): TileMode => {
+    if (access) return tile.key ? access(tile.key) : 'hidden';
+    if (tile.portalOnly) return 'hidden';
+    return tile.adminOnly && !isAdmin ? 'hidden' : 'act';
+  };
   // Tuiles regroupées par famille pour hiérarchiser (plutôt que 14 tuiles à plat).
   const groups: { titre: string; tiles: TileSpec[] }[] = [
     {
       titre: 'Conception',
       tiles: [
-        { icon: Package, label: 'Prescriptions', variant: 'bordeaux', onPress: handlers.onPressPrescriptions },
-        { icon: Wallet,  label: 'Budget',        variant: 'bordeaux', onPress: handlers.onPressBudget },
-        { icon: Ruler,   label: 'Métrés',        variant: 'bordeaux', onPress: handlers.onPressMetres },
+        { icon: Package, label: 'Prescriptions', key: 'prescriptions', variant: 'bordeaux', onPress: handlers.onPressPrescriptions },
+        { icon: Wallet,  label: 'Budget',        key: 'budget',        variant: 'bordeaux', onPress: handlers.onPressBudget },
+        { icon: Ruler,   label: 'Métrés',        key: 'metres',        variant: 'bordeaux', onPress: handlers.onPressMetres },
+        { icon: Receipt, label: 'Honoraires',    key: 'honoraires',    variant: 'bordeaux', onPress: handlers.onPressHonoraires ?? noop, portalOnly: true },
+        { icon: Wallet,  label: 'Mes finances',  key: 'finances',      variant: 'bordeaux', onPress: handlers.onPressFinances ?? noop, portalOnly: true },
       ],
     },
     {
       titre: 'Suivi & terrain',
       tiles: [
-        { icon: CheckSquare,   label: 'Notes',     variant: 'bordeaux', onPress: handlers.onPressNotes,  badge: counts.notes },
-        { icon: Camera,        label: 'Photos',    variant: 'marron',   onPress: handlers.onPressPhotos, badge: counts.photos },
-        { icon: ClipboardList, label: 'Suivis CR', variant: 'bordeaux', onPress: handlers.onPressSuivis, badge: counts.notesPlanning },
-        { icon: CalendarRange, label: 'Phases',    variant: 'bordeaux', onPress: handlers.onPressPhases },
-        { icon: History,       label: 'Journal',   variant: 'bordeaux', onPress: handlers.onPressJournal },
-        { icon: Navigation,    label: 'Y aller',   variant: 'marron',   onPress: handlers.onPressYAller },
+        { icon: CheckSquare,   label: 'Notes',     key: 'notes',   variant: 'bordeaux', onPress: handlers.onPressNotes,  badge: counts.notes },
+        { icon: Camera,        label: 'Photos',    key: 'photos',  variant: 'marron',   onPress: handlers.onPressPhotos, badge: counts.photos },
+        { icon: ClipboardList, label: 'Suivis CR', key: 'suivis',  variant: 'bordeaux', onPress: handlers.onPressSuivis, badge: counts.notesPlanning },
+        { icon: CalendarRange, label: 'Phases',    key: 'phases',  variant: 'bordeaux', onPress: handlers.onPressPhases },
+        { icon: History,       label: 'Journal',   key: 'journal', variant: 'bordeaux', onPress: handlers.onPressJournal },
+        { icon: Navigation,    label: 'Y aller',   key: 'yAller',  variant: 'marron',   onPress: handlers.onPressYAller },
       ],
     },
     {
       titre: 'Finances',
       tiles: [
-        { icon: Briefcase,    label: 'Marchés',     variant: 'bordeaux', onPress: handlers.onPressMarches,     badge: counts.marches, adminOnly: true },
-        { icon: ShoppingCart, label: 'Achats',      variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
-        { icon: TrendingUp,   label: 'Rentabilité', variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
-        { icon: HardHat,      label: 'Sous-traitants', variant: 'marron', onPress: handlers.onPressSousTraitants, adminOnly: true },
-        { icon: Scale,        label: 'Consultation',variant: 'bordeaux', onPress: handlers.onPressConsultation, adminOnly: true },
+        { icon: Briefcase,    label: 'Marchés',     key: 'marches',       variant: 'bordeaux', onPress: handlers.onPressMarches,     badge: counts.marches, adminOnly: true },
+        { icon: ShoppingCart, label: 'Achats',      key: 'achats',        variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
+        { icon: TrendingUp,   label: 'Rentabilité', key: 'rentabilite',   variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
+        { icon: HardHat,      label: 'Sous-traitants', key: 'sousTraitants', variant: 'marron', onPress: handlers.onPressSousTraitants, adminOnly: true },
+        { icon: Scale,        label: 'Consultation',key: 'consultation',  variant: 'bordeaux', onPress: handlers.onPressConsultation, adminOnly: true },
       ],
     },
     {
       titre: 'Documents & réception',
       tiles: [
-        { icon: FolderOpen, label: 'Documents',    variant: 'bordeaux', onPress: handlers.onPressDrive, adminOnly: true },
-        { icon: Info,       label: 'Infos utiles', variant: 'bordeaux', onPress: handlers.onPressFiche },
-        { icon: LayoutGrid, label: 'Plans',        variant: 'bordeaux', onPress: handlers.onPressPlans,     badge: counts.plans },
-        { icon: FileCheck,  label: 'PV réception', variant: 'bordeaux', onPress: handlers.onPressPV,        adminOnly: true },
-        { icon: Landmark,   label: 'Administratif',variant: 'bordeaux', onPress: handlers.onPressAdministratif, adminOnly: true },
-        { icon: Truck,      label: 'Livraison',    variant: 'marron',   onPress: handlers.onPressLivraison, badge: counts.livraisons },
+        { icon: FolderOpen, label: 'Documents',    key: 'drive',         variant: 'bordeaux', onPress: handlers.onPressDrive, adminOnly: true },
+        { icon: Info,       label: 'Infos utiles', key: 'fiche',         variant: 'bordeaux', onPress: handlers.onPressFiche },
+        { icon: LayoutGrid, label: 'Plans',        key: 'plans',         variant: 'bordeaux', onPress: handlers.onPressPlans,     badge: counts.plans },
+        { icon: FileCheck,  label: 'PV réception', key: 'pv',            variant: 'bordeaux', onPress: handlers.onPressPV,        adminOnly: true },
+        { icon: Landmark,   label: 'Administratif',key: 'administratif', variant: 'bordeaux', onPress: handlers.onPressAdministratif, adminOnly: true },
+        { icon: Truck,      label: 'Livraison',    key: 'livraison',     variant: 'marron',   onPress: handlers.onPressLivraison, badge: counts.livraisons },
       ],
     },
     {
       titre: 'Client & SAV',
       tiles: [
-        { icon: Wrench,        label: 'SAV',            variant: 'bordeaux', onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
-        { icon: User,          label: 'Portail client', variant: 'marron',   onPress: handlers.onPressPortailClient, adminOnly: true },
-        { icon: Users,         label: 'Annuaire',       variant: 'bordeaux', onPress: handlers.onPressAnnuaire },
-        { icon: MessageCircle, label: 'Messagerie',     variant: 'bordeaux', onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
+        { icon: Wrench,        label: 'SAV',            key: 'sav',        variant: 'bordeaux', onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
+        { icon: User,          label: 'Portail client',                    variant: 'marron',   onPress: handlers.onPressPortailClient, adminOnly: true },
+        { icon: Users,         label: 'Annuaire',       key: 'annuaire',   variant: 'bordeaux', onPress: handlers.onPressAnnuaire },
+        { icon: MessageCircle, label: 'Messagerie',     key: 'messagerie', variant: 'bordeaux', onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
       ],
     },
   ];
@@ -174,13 +197,15 @@ export function ChantierDetailDashboard({
   return (
     <View style={styles.container}>
       {groups.map((group) => {
-        const gTiles = group.tiles.filter(t => !t.adminOnly || isAdmin);
+        const gTiles = group.tiles
+          .map(tile => ({ tile, mode: resolveMode(tile) }))
+          .filter(x => x.mode !== 'hidden');
         if (gTiles.length === 0) return null;
         return (
           <View key={group.titre} style={styles.group}>
             <Text style={styles.groupTitle}>{group.titre}</Text>
             <View style={styles.grid}>
-              {gTiles.map((tile, i) => (
+              {gTiles.map(({ tile, mode }, i) => (
                 <View key={`${tile.label}-${i}`} style={styles.tileWrap}>
                   <SectionTile
                     icon={tile.icon}
@@ -188,6 +213,7 @@ export function ChantierDetailDashboard({
                     variant={tile.variant}
                     onPress={tile.onPress}
                     badge={tile.badge}
+                    readonly={mode === 'read'}
                   />
                 </View>
               ))}

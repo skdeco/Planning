@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { MotiView } from 'moti';
 import * as Haptics from 'expo-haptics';
-import type { LucideIcon } from 'lucide-react-native';
+import { Eye, type LucideIcon } from 'lucide-react-native';
 import { DS } from '@/constants/design';
 
 /**
@@ -34,6 +34,8 @@ export interface SectionTileProps {
   onPress?: () => void;
   /** Badge de notification (ex: messages non lus). 0 = masqué. */
   badge?: number;
+  /** Tuile en lecture seule (portail) : petit œil discret en haut à gauche. */
+  readonly?: boolean;
 }
 
 export function SectionTile({
@@ -42,6 +44,7 @@ export function SectionTile({
   variant = 'bordeaux',
   onPress,
   badge,
+  readonly,
 }: SectionTileProps) {
   const isBrown = variant === 'marron';
   const iconBg = isBrown ? DS.nudeMoyen : DS.cremeNude;
@@ -73,6 +76,11 @@ export function SectionTile({
               <Text style={styles.badgeText}>
                 {badge > 99 ? '99+' : String(badge)}
               </Text>
+            </View>
+          )}
+          {readonly && (
+            <View style={styles.readBadge}>
+              <Eye size={11} color={DS.textSecondary} strokeWidth={2.2} />
             </View>
           )}
         </MotiView>
@@ -128,5 +136,11 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '700',
     color: DS.cremeFond,
+  },
+  readBadge: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    opacity: 0.7,
   },
 });
