@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import { APPORTEUR_TYPE_LABELS } from '@/app/types';
-import type { Chantier } from '@/app/types';
+import type { Chantier, Apporteur } from '@/app/types';
 import {
   extraireLotsDuTexte,
   extraireLotsAvecRemise,
@@ -24,6 +24,16 @@ import { ChatChantier } from '@/components/ChatChantier';
 import { Palette, Coins, CalendarDays, ClipboardList, Flag, MessageCircle, Package, Wallet } from 'lucide-react-native';
 import { PrescriptionsPanel } from '@/components/architecte/PrescriptionsPanel';
 import { HonorairesPanel } from '@/components/architecte/HonorairesPanel';
+import { BudgetPanel } from '@/components/architecte/BudgetPanel';
+import { MetresPanel } from '@/components/architecte/MetresPanel';
+import { PhasePanel } from '@/components/architecte/PhasePanel';
+import { ConsultationPanel } from '@/components/architecte/ConsultationPanel';
+import { DemarchePanel } from '@/components/architecte/DemarchePanel';
+import { JournalPanel } from '@/components/architecte/JournalPanel';
+import { AnnuairePanel } from '@/components/architecte/AnnuairePanel';
+import { ChantierDetailDashboard, type ChantierDetailDashboardHandlers } from '@/components/ui/ChantierDetailDashboard';
+import { tileAccess, type TileKey } from '@/lib/portail/dashboardAccess';
+import { DS } from '@/constants/design';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
 import { ModalNouveauTicketSAV } from '@/components/ModalNouveauTicketSAV';
@@ -106,18 +116,21 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   }, [visible, chantier?.id, isExterne, externAp?.id]);
 
   // ── UI state ──
-  const [ongletActif, setOngletActif] = useState<OngletPortail>('projet');
+  // null = écran d'accueil (grille de tuiles). Sinon = contenu d'un onglet ouvert.
+  const [ongletActif, setOngletActif] = useState<OngletPortail | null>(null);
+  // Panneau plein écran ouvert depuis une tuile (Modal), ex. Budget/Métrés/Phases…
+  const [portalPanel, setPortalPanel] = useState<TileKey | null>(null);
   const [showRetrocession, setShowRetrocession] = useState(false); // section "Rétrocession" repliable (Chiffres)
   const [showAvancementDetail, setShowAvancementDetail] = useState(false); // détail des lots replié par défaut
   const [savDetailId, setSavDetailId] = useState<string | null>(null);
   const [showNouveauSav, setShowNouveauSav] = useState(false);
-  // Revert au premier onglet visible si l'actif disparaît (changement permissions).
+  // Revert vers l'accueil si l'onglet ouvert n'est plus visible (changement permissions).
   useEffect(() => {
-    if (!chantier) return;
+    if (!chantier || ongletActif === null) return;
     const keys: OngletPortail[] = ['projet', 'materiaux', 'honoraires', 'chiffres', 'planning', 'suivisCR', 'finChantier', 'messages'];
     const visibles = keys.filter(k => canVoirOnglet(k, externAp, chantier, isAdmin) && (k !== 'planning' || peutVoirPlanning));
-    if (visibles.length > 0 && !visibles.includes(ongletActif)) {
-      setOngletActif(visibles[0]);
+    if (!visibles.includes(ongletActif)) {
+      setOngletActif(null);
     }
   }, [chantier, externAp, isAdmin, ongletActif]);
   const [pickerType, setPickerType] = useState<'architecte' | 'apporteur' | 'contractant' | 'client' | null>(null);
@@ -1283,6 +1296,67 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Autorisation finances (source unique) : gouverne l'onglet Chiffres ET la barre KPI Budget.
   const canVoirChiffres = canVoirOnglet('chiffres', externAp, chantier, isAdmin);
 
+  // ── Grille de tuiles du portail (même format que l'admin, filtré par rôle) ──
+  // Tuiles ouvrant un panneau plein écran dédié (mode « agir » ou panneau lecture).
+  const PANEL_TILES: TileKey[] = ['prescriptions', 'honoraires', 'budget', 'metres', 'phases', 'suivis', 'consultation', 'administratif', 'journal', 'annuaire'];
+  // Tuiles réutilisant le contenu d'un onglet existant (lecture correcte par rôle).
+  const ONGLET_OF: Partial<Record<TileKey, OngletPortail>> = {
+    finances: 'chiffres', pv: 'finChantier', livraison: 'finChantier',
+    fiche: 'projet', photos: 'projet', plans: 'projet', messagerie: 'messages',
+  };
+  // Contact gouvernant la grille : le portail réel utilise externAp ; en aperçu
+  // admin (externAp absent), on montre la vue CLIENT (« aperçu du portail client »).
+  const gridContact: Apporteur | undefined = externAp ?? (isAdmin ? ({ id: 'preview', type: 'client' } as Apporteur) : undefined);
+  const openTile = (key: TileKey) => {
+    const mode = tileAccess(key, gridContact, chantier);
+    if (mode === 'hidden') return;
+    if (key === 'sav') { setShowNouveauSav(true); return; }
+    if (mode === 'act' && PANEL_TILES.includes(key)) { setPortalPanel(key); return; }
+    const o = ONGLET_OF[key];
+    if (o) { setOngletActif(o); return; }
+    if (PANEL_TILES.includes(key)) setPortalPanel(key); // panneaux en lecture (journal, annuaire…)
+  };
+
+  const photosCount = (data.photosChantier || []).filter(p => p.chantierId === chantierId).length;
+  const plansCount = (chantier?.fiche?.plans || []).filter(p => !p.archivedAt).length;
+  const portalCounts = { notes: 0, plans: plansCount, photos: photosCount, achats: 0, marches: 0, notesPlanning: 0, sav: 0, livraisons: 0, messages: 0 };
+  const portalHandlers: ChantierDetailDashboardHandlers = {
+    onPressFiche: () => openTile('fiche'),
+    onPressPlans: () => openTile('plans'),
+    onPressNotes: () => {},
+    onPressSuivis: () => openTile('suivis'),
+    onPressPrescriptions: () => openTile('prescriptions'),
+    onPressBudget: () => openTile('budget'),
+    onPressMetres: () => openTile('metres'),
+    onPressPhases: () => openTile('phases'),
+    onPressAdministratif: () => openTile('administratif'),
+    onPressConsultation: () => openTile('consultation'),
+    onPressAnnuaire: () => openTile('annuaire'),
+    onPressJournal: () => openTile('journal'),
+    onPressSousTraitants: () => {},
+    onPressPhotos: () => openTile('photos'),
+    onPressYAller: () => {},
+    onPressMarches: () => {},
+    onPressSAV: () => openTile('sav'),
+    onPressAchats: () => {},
+    onPressPV: () => openTile('pv'),
+    onPressRentabilite: () => {},
+    onPressLivraison: () => openTile('livraison'),
+    onPressMessagerie: () => openTile('messagerie'),
+    onPressDrive: () => {},
+    onPressPortailClient: () => {},
+    onPressHonoraires: () => openTile('honoraires'),
+    onPressFinances: () => openTile('finances'),
+  };
+
+  // Bande « À valider » (client) : actions prioritaires en attente.
+  const aValider: { label: string; onPress: () => void }[] = [];
+  if (isClient && chantier) {
+    const nbPresc = (data.prescriptions || []).filter(p => p.chantierId === chantierId && p.statut === 'propose').length;
+    if (nbPresc > 0) aValider.push({ label: `${nbPresc} article${nbPresc > 1 ? 's' : ''} à valider dans ma sélection`, onPress: () => openTile('prescriptions') });
+    if (chantier.pvReception && !chantier.pvReception.clotureLe) aValider.push({ label: 'PV de réception à signer', onPress: () => openTile('pv') });
+  }
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -1326,29 +1400,32 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
           </View>
 
-          {/* ── Tab bar (scroll horizontal) ── */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.tabBarContent}
-            style={styles.tabBar}
-          >
-            {ongletsVisibles.map(o => {
-              const Icon = o.icon;
-              const actif = ongletActif === o.key;
-              return (
-                <Pressable
-                  key={o.key}
-                  onPress={() => setOngletActif(o.key)}
-                  style={[styles.tab, actif && styles.tabActive, { flexDirection: 'row', alignItems: 'center', gap: 5 }]}
-                >
-                  <Icon size={14} color={actif ? '#fff' : '#687076'} strokeWidth={2} />
-                  <Text style={[styles.tabText, actif && styles.tabTextActive]}>{o.label}</Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-
+          {ongletActif === null ? (
+            /* ── Accueil : grille de tuiles (même format que l'admin, filtrée par rôle) ── */
+            <ScrollView style={{ flex: 1 }} contentContainerStyle={styles.gridScroll} showsVerticalScrollIndicator={false}>
+              {aValider.length > 0 && (
+                <View style={styles.validerCard}>
+                  <Text style={styles.validerTitle}>À valider</Text>
+                  {aValider.map((v, i) => (
+                    <Pressable key={i} onPress={v.onPress} style={styles.validerRow}>
+                      <Text style={styles.validerRowText}>{v.label}</Text>
+                      <Text style={styles.validerChevron}>›</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              )}
+              <ChantierDetailDashboard
+                isAdmin={false}
+                counts={portalCounts}
+                handlers={portalHandlers}
+                access={(k) => tileAccess(k, gridContact, chantier)}
+              />
+            </ScrollView>
+          ) : (
+          <>
+          <Pressable onPress={() => setOngletActif(null)} style={styles.backBar} accessibilityRole="button" accessibilityLabel="Retour à l'accueil">
+            <Text style={styles.backBarText}>‹ Retour</Text>
+          </Pressable>
           {/* Onglet Matériaux (prescriptions architecte) — plein écran, hors ScrollView */}
           {ongletActif === 'materiaux' ? (
             <View style={{ flex: 1 }}>
@@ -2165,6 +2242,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 (ex: timelineHtml export PDF, voir handlePartager). */}
           </ScrollView>
           )}
+          </>
+          )}
 
           {/* ── Boutons sticky bottom (hors ScrollView, toujours visibles) ── */}
           <View style={styles.buttonsRow}>
@@ -2626,6 +2705,18 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           onClose={() => setShowNouveauSav(false)}
         />
       )}
+
+      {/* ── Panneaux ouverts depuis la grille (Modals plein écran) ── */}
+      <PrescriptionsPanel visible={portalPanel === 'prescriptions'} onClose={() => setPortalPanel(null)} chantierId={chantierId} auteurId={externAp?.id || 'admin'} readonly={isClient} />
+      <HonorairesPanel visible={portalPanel === 'honoraires'} onClose={() => setPortalPanel(null)} chantierId={chantierId} auteurId={externAp?.id || 'admin'} />
+      <BudgetPanel visible={portalPanel === 'budget'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <MetresPanel visible={portalPanel === 'metres'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <PhasePanel visible={portalPanel === 'phases'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <SuiviCRPanel visible={portalPanel === 'suivis'} onClose={() => setPortalPanel(null)} chantierId={chantierId} isAdmin={false} />
+      <ConsultationPanel visible={portalPanel === 'consultation'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <DemarchePanel visible={portalPanel === 'administratif'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <JournalPanel visible={portalPanel === 'journal'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <AnnuairePanel visible={portalPanel === 'annuaire'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
     </Modal>
   );
 }
@@ -2644,6 +2735,14 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     flexDirection: 'column',
   },
+  gridScroll: { padding: 14, paddingBottom: 28 },
+  backBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: DS.border, backgroundColor: DS.cremeFond },
+  backBarText: { fontSize: 15, fontWeight: '700', color: DS.bordeaux },
+  validerCard: { backgroundColor: DS.cremeNude, borderRadius: 12, padding: 12, marginBottom: 14 },
+  validerTitle: { fontSize: 12, fontWeight: '800', color: DS.bordeaux, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
+  validerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: DS.surface, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, marginBottom: 6 },
+  validerRowText: { flex: 1, fontSize: 14, fontWeight: '600', color: DS.sombre },
+  validerChevron: { fontSize: 20, fontWeight: '700', color: DS.bordeaux, marginLeft: 8 },
   header: {
     backgroundColor: '#2C2C2C',
     paddingTop: 20,

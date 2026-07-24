@@ -29,6 +29,8 @@ export interface PrescriptionsPanelProps {
   auteurId?: string;
   /** Rendu sans Modal (intégré dans un onglet, ex. portail architecte). */
   embedded?: boolean;
+  /** Lecture seule (vue client) : masque l'ajout et l'édition. */
+  readonly?: boolean;
 }
 
 function genId(prefix: string): string {
@@ -125,7 +127,7 @@ const EMPTY_FORM: FormState = {
   prixUnitaire: '', unite: '', quantite: '', auDevis: false, montantDevis: '', statut: 'a_proposer',
 };
 
-export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false }: PrescriptionsPanelProps) {
+export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false, readonly = false }: PrescriptionsPanelProps) {
   const { data, addPrescription, updatePrescription, deletePrescription } = useApp();
 
   const [filter, setFilter] = useState<string | null>(null); // null = toutes
@@ -311,14 +313,16 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                           <StatusPill label={PRESCRIPTION_STATUT_LABELS[p.statut]} status={statutToPill(p.statut)} />
                         </View>
                       </View>
-                      <View style={styles.actions}>
-                        <Pressable hitSlop={8} onPress={() => openEdit(p)} style={styles.actionBtn}>
-                          <Pencil size={16} color={DS.bordeaux} />
-                        </Pressable>
-                        <Pressable hitSlop={8} onPress={() => confirmDelete(p)} style={styles.actionBtn}>
-                          <Trash2 size={16} color={DS.marron} />
-                        </Pressable>
-                      </View>
+                      {!readonly && (
+                        <View style={styles.actions}>
+                          <Pressable hitSlop={8} onPress={() => openEdit(p)} style={styles.actionBtn}>
+                            <Pencil size={16} color={DS.bordeaux} />
+                          </Pressable>
+                          <Pressable hitSlop={8} onPress={() => confirmDelete(p)} style={styles.actionBtn}>
+                            <Trash2 size={16} color={DS.marron} />
+                          </Pressable>
+                        </View>
+                      )}
                     </View>
                   );
                 })}
@@ -328,9 +332,11 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
         </ScrollView>
 
         {/* FAB ajouter */}
-        <Pressable style={styles.fab} onPress={openNew}>
-          <Plus size={22} color={DS.cremeFond} />
-        </Pressable>
+        {!readonly && (
+          <Pressable style={styles.fab} onPress={openNew}>
+            <Plus size={22} color={DS.cremeFond} />
+          </Pressable>
+        )}
 
         {/* Formulaire ajout/édition — overlay inline (pas de Modal imbriquée) */}
         {showForm && (
