@@ -22,6 +22,7 @@ import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChatChantier } from '@/components/ChatChantier';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
+import { DriveChantier } from '@/components/DriveChantier';
 import { Palette, Coins, CalendarDays, ClipboardList, Flag, MessageCircle, Package, Wallet } from 'lucide-react-native';
 import { PrescriptionsPanel } from '@/components/architecte/PrescriptionsPanel';
 import { HonorairesPanel } from '@/components/architecte/HonorairesPanel';
@@ -125,6 +126,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Panneau plein écran ouvert depuis une tuile (Modal), ex. Budget/Métrés/Phases…
   const [portalPanel, setPortalPanel] = useState<TileKey | null>(null);
   const [galerieOpen, setGalerieOpen] = useState(false);
+  const [driveOpen, setDriveOpen] = useState(false);
   // Focus dans l'onglet Projet : n'afficher que la section de la tuile ouverte (Infos ou Plans).
   const [projetFocus, setProjetFocus] = useState<'infos' | 'plans' | null>(null);
   const [showRetrocession, setShowRetrocession] = useState(false); // section "Rétrocession" repliable (Chiffres)
@@ -1321,6 +1323,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     if (mode === 'hidden') return;
     if (key === 'sav') { setShowNouveauSav(true); return; }
     if (key === 'photos') { setGalerieOpen(true); return; }
+    if (key === 'drive') { setDriveOpen(true); return; }
     if (key === 'fiche' || key === 'plans') { setProjetFocus(key === 'fiche' ? 'infos' : 'plans'); setOngletActif('projet'); return; }
     if (mode === 'act' && PANEL_TILES.includes(key)) { setPortalPanel(key); return; }
     const o = ONGLET_OF[key];
@@ -1354,7 +1357,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     onPressRentabilite: () => {},
     onPressLivraison: () => openTile('livraison'),
     onPressMessagerie: () => openTile('messagerie'),
-    onPressDrive: () => {},
+    onPressDrive: () => openTile('drive'),
     onPressPortailClient: () => {},
     onPressHonoraires: () => openTile('honoraires'),
     onPressFinances: () => openTile('finances'),
@@ -2838,6 +2841,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <JournalPanel visible={portalPanel === 'journal'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <AnnuairePanel visible={portalPanel === 'annuaire'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <GaleriePhotos visible={galerieOpen} onClose={() => setGalerieOpen(false)} chantierId={chantierId} titre={`Photos — ${chantier?.nom || ''}`} />
+      <DriveChantier visible={driveOpen} onClose={() => setDriveOpen(false)} chantierId={chantierId} readonly={!isAdmin} />
     </Modal>
   );
 }

@@ -32,7 +32,7 @@ const ACCESS: Record<PortailRole, Partial<Record<TileKey, TileMode>>> = {
     phases: 'act', suivis: 'act', consultation: 'act', administratif: 'act',
     plans: 'act', messagerie: 'act',
     photos: 'read', journal: 'read', fiche: 'read', pv: 'read',
-    livraison: 'read', annuaire: 'read',
+    livraison: 'read', annuaire: 'read', drive: 'read',
   },
   client: {
     prescriptions: 'act',   // « Ma sélection » : valide / refuse
@@ -41,7 +41,7 @@ const ACCESS: Record<PortailRole, Partial<Record<TileKey, TileMode>>> = {
     sav: 'act',             // signale un problème (décision Kevin)
     messagerie: 'act',
     finances: 'read', photos: 'read', suivis: 'read', phases: 'read',
-    plans: 'read', fiche: 'read', livraison: 'read', annuaire: 'read',
+    plans: 'read', fiche: 'read', livraison: 'read', annuaire: 'read', drive: 'read',
   },
   apporteur: {
     fiche: 'read', photos: 'read', phases: 'read', messagerie: 'act',

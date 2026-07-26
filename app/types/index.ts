@@ -134,6 +134,8 @@ export interface ChantierDoc {
   fichierUrl: string;
   uploadedAt: string;      // ISO
   uploadedPar?: string;    // nom de l'uploader
+  /** Partagé au portail externe (client/architecte). false/absent = privé interne (défaut privé pour les documents). */
+  partageExterne?: boolean;
 }
 
 export const CHANTIER_COLORS = [
@@ -936,6 +938,8 @@ export interface PhotoChantier {
   legende?: string;      // légende/description (ex: "Mur nord terminé")
   createdAt: string;     // ISO datetime
   source: 'fin_journee' | 'manuel'; // déclenché par pointage fin ou ajout manuel
+  /** Partagée au portail externe (client). false = privée interne. Défaut (absent) = partagée. */
+  partageExterne?: boolean;
 }
 
 // ─── Documents RH par employé ──────────────────────────────────────────────

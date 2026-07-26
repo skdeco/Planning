@@ -171,6 +171,7 @@ interface AppContextType {
   deleteNoteSuivi: (id: string) => void;
   // Galerie photos chantier
   addPhotoChantier: (p: PhotoChantier) => void;
+  updatePhotoChantier: (p: PhotoChantier) => void;
   addPhotosChantier: (photos: PhotoChantier[]) => void;
   deletePhotoChantier: (id: string) => void;
   // Documents RH employé
@@ -1554,6 +1555,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
   const addPhotosChantier = (photos: PhotoChantier[]) =>
     setData(p => ({ ...p, photosChantier: [...(p.photosChantier || []), ...photos] }));
+  const updatePhotoChantier = (photo: PhotoChantier) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, photosChantier: (p.photosChantier || []).map(x => (x.id === photo.id ? photo : x)) }));
+  };
   const deletePhotoChantier = (id: string) => {
     trackGenericDeletion(id);
     // Supprimer le fichier du Storage Supabase si c'est une URL distante
@@ -2046,7 +2051,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addSupplement, updateSupplement, deleteSupplement,
       addDocSuivi, updateDocSuivi, deleteDocSuivi,
       addNoteSuivi, updateNoteSuivi, deleteNoteSuivi,
-      addPhotoChantier, addPhotosChantier, deletePhotoChantier,
+      addPhotoChantier, addPhotosChantier, updatePhotoChantier, deletePhotoChantier,
       addDocumentRH, deleteDocumentRH,
       addDocumentSociete, updateDocumentSociete, deleteDocumentSociete,
       addLivraison, updateLivraison, deleteLivraison,

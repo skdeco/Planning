@@ -50,7 +50,7 @@ function getWeekKey(dateStr: string): string {
 }
 
 export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePhotosProps) {
-  const { data, currentUser, deletePhotoChantier, addPhotoChantier } = useApp();
+  const { data, currentUser, deletePhotoChantier, addPhotoChantier, updatePhotoChantier } = useApp();
   const { t, language } = useLanguage();
   const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
   const { width: screenW } = useWindowDimensions();
@@ -68,6 +68,9 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
 
   const isAdmin = currentUser?.role === 'admin';
   const myId = currentUser?.employeId || currentUser?.soustraitantId || 'admin';
+  // Gestion du partage photos (admin/entreprise + architecte). Le client ne voit que les photos partagées.
+  const externType = (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId)?.type;
+  const canManagePhotos = isAdmin || externType === 'architecte';
 
   // Non-admin (employé / sous-traitant) : restreint aux chantiers où l'utilisateur est
   // affecté — la galerie globale ne doit pas exposer les photos des autres chantiers.
@@ -87,9 +90,10 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
     let photos = (data.photosChantier || []);
     if (chantierId) photos = photos.filter(p => p.chantierId === chantierId);
     else if (allowedChantierIds) photos = photos.filter(p => allowedChantierIds.has(p.chantierId));
+    if (!canManagePhotos) photos = photos.filter(p => p.partageExterne !== false); // client : photos partagées seulement
     if (filterEmployeId !== 'all') photos = photos.filter(p => p.employeId === filterEmployeId);
     return photos.sort((a, b) => (b.createdAt || b.date || '').localeCompare(a.createdAt || a.date || ''));
-  }, [data.photosChantier, chantierId, filterEmployeId, allowedChantierIds]);
+  }, [data.photosChantier, chantierId, filterEmployeId, allowedChantierIds, canManagePhotos]);
 
   const getChantierNom = (id: string) => data.chantiers.find(c => c.id === id)?.nom || '?';
   const getChantierCouleur = (id: string) => data.chantiers.find(c => c.id === id)?.couleur || '#2C2C2C';
@@ -387,7 +391,15 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
                   {getChantierNom(selectedPhoto.chantierId)}
                 </Text>
               </View>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                {canManagePhotos && (
+                  <Pressable
+                    style={[styles.viewerActionBtn, { width: 'auto', paddingHorizontal: 12, backgroundColor: selectedPhoto.partageExterne === false ? 'rgba(140,109,47,0.35)' : 'rgba(46,125,91,0.4)' }]}
+                    onPress={() => { const upd = { ...selectedPhoto, partageExterne: selectedPhoto.partageExterne === false ? true : false }; updatePhotoChantier(upd); setSelectedPhoto(upd); }}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#fff' }}>{selectedPhoto.partageExterne === false ? 'Privé' : 'Partagé'}</Text>
+                  </Pressable>
+                )}
                 <Pressable style={styles.viewerActionBtn} onPress={() => downloadPhoto(selectedPhoto)}>
                   <Text style={{ fontSize: 18 }}>⬇</Text>
                 </Pressable>

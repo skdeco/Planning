@@ -19,9 +19,11 @@ interface DriveChantierProps {
   visible: boolean;
   onClose: () => void;
   chantierId: string;
+  /** Vue externe (client/architecte) : uniquement les documents partagés, sans upload/suppression/partage. */
+  readonly?: boolean;
 }
 
-export function DriveChantier({ visible, onClose, chantierId }: DriveChantierProps) {
+export function DriveChantier({ visible, onClose, chantierId, readonly = false }: DriveChantierProps) {
   const { data, currentUser, updateChantier } = useApp();
   const { confirm, ConfirmModal } = useConfirm();
   const [uploadingCat, setUploadingCat] = useState<ChantierDocCategorie | null>(null);
@@ -67,6 +69,11 @@ export function DriveChantier({ visible, onClose, chantierId }: DriveChantierPro
     }
   };
 
+  const togglePartage = (doc: ChantierDoc) => {
+    if (!chantier) return;
+    updateChantier({ ...chantier, documents: documents.map(d => (d.id === doc.id ? { ...d, partageExterne: d.partageExterne === true ? false : true } : d)) });
+  };
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
@@ -83,20 +90,23 @@ export function DriveChantier({ visible, onClose, chantierId }: DriveChantierPro
 
           <ScrollView contentContainerStyle={{ padding: 16, gap: 16 }} showsVerticalScrollIndicator={false}>
             {CHANTIER_DOC_CATEGORIES.map(cat => {
-              const docs = documents.filter(d => d.categorie === cat.key);
+              const docs = documents.filter(d => d.categorie === cat.key && (!readonly || d.partageExterne === true));
+              if (readonly && docs.length === 0) return null; // vue externe : masquer les catégories sans document partagé
               return (
                 <View key={cat.key} style={styles.catBlock}>
                   <View style={styles.catHeader}>
                     <Text style={styles.catTitle}>{cat.label} ({docs.length})</Text>
-                    <Pressable
-                      onPress={() => handleAdd(cat.key)}
-                      disabled={uploadingCat !== null}
-                      style={[styles.addBtn, uploadingCat !== null && { opacity: 0.4 }]}
-                    >
-                      {uploadingCat === cat.key
-                        ? <ActivityIndicator size="small" color="#5C1F2E" />
-                        : <Text style={styles.addBtnText}>+ Ajouter</Text>}
-                    </Pressable>
+                    {!readonly && (
+                      <Pressable
+                        onPress={() => handleAdd(cat.key)}
+                        disabled={uploadingCat !== null}
+                        style={[styles.addBtn, uploadingCat !== null && { opacity: 0.4 }]}
+                      >
+                        {uploadingCat === cat.key
+                          ? <ActivityIndicator size="small" color="#5C1F2E" />
+                          : <Text style={styles.addBtnText}>+ Ajouter</Text>}
+                      </Pressable>
+                    )}
                   </View>
                   {docs.length === 0 ? (
                     <Text style={styles.empty}>Aucun document</Text>
@@ -108,14 +118,22 @@ export function DriveChantier({ visible, onClose, chantierId }: DriveChantierPro
                           {new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}{doc.uploadedPar ? ` · ${doc.uploadedPar}` : ''}
                         </Text>
                       </Pressable>
-                      <Pressable onPress={() => handleDelete(doc)} hitSlop={8} style={styles.delBtn}>
-                        <Text style={styles.del}>🗑</Text>
-                      </Pressable>
+                      {!readonly && (<>
+                        <Pressable onPress={() => togglePartage(doc)} hitSlop={6} style={[styles.shareBtn, doc.partageExterne === true && styles.shareBtnOn]}>
+                          <Text style={[styles.shareTxt, doc.partageExterne === true && styles.shareTxtOn]}>{doc.partageExterne === true ? 'Partagé' : 'Privé'}</Text>
+                        </Pressable>
+                        <Pressable onPress={() => handleDelete(doc)} hitSlop={8} style={styles.delBtn}>
+                          <Text style={styles.del}>🗑</Text>
+                        </Pressable>
+                      </>)}
                     </View>
                   ))}
                 </View>
               );
             })}
+            {readonly && documents.every(d => d.partageExterne !== true) && (
+              <Text style={styles.empty}>Aucun document partagé pour le moment.</Text>
+            )}
             <View style={{ height: 24 }} />
           </ScrollView>
 
@@ -141,6 +159,10 @@ const styles = StyleSheet.create({
   catTitle: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
   addBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: '#F0E6DC' },
   addBtnText: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
+  shareBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F1E8DC', marginRight: 4 },
+  shareBtnOn: { backgroundColor: '#E7F1EA' },
+  shareTxt: { fontSize: 11, fontWeight: '700', color: '#8C6D2F' },
+  shareTxtOn: { color: '#2E7D5B' },
   empty: { fontSize: 12, color: '#B0A99F', fontStyle: 'italic' },
   docRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
