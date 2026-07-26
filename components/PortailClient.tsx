@@ -1354,6 +1354,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   if (isClient && chantier) {
     const nbPresc = (data.prescriptions || []).filter(p => p.chantierId === chantierId && p.statut === 'propose').length;
     if (nbPresc > 0) aValider.push({ label: `${nbPresc} article${nbPresc > 1 ? 's' : ''} à valider dans ma sélection`, onPress: () => openTile('prescriptions') });
+    const devisHono = (data.devisHonoraires || []).find(d => d.chantierId === chantierId);
+    if (devisHono) {
+      const phases = [devisHono.phaseConception, devisHono.phaseSuivi, ...(devisHono.supplements || [])];
+      const nbHono = phases.filter(p => p && p.statut === 'a_confirmer').length;
+      if (nbHono > 0) aValider.push({ label: `${nbHono} honoraire${nbHono > 1 ? 's' : ''} d'architecte à accepter`, onPress: () => openTile('honoraires') });
+    }
     if (chantier.pvReception && !chantier.pvReception.clotureLe) aValider.push({ label: 'PV de réception à signer', onPress: () => openTile('pv') });
   }
 
