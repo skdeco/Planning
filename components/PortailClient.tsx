@@ -33,6 +33,7 @@ import { JournalPanel } from '@/components/architecte/JournalPanel';
 import { AnnuairePanel } from '@/components/architecte/AnnuairePanel';
 import { ChantierDetailDashboard, type ChantierDetailDashboardHandlers } from '@/components/ui/ChantierDetailDashboard';
 import { tileAccess, type TileKey } from '@/lib/portail/dashboardAccess';
+import { computeFluxClient } from '@/lib/portail/fluxClient';
 import { DS } from '@/constants/design';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
 import { ModalSAVDetail } from '@/components/ModalSAVDetail';
@@ -1349,6 +1350,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     onPressFinances: () => openTile('finances'),
   };
 
+  // Les 4 flux que finance le client (récap lecture seule en tête de « Mes finances »).
+  const flux = computeFluxClient(data, chantierId);
+
   // Bande « À valider » (client) : actions prioritaires en attente.
   const aValider: { label: string; onPress: () => void }[] = [];
   if (isClient && chantier) {
@@ -1459,6 +1463,17 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET CHIFFRES ─────────────── */}
             {ongletActif === 'chiffres' && (<>
+            {/* ── Récap des 4 flux financés par le client (lecture seule) ── */}
+            <View style={styles.fluxCard}>
+              <Text style={styles.fluxCardTitle}>Ce que vous financez</Text>
+              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Honoraires architecte</Text><Text style={styles.fluxVal}>{fmt(flux.honoraires)} €</Text></View>
+              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Marché entreprise</Text><Text style={styles.fluxVal}>{fmt(flux.marche)} €</Text></View>
+              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Matériaux</Text><Text style={styles.fluxVal}>{fmt(flux.materiaux)} €</Text></View>
+              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Mobilier & décoration</Text><Text style={styles.fluxVal}>{fmt(flux.mobilierDeco)} €</Text></View>
+              <View style={[styles.fluxRow, styles.fluxTotalRow]}><Text style={styles.fluxTotalLabel}>Total</Text><Text style={styles.fluxTotalVal}>{fmt(flux.total)} €</Text></View>
+              {flux.honorairesAConfirmer > 0 ? <Text style={styles.fluxNote}>+ {fmt(flux.honorairesAConfirmer)} € d&apos;honoraires à confirmer</Text> : null}
+            </View>
+
             {/* ── Avenants à valider (client) — Tier 3 B4 ── */}
             {(isClient || isAdmin) && avenantsEnAttente.length > 0 && (
               <View style={styles.card}>
@@ -2713,7 +2728,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       )}
 
       {/* ── Panneaux ouverts depuis la grille (Modals plein écran) ── */}
-      <PrescriptionsPanel visible={portalPanel === 'prescriptions'} onClose={() => setPortalPanel(null)} chantierId={chantierId} auteurId={externAp?.id || 'admin'} readonly={isClient} />
+      <PrescriptionsPanel visible={portalPanel === 'prescriptions'} onClose={() => setPortalPanel(null)} chantierId={chantierId} auteurId={externAp?.id || 'admin'} clientMode={isClient} />
       <HonorairesPanel visible={portalPanel === 'honoraires'} onClose={() => setPortalPanel(null)} chantierId={chantierId} auteurId={externAp?.id || 'admin'} />
       <BudgetPanel visible={portalPanel === 'budget'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <MetresPanel visible={portalPanel === 'metres'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
@@ -2749,6 +2764,15 @@ const styles = StyleSheet.create({
   validerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: DS.surface, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, marginBottom: 6 },
   validerRowText: { flex: 1, fontSize: 14, fontWeight: '600', color: DS.sombre },
   validerChevron: { fontSize: 20, fontWeight: '700', color: DS.bordeaux, marginLeft: 8 },
+  fluxCard: { backgroundColor: DS.surface, borderRadius: 12, borderWidth: 1, borderColor: DS.border, padding: 14, marginBottom: 12 },
+  fluxCardTitle: { fontSize: 12, fontWeight: '800', color: DS.bordeaux, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
+  fluxRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
+  fluxLabel: { fontSize: 14, color: DS.textSecondary },
+  fluxVal: { fontSize: 14, fontWeight: '700', color: DS.sombre },
+  fluxTotalRow: { borderTopWidth: 1, borderTopColor: DS.border, marginTop: 4, paddingTop: 10 },
+  fluxTotalLabel: { fontSize: 15, fontWeight: '800', color: DS.sombre, textTransform: 'uppercase', letterSpacing: 0.3 },
+  fluxTotalVal: { fontSize: 17, fontWeight: '800', color: DS.bordeaux },
+  fluxNote: { fontSize: 12, color: DS.textSecondary, fontStyle: 'italic', marginTop: 6 },
   header: {
     backgroundColor: '#2C2C2C',
     paddingTop: 20,

@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { Plus, Pencil, Trash2, Link2, Paperclip, X, FileText, Image as ImageIcon } from 'lucide-react-native';
+import { Plus, Pencil, Trash2, Link2, Paperclip, X, Check, FileText, Image as ImageIcon } from 'lucide-react-native';
 import type { Prescription, PrescriptionNature, PrescriptionStatut, PrescriptionDocument } from '@/app/types';
 import { PRESCRIPTION_STATUT_LABELS } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
@@ -29,8 +29,14 @@ export interface PrescriptionsPanelProps {
   auteurId?: string;
   /** Rendu sans Modal (intégré dans un onglet, ex. portail architecte). */
   embedded?: boolean;
-  /** Lecture seule (vue client) : masque l'ajout et l'édition. */
+  /** Lecture seule (vue client passive) : masque l'ajout et l'édition. */
   readonly?: boolean;
+  /**
+   * Mode CLIENT : peut valider/refuser ce qu'on lui propose (statut 'propose'),
+   * et proposer ses propres envies (marquées 'suggéré client'). Ne modifie pas
+   * les prescriptions des autres.
+   */
+  clientMode?: boolean;
 }
 
 function genId(prefix: string): string {
@@ -127,8 +133,12 @@ const EMPTY_FORM: FormState = {
   prixUnitaire: '', unite: '', quantite: '', auDevis: false, montantDevis: '', statut: 'a_proposer',
 };
 
-export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false, readonly = false }: PrescriptionsPanelProps) {
+export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false, readonly = false, clientMode = false }: PrescriptionsPanelProps) {
   const { data, addPrescription, updatePrescription, deletePrescription } = useApp();
+
+  // Décision client : valider / refuser une prescription proposée.
+  const decide = (p: Prescription, statut: PrescriptionStatut) =>
+    updatePrescription({ ...p, statut, decideParId: auteurId, decideAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
 
   const [filter, setFilter] = useState<string | null>(null); // null = toutes
   const [showForm, setShowForm] = useState(false);
@@ -171,7 +181,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
 
   const openNew = () => {
     setEditId(null);
-    setForm(EMPTY_FORM);
+    setForm(clientMode ? { ...EMPTY_FORM, nature: 'deco', categorie: 'Mes envies' } : EMPTY_FORM);
     setShowForm(true);
   };
 
@@ -225,7 +235,8 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
       quantite: num(form.quantite),
       auDevis: form.auDevis || undefined,
       montantDevis: form.auDevis ? num(form.montantDevis) : undefined,
-      statut: form.statut,
+      statut: clientMode ? 'a_proposer' : form.statut,
+      sourceClient: clientMode ? true : existing?.sourceClient,
       visibilite: existing?.visibilite,
       alternatives: existing?.alternatives,
       livraisonId: existing?.livraisonId,
@@ -311,9 +322,33 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                         </View>
                         <View style={styles.pillRow}>
                           <StatusPill label={PRESCRIPTION_STATUT_LABELS[p.statut]} status={statutToPill(p.statut)} />
+                          {p.sourceClient ? <Text style={styles.suggestBadge}>Suggéré client</Text> : null}
                         </View>
                       </View>
-                      {!readonly && (
+                      {clientMode ? (
+                        <View style={styles.actions}>
+                          {p.statut === 'propose' && (
+                            <>
+                              <Pressable hitSlop={8} onPress={() => decide(p, 'valide')} style={[styles.actionBtn, styles.okBtn]}>
+                                <Check size={16} color={DS.cremeFond} />
+                              </Pressable>
+                              <Pressable hitSlop={8} onPress={() => decide(p, 'refuse')} style={styles.actionBtn}>
+                                <X size={16} color={DS.marron} />
+                              </Pressable>
+                            </>
+                          )}
+                          {(p.sourceClient && p.createParId === auteurId) && (
+                            <>
+                              <Pressable hitSlop={8} onPress={() => openEdit(p)} style={styles.actionBtn}>
+                                <Pencil size={16} color={DS.bordeaux} />
+                              </Pressable>
+                              <Pressable hitSlop={8} onPress={() => confirmDelete(p)} style={styles.actionBtn}>
+                                <Trash2 size={16} color={DS.marron} />
+                              </Pressable>
+                            </>
+                          )}
+                        </View>
+                      ) : !readonly ? (
                         <View style={styles.actions}>
                           <Pressable hitSlop={8} onPress={() => openEdit(p)} style={styles.actionBtn}>
                             <Pencil size={16} color={DS.bordeaux} />
@@ -322,7 +357,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                             <Trash2 size={16} color={DS.marron} />
                           </Pressable>
                         </View>
-                      )}
+                      ) : null}
                     </View>
                   );
                 })}
@@ -429,6 +464,8 @@ const styles = StyleSheet.create({
   pillRow: { marginTop: space.sm, flexDirection: 'row' },
   actions: { flexDirection: 'row', gap: space.sm },
   actionBtn: { width: 34, height: 34, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
+  okBtn: { backgroundColor: DS.success },
+  suggestBadge: { fontSize: font.tiny, fontWeight: font.bold, color: DS.marron, backgroundColor: DS.nudeMoyen, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.xs, marginLeft: space.xs, overflow: 'hidden', textTransform: 'uppercase' },
   fab: {
     position: 'absolute', right: space.lg, bottom: space.xl,
     width: 52, height: 52, borderRadius: radius.lg, backgroundColor: DS.bordeaux,

@@ -127,7 +127,9 @@ export interface Prescription {
   livraisonId?: string;           // ref LivraisonChantier.id
 
   note?: string;
-  createParId: string;            // 'admin' ou apporteurId (architecte)
+  /** Proposé par le CLIENT (envie/suggestion) — à formaliser par le prescripteur (archi ou entreprise). */
+  sourceClient?: boolean;
+  createParId: string;            // 'admin' ou apporteurId (architecte/client)
   createdAt: string;              // ISO datetime
   updatedAt: string;              // ISO datetime
 }
