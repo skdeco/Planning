@@ -6,6 +6,7 @@ import type {
 } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { PanelHeader } from '@/components/ui/PanelHeader';
+import { assietteTravauxHT, marcheDevisUploade } from '@/lib/portail/fluxClient';
 import { DS, radius, space, font } from '@/constants/design';
 import { FilterChip } from '@/components/ui/FilterChip';
 import { StatusPill, type StatusType } from '@/components/ui/StatusPill';
@@ -73,7 +74,10 @@ export function HonorairesPanel({ visible, onClose, chantierId, auteurId = 'admi
   const [form, setForm] = useState<LigneForm>({ libelle: '', mode: 'forfait', montantForfait: '', pourcentage: '', assiette: 'travaux', optionnelle: false });
   const [envTravaux, setEnvTravaux] = useState('');
 
-  const assietteTravaux = devis?.montantTravauxHT || 0;
+  // Assiette travaux : auto d'après le marché entreprise dès qu'un devis est uploadé,
+  // sinon saisie manuelle par l'architecte.
+  const marcheFige = marcheDevisUploade(data, chantierId);
+  const assietteTravaux = assietteTravauxHT(data, chantierId, devis?.montantTravauxHT);
   const assietteDeco = assietteTravaux + prescTotal;
   const ligneMontant = (l: HonorairesLigne) =>
     l.mode === 'forfait'
@@ -221,12 +225,16 @@ export function HonorairesPanel({ visible, onClose, chantierId, auteurId = 'admi
             {/* Assiette */}
             <View style={styles.assiette}>
               <View style={styles.assRow}>
-                <Text style={styles.assLabel}>Montant travaux (saisi)</Text>
-                <TextInput
-                  style={styles.assInput} placeholder="0" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad"
-                  defaultValue={assietteTravaux ? String(assietteTravaux) : ''}
-                  onChangeText={setEnvTravaux} onEndEditing={saveTravaux} onSubmitEditing={saveTravaux} returnKeyType="done"
-                />
+                <Text style={styles.assLabel}>{marcheFige ? 'Montant travaux (marché entreprise)' : 'Montant travaux (saisi)'}</Text>
+                {marcheFige ? (
+                  <Text style={styles.assVal}>{fmt(assietteTravaux)} €</Text>
+                ) : (
+                  <TextInput
+                    style={styles.assInput} placeholder="0" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad"
+                    defaultValue={assietteTravaux ? String(assietteTravaux) : ''}
+                    onChangeText={setEnvTravaux} onEndEditing={saveTravaux} onSubmitEditing={saveTravaux} returnKeyType="done"
+                  />
+                )}
               </View>
               <View style={styles.assRow}>
                 <Text style={styles.assLabelMut}>+ Prescriptions & mobilier (auto)</Text>

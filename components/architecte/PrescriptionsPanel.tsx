@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
-import { Plus, Pencil, Trash2, Link2, Paperclip, X, Check, FileText, Image as ImageIcon } from 'lucide-react-native';
+import { Plus, Pencil, Trash2, Link2, Paperclip, X, Check, RotateCcw, FileText, Image as ImageIcon } from 'lucide-react-native';
 import type { Prescription, PrescriptionNature, PrescriptionStatut, PrescriptionDocument } from '@/app/types';
 import { PRESCRIPTION_STATUT_LABELS } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
@@ -139,6 +139,10 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
   // Décision client : valider / refuser une prescription proposée.
   const decide = (p: Prescription, statut: PrescriptionStatut) =>
     updatePrescription({ ...p, statut, decideParId: auteurId, decideAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+
+  // Devis entreprise (signé prioritaire) pour vérifier si un article y est déjà inclus.
+  const marcheDevis = (data.marchesChantier || []).find(m => m.chantierId === chantierId && (m.devisSigneUri || m.devisInitialUri));
+  const devisEntrepriseUri = marcheDevis?.devisSigneUri || marcheDevis?.devisInitialUri;
 
   const [filter, setFilter] = useState<string | null>(null); // null = toutes
   const [showForm, setShowForm] = useState(false);
@@ -337,6 +341,11 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                               </Pressable>
                             </>
                           )}
+                          {p.statut === 'valide' && (
+                            <Pressable hitSlop={8} onPress={() => decide(p, 'a_proposer')} style={styles.actionBtn} accessibilityLabel="Changer d'avis">
+                              <RotateCcw size={15} color={DS.marron} />
+                            </Pressable>
+                          )}
                           {(p.sourceClient && p.createParId === auteurId) && (
                             <>
                               <Pressable hitSlop={8} onPress={() => openEdit(p)} style={styles.actionBtn}>
@@ -395,7 +404,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Référence" placeholderTextColor={DS.textAlt} value={form.reference} onChangeText={t => set({ reference: t })} />
                 </View>
                 <View style={styles.row2}>
-                  <TextInput style={[styles.input, styles.flex1]} placeholder="Prix €" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.prixUnitaire} onChangeText={t => set({ prixUnitaire: t })} />
+                  <TextInput style={[styles.input, styles.flex1]} placeholder="Prix TTC €" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.prixUnitaire} onChangeText={t => set({ prixUnitaire: t })} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Unité" placeholderTextColor={DS.textAlt} value={form.unite} onChangeText={t => set({ unite: t })} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Qté" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.quantite} onChangeText={t => set({ quantite: t })} />
                 </View>
@@ -404,8 +413,13 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                   <View style={[styles.checkbox, form.auDevis && styles.checkboxOn]} />
                   <Text style={styles.devisToggleText}>Prévu au devis (comparer l'écart de prix)</Text>
                 </Pressable>
+                {devisEntrepriseUri ? (
+                  <Pressable style={styles.addLine} onPress={() => openDocPreview(devisEntrepriseUri)}>
+                    <FileText size={15} color={DS.bordeaux} /><Text style={styles.addLineText}>Ouvrir le devis entreprise (vérifier si déjà inclus)</Text>
+                  </Pressable>
+                ) : null}
                 {form.auDevis && (
-                  <TextInput style={styles.input} placeholder="Montant prévu au devis € HT" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.montantDevis} onChangeText={t => set({ montantDevis: t })} />
+                  <TextInput style={styles.input} placeholder="Montant prévu au devis TTC €" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.montantDevis} onChangeText={t => set({ montantDevis: t })} />
                 )}
 
                 <Text style={styles.formLabel}>Références & visuels de l'article</Text>

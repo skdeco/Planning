@@ -1465,7 +1465,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {ongletActif === 'chiffres' && (<>
             {/* ── Récap des 4 flux financés par le client (lecture seule) ── */}
             <View style={styles.fluxCard}>
-              <Text style={styles.fluxCardTitle}>Ce que vous financez</Text>
+              <Text style={styles.fluxCardTitle}>Ce que vous financez · TTC</Text>
               <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Honoraires architecte</Text><Text style={styles.fluxVal}>{fmt(flux.honoraires)} €</Text></View>
               <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Marché entreprise</Text><Text style={styles.fluxVal}>{fmt(flux.marche)} €</Text></View>
               <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Matériaux</Text><Text style={styles.fluxVal}>{fmt(flux.materiaux)} €</Text></View>
