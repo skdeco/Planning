@@ -123,6 +123,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Panneau plein écran ouvert depuis une tuile (Modal), ex. Budget/Métrés/Phases…
   const [portalPanel, setPortalPanel] = useState<TileKey | null>(null);
   const [galerieOpen, setGalerieOpen] = useState(false);
+  // Focus dans l'onglet Projet : n'afficher que la section de la tuile ouverte (Infos ou Plans).
+  const [projetFocus, setProjetFocus] = useState<'infos' | 'plans' | null>(null);
   const [showRetrocession, setShowRetrocession] = useState(false); // section "Rétrocession" repliable (Chiffres)
   const [showAvancementDetail, setShowAvancementDetail] = useState(false); // détail des lots replié par défaut
   const [savDetailId, setSavDetailId] = useState<string | null>(null);
@@ -1317,6 +1319,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     if (mode === 'hidden') return;
     if (key === 'sav') { setShowNouveauSav(true); return; }
     if (key === 'photos') { setGalerieOpen(true); return; }
+    if (key === 'fiche' || key === 'plans') { setProjetFocus(key === 'fiche' ? 'infos' : 'plans'); setOngletActif('projet'); return; }
     if (mode === 'act' && PANEL_TILES.includes(key)) { setPortalPanel(key); return; }
     const o = ONGLET_OF[key];
     if (o) { setOngletActif(o); return; }
@@ -1460,7 +1463,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </ScrollView>
           ) : (
           <>
-          <Pressable onPress={() => setOngletActif(null)} style={styles.backBar} accessibilityRole="button" accessibilityLabel="Retour à l'accueil">
+          <Pressable onPress={() => { setOngletActif(null); setProjetFocus(null); }} style={styles.backBar} accessibilityRole="button" accessibilityLabel="Retour à l'accueil">
             <Text style={styles.backBarText}>‹ Retour</Text>
           </Pressable>
           {/* Onglet Matériaux (prescriptions architecte) — plein écran, hors ScrollView */}
@@ -2051,6 +2054,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ─────────────── ONGLET PROJET ─────────────── */}
             {ongletActif === 'projet' && (<>
             {/* "Ma commission" déplacée dans l'onglet Chiffres → section repliable "Rétrocession". */}
+            {(projetFocus === 'infos' || !projetFocus) && (<>
+            {/* ── Infos utiles (lecture) ── */}
+            <View style={styles.card}>
+              <Text style={styles.sectionTitle}>Infos utiles</Text>
+              <View style={styles.infoRow}><Text style={styles.infoLabel}>Adresse</Text><Text style={styles.infoVal} numberOfLines={2}>{adresseComplete || '—'}</Text></View>
+              {chantier.dateDebut ? <View style={styles.infoRow}><Text style={styles.infoLabel}>Début</Text><Text style={styles.infoVal}>{formatDate(chantier.dateDebut)}</Text></View> : null}
+              {chantier.dateFin ? <View style={styles.infoRow}><Text style={styles.infoLabel}>Fin prévue</Text><Text style={styles.infoVal}>{formatDate(chantier.dateFin)}</Text></View> : null}
+            </View>
             {/* Accès rapide "Signaler un problème" pour l'externe (le SAV complet reste dans Fin de chantier). */}
             {!isAdmin && (
               <Pressable onPress={() => setShowNouveauSav(true)} style={{ backgroundColor: '#FBEEE9', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#E8C4B8' }}>
@@ -2085,10 +2096,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
               </View>
             )}
+            </>)}
 
             {/* Moodboard retiré (refacto V10). */}
 
-            {/* ── Plans ── */}
+            {(projetFocus === 'plans' || !projetFocus) && (
             <View style={styles.card}>
               {(() => {
                 // Versioning : ne montrer que les plans actifs (non-archivés)
@@ -2188,6 +2200,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 );
               })()}
             </View>
+            )}
             </>)}
             {/* ─────────────── /ONGLET PROJET ─────────────── */}
 
@@ -2231,7 +2244,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {/* ─────────────── /ONGLET MESSAGES ─────────────── */}
 
             {/* ─────────────── ONGLET PROJET (suite : Photos) ─────────────── */}
-            {ongletActif === 'projet' && (<>
+            {ongletActif === 'projet' && !projetFocus && (<>
             {/* ── Photos portail client ── */}
             <View style={styles.card}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -2859,6 +2872,9 @@ const styles = StyleSheet.create({
   versSave: { backgroundColor: DS.bordeaux, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7 },
   versSaveTxt: { color: DS.cremeFond, fontWeight: '700', fontSize: 12 },
   versAdd: { fontSize: 12, fontWeight: '700', color: DS.bordeaux, marginTop: 4 },
+  infoRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#F2ECE4' },
+  infoLabel: { fontSize: 13, color: '#8C8077', fontWeight: '600' },
+  infoVal: { flex: 1, fontSize: 13, color: '#2C2C2C', fontWeight: '700', textAlign: 'right' },
   header: {
     backgroundColor: '#2C2C2C',
     paddingTop: 20,

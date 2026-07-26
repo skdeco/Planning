@@ -257,11 +257,18 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
     };
     if (editId) updatePrescription(entry);
     else addPrescription(entry);
-    // Suggestion du client → notifier le prescripteur (admin/entreprise).
+    // Suggestion du client → notifier le prescripteur : l'admin/entreprise ET
+    // l'architecte du chantier s'il y en a un (chacun peut la formaliser).
     if (clientMode && !editId) {
-      const tokens = getAdminPushTokens(data.employes || [], data.adminEmployeId);
-      if (tokens.length > 0) {
-        sendPushNotification(tokens, 'Suggestion client', `${chantierNom} : nouvelle envie proposée — ${entry.designation}`).catch(() => {});
+      const chantier = data.chantiers.find(c => c.id === chantierId);
+      const archi = (data.apporteurs || []).find(a => a.id === chantier?.architecteId);
+      const tokens = [
+        ...getAdminPushTokens(data.employes || [], data.adminEmployeId),
+        ...(archi?.pushToken ? [archi.pushToken] : []),
+      ];
+      const uniq = Array.from(new Set(tokens));
+      if (uniq.length > 0) {
+        sendPushNotification(uniq, 'Suggestion client', `${chantierNom} : nouvelle envie proposée — ${entry.designation}`).catch(() => {});
       }
     }
     setShowForm(false);
