@@ -1386,7 +1386,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Bande « À valider » (client) : actions prioritaires en attente.
   const aValider: { label: string; onPress: () => void }[] = [];
   if (isClient && chantier) {
-    const nbPresc = (data.prescriptions || []).filter(p => p.chantierId === chantierId && p.statut === 'propose').length;
+    const nbPresc = (data.prescriptions || []).filter(p => p.chantierId === chantierId && (p.statut === 'propose' || p.statut === 'a_proposer')).length;
     if (nbPresc > 0) aValider.push({ label: `${nbPresc} article${nbPresc > 1 ? 's' : ''} à valider dans ma sélection`, onPress: () => openTile('prescriptions') });
     const devisHono = (data.devisHonoraires || []).find(d => d.chantierId === chantierId);
     if (devisHono) {

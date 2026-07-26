@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, Modal, Alert, ActivityIndicator, Image, KeyboardAvoidingView, Platform, StyleSheet } from 'react-native';
 import { Plus, Pencil, Trash2, Link2, Paperclip, X, Check, RotateCcw, FileText, Image as ImageIcon } from 'lucide-react-native';
 import type { Prescription, PrescriptionNature, PrescriptionStatut, PrescriptionDocument } from '@/app/types';
 import { PRESCRIPTION_STATUT_LABELS } from '@/app/types';
@@ -150,6 +150,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
   const devisEntrepriseUri = marcheDevis?.devisSigneUri || marcheDevis?.devisInitialUri;
 
   const [filter, setFilter] = useState<string | null>(null); // null = toutes
+  const [detailId, setDetailId] = useState<string | null>(null); // fiche détaillée (client)
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -329,7 +330,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                 {list.map(p => {
                   const sousTotal = (p.prixUnitaire || 0) * (p.quantite || 0);
                   return (
-                    <View key={p.id} style={styles.card}>
+                    <Pressable key={p.id} style={styles.card} onPress={clientMode ? () => setDetailId(p.id) : undefined}>
                       <View style={styles.cardBody}>
                         <Text style={styles.designation} numberOfLines={1}>{p.designation}</Text>
                         {(p.marque || p.reference) ? (
@@ -352,31 +353,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                       </View>
                       {clientMode ? (
                         <View style={styles.actions}>
-                          {p.statut === 'propose' && (
-                            <>
-                              <Pressable hitSlop={8} onPress={() => decide(p, 'valide')} style={[styles.actionBtn, styles.okBtn]}>
-                                <Check size={16} color={DS.cremeFond} />
-                              </Pressable>
-                              <Pressable hitSlop={8} onPress={() => decide(p, 'refuse')} style={styles.actionBtn}>
-                                <X size={16} color={DS.marron} />
-                              </Pressable>
-                            </>
-                          )}
-                          {p.statut === 'valide' && (
-                            <Pressable hitSlop={8} onPress={() => decide(p, 'a_proposer')} style={styles.actionBtn} accessibilityLabel="Changer d'avis">
-                              <RotateCcw size={15} color={DS.marron} />
-                            </Pressable>
-                          )}
-                          {(p.sourceClient && p.createParId === auteurId) && (
-                            <>
-                              <Pressable hitSlop={8} onPress={() => openEdit(p)} style={styles.actionBtn}>
-                                <Pencil size={16} color={DS.bordeaux} />
-                              </Pressable>
-                              <Pressable hitSlop={8} onPress={() => confirmDelete(p)} style={styles.actionBtn}>
-                                <Trash2 size={16} color={DS.marron} />
-                              </Pressable>
-                            </>
-                          )}
+                          <Text style={styles.cardChevron}>›</Text>
                         </View>
                       ) : !readonly ? (
                         <View style={styles.actions}>
@@ -388,7 +365,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                           </Pressable>
                         </View>
                       ) : null}
-                    </View>
+                    </Pressable>
                   );
                 })}
               </View>
@@ -402,6 +379,113 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
             <Plus size={22} color={DS.cremeFond} />
           </Pressable>
         )}
+
+        {/* Fiche détaillée (client) : photo, specs, liens, documents, actions libellées */}
+        {detailId && (() => {
+          const p = items.find(i => i.id === detailId);
+          if (!p) return null;
+          const st = (p.prixUnitaire || 0) * (p.quantite || 0);
+          const img = p.imageUri || p.documents?.find(d => d.type === 'image')?.uri;
+          const liens = Array.from(new Set([...(p.liens || []), ...(p.lien ? [p.lien] : [])])).filter(Boolean);
+          const ftLiens = p.ficheTechnique?.liens || [];
+          const ftDocs = p.ficheTechnique?.documents || [];
+          const enAttente = p.statut === 'a_proposer' || p.statut === 'propose';
+          return (
+            <View style={styles.formOverlay}>
+              <Pressable style={StyleSheet.absoluteFill} onPress={() => setDetailId(null)} />
+              <View style={styles.formSheet}>
+                <ScrollView showsVerticalScrollIndicator={false}>
+                  <View style={styles.detailHead}>
+                    <Text style={styles.detailTitle}>{p.designation}</Text>
+                    <Pressable hitSlop={8} onPress={() => setDetailId(null)} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
+                  </View>
+                  {img ? <Image source={{ uri: img }} style={styles.detailImg} resizeMode="cover" /> : null}
+                  {(p.marque || p.reference || p.coloris) ? (
+                    <Text style={styles.detailSub}>{[p.marque, p.reference, p.coloris].filter(Boolean).join(' · ')}</Text>
+                  ) : null}
+                  {p.prixUnitaire != null ? (
+                    <Text style={styles.detailPrix}>
+                      {fmt(p.prixUnitaire)} € HT{p.unite ? ` /${p.unite}` : ''}{p.quantite != null ? ` × ${p.quantite}` : ''}{st ? ` = ${fmt(st)} € HT` : ''}
+                    </Text>
+                  ) : null}
+                  <View style={styles.detailPillRow}>
+                    <StatusPill label={PRESCRIPTION_STATUT_LABELS[p.statut]} status={statutToPill(p.statut)} />
+                    {p.sourceClient ? <Text style={styles.suggestBadge}>Suggéré client</Text> : null}
+                  </View>
+                  {p.note ? <Text style={styles.detailNote}>{p.note}</Text> : null}
+
+                  {liens.length > 0 && (<>
+                    <Text style={styles.formLabel}>Liens</Text>
+                    {liens.map((l, i) => (
+                      <Pressable key={`l${i}`} style={styles.detailLink} onPress={() => openDocPreview(l)}>
+                        <Link2 size={15} color={DS.bordeaux} /><Text style={styles.detailLinkText} numberOfLines={1}>{l}</Text>
+                      </Pressable>
+                    ))}
+                  </>)}
+                  {(p.documents?.length || 0) > 0 && (<>
+                    <Text style={styles.formLabel}>Documents</Text>
+                    {p.documents!.map(d => (
+                      <Pressable key={d.id} style={styles.detailLink} onPress={() => openDocPreview(d.uri)}>
+                        {d.type === 'pdf' ? <FileText size={15} color={DS.bordeaux} /> : <ImageIcon size={15} color={DS.bordeaux} />}<Text style={styles.detailLinkText} numberOfLines={1}>{d.nom}</Text>
+                      </Pressable>
+                    ))}
+                  </>)}
+                  {(ftLiens.length > 0 || ftDocs.length > 0) && (<>
+                    <Text style={styles.formLabel}>Fiche technique</Text>
+                    {ftLiens.map((l, i) => (
+                      <Pressable key={`fl${i}`} style={styles.detailLink} onPress={() => openDocPreview(l)}>
+                        <Link2 size={15} color={DS.bordeaux} /><Text style={styles.detailLinkText} numberOfLines={1}>{l}</Text>
+                      </Pressable>
+                    ))}
+                    {ftDocs.map(d => (
+                      <Pressable key={d.id} style={styles.detailLink} onPress={() => openDocPreview(d.uri)}>
+                        <FileText size={15} color={DS.bordeaux} /><Text style={styles.detailLinkText} numberOfLines={1}>{d.nom}</Text>
+                      </Pressable>
+                    ))}
+                  </>)}
+
+                  {/* Actions client */}
+                  {clientMode && enAttente && (
+                    <View style={styles.detailActions}>
+                      <Pressable style={[styles.detailBtn, styles.detailBtnOk]} onPress={() => decide(p, 'valide')}>
+                        <Check size={17} color={DS.cremeFond} /><Text style={styles.detailBtnOkText}>Valider ce choix</Text>
+                      </Pressable>
+                      <Pressable style={styles.detailBtnGhost} onPress={() => decide(p, 'refuse')}>
+                        <Text style={styles.detailBtnGhostText}>Refuser</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  {clientMode && p.statut === 'valide' && (
+                    <View style={styles.detailActions}>
+                      <Text style={styles.detailAccepted}>✓ Vous avez validé ce choix</Text>
+                      <Pressable style={styles.detailBtnGhost} onPress={() => decide(p, 'propose')}>
+                        <Text style={styles.detailBtnGhostText}>Changer d'avis — en choisir un autre</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  {clientMode && p.statut === 'refuse' && (
+                    <View style={styles.detailActions}>
+                      <Text style={styles.detailRefused}>Vous avez refusé ce choix</Text>
+                      <Pressable style={styles.detailBtnGhost} onPress={() => decide(p, 'propose')}>
+                        <Text style={styles.detailBtnGhostText}>Revenir sur mon refus</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  {(p.sourceClient && p.createParId === auteurId) && (
+                    <View style={styles.detailActions}>
+                      <Pressable style={styles.detailBtnGhost} onPress={() => { setDetailId(null); openEdit(p); }}>
+                        <Text style={styles.detailBtnGhostText}>Modifier ma suggestion</Text>
+                      </Pressable>
+                      <Pressable style={styles.detailBtnGhost} onPress={() => { setDetailId(null); confirmDelete(p); }}>
+                        <Text style={styles.detailBtnGhostText}>Supprimer</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                </ScrollView>
+              </View>
+            </View>
+          );
+        })()}
 
         {/* Formulaire ajout/édition — overlay inline (pas de Modal imbriquée) */}
         {showForm && (
@@ -507,6 +591,24 @@ const styles = StyleSheet.create({
   actionBtn: { width: 34, height: 34, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
   okBtn: { backgroundColor: DS.success },
   suggestBadge: { fontSize: font.tiny, fontWeight: font.bold, color: DS.marron, backgroundColor: DS.nudeMoyen, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.xs, marginLeft: space.xs, overflow: 'hidden', textTransform: 'uppercase' },
+  cardChevron: { fontSize: 24, fontWeight: '700', color: DS.textAlt },
+  detailHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, marginBottom: space.sm },
+  detailTitle: { flex: 1, fontSize: font.title, fontWeight: font.heavy, color: DS.sombre },
+  detailImg: { width: '100%', height: 200, borderRadius: radius.md, backgroundColor: DS.cremeNude, marginBottom: space.sm },
+  detailSub: { fontSize: font.body, color: DS.textSecondary, marginBottom: space.xs },
+  detailPrix: { fontSize: font.md, fontWeight: font.bold, color: DS.marron, marginBottom: space.sm },
+  detailPillRow: { flexDirection: 'row', alignItems: 'center', marginBottom: space.sm },
+  detailNote: { fontSize: font.compact, color: DS.textSecondary, fontStyle: 'italic', marginBottom: space.sm },
+  detailLink: { flexDirection: 'row', alignItems: 'center', gap: space.sm, paddingVertical: space.sm, borderBottomWidth: 1, borderBottomColor: DS.border },
+  detailLinkText: { flex: 1, fontSize: font.compact, color: DS.bordeaux, fontWeight: font.semibold },
+  detailActions: { marginTop: space.lg, gap: space.sm },
+  detailBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: space.sm, borderRadius: radius.xl, paddingVertical: space.md },
+  detailBtnOk: { backgroundColor: DS.success },
+  detailBtnOkText: { color: DS.cremeFond, fontSize: font.md, fontWeight: font.bold },
+  detailBtnGhost: { borderRadius: radius.xl, paddingVertical: space.md, alignItems: 'center', backgroundColor: DS.cremeNude },
+  detailBtnGhostText: { color: DS.marron, fontSize: font.body, fontWeight: font.bold },
+  detailAccepted: { fontSize: font.body, fontWeight: font.bold, color: DS.success, textAlign: 'center' },
+  detailRefused: { fontSize: font.body, fontWeight: font.bold, color: DS.marron, textAlign: 'center' },
   fab: {
     position: 'absolute', right: space.lg, bottom: space.xl,
     width: 52, height: 52, borderRadius: radius.lg, backgroundColor: DS.bordeaux,
