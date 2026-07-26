@@ -104,6 +104,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Le client ne voit le planning que si l'admin l'a activé pour ce chantier
   const chantierForPlanning = data.chantiers.find(c => c.id === chantierId);
   const peutVoirPlanning = isAdmin || !isClient || chantierForPlanning?.afficherPlanningAuClient === true;
+  // Gestion des plans (upload + partage) : admin (entreprise) et architecte.
+  const canManagePlans = isAdmin || externAp?.type === 'architecte';
 
   const chantier = chantierForPlanning;
   const apporteurs = data.apporteurs || [];
@@ -1375,6 +1377,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   ];
   const sitTotal = situationClient.reduce((s, r) => s + r.total, 0);
   const sitRegle = situationClient.reduce((s, r) => s + r.regle, 0);
+  const togglePlanPartage = (planId: string) => {
+    if (!chantier?.fiche) return;
+    const plans = (chantier.fiche.plans || []).map(pl => (pl.id === planId ? { ...pl, partageExterne: pl.partageExterne === false ? true : false } : pl));
+    updateChantier({ ...chantier, fiche: { ...chantier.fiche, plans } });
+  };
   const saveVersement = () => {
     if (!versementForm) return;
     const montant = parseFloat(versementForm.montant.replace(',', '.'));
@@ -1386,7 +1393,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Bande « À valider » (client) : actions prioritaires en attente.
   const aValider: { label: string; onPress: () => void }[] = [];
   if (isClient && chantier) {
-    const nbPresc = (data.prescriptions || []).filter(p => p.chantierId === chantierId && (p.statut === 'propose' || p.statut === 'a_proposer')).length;
+    const nbPresc = (data.prescriptions || []).filter(p => p.chantierId === chantierId && p.statut === 'propose').length;
     if (nbPresc > 0) aValider.push({ label: `${nbPresc} article${nbPresc > 1 ? 's' : ''} à valider dans ma sélection`, onPress: () => openTile('prescriptions') });
     const devisHono = (data.devisHonoraires || []).find(d => d.chantierId === chantierId);
     if (devisHono) {
@@ -2104,7 +2111,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             <View style={styles.card}>
               {(() => {
                 // Versioning : ne montrer que les plans actifs (non-archivés)
-                const activePlans = (chantier.fiche?.plans || []).filter(p => !p.archivedAt);
+                // Les gestionnaires (admin/archi) voient tout ; les autres (client) uniquement les plans partagés.
+                const activePlans = (chantier.fiche?.plans || []).filter(p => !p.archivedAt && (canManagePlans || p.partageExterne !== false));
                 return (
                   <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
@@ -2133,6 +2141,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           Ajouté le {new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
                         </Text>
                       </View>
+                      {canManagePlans && (
+                        <Pressable
+                          onPress={() => togglePlanPartage(plan.id)}
+                          style={[styles.planShare, plan.partageExterne === false && styles.planSharePrive]}
+                        >
+                          <Text style={[styles.planShareText, plan.partageExterne === false && styles.planSharePriveText]}>
+                            {plan.partageExterne === false ? 'Privé' : 'Partagé'}
+                          </Text>
+                        </Pressable>
+                      )}
                       {isAdmin && (
                         <Pressable
                           onPress={() => {
@@ -3760,6 +3778,10 @@ const styles = StyleSheet.create({
     color: '#C9A96E',
     marginLeft: 8,
   },
+  planShare: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#E7F1EA', marginRight: 4 },
+  planShareText: { fontSize: 11, fontWeight: '700', color: '#2E7D5B' },
+  planSharePrive: { backgroundColor: '#F1E8DC' },
+  planSharePriveText: { color: '#8C6D2F' },
   planRow: {
     flexDirection: 'row',
     alignItems: 'center',

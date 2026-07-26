@@ -141,9 +141,12 @@ const TVA_OPTIONS = ['20', '10', '5.5'];
 export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false, readonly = false, clientMode = false }: PrescriptionsPanelProps) {
   const { data, addPrescription, updatePrescription, deletePrescription } = useApp();
 
-  // Décision client : valider / refuser une prescription proposée.
+  // Décision client : valider / refuser une prescription proposée (trace le décideur).
   const decide = (p: Prescription, statut: PrescriptionStatut) =>
     updatePrescription({ ...p, statut, decideParId: auteurId, decideAt: new Date().toISOString(), updatedAt: new Date().toISOString() });
+  // Changement de statut par le prescripteur (proposer au client / repasser en brouillon).
+  const setStatut = (p: Prescription, statut: PrescriptionStatut) =>
+    updatePrescription({ ...p, statut, updatedAt: new Date().toISOString() });
 
   // Devis entreprise (signé prioritaire) pour vérifier si un article y est déjà inclus.
   const marcheDevis = (data.marchesChantier || []).find(m => m.chantierId === chantierId && (m.devisSigneUri || m.devisInitialUri));
@@ -161,8 +164,12 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
   );
 
   const items = useMemo(
-    () => (data.prescriptions || []).filter(p => p.chantierId === chantierId),
-    [data.prescriptions, chantierId],
+    () => (data.prescriptions || []).filter(p =>
+      p.chantierId === chantierId
+      // Client : ne voit pas les brouillons « à proposer » de l'archi (sauf ses propres suggestions).
+      && (!clientMode || p.statut !== 'a_proposer' || p.sourceClient),
+    ),
+    [data.prescriptions, chantierId, clientMode],
   );
 
   const categories = useMemo(
@@ -330,7 +337,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                 {list.map(p => {
                   const sousTotal = (p.prixUnitaire || 0) * (p.quantite || 0);
                   return (
-                    <Pressable key={p.id} style={styles.card} onPress={clientMode ? () => setDetailId(p.id) : undefined}>
+                    <Pressable key={p.id} style={styles.card} onPress={() => setDetailId(p.id)}>
                       <View style={styles.cardBody}>
                         <Text style={styles.designation} numberOfLines={1}>{p.designation}</Text>
                         {(p.marque || p.reference) ? (
@@ -351,20 +358,10 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                           {p.sourceClient ? <Text style={styles.suggestBadge}>Suggéré client</Text> : null}
                         </View>
                       </View>
-                      {clientMode ? (
-                        <View style={styles.actions}>
-                          <Text style={styles.cardChevron}>›</Text>
-                        </View>
-                      ) : !readonly ? (
-                        <View style={styles.actions}>
-                          <Pressable hitSlop={8} onPress={() => openEdit(p)} style={styles.actionBtn}>
-                            <Pencil size={16} color={DS.bordeaux} />
-                          </Pressable>
-                          <Pressable hitSlop={8} onPress={() => confirmDelete(p)} style={styles.actionBtn}>
-                            <Trash2 size={16} color={DS.marron} />
-                          </Pressable>
-                        </View>
-                      ) : null}
+                      <View style={styles.actions}>
+                        {p.statut === 'a_proposer' && !p.sourceClient ? <Text style={styles.draftBadge}>Brouillon</Text> : null}
+                        <Text style={styles.cardChevron}>›</Text>
+                      </View>
                     </Pressable>
                   );
                 })}
@@ -389,7 +386,6 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
           const liens = Array.from(new Set([...(p.liens || []), ...(p.lien ? [p.lien] : [])])).filter(Boolean);
           const ftLiens = p.ficheTechnique?.liens || [];
           const ftDocs = p.ficheTechnique?.documents || [];
-          const enAttente = p.statut === 'a_proposer' || p.statut === 'propose';
           return (
             <View style={styles.formOverlay}>
               <Pressable style={StyleSheet.absoluteFill} onPress={() => setDetailId(null)} />
@@ -444,8 +440,8 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                     ))}
                   </>)}
 
-                  {/* Actions client */}
-                  {clientMode && enAttente && (
+                  {/* Actions CLIENT (uniquement sur ce qui lui a été proposé) */}
+                  {clientMode && p.statut === 'propose' && (
                     <View style={styles.detailActions}>
                       <Pressable style={[styles.detailBtn, styles.detailBtnOk]} onPress={() => decide(p, 'valide')}>
                         <Check size={17} color={DS.cremeFond} /><Text style={styles.detailBtnOkText}>Valider ce choix</Text>
@@ -471,10 +467,33 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                       </Pressable>
                     </View>
                   )}
-                  {(p.sourceClient && p.createParId === auteurId) && (
+                  {/* Sa propre suggestion (client) */}
+                  {clientMode && p.sourceClient && p.createParId === auteurId && (
                     <View style={styles.detailActions}>
                       <Pressable style={styles.detailBtnGhost} onPress={() => { setDetailId(null); openEdit(p); }}>
                         <Text style={styles.detailBtnGhostText}>Modifier ma suggestion</Text>
+                      </Pressable>
+                      <Pressable style={styles.detailBtnGhost} onPress={() => { setDetailId(null); confirmDelete(p); }}>
+                        <Text style={styles.detailBtnGhostText}>Supprimer</Text>
+                      </Pressable>
+                    </View>
+                  )}
+
+                  {/* Actions PRESCRIPTEUR (architecte / entreprise) */}
+                  {!clientMode && (
+                    <View style={styles.detailActions}>
+                      {p.statut === 'a_proposer' && !p.sourceClient && (
+                        <Pressable style={[styles.detailBtn, styles.detailBtnOk]} onPress={() => setStatut(p, 'propose')}>
+                          <Check size={17} color={DS.cremeFond} /><Text style={styles.detailBtnOkText}>Proposer au client</Text>
+                        </Pressable>
+                      )}
+                      {p.statut === 'propose' && (
+                        <Pressable style={styles.detailBtnGhost} onPress={() => setStatut(p, 'a_proposer')}>
+                          <Text style={styles.detailBtnGhostText}>Repasser en brouillon (retirer au client)</Text>
+                        </Pressable>
+                      )}
+                      <Pressable style={styles.detailBtnGhost} onPress={() => { setDetailId(null); openEdit(p); }}>
+                        <Text style={styles.detailBtnGhostText}>Modifier</Text>
                       </Pressable>
                       <Pressable style={styles.detailBtnGhost} onPress={() => { setDetailId(null); confirmDelete(p); }}>
                         <Text style={styles.detailBtnGhostText}>Supprimer</Text>
@@ -592,6 +611,7 @@ const styles = StyleSheet.create({
   okBtn: { backgroundColor: DS.success },
   suggestBadge: { fontSize: font.tiny, fontWeight: font.bold, color: DS.marron, backgroundColor: DS.nudeMoyen, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.xs, marginLeft: space.xs, overflow: 'hidden', textTransform: 'uppercase' },
   cardChevron: { fontSize: 24, fontWeight: '700', color: DS.textAlt },
+  draftBadge: { fontSize: font.tiny, fontWeight: font.bold, color: DS.textSecondary, backgroundColor: DS.cremeNude, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.xs, overflow: 'hidden', textTransform: 'uppercase' },
   detailHead: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm, marginBottom: space.sm },
   detailTitle: { flex: 1, fontSize: font.title, fontWeight: font.heavy, color: DS.sombre },
   detailImg: { width: '100%', height: 200, borderRadius: radius.md, backgroundColor: DS.cremeNude, marginBottom: space.sm },

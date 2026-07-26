@@ -242,8 +242,10 @@ export interface PlanChantier {
   id: string;
   nom: string;              // nom du plan (ex: "Plan RDC")
   fichier: string;          // base64 URI du PDF
-  visiblePar: 'tous' | 'employes' | 'soustraitants' | 'admin' | 'specifique'; // qui peut voir
+  visiblePar: 'tous' | 'employes' | 'soustraitants' | 'admin' | 'specifique'; // qui peut voir (interne)
   visibleIds?: string[];    // IDs spécifiques (employés ou ST) si visiblePar === 'specifique'
+  /** Partagé au portail externe (client/architecte). false = plan privé interne. Défaut (absent) = partagé (rétrocompat). */
+  partageExterne?: boolean;
   uploadedAt: string;
   // Versioning automatique : un upload avec même nom normalisé archive le précédent
   archivedAt?: string;      // ISO datetime — si présent → version remplacée, masquée par défaut
