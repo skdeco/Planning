@@ -8,6 +8,8 @@ import { PanelHeader } from '@/components/ui/PanelHeader';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { sendPushNotification } from '@/hooks/useNotifications';
+import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { DS, radius, space, font } from '@/constants/design';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { FilterChip } from '@/components/ui/FilterChip';
@@ -122,6 +124,7 @@ type FormState = {
   prixUnitaire: string;
   unite: string;
   quantite: string;
+  tauxTVA: string;
   auDevis: boolean;
   montantDevis: string;
   statut: PrescriptionStatut;
@@ -130,8 +133,10 @@ type FormState = {
 const EMPTY_FORM: FormState = {
   nature: 'materiau', categorie: '', designation: '', marque: '', reference: '',
   liens: [], documents: [], ftLiens: [], ftDocuments: [],
-  prixUnitaire: '', unite: '', quantite: '', auDevis: false, montantDevis: '', statut: 'a_proposer',
+  prixUnitaire: '', unite: '', quantite: '', tauxTVA: '20', auDevis: false, montantDevis: '', statut: 'a_proposer',
 };
+
+const TVA_OPTIONS = ['20', '10', '5.5'];
 
 export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'admin', embedded = false, readonly = false, clientMode = false }: PrescriptionsPanelProps) {
   const { data, addPrescription, updatePrescription, deletePrescription } = useApp();
@@ -206,6 +211,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
       prixUnitaire: p.prixUnitaire != null ? String(p.prixUnitaire) : '',
       unite: p.unite || '',
       quantite: p.quantite != null ? String(p.quantite) : '',
+      tauxTVA: p.tauxTVA != null ? String(p.tauxTVA) : '20',
       auDevis: !!p.auDevis,
       montantDevis: p.montantDevis != null ? String(p.montantDevis) : '',
       statut: p.statut,
@@ -237,6 +243,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
       prixUnitaire: num(form.prixUnitaire),
       unite: form.unite.trim() || undefined,
       quantite: num(form.quantite),
+      tauxTVA: num(form.tauxTVA),
       auDevis: form.auDevis || undefined,
       montantDevis: form.auDevis ? num(form.montantDevis) : undefined,
       statut: clientMode ? 'a_proposer' : form.statut,
@@ -250,6 +257,13 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
     };
     if (editId) updatePrescription(entry);
     else addPrescription(entry);
+    // Suggestion du client → notifier le prescripteur (admin/entreprise).
+    if (clientMode && !editId) {
+      const tokens = getAdminPushTokens(data.employes || [], data.adminEmployeId);
+      if (tokens.length > 0) {
+        sendPushNotification(tokens, 'Suggestion client', `${chantierNom} : nouvelle envie proposée — ${entry.designation}`).catch(() => {});
+      }
+    }
     setShowForm(false);
   };
 
@@ -404,9 +418,15 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Référence" placeholderTextColor={DS.textAlt} value={form.reference} onChangeText={t => set({ reference: t })} />
                 </View>
                 <View style={styles.row2}>
-                  <TextInput style={[styles.input, styles.flex1]} placeholder="Prix TTC €" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.prixUnitaire} onChangeText={t => set({ prixUnitaire: t })} />
+                  <TextInput style={[styles.input, styles.flex1]} placeholder="Prix HT €" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.prixUnitaire} onChangeText={t => set({ prixUnitaire: t })} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Unité" placeholderTextColor={DS.textAlt} value={form.unite} onChangeText={t => set({ unite: t })} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Qté" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.quantite} onChangeText={t => set({ quantite: t })} />
+                </View>
+                <View style={styles.segRow}>
+                  <Text style={styles.tvaLabel}>TVA %</Text>
+                  {TVA_OPTIONS.map(tx => (
+                    <FilterChip key={tx} label={`${tx.replace('.', ',')} %`} active={form.tauxTVA === tx} onPress={() => set({ tauxTVA: tx })} activeColor={DS.bordeaux} />
+                  ))}
                 </View>
 
                 <Pressable style={styles.devisToggle} onPress={() => set({ auDevis: !form.auDevis })}>
@@ -419,7 +439,7 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
                   </Pressable>
                 ) : null}
                 {form.auDevis && (
-                  <TextInput style={styles.input} placeholder="Montant prévu au devis TTC €" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.montantDevis} onChangeText={t => set({ montantDevis: t })} />
+                  <TextInput style={styles.input} placeholder="Montant prévu au devis € HT" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.montantDevis} onChangeText={t => set({ montantDevis: t })} />
                 )}
 
                 <Text style={styles.formLabel}>Références & visuels de l'article</Text>
@@ -489,7 +509,8 @@ const styles = StyleSheet.create({
   formOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(42,38,34,0.42)', justifyContent: 'flex-end' },
   formSheet: { backgroundColor: DS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: space.xl, maxHeight: '88%' },
   formTitle: { fontSize: font.title, fontWeight: font.heavy, color: DS.sombre, marginBottom: space.md, textTransform: 'uppercase' },
-  segRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.md },
+  segRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.md, alignItems: 'center' },
+  tvaLabel: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, marginRight: space.xs },
   segWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: space.sm, marginBottom: space.lg },
   input: {
     backgroundColor: DS.surfaceHover, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md,

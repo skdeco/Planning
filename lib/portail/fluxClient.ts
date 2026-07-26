@@ -23,7 +23,8 @@ export interface FluxClient {
   total: number;                  // somme des flux engagés (hors « à confirmer »)
 }
 
-const montantPresc = (p: Prescription) => (p.prixUnitaire || 0) * (p.quantite || 0);
+const montantPrescHT = (p: Prescription) => (p.prixUnitaire || 0) * (p.quantite || 0);
+const montantPrescTTC = (p: Prescription) => montantPrescHT(p) * (1 + (p.tauxTVA ?? 20) / 100);
 
 /** Total HT du marché entreprise (marchés + suppléments) — sert d'assiette travaux. */
 export function marcheTotalHT(data: AppData, chantierId: string): number {
@@ -50,8 +51,8 @@ export function assietteTravauxHT(data: AppData, chantierId: string, montantTrav
 export function computeFluxClient(data: AppData, chantierId: string): FluxClient {
   const prescriptions = (data.prescriptions || []).filter(p => p.chantierId === chantierId);
   const acceptees = prescriptions.filter(p => p.statut === 'valide');
-  const materiaux = acceptees.filter(p => p.nature === 'materiau' && !p.auDevis).reduce((s, p) => s + montantPresc(p), 0);
-  const mobilierDeco = acceptees.filter(p => p.nature === 'deco' && !p.auDevis).reduce((s, p) => s + montantPresc(p), 0);
+  const materiaux = acceptees.filter(p => p.nature === 'materiau' && !p.auDevis).reduce((s, p) => s + montantPrescTTC(p), 0);
+  const mobilierDeco = acceptees.filter(p => p.nature === 'deco' && !p.auDevis).reduce((s, p) => s + montantPrescTTC(p), 0);
 
   const marche =
     (data.marchesChantier || []).filter(m => m.chantierId === chantierId).reduce((s, m) => s + (m.montantTTC || 0), 0) +
@@ -63,7 +64,7 @@ export function computeFluxClient(data: AppData, chantierId: string): FluxClient
   let honorairesAConfirmer = 0;
   if (devis) {
     const assietteTravaux = assietteTravauxHT(data, chantierId, devis.montantTravauxHT);
-    const prescTotal = prescriptions.reduce((s, p) => s + montantPresc(p), 0);
+    const prescTotal = prescriptions.reduce((s, p) => s + montantPrescHT(p), 0);
     const assietteDeco = assietteTravaux + prescTotal;
     const ttc = 1 + (devis.tauxTVA ?? 20) / 100;
     const ligneMontant = (l: HonorairesLigne) =>

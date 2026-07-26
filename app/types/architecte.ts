@@ -110,6 +110,8 @@ export interface Prescription {
   unite?: string;                 // 'm²' | 'ml' | 'u' | 'forfait'… (libre)
   quantite?: number;
 
+  tauxTVA?: number;               // % TVA de l'article (défaut 20) — prixUnitaire est HT, TTC = HT × (1 + taux/100)
+
   // ─── Comparaison au devis (budget) ───
   auDevis?: boolean;              // true = article prévu au devis (compare l'écart) ; sinon = hors devis (simple ajout au budget)
   montantDevis?: number;          // € HT prévu au devis pour cet article (si auDevis)

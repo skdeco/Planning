@@ -126,7 +126,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const [savDetailId, setSavDetailId] = useState<string | null>(null);
   const [showNouveauSav, setShowNouveauSav] = useState(false);
   // Saisie d'un versement client (matériaux / mobilier-déco) — admin/entreprise.
-  const [versementForm, setVersementForm] = useState<{ flux: 'materiaux' | 'deco'; montant: string; date: string } | null>(null);
+  const [versementForm, setVersementForm] = useState<{ flux: 'honoraires' | 'materiaux' | 'deco'; montant: string; date: string } | null>(null);
   // Revert vers l'accueil si l'onglet ouvert n'est plus visible (changement permissions).
   useEffect(() => {
     if (!chantier || ongletActif === null) return;
@@ -1355,10 +1355,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Les 4 flux que finance le client (récap lecture seule en tête de « Mes finances »).
   const flux = computeFluxClient(data, chantierId);
   // Situation unifiée : Total · Réglé · Reste par flux (TTC).
-  const versementsFlux = (f: 'materiaux' | 'deco') => (data.versementsClient || []).filter(v => v.chantierId === chantierId && v.flux === f);
+  const versementsFlux = (f: 'honoraires' | 'materiaux' | 'deco') => (data.versementsClient || []).filter(v => v.chantierId === chantierId && v.flux === f);
   const devisH = (data.devisHonoraires || []).find(d => d.chantierId === chantierId);
   const ttcH = 1 + (devisH?.tauxTVA ?? 20) / 100;
-  const regleHonoraires = (devisH?.appels || []).filter(a => a.statut === 'regle').reduce((s, a) => s + (a.montantHT || 0), 0) * ttcH;
+  const regleHonoraires =
+    (devisH?.appels || []).filter(a => a.statut === 'regle').reduce((s, a) => s + (a.montantHT || 0), 0) * ttcH +
+    versementsFlux('honoraires').reduce((s, v) => s + v.montant, 0);
   const situationClient: { key: 'honoraires' | 'marche' | 'materiaux' | 'deco'; label: string; total: number; regle: number }[] = [
     { key: 'honoraires', label: 'Honoraires architecte', total: flux.honoraires, regle: regleHonoraires },
     { key: 'marche', label: 'Marché entreprise', total: flux.marche, regle: dejaPayeTotal },
@@ -1496,7 +1498,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               </View>
               {situationClient.map(s => {
                 const reste = Math.max(0, s.total - s.regle);
-                const canRecord = !isClient && (s.key === 'materiaux' || s.key === 'deco');
+                const canRecord = !isClient && s.key !== 'marche';
                 return (
                   <View key={s.key}>
                     <View style={styles.sitRow}>
@@ -1507,7 +1509,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </View>
                     {canRecord && (
                       <View style={styles.versWrap}>
-                        {versementsFlux(s.key as 'materiaux' | 'deco').map(v => (
+                        {versementsFlux(s.key as 'honoraires' | 'materiaux' | 'deco').map(v => (
                           <View key={v.id} style={styles.versRow}>
                             <Text style={styles.versTxt}>{v.date.split('-').reverse().join('/')} · {fmt(v.montant)} €</Text>
                             <Pressable hitSlop={8} onPress={() => deleteVersementClient(v.id)}><Text style={styles.versDel}>✕</Text></Pressable>
@@ -1521,7 +1523,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             <Pressable hitSlop={8} onPress={() => setVersementForm(null)}><Text style={styles.versDel}>✕</Text></Pressable>
                           </View>
                         ) : (
-                          <Pressable onPress={() => setVersementForm({ flux: s.key as 'materiaux' | 'deco', montant: '', date: todayYMD() })}><Text style={styles.versAdd}>+ versement</Text></Pressable>
+                          <Pressable onPress={() => setVersementForm({ flux: s.key as 'honoraires' | 'materiaux' | 'deco', montant: '', date: todayYMD() })}><Text style={styles.versAdd}>+ versement</Text></Pressable>
                         )}
                       </View>
                     )}

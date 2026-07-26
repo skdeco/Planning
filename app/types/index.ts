@@ -633,7 +633,7 @@ export type MarcheST = DevisST;
 export interface VersementClient {
   id: string;
   chantierId: string;
-  flux: 'materiaux' | 'deco';
+  flux: 'honoraires' | 'materiaux' | 'deco';
   montant: number;        // TTC
   date: string;           // YYYY-MM-DD
   note?: string;
