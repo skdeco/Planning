@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import { PortailClient } from '@/components/PortailClient';
+import { CreerChantierArchi } from '@/components/externe/CreerChantierArchi';
 import { STATUT_LABELS, STATUT_COLORS } from '@/app/types';
 import { getChantierLots } from '@/lib/chantier/getChantierLots';
 import { FadeInView } from '@/components/ui/animated';
@@ -15,6 +16,8 @@ export default function MesChantiersExterne() {
   const apporteur = (data.apporteurs || []).find(a => a.id === apporteurId);
   const [showClos, setShowClos] = useState(false);
   const [openChantier, setOpenChantier] = useState<string | null>(null);
+  const [showCreer, setShowCreer] = useState(false);
+  const isArchitecte = apporteur?.type === 'architecte';
 
   const mesChantiers = useMemo(() => {
     if (!apporteurId) return [];
@@ -118,6 +121,11 @@ export default function MesChantiersExterne() {
           </View>
         </View>
       )}
+      {isArchitecte && (
+        <Pressable style={styles.creerBtn} onPress={() => setShowCreer(true)}>
+          <Text style={styles.creerBtnText}>＋ Créer un chantier</Text>
+        </Pressable>
+      )}
       <Text style={styles.sectionTitle}>Chantiers en cours ({actifs.length})</Text>
       {actifs.length === 0 ? (
         <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#B8AA97" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
@@ -152,6 +160,15 @@ export default function MesChantiersExterne() {
           chantierId={openChantier}
         />
       )}
+
+      {isArchitecte && apporteurId && (
+        <CreerChantierArchi
+          visible={showCreer}
+          onClose={() => setShowCreer(false)}
+          architecteId={apporteurId}
+          onCreated={(id) => { setShowCreer(false); setOpenChantier(id); }}
+        />
+      )}
     </ScrollView>
   );
 }
@@ -165,6 +182,8 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
     marginBottom: 10,
   },
+  creerBtn: { backgroundColor: '#5C1F2E', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
+  creerBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
