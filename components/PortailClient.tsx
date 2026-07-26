@@ -93,7 +93,7 @@ const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contract
 ];
 
 export function PortailClient({ visible, onClose, chantierId }: PortailClientProps) {
-  const { data, currentUser, updateChantier, updateMarcheChantier, updateSupplementMarche, addPlanChantier, deletePlanChantier } = useApp();
+  const { data, currentUser, updateChantier, updateMarcheChantier, updateSupplementMarche, addPlanChantier, deletePlanChantier, addVersementClient, deleteVersementClient } = useApp();
   const isAdmin = currentUser?.role === 'admin';
   const isExterne = currentUser?.role === 'apporteur';
   const externAp = isExterne ? (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId) : undefined;
@@ -125,6 +125,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const [showAvancementDetail, setShowAvancementDetail] = useState(false); // détail des lots replié par défaut
   const [savDetailId, setSavDetailId] = useState<string | null>(null);
   const [showNouveauSav, setShowNouveauSav] = useState(false);
+  // Saisie d'un versement client (matériaux / mobilier-déco) — admin/entreprise.
+  const [versementForm, setVersementForm] = useState<{ flux: 'materiaux' | 'deco'; montant: string; date: string } | null>(null);
   // Revert vers l'accueil si l'onglet ouvert n'est plus visible (changement permissions).
   useEffect(() => {
     if (!chantier || ongletActif === null) return;
@@ -1352,6 +1354,26 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   // Les 4 flux que finance le client (récap lecture seule en tête de « Mes finances »).
   const flux = computeFluxClient(data, chantierId);
+  // Situation unifiée : Total · Réglé · Reste par flux (TTC).
+  const versementsFlux = (f: 'materiaux' | 'deco') => (data.versementsClient || []).filter(v => v.chantierId === chantierId && v.flux === f);
+  const devisH = (data.devisHonoraires || []).find(d => d.chantierId === chantierId);
+  const ttcH = 1 + (devisH?.tauxTVA ?? 20) / 100;
+  const regleHonoraires = (devisH?.appels || []).filter(a => a.statut === 'regle').reduce((s, a) => s + (a.montantHT || 0), 0) * ttcH;
+  const situationClient: { key: 'honoraires' | 'marche' | 'materiaux' | 'deco'; label: string; total: number; regle: number }[] = [
+    { key: 'honoraires', label: 'Honoraires architecte', total: flux.honoraires, regle: regleHonoraires },
+    { key: 'marche', label: 'Marché entreprise', total: flux.marche, regle: dejaPayeTotal },
+    { key: 'materiaux', label: 'Matériaux', total: flux.materiaux, regle: versementsFlux('materiaux').reduce((s, v) => s + v.montant, 0) },
+    { key: 'deco', label: 'Mobilier & décoration', total: flux.mobilierDeco, regle: versementsFlux('deco').reduce((s, v) => s + v.montant, 0) },
+  ];
+  const sitTotal = situationClient.reduce((s, r) => s + r.total, 0);
+  const sitRegle = situationClient.reduce((s, r) => s + r.regle, 0);
+  const saveVersement = () => {
+    if (!versementForm) return;
+    const montant = parseFloat(versementForm.montant.replace(',', '.'));
+    if (!Number.isFinite(montant) || montant <= 0) return;
+    addVersementClient({ id: genId('vcl'), chantierId, flux: versementForm.flux, montant, date: versementForm.date || todayYMD(), createdAt: new Date().toISOString() });
+    setVersementForm(null);
+  };
 
   // Bande « À valider » (client) : actions prioritaires en attente.
   const aValider: { label: string; onPress: () => void }[] = [];
@@ -1463,14 +1485,55 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
             {/* ─────────────── ONGLET CHIFFRES ─────────────── */}
             {ongletActif === 'chiffres' && (<>
-            {/* ── Récap des 4 flux financés par le client (lecture seule) ── */}
+            {/* ── Situation client unifiée : 4 flux × Total · Réglé · Reste (TTC) ── */}
             <View style={styles.fluxCard}>
-              <Text style={styles.fluxCardTitle}>Ce que vous financez · TTC</Text>
-              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Honoraires architecte</Text><Text style={styles.fluxVal}>{fmt(flux.honoraires)} €</Text></View>
-              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Marché entreprise</Text><Text style={styles.fluxVal}>{fmt(flux.marche)} €</Text></View>
-              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Matériaux</Text><Text style={styles.fluxVal}>{fmt(flux.materiaux)} €</Text></View>
-              <View style={styles.fluxRow}><Text style={styles.fluxLabel}>Mobilier & décoration</Text><Text style={styles.fluxVal}>{fmt(flux.mobilierDeco)} €</Text></View>
-              <View style={[styles.fluxRow, styles.fluxTotalRow]}><Text style={styles.fluxTotalLabel}>Total</Text><Text style={styles.fluxTotalVal}>{fmt(flux.total)} €</Text></View>
+              <Text style={styles.fluxCardTitle}>Situation · ce que vous financez (TTC)</Text>
+              <View style={styles.sitHeadRow}>
+                <Text style={[styles.sitHead, styles.sitCol0]}> </Text>
+                <Text style={[styles.sitHead, styles.sitCol]}>Total</Text>
+                <Text style={[styles.sitHead, styles.sitCol]}>Réglé</Text>
+                <Text style={[styles.sitHead, styles.sitCol]}>Reste</Text>
+              </View>
+              {situationClient.map(s => {
+                const reste = Math.max(0, s.total - s.regle);
+                const canRecord = !isClient && (s.key === 'materiaux' || s.key === 'deco');
+                return (
+                  <View key={s.key}>
+                    <View style={styles.sitRow}>
+                      <Text style={[styles.sitLabel, styles.sitCol0]} numberOfLines={1}>{s.label}</Text>
+                      <Text style={[styles.sitCell, styles.sitCol]}>{fmtCompact(s.total)}</Text>
+                      <Text style={[styles.sitCell, styles.sitCol]}>{fmtCompact(s.regle)}</Text>
+                      <Text style={[styles.sitCell, styles.sitCol, reste > 0 && styles.sitReste]}>{fmtCompact(reste)}</Text>
+                    </View>
+                    {canRecord && (
+                      <View style={styles.versWrap}>
+                        {versementsFlux(s.key as 'materiaux' | 'deco').map(v => (
+                          <View key={v.id} style={styles.versRow}>
+                            <Text style={styles.versTxt}>{v.date.split('-').reverse().join('/')} · {fmt(v.montant)} €</Text>
+                            <Pressable hitSlop={8} onPress={() => deleteVersementClient(v.id)}><Text style={styles.versDel}>✕</Text></Pressable>
+                          </View>
+                        ))}
+                        {versementForm && versementForm.flux === s.key ? (
+                          <View style={styles.versForm}>
+                            <TextInput style={styles.versInput} placeholder="Montant TTC" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={versementForm.montant} onChangeText={t => setVersementForm(f => (f ? { ...f, montant: t } : f))} />
+                            <TextInput style={styles.versInput} placeholder="AAAA-MM-JJ" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={versementForm.date} onChangeText={t => setVersementForm(f => (f ? { ...f, date: t } : f))} />
+                            <Pressable style={styles.versSave} onPress={saveVersement}><Text style={styles.versSaveTxt}>OK</Text></Pressable>
+                            <Pressable hitSlop={8} onPress={() => setVersementForm(null)}><Text style={styles.versDel}>✕</Text></Pressable>
+                          </View>
+                        ) : (
+                          <Pressable onPress={() => setVersementForm({ flux: s.key as 'materiaux' | 'deco', montant: '', date: todayYMD() })}><Text style={styles.versAdd}>+ versement</Text></Pressable>
+                        )}
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
+              <View style={[styles.sitRow, styles.fluxTotalRow]}>
+                <Text style={[styles.fluxTotalLabel, styles.sitCol0]}>Total</Text>
+                <Text style={[styles.fluxTotalVal, styles.sitCol]}>{fmtCompact(sitTotal)}</Text>
+                <Text style={[styles.sitCell, styles.sitCol]}>{fmtCompact(sitRegle)}</Text>
+                <Text style={[styles.fluxTotalVal, styles.sitCol, styles.sitReste]}>{fmtCompact(Math.max(0, sitTotal - sitRegle))}</Text>
+              </View>
               {flux.honorairesAConfirmer > 0 ? <Text style={styles.fluxNote}>+ {fmt(flux.honorairesAConfirmer)} € d&apos;honoraires à confirmer</Text> : null}
             </View>
 
@@ -2773,6 +2836,23 @@ const styles = StyleSheet.create({
   fluxTotalLabel: { fontSize: 15, fontWeight: '800', color: DS.sombre, textTransform: 'uppercase', letterSpacing: 0.3 },
   fluxTotalVal: { fontSize: 17, fontWeight: '800', color: DS.bordeaux },
   fluxNote: { fontSize: 12, color: DS.textSecondary, fontStyle: 'italic', marginTop: 6 },
+  sitHeadRow: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: DS.border, paddingBottom: 6, marginBottom: 2 },
+  sitHead: { fontSize: 10, fontWeight: '700', color: DS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'right' },
+  sitCol0: { flex: 1.5, textAlign: 'left' },
+  sitCol: { flex: 1, textAlign: 'right' },
+  sitRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
+  sitLabel: { fontSize: 13, color: DS.sombre },
+  sitCell: { fontSize: 12, fontWeight: '700', color: DS.sombre, fontVariant: ['tabular-nums'] },
+  sitReste: { color: DS.bordeaux },
+  versWrap: { paddingLeft: 10, paddingBottom: 6, marginTop: -2 },
+  versRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 2 },
+  versTxt: { fontSize: 11, color: DS.textSecondary },
+  versDel: { fontSize: 14, fontWeight: '700', color: DS.marron, paddingHorizontal: 4 },
+  versForm: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
+  versInput: { flex: 1, borderWidth: 1, borderColor: DS.border, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6, fontSize: 12, color: DS.text, backgroundColor: DS.surfaceHover },
+  versSave: { backgroundColor: DS.bordeaux, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7 },
+  versSaveTxt: { color: DS.cremeFond, fontWeight: '700', fontSize: 12 },
+  versAdd: { fontSize: 12, fontWeight: '700', color: DS.bordeaux, marginTop: 4 },
   header: {
     backgroundColor: '#2C2C2C',
     paddingTop: 20,

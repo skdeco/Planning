@@ -625,6 +625,21 @@ export interface DevisST {
 /** Alias pour compatibilité ascendante */
 export type MarcheST = DevisST;
 
+/**
+ * Versement du client sur un flux « à sa charge » hors marché entreprise :
+ * matériaux (hors devis) ou mobilier/décoration. Permet un décompte
+ * Total · Réglé · Reste homogène avec le marché. Montant TTC.
+ */
+export interface VersementClient {
+  id: string;
+  chantierId: string;
+  flux: 'materiaux' | 'deco';
+  montant: number;        // TTC
+  date: string;           // YYYY-MM-DD
+  note?: string;
+  createdAt: string;
+}
+
 /** Un sous-traitant */
 export interface SousTraitant {
   id: string;
@@ -1442,6 +1457,7 @@ export interface AppData {
   piecesChantier?: PieceChantier[];   // pièces + métrés (partagées entre modules)
   prescriptions?: Prescription[];     // prescriptions matériaux & décoration
   devisHonoraires?: DevisHonoraires[];// honoraires archi (flux privé archi ↔ client)
+  versementsClient?: VersementClient[]; // versements client sur matériaux / mobilier-déco
   phasesChantier?: PhaseChantier[];   // planning de phases (prévu vs réel)
   jalonsChantier?: JalonChantier[];   // jalons clés (hors d'eau/air, réception)
   demarchesAdmin?: DemarcheAdministrative[]; // démarches & échéances administratives

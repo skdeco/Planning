@@ -254,6 +254,8 @@ interface AppContextType {
   addDevisHonoraires: (x: import('@/app/types').DevisHonoraires) => void;
   updateDevisHonoraires: (x: import('@/app/types').DevisHonoraires) => void;
   deleteDevisHonoraires: (id: string) => void;
+  addVersementClient: (x: import('@/app/types').VersementClient) => void;
+  deleteVersementClient: (id: string) => void;
   addPhaseChantier: (x: import('@/app/types').PhaseChantier) => void;
   updatePhaseChantier: (x: import('@/app/types').PhaseChantier) => void;
   deletePhaseChantier: (id: string) => void;
@@ -464,6 +466,7 @@ function migrateData(parsed: Record<string, any>): AppData {
     piecesChantier: parsed.piecesChantier || [],
     prescriptions: parsed.prescriptions || [],
     devisHonoraires: parsed.devisHonoraires || [],
+    versementsClient: parsed.versementsClient || [],
     phasesChantier: parsed.phasesChantier || [],
     jalonsChantier: parsed.jalonsChantier || [],
     demarchesAdmin: parsed.demarchesAdmin || [],
@@ -875,6 +878,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             piecesChantier: (result.piecesChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             prescriptions: (result.prescriptions || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             devisHonoraires: (result.devisHonoraires || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
+            versementsClient: (result.versementsClient || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             phasesChantier: (result.phasesChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             jalonsChantier: (result.jalonsChantier || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
             demarchesAdmin: (result.demarchesAdmin || []).filter((x: { id: string }) => !deletedGenericIdsRef.current.has(x.id)),
@@ -988,6 +992,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       piecesChantier: (p.piecesChantier || []).filter(x => x.chantierId !== id),
       prescriptions: (p.prescriptions || []).filter(x => x.chantierId !== id),
       devisHonoraires: (p.devisHonoraires || []).filter(x => x.chantierId !== id),
+      versementsClient: (p.versementsClient || []).filter(x => x.chantierId !== id),
       phasesChantier: (p.phasesChantier || []).filter(x => x.chantierId !== id),
       jalonsChantier: (p.jalonsChantier || []).filter(x => x.chantierId !== id),
       demarchesAdmin: (p.demarchesAdmin || []).filter(x => x.chantierId !== id),
@@ -1914,6 +1919,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     deletedGenericIdsRef.current.add(id);
     setData(p => ({ ...p, devisHonoraires: (p.devisHonoraires || []).filter(i => i.id !== id) }));
   };
+  const addVersementClient = (x: import('@/app/types').VersementClient) => {
+    lastLocalChangeRef.current = Date.now();
+    setData(p => ({ ...p, versementsClient: [...(p.versementsClient || []), x] }));
+  };
+  const deleteVersementClient = (id: string) => {
+    deletedGenericIdsRef.current.add(id);
+    setData(p => ({ ...p, versementsClient: (p.versementsClient || []).filter(i => i.id !== id) }));
+  };
   // Planning de phases
   const addPhaseChantier = (x: import('@/app/types').PhaseChantier) => {
     lastLocalChangeRef.current = Date.now();
@@ -2059,6 +2072,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPieceChantier, updatePieceChantier, deletePieceChantier,
       addPrescription, updatePrescription, deletePrescription,
       addDevisHonoraires, updateDevisHonoraires, deleteDevisHonoraires,
+      addVersementClient, deleteVersementClient,
       addPhaseChantier, updatePhaseChantier, deletePhaseChantier,
       addJalonChantier, updateJalonChantier, deleteJalonChantier,
       addDemarcheAdmin, updateDemarcheAdmin, deleteDemarcheAdmin,
