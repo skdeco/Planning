@@ -21,6 +21,7 @@ import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PVReceptionChantier } from '@/components/PVReceptionChantier';
 import { PVReceptionChantierV2 } from '@/components/PVReceptionChantierV2';
 import { ChatChantier } from '@/components/ChatChantier';
+import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { Palette, Coins, CalendarDays, ClipboardList, Flag, MessageCircle, Package, Wallet } from 'lucide-react-native';
 import { PrescriptionsPanel } from '@/components/architecte/PrescriptionsPanel';
 import { HonorairesPanel } from '@/components/architecte/HonorairesPanel';
@@ -121,6 +122,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const [ongletActif, setOngletActif] = useState<OngletPortail | null>(null);
   // Panneau plein écran ouvert depuis une tuile (Modal), ex. Budget/Métrés/Phases…
   const [portalPanel, setPortalPanel] = useState<TileKey | null>(null);
+  const [galerieOpen, setGalerieOpen] = useState(false);
   const [showRetrocession, setShowRetrocession] = useState(false); // section "Rétrocession" repliable (Chiffres)
   const [showAvancementDetail, setShowAvancementDetail] = useState(false); // détail des lots replié par défaut
   const [savDetailId, setSavDetailId] = useState<string | null>(null);
@@ -1314,6 +1316,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     const mode = tileAccess(key, gridContact, chantier);
     if (mode === 'hidden') return;
     if (key === 'sav') { setShowNouveauSav(true); return; }
+    if (key === 'photos') { setGalerieOpen(true); return; }
     if (mode === 'act' && PANEL_TILES.includes(key)) { setPortalPanel(key); return; }
     const o = ONGLET_OF[key];
     if (o) { setOngletActif(o); return; }
@@ -2803,6 +2806,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <DemarchePanel visible={portalPanel === 'administratif'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <JournalPanel visible={portalPanel === 'journal'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <AnnuairePanel visible={portalPanel === 'annuaire'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <GaleriePhotos visible={galerieOpen} onClose={() => setGalerieOpen(false)} chantierId={chantierId} titre={`Photos — ${chantier?.nom || ''}`} />
     </Modal>
   );
 }
