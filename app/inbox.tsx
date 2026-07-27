@@ -22,7 +22,8 @@ import { useApp } from '@/app/context/AppContext';
 import { notifyInboxChanged, useInbox } from '@/hooks/useInbox';
 import { removeInboxItem, getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { uploadFileToStorage } from '@/lib/supabase';
-import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie, type PhotoChantier, type PlanChantier } from '@/app/types';
+import { genererNomAchatAuto } from '@/lib/achats/genererNomAuto';
+import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie, type DepenseChantier, type PhotoChantier, type PlanChantier } from '@/app/types';
 
 function getFileIcon(mimeType: string): string {
   if (mimeType === 'application/pdf') return '📄';
@@ -54,7 +55,7 @@ const rid = (p: string) => `${p}_${Date.now()}_${Math.random().toString(36).slic
 
 export default function InboxScreen(): React.ReactElement {
   const { items, refresh } = useInbox();
-  const { data, currentUser, updateChantier, addPlanChantier, addPhotoChantier } = useApp();
+  const { data, currentUser, updateChantier, addPlanChantier, addPhotoChantier, addDepense } = useApp();
 
   const [placing, setPlacing] = useState<InboxItem | null>(null);
   const [targetChantierId, setTargetChantierId] = useState<string | null>(null);
@@ -134,6 +135,29 @@ export default function InboxScreen(): React.ReactElement {
     } catch { setBusy(false); toast.error("L'envoi a échoué"); }
   };
 
+  const placeAchat = async () => {
+    if (!placing || !targetChantierId || busy) return;
+    setBusy(true);
+    try {
+      const up = await uploadInbox(placing, targetChantierId, 'achats');
+      if (!up) { setBusy(false); toast.error("L'envoi a échoué"); return; }
+      const depense: DepenseChantier = {
+        id: rid('dep'),
+        chantierId: targetChantierId,
+        libelle: genererNomAchatAuto(),
+        montant: 0,
+        date: new Date().toISOString().slice(0, 10),
+        categorie: 'achat',
+        fichier: up.url,
+        createdAt: new Date().toISOString(),
+        createdBy: currentUser?.nom || 'Admin',
+      };
+      addDepense(depense);
+      finishPlace();
+      toast.info('Facture classée — pensez à renseigner le montant dans Achats');
+    } catch { setBusy(false); toast.error("L'envoi a échoué"); }
+  };
+
   const renderItem = useCallback(({ item }: ListRenderItemInfo<InboxItem>) => {
     const subtitle = [formatBytes(item.fileSize), formatRelativeDate(item.createdAt)].filter(s => s.length > 0).join(' · ');
     return (
@@ -210,6 +234,9 @@ export default function InboxScreen(): React.ReactElement {
                     </View>
                     <Pressable onPress={placePlans} disabled={busy} style={{ backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md, paddingVertical: space.md, alignItems: 'center', marginBottom: space.sm }}>
                       <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>📐 Plans</Text>
+                    </Pressable>
+                    <Pressable onPress={placeAchat} disabled={busy} style={{ backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md, paddingVertical: space.md, alignItems: 'center', marginBottom: space.sm }}>
+                      <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>🧾 Achats (facture)</Text>
                     </Pressable>
                     {isImage && (
                       <Pressable onPress={placePhotos} disabled={busy} style={{ backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md, paddingVertical: space.md, alignItems: 'center' }}>
