@@ -20,6 +20,8 @@
 import { ActionSheetIOS, Alert, Linking, Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { listInboxItems, getInboxItemPath, removeInboxItem, type InboxItem } from '@/lib/share/inboxStore';
+import { notifyInboxChanged } from '@/hooks/useInbox';
 
 export interface PickedFile {
   /** file:// stable (cacheDirectory mobile) ou data: URI (web). */
@@ -49,7 +51,7 @@ export interface PickNativeFileOptions {
   compressImages?: boolean;
 }
 
-type Source = 'photos' | 'camera' | 'files';
+type Source = 'photos' | 'camera' | 'files' | 'inbox';
 
 function inferMimeFromUri(uri: string, fallback = 'application/octet-stream'): string {
   const lower = uri.toLowerCase().split('?')[0];
@@ -217,14 +219,87 @@ function pickFromWeb(opts: Required<PickNativeFileOptions>): Promise<PickedFile[
   });
 }
 
-async function chooseSource(opts: Required<PickNativeFileOptions>): Promise<Source | null> {
+/**
+ * Items de la boîte de réception (Share Extension iOS) compatibles avec les
+ * types acceptés. Vide sur web/Android (inbox alimentée par l'extension iOS).
+ */
+function matchingInboxItems(opts: Required<PickNativeFileOptions>): InboxItem[] {
+  let items: InboxItem[];
+  try {
+    items = listInboxItems();
+  } catch {
+    return [];
+  }
+  return items.filter((it) => {
+    const m = it.mimeType || '';
+    if (opts.acceptImages && m.startsWith('image/')) return true;
+    if (opts.acceptPdf && m === 'application/pdf') return true;
+    return false;
+  });
+}
+
+/**
+ * Choisit un item d'inbox (menu secondaire si plusieurs), le retire de l'inbox
+ * après sélection, et le renvoie comme PickedFile prêt à uploader.
+ */
+async function pickFromInbox(items: InboxItem[]): Promise<PickedFile[]> {
+  if (items.length === 0) return [];
+  let chosen: InboxItem | null = items[0];
+
+  if (items.length > 1) {
+    const labels = items.map((it) => it.filename || 'Document');
+    if (Platform.OS === 'ios') {
+      const options = [...labels, 'Annuler'];
+      const cancelButtonIndex = options.length - 1;
+      chosen = await new Promise<InboxItem | null>((resolve) => {
+        ActionSheetIOS.showActionSheetWithOptions(
+          { title: 'Boîte de réception', options, cancelButtonIndex },
+          (i) => resolve(i === cancelButtonIndex ? null : (items[i] ?? null)),
+        );
+      });
+    } else {
+      chosen = await new Promise<InboxItem | null>((resolve) => {
+        Alert.alert(
+          'Boîte de réception',
+          'Choisissez un fichier',
+          [
+            ...labels.map((label, idx) => ({ text: label, onPress: () => resolve(items[idx]) })),
+            { text: 'Annuler', style: 'cancel' as const, onPress: () => resolve(null) },
+          ],
+          { cancelable: true, onDismiss: () => resolve(null) },
+        );
+      });
+    }
+  }
+
+  if (!chosen) return [];
+  const path = getInboxItemPath(chosen);
+  if (!path) return [];
+  const file: PickedFile = {
+    uri: path,
+    mimeType: chosen.mimeType || inferMimeFromUri(path),
+    filename: chosen.filename,
+    size: chosen.fileSize,
+  };
+  try {
+    removeInboxItem(chosen.id);
+    notifyInboxChanged();
+  } catch { /* nettoyage best-effort */ }
+  return [file];
+}
+
+async function chooseSource(
+  opts: Required<PickNativeFileOptions>,
+  inboxCount: number,
+): Promise<Source | null> {
   // Construit dynamiquement la liste des sources autorisées dans l'ordre :
-  // Photothèque, Appareil photo, Fichiers.
+  // Photothèque, Appareil photo, Fichiers, Boîte de réception.
   const labels: string[] = [];
   const sources: Source[] = [];
   if (opts.acceptImages) { labels.push('Photothèque'); sources.push('photos'); }
   if (opts.acceptCamera) { labels.push('Appareil photo'); sources.push('camera'); }
   if (opts.acceptPdf) { labels.push('Fichiers'); sources.push('files'); }
+  if (inboxCount > 0) { labels.push(`Boîte de réception (${inboxCount})`); sources.push('inbox'); }
 
   // Aucune ou une seule source : pas de choix.
   if (sources.length === 0) return null;
@@ -281,10 +356,12 @@ export async function pickNativeFile(
   try {
     if (Platform.OS === 'web') return await pickFromWeb(resolved);
 
-    const source = await chooseSource(resolved);
+    const inboxItems = matchingInboxItems(resolved);
+    const source = await chooseSource(resolved, inboxItems.length);
     if (source === null) return [];
     if (source === 'photos') return await pickFromPhotos(resolved);
     if (source === 'camera') return await pickFromCamera(resolved);
+    if (source === 'inbox') return await pickFromInbox(inboxItems);
     return await pickFromFiles(resolved);
   } catch (err) {
     console.warn('pickNativeFile:', err);
