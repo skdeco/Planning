@@ -59,6 +59,7 @@ import { DatePicker } from '@/components/DatePicker';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
+import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
@@ -2393,6 +2394,7 @@ export default function ChantiersScreen() {
                             }}>
                             <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Ajouter une facture</Text>
                           </Pressable>
+                          <DocInboxButton folder={`chantiers/${ficheId}/achats`} onUploaded={({ url }) => setAchatFichierUri(url)} />
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
@@ -3059,6 +3061,7 @@ export default function ChantiersScreen() {
                             }}>
                             <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Ajouter une facture</Text>
                           </Pressable>
+                          <DocInboxButton folder={`chantiers/${achatsChantierId}/achats`} onUploaded={({ url }) => setAchatFichierUri(url)} />
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
