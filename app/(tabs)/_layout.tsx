@@ -231,12 +231,12 @@ export default function TabLayout() {
         }}
       />
 
-      {/* ═══ ONGLET 7 : Messages — DÉSACTIVÉ (UI cachée, data layer intact pour réactivation future) ═══ */}
+      {/* ═══ ONGLET 7 : Messages — visible pour admin/employé/ST (pas les apporteurs) ═══ */}
       <Tabs.Screen
         name="messagerie"
         options={{
           title: t.nav.messages,
-          href: null,
+          href: isApporteur ? null : undefined,
           tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
           tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
           tabBarIcon: ({ color }) => (
