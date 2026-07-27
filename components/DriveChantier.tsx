@@ -5,6 +5,7 @@ import {
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { useConfirm } from '@/hooks/useConfirm';
 import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie } from '@/app/types';
@@ -60,6 +61,12 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
     } finally {
       setUploadingCat(null);
     }
+  };
+
+  const addFromInbox = (categorie: ChantierDocCategorie, up: { url: string; nom: string }) => {
+    if (!chantier) return;
+    const doc: ChantierDoc = { id: `doc_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`, categorie, nom: up.nom, fichierUrl: up.url, uploadedAt: new Date().toISOString(), uploadedPar: currentUser?.nom };
+    updateChantier({ ...chantier, documents: [...documents, doc] });
   };
 
   const handleDelete = async (doc: ChantierDoc) => {
@@ -128,6 +135,9 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
                       </>)}
                     </View>
                   ))}
+                  {!readonly && (
+                    <DocInboxButton folder={`chantiers/${chantierId}/drive`} onUploaded={(d) => addFromInbox(cat.key, d)} />
+                  )}
                 </View>
               );
             })}

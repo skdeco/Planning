@@ -6,6 +6,7 @@ import { useApp } from '@/app/context/AppContext';
 import { PanelHeader } from '@/components/ui/PanelHeader';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 
@@ -190,6 +191,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
                       {uploading ? <ActivityIndicator size="small" color={DS.bordeaux} /> : <FileText size={16} color={DS.bordeaux} />}
                       <Text style={styles.attachText}>{form.fichier ? '✓ Devis joint' : 'Joindre le devis (PDF)'}</Text>
                     </Pressable>
+                    <DocInboxButton folder={`chantiers/${chantierId}/st`} onUploaded={({ url }) => setForm(f => (f && f.kind === 'devis' ? { ...f, fichier: url } : f))} />
                     <TextInput style={[styles.input, styles.multiline]} placeholder="Note (optionnel — précision, condition…)" placeholderTextColor={DS.textAlt} multiline value={form.note} onChangeText={t => setForm({ ...form, note: t })} />
                     <Pressable style={[styles.saveBtn, (!form.soustraitantId || !form.objet.trim()) && styles.saveBtnDisabled]} onPress={saveDevis}><Text style={styles.saveText}>{form.editId ? 'Enregistrer' : 'Ajouter'}</Text></Pressable>
                   </>
@@ -205,6 +207,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
                       {uploading ? <ActivityIndicator size="small" color={DS.bordeaux} /> : <Paperclip size={16} color={DS.bordeaux} />}
                       <Text style={styles.attachText}>{form.facture ? '✓ Facture jointe' : 'Joindre la facture (PDF)'}</Text>
                     </Pressable>
+                    <DocInboxButton folder={`chantiers/${chantierId}/st`} onUploaded={({ url }) => setForm(f => (f && f.kind === 'acompte' ? { ...f, facture: url } : f))} />
                     <Pressable style={[styles.saveBtn, !form.montant.trim() && styles.saveBtnDisabled]} onPress={saveAcompte}><Text style={styles.saveText}>Ajouter</Text></Pressable>
                   </>
                 )}

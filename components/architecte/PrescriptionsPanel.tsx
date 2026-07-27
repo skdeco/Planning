@@ -10,6 +10,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
+import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { DS, radius, space, font } from '@/constants/design';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { FilterChip } from '@/components/ui/FilterChip';
@@ -66,8 +67,8 @@ function LinksEditor({ liens, onChange }: { liens: string[]; onChange: (l: strin
   );
 }
 
-/** Éditeur de documents (chips + bouton fichier/photo/caméra). */
-function DocsEditor({ docs, onChange, onPick, busy }: { docs: PrescriptionDocument[]; onChange: (d: PrescriptionDocument[]) => void; onPick: () => void; busy: boolean }) {
+/** Éditeur de documents (chips + bouton fichier/photo/caméra + boîte de réception). */
+function DocsEditor({ docs, onChange, onPick, busy, folder }: { docs: PrescriptionDocument[]; onChange: (d: PrescriptionDocument[]) => void; onPick: () => void; busy: boolean; folder: string }) {
   return (
     <>
       {docs.length > 0 && (
@@ -87,6 +88,10 @@ function DocsEditor({ docs, onChange, onPick, busy }: { docs: PrescriptionDocume
         {busy ? <ActivityIndicator size="small" color={DS.bordeaux} /> : <Paperclip size={15} color={DS.bordeaux} />}
         <Text style={styles.addLineText}>Ajouter fichier / photo</Text>
       </Pressable>
+      <DocInboxButton
+        folder={folder}
+        onUploaded={({ url, nom, mime }) => onChange([...docs, { id: genId('pdoc'), nom, uri: url, type: mime.includes('pdf') ? 'pdf' : 'image' }])}
+      />
     </>
   );
 }
@@ -554,11 +559,11 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
 
                 <Text style={styles.formLabel}>Références & visuels de l'article</Text>
                 <LinksEditor liens={form.liens} onChange={l => set({ liens: l })} />
-                <DocsEditor docs={form.documents} onChange={d => set({ documents: d })} onPick={() => pickDocs(docs => set({ documents: [...form.documents, ...docs] }))} busy={uploading} />
+                <DocsEditor docs={form.documents} onChange={d => set({ documents: d })} onPick={() => pickDocs(docs => set({ documents: [...form.documents, ...docs] }))} busy={uploading} folder={`chantiers/${chantierId}/prescriptions`} />
 
                 <Text style={styles.formLabel}>Fiche technique</Text>
                 <LinksEditor liens={form.ftLiens} onChange={l => set({ ftLiens: l })} />
-                <DocsEditor docs={form.ftDocuments} onChange={d => set({ ftDocuments: d })} onPick={() => pickDocs(docs => set({ ftDocuments: [...form.ftDocuments, ...docs] }))} busy={uploading} />
+                <DocsEditor docs={form.ftDocuments} onChange={d => set({ ftDocuments: d })} onPick={() => pickDocs(docs => set({ ftDocuments: [...form.ftDocuments, ...docs] }))} busy={uploading} folder={`chantiers/${chantierId}/prescriptions`} />
 
                 <Text style={styles.formLabel}>Statut</Text>
                 <View style={styles.segWrap}>
