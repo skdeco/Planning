@@ -45,6 +45,43 @@ function montantsApres(texte: string, labelSource: string): number[] {
   return out;
 }
 
+/**
+ * Tente de repérer le nom du fournisseur dans une facture.
+ * 1) Correspondance avec un fournisseur déjà connu (fiable).
+ * 2) Sinon, heuristique : première ligne « raison sociale » en tête de document.
+ * Résultat destiné au pré-remplissage — toujours vérifiable/corrigeable.
+ */
+export function extraireFournisseur(texteRaw: string, nomsConnus: string[] = []): string | null {
+  if (!texteRaw) return null;
+  const texte = texteRaw.replace(/ /g, ' ');
+  const lower = texte.toLowerCase();
+
+  // 1) Fournisseur connu présent dans le texte → on renvoie le nom canonique.
+  //    Comparaison directe ET normalisée (sans accents/ponctuation) pour tolérer
+  //    « POINT.P » ~ « Point P », « Leroy-Merlin » ~ « Leroy Merlin », etc.
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g, '');
+  const lowerNorm = norm(texte);
+  const connusTries = [...nomsConnus].filter(n => (n || '').trim().length >= 3)
+    .sort((a, b) => b.length - a.length); // le plus long d'abord (évite les faux positifs)
+  for (const nom of connusTries) {
+    const nn = norm(nom);
+    if (lower.includes(nom.trim().toLowerCase()) || (nn.length >= 3 && lowerNorm.includes(nn))) return nom;
+  }
+
+  // 2) Heuristique : parcourt les premières lignes non vides.
+  const BLACKLIST = /(facture|devis|avoir|bon de|commande|client|date|n[°o]\b|siret|siren|t\.?v\.?a|rcs|naf|ape|adresse|t[ée]l|email|e-mail|@|www|http|iban|bic|page|montant|total|h\.?t\b|t\.?t\.?c|acompte|r[èe]glement)/i;
+  const lines = texte.split(/\r?\n/).map(l => l.trim()).filter(Boolean).slice(0, 12);
+  for (const l of lines) {
+    if (l.length < 3 || l.length > 45) continue;
+    if (BLACKLIST.test(l)) continue;
+    if (/\d{3,}/.test(l)) continue; // trop de chiffres → adresse/référence, pas un nom
+    const letters = (l.match(/[a-zA-ZÀ-ÿ]/g) || []).length;
+    if (letters < l.length * 0.6) continue; // majoritairement des lettres
+    return l.replace(/\s{2,}/g, ' ').trim();
+  }
+  return null;
+}
+
 export function extraireTotauxFacture(texteRaw: string): TotauxFacture {
   if (!texteRaw) return { ht: null, ttc: null, tva: null };
   const texte = texteRaw.replace(/ /g, ' ');

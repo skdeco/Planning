@@ -62,7 +62,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { FournisseurPicker } from '@/components/fournisseurs/FournisseurPicker';
 import { extractTextFromPdfUrl } from '@/lib/pdfExtract';
-import { extraireTotauxFacture } from '@/lib/factureParser';
+import { extraireTotauxFacture, extraireFournisseur } from '@/lib/factureParser';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
@@ -351,14 +351,16 @@ export default function ChantiersScreen() {
       const texte = await extractTextFromPdfUrl(url);
       if (!texte) { toast.info('Facture ajoutée — montants à saisir'); return; }
       const { ht, ttc } = extraireTotauxFacture(texte);
-      if (ht == null && ttc == null) { toast.info('Aucun montant détecté — saisie manuelle'); return; }
+      const fournisseur = extraireFournisseur(texte, (data.fournisseursFiches || []).map(f => f.nom));
+      if (ht == null && ttc == null && !fournisseur) { toast.info('Aucune donnée détectée — saisie manuelle'); return; }
       setAchatForm(f => ({
         ...f,
         montantHT: f.montantHT.trim() ? f.montantHT : (ht != null ? String(ht).replace('.', ',') : f.montantHT),
         montantTTC: f.montantTTC.trim() ? f.montantTTC : (ttc != null ? String(ttc).replace('.', ',') : f.montantTTC),
+        fournisseur: f.fournisseur.trim() ? f.fournisseur : (fournisseur || f.fournisseur),
       }));
       setShowDetailsAchat(true);
-      toast.success('Montants détectés — à vérifier');
+      toast.success(fournisseur ? `Détecté : ${fournisseur} — à vérifier` : 'Montants détectés — à vérifier');
     } catch { /* silencieux : saisie manuelle */ }
     finally { setAchatAnalyse(false); }
   };

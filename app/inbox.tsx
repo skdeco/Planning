@@ -23,6 +23,8 @@ import { notifyInboxChanged, useInbox } from '@/hooks/useInbox';
 import { removeInboxItem, getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { genererNomAchatAuto } from '@/lib/achats/genererNomAuto';
+import { extractTextFromPdfUrl } from '@/lib/pdfExtract';
+import { extraireTotauxFacture, extraireFournisseur } from '@/lib/factureParser';
 import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie, type DepenseChantier, type PhotoChantier, type PlanChantier } from '@/app/types';
 
 function getFileIcon(mimeType: string): string {
@@ -141,20 +143,40 @@ export default function InboxScreen(): React.ReactElement {
     try {
       const up = await uploadInbox(placing, targetChantierId, 'achats');
       if (!up) { setBusy(false); toast.error("L'envoi a échoué"); return; }
+
+      // Lecture automatique HT/TTC + fournisseur (PDF avec texte uniquement, gratuit).
+      let ht: number | null = null, ttc: number | null = null, fournisseur: string | null = null;
+      if (placing.mimeType === 'application/pdf') {
+        try {
+          const texte = await extractTextFromPdfUrl(up.url);
+          if (texte) {
+            const totaux = extraireTotauxFacture(texte);
+            ht = totaux.ht; ttc = totaux.ttc;
+            fournisseur = extraireFournisseur(texte, (data.fournisseursFiches || []).map(f => f.nom));
+          }
+        } catch { /* saisie manuelle si échec */ }
+      }
+
       const depense: DepenseChantier = {
         id: rid('dep'),
         chantierId: targetChantierId,
         libelle: genererNomAchatAuto(),
-        montant: 0,
+        montant: ht ?? 0,
+        montantTTC: ttc ?? undefined,
         date: new Date().toISOString().slice(0, 10),
         categorie: 'achat',
+        fournisseur: fournisseur ?? undefined,
         fichier: up.url,
         createdAt: new Date().toISOString(),
         createdBy: currentUser?.nom || 'Admin',
       };
       addDepense(depense);
       finishPlace();
-      toast.info('Facture classée — pensez à renseigner le montant dans Achats');
+      if (ht != null || ttc != null || fournisseur) {
+        toast.success(`Facture classée — ${fournisseur ? fournisseur + ', ' : ''}${ttc != null ? ttc + '€ TTC ' : ''}détecté (à vérifier)`);
+      } else {
+        toast.info('Facture classée — pensez à renseigner le montant dans Achats');
+      }
     } catch { setBusy(false); toast.error("L'envoi a échoué"); }
   };
 
