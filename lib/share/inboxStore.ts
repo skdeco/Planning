@@ -93,6 +93,45 @@ export function getInboxDirectory(): Directory | null {
   return inboxDir;
 }
 
+/**
+ * Dossier de staging d'expo-share-extension (`AppGroup/sharedData`) : c'est là
+ * que l'extension copie les fichiers partagés AVANT qu'on les importe dans
+ * l'inbox. Pour les FICHIERS, l'extension utilise le nom d'origine et sa copie
+ * native échoue si le nom existe déjà → re-partager le même fichier renvoie un
+ * écran vide. D'où le nettoyage ci-dessous.
+ */
+function getSharedDataDirectory(): Directory | null {
+  const appGroupDir = getAppGroupDirectory();
+  if (!appGroupDir) return null;
+  return new Directory(appGroupDir, 'sharedData');
+}
+
+/**
+ * Vide le dossier de staging `sharedData`. À appeler UNIQUEMENT depuis l'app
+ * principale (jamais pendant un partage en cours), typiquement au passage en
+ * premier plan : à ce moment, tout partage a déjà été importé dans l'inbox.
+ * Évite les collisions de nom qui bloquent le re-partage d'un même fichier.
+ * @returns nombre de fichiers supprimés.
+ */
+export function cleanupStagedShareFiles(): number {
+  if (Platform.OS !== 'ios') return 0;
+  const dir = getSharedDataDirectory();
+  if (!dir) return 0;
+  try {
+    if (!dir.exists) return 0;
+    let n = 0;
+    for (const entry of dir.list()) {
+      if (entry instanceof File) {
+        try { entry.delete(); n++; } catch { /* ignore un fichier verrouillé */ }
+      }
+    }
+    return n;
+  } catch (err) {
+    console.warn('[inboxStore] cleanup sharedData failed', err);
+    return 0;
+  }
+}
+
 export function getManifestFile(): File | null {
   const inboxDir = getInboxDirectory();
   if (!inboxDir) return null;
@@ -174,6 +213,9 @@ export function addInboxItem(params: AddInboxItemParams): InboxItem | null {
     }
     const destFile = new File(inboxDir, destFilename);
     sourceFile.copy(destFile);
+    // Nettoyage du fichier stagé (sharedData/<nom d'origine>) : sinon la copie
+    // native d'expo-share-extension échouera au prochain partage du même nom.
+    try { sourceFile.delete(); } catch { /* best-effort */ }
   } catch (err) {
     console.warn('[inboxStore] copy failed', err);
     return null;

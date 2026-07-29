@@ -7,7 +7,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, type AppStateStatus, Platform } from 'react-native';
 
-import { listInboxItems, type InboxItem } from '@/lib/share/inboxStore';
+import { listInboxItems, cleanupStagedShareFiles, type InboxItem } from '@/lib/share/inboxStore';
 
 export interface UseInboxResult {
   items: InboxItem[];
@@ -36,9 +36,12 @@ export function useInbox(): UseInboxResult {
   useEffect(() => {
     refresh();
     if (Platform.OS !== 'ios') return;
+    // Vide le staging résiduel d'expo-share-extension (débloque le re-partage
+    // d'un fichier de même nom). Sûr ici : on est dans l'app principale.
+    cleanupStagedShareFiles();
 
     const sub = AppState.addEventListener('change', (state: AppStateStatus) => {
-      if (state === 'active') refresh();
+      if (state === 'active') { cleanupStagedShareFiles(); refresh(); }
     });
     return () => sub.remove();
   }, [refresh]);
