@@ -198,7 +198,7 @@ export default function InboxScreen(): React.ReactElement {
         toast.info('Facture classée — pensez à renseigner le montant dans Achats');
       }
       // Envoi automatique vers Chaintrust (comme le formulaire d'achat direct).
-      void envoyerFactureChaintrust(null, up.url, libelle);
+      void envoyerFactureChaintrust(null, up.url, libelle, placing.filename);
     } catch { setBusy(false); toast.error("L'envoi a échoué"); }
   };
 

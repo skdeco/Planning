@@ -12,15 +12,56 @@ import { requireOptionalNativeModule } from 'expo-modules-core';
 
 export const CHAINTRUST_CAPTURE_EMAIL = 'avoda_skdeco_e0ec380e@capture.chaintrust.io';
 
+/** Détecte l'extension réelle d'après les octets d'en-tête (magic numbers). */
+function extFromBase64Header(head: string): string | null {
+  if (head.startsWith('JVBER')) return 'pdf';   // %PDF
+  if (head.startsWith('/9j/')) return 'jpg';     // JPEG FF D8 FF
+  if (head.startsWith('iVBOR')) return 'png';    // PNG 89 50 4E 47
+  if (head.startsWith('UklGR')) return 'webp';   // RIFF (webp)
+  return null;
+}
+
+/** Nettoie un nom pour en faire un nom de fichier lisible (sans extension). */
+function baseName(nom: string): string {
+  const sansExt = (nom || 'facture').replace(/\.[a-z0-9]{2,5}$/i, '');
+  const clean = sansExt.replace(/[\\/:*?"<>|]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 60);
+  return clean || 'facture';
+}
+
+/**
+ * Prépare la pièce jointe : détecte le vrai type via le contenu et copie le
+ * fichier sous un nom lisible avec la BONNE extension (immunise contre les URL
+ * de stockage mal nommées, ex: un PDF servi en .jpg).
+ */
+async function preparerPieceJointe(uri: string, nomSouhaite: string): Promise<string> {
+  try {
+    const head = await FileSystem.readAsStringAsync(uri, {
+      encoding: FileSystem.EncodingType.Base64,
+      length: 12,
+      position: 0,
+    });
+    const ext = extFromBase64Header(head)
+      ?? (uri.toLowerCase().split('?')[0].match(/\.([a-z0-9]{2,5})$/)?.[1]) // fallback : extension de l'URI
+      ?? 'pdf';
+    const dest = `${FileSystem.cacheDirectory}${baseName(nomSouhaite)}.${ext}`;
+    await FileSystem.copyAsync({ from: uri, to: dest });
+    return dest;
+  } catch {
+    return uri; // en cas d'échec, on joint tel quel
+  }
+}
+
 /**
  * @param localUri   chemin local de la pièce (capture caméra) si disponible
  * @param fichierUrl URL Supabase de secours — téléchargée en cache avant l'envoi
- * @param libelle    libellé de l'achat (sujet du mail)
+ * @param libelle    libellé de l'achat (sujet du mail + nom de secours de la pièce)
+ * @param filename   nom d'origine du fichier (ex: "Facture Point P.pdf") si connu
  */
 export async function envoyerFactureChaintrust(
   localUri: string | null,
   fichierUrl: string | undefined,
   libelle: string,
+  filename?: string,
 ): Promise<void> {
   // Garde anti-crash : le module natif ExpoMailComposer n'existe que dans un
   // build natif récent. requireOptionalNativeModule renvoie null (sans crasher)
@@ -43,13 +84,18 @@ export async function envoyerFactureChaintrust(
       );
       return;
     }
-    let attachmentUri = localUri;
-    if (!attachmentUri && fichierUrl) {
-      const ext = (fichierUrl.split('?')[0].split('.').pop() || 'jpg').slice(0, 5);
-      const dest = `${FileSystem.cacheDirectory}chaintrust_${Date.now()}.${ext}`;
-      const dl = await FileSystem.downloadAsync(fichierUrl, dest);
-      attachmentUri = dl.uri;
+    // Récupère le fichier localement (téléchargement si on n'a que l'URL).
+    let sourceUri = localUri;
+    if (!sourceUri && fichierUrl) {
+      const tmp = `${FileSystem.cacheDirectory}dl_${Date.now()}`;
+      const dl = await FileSystem.downloadAsync(fichierUrl, tmp);
+      sourceUri = dl.uri;
     }
+
+    // Nom + extension corrects (basés sur le CONTENU réel).
+    const nomSouhaite = filename || libelle || 'facture';
+    const attachmentUri = sourceUri ? await preparerPieceJointe(sourceUri, nomSouhaite) : undefined;
+
     await MailComposer.composeAsync({
       recipients: [CHAINTRUST_CAPTURE_EMAIL],
       subject: `Facture - ${libelle}`,
