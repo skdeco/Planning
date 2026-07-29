@@ -875,6 +875,22 @@ export interface DepenseChantier {
   createdBy?: string;       // nom de l'admin qui a saisi
 }
 
+/** Fiche fournisseur (carnet d'adresses fournisseurs, personnalisable par l'admin) */
+export interface Fournisseur {
+  id: string;
+  nom: string;              // raison sociale / nom (obligatoire, sert de clé d'affichage)
+  categorie?: string;       // spécialité (ex: Placo, Électricité, Carrelage, Peinture…)
+  contact?: string;         // nom de l'interlocuteur
+  telephone?: string;
+  email?: string;
+  adresse?: string;
+  siteWeb?: string;
+  siret?: string;
+  rib?: string;             // IBAN / RIB pour règlements
+  notes?: string;           // remarques libres (délais, conditions, remises…)
+  createdAt?: string;
+}
+
 /** Un supplément (travaux non prévus au devis) */
 export interface SupplementChantier {
   id: string;
@@ -1449,7 +1465,8 @@ export interface AppData {
   magasinPrefere?: string;         // Magasin préféré pour vérifier la dispo (ex: "Leroy Merlin Ivry-sur-Seine")
   metiersPerso?: MetierPerso[];    // Métiers personnalisés ajoutés par l'admin
   budgetsChantier?: Record<string, number>; // Budget prévisionnel par chantierId
-  fournisseurs?: string[];         // Liste de fournisseurs prédéfinis (personnalisable par l'admin)
+  fournisseurs?: string[];         // [Legacy] noms de fournisseurs — migré vers fournisseursFiches, conservé pour rétrocompat
+  fournisseursFiches?: Fournisseur[]; // Carnet d'adresses fournisseurs (fiches détaillées)
   // Plans chantier
   plansChantier?: Record<string, any>;
   // Présences forcées : jours où l'employé était présent sans pointer

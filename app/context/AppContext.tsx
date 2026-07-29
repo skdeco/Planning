@@ -212,9 +212,12 @@ interface AppContextType {
   deleteMetierPerso: (id: string) => void;
   // Budget prévisionnel par chantier
   updateBudgetChantier: (chantierId: string, budget: number | undefined) => void;
-  // Fournisseurs prédéfinis
+  // Fournisseurs prédéfinis (legacy par nom) + fiches détaillées
   addFournisseur: (nom: string) => void;
   deleteFournisseur: (nom: string) => void;
+  addFournisseurFiche: (f: import('@/app/types').Fournisseur) => void;
+  updateFournisseurFiche: (f: import('@/app/types').Fournisseur) => void;
+  deleteFournisseurFiche: (id: string) => void;
   // Ordre affectations (multi-chantiers même jour)
   updateOrdreAffectation: (employeId: string, date: string, orderedChantierIds: string[]) => void;
   // Ordre personnalisé des chantiers dans la vue Planning (réorganisation par long-press)
@@ -372,6 +375,38 @@ function isDemoData(d: AppData): boolean {
   return allEmpDemo && allChDemo;
 }
 
+/** Slug stable pour l'id d'une fiche fournisseur (déterministe à partir du nom). */
+export function fournisseurSlug(nom: string): string {
+  // NFD décompose les accents en marques combinantes ; [^a-z0-9] les retire ensuite.
+  const base = (nom || '').trim().toLowerCase().normalize('NFD')
+    .replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '').slice(0, 40);
+  return 'f_' + (base || 'x');
+}
+
+/**
+ * Migration douce : construit les fiches fournisseurs à partir des noms déjà
+ * présents (liste legacy `fournisseurs`, dépenses/achats, listes de matériaux).
+ * Idempotente (id déterministe via le nom). N'écrase jamais des fiches existantes.
+ */
+function migrerFournisseursFiches(parsed: Record<string, any>): import('@/app/types').Fournisseur[] {
+  const noms = new Set<string>();
+  (parsed.fournisseurs || []).forEach((n: string) => { if (n && n.trim()) noms.add(n.trim()); });
+  const depenses = parsed.depenses || parsed.depensesChantier || [];
+  depenses.forEach((d: any) => { if (d && d.fournisseur && String(d.fournisseur).trim()) noms.add(String(d.fournisseur).trim()); });
+  (parsed.listesMateriaux || []).forEach((l: any) => (l.items || []).forEach((it: any) => {
+    if (it && it.fournisseur && String(it.fournisseur).trim()) noms.add(String(it.fournisseur).trim());
+  }));
+  const seen = new Set<string>();
+  const fiches: import('@/app/types').Fournisseur[] = [];
+  noms.forEach((nom) => {
+    const key = nom.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
+    fiches.push({ id: fournisseurSlug(nom), nom });
+  });
+  return fiches;
+}
+
 function migrateData(parsed: Record<string, any>): AppData {
   // IMPORTANT : cette fonction ne doit JAMAIS supprimer de données existantes.
   // Elle ne fait qu'ajouter les champs manquants avec des valeurs par défaut.
@@ -444,6 +479,7 @@ function migrateData(parsed: Record<string, any>): AppData {
     // Notes chantier (ne jamais écraser)
     notesChantier: parsed.notesChantier || [],
     catalogueArticles: parsed.catalogueArticles || [],
+    fournisseursFiches: parsed.fournisseursFiches || migrerFournisseursFiches(parsed),
     agendaEvents: parsed.agendaEvents || [],
     notesChantierSupprimees: parsed.notesChantierSupprimees || [],
     // Galerie photos (ne jamais écraser)
@@ -1728,11 +1764,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addBadgeEmploye = (b: import('@/app/types').BadgeEmploye) =>
     setData(p => ({ ...p, badgesEmployes: [...(p.badgesEmployes || []), b] }));
 
-  // Fournisseurs prédéfinis
+  // Fournisseurs — fiches détaillées (carnet d'adresses)
+  const addFournisseurFiche = (f: import('@/app/types').Fournisseur) =>
+    setData(p => ({ ...p, fournisseursFiches: [...(p.fournisseursFiches || []), f] }));
+  const updateFournisseurFiche = (f: import('@/app/types').Fournisseur) =>
+    setData(p => ({ ...p, fournisseursFiches: (p.fournisseursFiches || []).map(x => (x.id === f.id ? f : x)) }));
+  const deleteFournisseurFiche = (id: string) =>
+    setData(p => ({ ...p, fournisseursFiches: (p.fournisseursFiches || []).filter(x => x.id !== id) }));
+
+  // Legacy (compat) : ajout/suppression par nom → agit désormais sur les fiches.
   const addFournisseur = (nom: string) =>
-    setData(p => ({ ...p, fournisseurs: [...new Set([...(p.fournisseurs || []), nom.trim()])] }));
+    setData(p => {
+      const n = nom.trim();
+      if (!n) return p;
+      const fiches = p.fournisseursFiches || [];
+      if (fiches.some(x => x.nom.trim().toLowerCase() === n.toLowerCase())) return p;
+      const fiche: import('@/app/types').Fournisseur = { id: fournisseurSlug(n), nom: n, createdAt: new Date().toISOString() };
+      return { ...p, fournisseursFiches: [...fiches, fiche] };
+    });
   const deleteFournisseur = (nom: string) =>
-    setData(p => ({ ...p, fournisseurs: (p.fournisseurs || []).filter(f => f !== nom) }));
+    setData(p => ({ ...p, fournisseursFiches: (p.fournisseursFiches || []).filter(x => x.nom.trim().toLowerCase() !== nom.trim().toLowerCase()) }));
 
   // Apporteurs (architectes / apporteurs d'affaires)
   const addApporteur = (a: import('@/app/types').Apporteur) =>
@@ -2066,6 +2117,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere,
       addMetierPerso, deleteMetierPerso, updateBudgetChantier,
       addFournisseur, deleteFournisseur,
+      addFournisseurFiche, updateFournisseurFiche, deleteFournisseurFiche,
       updateOrdreAffectation,
       updateChantierOrderPlanning,
       addArticleCatalogue, updateArticleCatalogue, deleteArticleCatalogue,

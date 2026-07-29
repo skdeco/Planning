@@ -17,6 +17,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { ScreenContainer } from '@/components/screen-container';
 import type { ListeMateriau, MateriauItem } from '@/app/types';
 import { CatalogueArticles } from '@/components/CatalogueArticles';
+import { FournisseursManager } from '@/components/fournisseurs/FournisseursManager';
 import { SelectField } from '@/components/ui/SelectField';
 import { router } from 'expo-router';
 import { apiCall } from '@/lib/_core/api';
@@ -187,8 +188,9 @@ export default function MaterielScreen() {
   const [newFournisseur, setNewFournisseur] = useState('');
   const inputRef = useRef<TextInput>(null);
 
-  // Fournisseurs prédéfinis + ceux utilisés dans les articles
+  // Fournisseurs : fiches du carnet + legacy + ceux utilisés dans les articles
   const fournisseursList = [...new Set([
+    ...(data.fournisseursFiches || []).map(f => f.nom).filter(Boolean),
     ...(data.fournisseurs || []),
     ...(data.listesMateriaux || []).flatMap(l => l.items.map(i => i.fournisseur).filter(Boolean) as string[]),
   ])].sort();
@@ -1113,56 +1115,11 @@ export default function MaterielScreen() {
         </Pressable>
       </ModalKeyboard>
 
-      {/* ── Modal Gestion Fournisseurs ── */}
+      {/* ── Modal Gestion Fournisseurs (carnet d'adresses / fiches détaillées) ── */}
       <ModalKeyboard visible={showFournisseurModal} transparent animationType="fade" onRequestClose={() => setShowFournisseurModal(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowFournisseurModal(false)}>
-          <Pressable style={[styles.modalContent, { maxHeight: '70%' }]} onPress={e => e.stopPropagation()}>
-            <Text style={styles.modalTitle}>{t.materiel.fournisseursTitle}</Text>
-            <Text style={{ fontSize: 12, color: '#687076', marginBottom: 12 }}>{t.materiel.manageFournisseursDesc}</Text>
-
-            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-              <TextInput
-                style={[styles.input, { flex: 1, marginBottom: 0 }]}
-                placeholder={t.materiel.fournisseurExample}
-                placeholderTextColor="#B0BEC5"
-                value={newFournisseurName}
-                onChangeText={setNewFournisseurName}
-                onSubmitEditing={() => {
-                  if (newFournisseurName.trim()) { addFournisseur(newFournisseurName.trim()); setNewFournisseurName(''); }
-                }}
-              />
-              <Pressable
-                style={{ backgroundColor: newFournisseurName.trim() ? '#2C2C2C' : '#E2E6EA', borderRadius: 10, paddingHorizontal: 14, justifyContent: 'center' }}
-                onPress={() => { if (newFournisseurName.trim()) { addFournisseur(newFournisseurName.trim()); setNewFournisseurName(''); } }}
-                disabled={!newFournisseurName.trim()}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: newFournisseurName.trim() ? '#fff' : '#B0BEC5' }}>+</Text>
-              </Pressable>
-            </View>
-
-            <ScrollView style={{ maxHeight: 300 }}>
-              {(data.fournisseurs || []).length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#B0BEC5', textAlign: 'center', padding: 20 }}>{t.materiel.noFournisseurYet}</Text>
-              ) : (
-                (data.fournisseurs || []).map(f => (
-                  <View key={f} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}>
-                    <Text style={{ fontSize: 14, color: '#11181C' }}>{f}</Text>
-                    <Pressable onPress={() => {
-                      if (Platform.OS === 'web') {
-                        if (window.confirm(`${t.common.delete} "${f}" ?`)) deleteFournisseur(f);
-                      } else {
-                        Alert.alert(t.common.delete, `${t.common.delete} "${f}" ?`, [{ text: t.common.cancel, style: 'cancel' }, { text: t.common.delete, style: 'destructive', onPress: () => deleteFournisseur(f) }]);
-                      }
-                    }}>
-                      <Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text>
-                    </Pressable>
-                  </View>
-                ))
-              )}
-            </ScrollView>
-
-            <Pressable style={[styles.btnSave, { marginTop: 12 }]} onPress={() => setShowFournisseurModal(false)}>
-              <Text style={styles.btnSaveText}>{t.common.close}</Text>
-            </Pressable>
+          <Pressable style={[styles.modalContent, { maxHeight: '85%' }]} onPress={e => e.stopPropagation()}>
+            <FournisseursManager onClose={() => setShowFournisseurModal(false)} />
           </Pressable>
         </Pressable>
       </ModalKeyboard>

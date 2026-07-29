@@ -60,6 +60,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { DocInboxButton } from '@/components/share/DocInboxButton';
+import { FournisseurPicker } from '@/components/fournisseurs/FournisseurPicker';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
@@ -2429,8 +2430,9 @@ export default function ChantiersScreen() {
                               <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
                                 value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
                             </View>
-                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" placeholderTextColor="#9DA6B0" />
+                            <View style={{ marginBottom: 6 }}>
+                              <FournisseurPicker value={achatForm.fournisseur} onChange={v => setAchatForm(f => ({ ...f, fournisseur: v }))} />
+                            </View>
                             <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
                               value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9DA6B0" />
                           </>
@@ -3096,8 +3098,9 @@ export default function ChantiersScreen() {
                               <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
                                 value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
                             </View>
-                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.fournisseur} onChangeText={v => setAchatForm(f => ({ ...f, fournisseur: v }))} placeholder="Fournisseur" placeholderTextColor="#9DA6B0" />
+                            <View style={{ marginBottom: 6 }}>
+                              <FournisseurPicker value={achatForm.fournisseur} onChange={v => setAchatForm(f => ({ ...f, fournisseur: v }))} />
+                            </View>
                             <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
                               value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9DA6B0" />
                           </>

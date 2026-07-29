@@ -2,12 +2,13 @@
  * Hub "Gestion" (admin) — regroupe Reporting, RH et Société en un seul onglet
  * pour alléger la barre de navigation. Chaque carte ouvre l'écran dédié.
  */
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal } from 'react-native';
 import { useRouter } from 'expo-router';
-import { ChartBar, Users, Building2, FolderOpen, ChevronRight } from 'lucide-react-native';
+import { ChartBar, Users, Building2, FolderOpen, ChevronRight, Store } from 'lucide-react-native';
 import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
+import { FournisseursManager } from '@/components/fournisseurs/FournisseursManager';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, space, font } from '@/constants/design';
@@ -26,6 +27,7 @@ export default function GestionScreen() {
   const isAdmin = currentUser?.role === 'admin';
   const router = useRouter();
   const { refreshing, onRefresh } = useRefresh();
+  const [showFournisseurs, setShowFournisseurs] = useState(false);
 
   const nbDemandesEnAttente =
     (data.demandesConge || []).filter(d => d.statut === 'en_attente').length +
@@ -83,8 +85,31 @@ export default function GestionScreen() {
               </Pressable>
             );
           })}
+
+          {/* Carnet fournisseurs (ouvre une modal, pas une route dédiée) */}
+          <Pressable style={styles.card} onPress={() => setShowFournisseurs(true)}>
+            <View style={styles.cardIcon}>
+              <Store size={24} color={DS.bordeaux} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={styles.cardTitleRow}>
+                <Text style={styles.cardTitle}>Fournisseurs</Text>
+              </View>
+              <Text style={styles.cardDesc}>Carnet d'adresses fournisseurs (fiches détaillées)</Text>
+            </View>
+            <ChevronRight size={20} color={DS.textDisabled} />
+          </Pressable>
         </View>
       </ScrollView>
+
+      <Modal visible={showFournisseurs} animationType="slide" transparent onRequestClose={() => setShowFournisseurs(false)}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
+          <Pressable style={{ flex: 1 }} onPress={() => setShowFournisseurs(false)} />
+          <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: space.lg, height: '88%' }}>
+            <FournisseursManager onClose={() => setShowFournisseurs(false)} />
+          </View>
+        </View>
+      </Modal>
     </ScreenContainer>
   );
 }
