@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { File } from 'expo-file-system';
 import { close, openHostApp, type InitialProps } from 'expo-share-extension';
@@ -109,6 +109,18 @@ export default function ShareExtension(props: InitialProps): React.ReactElement 
       setImporting(false);
     }
   };
+
+  // Import automatique dès qu'un fichier est reçu : l'utilisateur n'a plus à
+  // taper « Importer » — l'app s'ouvre directement sur l'écran de placement.
+  const autoImportedRef = useRef(false);
+  useEffect(() => {
+    if (autoImportedRef.current) return;
+    if (canImport && !importing) {
+      autoImportedRef.current = true;
+      handleImport();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canImport, importing]);
 
   const primaryDisabled = !canImport || importing;
 

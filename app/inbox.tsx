@@ -158,23 +158,22 @@ export default function InboxScreen(): React.ReactElement {
       const up = await uploadInbox(placing, targetChantierId, 'achats');
       if (!up) { setBusy(false); toast.error("L'envoi a échoué"); return; }
 
-      // Détection PDF robuste (mimeType OU extension du nom OU de l'URL).
-      const isPdf = placing.mimeType === 'application/pdf'
-        || /\.pdf$/i.test(placing.filename || '')
-        || /\.pdf(\?|$)/i.test(up.url);
-
-      // Lecture automatique HT/TTC + fournisseur (PDF avec texte uniquement, gratuit).
+      // Lecture automatique HT/TTC + fournisseur. On tente TOUJOURS l'extraction
+      // (l'endpoint renvoie du texte pour un PDF, rien pour une image → sans risque).
+      // Une reprise après un court délai couvre la propagation du fichier fraîchement uploadé.
       let ht: number | null = null, ttc: number | null = null, fournisseur: string | null = null;
-      if (isPdf) {
-        try {
-          const texte = await extractTextFromPdfUrl(up.url);
-          if (texte) {
-            const totaux = extraireTotauxFacture(texte);
-            ht = totaux.ht; ttc = totaux.ttc;
-            fournisseur = extraireFournisseur(texte, (data.fournisseursFiches || []).map(f => f.nom));
-          }
-        } catch { /* saisie manuelle si échec */ }
-      }
+      try {
+        let texte = await extractTextFromPdfUrl(up.url);
+        if (!texte) {
+          await new Promise(r => setTimeout(r, 1500));
+          texte = await extractTextFromPdfUrl(up.url);
+        }
+        if (texte) {
+          const totaux = extraireTotauxFacture(texte);
+          ht = totaux.ht; ttc = totaux.ttc;
+          fournisseur = extraireFournisseur(texte, (data.fournisseursFiches || []).map(f => f.nom));
+        }
+      } catch { /* saisie manuelle si échec */ }
 
       const libelle = genererNomAchatAuto();
       const depense: DepenseChantier = {
