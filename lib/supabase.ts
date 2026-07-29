@@ -541,7 +541,13 @@ function mimeToExt(mimeType: string): string {
 export async function uploadFileToStorage(
   uri: string,
   folder: string,
-  fileId: string
+  fileId: string,
+  /**
+   * Type MIME connu de l'appelant (ex: 'application/pdf'). Utilisé pour choisir
+   * l'extension quand l'URI n'en porte pas de fiable (cache DocumentPicker) —
+   * évite qu'un PDF soit stocké/joint en .jpg (illisible).
+   */
+  mimeTypeHint?: string,
 ): Promise<string | null> {
   try {
     if (uri.startsWith('http')) return uri;
@@ -625,14 +631,20 @@ export async function uploadFileToStorage(
 
     // ── file:// ou content:// URI ──
     // Détecter l'extension depuis l'URI
-    const uriLower = uri.toLowerCase();
-    const ext = uriLower.endsWith('.pdf') ? 'pdf'
+    const uriLower = uri.toLowerCase().split('?')[0];
+    let ext = uriLower.endsWith('.pdf') ? 'pdf'
       : uriLower.endsWith('.png') ? 'png'
       : uriLower.endsWith('.webp') ? 'webp'
-      : 'jpg';
+      : uriLower.endsWith('.gif') ? 'gif'
+      : (uriLower.endsWith('.jpg') || uriLower.endsWith('.jpeg')) ? 'jpg'
+      : '';
+    // URI sans extension fiable (cache DocumentPicker…) → on se fie au MIME fourni.
+    if (!ext && mimeTypeHint) ext = mimeToExt(mimeTypeHint);
+    if (!ext) ext = 'jpg';
     const contentType = ext === 'pdf' ? 'application/pdf'
       : ext === 'png' ? 'image/png'
       : ext === 'webp' ? 'image/webp'
+      : ext === 'gif' ? 'image/gif'
       : 'image/jpeg';
 
     const path = `${folder}/${fileId}.${ext}`;

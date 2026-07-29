@@ -2360,7 +2360,7 @@ export default function ChantiersScreen() {
                               try {
                                 const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
                                 if (!files || files.length === 0) return;
-                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${ficheId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
+                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${ficheId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, files[0].mimeType);
                                 if (url) { setAchatFichierUri(url); void analyserFacture(url); }
                               } catch (err) {
                                 console.error('Upload achat échoué', err);
@@ -3033,7 +3033,7 @@ export default function ChantiersScreen() {
                                 const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
                                 if (!files || files.length === 0) return;
                                 setAchatFichierLocalUri(files[0].uri);
-                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${achatsChantierId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
+                                const url = await uploadFileToStorage(files[0].uri, `chantiers/${achatsChantierId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`, files[0].mimeType);
                                 if (url) { setAchatFichierUri(url); void analyserFacture(url); }
                               } catch (err) {
                                 console.error('Upload achat échoué', err);
