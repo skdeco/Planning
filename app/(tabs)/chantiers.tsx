@@ -61,6 +61,8 @@ import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButto
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { FournisseurPicker } from '@/components/fournisseurs/FournisseurPicker';
+import { extractTextFromPdfUrl } from '@/lib/pdfExtract';
+import { extraireTotauxFacture } from '@/lib/factureParser';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
@@ -338,6 +340,28 @@ export default function ChantiersScreen() {
   const [editAchatId, setEditAchatId] = useState<string | null>(null);
   const [showDetailsAchat, setShowDetailsAchat] = useState(false);
   const [achatForm, setAchatForm] = useState({ libelle: '', montantHT: '', montantTTC: '', date: '', fournisseur: '', fichier: '', note: '' });
+  const [achatAnalyse, setAchatAnalyse] = useState(false); // analyse PDF facture en cours
+
+  // Détection automatique HT/TTC depuis la facture PDF (extraction texte gratuite + regex).
+  // Ne remplit que les champs vides — l'utilisateur vérifie/corrige toujours.
+  const analyserFacture = async (url: string | null) => {
+    if (!url || !/\.pdf(\?|$)/i.test(url)) return; // PDF uniquement (une photo n'a pas de texte)
+    setAchatAnalyse(true);
+    try {
+      const texte = await extractTextFromPdfUrl(url);
+      if (!texte) { toast.info('Facture ajoutée — montants à saisir'); return; }
+      const { ht, ttc } = extraireTotauxFacture(texte);
+      if (ht == null && ttc == null) { toast.info('Aucun montant détecté — saisie manuelle'); return; }
+      setAchatForm(f => ({
+        ...f,
+        montantHT: f.montantHT.trim() ? f.montantHT : (ht != null ? String(ht).replace('.', ',') : f.montantHT),
+        montantTTC: f.montantTTC.trim() ? f.montantTTC : (ttc != null ? String(ttc).replace('.', ',') : f.montantTTC),
+      }));
+      setShowDetailsAchat(true);
+      toast.success('Montants détectés — à vérifier');
+    } catch { /* silencieux : saisie manuelle */ }
+    finally { setAchatAnalyse(false); }
+  };
   // Menu actions chantier
   const [actionChantier, setActionChantier] = useState<Chantier | null>(null);
   // Retour au dashboard chantier après fermeture d'un onglet (panel) — mémorise
@@ -2387,15 +2411,15 @@ export default function ChantiersScreen() {
                                 const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
                                 if (!files || files.length === 0) return;
                                 const url = await uploadFileToStorage(files[0].uri, `chantiers/${ficheId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
-                                if (url) setAchatFichierUri(url);
+                                if (url) { setAchatFichierUri(url); void analyserFacture(url); }
                               } catch (err) {
                                 console.error('Upload achat échoué', err);
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Ajouter une facture</Text>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
                           </Pressable>
-                          <DocInboxButton folder={`chantiers/${ficheId}/achats`} onUploaded={({ url }) => setAchatFichierUri(url)} />
+                          <DocInboxButton folder={`chantiers/${ficheId}/achats`} onUploaded={({ url }) => { setAchatFichierUri(url); void analyserFacture(url); }} />
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
@@ -3055,15 +3079,15 @@ export default function ChantiersScreen() {
                                 if (!files || files.length === 0) return;
                                 setAchatFichierLocalUri(files[0].uri);
                                 const url = await uploadFileToStorage(files[0].uri, `chantiers/${achatsChantierId}/achats`, `achat_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`);
-                                if (url) setAchatFichierUri(url);
+                                if (url) { setAchatFichierUri(url); void analyserFacture(url); }
                               } catch (err) {
                                 console.error('Upload achat échoué', err);
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>Ajouter une facture</Text>
+                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
                           </Pressable>
-                          <DocInboxButton folder={`chantiers/${achatsChantierId}/achats`} onUploaded={({ url }) => setAchatFichierUri(url)} />
+                          <DocInboxButton folder={`chantiers/${achatsChantierId}/achats`} onUploaded={({ url }) => { setAchatFichierUri(url); void analyserFacture(url); }} />
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
