@@ -102,7 +102,7 @@ export default function ShareExtension(props: InitialProps): React.ReactElement 
         return;
       }
 
-      openHostApp('/');
+      openHostApp('/inbox');
     } catch (err) {
       console.warn('[ShareExtension] import failed', err);
       setError("Erreur lors de l'import. Réessayez.");

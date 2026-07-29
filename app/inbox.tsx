@@ -2,7 +2,7 @@
 // (manifest AppGroup). Consultation, suppression, et « Placer dans… » :
 // assigner un fichier à un chantier + une destination (Documents / Plans / Photos).
 
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Alert,
   ActivityIndicator,
@@ -25,6 +25,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { genererNomAchatAuto } from '@/lib/achats/genererNomAuto';
 import { extractTextFromPdfUrl } from '@/lib/pdfExtract';
 import { extraireTotauxFacture, extraireFournisseur } from '@/lib/factureParser';
+import { envoyerFactureChaintrust } from '@/lib/chaintrust';
 import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie, type DepenseChantier, type PhotoChantier, type PlanChantier } from '@/app/types';
 
 function getFileIcon(mimeType: string): string {
@@ -67,6 +68,19 @@ export default function InboxScreen(): React.ReactElement {
     () => [...(data.chantiers || [])].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')),
     [data.chantiers],
   );
+
+  // Arrivée depuis le partage iOS : si un seul fichier fraîchement reçu attend,
+  // on ouvre directement « Placer dans… » (choix chantier + destination) plutôt
+  // que de laisser l'utilisateur chercher le bouton.
+  const autoOpenedRef = useRef(false);
+  useEffect(() => {
+    if (autoOpenedRef.current || placing) return;
+    if (items.length === 1 && Date.now() - items[0].createdAt < 5 * 60 * 1000) {
+      autoOpenedRef.current = true;
+      setTargetChantierId(null);
+      setPlacing(items[0]);
+    }
+  }, [items, placing]);
 
   const handleDelete = useCallback((item: InboxItem): void => {
     Alert.alert('Supprimer ce fichier ?', item.filename, [
@@ -144,9 +158,14 @@ export default function InboxScreen(): React.ReactElement {
       const up = await uploadInbox(placing, targetChantierId, 'achats');
       if (!up) { setBusy(false); toast.error("L'envoi a échoué"); return; }
 
+      // Détection PDF robuste (mimeType OU extension du nom OU de l'URL).
+      const isPdf = placing.mimeType === 'application/pdf'
+        || /\.pdf$/i.test(placing.filename || '')
+        || /\.pdf(\?|$)/i.test(up.url);
+
       // Lecture automatique HT/TTC + fournisseur (PDF avec texte uniquement, gratuit).
       let ht: number | null = null, ttc: number | null = null, fournisseur: string | null = null;
-      if (placing.mimeType === 'application/pdf') {
+      if (isPdf) {
         try {
           const texte = await extractTextFromPdfUrl(up.url);
           if (texte) {
@@ -157,10 +176,11 @@ export default function InboxScreen(): React.ReactElement {
         } catch { /* saisie manuelle si échec */ }
       }
 
+      const libelle = genererNomAchatAuto();
       const depense: DepenseChantier = {
         id: rid('dep'),
         chantierId: targetChantierId,
-        libelle: genererNomAchatAuto(),
+        libelle,
         montant: ht ?? 0,
         montantTTC: ttc ?? undefined,
         date: new Date().toISOString().slice(0, 10),
@@ -177,6 +197,8 @@ export default function InboxScreen(): React.ReactElement {
       } else {
         toast.info('Facture classée — pensez à renseigner le montant dans Achats');
       }
+      // Envoi automatique vers Chaintrust (comme le formulaire d'achat direct).
+      void envoyerFactureChaintrust(null, up.url, libelle);
     } catch { setBusy(false); toast.error("L'envoi a échoué"); }
   };
 
