@@ -806,7 +806,12 @@ export default function MaterielScreen() {
                     sansFournisseur.push(item);
                   }
                 });
-                const fournisseurs = Object.keys(parFournisseur).sort();
+                // Tri alphabétique des articles à l'intérieur de chaque groupe
+                const parTexte = (a: typeof itemsActifs[0], b: typeof itemsActifs[0]) =>
+                  (a.texte || '').localeCompare(b.texte || '', 'fr', { sensitivity: 'base' });
+                Object.keys(parFournisseur).forEach(f => parFournisseur[f].sort(parTexte));
+                sansFournisseur.sort(parTexte);
+                const fournisseurs = Object.keys(parFournisseur).sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' }));
                 const renderItemAcheteur = (item: typeof itemsActifs[0]) => {
                   const emp = data.employes.find(e => e.id === item.employeId);
                   return (

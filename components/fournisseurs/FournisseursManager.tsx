@@ -24,7 +24,7 @@ const EMPTY: Fournisseur = { id: '', nom: '' };
 export function FournisseursManager({ onClose, title = 'Fournisseurs' }: Props) {
   const { data, addFournisseurFiche, updateFournisseurFiche, deleteFournisseurFiche } = useApp();
   const fiches = useMemo(
-    () => [...(data.fournisseursFiches || [])].sort((a, b) => (a.nom || '').localeCompare(b.nom || '')),
+    () => [...(data.fournisseursFiches || [])].sort((a, b) => (a.nom || '').localeCompare(b.nom || '', 'fr', { sensitivity: 'base' })),
     [data.fournisseursFiches],
   );
   const [recherche, setRecherche] = useState('');

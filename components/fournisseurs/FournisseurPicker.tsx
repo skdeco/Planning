@@ -21,7 +21,7 @@ export function FournisseurPicker({ value, onChange, placeholder = 'Choisir un f
   const [q, setQ] = useState('');
 
   const noms = useMemo(
-    () => [...new Set((data.fournisseursFiches || []).map(f => f.nom).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    () => [...new Set((data.fournisseursFiches || []).map(f => f.nom).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'fr', { sensitivity: 'base' })),
     [data.fournisseursFiches],
   );
   const filtered = useMemo(() => {
