@@ -234,7 +234,13 @@ export default function MaterielScreen() {
   const toutesListes = (data.listesMateriaux || []).filter(matchSearch);
 
   // ── Grouper par chantier pour la vue acheteur ──
-  const listesParChantier = chantiersVisibles.map(c => ({
+  // L'acheteur (admin OU employé acheteur) doit voir TOUS les chantiers actifs
+  // pour acheter — pas seulement ceux où il est affecté (sinon liste vide alors
+  // que le compteur affiche des articles). L'onglet est déjà réservé aux acheteurs.
+  const chantiersAcheteur = isAcheteur
+    ? data.chantiers.filter(c => c.statut !== 'termine')
+    : chantiersVisibles;
+  const listesParChantier = chantiersAcheteur.map(c => ({
     chantier: c,
     listes: toutesListes.filter(l => l.chantierId === c.id),
   })).filter(g => g.listes.length > 0);
