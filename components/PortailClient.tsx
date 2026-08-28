@@ -95,7 +95,7 @@ const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contract
 ];
 
 export function PortailClient({ visible, onClose, chantierId }: PortailClientProps) {
-  const { data, currentUser, updateChantier, updateMarcheChantier, updateSupplementMarche, addPlanChantier, deletePlanChantier, addVersementClient, deleteVersementClient } = useApp();
+  const { data, currentUser, updateChantier, updateMarcheChantier, updateSupplementMarche, addPlanChantier, deletePlanChantier, archivePlanChantier, addVersementClient, deleteVersementClient } = useApp();
   const isAdmin = currentUser?.role === 'admin';
   const isExterne = currentUser?.role === 'apporteur';
   const externAp = isExterne ? (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId) : undefined;
@@ -2152,6 +2152,27 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           <Text style={[styles.planShareText, plan.partageExterne === false && styles.planSharePriveText]}>
                             {plan.partageExterne === false ? 'Privé' : 'Partagé'}
                           </Text>
+                        </Pressable>
+                      )}
+                      {isAdmin && (
+                        <Pressable
+                          onPress={() => {
+                            const doArch = () => archivePlanChantier(chantierId, plan.id);
+                            const message = `Archiver le plan "${plan.nom}" ? Il restera consultable dans les plans archivés.`;
+                            if (Platform.OS === 'web') {
+                              if (window.confirm(message)) doArch();
+                            } else {
+                              Alert.alert('Archiver ce plan ?', plan.nom, [
+                                { text: 'Annuler', style: 'cancel' },
+                                { text: 'Archiver', onPress: doArch },
+                              ]);
+                            }
+                          }}
+                          style={{ padding: 6 }}
+                          accessibilityRole="button"
+                          accessibilityLabel={`Archiver ${plan.nom}`}
+                        >
+                          <Text style={{ fontSize: 14 }}>📁</Text>
                         </Pressable>
                       )}
                       {isAdmin && (

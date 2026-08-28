@@ -199,6 +199,9 @@ interface AppContextType {
   // Plans chantier
   addPlanChantier: (chantierId: string, plan: PlanChantier) => void;
   deletePlanChantier: (chantierId: string, planId: string) => void;
+  // Archivage manuel d'un plan (réversible) — V11
+  archivePlanChantier: (chantierId: string, planId: string) => void;
+  unarchivePlanChantier: (chantierId: string, planId: string) => void;
   // PV de réception
   upsertPVReception: (chantierId: string, pv: PVReception) => void;
   deletePVReception: (chantierId: string) => void;
@@ -1726,6 +1729,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   };
 
+  // Archivage manuel d'un plan — à la guise de l'admin (V11).
+  // Ne touche pas au fichier Storage : le plan reste consultable dans
+  // « Anciens plans archivés ». Pas de replacedById (pas de versioning).
+  const archivePlanChantier = (chantierId: string, planId: string) =>
+    setData(p => ({
+      ...p,
+      chantiers: p.chantiers.map(c =>
+        c.id === chantierId && c.fiche
+          ? {
+              ...c,
+              fiche: {
+                ...c.fiche,
+                plans: (c.fiche.plans || []).map(pl =>
+                  pl.id === planId && !pl.archivedAt
+                    ? { ...pl, archivedAt: new Date().toISOString() }
+                    : pl
+                ),
+              },
+            }
+          : c
+      ),
+    }));
+
+  // Restauration d'un plan archivé : efface archivedAt et replacedById.
+  const unarchivePlanChantier = (chantierId: string, planId: string) =>
+    setData(p => ({
+      ...p,
+      chantiers: p.chantiers.map(c =>
+        c.id === chantierId && c.fiche
+          ? {
+              ...c,
+              fiche: {
+                ...c.fiche,
+                plans: (c.fiche.plans || []).map(pl => {
+                  if (pl.id !== planId || !pl.archivedAt) return pl;
+                  const { archivedAt: _a, replacedById: _r, ...rest } = pl;
+                  return rest as PlanChantier;
+                }),
+              },
+            }
+          : c
+      ),
+    }));
+
   // ── PV de réception ──
   const upsertPVReception = (chantierId: string, pv: PVReception) =>
     setData(p => ({
@@ -2111,7 +2158,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       importAllData,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
-      addPlanChantier, deletePlanChantier,
+      addPlanChantier, deletePlanChantier, archivePlanChantier, unarchivePlanChantier,
       upsertPVReception,
       deletePVReception,
       updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere,

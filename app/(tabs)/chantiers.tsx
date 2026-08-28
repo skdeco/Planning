@@ -186,7 +186,7 @@ const DEFAULT_FORM: ChantierForm = {
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, addDepense, updateDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, archivePlanChantier, unarchivePlanChantier, addDepense, updateDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
   const statutLabel = (k: string) => (t.statutChantier as Record<string, string>)[k] || STATUT_LABELS[k as keyof typeof STATUT_LABELS] || k;
   const metierLabel = (k: string) => (t.cats.metier as Record<string, string>)[k] || METIER_COLORS[k]?.label || k;
@@ -3313,6 +3313,26 @@ export default function ChantiersScreen() {
                           </Pressable>
                           {isAdmin && (
                             <Pressable
+                              style={styles.planArchiveBtn}
+                              onPress={() => {
+                                const message = `Archiver le plan "${plan.nom}" ? Il restera consultable dans « Anciens plans archivés ».`;
+                                if (Platform.OS === 'web') {
+                                  if (window.confirm(message)) archivePlanChantier(plansChantierId!, plan.id);
+                                } else {
+                                  Alert.alert('Archiver ce plan ?', message, [
+                                    { text: t.common.cancel, style: 'cancel' },
+                                    { text: 'Archiver', onPress: () => archivePlanChantier(plansChantierId!, plan.id) },
+                                  ]);
+                                }
+                              }}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Archiver ${plan.nom}`}
+                            >
+                              <Text style={styles.planDeleteBtnText}>📁</Text>
+                            </Pressable>
+                          )}
+                          {isAdmin && (
+                            <Pressable
                               style={styles.planDeleteBtn}
                               onPress={() => {
                                 const allPlansLocal = data.chantiers.find(c => c.id === plansChantierId)?.fiche?.plans || [];
@@ -3373,6 +3393,16 @@ export default function ChantiersScreen() {
                             </View>
                             <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
                           </Pressable>
+                          {isAdmin && (
+                            <Pressable
+                              style={styles.planArchiveBtn}
+                              onPress={() => unarchivePlanChantier(plansChantierId!, plan.id)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Restaurer ${plan.nom}`}
+                            >
+                              <Text style={styles.planDeleteBtnText}>↩️</Text>
+                            </Pressable>
+                          )}
                           {isAdmin && (
                             <Pressable
                               style={styles.planDeleteBtn}
@@ -4594,6 +4624,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: '#FFF0F0',
+    borderLeftWidth: 1,
+    borderLeftColor: '#E2E6EA',
+  },
+  planArchiveBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#F6F3EE',
     borderLeftWidth: 1,
     borderLeftColor: '#E2E6EA',
   },
