@@ -87,7 +87,7 @@ export default function MesChantiersExterne() {
           {(() => {
             const lots = getChantierLots(c, data.marchesChantier, data.supplementsMarche);
             const pct = lots.length ? Math.round(lots.reduce((s, l) => s + (l.pourcentage || 0), 0) / lots.length) : null;
-            const st = STATUT_COLORS[c.statut];
+            const st = STATUT_COLORS[c.statut] ?? STATUT_COLORS.actif;
             return (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
                 {st && (

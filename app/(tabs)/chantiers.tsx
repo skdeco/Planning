@@ -1281,7 +1281,7 @@ export default function ChantiersScreen() {
   }, [data.chantiers, searchQuery, filterContactType, filterContactId, filterStatut, isApporteurUser, currentUser?.apporteurId]);
 
   const renderChantier = ({ item, index }: { item: Chantier; index: number }) => {
-    const statut = STATUT_COLORS[item.statut];
+    const statut = STATUT_COLORS[item.statut] ?? STATUT_COLORS.actif; // fallback statut inconnu (données legacy)
     const assignedEmps = data.employes.filter(e => item.employeIds.includes(e.id));
     const notesActives = getNotesActives(item.id);
     const nbAchats = (data.depenses || data.depensesChantier || []).filter(d => d.chantierId === item.id).length;
@@ -1653,7 +1653,7 @@ export default function ChantiersScreen() {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20 }}>
             {actionChantier && (() => {
               const ch = actionChantier;
-              const statut = STATUT_COLORS[ch.statut];
+              const statut = STATUT_COLORS[ch.statut] ?? STATUT_COLORS.actif;
               const notesCount = getNotesActives(ch.id).length;
               const plansCount = (ch.fiche?.plans || []).filter(p => !p.archivedAt).length;
               const photosCount = (data.photosChantier || []).filter(p => p.chantierId === ch.id).length;
@@ -2151,7 +2151,7 @@ export default function ChantiersScreen() {
                 {(() => {
                   const ch = data.chantiers.find(c => c.id === ficheId);
                   if (!ch) return null;
-                  const statut = STATUT_COLORS[ch.statut];
+                  const statut = STATUT_COLORS[ch.statut] ?? STATUT_COLORS.actif;
                   return (
                     <View style={[styles.statutBadge, { backgroundColor: statut.bg, alignSelf: 'flex-start', marginTop: 6 }]}>
                       <Text style={[styles.statutText, { color: statut.text }]}>{statutLabel(ch.statut)}</Text>

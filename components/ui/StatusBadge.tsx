@@ -161,10 +161,11 @@ export function statutBadgeProps(statut: StatutChantier): {
   bg: string;
   color: string;
 } {
+  const colors = STATUT_COLORS[statut] ?? STATUT_COLORS.actif; // fallback statut inconnu (données legacy)
   return {
-    label: STATUT_LABELS[statut],
-    bg:    STATUT_COLORS[statut].bg,
-    color: STATUT_COLORS[statut].text,
+    label: STATUT_LABELS[statut] ?? String(statut),
+    bg:    colors.bg,
+    color: colors.text,
   };
 }
 
