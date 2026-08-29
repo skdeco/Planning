@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import {
   Info,
   LayoutGrid,
@@ -27,7 +27,6 @@ import {
   Landmark,
   Scale,
   Users,
-  History,
   Flag,
   HardHat,
   FilePlus,
@@ -151,7 +150,6 @@ export function ChantierDetailDashboard({
         { icon: Camera,        label: 'Photos',    key: 'photos',  variant: 'marron',   onPress: handlers.onPressPhotos, badge: counts.photos },
         { icon: ClipboardList, label: 'Suivis CR', key: 'suivis',  variant: 'bordeaux', onPress: handlers.onPressSuivis, badge: counts.notesPlanning },
         { icon: CalendarRange, label: 'Phases',    key: 'phases',  variant: 'bordeaux', onPress: handlers.onPressPhases },
-        { icon: History,       label: 'Journal',   key: 'journal', variant: 'bordeaux', onPress: handlers.onPressJournal },
         { icon: Navigation,    label: 'Y aller',   key: 'yAller',  variant: 'marron',   onPress: handlers.onPressYAller },
       ],
     },
@@ -271,7 +269,9 @@ const styles = StyleSheet.create({
     gap: 8, // V10 Option A : gap réduit pour densité
   },
   tileWrap: {
-    width: '31.8%',
+    // Mobile : 3 colonnes fluides. Web : largeur fixe pour éviter des tuiles
+    // géantes sur grand écran (la grille wrap remplit la ligne naturellement).
+    ...(Platform.OS === 'web' ? { width: 170 } : { width: '31.8%' as const }),
   },
   footer: {
     gap: 8,
