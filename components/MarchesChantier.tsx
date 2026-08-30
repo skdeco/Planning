@@ -270,6 +270,16 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     const devisI = await uploadIfNeeded(marcheDevisInitial, 'marche/devis');
     const devisS = await uploadIfNeeded(marcheDevisSigne, 'marche/devis-signe');
     const now = new Date().toISOString();
+    // Commission activée mais incomplète : on BLOQUE l'enregistrement avec un
+    // message clair (V11 fix : avant, la commission était perdue en silence).
+    if (commissionEnabled && (!commissionForm.apporteurId || !commissionForm.valeur.trim())) {
+      const msg = !commissionForm.apporteurId
+        ? "Commission activée : sélectionne l'apporteur / architecte bénéficiaire."
+        : "Commission activée : saisis le pourcentage ou le montant de la commission (le chiffre grisé n'est qu'un exemple).";
+      if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
+      else Alert.alert('Commission incomplète', msg);
+      return;
+    }
     // Construire la commission si activée et valide
     let commission: CommissionApporteur | undefined;
     if (commissionEnabled && commissionForm.apporteurId && commissionForm.valeur.trim()) {
@@ -297,6 +307,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       dateDevis: marcheForm.dateDevis || undefined,
       dateSignature: marcheForm.dateSignature || undefined,
       paiements: editMarche?.paiements || [],
+      // V11 fix : la modification effaçait les lots d'avancement, les snapshots
+      // et la signature client (champs absents du formulaire) — on les préserve.
+      avancementCorps: editMarche?.avancementCorps,
+      snapshots: editMarche?.snapshots,
+      signatureClientUri: editMarche?.signatureClientUri,
+      signatureClientDate: editMarche?.signatureClientDate,
       commission,
       createdAt: editMarche?.createdAt || now,
       updatedAt: now,

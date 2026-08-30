@@ -130,7 +130,7 @@ export function ImportLotsDevisOverlay({
     detected.forEach((_, i) => { sel[i] = true; });
     setLotsSelection(sel);
     if (detected.length === 0) {
-      const msg = 'Aucun lot détecté. Vérifiez que le texte contient bien des lignes avec un nom et un montant.';
+      const msg = 'Aucun lot détecté. Format attendu, un lot par ligne : « 1 Nom du lot 4 500,00 € » (numéro de lot devant, montant avec décimales). En mode « Saisie », utilisez « Nom : montant ».';
       if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
       else Alert.alert('Aucun lot détecté', msg);
     } else if (remiseInfo) {
@@ -241,7 +241,7 @@ export function ImportLotsDevisOverlay({
                 onChangeText={setImportTexte}
                 placeholder={
                   importMode === 'coller'
-                    ? 'Cloisons placo BA13................. 4 500,00 €\nCarrelage salle de bain............... 3 200,00 €\nÉlectricité (mise aux normes)......... 5 800,00 €\n...'
+                    ? '1 Cloisons placo BA13............... 4 500,00 €\n2 Carrelage salle de bain............ 3 200,00 €\n3 Électricité (mise aux normes)...... 5 800,00 €\n...'
                     : 'Cloisons : 4500\nCarrelage : 3200\nÉlectricité : 5800'
                 }
                 placeholderTextColor={DS.textSecondary}

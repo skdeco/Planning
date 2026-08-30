@@ -218,16 +218,30 @@ export function useNotesModalLogic(
 
   /** Sauvegarde la note (création ou mise à jour). Préservation 1:1. */
   const save = useCallback(() => {
+    // V11 fix : une tâche tapée dans le champ mais non validée par Entrée
+    // était ignorée et Enregistrer ne faisait rien (échec silencieux).
+    // On rattache le texte en attente comme tâche au moment de la sauvegarde.
+    let pendingTasks = draftState.tasks;
+    const pendingText = uiState.newTaskText.trim();
+    if (pendingText && !noteModal?.editingNote) {
+      pendingTasks = [...draftState.tasks, {
+        id: `t_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+        texte: pendingText,
+        fait: false,
+      }];
+      setDraftState(prev => ({ ...prev, tasks: pendingTasks }));
+      setUiState(prev => ({ ...prev, newTaskText: '', showTaskInput: false }));
+    }
     // Accepter la note si texte OU tâches présentes
     const hasTasks = noteModal?.editingNote
       ? (noteModal.editingNote.tasks || []).length > 0
-      : draftState.tasks.length > 0;
+      : pendingTasks.length > 0;
     if (!noteModal || (!draftState.texte.trim() && !hasTasks)) return;
     const { auteurId, auteurNom } = getCurrentAuthor();
     const now = new Date().toISOString();
 
     // Récupérer les tâches : depuis editingNote.tasks (note existante) ou draft.tasks (nouvelle note)
-    const tasksToSave = noteModal.editingNote ? (noteModal.editingNote.tasks || []) : draftState.tasks;
+    const tasksToSave = noteModal.editingNote ? (noteModal.editingNote.tasks || []) : pendingTasks;
 
     // Déterminer la valeur finale de visiblePar
     const finalVisiblePar: Note['visiblePar'] = draftState.visiblePar === 'tous' || draftState.visiblePar === 'employes' || draftState.visiblePar === 'soustraitants'
@@ -301,7 +315,7 @@ export function useNotesModalLogic(
 
     Keyboard.dismiss();
     setUiState(prev => ({ ...prev, showEditor: false }));
-  }, [noteModal, setNoteModal, draftState, isAdmin, currentUser, upsertNote, getCurrentAuthor]);
+  }, [noteModal, setNoteModal, draftState, uiState.newTaskText, isAdmin, currentUser, upsertNote, getCurrentAuthor]);
 
   const close = useCallback(() => {
     if (noteModal && uiState.showEditor && (draftState.texte.trim() || draftState.tasks.length > 0)) {
