@@ -84,7 +84,7 @@ const SAV_STATUT_COLORS: Record<string, { bg: string; text: string }> = {
   ouvert: { bg: '#FFF3CD', text: '#856404' },
   en_cours: { bg: '#D4EDDA', text: '#155724' },
   resolu: { bg: '#D1ECF1', text: '#0C5460' },
-  clos: { bg: '#E2E6EA', text: '#687076' },
+  clos: { bg: '#EDE2D6', text: '#6E5F54' },
 };
 
 // Types de lien contact — ordre d'affichage en chips
@@ -1266,8 +1266,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center' }}>
-            <Text style={{ fontSize: 15, color: '#687076', marginBottom: 16 }}>Chantier introuvable</Text>
-            <Pressable onPress={onClose} style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 }}>
+            <Text style={{ fontSize: 15, color: '#6E5F54', marginBottom: 16 }}>Chantier introuvable</Text>
+            <Pressable onPress={onClose} style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 }}>
               <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Fermer</Text>
             </Pressable>
           </View>
@@ -1562,10 +1562,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 {avenantsEnAttente.map(s => (
                   <View key={s.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C', flex: 1 }} numberOfLines={2}>{s.libelle}</Text>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#8C6D2F' }}>{fmt(s.montantTTC)} €</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E', flex: 1 }} numberOfLines={2}>{s.libelle}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#5C1F2E' }}>{fmt(s.montantTTC)} €</Text>
                     </View>
-                    {s.description ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{s.description}</Text> : null}
+                    {s.description ? <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>{s.description}</Text> : null}
                     {isClient && (
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                         <Pressable onPress={() => repondreAvenant(s, true)} style={{ flex: 1, paddingVertical: 8, alignItems: 'center', backgroundColor: '#2E7D32', borderRadius: 8 }}>
@@ -1605,12 +1605,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         <Text style={styles.pfsResumeLabel}>Avancement des travaux</Text>
                         <Text style={styles.pfsResumeValue}>{avancementGlobalCorps}%</Text>
                       </View>
-                      <View style={{ height: 8, backgroundColor: '#E8DDD0', borderRadius: 4, overflow: 'hidden', marginTop: 6 }}>
-                        <View style={{ height: '100%', width: `${Math.min(100, Math.max(0, avancementGlobalCorps))}%`, backgroundColor: '#C9A96E' }} />
+                      <View style={{ height: 8, backgroundColor: '#EDE2D6', borderRadius: 4, overflow: 'hidden', marginTop: 6 }}>
+                        <View style={{ height: '100%', width: `${Math.min(100, Math.max(0, avancementGlobalCorps))}%`, backgroundColor: '#5C1F2E' }} />
                       </View>
                     </>
                   )}
-                  <View style={[styles.pfsResumeRow, { marginTop: 10, borderTopWidth: 1, borderTopColor: '#E8DDD0', paddingTop: 8 }]}>
+                  <View style={[styles.pfsResumeRow, { marginTop: 10, borderTopWidth: 1, borderTopColor: '#EDE2D6', paddingTop: 8 }]}>
                     <Text style={styles.pfsResumeLabel}>Facturé à ce jour</Text>
                     <Text style={styles.pfsResumeValue}>{fmt(situationsAReglerClient.factureTTC)} €</Text>
                   </View>
@@ -1619,8 +1619,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     <Text style={[styles.pfsResumeValue, { color: '#2E7D32', fontWeight: '700' }]}>{fmt(situationsAReglerClient.paye)} €</Text>
                   </View>
                   <View style={[styles.pfsResumeRow, styles.pfsResumeReste]}>
-                    <Text style={[styles.pfsResumeLabel, { color: '#8C6D2F', fontWeight: '800' }]}>Reste à régler</Text>
-                    <Text style={[styles.pfsResumeValue, { color: '#8C6D2F', fontWeight: '800' }]}>{fmt(situationsAReglerClient.resteADate)} €</Text>
+                    <Text style={[styles.pfsResumeLabel, { color: '#5C1F2E', fontWeight: '800' }]}>Reste à régler</Text>
+                    <Text style={[styles.pfsResumeValue, { color: '#5C1F2E', fontWeight: '800' }]}>{fmt(situationsAReglerClient.resteADate)} €</Text>
                   </View>
                   <Text style={{ fontSize: 11, color: '#B0A99F', marginTop: 8 }}>
                     À terme, reste à régler sur l'ensemble du contrat : {fmt(resteAPayerChantier)} €
@@ -1689,20 +1689,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 {situationsAReglerClient.rows.map(({ s, montantTTC, regle, reste }) => (
                   <View key={s.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
-                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#2C2C2C' }}>{s.intitule}</Text>
-                      <Text style={{ fontSize: 11, color: '#8C8077' }}>{new Date(s.dateGel).toLocaleDateString('fr-FR')}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '800', color: '#5C1F2E' }}>{s.intitule}</Text>
+                      <Text style={{ fontSize: 11, color: '#6E5F54' }}>{new Date(s.dateGel).toLocaleDateString('fr-FR')}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
-                      <Text style={{ fontSize: 12, color: '#687076' }}>Facturé sur cette situation</Text>
-                      <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600' }}>{fmt(montantTTC)} €</Text>
+                      <Text style={{ fontSize: 12, color: '#6E5F54' }}>Facturé sur cette situation</Text>
+                      <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{fmt(montantTTC)} €</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
                       <Text style={{ fontSize: 12, color: '#2E7D32' }}>Réglé</Text>
                       <Text style={{ fontSize: 12, color: '#2E7D32', fontWeight: '600' }}>{fmt(regle)} €</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
-                      <Text style={{ fontSize: 13, color: reste > 0.5 ? '#8C6D2F' : '#2E7D32', fontWeight: '800' }}>Reste à régler</Text>
-                      <Text style={{ fontSize: 13, color: reste > 0.5 ? '#8C6D2F' : '#2E7D32', fontWeight: '800' }}>{reste > 0.5 ? `${fmt(reste)} €` : 'Soldée'}</Text>
+                      <Text style={{ fontSize: 13, color: reste > 0.5 ? '#5C1F2E' : '#2E7D32', fontWeight: '800' }}>Reste à régler</Text>
+                      <Text style={{ fontSize: 13, color: reste > 0.5 ? '#5C1F2E' : '#2E7D32', fontWeight: '800' }}>{reste > 0.5 ? `${fmt(reste)} €` : 'Soldée'}</Text>
                     </View>
                   </View>
                 ))}
@@ -1715,7 +1715,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 <Text style={styles.sectionTitle}>Vos versements</Text>
                 {versementsClient.map((v, i) => (
                   <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderTopWidth: i > 0 ? 1 : 0, borderTopColor: '#F2ECE4' }}>
-                    <Text style={{ fontSize: 13, color: '#687076' }}>{new Date(v.date + 'T12:00:00').toLocaleDateString('fr-FR')}</Text>
+                    <Text style={{ fontSize: 13, color: '#6E5F54' }}>{new Date(v.date + 'T12:00:00').toLocaleDateString('fr-FR')}</Text>
                     <Text style={{ fontSize: 13, fontWeight: '700', color: '#2E7D32' }}>{fmt(v.montant)} €</Text>
                   </View>
                 ))}
@@ -1727,10 +1727,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               <Pressable onPress={() => setShowAvancementDetail(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 4 }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={styles.sectionTitle}>Avancement</Text>
-                  <Text style={{ fontSize: 13, color: '#8C8077' }}>{showAvancementDetail ? '▾' : '▸'}</Text>
+                  <Text style={{ fontSize: 13, color: '#6E5F54' }}>{showAvancementDetail ? '▾' : '▸'}</Text>
                 </View>
                 {avancementGlobalCorps != null && (
-                  <View style={{ backgroundColor: '#C9A96E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
+                  <View style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
                     <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
                   </View>
                 )}
@@ -1741,7 +1741,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               {/* Auto-extraction en cours */}
               {autoExtractLoading && (
                 <View style={styles.autoExtractRow}>
-                  <ActivityIndicator size="small" color="#C9A96E" />
+                  <ActivityIndicator size="small" color="#5C1F2E" />
                   <Text style={styles.autoExtractText}>Extraction automatique des lots...</Text>
                 </View>
               )}
@@ -1753,7 +1753,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               )}
 
               {avancementCorps.length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
+                <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
                   Aucun corps de métier ajouté
                 </Text>
               ) : (
@@ -1766,7 +1766,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           style={{ flex: 1 }}
                         >
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#2C2C2C' }}>
+                            <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>
                               {c.nom}{c.montant && !isClient ? ` — ${fmt(c.montant)} € HT` : ''}
                             </Text>
                             {isLotEnCours(c) && (
@@ -1776,14 +1776,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             )}
                           </View>
                           {(c.dateDebutPrevue || c.dateFinPrevue) && (
-                            <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 2 }}>{c.dateDebutPrevue || '?'} → {c.dateFinPrevue || '?'}
+                            <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>{c.dateDebutPrevue || '?'} → {c.dateFinPrevue || '?'}
                             </Text>
                           )}
                         </Pressable>
                         <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
-                          <Text style={{ fontSize: 13, fontWeight: '800', color: '#C9A96E' }}>{c.pourcentage}%</Text>
+                          <Text style={{ fontSize: 13, fontWeight: '800', color: '#5C1F2E' }}>{c.pourcentage}%</Text>
                           {c.montant && c.pourcentage > 0 && !isClient && (
-                            <Text style={{ fontSize: 10, color: '#8C6D2F', fontWeight: '700', marginTop: 1 }}>
+                            <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '700', marginTop: 1 }}>
                               = {fmt((c.montant || 0) * (c.pourcentage / 100))} €
                             </Text>
                           )}
@@ -1814,10 +1814,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         <View style={{ marginTop: 8 }}>
                           {c.photosAvant && c.photosAvant.length > 0 && (
                             <View style={{ marginBottom: 6 }}>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C8077', marginBottom: 4 }}>AVANT</Text>
+                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#6E5F54', marginBottom: 4 }}>AVANT</Text>
                               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                                 {c.photosAvant.map((p, i) => (
-                                  <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#8C8077' }} />
+                                  <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#6E5F54' }} />
                                 ))}
                               </View>
                             </View>
@@ -1845,15 +1845,15 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             return (
                               <View key={cc.id} style={{
                                 padding: 8, borderRadius: 8,
-                                backgroundColor: isMine ? '#E8DDD0' : '#F1F8F2',
+                                backgroundColor: isMine ? '#EDE2D6' : '#F1F8F2',
                                 borderLeftWidth: 3,
-                                borderLeftColor: unreadByAdmin ? '#E74C3C' : (isMine ? '#8C8077' : '#2E7D32'),
+                                borderLeftColor: unreadByAdmin ? '#E74C3C' : (isMine ? '#6E5F54' : '#2E7D32'),
                               }}>
-                                <Text style={{ fontSize: 10, color: '#8C8077', fontWeight: '700' }}>
+                                <Text style={{ fontSize: 10, color: '#6E5F54', fontWeight: '700' }}>
                                   {cc.auteurNom} ({cc.auteurType}) · {new Date(cc.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                                   {unreadByAdmin ? '  🔴 Non lu' : ''}
                                 </Text>
-                                <Text style={{ fontSize: 12, color: '#2C2C2C', marginTop: 3 }}>{cc.texte}</Text>
+                                <Text style={{ fontSize: 12, color: '#5C1F2E', marginTop: 3 }}>{cc.texte}</Text>
                               </View>
                             );
                           })}
@@ -1863,9 +1863,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       {(isExterne || isAdmin) && (
                         <Pressable
                           onPress={() => openCommentaireClient(c.id)}
-                          style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#FAF7F3', borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' }}
+                          style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' }}
                         >
-                          <Text style={{ fontSize: 11, color: '#8C6D2F', fontWeight: '700' }}>Ajouter un commentaire</Text>
+                          <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '700' }}>Ajouter un commentaire</Text>
                         </Pressable>
                       )}
                       {/* Validation d'étape par le client sur un lot achevé — Tier 3 B */}
@@ -1897,9 +1897,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </View>
                   )}
                   {!isClient && situation.totalHT > 0 && (
-                    <View style={[styles.totalLotsRow, { marginTop: 6, backgroundColor: '#F5EDE3' }]}>
-                      <Text style={[styles.totalLotsLabel, { color: '#8C6D2F' }]}>Cumulé selon avancement</Text>
-                      <Text style={[styles.totalLotsValue, { color: '#8C6D2F' }]}>{fmt(situation.totalHT)} € HT</Text>
+                    <View style={[styles.totalLotsRow, { marginTop: 6, backgroundColor: '#F1E7DC' }]}>
+                      <Text style={[styles.totalLotsLabel, { color: '#5C1F2E' }]}>Cumulé selon avancement</Text>
+                      <Text style={[styles.totalLotsValue, { color: '#5C1F2E' }]}>{fmt(situation.totalHT)} € HT</Text>
                     </View>
                   )}
                   {isAdmin && (
@@ -1939,20 +1939,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       </View>
                       {/* Aperçu PDF inline (web uniquement) pour copier-coller les lots */}
                       {Platform.OS === 'web' && (
-                        <View style={{ marginTop: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: '#E8DDD0', height: 500 }}>
+                        <View style={{ marginTop: 8, borderRadius: 10, overflow: 'hidden', borderWidth: 1, borderColor: '#EDE2D6', height: 500 }}>
                           {/* @ts-ignore — web iframe */}
                           <iframe src={premierDevisUri} style={{ width: '100%', height: '100%', border: 'none' }} title="Devis" />
                         </View>
                       )}
                       {Platform.OS !== 'web' && (
-                        <Text style={{ fontSize: 11, color: '#8C8077', fontStyle: 'italic', marginTop: 6 }}>
+                        <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic', marginTop: 6 }}>
                           Ouvrez le devis sur la version web pour voir l'aperçu et copier-coller les lots.
                         </Text>
                       )}
                     </>
                   ) : (
-                    <View style={{ backgroundColor: '#FFF8E1', borderRadius: 10, padding: 12, marginTop: 6 }}>
-                      <Text style={{ fontSize: 11, color: '#8C6D2F' }}>Aucun devis lié à ce chantier. Uploadez-en un dans 💼 Marchés pour voir l'aperçu ici et extraire automatiquement les lots.
+                    <View style={{ backgroundColor: '#F2E4E1', borderRadius: 10, padding: 12, marginTop: 6 }}>
+                      <Text style={{ fontSize: 11, color: '#5C1F2E' }}>Aucun devis lié à ce chantier. Uploadez-en un dans 💼 Marchés pour voir l'aperçu ici et extraire automatiquement les lots.
                       </Text>
                     </View>
                   )}
@@ -1970,20 +1970,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               <View style={styles.card}>
                 <Pressable onPress={() => setShowRetrocession(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={styles.sectionTitle}>Rétrocession</Text>
-                  <Text style={{ fontSize: 16, color: '#8C6D2F', fontWeight: '800' }}>{showRetrocession ? '▾' : '▸'}</Text>
+                  <Text style={{ fontSize: 16, color: '#5C1F2E', fontWeight: '800' }}>{showRetrocession ? '▾' : '▸'}</Text>
                 </Pressable>
                 {showRetrocession && (<>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5 }}>
-                    <Text style={{ fontSize: 13, color: '#687076', fontWeight: '700' }}>Total</Text>
-                    <Text style={{ fontSize: 14, color: '#2C2C2C', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
+                    <Text style={{ fontSize: 13, color: '#6E5F54', fontWeight: '700' }}>Total</Text>
+                    <Text style={{ fontSize: 14, color: '#5C1F2E', fontWeight: '800' }}>{fmt(maCommission.total)} €</Text>
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
                     <Text style={{ fontSize: 13, color: '#2E7D32' }}>Déjà perçu</Text>
                     <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '700' }}>{fmt(maCommission.paye)} €</Text>
                   </View>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
-                    <Text style={{ fontSize: 13, color: '#8C6D2F', fontWeight: '800' }}>Reste à percevoir</Text>
-                    <Text style={{ fontSize: 14, color: '#8C6D2F', fontWeight: '800' }}>{fmt(maCommission.duDu)} €</Text>
+                    <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '800' }}>Reste à percevoir</Text>
+                    <Text style={{ fontSize: 14, color: '#5C1F2E', fontWeight: '800' }}>{fmt(maCommission.duDu)} €</Text>
                   </View>
                 </>)}
               </View>
@@ -2120,13 +2120,13 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <Text style={styles.sectionTitle}>Plans</Text>
-                <Text style={{ fontSize: 11, color: '#8C8077' }}>
+                <Text style={{ fontSize: 11, color: '#6E5F54' }}>
                   {activePlans.length} plan{activePlans.length > 1 ? 's' : ''}
                 </Text>
               </View>
 
               {activePlans.length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
+                <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
                   Aucun plan ajouté
                 </Text>
               ) : (
@@ -2302,12 +2302,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 )}
               </View>
               {isAdmin && toutesPhotos.length === 0 ? (
-                <View style={{ backgroundColor: '#F5EDE3', borderRadius: 10, padding: 14, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 12, color: '#8C8077', textAlign: 'center', marginBottom: 8 }}>
+                <View style={{ backgroundColor: '#F1E7DC', borderRadius: 10, padding: 14, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 12, color: '#6E5F54', textAlign: 'center', marginBottom: 8 }}>
                     Aucune photo dans la galerie de ce chantier.{'\n'}Ajoutez des photos depuis l'onglet 📸 Photos du chantier.
                   </Text>
                   <Pressable
-                    style={{ backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 }}
+                    style={{ backgroundColor: '#5C1F2E', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 8 }}
                     onPress={() => {
                       onClose();
                       // Laisser le temps au modal de se fermer puis naviguer
@@ -2319,7 +2319,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   </Pressable>
                 </View>
               ) : photosPortail.length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
+                <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
                   Aucune photo sélectionnée pour le portail. Cliquez sur "Sélectionner" pour en choisir.
                 </Text>
               ) : (
@@ -2346,7 +2346,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </Pressable>
               </View>
               {ticketsSAV.length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
+                <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 }}>
                   Aucun ticket SAV pour ce chantier
                 </Text>
               ) : (
@@ -2405,7 +2405,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <Modal visible={pickerType !== null} animationType="fade" transparent onRequestClose={() => setPickerType(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '80%' }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 }}>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 12 }}>
               {pickerType && `${APPORTEUR_TYPE_LABELS[pickerType].emoji} Sélectionner ${APPORTEUR_TYPE_LABELS[pickerType].label}`}
             </Text>
             <ScrollView>
@@ -2413,10 +2413,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 onPress={() => pickerType && handleSelectContact(pickerType, null)}
                 style={styles.pickerRow}
               >
-                <Text style={{ fontSize: 14, color: '#687076', fontStyle: 'italic' }}>— Aucun —</Text>
+                <Text style={{ fontSize: 14, color: '#6E5F54', fontStyle: 'italic' }}>— Aucun —</Text>
               </Pressable>
               {apporteursDuType.length === 0 && (
-                <Text style={{ fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 12 }}>
+                <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 12 }}>
                   Aucun contact de ce type enregistré
                 </Text>
               )}
@@ -2427,14 +2427,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   style={styles.pickerRow}
                 >
                   <View style={{ flex: 1 }}>
-                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>{a.prenom} {a.nom}</Text>
-                    {a.societe && <Text style={{ fontSize: 11, color: '#687076' }}>{a.societe}</Text>}
+                    <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E' }}>{a.prenom} {a.nom}</Text>
+                    {a.societe && <Text style={{ fontSize: 11, color: '#6E5F54' }}>{a.societe}</Text>}
                   </View>
                 </Pressable>
               ))}
             </ScrollView>
-            <Pressable onPress={() => setPickerType(null)} style={{ marginTop: 12, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-              <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+            <Pressable onPress={() => setPickerType(null)} style={{ marginTop: 12, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+              <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
             </Pressable>
           </View>
         </View>
@@ -2444,9 +2444,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <Modal visible={showPhotosPicker} animationType="slide" transparent onRequestClose={() => setShowPhotosPicker(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', flex: 1 }}>
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#E8DDD0' }}>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C' }}>Photos affichées dans le portail</Text>
-              <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E' }}>Photos affichées dans le portail</Text>
+              <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>
                 {selectedPhotoIds.length} / {toutesPhotos.length} sélectionnée(s)
               </Text>
             </View>
@@ -2456,8 +2456,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   const selected = selectedPhotoIds.includes(p.id);
                   return (
                     <Pressable key={p.id} onPress={() => togglePhoto(p.id)} style={{ position: 'relative' }}>
-                      <Image source={{ uri: p.uri }} style={[styles.photo, { width: photoSize, height: photoSize, borderWidth: 3, borderColor: selected ? '#C9A96E' : 'transparent' }]} resizeMode="cover" />
-                      <View style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: selected ? '#C9A96E' : 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' }}>
+                      <Image source={{ uri: p.uri }} style={[styles.photo, { width: photoSize, height: photoSize, borderWidth: 3, borderColor: selected ? '#5C1F2E' : 'transparent' }]} resizeMode="cover" />
+                      <View style={{ position: 'absolute', top: 6, right: 6, width: 22, height: 22, borderRadius: 11, backgroundColor: selected ? '#5C1F2E' : 'rgba(0,0,0,0.4)', alignItems: 'center', justifyContent: 'center' }}>
                         {selected && <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>✓</Text>}
                       </View>
                     </Pressable>
@@ -2465,16 +2465,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 })}
               </View>
               {toutesPhotos.length === 0 && (
-                <Text style={{ fontSize: 13, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 }}>
+                <Text style={{ fontSize: 13, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 }}>
                   Aucune photo dans la galerie du chantier
                 </Text>
               )}
             </ScrollView>
-            <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#E8DDD0' }}>
-              <Pressable onPress={() => setShowPhotosPicker(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+            <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#EDE2D6' }}>
+              <Pressable onPress={() => setShowPhotosPicker(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
-              <Pressable onPress={savePhotosSelection} style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+              <Pressable onPress={savePhotosSelection} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#fff', fontWeight: '700' }}>Enregistrer</Text>
               </Pressable>
             </View>
@@ -2492,19 +2492,19 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             showsVerticalScrollIndicator={false}
           >
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 }}>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 12 }}>
               {editCorpsId
                 ? `Avancement${corpsForm.nom ? ` — ${corpsForm.nom}` : ''}`
                 : 'Ajouter un corps de métier'}
             </Text>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Nom *</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 4 }}>Nom *</Text>
             <TextInput
               style={styles.corpsInp}
               value={corpsForm.nom}
               onChangeText={v => setCorpsForm(f => ({ ...f, nom: v }))}
               placeholder="Ex: Électricité, Plomberie..."
             />
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4, marginTop: 10 }}>Montant (€) — optionnel</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 4, marginTop: 10 }}>Montant (€) — optionnel</Text>
             <TextInput
               style={styles.corpsInp}
               value={corpsForm.montant}
@@ -2512,7 +2512,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               keyboardType="decimal-pad"
               placeholder="5000"
             />
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 4, marginTop: 10 }}>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 4, marginTop: 10 }}>
               Avancement : {corpsForm.pourcentage}%
             </Text>
             {/* 10-step button selector */}
@@ -2523,11 +2523,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   onPress={() => setCorpsForm(f => ({ ...f, pourcentage: v }))}
                   style={{
                     paddingHorizontal: 10, paddingVertical: 8, borderRadius: 8,
-                    backgroundColor: corpsForm.pourcentage === v ? '#C9A96E' : '#F5EDE3',
-                    borderWidth: 1, borderColor: corpsForm.pourcentage === v ? '#C9A96E' : '#E8DDD0',
+                    backgroundColor: corpsForm.pourcentage === v ? '#5C1F2E' : '#F1E7DC',
+                    borderWidth: 1, borderColor: corpsForm.pourcentage === v ? '#5C1F2E' : '#EDE2D6',
                   }}
                 >
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: corpsForm.pourcentage === v ? '#fff' : '#687076' }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: corpsForm.pourcentage === v ? '#fff' : '#6E5F54' }}>
                     {v}%
                   </Text>
                 </Pressable>
@@ -2538,10 +2538,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
 
             {/* Planning prévu (visible par externes) */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Planning prévu</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 16, marginBottom: 6 }}>Planning prévu</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>Début</Text>
+                <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 4 }}>Début</Text>
                 <DatePickerField
                   value={corpsForm.dateDebutPrevue}
                   onChange={v => setCorpsForm(f => ({ ...f, dateDebutPrevue: v }))}
@@ -2549,7 +2549,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: '#687076', marginBottom: 4 }}>Fin</Text>
+                <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 4 }}>Fin</Text>
                 <DatePickerField
                   value={corpsForm.dateFinPrevue}
                   onChange={v => setCorpsForm(f => ({ ...f, dateFinPrevue: v }))}
@@ -2558,12 +2558,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 />
               </View>
             </View>
-            <Text style={{ fontSize: 11, color: '#8C8077', marginTop: 10, fontStyle: 'italic' }}>
+            <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 10, fontStyle: 'italic' }}>
               Le statut "En cours" est automatique : actif si la date d'aujourd'hui est entre le début et la fin prévus.
             </Text>
 
             {/* Commentaire admin (visible par externes) */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Commentaire (visible par le client / apporteur)</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 16, marginBottom: 6 }}>Commentaire (visible par le client / apporteur)</Text>
             <TextInput
               style={[styles.corpsInp, { minHeight: 70, textAlignVertical: 'top' }]}
               value={corpsForm.commentaire}
@@ -2573,7 +2573,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             />
 
             {/* Photos */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Photos attachées ({corpsForm.photos.length})</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 16, marginBottom: 6 }}>Photos attachées ({corpsForm.photos.length})</Text>
             {corpsForm.photos.length > 0 && (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginBottom: 8 }}>
                 {corpsForm.photos.map(uri => (
@@ -2591,16 +2591,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             )}
             <Pressable
               onPress={() => pickPhotoForLot('generic')}
-              style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' }}
+              style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' }}
             >
-              <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>+ Ajouter une photo</Text>
+              <Text style={{ color: '#5C1F2E', fontWeight: '700', fontSize: 12 }}>+ Ajouter une photo</Text>
             </Pressable>
 
             {/* Photos avant / après */}
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 16, marginBottom: 6 }}>Comparatif Avant / Après</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 16, marginBottom: 6 }}>Comparatif Avant / Après</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <View style={{ flex: 1, backgroundColor: '#FAF7F3', borderRadius: 10, padding: 8 }}>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: '#8C8077', marginBottom: 6 }}>AVANT ({lotPhotosAvant.length})</Text>
+              <View style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, padding: 8 }}>
+                <Text style={{ fontSize: 11, fontWeight: '800', color: '#6E5F54', marginBottom: 6 }}>AVANT ({lotPhotosAvant.length})</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
                   {lotPhotosAvant.map(uri => (
                     <View key={uri} style={{ position: 'relative' }}>
@@ -2611,8 +2611,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     </View>
                   ))}
                 </View>
-                <Pressable onPress={() => pickPhotoForLot('avant')} style={{ backgroundColor: '#fff', borderRadius: 8, paddingVertical: 6, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#8C8077' }}>
-                  <Text style={{ fontSize: 11, color: '#8C8077', fontWeight: '700' }}>+ Avant</Text>
+                <Pressable onPress={() => pickPhotoForLot('avant')} style={{ backgroundColor: '#fff', borderRadius: 8, paddingVertical: 6, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#6E5F54' }}>
+                  <Text style={{ fontSize: 11, color: '#6E5F54', fontWeight: '700' }}>+ Avant</Text>
                 </Pressable>
               </View>
               <View style={{ flex: 1, backgroundColor: '#F1F8F2', borderRadius: 10, padding: 8 }}>
@@ -2634,13 +2634,13 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-              <Pressable onPress={() => setShowCorpsForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+              <Pressable onPress={() => setShowCorpsForm(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
               <Pressable
                 onPress={saveCorps}
                 disabled={!corpsForm.nom.trim()}
-                style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: corpsForm.nom.trim() ? 1 : 0.5 }}
+                style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: corpsForm.nom.trim() ? 1 : 0.5 }}
               >
                 <Text style={{ color: '#fff', fontWeight: '700' }}>{editCorpsId ? 'Modifier' : 'Ajouter'}</Text>
               </Pressable>
@@ -2654,14 +2654,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <Modal visible={!!commentaireLotId} animationType="fade" transparent onRequestClose={() => setCommentaireLotId(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 4 }}>Nouveau commentaire</Text>
-            <Text style={{ fontSize: 12, color: '#8C8077', marginBottom: 12 }}>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 4 }}>Nouveau commentaire</Text>
+            <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 12 }}>
               Visible par l'admin et les autres intervenants de ce chantier.
             </Text>
             <TextInput
               style={{
-                backgroundColor: '#FAF7F3', borderRadius: 10, borderWidth: 1.5, borderColor: '#E8DDD0',
-                paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#2C2C2C',
+                backgroundColor: '#FAF5EF', borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6',
+                paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#5C1F2E',
                 minHeight: 120, textAlignVertical: 'top',
               }}
               value={commentaireTexte}
@@ -2671,11 +2671,11 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               autoFocus
             />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-              <Pressable onPress={() => setCommentaireLotId(null)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+              <Pressable onPress={() => setCommentaireLotId(null)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
-              <Pressable onPress={saveCommentaireClient} disabled={!commentaireTexte.trim()} style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !commentaireTexte.trim() ? 0.5 : 1 }}>
-                <Text style={{ color: '#C9A96E', fontWeight: '800' }}>Envoyer</Text>
+              <Pressable onPress={saveCommentaireClient} disabled={!commentaireTexte.trim()} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !commentaireTexte.trim() ? 0.5 : 1 }}>
+                <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Envoyer</Text>
               </Pressable>
             </View>
           </View>
@@ -2686,15 +2686,15 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <Modal visible={showImportDevis} animationType="slide" transparent onRequestClose={() => setShowImportDevis(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', flex: 1 }}>
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#E8DDD0', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C' }}>Importer les lots du devis</Text>
-                <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E' }}>Importer les lots du devis</Text>
+                <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>
                   Détection automatique des corps de métier et montants
                 </Text>
               </View>
-              <Pressable onPress={() => setShowImportDevis(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 16, color: '#2C2C2C', fontWeight: '700' }}>✕</Text>
+              <Pressable onPress={() => setShowImportDevis(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: 16, color: '#5C1F2E', fontWeight: '700' }}>✕</Text>
               </Pressable>
             </View>
 
@@ -2728,7 +2728,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
 
             <ScrollView contentContainerStyle={{ padding: 16 }}>
-              <Text style={{ fontSize: 12, color: '#687076', marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 8 }}>
                 {importMode === 'pdf'
                   ? '🤖 Extraction automatique depuis le PDF déjà uploadé dans Marchés. Cliquez sur le bouton ci-dessous.'
                   : importMode === 'coller'
@@ -2740,16 +2740,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   <Pressable
                     onPress={extraireAutoDepuisPdf}
                     disabled={pdfExtractLoading}
-                    style={{ backgroundColor: '#2C2C2C', borderRadius: 10, padding: 14, alignItems: 'center', opacity: pdfExtractLoading ? 0.5 : 1 }}
+                    style={{ backgroundColor: '#5C1F2E', borderRadius: 10, padding: 14, alignItems: 'center', opacity: pdfExtractLoading ? 0.5 : 1 }}
                   >
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
                       {pdfExtractLoading ? '⏳ Analyse en cours...' : '🤖 Analyser le devis PDF'}
                     </Text>
                   </Pressable>
                   {importTexte && (
-                    <View style={{ marginTop: 12, backgroundColor: '#F5EDE3', borderRadius: 10, padding: 10, maxHeight: 150 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C8077', marginBottom: 4 }}>TEXTE EXTRAIT ({importTexte.length} caractères)</Text>
-                      <ScrollView><Text style={{ fontSize: 11, color: '#1A1A1A' }} numberOfLines={10}>{importTexte.slice(0, 500)}...</Text></ScrollView>
+                    <View style={{ marginTop: 12, backgroundColor: '#F1E7DC', borderRadius: 10, padding: 10, maxHeight: 150 }}>
+                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#6E5F54', marginBottom: 4 }}>TEXTE EXTRAIT ({importTexte.length} caractères)</Text>
+                      <ScrollView><Text style={{ fontSize: 11, color: '#2B1D14' }} numberOfLines={10}>{importTexte.slice(0, 500)}...</Text></ScrollView>
                     </View>
                   )}
                 </View>
@@ -2763,7 +2763,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   placeholder={importMode === 'coller'
                     ? 'Lot 1 - Électricité .... 5 000,00 €\nLot 2 - Plomberie ...... 8 000,00 €\n...'
                     : 'Électricité 5000\nPlomberie 8000'}
-                  placeholderTextColor="#B0BEC5"
+                  placeholderTextColor="#9A8C80"
                   textAlignVertical="top"
                 />
               )}
@@ -2780,7 +2780,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               {/* Résultats */}
               {lotsDetectes.length > 0 && (
                 <View style={{ marginTop: 16 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#2C2C2C', marginBottom: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#5C1F2E', marginBottom: 8 }}>
                     {lotsDetectes.length} lot(s) détecté(s)
                   </Text>
                   {lotsDetectes.map((lot, i) => {
@@ -2799,16 +2799,16 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               )}
             </ScrollView>
 
-            <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#E8DDD0' }}>
-              <Pressable onPress={() => setShowImportDevis(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+            <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#EDE2D6' }}>
+              <Pressable onPress={() => setShowImportDevis(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
               <Pressable
                 onPress={importerLots}
                 disabled={lotsDetectes.length === 0 || Object.values(lotsSelection).every(v => !v)}
                 style={{
                   flex: 1,
-                  backgroundColor: '#2C2C2C',
+                  backgroundColor: '#5C1F2E',
                   borderRadius: 10,
                   paddingVertical: 12,
                   alignItems: 'center',
@@ -2916,10 +2916,10 @@ const styles = StyleSheet.create({
   versSaveTxt: { color: DS.cremeFond, fontWeight: '700', fontSize: 12 },
   versAdd: { fontSize: 12, fontWeight: '700', color: DS.bordeaux, marginTop: 4 },
   infoRow: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#F2ECE4' },
-  infoLabel: { fontSize: 13, color: '#8C8077', fontWeight: '600' },
-  infoVal: { flex: 1, fontSize: 13, color: '#2C2C2C', fontWeight: '700', textAlign: 'right' },
+  infoLabel: { fontSize: 13, color: '#6E5F54', fontWeight: '600' },
+  infoVal: { flex: 1, fontSize: 13, color: '#5C1F2E', fontWeight: '700', textAlign: 'right' },
   header: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingTop: 20,
     paddingBottom: 16,
     paddingHorizontal: 20,
@@ -2935,7 +2935,7 @@ const styles = StyleSheet.create({
   },
   headerAddress: {
     fontSize: 13,
-    color: '#C9A96E',
+    color: '#5C1F2E',
     marginTop: 2,
   },
   closeBtn: {
@@ -2970,17 +2970,17 @@ const styles = StyleSheet.create({
     borderColor: '#F0F0F0',
   },
   contactPrincipalCard: {
-    backgroundColor: '#FAF3E6',
+    backgroundColor: '#F2E4E1',
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
-    borderColor: '#C9A96E',
+    borderColor: '#5C1F2E',
   },
   contactPrincipalLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#8C6D2F',
+    color: '#5C1F2E',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 4,
@@ -2988,11 +2988,11 @@ const styles = StyleSheet.create({
   contactPrincipalName: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   contactPrincipalMeta: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   lienChip: {
@@ -3001,71 +3001,71 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E8DDD0',
-    backgroundColor: '#FAF7F3',
+    borderColor: '#EDE2D6',
+    backgroundColor: '#FAF5EF',
     minWidth: 140,
     flexGrow: 1,
   },
   lienChipLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#8C8077',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
     marginBottom: 2,
   },
   lienChipValue: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '500',
   },
   sectionTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     marginBottom: 12,
     letterSpacing: 0.6,
     textTransform: 'uppercase',
   },
   progressLabel: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 8,
   },
   progressBarBg: {
     height: 16,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 8,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    backgroundColor: '#C9A96E',
+    backgroundColor: '#5C1F2E',
     borderRadius: 8,
   },
   progressPct: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#C9A96E',
+    color: '#5C1F2E',
     textAlign: 'right',
     marginTop: 4,
   },
   corpsBarBg: {
     height: 10,
-    backgroundColor: '#E8DDD0',
+    backgroundColor: '#EDE2D6',
     borderRadius: 5,
     overflow: 'hidden',
     marginTop: 6,
   },
   corpsBarFill: {
     height: '100%',
-    backgroundColor: '#C9A96E',
+    backgroundColor: '#5C1F2E',
     borderRadius: 5,
   },
   addCorpsBtn: {
-    backgroundColor: '#FAF3E6',
+    backgroundColor: '#F2E4E1',
     borderWidth: 1,
-    borderColor: '#C9A96E',
+    borderColor: '#5C1F2E',
     borderStyle: 'dashed',
     borderRadius: 10,
     paddingVertical: 10,
@@ -3075,10 +3075,10 @@ const styles = StyleSheet.create({
   addCorpsBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#8C6D2F',
+    color: '#5C1F2E',
   },
   gererPhotosBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 6,
@@ -3095,7 +3095,7 @@ const styles = StyleSheet.create({
   },
   photo: {
     borderRadius: 10,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   marcheRow: {
     flexDirection: 'row',
@@ -3107,11 +3107,11 @@ const styles = StyleSheet.create({
   marcheLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   marcheMontant: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   marcheStatut: {
@@ -3128,17 +3128,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 8,
     marginTop: 4,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   totalLabel: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   totalValue: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   savRow: {
     flexDirection: 'row',
@@ -3150,11 +3150,11 @@ const styles = StyleSheet.create({
   savObjet: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   savDesc: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   savBadge: {
@@ -3173,17 +3173,17 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: '#C9A96E',
+    backgroundColor: '#5C1F2E',
     marginTop: 5,
   },
   timelineDate: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 2,
   },
   timelineText: {
     fontSize: 13,
-    color: '#11181C',
+    color: '#2B1D14',
     lineHeight: 18,
   },
   buttonsRow: {
@@ -3191,7 +3191,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   partagerBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
@@ -3202,13 +3202,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   fermerBtn: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
   fermerBtnText: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontSize: 15,
     fontWeight: '700',
   },
@@ -3218,20 +3218,20 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5EDE3',
+    borderBottomColor: '#F1E7DC',
   },
   corpsInp: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#E8DDD0',
-    color: '#11181C',
+    borderColor: '#EDE2D6',
+    color: '#2B1D14',
   },
   importDevisBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     borderRadius: 10,
     paddingVertical: 10,
     alignItems: 'center',
@@ -3240,15 +3240,15 @@ const styles = StyleSheet.create({
   importDevisBtnText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#C9A96E',
+    color: '#FFFFFF',
   },
   devisLinkRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 8,
@@ -3258,46 +3258,46 @@ const styles = StyleSheet.create({
   devisLinkText: {
     flex: 1,
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
   },
   devisLinkAction: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#C9A96E',
+    color: '#5C1F2E',
   },
   importTab: {
     flex: 1,
     paddingVertical: 10,
     borderRadius: 10,
     alignItems: 'center',
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
   },
   importTabActive: {
-    backgroundColor: '#2C2C2C',
-    borderColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
+    borderColor: '#5C1F2E',
   },
   importTabText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#687076',
+    color: '#6E5F54',
   },
   importTabTextActive: {
-    color: '#C9A96E',
+    color: '#5C1F2E',
   },
   importTextarea: {
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
     borderRadius: 10,
     padding: 12,
     fontSize: 13,
-    color: '#11181C',
+    color: '#2B1D14',
     minHeight: 180,
   },
   detecterBtn: {
-    backgroundColor: '#C9A96E',
+    backgroundColor: '#5C1F2E',
     borderRadius: 10,
     paddingVertical: 12,
     alignItems: 'center',
@@ -3314,9 +3314,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 10,
     borderRadius: 8,
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
     marginBottom: 6,
     gap: 10,
   },
@@ -3326,33 +3326,33 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     backgroundColor: '#fff',
     borderWidth: 2,
-    borderColor: '#B0BEC5',
+    borderColor: '#9A8C80',
     alignItems: 'center',
     justifyContent: 'center',
   },
   lotCheckboxChecked: {
-    backgroundColor: '#C9A96E',
-    borderColor: '#C9A96E',
+    backgroundColor: '#5C1F2E',
+    borderColor: '#5C1F2E',
   },
   lotNom: {
     flex: 1,
     fontSize: 13,
     fontWeight: '700',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   lotMontant: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#C9A96E',
+    color: '#5C1F2E',
   },
   // ── Auto-extraction indicators ──
   autoExtractRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    backgroundColor: '#FAF3E6',
+    backgroundColor: '#F2E4E1',
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
     borderRadius: 10,
     paddingHorizontal: 12,
     paddingVertical: 10,
@@ -3361,7 +3361,7 @@ const styles = StyleSheet.create({
   autoExtractText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#8C6D2F',
+    color: '#5C1F2E',
   },
   autoExtractToast: {
     backgroundColor: '#DFF5E1',
@@ -3379,9 +3379,9 @@ const styles = StyleSheet.create({
   },
   // ── Re-analyser button ──
   reanalyserBtn: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderWidth: 1,
-    borderColor: '#C9A96E',
+    borderColor: '#5C1F2E',
     borderRadius: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
@@ -3391,33 +3391,33 @@ const styles = StyleSheet.create({
   reanalyserBtnText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#8C6D2F',
+    color: '#5C1F2E',
   },
   totalLotsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: 10,
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginTop: 6,
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
   },
   totalLotsLabel: {
     flex: 1,
     fontSize: 13,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
   totalLotsValue: {
     fontSize: 15,
     fontWeight: '800',
-    color: '#8C6D2F',
+    color: '#5C1F2E',
     textAlign: 'right',
   },
   deleteAllLotsBtn: {
@@ -3438,7 +3438,7 @@ const styles = StyleSheet.create({
   situationTableHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderRadius: 8,
@@ -3448,7 +3448,7 @@ const styles = StyleSheet.create({
   situationColHeader: {
     fontSize: 10,
     fontWeight: '800',
-    color: '#C9A96E',
+    color: '#5C1F2E',
     textTransform: 'uppercase',
     letterSpacing: 0.3,
   },
@@ -3458,17 +3458,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F5EDE3',
+    borderBottomColor: '#F1E7DC',
     gap: 6,
   },
   situationCell: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
   },
   situationTotals: {
     marginTop: 10,
     borderTopWidth: 1,
-    borderTopColor: '#E8DDD0',
+    borderTopColor: '#EDE2D6',
     paddingTop: 8,
   },
   situationTotalRow: {
@@ -3479,42 +3479,42 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
   },
   situationTotalTTC: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     borderRadius: 8,
     marginVertical: 4,
   },
   situationTotalLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   situationTotalValue: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   factureBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     borderRadius: 12,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 12,
   },
   factureBtnText: {
-    color: '#C9A96E',
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '800',
   },
   // ── Point financier de situation ──
   pfsSubtitle: {
     fontSize: 11,
-    color: '#8C8077',
+    color: '#6E5F54',
     marginTop: -6,
     marginBottom: 10,
     fontStyle: 'italic',
   },
   pfsResumeBox: {
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     padding: 12,
     marginBottom: 14,
@@ -3527,35 +3527,35 @@ const styles = StyleSheet.create({
   },
   pfsResumeReste: {
     borderTopWidth: 1,
-    borderTopColor: '#E8DDD0',
+    borderTopColor: '#EDE2D6',
     paddingTop: 8,
     marginTop: 4,
   },
   pfsResumeLabel: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '600',
   },
   pfsResumeValue: {
     fontSize: 14,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '700',
   },
   pfsSectionLabel: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
   },
   pfsHistItem: {
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     padding: 12,
     marginBottom: 10,
     borderLeftWidth: 4,
-    borderLeftColor: '#C9A96E',
+    borderLeftColor: '#5C1F2E',
   },
   pfsHistItemPayee: {
     borderLeftColor: '#2E7D32',
@@ -3564,11 +3564,11 @@ const styles = StyleSheet.create({
   pfsHistNumero: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   pfsHistDate: {
     fontSize: 11,
-    color: '#8C8077',
+    color: '#6E5F54',
     marginTop: 2,
   },
   pfsHistRow: {
@@ -3578,16 +3578,16 @@ const styles = StyleSheet.create({
   },
   pfsHistLabel: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
   },
   pfsHistMontant: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#8C6D2F',
+    color: '#5C1F2E',
   },
   pfsHistSub: {
     fontSize: 12,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '600',
   },
   pfsBadge: {
@@ -3612,7 +3612,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   pfsActionBtn: {
-    backgroundColor: '#E8DDD0',
+    backgroundColor: '#EDE2D6',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -3620,28 +3620,28 @@ const styles = StyleSheet.create({
   pfsActionBtnText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   pfsActionBtnPay: {
     backgroundColor: '#2E7D32',
   },
   pfsActionBtnUndo: {
-    backgroundColor: '#8C8077',
+    backgroundColor: '#6E5F54',
   },
   pfsActionBtnDel: {
     backgroundColor: '#B83A2E',
   },
   pfsBlockedBox: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#F2E4E1',
     borderWidth: 1,
-    borderColor: '#F5EDE3',
+    borderColor: '#F1E7DC',
     borderRadius: 10,
     padding: 12,
     marginTop: 10,
   },
   pfsBlockedText: {
     fontSize: 12,
-    color: '#8C6D2F',
+    color: '#5C1F2E',
     fontWeight: '600',
     lineHeight: 18,
   },
@@ -3652,17 +3652,17 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E8DDD0',
+    borderTopColor: '#EDE2D6',
   },
   subSectionTitle: {
     fontSize: 13,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   lotEnCoursCard: {
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#F2E4E1',
     borderRadius: 10,
     padding: 10,
     borderLeftWidth: 4,
@@ -3680,16 +3680,16 @@ const styles = StyleSheet.create({
     color: '#5A4500',
   },
   lotCommentaireBox: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 8,
     padding: 8,
     marginTop: 6,
     borderLeftWidth: 3,
-    borderLeftColor: '#C9A96E',
+    borderLeftColor: '#5C1F2E',
   },
   lotCommentaireText: {
     fontSize: 12,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     lineHeight: 17,
   },
 
@@ -3700,19 +3700,19 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 6,
     borderTopWidth: 1,
-    borderTopColor: '#F5EDE3',
+    borderTopColor: '#F1E7DC',
   },
   equipeJourLabel: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#687076',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     width: 80,
   },
   equipeJourDate: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     width: 60,
   },
   equipeBadge: {
@@ -3733,25 +3733,25 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
   },
   savCreeparBadge: {
     fontSize: 10,
-    color: '#C9A96E',
+    color: '#5C1F2E',
     marginTop: 2,
     fontStyle: 'italic',
     fontWeight: '600',
   },
   savChevron: {
     fontSize: 18,
-    color: '#C9A96E',
+    color: '#5C1F2E',
     fontWeight: '600',
   },
   savCreerBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
@@ -3769,12 +3769,12 @@ const styles = StyleSheet.create({
     padding: 12,
     marginBottom: 12,
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
   },
   lieAcompactTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     marginBottom: 8,
   },
   lieAcompactRows: { gap: 4 },
@@ -3784,29 +3784,29 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 8,
     borderRadius: 6,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   lieAcompactType: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
     width: 130,
   },
   lieAcompactNom: {
     flex: 1,
     fontSize: 12,
     fontWeight: '600',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   lieAcompactChevron: {
     fontSize: 18,
-    color: '#C9A96E',
+    color: '#5C1F2E',
     marginLeft: 8,
   },
   planShare: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#E7F1EA', marginRight: 4 },
   planShareText: { fontSize: 11, fontWeight: '700', color: '#2E7D5B' },
-  planSharePrive: { backgroundColor: '#F1E8DC' },
-  planSharePriveText: { color: '#8C6D2F' },
+  planSharePrive: { backgroundColor: '#F1E7DC' },
+  planSharePriveText: { color: '#5C1F2E' },
   planRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -3814,16 +3814,16 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     borderRadius: 8,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   planNom: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   planMeta: {
     fontSize: 10,
-    color: '#8C8077',
+    color: '#6E5F54',
     marginTop: 2,
   },
 
@@ -3834,7 +3834,7 @@ const styles = StyleSheet.create({
     maxWidth: 140,
   },
   headerDestinataireLabel: {
-    color: '#C9A96E',
+    color: '#5C1F2E',
     fontSize: 9,
     fontWeight: '700',
     textTransform: 'uppercase',
@@ -3850,17 +3850,17 @@ const styles = StyleSheet.create({
   // ── Refonte C1 : KPI bar + tabs ──
   kpiBar: {
     flexDirection: 'row',
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     paddingHorizontal: 16,
     paddingVertical: 12,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E8DDD0',
+    borderBottomColor: '#EDE2D6',
   },
   kpiCell: { flex: 1 },
   kpiLabel: {
     fontSize: 9,
-    color: '#687076',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 3,
@@ -3869,12 +3869,12 @@ const styles = StyleSheet.create({
   kpiValue: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   tabBar: {
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#E8DDD0',
+    borderBottomColor: '#EDE2D6',
     maxHeight: 56,
   },
   tabBarContent: {
@@ -3886,12 +3886,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 14,
     borderRadius: 18,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     minWidth: 90,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabActive: { backgroundColor: '#2C2C2C' },
-  tabText: { fontSize: 12, fontWeight: '600', color: '#687076' },
+  tabActive: { backgroundColor: '#5C1F2E' },
+  tabText: { fontSize: 12, fontWeight: '600', color: '#6E5F54' },
   tabTextActive: { color: '#fff', fontWeight: '700' },
 });

@@ -125,7 +125,7 @@ export default function LoginScreen() {
               value={identifiant}
               onChangeText={v => { setIdentifiant(v); setError(''); }}
               placeholder={t.auth.usernamePlaceholder}
-              placeholderTextColor="#8C8077"
+              placeholderTextColor="#6E5F54"
               autoCapitalize="none"
               autoCorrect={false}
               returnKeyType="next"
@@ -138,7 +138,7 @@ export default function LoginScreen() {
                 value={motDePasse}
                 onChangeText={v => { setMotDePasse(v); setError(''); }}
                 placeholder={t.auth.passwordPlaceholder}
-                placeholderTextColor="#8C8077"
+                placeholderTextColor="#6E5F54"
                 secureTextEntry={!showPassword}
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -174,7 +174,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   flex: {
     flex: 1,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   container: {
     flexGrow: 1,
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   appSub: {
     fontSize: 14,
-    color: '#8C8077',
+    color: '#6E5F54',
     marginTop: 2,
   },
   card: {
@@ -212,28 +212,28 @@ const styles = StyleSheet.create({
   cardTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1A1A1A',
+    color: '#2B1D14',
     marginBottom: 20,
     textAlign: 'center',
   },
   label: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#1A1A1A',
+    color: '#2B1D14',
     marginBottom: 6,
     marginTop: 12,
   },
   input: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 14,
     fontSize: 15,
-    color: '#1A1A1A',
+    color: '#2B1D14',
     borderWidth: 1.5,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
     // @ts-ignore — propriété web pour le focus
-    outlineColor: '#2C2C2C',
+    outlineColor: '#5C1F2E',
   },
   passwordRow: {
     position: 'relative',
@@ -259,7 +259,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   loginBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     borderRadius: 12,
     paddingVertical: 15,
     alignItems: 'center',
@@ -275,13 +275,13 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 11,
-    color: '#8C8077',
+    color: '#6E5F54',
     textAlign: 'center',
     marginTop: 8,
     lineHeight: 16,
   },
   hintBold: {
     fontWeight: '700',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
 });

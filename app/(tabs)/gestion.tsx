@@ -46,7 +46,7 @@ export default function GestionScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 14, color: '#8C8077' }}>{t.common.accessReserved}</Text>
+          <Text style={{ fontSize: 14, color: '#6E5F54' }}>{t.common.accessReserved}</Text>
         </View>
       </ScreenContainer>
     );

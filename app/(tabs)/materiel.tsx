@@ -502,7 +502,7 @@ export default function MaterielScreen() {
         <View style={styles.listeCardHeader}>
           {showEmploye && employe ? (
             <View style={styles.employeHeader}>
-              <View style={[styles.employeAvatar, { backgroundColor: employe.couleur || '#2C2C2C' }]}>
+              <View style={[styles.employeAvatar, { backgroundColor: employe.couleur || '#5C1F2E' }]}>
                 <Text style={styles.employeAvatarText}>
                   {employe.prenom?.[0] || '?'}{employe.nom?.[0] || '?'}
                 </Text>
@@ -548,17 +548,17 @@ export default function MaterielScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                     {!dispo && !loading && (
                       <Pressable
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EEF2F8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F2E4E1', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
                         onPress={() => handleCheckDispo(item.id, item.texte)}
                       >
-                        <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{t.materiel.checkAvailability}</Text>
+                        <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{t.materiel.checkAvailability}</Text>
                       </Pressable>
                     )}
-                    {loading && <ActivityIndicator size="small" color="#2C2C2C" />}
+                    {loading && <ActivityIndicator size="small" color="#5C1F2E" />}
                     {dispo && !loading && (
                       <Pressable
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
-                          backgroundColor: dispo.status === 'en_stock' ? '#D4EDDA' : dispo.status === 'stock_limite' ? '#FFF3CD' : dispo.status === 'rupture' ? '#FDECEA' : '#F5EDE3'
+                          backgroundColor: dispo.status === 'en_stock' ? '#D4EDDA' : dispo.status === 'stock_limite' ? '#FFF3CD' : dispo.status === 'rupture' ? '#FDECEA' : '#F1E7DC'
                         }}
                         onPress={() => {
                           if (dispo.lien) {
@@ -569,7 +569,7 @@ export default function MaterielScreen() {
                         onLongPress={() => handleCheckDispo(item.id, item.texte)}
                       >
                         <Text style={{ fontSize: 11, fontWeight: '600',
-                          color: dispo.status === 'en_stock' ? '#155724' : dispo.status === 'stock_limite' ? '#856404' : dispo.status === 'rupture' ? '#B71C1C' : '#687076'
+                          color: dispo.status === 'en_stock' ? '#155724' : dispo.status === 'stock_limite' ? '#856404' : dispo.status === 'rupture' ? '#B71C1C' : '#6E5F54'
                         }}>
                           {dispo.status === 'en_stock' ? '🟢' : dispo.status === 'stock_limite' ? '🟡' : dispo.status === 'rupture' ? '🔴' : '⚪'} {dispo.label}
                         </Text>
@@ -835,7 +835,7 @@ export default function MaterielScreen() {
                           <Text style={{ fontSize: 10, color: '#999' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
                         </View>
                         <Pressable onPress={() => setFournisseurPickerModal({ listeId: item.listeId, itemId: item.id, nom: item.texte, currentFournisseur: item.fournisseur || '' })}>
-                          <Text style={{ fontSize: 10, color: '#2C2C2C', fontWeight: '600' }}>{item.fournisseur ? `🏪 ${item.fournisseur}` : '🏪 Assigner fournisseur'}</Text>
+                          <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{item.fournisseur ? `🏪 ${item.fournisseur}` : '🏪 Assigner fournisseur'}</Text>
                         </Pressable>
                         {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
                       </View>
@@ -851,20 +851,20 @@ export default function MaterielScreen() {
                   <>
                     {fournisseurs.map(f => (
                       <View key={f} style={{ marginBottom: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F5EDE3', borderRadius: 6, marginBottom: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F1E7DC', borderRadius: 6, marginBottom: 4 }}>
                           <Text style={{ fontSize: 12 }}>🏪</Text>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C' }}>{f}</Text>
-                          <Text style={{ fontSize: 10, color: '#8C8077' }}>({parFournisseur[f].length})</Text>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E' }}>{f}</Text>
+                          <Text style={{ fontSize: 10, color: '#6E5F54' }}>({parFournisseur[f].length})</Text>
                         </View>
                         {parFournisseur[f].map(renderItemAcheteur)}
                       </View>
                     ))}
                     {sansFournisseur.length > 0 && fournisseurs.length > 0 && (
                       <View style={{ marginBottom: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F5EDE3', borderRadius: 6, marginBottom: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F1E7DC', borderRadius: 6, marginBottom: 4 }}>
                           <Text style={{ fontSize: 12 }}>📦</Text>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#8C8077' }}>{t.materiel.noFournisseur}</Text>
-                          <Text style={{ fontSize: 10, color: '#8C8077' }}>({sansFournisseur.length})</Text>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54' }}>{t.materiel.noFournisseur}</Text>
+                          <Text style={{ fontSize: 10, color: '#6E5F54' }}>({sansFournisseur.length})</Text>
                         </View>
                       </View>
                     )}
@@ -929,10 +929,10 @@ export default function MaterielScreen() {
 
       {/* Bouton catalogue — admin/acheteur */}
       {isAcheteur && (
-        <Pressable style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 12, marginBottom: 6, backgroundColor: '#EBF0FF', paddingVertical: 8, borderRadius: 8 }}
+        <Pressable style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 12, marginBottom: 6, backgroundColor: '#F2E4E1', paddingVertical: 8, borderRadius: 8 }}
           onPress={() => setShowCatalogue(true)}>
           <Text style={{ fontSize: 14 }}>📦</Text>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>Gérer le catalogue ({(data.catalogueArticles || []).length} articles)</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>Gérer le catalogue ({(data.catalogueArticles || []).length} articles)</Text>
         </Pressable>
       )}
 
@@ -960,8 +960,8 @@ export default function MaterielScreen() {
       {/* Bouton gérer fournisseurs (admin) */}
       {viewMode === 'acheteur' && isAdmin && (
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
-          <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, backgroundColor: '#F5EDE3', borderRadius: 8, alignSelf: 'flex-start' }} onPress={() => setShowFournisseurModal(true)}>
-            <Text style={{ fontSize: 12, color: '#8C8077' }}>{t.materiel.manageFournisseurs}</Text>
+          <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, backgroundColor: '#F1E7DC', borderRadius: 8, alignSelf: 'flex-start' }} onPress={() => setShowFournisseurModal(true)}>
+            <Text style={{ fontSize: 12, color: '#6E5F54' }}>{t.materiel.manageFournisseurs}</Text>
           </Pressable>
         </View>
       )}
@@ -1047,14 +1047,14 @@ export default function MaterielScreen() {
               ).slice(0, 5);
               if (suggestions.length === 0) return null;
               return (
-                <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 8, marginBottom: 6 }}>
+                <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, marginBottom: 6 }}>
                   {suggestions.map(a => (
-                    <Pressable key={a.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F5EDE3' }}
+                    <Pressable key={a.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}
                       onPress={() => { setNewArticle(a.nom + (a.reference ? ` (${a.reference})` : '')); if (a.fournisseur) setNewFournisseur(a.fournisseur); }}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C' }}>{a.nom}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14' }}>{a.nom}</Text>
                       <View style={{ flexDirection: 'row', gap: 8 }}>
-                        {a.reference && <Text style={{ fontSize: 10, color: '#687076' }}>Réf: {a.reference}</Text>}
-                        {a.description && <Text style={{ fontSize: 10, color: '#B0BEC5' }}>{a.description}</Text>}
+                        {a.reference && <Text style={{ fontSize: 10, color: '#6E5F54' }}>Réf: {a.reference}</Text>}
+                        {a.description && <Text style={{ fontSize: 10, color: '#9A8C80' }}>{a.description}</Text>}
                       </View>
                     </Pressable>
                   ))}
@@ -1088,22 +1088,22 @@ export default function MaterielScreen() {
                 <Text style={styles.inputLabel}>Fournisseur ({t.common.optional})</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 6 }}>
                   <Pressable
-                    style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: !newFournisseur ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: !newFournisseur ? '#2C2C2C' : '#E2E6EA' }}
+                    style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: !newFournisseur ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: !newFournisseur ? '#5C1F2E' : '#EDE2D6' }}
                     onPress={() => setNewFournisseur('')}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: !newFournisseur ? '#fff' : '#687076' }}>{t.common.none}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: !newFournisseur ? '#fff' : '#6E5F54' }}>{t.common.none}</Text>
                   </Pressable>
                   {fournisseursList.map(f => (
                     <Pressable key={f}
-                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: newFournisseur === f ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: newFournisseur === f ? '#2C2C2C' : '#E2E6EA' }}
+                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: newFournisseur === f ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: newFournisseur === f ? '#5C1F2E' : '#EDE2D6' }}
                       onPress={() => setNewFournisseur(f)}>
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: newFournisseur === f ? '#fff' : '#11181C' }}>{f}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: newFournisseur === f ? '#fff' : '#2B1D14' }}>{f}</Text>
                     </Pressable>
                   ))}
                   {isAdmin && (
                     <Pressable
-                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#E2E6EA', borderStyle: 'dashed' }}
+                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#EDE2D6', borderStyle: 'dashed' }}
                       onPress={() => setShowFournisseurModal(true)}>
-                      <Text style={{ fontSize: 12, color: '#687076' }}>+ Ajouter</Text>
+                      <Text style={{ fontSize: 12, color: '#6E5F54' }}>+ Ajouter</Text>
                     </Pressable>
                   )}
                 </ScrollView>
@@ -1142,23 +1142,23 @@ export default function MaterielScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={styles.modalTitle}>{t.materiel.fournisseur}</Text>
               <Pressable onPress={() => setFournisseurPickerModal(null)}>
-                <Text style={{ fontSize: 18, color: '#687076' }}>✕</Text>
+                <Text style={{ fontSize: 18, color: '#6E5F54' }}>✕</Text>
               </Pressable>
             </View>
-            <Text style={{ fontSize: 12, color: '#687076', marginBottom: 16 }}>
-              Article : <Text style={{ fontWeight: '700', color: '#11181C' }}>{fournisseurPickerModal?.nom}</Text>
+            <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 16 }}>
+              Article : <Text style={{ fontWeight: '700', color: '#2B1D14' }}>{fournisseurPickerModal?.nom}</Text>
             </Text>
             <ScrollView style={{ maxHeight: 300 }}>
               <Pressable
-                style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: !fournisseurPickerModal?.currentFournisseur ? '#2C2C2C' : '#F5EDE3' }}
+                style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: !fournisseurPickerModal?.currentFournisseur ? '#5C1F2E' : '#F1E7DC' }}
                 onPress={() => fournisseurPickerModal && handleChangeFournisseur(fournisseurPickerModal.listeId, fournisseurPickerModal.itemId, '')}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: !fournisseurPickerModal?.currentFournisseur ? '#fff' : '#687076' }}>{t.common.none}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: !fournisseurPickerModal?.currentFournisseur ? '#fff' : '#6E5F54' }}>{t.common.none}</Text>
               </Pressable>
               {fournisseursList.map(f => (
                 <Pressable key={f}
-                  style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: fournisseurPickerModal?.currentFournisseur === f ? '#2C2C2C' : '#F5EDE3' }}
+                  style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: fournisseurPickerModal?.currentFournisseur === f ? '#5C1F2E' : '#F1E7DC' }}
                   onPress={() => fournisseurPickerModal && handleChangeFournisseur(fournisseurPickerModal.listeId, fournisseurPickerModal.itemId, f)}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: fournisseurPickerModal?.currentFournisseur === f ? '#fff' : '#11181C' }}>{f}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: fournisseurPickerModal?.currentFournisseur === f ? '#fff' : '#2B1D14' }}>{f}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -1173,7 +1173,7 @@ export default function MaterielScreen() {
             <Text style={styles.modalTitle}>{t.materiel.partialBuy}</Text>
             <Text style={styles.modalSubtitle}>{partielModal?.nom}</Text>
             <Text style={{ fontSize: 13, color: '#555', marginBottom: 12 }}>
-              Quantité demandée : <Text style={{ fontWeight: '700', color: '#2C2C2C' }}>{partielModal?.quantiteTotale}{partielModal?.quantiteUnite ? ` ${partielModal.quantiteUnite}` : ''}</Text>
+              Quantité demandée : <Text style={{ fontWeight: '700', color: '#5C1F2E' }}>{partielModal?.quantiteTotale}{partielModal?.quantiteUnite ? ` ${partielModal.quantiteUnite}` : ''}</Text>
             </Text>
 
             <Text style={styles.inputLabel}>{t.materiel.qtyBoughtLabel}</Text>
@@ -1186,7 +1186,7 @@ export default function MaterielScreen() {
               autoFocus
               onSubmitEditing={handleConfirmPartiel}
             />
-            <Text style={{ fontSize: 11, color: '#687076', marginBottom: 12, fontStyle: 'italic' }}>
+            <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 12, fontStyle: 'italic' }}>
               L'article restera à acheter avec la quantité restante, et un nouvel article "acheté" sera créé.
             </Text>
 
@@ -1212,24 +1212,24 @@ export default function MaterielScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
-  title: { fontSize: 20, fontWeight: '700', color: '#2C2C2C', flex: 1 },
+  title: { fontSize: 20, fontWeight: '700', color: '#5C1F2E', flex: 1 },
   badge: { backgroundColor: '#E74C3C', borderRadius: 12, minWidth: 24, height: 24, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F5EDE3', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA' },
-  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#11181C' },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F1E7DC', borderRadius: 10, borderWidth: 1, borderColor: '#EDE2D6' },
+  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#2B1D14' },
   searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   tabBar: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F0F4FF', borderRadius: 8, padding: 3 },
   tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 6 },
   tabActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
   tabText: { fontSize: 13, color: '#666', fontWeight: '500' },
-  tabTextActive: { color: '#2C2C2C', fontWeight: '700' },
+  tabTextActive: { color: '#5C1F2E', fontWeight: '700' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 40 },
   emptyState: { alignItems: 'center', paddingTop: 60 },
   emptyStateText: { color: '#999', fontSize: 15 },
   chantierSection: { marginBottom: 12 },
   chantierHeader: { borderLeftWidth: 4, paddingLeft: 10, marginBottom: 6 },
-  chantierNom: { fontSize: 15, fontWeight: '700', color: '#2C2C2C' },
+  chantierNom: { fontSize: 15, fontWeight: '700', color: '#5C1F2E' },
   chantierAdresse: { fontSize: 11, color: '#888' },
   chantierStats: { marginTop: 4, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
   chantierStatsText: { fontSize: 12, color: '#555', fontStyle: 'italic' },
@@ -1245,14 +1245,14 @@ const styles = StyleSheet.create({
   itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
   itemAchete: { opacity: 0.6 },
   checkbox: { width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: '#CCC', alignItems: 'center', justifyContent: 'center', marginRight: 8, flexShrink: 0 },
-  checkboxAcheteur: { borderColor: '#2C2C2C' },
+  checkboxAcheteur: { borderColor: '#5C1F2E' },
   checkboxInner: { fontSize: 14 },
   checkboxChecked: { backgroundColor: '#27AE60', borderColor: '#27AE60' },
   checkboxCheckedInner: { color: '#fff', fontSize: 13, fontWeight: '700' },
   itemContent: { flex: 1, flexDirection: 'column', gap: 1 },
   itemTexte: { fontSize: 13, color: '#333' },
   itemTexteBarre: { textDecorationLine: 'line-through', color: '#999' },
-  itemQuantite: { fontSize: 12, color: '#2C2C2C', backgroundColor: '#EEF2F8', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, fontWeight: '700', minWidth: 24, textAlign: 'center' },
+  itemQuantite: { fontSize: 12, color: '#5C1F2E', backgroundColor: '#F2E4E1', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, fontWeight: '700', minWidth: 24, textAlign: 'center' },
   itemCommentaire: { fontSize: 11, color: '#666', fontStyle: 'italic', marginLeft: 30, marginTop: 1 },
   achetePar: { fontSize: 11, color: '#27AE60', marginTop: 2 },
   deleteBtn: { padding: 6, marginLeft: 4, flexShrink: 0 },
@@ -1279,7 +1279,7 @@ const styles = StyleSheet.create({
   },
   // Vue acheteur
   acheteurCard: { backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
-  acheteurCardTitle: { fontSize: 13, fontWeight: '700', color: '#2C2C2C', marginBottom: 10, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#EEF2F8' },
+  acheteurCardTitle: { fontSize: 13, fontWeight: '700', color: '#5C1F2E', marginBottom: 10, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#F2E4E1' },
   acheteurItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
   archiveCard: { backgroundColor: '#F0FFF4', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#C6F6D5' },
   archiveCardTitle: { fontSize: 13, fontWeight: '700', color: '#276749', marginBottom: 10, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#C6F6D5' },
@@ -1291,20 +1291,20 @@ const styles = StyleSheet.create({
   statsBadgeGreenText: { color: '#276749', fontSize: 11, fontWeight: '700' },
   allDoneRow: { backgroundColor: '#F0FFF4', borderRadius: 10, padding: 12, marginBottom: 8, alignItems: 'center' },
   allDoneText: { color: '#276749', fontSize: 13, fontWeight: '600' },
-  addItemBtn: { marginTop: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: '#2C2C2C', borderRadius: 6, borderStyle: 'dashed' },
-  addItemBtnText: { color: '#2C2C2C', fontSize: 13, fontWeight: '600' },
+  addItemBtn: { marginTop: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 6, borderStyle: 'dashed' },
+  addItemBtnText: { color: '#5C1F2E', fontSize: 13, fontWeight: '600' },
   // Modal
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#2C2C2C', marginBottom: 4 },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#5C1F2E', marginBottom: 4 },
   modalSubtitle: { fontSize: 13, color: '#888', marginBottom: 16 },
   inputLabel: { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: '#E8DDD0', borderRadius: 8, padding: 10, fontSize: 15, marginBottom: 12, backgroundColor: '#FBF8F4', color: '#1A1A1A' },
+  input: { borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, padding: 10, fontSize: 15, marginBottom: 12, backgroundColor: '#FAF5EF', color: '#2B1D14' },
   inputMultiline: { height: 64, textAlignVertical: 'top' },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
   btnCancel: { flex: 1, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: '#DDD', borderRadius: 8 },
   btnCancelText: { color: '#666', fontSize: 15 },
-  btnSave: { flex: 2, paddingVertical: 12, alignItems: 'center', backgroundColor: '#2C2C2C', borderRadius: 8 },
+  btnSave: { flex: 2, paddingVertical: 12, alignItems: 'center', backgroundColor: '#5C1F2E', borderRadius: 8 },
   btnSaveText: { color: '#fff', fontSize: 15, fontWeight: '700' },
   btnDisabled: { opacity: 0.4 },
 });

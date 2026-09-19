@@ -100,13 +100,13 @@ export function GanttTimelineAdmin({
       {/* Navigation mois */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8 }}>
         <Pressable onPress={onPrevMonths} style={{ padding: 6 }}>
-          <Text style={{ fontSize: 18, color: '#2C2C2C' }}>‹‹</Text>
+          <Text style={{ fontSize: 18, color: '#5C1F2E' }}>‹‹</Text>
         </Pressable>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>
+        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14' }}>
           {ganttMonths.map(m => m.label).join(' — ')}
         </Text>
         <Pressable onPress={onNextMonths} style={{ padding: 6 }}>
-          <Text style={{ fontSize: 18, color: '#2C2C2C' }}>››</Text>
+          <Text style={{ fontSize: 18, color: '#5C1F2E' }}>››</Text>
         </Pressable>
       </View>
 
@@ -114,19 +114,19 @@ export function GanttTimelineAdmin({
       <View style={{ flexDirection: 'row', flex: 1 }}>
 
         {/* Colonne gauche figée (hors du ScrollView horizontal) */}
-        <View style={{ width: NAME_W, borderRightWidth: 1, borderRightColor: '#E2E6EA', zIndex: 2, backgroundColor: '#FAFAF9' }}>
+        <View style={{ width: NAME_W, borderRightWidth: 1, borderRightColor: '#EDE2D6', zIndex: 2, backgroundColor: '#FAFAF9' }}>
           {/* Espaceur aligné avec les en-têtes mois + jours */}
-          <View style={{ height: HEADER_H, borderBottomWidth: 1, borderBottomColor: '#E2E6EA', justifyContent: 'flex-end', paddingBottom: 2, paddingHorizontal: 6 }}>
-            <Text style={{ fontSize: 10, color: '#9CA3AF', fontWeight: '600' }}>CHANTIER</Text>
+          <View style={{ height: HEADER_H, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', justifyContent: 'flex-end', paddingBottom: 2, paddingHorizontal: 6 }}>
+            <Text style={{ fontSize: 10, color: '#9A8C80', fontWeight: '600' }}>CHANTIER</Text>
           </View>
           {ganttSortedChantiers.map(c => {
             const empAffectes = data.employes.filter(e =>
               data.affectations.some(a => a.chantierId === c.id && a.employeId === e.id)
             );
             return (
-              <View key={c.id} style={{ height: ROW_H, justifyContent: 'center', paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
-                <Text style={{ fontSize: 11, fontWeight: '600', color: '#11181C' }} numberOfLines={1}>{c.nom}</Text>
-                <Text style={{ fontSize: 9, color: '#9CA3AF' }}>{empAffectes.length} pers.</Text>
+              <View key={c.id} style={{ height: ROW_H, justifyContent: 'center', paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' }}>
+                <Text style={{ fontSize: 11, fontWeight: '600', color: '#2B1D14' }} numberOfLines={1}>{c.nom}</Text>
+                <Text style={{ fontSize: 9, color: '#9A8C80' }}>{empAffectes.length} pers.</Text>
               </View>
             );
           })}
@@ -138,21 +138,21 @@ export function GanttTimelineAdmin({
             {/* En-tête mois */}
             <View style={{ flexDirection: 'row', height: MONTH_H }}>
               {ganttMonths.map((m, i) => (
-                <View key={i} style={{ width: m.days * DAY_W, borderRightWidth: 1, borderRightColor: '#E2E6EA', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#2C2C2C' }}>{m.label}</Text>
+                <View key={i} style={{ width: m.days * DAY_W, borderRightWidth: 1, borderRightColor: '#EDE2D6', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E' }}>{m.label}</Text>
                 </View>
               ))}
             </View>
             {/* En-tête jours */}
-            <View style={{ flexDirection: 'row', height: DAY_ROW_H, borderBottomWidth: 1, borderBottomColor: '#E2E6EA' }}>
+            <View style={{ flexDirection: 'row', height: DAY_ROW_H, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
               {Array.from({ length: ganttTotalDays }, (_, i) => {
                 const d = new Date(ganttStart);
                 d.setDate(d.getDate() + i);
                 const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                 const isT = toYMD(d) === todayStr;
                 return (
-                  <View key={i} style={{ width: DAY_W, alignItems: 'center', justifyContent: 'center', backgroundColor: isT ? '#E8F0FE' : isWeekend ? '#F8F9FA' : 'transparent', borderRightWidth: d.getDate() === 1 ? 1 : 0, borderRightColor: '#E2E6EA' }}>
-                    <Text style={{ fontSize: 8, color: isT ? '#2C2C2C' : '#9CA3AF' }}>{d.getDate()}</Text>
+                  <View key={i} style={{ width: DAY_W, alignItems: 'center', justifyContent: 'center', backgroundColor: isT ? '#E8F0FE' : isWeekend ? '#FAF5EF' : 'transparent', borderRightWidth: d.getDate() === 1 ? 1 : 0, borderRightColor: '#EDE2D6' }}>
+                    <Text style={{ fontSize: 8, color: isT ? '#5C1F2E' : '#9A8C80' }}>{d.getDate()}</Text>
                   </View>
                 );
               })}
@@ -168,13 +168,13 @@ export function GanttTimelineAdmin({
                 const barLeft = startOffset * DAY_W;
                 const isEnRetard = c.statut === 'actif' && c.dateFin < todayStr;
                 return (
-                  <View key={c.id} style={{ height: ROW_H, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' }}>
+                  <View key={c.id} style={{ height: ROW_H, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' }}>
                     <View style={{ width: ganttTotalDays * DAY_W, height: ROW_H, position: 'relative' }}>
                       {/* Ligne aujourd'hui */}
                       {(() => {
                         const tOff = Math.ceil((ganttToday.getTime() - ganttStart.getTime()) / (1000 * 60 * 60 * 24));
                         if (tOff >= 0 && tOff < ganttTotalDays) {
-                          return <View style={{ position: 'absolute', left: tOff * DAY_W, top: 0, bottom: 0, width: 1.5, backgroundColor: '#2C2C2C', opacity: 0.2, zIndex: 1 }} />;
+                          return <View style={{ position: 'absolute', left: tOff * DAY_W, top: 0, bottom: 0, width: 1.5, backgroundColor: '#5C1F2E', opacity: 0.2, zIndex: 1 }} />;
                         }
                         return null;
                       })()}

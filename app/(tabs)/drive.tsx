@@ -61,7 +61,7 @@ export default function DriveScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 14, color: '#8C8077' }}>{t.common.accessReserved}</Text>
+          <Text style={{ fontSize: 14, color: '#6E5F54' }}>{t.common.accessReserved}</Text>
         </View>
       </ScreenContainer>
     );
@@ -69,7 +69,7 @@ export default function DriveScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView style={{ flex: 1, backgroundColor: '#FBF7F2' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>{t.drive.title}</Text>
         <Text style={styles.subtitle}>{rows.length} {t.drive.documents} — {t.drive.allChantiers}</Text>
 
@@ -130,19 +130,19 @@ export default function DriveScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '800', color: '#2C2C2C' },
-  subtitle: { fontSize: 13, color: '#8C8077', marginTop: 2, marginBottom: 12 },
+  title: { fontSize: 24, fontWeight: '800', color: '#5C1F2E' },
+  subtitle: { fontSize: 13, color: '#6E5F54', marginTop: 2, marginBottom: 12 },
   searchWrap: { marginBottom: 8 },
-  search: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#EDE4D8', paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#2C2C2C' },
-  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: '#E8DDD0', backgroundColor: '#F5EDE3' },
-  chipActive: { borderColor: '#2C2C2C', backgroundColor: '#2C2C2C' },
-  chipText: { fontSize: 12, fontWeight: '700', color: '#687076' },
+  search: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#EDE4D8', paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#5C1F2E' },
+  chip: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 16, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
+  chipActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
+  chipText: { fontSize: 12, fontWeight: '700', color: '#6E5F54' },
   chipTextActive: { color: '#fff' },
   empty: { fontSize: 13, color: '#B0A99F', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 },
   row: { backgroundColor: '#fff', borderRadius: 12, padding: 12 },
-  docNom: { fontSize: 14, fontWeight: '700', color: '#2C2C2C' },
+  docNom: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, gap: 8 },
   chantier: { fontSize: 12, color: '#5C1F2E', fontWeight: '600', flex: 1 },
-  cat: { fontSize: 11, color: '#8C8077', backgroundColor: '#F0E6DC', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, overflow: 'hidden' },
-  date: { fontSize: 11, color: '#8C8077', marginTop: 4 },
+  cat: { fontSize: 11, color: '#6E5F54', backgroundColor: '#F0E6DC', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8, overflow: 'hidden' },
+  date: { fontSize: 11, color: '#6E5F54', marginTop: 4 },
 });

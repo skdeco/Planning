@@ -7,8 +7,8 @@ export default function RootIndex() {
 
   if (!isHydrated) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F2F4F7' }}>
-        <ActivityIndicator size="large" color="#1A3A6B" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FAF5EF' }}>
+        <ActivityIndicator size="large" color="#5C1F2E" />
       </View>
     );
   }

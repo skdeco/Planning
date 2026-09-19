@@ -300,7 +300,7 @@ const USER_KEY = 'sk_deco_user';
 // ─── Données de démonstration ─────────────────────────────────────────────────
 const DEMO_DATA: AppData = {
   employes: [
-    { id: 'e1', prenom: 'Sacha',  nom: 'Martin',  metier: 'electricien',   role: 'employe', identifiant: 'sacha',  motDePasse: '1234', couleur: '#1A3A6B' },
+    { id: 'e1', prenom: 'Sacha',  nom: 'Martin',  metier: 'electricien',   role: 'employe', identifiant: 'sacha',  motDePasse: '1234', couleur: '#5C1F2E' },
     { id: 'e2', prenom: 'Lucas',  nom: 'Bernard', metier: 'plombier',      role: 'employe', identifiant: 'lucas',  motDePasse: '1234', couleur: '#9B59B6' },
     { id: 'e3', prenom: 'Thomas', nom: 'Dupont',  metier: 'macon',         role: 'employe', identifiant: 'thomas', motDePasse: '1234', couleur: '#27AE60' },
     { id: 'e4', prenom: 'Emma',   nom: 'Leroy',   metier: 'peintre',       role: 'employe', identifiant: 'emma',   motDePasse: '1234', couleur: '#E74C3C' },
@@ -309,7 +309,7 @@ const DEMO_DATA: AppData = {
     { id: 'e7', prenom: 'Kev',    nom: 'Blanc',   metier: 'macon',         role: 'employe', identifiant: 'kev',    motDePasse: '1234', couleur: '#FFB800' },
   ],
   chantiers: [
-    { id: 'c1', nom: 'Résidence Les Pins', adresse: '12 rue des Pins, Lyon', dateDebut: '2026-03-01', dateFin: '2026-06-30', statut: 'actif' as const, employeIds: ['e1', 'e2', 'e6'], visibleSurPlanning: true, couleur: '#1A3A6B' },
+    { id: 'c1', nom: 'Résidence Les Pins', adresse: '12 rue des Pins, Lyon', dateDebut: '2026-03-01', dateFin: '2026-06-30', statut: 'actif' as const, employeIds: ['e1', 'e2', 'e6'], visibleSurPlanning: true, couleur: '#5C1F2E' },
     { id: 'c2', nom: 'Appartement Bellecour', adresse: '5 place Bellecour, Lyon', dateDebut: '2026-03-15', dateFin: '2026-05-15', statut: 'actif' as const, employeIds: ['e3', 'e4'], visibleSurPlanning: true, couleur: '#27AE60' },
     { id: 'c3', nom: 'Villa Moderne', adresse: '8 allée des Roses, Villeurbanne', dateDebut: '2026-04-01', dateFin: '2026-07-31', statut: 'en_attente' as const, employeIds: ['e5', 'e7'], visibleSurPlanning: true, couleur: '#9B59B6' },
   ],
@@ -2251,10 +2251,10 @@ const sessionStyles = StyleSheet.create({
     elevation: 20,
   },
   icon: { fontSize: 40, marginBottom: 12 },
-  title: { fontSize: 20, fontWeight: '700', color: '#11181C', marginBottom: 10, textAlign: 'center' },
-  message: { fontSize: 14, color: '#687076', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  title: { fontSize: 20, fontWeight: '700', color: '#2B1D14', marginBottom: 10, textAlign: 'center' },
+  message: { fontSize: 14, color: '#6E5F54', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   btn: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#5C1F2E',
     borderRadius: 10,
     paddingVertical: 14,
     paddingHorizontal: 28,

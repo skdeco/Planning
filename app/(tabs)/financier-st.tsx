@@ -237,38 +237,38 @@ export default function FinancierSTScreen() {
           const nbFournis = DOCUMENTS_LEGAUX_TYPES.filter(docType => findDocForType(monST.documents || [], docType.label)).length;
           const complete = nbFournis === DOCUMENTS_LEGAUX_TYPES.length;
           return (
-            <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 12, marginTop: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
+            <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 14, marginHorizontal: 16, marginBottom: 12, marginTop: 12, borderWidth: 1, borderColor: '#EDE2D6' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#1A1A1A' }}>{t.financierSt.myLegalDocs}</Text>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#2B1D14' }}>{t.financierSt.myLegalDocs}</Text>
                 <View style={{ paddingHorizontal: 8, paddingVertical: 3, borderRadius: 10, backgroundColor: complete ? '#D4EDDA' : '#FFF3CD' }}>
                   <Text style={{ fontSize: 11, fontWeight: '700', color: complete ? '#155724' : '#856404' }}>{nbFournis}/{DOCUMENTS_LEGAUX_TYPES.length}</Text>
                 </View>
               </View>
-              <Text style={{ fontSize: 11, color: '#8C8077', marginBottom: 10 }}>
+              <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 10 }}>
                 {t.financierSt.uploadHint}
               </Text>
               {DOCUMENTS_LEGAUX_TYPES.map(docType => {
                 const doc = findDocForType(monST.documents || [], docType.label);
                 return (
-                  <View key={docType.id} style={{ borderBottomWidth: 0.5, borderBottomColor: '#F0E8DE' }}>
+                  <View key={docType.id} style={{ borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#1A1A1A' }}>{docType.label}</Text>
-                        <Text style={{ fontSize: 10, color: doc ? '#10B981' : '#C9A96E', marginTop: 2 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14' }}>{docType.label}</Text>
+                        <Text style={{ fontSize: 10, color: doc ? '#10B981' : '#5C1F2E', marginTop: 2 }}>
                           {doc ? `✅ ${t.financierSt.providedOn} ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : `⚠️ ${t.financierSt.missing}`}
                         </Text>
                       </View>
                       {doc ? (
                         <View style={{ flexDirection: 'row', gap: 6 }}>
-                          <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#F5EDE3' }} onPress={() => openDoc(doc.fichier)}>
-                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#2C2C2C' }}>{t.common.view}</Text>
+                          <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#F1E7DC' }} onPress={() => openDoc(doc.fichier)}>
+                            <Text style={{ fontSize: 11, fontWeight: '600', color: '#5C1F2E' }}>{t.common.view}</Text>
                           </Pressable>
                           <Pressable style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6, backgroundColor: '#FEE2E2' }} onPress={() => handleDeleteDocLegal(doc.id)}>
                             <Text style={{ fontSize: 11, fontWeight: '600', color: '#D94F4F' }}>{t.equipe.suppr}</Text>
                           </Pressable>
                         </View>
                       ) : (
-                        <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#2C2C2C' }} onPress={() => handleUploadDocLegal(docType.label)}>
+                        <Pressable style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 6, backgroundColor: '#5C1F2E' }} onPress={() => handleUploadDocLegal(docType.label)}>
                           <Text style={{ fontSize: 11, fontWeight: '600', color: '#fff' }}>{t.equipe.load}</Text>
                         </Pressable>
                       )}
@@ -314,7 +314,7 @@ export default function FinancierSTScreen() {
 
                 {/* Récapitulatif chantier */}
                 <View style={styles.financeRow}>
-                  <FinanceCell label="Total convenu" value={fmt(totalPrix)} color="#2C2C2C" />
+                  <FinanceCell label="Total convenu" value={fmt(totalPrix)} color="#5C1F2E" />
                   <FinanceCell label="Reçu" value={fmt(totalAcomptes)} color="#E67E22" />
                   <FinanceCell label="Reste à recevoir" value={fmt(totalReste)} color={totalReste > 0 ? '#E74C3C' : '#27AE60'} />
                 </View>
@@ -436,50 +436,50 @@ function FinanceCell({ label, value, color }: { label: string; value: string; co
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-  headerTitle: { fontSize: 26, fontWeight: '800', color: '#11181C' },
+  headerTitle: { fontSize: 26, fontWeight: '800', color: '#2B1D14' },
   scroll: { flex: 1, paddingHorizontal: 16 },
   emptyState: { padding: 40, alignItems: 'center' },
-  emptyText: { fontSize: 15, color: '#687076', fontWeight: '500' },
-  emptyHint: { fontSize: 13, color: '#B0BEC5', marginTop: 6 },
-  emptySmall: { fontSize: 13, color: '#B0BEC5', paddingVertical: 8 },
+  emptyText: { fontSize: 15, color: '#6E5F54', fontWeight: '500' },
+  emptyHint: { fontSize: 13, color: '#9A8C80', marginTop: 6 },
+  emptySmall: { fontSize: 13, color: '#9A8C80', paddingVertical: 8 },
   // Chantier block
   chantierBlock: { marginBottom: 20 },
   chantierHeader: { marginBottom: 10 },
-  chantierNom: { fontSize: 20, fontWeight: '800', color: '#11181C' },
-  chantierAdresse: { fontSize: 12, color: '#687076', marginTop: 2 },
+  chantierNom: { fontSize: 20, fontWeight: '800', color: '#2B1D14' },
+  chantierAdresse: { fontSize: 12, color: '#6E5F54', marginTop: 2 },
   financeRow: { flexDirection: 'row', gap: 8, marginBottom: 12 },
-  financeCell: { flex: 1, backgroundColor: '#EEF2F8', borderRadius: 10, padding: 10, alignItems: 'center' },
-  financeCellLabel: { fontSize: 10, fontWeight: '600', color: '#687076', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 4, textAlign: 'center' },
+  financeCell: { flex: 1, backgroundColor: '#F2E4E1', borderRadius: 10, padding: 10, alignItems: 'center' },
+  financeCellLabel: { fontSize: 10, fontWeight: '600', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 4, textAlign: 'center' },
   financeCellValue: { fontSize: 14, fontWeight: '800' },
   // Devis card
   devisCard: {
     backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
-    borderLeftWidth: 3, borderLeftColor: '#2C2C2C',
+    borderLeftWidth: 3, borderLeftColor: '#5C1F2E',
   },
   devisHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
-  devisObjetBadge: { backgroundColor: '#EEF2F8', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  devisObjetText: { fontSize: 13, fontWeight: '700', color: '#2C2C2C' },
-  devisPrix: { fontSize: 16, fontWeight: '800', color: '#11181C' },
+  devisObjetBadge: { backgroundColor: '#F2E4E1', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  devisObjetText: { fontSize: 13, fontWeight: '700', color: '#5C1F2E' },
+  devisPrix: { fontSize: 16, fontWeight: '800', color: '#2B1D14' },
   devisFinanceRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  devisFinanceCell: { flex: 1, backgroundColor: '#F8F9FA', borderRadius: 8, padding: 8, alignItems: 'center' },
-  devisFinanceCellLabel: { fontSize: 10, fontWeight: '600', color: '#687076', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2, textAlign: 'center' },
+  devisFinanceCell: { flex: 1, backgroundColor: '#FAF5EF', borderRadius: 8, padding: 8, alignItems: 'center' },
+  devisFinanceCellLabel: { fontSize: 10, fontWeight: '600', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 2, textAlign: 'center' },
   devisFinanceCellValue: { fontSize: 13, fontWeight: '800' },
   devisDocsRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  docBtn: { flex: 1, backgroundColor: '#EEF2F8', paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
+  docBtn: { flex: 1, backgroundColor: '#F2E4E1', paddingVertical: 10, borderRadius: 10, alignItems: 'center' },
   docBtnUpload: { backgroundColor: '#FFF3CD', borderWidth: 1.5, borderColor: '#FFB74D', borderStyle: 'dashed' },
   docBtnSigne: { backgroundColor: '#D4EDDA' },
-  docBtnAttente: { backgroundColor: '#F8F9FA' },
-  docBtnText: { fontSize: 12, fontWeight: '600', color: '#2C2C2C' },
-  docBtnTextGrey: { fontSize: 12, fontWeight: '500', color: '#B0BEC5' },
+  docBtnAttente: { backgroundColor: '#FAF5EF' },
+  docBtnText: { fontSize: 12, fontWeight: '600', color: '#5C1F2E' },
+  docBtnTextGrey: { fontSize: 12, fontWeight: '500', color: '#9A8C80' },
   // Acomptes
-  acomptesSection: { borderTopWidth: 1, borderTopColor: '#F5EDE3', paddingTop: 10 },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#687076', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 },
-  acompteRow: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' },
+  acomptesSection: { borderTopWidth: 1, borderTopColor: '#F1E7DC', paddingTop: 10 },
+  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8 },
+  acompteRow: { paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' },
   acompteRowHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 2 },
   acompteMontant: { fontSize: 15, fontWeight: '800', color: '#27AE60' },
-  acompteDate: { fontSize: 12, color: '#687076' },
-  acompteComment: { fontSize: 13, color: '#687076', marginBottom: 4 },
-  factureLink: { fontSize: 12, fontWeight: '600', color: '#2C2C2C', marginTop: 4 },
+  acompteDate: { fontSize: 12, color: '#6E5F54' },
+  acompteComment: { fontSize: 13, color: '#6E5F54', marginBottom: 4 },
+  factureLink: { fontSize: 12, fontWeight: '600', color: '#5C1F2E', marginTop: 4 },
   factureUpload: { fontSize: 12, fontWeight: '600', color: '#E67E22', marginTop: 4 },
 });

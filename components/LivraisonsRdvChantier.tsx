@@ -363,14 +363,14 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                     >
                       <View style={{
                         width: 18, height: 18, borderRadius: 9,
-                        backgroundColor: l.demandeMairie?.fait ? '#5C1F2E' : '#ECDFCD',
+                        backgroundColor: l.demandeMairie?.fait ? '#5C1F2E' : '#F1E7DC',
                         alignItems: 'center', justifyContent: 'center',
                       }}>
                         <Text style={{ color: l.demandeMairie?.fait ? '#FFFFFF' : '#8A7B6E', fontSize: 11, fontWeight: '700' }}>
                           {l.demandeMairie?.fait ? '✓' : '○'}
                         </Text>
                       </View>
-                      <Text style={{ fontSize: 12, color: l.demandeMairie?.fait ? '#2A2622' : '#8A7B6E', fontWeight: '600', flex: 1 }}>Demande mairie {l.demandeMairie?.fait ? 'envoyée' : 'à faire'}
+                      <Text style={{ fontSize: 12, color: l.demandeMairie?.fait ? '#2B1D14' : '#8A7B6E', fontWeight: '600', flex: 1 }}>Demande mairie {l.demandeMairie?.fait ? 'envoyée' : 'à faire'}
                       </Text>
                     </Pressable>
                     {/* Détails (mini-tags inline) si cochée */}
@@ -381,7 +381,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                           onPress={() => setOpenAssignDropdown(prev =>
                             prev?.livId === l.id && prev?.type === 'mairie' ? null : { livId: l.id, type: 'mairie' }
                           )}
-                          style={{ backgroundColor: '#F1E8DC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}
+                          style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}
                           accessibilityRole="button"
                           accessibilityLabel="Choisir un employé pour la demande mairie"
                         >
@@ -404,7 +404,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                             }
                           }}
                           placeholder="email@mairie.fr"
-                          placeholderTextColor="#B0A89E"
+                          placeholderTextColor="#9A8C80"
                           keyboardType="email-address"
                           autoCapitalize="none"
                           style={{ flex: 1, minWidth: 100, fontSize: 10, color: '#5C1F2E', fontWeight: '500', textDecorationLine: 'underline', paddingVertical: 2 }}
@@ -413,7 +413,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                     )}
                     {/* Dropdown employé (sous le tag, si ouvert pour mairie) */}
                     {openAssignDropdown?.livId === l.id && openAssignDropdown?.type === 'mairie' && (
-                      <View style={{ marginLeft: 26, marginTop: 4, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#ECDFCD', maxHeight: 180 }}>
+                      <View style={{ marginLeft: 26, marginTop: 4, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#F1E7DC', maxHeight: 180 }}>
                         <ScrollView>
                           <Pressable
                             onPress={() => {
@@ -424,7 +424,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                               });
                               setOpenAssignDropdown(null);
                             }}
-                            style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD' }}
+                            style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' }}
                           >
                             <Text style={{ fontSize: 12, color: '#8A7B6E', fontStyle: 'italic' }}>Personne (désassigner)</Text>
                           </Pressable>
@@ -439,9 +439,9 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                                 });
                                 setOpenAssignDropdown(null);
                               }}
-                              style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD', backgroundColor: l.demandeMairie?.assigneA === emp.id ? '#F1E8DC' : 'transparent' }}
+                              style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC', backgroundColor: l.demandeMairie?.assigneA === emp.id ? '#F1E7DC' : 'transparent' }}
                             >
-                              <Text style={{ fontSize: 12, color: '#2A2622', fontWeight: l.demandeMairie?.assigneA === emp.id ? '600' : '400' }}>
+                              <Text style={{ fontSize: 12, color: '#2B1D14', fontWeight: l.demandeMairie?.assigneA === emp.id ? '600' : '400' }}>
                                 {emp.prenom} {emp.nom}{l.demandeMairie?.assigneA === emp.id ? ' ✓' : ''}
                               </Text>
                             </Pressable>
@@ -464,14 +464,14 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                     >
                       <View style={{
                         width: 18, height: 18, borderRadius: 9,
-                        backgroundColor: l.prevenirMonteCharge?.fait ? '#5C1F2E' : '#ECDFCD',
+                        backgroundColor: l.prevenirMonteCharge?.fait ? '#5C1F2E' : '#F1E7DC',
                         alignItems: 'center', justifyContent: 'center',
                       }}>
                         <Text style={{ color: l.prevenirMonteCharge?.fait ? '#FFFFFF' : '#8A7B6E', fontSize: 11, fontWeight: '700' }}>
                           {l.prevenirMonteCharge?.fait ? '✓' : '○'}
                         </Text>
                       </View>
-                      <Text style={{ fontSize: 12, color: l.prevenirMonteCharge?.fait ? '#2A2622' : '#8A7B6E', fontWeight: '600', flex: 1 }}>Monte-charge {l.prevenirMonteCharge?.fait ? 'prévenu' : 'à prévenir'}
+                      <Text style={{ fontSize: 12, color: l.prevenirMonteCharge?.fait ? '#2B1D14' : '#8A7B6E', fontWeight: '600', flex: 1 }}>Monte-charge {l.prevenirMonteCharge?.fait ? 'prévenu' : 'à prévenir'}
                       </Text>
                     </Pressable>
                     {l.prevenirMonteCharge?.fait && (
@@ -480,7 +480,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                           onPress={() => setOpenAssignDropdown(prev =>
                             prev?.livId === l.id && prev?.type === 'monteCharge' ? null : { livId: l.id, type: 'monteCharge' }
                           )}
-                          style={{ backgroundColor: '#F1E8DC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}
+                          style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}
                           accessibilityRole="button"
                           accessibilityLabel="Choisir un employé pour prévenir le monte-charge"
                         >
@@ -502,7 +502,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                             }
                           }}
                           placeholder="contact@monte-charge.fr"
-                          placeholderTextColor="#B0A89E"
+                          placeholderTextColor="#9A8C80"
                           keyboardType="email-address"
                           autoCapitalize="none"
                           style={{ flex: 1, minWidth: 100, fontSize: 10, color: '#5C1F2E', fontWeight: '500', textDecorationLine: 'underline', paddingVertical: 2 }}
@@ -510,7 +510,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                       </View>
                     )}
                     {openAssignDropdown?.livId === l.id && openAssignDropdown?.type === 'monteCharge' && (
-                      <View style={{ marginLeft: 26, marginTop: 4, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#ECDFCD', maxHeight: 180 }}>
+                      <View style={{ marginLeft: 26, marginTop: 4, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#F1E7DC', maxHeight: 180 }}>
                         <ScrollView>
                           <Pressable
                             onPress={() => {
@@ -521,7 +521,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                               });
                               setOpenAssignDropdown(null);
                             }}
-                            style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD' }}
+                            style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' }}
                           >
                             <Text style={{ fontSize: 12, color: '#8A7B6E', fontStyle: 'italic' }}>Personne (désassigner)</Text>
                           </Pressable>
@@ -536,9 +536,9 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                                 });
                                 setOpenAssignDropdown(null);
                               }}
-                              style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#ECDFCD', backgroundColor: l.prevenirMonteCharge?.assigneA === emp.id ? '#F1E8DC' : 'transparent' }}
+                              style={{ paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC', backgroundColor: l.prevenirMonteCharge?.assigneA === emp.id ? '#F1E7DC' : 'transparent' }}
                             >
-                              <Text style={{ fontSize: 12, color: '#2A2622', fontWeight: l.prevenirMonteCharge?.assigneA === emp.id ? '600' : '400' }}>
+                              <Text style={{ fontSize: 12, color: '#2B1D14', fontWeight: l.prevenirMonteCharge?.assigneA === emp.id ? '600' : '400' }}>
                                 {emp.prenom} {emp.nom}{l.prevenirMonteCharge?.assigneA === emp.id ? ' ✓' : ''}
                               </Text>
                             </Pressable>
@@ -670,8 +670,8 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
               <TextInput style={styles.input} value={livForm.adresseLivraison} onChangeText={v => setLivForm(f => ({ ...f, adresseLivraison: v }))} placeholder="Optionnel" />
               <Text style={[styles.label, { marginTop: 10 }]}>Note</Text>
               <TextInput style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]} value={livForm.note} onChangeText={v => setLivForm(f => ({ ...f, note: v }))} placeholder="Instructions particulières..." multiline />
-              <Pressable onPress={pickPhotoEtiquette} style={{ marginTop: 10, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' }}>
-                <Text style={{ color: '#8C6D2F', fontWeight: '700', fontSize: 12 }}>
+              <Pressable onPress={pickPhotoEtiquette} style={{ marginTop: 10, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' }}>
+                <Text style={{ color: '#5C1F2E', fontWeight: '700', fontSize: 12 }}>
                   {livForm.photoEtiquetteUri ? '✓ Photo étiquette ajoutée' : '📷 Photo d\'étiquette (optionnel)'}
                 </Text>
               </Pressable>
@@ -695,14 +695,14 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                 }}>
                   {livForm.monteChargeRequis && <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>✓</Text>}
                 </View>
-                <Text style={{ fontSize: 14, color: '#2A2622', fontWeight: '500' }}>Monte-charge requis</Text>
+                <Text style={{ fontSize: 14, color: '#2B1D14', fontWeight: '500' }}>Monte-charge requis</Text>
               </Pressable>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                <Pressable onPress={() => setShowLivForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+                <Pressable onPress={() => setShowLivForm(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                  <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
                 </Pressable>
-                <Pressable onPress={saveLiv} disabled={!livForm.titre.trim()} style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !livForm.titre.trim() ? 0.5 : 1 }}>
-                  <Text style={{ color: '#C9A96E', fontWeight: '800' }}>{editLivId ? 'Enregistrer' : 'Créer'}</Text>
+                <Pressable onPress={saveLiv} disabled={!livForm.titre.trim()} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !livForm.titre.trim() ? 0.5 : 1 }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>{editLivId ? 'Enregistrer' : 'Créer'}</Text>
                 </Pressable>
               </View>
             </View>
@@ -806,11 +806,11 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
               <TextInput style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]} value={rdvForm.note} onChangeText={v => setRdvForm(f => ({ ...f, note: v }))} multiline placeholder="Points à aborder..." />
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                <Pressable onPress={() => setShowRdvForm(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+                <Pressable onPress={() => setShowRdvForm(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                  <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
                 </Pressable>
-                <Pressable onPress={saveRdv} disabled={!rdvForm.titre.trim()} style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !rdvForm.titre.trim() ? 0.5 : 1 }}>
-                  <Text style={{ color: '#C9A96E', fontWeight: '800' }}>{editRdvId ? 'Enregistrer' : 'Créer'}</Text>
+                <Pressable onPress={saveRdv} disabled={!rdvForm.titre.trim()} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !rdvForm.titre.trim() ? 0.5 : 1 }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>{editRdvId ? 'Enregistrer' : 'Créer'}</Text>
                 </Pressable>
               </View>
             </View>
@@ -823,35 +823,35 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12 },
-  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#2C2C2C', marginBottom: 10 },
-  empty: { fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
-  livCard: { flexDirection: 'row', backgroundColor: '#FAF7F3', borderRadius: 10, padding: 10, marginBottom: 8, gap: 8, borderLeftWidth: 3, borderLeftColor: '#C9A96E' },
+  sectionTitle: { fontSize: 14, fontWeight: '800', color: '#5C1F2E', marginBottom: 10 },
+  empty: { fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
+  livCard: { flexDirection: 'row', backgroundColor: '#FAF5EF', borderRadius: 10, padding: 10, marginBottom: 8, gap: 8, borderLeftWidth: 3, borderLeftColor: '#5C1F2E' },
   livCardDone: { borderLeftColor: '#2E7D32', backgroundColor: '#F1F8F2' },
-  livTitre: { fontSize: 13, fontWeight: '800', color: '#2C2C2C' },
-  livMeta: { fontSize: 11, color: '#8C6D2F', fontWeight: '700', marginTop: 2 },
-  livDetail: { fontSize: 11, color: '#687076', marginTop: 2 },
-  livNote: { fontSize: 11, color: '#8C6D2F', fontStyle: 'italic', marginTop: 4 },
+  livTitre: { fontSize: 13, fontWeight: '800', color: '#5C1F2E' },
+  livMeta: { fontSize: 11, color: '#5C1F2E', fontWeight: '700', marginTop: 2 },
+  livDetail: { fontSize: 11, color: '#6E5F54', marginTop: 2 },
+  livNote: { fontSize: 11, color: '#5C1F2E', fontStyle: 'italic', marginTop: 4 },
   livActions: { flexDirection: 'row', gap: 4, alignItems: 'flex-start' },
   badgeDone: { backgroundColor: '#D4EDDA', paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
   badgeDoneText: { fontSize: 10, fontWeight: '800', color: '#155724' },
-  miniBtn: { width: 32, height: 32, backgroundColor: '#fff', borderRadius: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E8DDD0' },
+  miniBtn: { width: 32, height: 32, backgroundColor: '#fff', borderRadius: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#EDE2D6' },
   miniBtnDone: { backgroundColor: '#D4EDDA', borderColor: '#2E7D32' },
-  miniBtnUndo: { backgroundColor: '#E8DDD0', borderColor: '#8C8077' },
+  miniBtnUndo: { backgroundColor: '#EDE2D6', borderColor: '#6E5F54' },
   miniBtnDel: { backgroundColor: '#FBEFEC', borderColor: '#E74C3C' },
   miniBtnText: { fontSize: 13 },
-  addBtn: { backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: '#C9A96E' },
-  addBtnText: { color: '#8C6D2F', fontSize: 12, fontWeight: '700' },
-  divider: { height: 1, backgroundColor: '#E8DDD0', marginVertical: 14 },
-  rdvCard: { flexDirection: 'row', backgroundColor: '#FAF7F3', borderRadius: 10, padding: 10, marginBottom: 8, gap: 8, borderLeftWidth: 3, borderLeftColor: '#2C2C2C' },
-  rdvTitre: { fontSize: 13, fontWeight: '800', color: '#2C2C2C' },
-  rdvMeta: { fontSize: 11, color: '#C9A96E', fontWeight: '700', marginTop: 2 },
-  rdvDetail: { fontSize: 11, color: '#687076', marginTop: 2 },
-  rdvNote: { fontSize: 11, color: '#8C6D2F', fontStyle: 'italic', marginTop: 4 },
+  addBtn: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' },
+  addBtnText: { color: '#5C1F2E', fontSize: 12, fontWeight: '700' },
+  divider: { height: 1, backgroundColor: '#EDE2D6', marginVertical: 14 },
+  rdvCard: { flexDirection: 'row', backgroundColor: '#FAF5EF', borderRadius: 10, padding: 10, marginBottom: 8, gap: 8, borderLeftWidth: 3, borderLeftColor: '#5C1F2E' },
+  rdvTitre: { fontSize: 13, fontWeight: '800', color: '#5C1F2E' },
+  rdvMeta: { fontSize: 11, color: '#5C1F2E', fontWeight: '700', marginTop: 2 },
+  rdvDetail: { fontSize: 11, color: '#6E5F54', marginTop: 2 },
+  rdvNote: { fontSize: 11, color: '#5C1F2E', fontStyle: 'italic', marginTop: 4 },
   modal: { backgroundColor: '#fff', borderRadius: 16, padding: 20 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 12 },
-  label: { fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginBottom: 4 },
-  input: { backgroundColor: '#FAF7F3', borderRadius: 10, borderWidth: 1.5, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#2C2C2C' },
-  chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E8DDD0' },
-  chipActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
-  chipText: { fontSize: 11, fontWeight: '700', color: '#2C2C2C' },
+  modalTitle: { fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 12 },
+  label: { fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginBottom: 4 },
+  input: { backgroundColor: '#FAF5EF', borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#5C1F2E' },
+  chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' },
+  chipActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
+  chipText: { fontSize: 11, fontWeight: '700', color: '#5C1F2E' },
 });

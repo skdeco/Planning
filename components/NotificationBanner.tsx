@@ -54,7 +54,7 @@ export function NotificationBanner() {
             <ScrollView style={styles.notifList}>
               {[...notifications].reverse().map(notif => {
                 const icon = ACTION_ICONS[notif.action] || '📌';
-                const color = ACTION_COLORS[notif.action] || '#687076';
+                const color = ACTION_COLORS[notif.action] || '#6E5F54';
                 const date = new Date(notif.timestamp);
                 const timeStr = `${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
                 return (
@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#5C1F2E',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
@@ -129,15 +129,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
+    borderBottomColor: '#EDE2D6',
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   closeBtn: {
-    backgroundColor: '#1A3A6B',
+    backgroundColor: '#5C1F2E',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -170,11 +170,11 @@ const styles = StyleSheet.create({
   notifDesc: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 2,
   },
   notifMeta: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
   },
 });

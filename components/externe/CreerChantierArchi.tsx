@@ -133,23 +133,23 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
           ) : (
             <ScrollView contentContainerStyle={{ padding: 16, gap: 10 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={styles.label}>Nom du chantier *</Text>
-              <TextInput style={styles.input} placeholder="Ex : Appartement Mozart" placeholderTextColor="#B0A594" value={nom} onChangeText={setNom} />
+              <TextInput style={styles.input} placeholder="Ex : Appartement Mozart" placeholderTextColor="#9A8C80" value={nom} onChangeText={setNom} />
 
               <Text style={styles.label}>Adresse</Text>
-              <TextInput style={styles.input} placeholder="Rue" placeholderTextColor="#B0A594" value={rue} onChangeText={setRue} />
+              <TextInput style={styles.input} placeholder="Rue" placeholderTextColor="#9A8C80" value={rue} onChangeText={setRue} />
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <TextInput style={[styles.input, { width: 110 }]} placeholder="Code postal" placeholderTextColor="#B0A594" keyboardType="number-pad" value={cp} onChangeText={setCp} />
-                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ville" placeholderTextColor="#B0A594" value={ville} onChangeText={setVille} />
+                <TextInput style={[styles.input, { width: 110 }]} placeholder="Code postal" placeholderTextColor="#9A8C80" keyboardType="number-pad" value={cp} onChangeText={setCp} />
+                <TextInput style={[styles.input, { flex: 1 }]} placeholder="Ville" placeholderTextColor="#9A8C80" value={ville} onChangeText={setVille} />
               </View>
 
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.label}>Début</Text>
-                  <TextInput style={styles.input} placeholder="AAAA-MM-JJ" placeholderTextColor="#B0A594" autoCapitalize="none" value={dateDebut} onChangeText={setDateDebut} />
+                  <TextInput style={styles.input} placeholder="AAAA-MM-JJ" placeholderTextColor="#9A8C80" autoCapitalize="none" value={dateDebut} onChangeText={setDateDebut} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.label}>Fin prévue</Text>
-                  <TextInput style={styles.input} placeholder="AAAA-MM-JJ" placeholderTextColor="#B0A594" autoCapitalize="none" value={dateFin} onChangeText={setDateFin} />
+                  <TextInput style={styles.input} placeholder="AAAA-MM-JJ" placeholderTextColor="#9A8C80" autoCapitalize="none" value={dateFin} onChangeText={setDateFin} />
                 </View>
               </View>
 
@@ -174,11 +174,11 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
               {clientMode === 'nouveau' && (
                 <View style={{ gap: 8 }}>
                   <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <TextInput style={[styles.input, { flex: 1 }]} placeholder="Prénom *" placeholderTextColor="#B0A594" value={nc.prenom} onChangeText={t => setNc(s => ({ ...s, prenom: t }))} />
-                    <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nom *" placeholderTextColor="#B0A594" value={nc.nom} onChangeText={t => setNc(s => ({ ...s, nom: t }))} />
+                    <TextInput style={[styles.input, { flex: 1 }]} placeholder="Prénom *" placeholderTextColor="#9A8C80" value={nc.prenom} onChangeText={t => setNc(s => ({ ...s, prenom: t }))} />
+                    <TextInput style={[styles.input, { flex: 1 }]} placeholder="Nom *" placeholderTextColor="#9A8C80" value={nc.nom} onChangeText={t => setNc(s => ({ ...s, nom: t }))} />
                   </View>
-                  <TextInput style={styles.input} placeholder="Email (optionnel)" placeholderTextColor="#B0A594" autoCapitalize="none" keyboardType="email-address" value={nc.email} onChangeText={t => setNc(s => ({ ...s, email: t }))} />
-                  <TextInput style={styles.input} placeholder="Téléphone (optionnel)" placeholderTextColor="#B0A594" keyboardType="phone-pad" value={nc.telephone} onChangeText={t => setNc(s => ({ ...s, telephone: t }))} />
+                  <TextInput style={styles.input} placeholder="Email (optionnel)" placeholderTextColor="#9A8C80" autoCapitalize="none" keyboardType="email-address" value={nc.email} onChangeText={t => setNc(s => ({ ...s, email: t }))} />
+                  <TextInput style={styles.input} placeholder="Téléphone (optionnel)" placeholderTextColor="#9A8C80" keyboardType="phone-pad" value={nc.telephone} onChangeText={t => setNc(s => ({ ...s, telephone: t }))} />
                   <Text style={styles.hint}>Un accès à l'application sera généré pour ce client.</Text>
                 </View>
               )}
@@ -198,31 +198,31 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#FBF7F2', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
+  sheet: { backgroundColor: '#FAF5EF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EDE4D8' },
-  title: { fontSize: 18, fontWeight: '800', color: '#2C2C2C' },
-  close: { fontSize: 20, color: '#8C8077', paddingHorizontal: 4 },
-  label: { fontSize: 12, fontWeight: '700', color: '#8C8077', textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 4 },
-  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#E8DDD0', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#2C2C2C' },
+  title: { fontSize: 18, fontWeight: '800', color: '#5C1F2E' },
+  close: { fontSize: 20, color: '#6E5F54', paddingHorizontal: 4 },
+  label: { fontSize: 12, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.3, marginTop: 4 },
+  input: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#5C1F2E' },
   segRow: { flexDirection: 'row', gap: 8 },
   seg: { flex: 1, paddingVertical: 8, borderRadius: 10, backgroundColor: '#F0E6DC', alignItems: 'center' },
   segOn: { backgroundColor: DS.bordeaux },
-  segTxt: { fontSize: 13, fontWeight: '700', color: '#8C6D2F' },
+  segTxt: { fontSize: 13, fontWeight: '700', color: '#5C1F2E' },
   segTxtOn: { color: '#fff' },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E8DDD0' },
+  chip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6' },
   chipOn: { backgroundColor: DS.bordeaux, borderColor: DS.bordeaux },
-  chipTxt: { fontSize: 13, fontWeight: '600', color: '#2C2C2C' },
+  chipTxt: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
   chipTxtOn: { color: '#fff' },
-  hint: { fontSize: 12, color: '#8C8077', fontStyle: 'italic' },
-  entrepriseNote: { fontSize: 12, color: '#8C6D2F', backgroundColor: '#F5ECDD', borderRadius: 10, padding: 10, marginTop: 6 },
+  hint: { fontSize: 12, color: '#6E5F54', fontStyle: 'italic' },
+  entrepriseNote: { fontSize: 12, color: '#5C1F2E', backgroundColor: '#F5ECDD', borderRadius: 10, padding: 10, marginTop: 6 },
   saveBtn: { backgroundColor: DS.bordeaux, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 10 },
   saveBtnOff: { opacity: 0.4 },
   saveTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
-  credIntro: { fontSize: 14, color: '#2C2C2C' },
-  credBox: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0', padding: 14, gap: 10 },
+  credIntro: { fontSize: 14, color: '#5C1F2E' },
+  credBox: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#EDE2D6', padding: 14, gap: 10 },
   credRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  credLabel: { fontSize: 12, fontWeight: '700', color: '#8C8077', textTransform: 'uppercase' },
+  credLabel: { fontSize: 12, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase' },
   credVal: { fontSize: 16, fontWeight: '800', color: DS.bordeaux },
-  credNote: { fontSize: 12, color: '#8C8077', fontStyle: 'italic' },
+  credNote: { fontSize: 12, color: '#6E5F54', fontStyle: 'italic' },
 });

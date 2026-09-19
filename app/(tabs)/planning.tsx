@@ -127,17 +127,17 @@ function DatePickerCalendar({ value, onChange }: { value: string; onChange: (v: 
 }
 const calStyles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  navBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F5EDE3', alignItems: 'center', justifyContent: 'center' },
-  navArrow: { fontSize: 18, color: '#2C2C2C', fontWeight: '700' },
-  title: { fontSize: 15, fontWeight: '700', color: '#11181C' },
+  navBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' },
+  navArrow: { fontSize: 18, color: '#5C1F2E', fontWeight: '700' },
+  title: { fontSize: 15, fontWeight: '700', color: '#2B1D14' },
   weekRow: { flexDirection: 'row', marginBottom: 6 },
-  weekDay: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#687076', textTransform: 'uppercase' },
+  weekDay: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: '14.28%', aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginVertical: 1 },
-  cellToday: { borderWidth: 1.5, borderColor: '#2C2C2C' },
-  cellSel: { backgroundColor: '#2C2C2C' },
-  cellText: { fontSize: 13, color: '#11181C', fontWeight: '500' },
-  cellTextToday: { color: '#2C2C2C', fontWeight: '700' },
+  cellToday: { borderWidth: 1.5, borderColor: '#5C1F2E' },
+  cellSel: { backgroundColor: '#5C1F2E' },
+  cellText: { fontSize: 13, color: '#2B1D14', fontWeight: '500' },
+  cellTextToday: { color: '#5C1F2E', fontWeight: '700' },
   cellTextSel: { color: '#fff', fontWeight: '700' },
 });
 
@@ -545,7 +545,7 @@ export default function PlanningScreen() {
           );
           return affs.map(a => {
             const ch = data.chantiers.find(c => c.id === a.chantierId);
-            return { chantierId: a.chantierId, chantierNom: ch?.nom || '?', couleur: ch?.couleur || '#2C2C2C' };
+            return { chantierId: a.chantierId, chantierNom: ch?.nom || '?', couleur: ch?.couleur || '#5C1F2E' };
           });
         });
         if (joursData.some(j => j.length > 0)) {
@@ -775,7 +775,7 @@ export default function PlanningScreen() {
           <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
           {isAdmin && (
             <Pressable style={{ marginLeft: 4 }} onPress={openAdminSettings}>
-              <Settings size={15} color="#8C8077" strokeWidth={2} />
+              <Settings size={15} color="#6E5F54" strokeWidth={2} />
             </Pressable>
           )}
         </View>
@@ -863,23 +863,23 @@ export default function PlanningScreen() {
               if (Platform.OS === 'web') { if (window.confirm(msg)) doDuplicate(); }
               else Alert.alert(t.planningAdmin.duplicate, msg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.planningAdmin.duplicate, onPress: doDuplicate }]);
             }} accessibilityLabel="Dupliquer semaine">
-              <Copy size={17} color="#2C2C2C" strokeWidth={2} />
+              <Copy size={17} color="#5C1F2E" strokeWidth={2} />
             </Pressable>
           )}
           {/* Bouton galerie photos — visible pour tous */}
           <Pressable style={styles.galerieBtn} onPress={() => { setGalerieChantierId(undefined); setShowGalerieGlobale(true); }}>
-            <Camera size={17} color="#2C2C2C" strokeWidth={2} />
+            <Camera size={17} color="#5C1F2E" strokeWidth={2} />
           </Pressable>
           {/* Bouton PDF planning — admin uniquement */}
           {isAdmin && (
             <Pressable style={styles.galerieBtn} onPress={handleExportPDF} accessibilityLabel="Exporter planning PDF">
-              <FileText size={17} color="#2C2C2C" strokeWidth={2} />
+              <FileText size={17} color="#5C1F2E" strokeWidth={2} />
             </Pressable>
           )}
           {/* Bouton export/sauvegarde — admin uniquement */}
           {isAdmin && (
             <Pressable style={styles.galerieBtn} onPress={handleExportData} accessibilityLabel="Exporter les données">
-              <Download size={17} color="#2C2C2C" strokeWidth={2} />
+              <Download size={17} color="#5C1F2E" strokeWidth={2} />
             </Pressable>
           )}
           <LanguageFlag />
@@ -905,13 +905,13 @@ export default function PlanningScreen() {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
           <Text style={styles.weekLabel}>{viewMode === 'semaine' ? weekLabel : monthData.label}</Text>
           <Pressable style={{ padding: 4 }} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}>
-            <Text style={{ fontSize: 16, color: '#2C2C2C' }}>‹</Text>
+            <Text style={{ fontSize: 16, color: '#5C1F2E' }}>‹</Text>
           </Pressable>
-          <Pressable style={{ backgroundColor: '#F5EDE3', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }} onPress={() => setShowDatePicker(true)}>
-            <Text style={{ fontSize: 10, fontWeight: '600', color: '#2C2C2C' }}>{t.common.today_short}</Text>
+          <Pressable style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }} onPress={() => setShowDatePicker(true)}>
+            <Text style={{ fontSize: 10, fontWeight: '600', color: '#5C1F2E' }}>{t.common.today_short}</Text>
           </Pressable>
           <Pressable style={{ padding: 4 }} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}>
-            <Text style={{ fontSize: 16, color: '#2C2C2C' }}>›</Text>
+            <Text style={{ fontSize: 16, color: '#5C1F2E' }}>›</Text>
           </Pressable>
         </View>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
@@ -1193,7 +1193,7 @@ export default function PlanningScreen() {
                 value={interventionForm.libelle}
                 onChangeText={v => setInterventionForm(f => ({ ...f, libelle: v }))}
                 placeholder={t.planningAdmin.interventionPh}
-                placeholderTextColor="#B0BEC5"
+                placeholderTextColor="#9A8C80"
                 autoFocus
               />
               <Text style={[styles.intervFormLabel, { marginTop: 12 }]}>{t.planningAdmin.descOptional}</Text>
@@ -1202,7 +1202,7 @@ export default function PlanningScreen() {
                 value={interventionForm.description}
                 onChangeText={v => setInterventionForm(f => ({ ...f, description: v }))}
                 placeholder={t.planningAdmin.interventionDescPh}
-                placeholderTextColor="#B0BEC5"
+                placeholderTextColor="#9A8C80"
                 multiline
               />
               <View style={styles.intervDateRow}>
@@ -1213,7 +1213,7 @@ export default function PlanningScreen() {
                     value={interventionForm.dateDebut}
                     onChangeText={v => setInterventionForm(f => ({ ...f, dateDebut: v }))}
                     placeholder="AAAA-MM-JJ"
-                    placeholderTextColor="#B0BEC5"
+                    placeholderTextColor="#9A8C80"
                     keyboardType="numbers-and-punctuation"
                   />
                 </View>
@@ -1224,7 +1224,7 @@ export default function PlanningScreen() {
                     value={interventionForm.dateFin}
                     onChangeText={v => setInterventionForm(f => ({ ...f, dateFin: v }))}
                     placeholder="AAAA-MM-JJ"
-                    placeholderTextColor="#B0BEC5"
+                    placeholderTextColor="#9A8C80"
                     keyboardType="numbers-and-punctuation"
                   />
                 </View>
@@ -1317,95 +1317,95 @@ export default function PlanningScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', maxWidth: 420 }}>
             <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 20, textAlign: 'center' }}>{t.planningAdmin.adminSettings}</Text>
+              <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 20, textAlign: 'center' }}>{t.planningAdmin.adminSettings}</Text>
 
               {/* Identifiant */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.loginId}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.planningAdmin.loginId}</Text>
               <TextInput
-                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 14 }}
                 value={adminIdEdit}
                 onChangeText={v => { setAdminIdEdit(v); setPwdError(''); }}
                 autoCapitalize="none"
                 autoCorrect={false}
                 placeholder={t.planningAdmin.adminIdPh}
-                placeholderTextColor="#687076"
+                placeholderTextColor="#6E5F54"
               />
 
               {/* Employé lié */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.employeLinked}</Text>
-              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>{t.planningAdmin.othersWillSee}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.planningAdmin.employeLinked}</Text>
+              <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 8 }}>{t.planningAdmin.othersWillSee}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 14 }}>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
                   <Pressable
-                    style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: !adminEmployeIdEdit ? '#2C2C2C' : '#F5EDE3' }}
+                    style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: !adminEmployeIdEdit ? '#5C1F2E' : '#F1E7DC' }}
                     onPress={() => setAdminEmployeIdEdit(undefined)}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '600', color: !adminEmployeIdEdit ? '#fff' : '#687076' }}>{t.common.none}</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: !adminEmployeIdEdit ? '#fff' : '#6E5F54' }}>{t.common.none}</Text>
                   </Pressable>
                   {data.employes.map(e => (
                     <Pressable
                       key={e.id}
-                      style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: adminEmployeIdEdit === e.id ? '#2C2C2C' : '#F5EDE3' }}
+                      style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: adminEmployeIdEdit === e.id ? '#5C1F2E' : '#F1E7DC' }}
                       onPress={() => setAdminEmployeIdEdit(e.id)}
                     >
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: adminEmployeIdEdit === e.id ? '#fff' : '#11181C' }}>{e.prenom} {e.nom}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: adminEmployeIdEdit === e.id ? '#fff' : '#2B1D14' }}>{e.prenom} {e.nom}</Text>
                     </Pressable>
                   ))}
                 </View>
               </ScrollView>
 
               {/* Magasin préféré */}
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6, marginTop: 8 }}>{t.planningAdmin.preferredStore}</Text>
-              <Text style={{ fontSize: 11, color: '#687076', marginBottom: 8 }}>{t.planningAdmin.preferredStoreHint}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6, marginTop: 8 }}>{t.planningAdmin.preferredStore}</Text>
+              <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 8 }}>{t.planningAdmin.preferredStoreHint}</Text>
               <TextInput
-                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 14 }}
                 value={magasinEdit}
                 onChangeText={setMagasinEdit}
                 placeholder={t.planningAdmin.storePh}
-                placeholderTextColor="#687076"
+                placeholderTextColor="#6E5F54"
               />
 
               {/* Séparateur */}
-              <View style={{ height: 1, backgroundColor: '#E2E6EA', marginVertical: 10 }} />
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#11181C', marginBottom: 12 }}>{t.planningAdmin.changePassword}</Text>
+              <View style={{ height: 1, backgroundColor: '#EDE2D6', marginVertical: 10 }} />
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#2B1D14', marginBottom: 12 }}>{t.planningAdmin.changePassword}</Text>
 
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.currentPassword}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.planningAdmin.currentPassword}</Text>
               <TextInput
-                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 14 }}
                 value={pwdActuel}
                 onChangeText={v => { setPwdActuel(v); setPwdError(''); }}
                 secureTextEntry
                 autoCapitalize="none"
                 placeholder="Mot de passe actuel"
-                placeholderTextColor="#687076"
+                placeholderTextColor="#6E5F54"
               />
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.newPassword}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.planningAdmin.newPassword}</Text>
               <TextInput
-                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 14 }}
                 value={pwdNouveau}
                 onChangeText={v => { setPwdNouveau(v); setPwdError(''); }}
                 secureTextEntry
                 autoCapitalize="none"
                 placeholder="Nouveau mot de passe"
-                placeholderTextColor="#687076"
+                placeholderTextColor="#6E5F54"
               />
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.confirmPassword}</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.planningAdmin.confirmPassword}</Text>
               <TextInput
-                style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#11181C', borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 14 }}
+                style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 14 }}
                 value={pwdConfirm}
                 onChangeText={v => { setPwdConfirm(v); setPwdError(''); }}
                 secureTextEntry
                 autoCapitalize="none"
                 placeholder="Confirmer le mot de passe"
-                placeholderTextColor="#687076"
+                placeholderTextColor="#6E5F54"
               />
               {pwdError !== '' && <Text style={{ color: '#E74C3C', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{pwdError}</Text>}
               {pwdSuccess && <Text style={{ color: '#27AE60', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{t.planningAdmin.settingsSaved}</Text>}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-                <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
-                  <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>{t.common.cancel}</Text>
+                <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
+                  <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
                 </Pressable>
-                <Pressable style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={handleSaveAdminSettings}>
+                <Pressable style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={handleSaveAdminSettings}>
                   <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>{t.common.save}</Text>
                 </Pressable>
               </View>
@@ -1432,49 +1432,49 @@ export default function PlanningScreen() {
               }
               return (
                 <ScrollView keyboardShouldPersistTaps="handled">
-                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C', textAlign: 'center', marginBottom: 4 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14', textAlign: 'center', marginBottom: 4 }}>
                     Déplacer {emp?.prenom} {emp?.nom}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#687076', textAlign: 'center', marginBottom: 16 }}>
+                  <Text style={{ fontSize: 12, color: '#6E5F54', textAlign: 'center', marginBottom: 16 }}>
                     Depuis : {fromChantier?.nom} — {new Date(moveModal.date + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                   </Text>
 
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 8 }}>{t.planningAdmin.moveToWhichChantier}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 8 }}>{t.planningAdmin.moveToWhichChantier}</Text>
                   <View style={{ gap: 4, marginBottom: 16 }}>
                     {/* Même chantier (changer juste la date) */}
                     <Pressable
-                      style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === moveModal.chantierId ? '#E8F0FE' : '#F5EDE3', borderWidth: moveTargetChantierId === moveModal.chantierId ? 1.5 : 0, borderColor: '#2C2C2C' }}
+                      style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === moveModal.chantierId ? '#E8F0FE' : '#F1E7DC', borderWidth: moveTargetChantierId === moveModal.chantierId ? 1.5 : 0, borderColor: '#5C1F2E' }}
                       onPress={() => setMoveTargetChantierId(moveModal.chantierId)}>
                       <View style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: fromChantier?.couleur, marginRight: 8 }} />
-                      <Text style={{ fontSize: 13, color: '#11181C', fontWeight: moveTargetChantierId === moveModal.chantierId ? '700' : '400' }}>{fromChantier?.nom} (même)</Text>
+                      <Text style={{ fontSize: 13, color: '#2B1D14', fontWeight: moveTargetChantierId === moveModal.chantierId ? '700' : '400' }}>{fromChantier?.nom} (même)</Text>
                     </Pressable>
                     {availableChantiers.map(c => (
                       <Pressable
                         key={c.id}
-                        style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === c.id ? '#E8F0FE' : '#F5EDE3', borderWidth: moveTargetChantierId === c.id ? 1.5 : 0, borderColor: '#2C2C2C' }}
+                        style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === c.id ? '#E8F0FE' : '#F1E7DC', borderWidth: moveTargetChantierId === c.id ? 1.5 : 0, borderColor: '#5C1F2E' }}
                         onPress={() => setMoveTargetChantierId(c.id)}>
                         <View style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: c.couleur, marginRight: 8 }} />
-                        <Text style={{ fontSize: 13, color: '#11181C', fontWeight: moveTargetChantierId === c.id ? '700' : '400' }}>{c.nom}</Text>
+                        <Text style={{ fontSize: 13, color: '#2B1D14', fontWeight: moveTargetChantierId === c.id ? '700' : '400' }}>{c.nom}</Text>
                       </Pressable>
                     ))}
                   </View>
 
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 }}>{t.planningAdmin.destinationDate}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.planningAdmin.destinationDate}</Text>
                   <View style={{ gap: 3, marginBottom: 16 }}>
                     {dateChoices.map(d => (
-                      <Pressable key={d.value} style={{ padding: 10, borderRadius: 8, backgroundColor: moveTargetDate === d.value ? '#2C2C2C' : '#F5EDE3' }}
+                      <Pressable key={d.value} style={{ padding: 10, borderRadius: 8, backgroundColor: moveTargetDate === d.value ? '#5C1F2E' : '#F1E7DC' }}
                         onPress={() => setMoveTargetDate(d.value)}>
-                        <Text style={{ fontSize: 13, fontWeight: moveTargetDate === d.value ? '700' : '400', color: moveTargetDate === d.value ? '#fff' : '#11181C', textTransform: 'capitalize' }}>{d.label}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: moveTargetDate === d.value ? '700' : '400', color: moveTargetDate === d.value ? '#fff' : '#2B1D14', textTransform: 'capitalize' }}>{d.label}</Text>
                       </Pressable>
                     ))}
                   </View>
 
                   <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setMoveModal(null)}>
-                      <Text style={{ fontSize: 15, color: '#687076', fontWeight: '600' }}>{t.common.cancel}</Text>
+                    <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setMoveModal(null)}>
+                      <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
                     </Pressable>
                     <Pressable
-                      style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: moveTargetChantierId ? 1 : 0.5 }}
+                      style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: moveTargetChantierId ? 1 : 0.5 }}
                       onPress={() => {
                         if (!moveModal || !moveTargetChantierId || !moveTargetDate) return;
                         moveEmploye({
@@ -1513,7 +1513,7 @@ export default function PlanningScreen() {
                   <Text style={[styles.modalTitle, { marginBottom: 8 }]}>
                     Ordre de passage — {emp?.prenom} {emp?.nom}
                   </Text>
-                  <Text style={{ fontSize: 12, color: '#687076', marginBottom: 12 }}>
+                  <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 12 }}>
                     {ordreModal.date} · Appuyez sur ↑ / ↓ pour réordonner
                   </Text>
                   {ordreModal.chantierIds.map((cId, idx) => {
@@ -1523,7 +1523,7 @@ export default function PlanningScreen() {
                         <View style={[styles.ordreBadge, { position: 'relative', marginRight: 10 }]}>
                           <Text style={styles.ordreBadgeText}>{idx + 1}</Text>
                         </View>
-                        <Text style={{ flex: 1, fontSize: 14, color: '#11181C' }} numberOfLines={1}>
+                        <Text style={{ flex: 1, fontSize: 14, color: '#2B1D14' }} numberOfLines={1}>
                           {ch?.nom || cId}
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -1556,11 +1556,11 @@ export default function PlanningScreen() {
                     );
                   })}
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                    <Pressable style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
-                      <Text style={{ color: '#687076', fontWeight: '600' }}>{t.common.cancel}</Text>
+                    <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
+                      <Text style={{ color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
                     </Pressable>
                     <Pressable
-                      style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
+                      style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
                       onPress={() => {
                         updateOrdreAffectation(ordreModal.employeId, ordreModal.date, ordreModal.chantierIds);
                         setOrdreModal(null);
@@ -1590,7 +1590,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 6,
     paddingBottom: 4,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   headerLogoWrap: {
     flexDirection: 'row',
@@ -1605,11 +1605,11 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   headerSub: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
   },
   navRow: {
     flexDirection: 'row',
@@ -1620,7 +1620,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1635,11 +1635,11 @@ const styles = StyleSheet.create({
   },
   navArrow: {
     fontSize: 22,
-    color: '#11181C',
+    color: '#2B1D14',
     fontWeight: '300',
   },
   todayBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -1672,11 +1672,11 @@ const styles = StyleSheet.create({
   weekLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   chantierCount: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
   },
   ordreBadge: {
     position: 'absolute',
@@ -1713,7 +1713,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginBottom: 16,
     alignItems: 'flex-start',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 14,
     padding: 12,
   },
@@ -1726,14 +1726,14 @@ const styles = StyleSheet.create({
   ficheRowLabel: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#687076',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 4,
   },
   ficheRowValue: {
     fontSize: 15,
-    color: '#11181C',
+    color: '#2B1D14',
     lineHeight: 22,
     fontWeight: '500',
   },
@@ -1764,11 +1764,11 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 10,
     marginRight: 8,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
   },
   ficheUpdatedAt: {
     fontSize: 11,
-    color: '#B0BEC5',
+    color: '#9A8C80',
     textAlign: 'center',
     marginBottom: 8,
     fontStyle: 'italic',
@@ -1789,7 +1789,7 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
@@ -1797,17 +1797,17 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 16,
   },
   modalCloseBtn: {
     marginTop: 16,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -1831,18 +1831,18 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalXBtnText: {
     fontSize: 14,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '700',
   },
   modalXText: {
     fontSize: 14,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '700',
   },
   interventionSheet: {
@@ -1856,20 +1856,20 @@ const styles = StyleSheet.create({
   intervFormLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   intervFormInput: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#11181C',
+    color: '#2B1D14',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   intervDateRow: {
     flexDirection: 'row',
@@ -1890,11 +1890,11 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   intervColorSwatchActive: {
-    borderColor: '#11181C',
+    borderColor: '#2B1D14',
     transform: [{ scale: 1.2 }],
   },
   intervSaveBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -1918,7 +1918,7 @@ const styles = StyleSheet.create({
   intervExistingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
@@ -1928,11 +1928,11 @@ const styles = StyleSheet.create({
   intervExistingLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   intervExistingDates: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   intervExistingDelete: {
@@ -1961,7 +1961,7 @@ const styles = StyleSheet.create({
   datePickerTitle: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     textAlign: 'center',
     marginBottom: 16,
   },
@@ -1969,18 +1969,18 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
     alignItems: 'center',
   },
   datePickerTodayText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   // ── Toggle vue semaine/mois ──
   viewToggle: {
     flexDirection: 'row',
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 8,
     padding: 2,
     marginRight: 4,
@@ -1991,12 +1991,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   viewToggleBtnActive: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
   },
   viewToggleBtnText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
   },
   viewToggleBtnTextActive: {
     color: '#fff',
@@ -2113,8 +2113,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F8FAFC',
   },
   chipActive: {
-    backgroundColor: '#2C2C2C',
-    borderColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
+    borderColor: '#5C1F2E',
   },
   chipText: {
     fontSize: 12,

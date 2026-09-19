@@ -102,16 +102,16 @@ export function DashboardKPI() {
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
         <Text style={styles.title}>Tableau de bord</Text>
-        <Pressable onPress={() => setShowGantt(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#2C2C2C', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
-          <CalendarDays size={13} color="#C9A96E" strokeWidth={2.2} />
-          <Text style={{ color: '#C9A96E', fontSize: 11, fontWeight: '800' }}>Planning Gantt</Text>
+        <Pressable onPress={() => setShowGantt(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#5C1F2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}>
+          <CalendarDays size={13} color="#FFFFFF" strokeWidth={2.2} />
+          <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '800' }}>Planning Gantt</Text>
         </Pressable>
       </View>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 2 }}>
-        <KpiCard label="CA signé HT" value={`${fmt(stats.caTotalHT)} €`} color="#2C2C2C" icon={PenLine} />
-        <KpiCard label="En cours TTC" value={`${fmt(stats.caEnCoursTTC)} €`} color="#8C6D2F" icon={HardHat} />
+        <KpiCard label="CA signé HT" value={`${fmt(stats.caTotalHT)} €`} color="#5C1F2E" icon={PenLine} />
+        <KpiCard label="En cours TTC" value={`${fmt(stats.caEnCoursTTC)} €`} color="#5C1F2E" icon={HardHat} />
         <KpiCard label="Encaissé" value={`${fmt(stats.caEncaisse)} €`} color="#2E7D32" icon={Wallet} />
-        <KpiCard label="À encaisser" value={`${fmt(stats.caARecevoir)} €`} color="#8C6D2F" icon={Hourglass} />
+        <KpiCard label="À encaisser" value={`${fmt(stats.caARecevoir)} €`} color="#5C1F2E" icon={Hourglass} />
       </ScrollView>
 
       <GanttGlobal visible={showGantt} onClose={() => setShowGantt(false)} />
@@ -137,7 +137,7 @@ export function DashboardKPI() {
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  title: { fontSize: 14, fontWeight: '800', color: '#2C2C2C', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
+  title: { fontSize: 14, fontWeight: '800', color: '#5C1F2E', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   kpiCard: {
     backgroundColor: '#fff',
     borderLeftWidth: 4,
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   kpiIcon: { fontSize: 18, marginBottom: 6 },
-  kpiLabel: { fontSize: 11, color: '#8C8077', fontWeight: '600', textTransform: 'uppercase' },
+  kpiLabel: { fontSize: 11, color: '#6E5F54', fontWeight: '600', textTransform: 'uppercase' },
   kpiValue: { fontSize: 17, fontWeight: '800', marginTop: 4 },
   retardsBox: {
     backgroundColor: '#FBEFEC',
@@ -166,7 +166,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     paddingVertical: 3,
   },
-  retardChantier: { flex: 1, fontSize: 11, color: '#2C2C2C', fontWeight: '600' },
+  retardChantier: { flex: 1, fontSize: 11, color: '#5C1F2E', fontWeight: '600' },
   retardMontant: { fontSize: 11, color: '#B83A2E', fontWeight: '800' },
-  retardMore: { fontSize: 10, color: '#8C8077', fontStyle: 'italic', marginTop: 4 },
+  retardMore: { fontSize: 10, color: '#6E5F54', fontStyle: 'italic', marginTop: 4 },
 });

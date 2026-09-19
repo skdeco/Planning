@@ -148,7 +148,7 @@ function IconCheck({ size = 18, color = '#27AE60' }: { size?: number; color?: st
   );
 }
 
-function IconClock({ size = 16, color = '#687076' }: { size?: number; color?: string }) {
+function IconClock({ size = 16, color = '#6E5F54' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
@@ -157,7 +157,7 @@ function IconClock({ size = 16, color = '#687076' }: { size?: number; color?: st
   );
 }
 
-function IconLocation({ size = 14, color = '#687076' }: { size?: number; color?: string }) {
+function IconLocation({ size = 14, color = '#6E5F54' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M12 21s-7-6.5-7-11a7 7 0 1 1 14 0c0 4.5-7 11-7 11z" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
@@ -166,7 +166,7 @@ function IconLocation({ size = 14, color = '#687076' }: { size?: number; color?:
   );
 }
 
-function IconCalendar({ size = 16, color = '#687076' }: { size?: number; color?: string }) {
+function IconCalendar({ size = 16, color = '#6E5F54' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Path d="M4 7h16v14H4zM4 7V5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2" stroke={color} strokeWidth="1.8" strokeLinecap="round" />
@@ -178,7 +178,7 @@ function IconCalendar({ size = 16, color = '#687076' }: { size?: number; color?:
   );
 }
 
-function IconPending({ size = 18, color = '#B0B8C1' }: { size?: number; color?: string }) {
+function IconPending({ size = 18, color = '#9A8C80' }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24" fill="none">
       <Circle cx="12" cy="12" r="10" stroke={color} strokeWidth="1.8" />
@@ -198,7 +198,7 @@ interface ChantierCardProps {
 
 function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loading }: ChantierCardProps) {
   const { t } = useLanguage();
-  const couleur = chantier.couleur || '#2C2C2C';
+  const couleur = chantier.couleur || '#5C1F2E';
   const adresse = [chantier.rue, chantier.codePostal, chantier.ville].filter(Boolean).join(', ') || chantier.adresse || '';
 
   const canDebut = !debutPointage;
@@ -214,7 +214,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
           <Text style={styles.chantierCardNom} numberOfLines={1}>{chantier.nom}</Text>
           {adresse ? (
             <View style={styles.adresseRow}>
-              <IconLocation size={12} color="#9CA3AF" />
+              <IconLocation size={12} color="#9A8C80" />
               <Text style={styles.chantierCardAdresse} numberOfLines={1}>{adresse}</Text>
             </View>
           ) : null}
@@ -231,7 +231,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
       <View style={styles.horairesRow}>
         <View style={styles.horaireItem}>
           <View style={styles.horaireLabel}>
-            <IconArrivee size={14} color={debutPointage ? '#27AE60' : '#B0B8C1'} />
+            <IconArrivee size={14} color={debutPointage ? '#27AE60' : '#9A8C80'} />
             <Text style={[styles.horaireLabelText, debutPointage && styles.horaireLabelDone]}>{t.pointage.arrival}</Text>
           </View>
           <Text style={[styles.horaireHeure, debutPointage && styles.horaireHeureDone]}>
@@ -241,7 +241,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
         <View style={styles.horaireSep} />
         <View style={styles.horaireItem}>
           <View style={styles.horaireLabel}>
-            <IconDepart size={14} color={finPointage ? '#E74C3C' : '#B0B8C1'} />
+            <IconDepart size={14} color={finPointage ? '#E74C3C' : '#9A8C80'} />
             <Text style={[styles.horaireLabelText, finPointage && styles.horaireLabelDone]}>{t.pointage.departure}</Text>
           </View>
           <Text style={[styles.horaireHeure, finPointage && styles.horaireHeureDone]}>
@@ -253,10 +253,10 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
             <View style={styles.horaireSep} />
             <View style={styles.horaireItem}>
               <View style={styles.horaireLabel}>
-                <IconClock size={14} color="#2C2C2C" />
-                <Text style={[styles.horaireLabelText, { color: '#2C2C2C' }]}>{t.pointage.duration}</Text>
+                <IconClock size={14} color="#5C1F2E" />
+                <Text style={[styles.horaireLabelText, { color: '#5C1F2E' }]}>{t.pointage.duration}</Text>
               </View>
-              <Text style={[styles.horaireHeure, { color: '#2C2C2C' }]}>
+              <Text style={[styles.horaireHeure, { color: '#5C1F2E' }]}>
                 {(() => {
                   const [dh, dm] = debutPointage.heure.split(':').map(Number);
                   const [fh, fm] = finPointage.heure.split(':').map(Number);
@@ -622,7 +622,7 @@ export default function PointageScreen() {
           <View style={styles.identiteRight}>
             <Text style={styles.identiteNom}>{empNom}</Text>
             <View style={styles.identiteRow}>
-              <IconCalendar size={13} color="#687076" />
+              <IconCalendar size={13} color="#6E5F54" />
               <Text style={styles.identiteDate}>
                 {JOURS_LONG[now.getDay()]} {now.getDate()} {MOIS[now.getMonth()]} {now.getFullYear()}
               </Text>
@@ -633,7 +633,7 @@ export default function PointageScreen() {
 
         {/* Info géolocalisation */}
         <View style={styles.geoInfoBanner}>
-          <IconLocation size={14} color="#2C2C2C" />
+          <IconLocation size={14} color="#5C1F2E" />
           <Text style={styles.geoInfoText}>
             La géolocalisation est activée uniquement lors de l'enregistrement d'une heure d'arrivée ou de départ.
           </Text>
@@ -656,7 +656,7 @@ export default function PointageScreen() {
           </View>
         ) : (
           <View style={styles.noChantierBox}>
-            <IconCalendar size={32} color="#B0B8C1" />
+            <IconCalendar size={32} color="#9A8C80" />
             <Text style={styles.noChantierText}>{t.pointage.noChantierToday}</Text>
           </View>
         )}
@@ -670,7 +670,7 @@ export default function PointageScreen() {
               return (
                 <View key={date} style={styles.histCard}>
                   <View style={styles.histDateRow}>
-                    <IconCalendar size={13} color="#2C2C2C" />
+                    <IconCalendar size={13} color="#5C1F2E" />
                     <Text style={styles.histDate}>{formatDateFr(date)}</Text>
                   </View>
                   {entries.map(([cId, { debut, fin }]) => {
@@ -678,14 +678,14 @@ export default function PointageScreen() {
                     return (
                       <View key={cId} style={styles.histChantierBlock}>
                         {ch && (
-                          <View style={[styles.histChantierTag, { borderLeftColor: ch.couleur || '#2C2C2C' }]}>
+                          <View style={[styles.histChantierTag, { borderLeftColor: ch.couleur || '#5C1F2E' }]}>
                             <Text style={styles.histChantierNom} numberOfLines={1}>{ch.nom}</Text>
                           </View>
                         )}
                         <View style={styles.histRow}>
                           <View style={styles.histItem}>
                             <View style={styles.histItemIcon}>
-                              {debut ? <IconCheck size={14} color="#27AE60" /> : <IconPending size={14} color="#B0B8C1" />}
+                              {debut ? <IconCheck size={14} color="#27AE60" /> : <IconPending size={14} color="#9A8C80" />}
                               <Text style={styles.histLabel}>{t.reporting.arrival}</Text>
                             </View>
                             <Text style={[styles.histTime, !debut && styles.histTimeMissing]}>
@@ -695,7 +695,7 @@ export default function PointageScreen() {
                           <View style={styles.histSep} />
                           <View style={styles.histItem}>
                             <View style={styles.histItemIcon}>
-                              {fin ? <IconCheck size={14} color="#E74C3C" /> : <IconPending size={14} color="#B0B8C1" />}
+                              {fin ? <IconCheck size={14} color="#E74C3C" /> : <IconPending size={14} color="#9A8C80" />}
                               <Text style={styles.histLabel}>{t.reporting.departure}</Text>
                             </View>
                             <Text style={[styles.histTime, !fin && styles.histTimeMissing]}>
@@ -707,10 +707,10 @@ export default function PointageScreen() {
                               <View style={styles.histSep} />
                               <View style={styles.histItem}>
                                 <View style={styles.histItemIcon}>
-                                  <IconClock size={14} color="#2C2C2C" />
-                                  <Text style={[styles.histLabel, { color: '#2C2C2C' }]}>{t.pointage.totalHours}</Text>
+                                  <IconClock size={14} color="#5C1F2E" />
+                                  <Text style={[styles.histLabel, { color: '#5C1F2E' }]}>{t.pointage.totalHours}</Text>
                                 </View>
-                                <Text style={[styles.histTime, { color: '#2C2C2C' }]}>
+                                <Text style={[styles.histTime, { color: '#5C1F2E' }]}>
                                   {(() => {
                                     const [dh, dm] = debut.heure.split(':').map(Number);
                                     const [fh, fm] = fin.heure.split(':').map(Number);
@@ -805,32 +805,32 @@ export default function PointageScreen() {
 
             return (
               <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 16, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 12 }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 12 }}>
                   {MOIS_LONG[moisActuel]} {annee}
                 </Text>
 
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                   <View style={{ alignItems: 'center', flex: 1 }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#11181C' }}>{joursComplets}</Text>
-                    <Text style={{ fontSize: 11, color: '#687076' }}>{t.pointage.daysClocked}</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#2B1D14' }}>{joursComplets}</Text>
+                    <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.pointage.daysClocked}</Text>
                   </View>
-                  <View style={{ width: 1, backgroundColor: '#E2E6EA' }} />
+                  <View style={{ width: 1, backgroundColor: '#EDE2D6' }} />
                   <View style={{ alignItems: 'center', flex: 1 }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#2C2C2C' }}>{totalH}h{String(totalM).padStart(2, '0')}</Text>
-                    <Text style={{ fontSize: 11, color: '#687076' }}>{t.pointage.hoursWorked}</Text>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#5C1F2E' }}>{totalH}h{String(totalM).padStart(2, '0')}</Text>
+                    <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.pointage.hoursWorked}</Text>
                   </View>
-                  <View style={{ width: 1, backgroundColor: '#E2E6EA' }} />
+                  <View style={{ width: 1, backgroundColor: '#EDE2D6' }} />
                   <View style={{ alignItems: 'center', flex: 1 }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: heuresSup > 0 ? '#27AE60' : '#687076' }}>
+                    <Text style={{ fontSize: 22, fontWeight: '800', color: heuresSup > 0 ? '#27AE60' : '#6E5F54' }}>
                       {supH}h{String(supM).padStart(2, '0')}
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#687076' }}>{t.pointage.overtimeHours}</Text>
+                    <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.pointage.overtimeHours}</Text>
                   </View>
                 </View>
 
                 {heuresTheoriques > 0 && (
-                  <View style={{ backgroundColor: '#F5EDE3', borderRadius: 8, padding: 8, marginTop: 4 }}>
-                    <Text style={{ fontSize: 11, color: '#687076', textAlign: 'center' }}>
+                  <View style={{ backgroundColor: '#F1E7DC', borderRadius: 8, padding: 8, marginTop: 4 }}>
+                    <Text style={{ fontSize: 11, color: '#6E5F54', textAlign: 'center' }}>
                       Prévu : {theoriqueH}h{String(theoriqueM).padStart(2, '0')} • Fait : {totalH}h{String(totalM).padStart(2, '0')} • {heuresSup > 0 ? `+${supH}h${String(supM).padStart(2, '0')} sup` : 'Dans les temps'}
                     </Text>
                   </View>
@@ -839,7 +839,7 @@ export default function PointageScreen() {
                 {/* Bouton export PDF */}
                 {Platform.OS === 'web' && (
                   <Pressable
-                    style={{ marginTop: 12, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
+                    style={{ marginTop: 12, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
                     onPress={() => {
                       // Générer HTML pour impression PDF
                       const rows = dates.map(date => {
@@ -918,7 +918,7 @@ export default function PointageScreen() {
                       style={[
                         styles.chantierSelectBtn,
                         photosChantierId === c.id && styles.chantierSelectBtnActive,
-                        { borderColor: c.couleur || '#2C2C2C' },
+                        { borderColor: c.couleur || '#5C1F2E' },
                       ]}
                       onPress={() => setPhotosChantierId(c.id)}
                     >
@@ -991,12 +991,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'flex-end',
     paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4,
-    backgroundColor: '#F5EDE3', gap: 8,
+    backgroundColor: '#F1E7DC', gap: 8,
   },
   headerLogo: { width: 72, height: 36 },
-  headerSub: { fontSize: 12, color: '#687076', marginBottom: 2 },
+  headerSub: { fontSize: 12, color: '#6E5F54', marginBottom: 2 },
   adminMsg: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
-  adminMsgText: { fontSize: 16, color: '#687076', textAlign: 'center', lineHeight: 24 },
+  adminMsgText: { fontSize: 16, color: '#6E5F54', textAlign: 'center', lineHeight: 24 },
 
   // Carte identité
   identiteCard: {
@@ -1010,14 +1010,14 @@ const styles = StyleSheet.create({
   identiteLeft: {},
   avatarCircle: {
     width: 52, height: 52, borderRadius: 26,
-    backgroundColor: '#2C2C2C', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center',
   },
   avatarInitials: { color: '#fff', fontSize: 18, fontWeight: '700' },
   identiteRight: { flex: 1 },
-  identiteNom: { fontSize: 17, fontWeight: '700', color: '#11181C', marginBottom: 3 },
+  identiteNom: { fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 3 },
   identiteRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 2 },
-  identiteDate: { fontSize: 12, color: '#687076' },
-  identiteHeure: { fontSize: 26, fontWeight: '700', color: '#2C2C2C', letterSpacing: 1 },
+  identiteDate: { fontSize: 12, color: '#6E5F54' },
+  identiteHeure: { fontSize: 26, fontWeight: '700', color: '#5C1F2E', letterSpacing: 1 },
 
   // Bannière géo
   geoInfoBanner: {
@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
 
   // Section
   section: { paddingHorizontal: 16, marginBottom: 8 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#11181C', marginBottom: 10 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: '#2B1D14', marginBottom: 10 },
 
   // Carte chantier
   chantierCard: {
@@ -1041,20 +1041,20 @@ const styles = StyleSheet.create({
   },
   chantierCardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 10 },
   chantierDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
-  chantierCardNom: { fontSize: 15, fontWeight: '700', color: '#11181C', marginBottom: 2 },
+  chantierCardNom: { fontSize: 15, fontWeight: '700', color: '#2B1D14', marginBottom: 2 },
   adresseRow: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  chantierCardAdresse: { fontSize: 11, color: '#9CA3AF', flex: 1 },
+  chantierCardAdresse: { fontSize: 11, color: '#9A8C80', flex: 1 },
   completeBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#ECFDF5', borderRadius: 20, paddingHorizontal: 8, paddingVertical: 3 },
   completeBadgeText: { fontSize: 11, color: '#27AE60', fontWeight: '600' },
 
   // Horaires
-  horairesRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8F9FA', borderRadius: 10, padding: 10, marginBottom: 12 },
+  horairesRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 10, padding: 10, marginBottom: 12 },
   horaireItem: { flex: 1, alignItems: 'center' },
   horaireLabel: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
-  horaireLabelText: { fontSize: 11, color: '#9CA3AF', fontWeight: '500' },
-  horaireLabelDone: { color: '#11181C' },
-  horaireHeure: { fontSize: 18, fontWeight: '700', color: '#B0B8C1' },
-  horaireHeureDone: { color: '#11181C' },
+  horaireLabelText: { fontSize: 11, color: '#9A8C80', fontWeight: '500' },
+  horaireLabelDone: { color: '#2B1D14' },
+  horaireHeure: { fontSize: 18, fontWeight: '700', color: '#9A8C80' },
+  horaireHeureDone: { color: '#2B1D14' },
   horaireSep: { width: 1, backgroundColor: '#E5E7EB', height: 32, marginHorizontal: 6 },
 
   // Boutons action
@@ -1063,7 +1063,7 @@ const styles = StyleSheet.create({
     flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, borderRadius: 12, paddingVertical: 12, paddingHorizontal: 10,
   },
-  btnArrivee: { backgroundColor: '#2C2C2C' },
+  btnArrivee: { backgroundColor: '#5C1F2E' },
   btnDepart: { backgroundColor: '#E74C3C' },
   actionBtnDisabled: { opacity: 0.45 },
   actionBtnText: { fontSize: 12, fontWeight: '700', color: '#fff', textAlign: 'center', flex: 1 },
@@ -1071,7 +1071,7 @@ const styles = StyleSheet.create({
 
   // No chantier
   noChantierBox: { alignItems: 'center', justifyContent: 'center', padding: 40, gap: 12 },
-  noChantierText: { fontSize: 14, color: '#9CA3AF', textAlign: 'center' },
+  noChantierText: { fontSize: 14, color: '#9A8C80', textAlign: 'center' },
 
   // Historique
   histCard: {
@@ -1080,17 +1080,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
   },
   histDateRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
-  histDate: { fontSize: 13, fontWeight: '700', color: '#2C2C2C' },
+  histDate: { fontSize: 13, fontWeight: '700', color: '#5C1F2E' },
   histChantierBlock: { marginBottom: 10 },
   histChantierTag: { borderLeftWidth: 3, paddingLeft: 8, marginBottom: 6 },
-  histChantierNom: { fontSize: 12, fontWeight: '600', color: '#11181C' },
+  histChantierNom: { fontSize: 12, fontWeight: '600', color: '#2B1D14' },
   histRow: { flexDirection: 'row', alignItems: 'flex-start' },
   histItem: { flex: 1, alignItems: 'center' },
   histItemIcon: { flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 },
   histSep: { width: 1, backgroundColor: '#E5E7EB', marginHorizontal: 8, alignSelf: 'stretch' },
-  histLabel: { fontSize: 11, color: '#687076' },
-  histTime: { fontSize: 17, fontWeight: '700', color: '#11181C' },
-  histTimeMissing: { color: '#B0B8C1' },
+  histLabel: { fontSize: 11, color: '#6E5F54' },
+  histTime: { fontSize: 17, fontWeight: '700', color: '#2B1D14' },
+  histTimeMissing: { color: '#9A8C80' },
 
   // Modal photos
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
@@ -1099,28 +1099,28 @@ const styles = StyleSheet.create({
     padding: 20, paddingBottom: 36, maxHeight: '85%',
   },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#11181C' },
+  modalTitle: { fontSize: 18, fontWeight: '700', color: '#2B1D14' },
   modalCloseBtn: { padding: 4 },
-  modalCloseText: { fontSize: 18, color: '#687076' },
-  modalSubtitle: { fontSize: 13, color: '#687076', marginBottom: 16, lineHeight: 18 },
+  modalCloseText: { fontSize: 18, color: '#6E5F54' },
+  modalSubtitle: { fontSize: 13, color: '#6E5F54', marginBottom: 16, lineHeight: 18 },
   chantierSelectSection: { marginBottom: 16 },
-  chantierSelectLabel: { fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 8 },
+  chantierSelectLabel: { fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 8 },
   chantierSelectScroll: { flexGrow: 0 },
   chantierSelectBtn: {
     borderRadius: 20, borderWidth: 2, paddingHorizontal: 14, paddingVertical: 6,
     marginRight: 8, backgroundColor: '#fff',
   },
-  chantierSelectBtnActive: { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' },
-  chantierSelectText: { fontSize: 13, fontWeight: '600', color: '#2C2C2C' },
+  chantierSelectBtnActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
+  chantierSelectText: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
   photosPreviewRow: { marginBottom: 12 },
   photoPreviewItem: { width: 80, marginRight: 10, alignItems: 'center' },
-  photoPreviewImg: { width: 72, height: 72, borderRadius: 8, backgroundColor: '#F5EDE3' },
+  photoPreviewImg: { width: 72, height: 72, borderRadius: 8, backgroundColor: '#F1E7DC' },
   photoPreviewPdf: {
     width: 72, height: 72, borderRadius: 8, backgroundColor: '#FFF3CD',
     alignItems: 'center', justifyContent: 'center',
   },
   photoPreviewPdfIcon: { fontSize: 28 },
-  photoPreviewName: { fontSize: 9, color: '#687076', marginTop: 4, textAlign: 'center', width: 72 },
+  photoPreviewName: { fontSize: 9, color: '#6E5F54', marginTop: 4, textAlign: 'center', width: 72 },
   photoRemoveBtn: {
     position: 'absolute', top: -4, right: -4,
     backgroundColor: '#E74C3C', borderRadius: 10, width: 20, height: 20,
@@ -1128,20 +1128,20 @@ const styles = StyleSheet.create({
   },
   photoRemoveText: { color: '#fff', fontSize: 10, fontWeight: '700' },
   pickPhotosBtn: {
-    backgroundColor: '#F5EDE3', borderRadius: 10, padding: 14,
-    alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#E2E6EA',
+    backgroundColor: '#F1E7DC', borderRadius: 10, padding: 14,
+    alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: '#EDE2D6',
     borderStyle: 'dashed',
   },
-  pickPhotosBtnText: { fontSize: 14, color: '#2C2C2C', fontWeight: '600' },
+  pickPhotosBtnText: { fontSize: 14, color: '#5C1F2E', fontWeight: '600' },
   modalActions: { flexDirection: 'row', gap: 12 },
   skipBtn: {
     flex: 1, borderRadius: 10, padding: 14, alignItems: 'center',
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
-  skipBtnText: { fontSize: 14, color: '#687076', fontWeight: '600' },
+  skipBtnText: { fontSize: 14, color: '#6E5F54', fontWeight: '600' },
   savePhotosBtn: {
     flex: 2, borderRadius: 10, padding: 14, alignItems: 'center',
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
   },
   savePhotosBtnText: { fontSize: 14, color: '#fff', fontWeight: '700' },
 });

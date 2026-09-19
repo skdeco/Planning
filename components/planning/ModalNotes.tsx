@@ -280,18 +280,18 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     if (savTickets.length === 0) return null;
                     return (
                       <View style={{ marginBottom: 8 }}>
-                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#687076', marginBottom: 4 }}>Lier à un SAV :</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#6E5F54', marginBottom: 4 }}>Lier à un SAV :</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-                          <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' }, !draft.savTicketId && { backgroundColor: '#2C2C2C', borderColor: '#2C2C2C' }]}
+                          <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' }, !draft.savTicketId && { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' }]}
                             onPress={() => setDraft({ savTicketId: null })}>
-                            <Text style={{ fontSize: 10, fontWeight: '600', color: !draft.savTicketId ? '#fff' : '#687076' }}>Aucun</Text>
+                            <Text style={{ fontSize: 10, fontWeight: '600', color: !draft.savTicketId ? '#fff' : '#6E5F54' }}>Aucun</Text>
                           </Pressable>
                           {savTickets.map(t => (
-                            <Pressable key={t.id} style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E2E6EA' }, draft.savTicketId === t.id && { backgroundColor: '#E74C3C', borderColor: '#E74C3C' }]}
+                            <Pressable key={t.id} style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' }, draft.savTicketId === t.id && { backgroundColor: '#E74C3C', borderColor: '#E74C3C' }]}
                               onPress={() => {
                                 setDraft({ savTicketId: t.id, ...(draft.texte.trim() ? {} : { texte: `SAV: ${t.objet}` }) });
                               }}>
-                              <Text style={{ fontSize: 10, fontWeight: '600', color: draft.savTicketId === t.id ? '#fff' : '#687076' }} numberOfLines={1}>{t.objet}</Text>
+                              <Text style={{ fontSize: 10, fontWeight: '600', color: draft.savTicketId === t.id ? '#fff' : '#6E5F54' }} numberOfLines={1}>{t.objet}</Text>
                             </Pressable>
                           ))}
                         </ScrollView>
@@ -383,7 +383,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                 </View>
                                 <Text style={[styles.taskText, task.fait && styles.taskTextDone, { flex: 1 }]}>{task.texte}</Text>
                                 <Pressable onPress={handleAddPhoto} style={{ paddingHorizontal: 6, paddingVertical: 4 }} accessibilityRole="button" accessibilityLabel="Ajouter une photo à la tâche">
-                                  <Text style={{ color: '#2C2C2C', fontSize: 16 }}>➕</Text>
+                                  <Text style={{ color: '#5C1F2E', fontSize: 16 }}>➕</Text>
                                 </Pressable>
                                 <Pressable
                                   onPress={() => {
@@ -446,7 +446,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                         value={ui.newTaskText}
                         onChangeText={(text) => setUi({ newTaskText: text })}
                         placeholder="Décrire la tâche..."
-                        placeholderTextColor="#B0BEC5"
+                        placeholderTextColor="#9A8C80"
                         autoFocus
                         returnKeyType="done"
                         onSubmitEditing={() => {
@@ -478,7 +478,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                         }}
                       />
                       <Pressable style={styles.taskInputCancel} onPress={() => setUi({ showTaskInput: false, newTaskText: '' })}>
-                        <Text style={{ color: '#687076' }}>✕</Text>
+                        <Text style={{ color: '#6E5F54' }}>✕</Text>
                       </Pressable>
                     </View>
                   ) : (
@@ -526,7 +526,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                         if (acteurs.length === 0) return null;
                         return (
                           <View style={{ marginTop: 4 }}>
-                            <Text style={[styles.noteLabel, { fontSize: 12, color: '#687076' }]}>
+                            <Text style={[styles.noteLabel, { fontSize: 12, color: '#6E5F54' }]}>
                               Sélectionner des acteurs spécifiques (optionnel)
                             </Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
@@ -605,7 +605,7 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
@@ -619,30 +619,30 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 16,
   },
   modalXBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalXText: {
     fontSize: 14,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '700',
   },
   modalCloseBtn: {
     marginTop: 16,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -659,11 +659,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   noteCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   noteCardHeader: {
     flexDirection: 'row',
@@ -674,15 +674,15 @@ const styles = StyleSheet.create({
   noteAuthor: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   noteDate: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
   },
   noteCardText: {
     fontSize: 14,
-    color: '#11181C',
+    color: '#2B1D14',
     lineHeight: 20,
   },
   noteCardPhoto: {
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
   },
   noteActionBtnDanger: {
     backgroundColor: '#FEE2E2',
@@ -708,21 +708,21 @@ const styles = StyleSheet.create({
   noteActionBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   addNoteBtn: {
     marginTop: 12,
     marginBottom: 4,
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#2C2C2C',
+    borderColor: '#5C1F2E',
     borderStyle: 'dashed',
   },
   addNoteBtnText: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -734,7 +734,7 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 8,
   },
   noteInputRow: {
@@ -744,18 +744,18 @@ const styles = StyleSheet.create({
   },
   noteInput: {
     flex: 1,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 10,
     padding: 12,
     fontSize: 14,
-    color: '#11181C',
+    color: '#2B1D14',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
     minHeight: 100,
     textAlignVertical: 'top',
   },
   keyboardDismissBtn: {
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 8,
     width: 36,
     height: 36,
@@ -765,7 +765,7 @@ const styles = StyleSheet.create({
   },
   keyboardDismissText: {
     fontSize: 18,
-    color: '#11181C',
+    color: '#2B1D14',
     fontWeight: '700',
   },
   photosRow: {
@@ -805,21 +805,21 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     marginRight: 8,
   },
   addPhotoBtnText: {
     fontSize: 24,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '300',
   },
   addPhotoBtnLabel: {
     fontSize: 10,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   editorActions: {
@@ -832,18 +832,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   cancelBtnText: {
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '600',
     fontSize: 15,
   },
   saveNoteBtn: {
     flex: 2,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -895,16 +895,16 @@ const styles = StyleSheet.create({
   // — Checklist de tâches —
   taskList: {
     marginTop: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   taskListTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#687076',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 10,
@@ -922,7 +922,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#B0BEC5',
+    borderColor: '#9A8C80',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
@@ -938,12 +938,12 @@ const styles = StyleSheet.create({
   },
   taskText: {
     fontSize: 14,
-    color: '#11181C',
+    color: '#2B1D14',
     flex: 1,
   },
   taskTextDone: {
     textDecorationLine: 'line-through',
-    color: '#B0BEC5',
+    color: '#9A8C80',
   },
   taskDoneBy: {
     fontSize: 11,
@@ -953,7 +953,7 @@ const styles = StyleSheet.create({
   },
   taskProgress: {
     height: 4,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 2,
     marginTop: 10,
     overflow: 'hidden',
@@ -965,7 +965,7 @@ const styles = StyleSheet.create({
   },
   taskProgressText: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     textAlign: 'right',
     marginTop: 4,
     fontStyle: 'italic',
@@ -983,7 +983,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   addTaskBtnText: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '600',
     fontSize: 14,
   },
@@ -992,17 +992,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 8,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#2C2C2C',
+    borderColor: '#5C1F2E',
   },
   taskInput: {
     flex: 1,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#11181C',
+    color: '#2B1D14',
   },
   taskInputCancel: {
     padding: 8,

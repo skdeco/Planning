@@ -12,21 +12,21 @@ export default function ExterneLayout() {
   if (currentUser.role !== 'apporteur') return <Redirect href={'/(tabs)' as any} />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5EDE3' }}>
+    <View style={{ flex: 1, backgroundColor: '#F1E7DC' }}>
       <View style={{
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingTop: insets.top + 8, paddingBottom: 10, paddingHorizontal: 16,
-        backgroundColor: '#2C2C2C',
+        backgroundColor: '#5C1F2E',
       }}>
         <View>
-          <Text style={{ color: '#C9A96E', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>SK DECO</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>SK DECO</Text>
           <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginTop: 2 }}>{currentUser.nom || 'Mon espace'}</Text>
         </View>
         <Pressable
           onPress={() => setCurrentUser(null)}
           style={{ backgroundColor: '#3A3A3A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
         >
-          <Text style={{ color: '#C9A96E', fontSize: 12, fontWeight: '700' }}>Déconnexion</Text>
+          <Text style={{ color: '#5C1F2E', fontSize: 12, fontWeight: '700' }}>Déconnexion</Text>
         </Pressable>
       </View>
       <Tabs
@@ -37,10 +37,10 @@ export default function ExterneLayout() {
             paddingBottom: bottomPadding,
             paddingTop: 6,
             backgroundColor: '#fff',
-            borderTopColor: '#E8DDD0',
+            borderTopColor: '#EDE2D6',
           },
-          tabBarActiveTintColor: '#8C6D2F',
-          tabBarInactiveTintColor: '#8C8077',
+          tabBarActiveTintColor: '#5C1F2E',
+          tabBarInactiveTintColor: '#6E5F54',
           tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
         }}
       >

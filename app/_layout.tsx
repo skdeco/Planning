@@ -24,6 +24,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { InboxBanner } from "@/components/InboxBanner";
 import { useChantiersCacheSync } from "@/hooks/useChantiersCacheSync";
 import { Toaster } from "sonner-native";
+import { useFonts } from "expo-font";
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -45,6 +46,8 @@ function ChantiersCacheSyncMounter({
 }
 
 export default function RootLayout() {
+  // Police des titres (Fraunces). Non bloquant : repli sur la police système pendant le chargement.
+  useFonts({ Fraunces_600SemiBold: require("../assets/fonts/Fraunces_600SemiBold.ttf") });
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
   const initialFrame = initialWindowMetrics?.frame ?? DEFAULT_WEB_FRAME;
 

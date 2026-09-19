@@ -92,8 +92,8 @@ export default function TabLayout() {
     <NotificationListener />
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2C2C2C',
-        tabBarInactiveTintColor: '#B0A89E',
+        tabBarActiveTintColor: '#5C1F2E',
+        tabBarInactiveTintColor: '#9A8C80',
         headerShown: false,
         tabBarButton: HapticTab,
         tabBarStyle: {

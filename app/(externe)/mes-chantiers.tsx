@@ -107,7 +107,7 @@ export default function MesChantiersExterne() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: '#F1E7DC' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
       {recapApporteur && recapApporteur.totalCom > 0 && (
         <View style={styles.recapBox}>
           <View style={styles.recapItem}>
@@ -116,7 +116,7 @@ export default function MesChantiersExterne() {
           </View>
           <View style={styles.recapSep} />
           <View style={styles.recapItem}>
-            <Text style={[styles.recapVal, { color: '#8C6D2F' }]}>{fmt(recapApporteur.dueCom)} €</Text>
+            <Text style={[styles.recapVal, { color: '#5C1F2E' }]}>{fmt(recapApporteur.dueCom)} €</Text>
             <Text style={styles.recapLbl}>Commission à percevoir</Text>
           </View>
         </View>
@@ -128,7 +128,7 @@ export default function MesChantiersExterne() {
       )}
       <Text style={styles.sectionTitle}>Chantiers en cours ({actifs.length})</Text>
       {actifs.length === 0 ? (
-        <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#B8AA97" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
+        <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
       ) : (
         actifs.map(renderCard)
       )}
@@ -177,7 +177,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: '800',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 10,
@@ -198,16 +198,16 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: '#2C2C2C' },
-  cardAddress: { fontSize: 12, color: '#8C8077', marginTop: 2 },
-  cardMeta: { fontSize: 11, color: '#8C6D2F', fontWeight: '700', marginTop: 4 },
-  cardArrow: { fontSize: 24, color: '#C9A96E', fontWeight: '300' },
-  recapBox: { flexDirection: 'row', backgroundColor: '#2C2C2C', borderRadius: 12, padding: 16, marginBottom: 16, alignItems: 'center' },
+  cardTitle: { fontSize: 15, fontWeight: '800', color: '#5C1F2E' },
+  cardAddress: { fontSize: 12, color: '#6E5F54', marginTop: 2 },
+  cardMeta: { fontSize: 11, color: '#5C1F2E', fontWeight: '700', marginTop: 4 },
+  cardArrow: { fontSize: 24, color: '#5C1F2E', fontWeight: '300' },
+  recapBox: { flexDirection: 'row', backgroundColor: '#5C1F2E', borderRadius: 12, padding: 16, marginBottom: 16, alignItems: 'center' },
   recapItem: { flex: 1, alignItems: 'center' },
   recapSep: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(255,255,255,0.15)' },
   recapVal: { fontSize: 20, fontWeight: '800', color: '#fff' },
   recapLbl: { fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 2, textAlign: 'center' },
-  empty: { fontSize: 13, color: '#8C8077', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 },
+  empty: { fontSize: 13, color: '#6E5F54', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 },
   toggleClos: {
     backgroundColor: '#fff',
     borderRadius: 10,
@@ -215,17 +215,17 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
   },
-  toggleClosText: { fontSize: 13, fontWeight: '700', color: '#2C2C2C' },
+  toggleClosText: { fontSize: 13, fontWeight: '700', color: '#5C1F2E' },
   infoBox: {
     marginTop: 24,
     padding: 12,
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     borderLeftWidth: 3,
-    borderLeftColor: '#C9A96E',
+    borderLeftColor: '#5C1F2E',
   },
-  infoLabel: { fontSize: 10, color: '#8C8077', fontWeight: '700', textTransform: 'uppercase' },
-  infoValue: { fontSize: 13, color: '#2C2C2C', fontWeight: '700', marginTop: 2 },
+  infoLabel: { fontSize: 10, color: '#6E5F54', fontWeight: '700', textTransform: 'uppercase' },
+  infoValue: { fontSize: 13, color: '#5C1F2E', fontWeight: '700', marginTop: 2 },
 });

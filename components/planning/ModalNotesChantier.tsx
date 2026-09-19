@@ -142,7 +142,7 @@ type ListItem =
 const MODAL_OVERLAY_BG = 'rgba(0,0,0,0.4)';
 
 /** Gris très clair pour placeholder + empty text. Pas de token DS équivalent. */
-const COLOR_PLACEHOLDER = '#B0BEC5';
+const COLOR_PLACEHOLDER = '#9A8C80';
 
 /**
  * Fond de la carte note (jaune post-it pâle).

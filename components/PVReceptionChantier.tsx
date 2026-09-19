@@ -127,7 +127,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
             <View style={{ marginTop: 8 }}>
               <Text style={styles.meta}>Signé le {new Date(pv.signatureClientDate).toLocaleString('fr-FR')}</Text>
               {pv.nomSignataire && <Text style={styles.meta}>Par {pv.nomSignataire}</Text>}
-              {pv.signatureClientUri && <Image source={{ uri: pv.signatureClientUri }} style={{ width: 160, height: 80, marginTop: 6, borderWidth: 1, borderColor: '#E8DDD0', borderRadius: 6 }} resizeMode="contain" />}
+              {pv.signatureClientUri && <Image source={{ uri: pv.signatureClientUri }} style={{ width: 160, height: 80, marginTop: 6, borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 6 }} resizeMode="contain" />}
             </View>
           )}
         </View>
@@ -150,12 +150,12 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
       <Modal visible={show} animationType="slide" transparent onRequestClose={() => setShow(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', flex: 1 }}>
-            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#E8DDD0', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View>
                 <Text style={{ fontSize: 16, fontWeight: '800' }}>PV de réception</Text>
-                <Text style={{ fontSize: 11, color: '#8C8077' }}>Cochez chaque point, indiquez les réserves</Text>
+                <Text style={{ fontSize: 11, color: '#6E5F54' }}>Cochez chaque point, indiquez les réserves</Text>
               </View>
-              <Pressable onPress={() => setShow(false)} style={{ width: 32, height: 32, backgroundColor: '#F5EDE3', borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => setShow(false)} style={{ width: 32, height: 32, backgroundColor: '#F1E7DC', borderRadius: 16, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontWeight: '800' }}>✕</Text>
               </Pressable>
             </View>
@@ -195,11 +195,11 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
               </Pressable>
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 20 }}>
-                <Pressable onPress={() => setShow(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Pressable onPress={() => setShow(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                   <Text style={{ fontWeight: '700' }}>Annuler</Text>
                 </Pressable>
-                <Pressable onPress={save} style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ color: '#C9A96E', fontWeight: '800' }}>Enregistrer</Text>
+                <Pressable onPress={save} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                  <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Enregistrer</Text>
                 </Pressable>
               </View>
             </ScrollView>
@@ -211,7 +211,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
       <Modal visible={signaturePadVisible} animationType="fade" transparent onRequestClose={() => setSignaturePadVisible(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16 }}>
-            <Text style={{ fontSize: 15, fontWeight: '800', marginBottom: 10, color: '#2C2C2C' }}>Signature client — PV de réception</Text>
+            <Text style={{ fontSize: 15, fontWeight: '800', marginBottom: 10, color: '#5C1F2E' }}>Signature client — PV de réception</Text>
             <SignaturePad
               onSave={(b64) => signerClient(b64)}
               onCancel={() => setSignaturePadVisible(false)}
@@ -225,19 +225,19 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
 
 const styles = StyleSheet.create({
   card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12 },
-  title: { fontSize: 14, fontWeight: '800', color: '#2C2C2C' },
-  empty: { fontSize: 12, color: '#B0BEC5', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
-  meta: { fontSize: 12, color: '#687076', marginTop: 2 },
-  btn: { backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1, borderColor: '#E8DDD0' },
+  title: { fontSize: 14, fontWeight: '800', color: '#5C1F2E' },
+  empty: { fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
+  meta: { fontSize: 12, color: '#6E5F54', marginTop: 2 },
+  btn: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, borderWidth: 1, borderColor: '#EDE2D6' },
   btnSign: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
-  btnText: { fontSize: 12, fontWeight: '700', color: '#2C2C2C' },
-  label: { fontSize: 12, fontWeight: '700', marginBottom: 4, color: '#2C2C2C' },
-  catTitle: { fontSize: 13, fontWeight: '800', color: '#8C6D2F', marginBottom: 6 },
+  btnText: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
+  label: { fontSize: 12, fontWeight: '700', marginBottom: 4, color: '#5C1F2E' },
+  catTitle: { fontSize: 13, fontWeight: '800', color: '#5C1F2E', marginBottom: 6 },
   itemRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 6 },
-  input: { backgroundColor: '#FAF7F3', borderRadius: 8, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 10, paddingVertical: 8, fontSize: 13 },
-  statusBtn: { width: 32, height: 32, backgroundColor: '#FAF7F3', borderRadius: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#E8DDD0' },
+  input: { backgroundColor: '#FAF5EF', borderRadius: 8, borderWidth: 1, borderColor: '#EDE2D6', paddingHorizontal: 10, paddingVertical: 8, fontSize: 13 },
+  statusBtn: { width: 32, height: 32, backgroundColor: '#FAF5EF', borderRadius: 6, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#EDE2D6' },
   statusOk: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
   statusKo: { backgroundColor: '#B83A2E', borderColor: '#B83A2E' },
-  statusNeutral: { backgroundColor: '#8C8077', borderColor: '#8C8077' },
+  statusNeutral: { backgroundColor: '#6E5F54', borderColor: '#6E5F54' },
   statusBtnText: { fontSize: 13, fontWeight: '800' },
 });

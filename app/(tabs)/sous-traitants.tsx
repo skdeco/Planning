@@ -24,7 +24,7 @@ export default function SousTraitantsRedirect() {
   return (
     <ScreenContainer containerClassName="bg-[#F5EDE3]">
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator size="large" color="#2C2C2C" />
+        <ActivityIndicator size="large" color="#5C1F2E" />
       </View>
     </ScreenContainer>
   );

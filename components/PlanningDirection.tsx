@@ -155,12 +155,12 @@ export function PlanningDirection() {
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 }} onPress={onClose}>
         <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 8, width: '100%', maxWidth: 320, maxHeight: 400 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', paddingHorizontal: 12, paddingVertical: 8 }}>{title}</Text>
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{title}</Text>
           <ScrollView>
             {options.map(opt => (
               <Pressable key={opt.value} style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 6 }}
                 onPress={() => { onSelect(opt.value); onClose(); }}>
-                <Text style={{ fontSize: 15, color: '#11181C' }}>{opt.label}</Text>
+                <Text style={{ fontSize: 15, color: '#2B1D14' }}>{opt.label}</Text>
               </Pressable>
             ))}
           </ScrollView>
@@ -187,22 +187,22 @@ export function PlanningDirection() {
   return (
     <>
       {/* Toggle semaine/jour + navigation */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#E2E6EA', gap: 4 }}>
-        <Pressable style={{ backgroundColor: directionVue === 'semaine' ? '#2C2C2C' : '#F5EDE3', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('semaine')}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'semaine' ? '#fff' : '#687076' }}>7j</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', gap: 4 }}>
+        <Pressable style={{ backgroundColor: directionVue === 'semaine' ? '#5C1F2E' : '#F1E7DC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('semaine')}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'semaine' ? '#fff' : '#6E5F54' }}>7j</Text>
         </Pressable>
-        <Pressable style={{ backgroundColor: directionVue === 'jour' ? '#2C2C2C' : '#F5EDE3', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('jour')}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'jour' ? '#fff' : '#687076' }}>Jour</Text>
+        <Pressable style={{ backgroundColor: directionVue === 'jour' ? '#5C1F2E' : '#F1E7DC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('jour')}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'jour' ? '#fff' : '#6E5F54' }}>Jour</Text>
         </Pressable>
         <Pressable onPress={() => directionVue === 'semaine' ? setWeekOffset(w => w - 1) : setDayOffset(d => d - 1)} style={{ padding: 4 }}><Text style={{ fontSize: 16 }}>‹</Text></Pressable>
-        <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#11181C', textAlign: 'center' }}>
+        <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#2B1D14', textAlign: 'center' }}>
           {directionVue === 'semaine' ? weekLabel : (() => { const d = new Date(); d.setDate(d.getDate() + dayOffset); return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); })()}
         </Text>
         <Pressable onPress={() => directionVue === 'semaine' ? setWeekOffset(w => w + 1) : setDayOffset(d => d + 1)} style={{ padding: 4 }}><Text style={{ fontSize: 16 }}>›</Text></Pressable>
-        <Pressable onPress={() => { setWeekOffset(0); setDayOffset(0); }} style={{ backgroundColor: '#F5EDE3', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 }}>
-          <Text style={{ fontSize: 10, fontWeight: '600', color: '#2C2C2C' }}>Auj.</Text>
+        <Pressable onPress={() => { setWeekOffset(0); setDayOffset(0); }} style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 }}>
+          <Text style={{ fontSize: 10, fontWeight: '600', color: '#5C1F2E' }}>Auj.</Text>
         </Pressable>
-        <Pressable style={{ backgroundColor: '#2C2C2C', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8 }} onPress={() => openNew()}>
+        <Pressable style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8 }} onPress={() => openNew()}>
           <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ RDV</Text>
         </Pressable>
       </View>
@@ -213,12 +213,12 @@ export function PlanningDirection() {
         const dateStr = toYMD(d);
         const evtsJour = (data.agendaEvents || []).filter(e => e.date === dateStr).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
         return (
-          <ScrollView style={{ flex: 1, backgroundColor: '#F8F9FA' }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
+          <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
             {evtsJour.length === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                 <Text style={{ fontSize: 36, marginBottom: 8 }}>📭</Text>
-                <Text style={{ fontSize: 14, color: '#687076' }}>Aucun rendez-vous</Text>
-                <Pressable style={{ marginTop: 12, backgroundColor: '#2C2C2C', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }} onPress={() => openNew(dateStr)}>
+                <Text style={{ fontSize: 14, color: '#6E5F54' }}>Aucun rendez-vous</Text>
+                <Pressable style={{ marginTop: 12, backgroundColor: '#5C1F2E', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }} onPress={() => openNew(dateStr)}>
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>+ Ajouter un RDV</Text>
                 </Pressable>
               </View>
@@ -247,15 +247,15 @@ export function PlanningDirection() {
                         {evt.heureFin && <Text style={{ fontSize: 10, color: evt.couleur }}>{evt.heureFin}</Text>}
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#11181C' }}>{evt.titre}</Text>
-                        {evt.description ? <Text style={{ fontSize: 13, color: '#687076', marginTop: 2 }}>{evt.description}</Text> : null}
-                        {evt.lieu ? <Text style={{ fontSize: 12, color: '#687076', marginTop: 2 }}>{evt.lieu}</Text> : null}
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14' }}>{evt.titre}</Text>
+                        {evt.description ? <Text style={{ fontSize: 13, color: '#6E5F54', marginTop: 2 }}>{evt.description}</Text> : null}
+                        {evt.lieu ? <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>{evt.lieu}</Text> : null}
                         {ch ? <Text style={{ fontSize: 12, color: ch.couleur, fontWeight: '600', marginTop: 2 }}>{ch.nom}</Text> : null}
                         {evt.invites.length > 0 && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {evt.invites.map(id => {
                               const emp = data.employes.find(e => e.id === id);
-                              return emp ? <View key={id} style={{ backgroundColor: '#EBF0FF', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}><Text style={{ fontSize: 10, color: '#2C2C2C', fontWeight: '600' }}>{emp.prenom}</Text></View> : null;
+                              return emp ? <View key={id} style={{ backgroundColor: '#F2E4E1', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}><Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{emp.prenom}</Text></View> : null;
                             })}
                           </View>
                         )}
@@ -275,28 +275,28 @@ export function PlanningDirection() {
       {/* ── VUE SEMAINE ── */}
       {directionVue === 'semaine' && <>
       {/* Header jours — FIXE (ne défile pas) */}
-      <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E6EA', backgroundColor: '#F8F9FA' }}>
+      <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', backgroundColor: '#FAF5EF' }}>
         <View style={{ width: TIME_COL, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center' }} />
         {days.map((day, i) => {
           const isToday = toYMD(day) === toYMD(new Date());
           return (
-            <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#EBF0FF' : undefined }}>
-              <Text style={{ fontSize: 9, fontWeight: '500', color: isToday ? '#2C2C2C' : '#687076' }}>{JOURS_COURT[i]}</Text>
-              <Text style={{ fontSize: 13, fontWeight: isToday ? '800' : '600', color: isToday ? '#2C2C2C' : '#11181C' }}>{day.getDate()}</Text>
+            <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#F2E4E1' : undefined }}>
+              <Text style={{ fontSize: 9, fontWeight: '500', color: isToday ? '#5C1F2E' : '#6E5F54' }}>{JOURS_COURT[i]}</Text>
+              <Text style={{ fontSize: 13, fontWeight: isToday ? '800' : '600', color: isToday ? '#5C1F2E' : '#2B1D14' }}>{day.getDate()}</Text>
             </View>
           );
         })}
       </View>
 
       {/* Grille horaire — défile verticalement */}
-      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2C2C2C']} tintColor="#2C2C2C" />}>
+      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />}>
         {/* Lignes horaires */}
         <View style={{ flexDirection: 'row' }}>
           {/* Colonne heures */}
           <View style={{ width: TIME_COL }}>
             {Array.from({ length: totalHours }, (_, i) => (
-              <View key={i} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 2, paddingRight: 4, alignItems: 'flex-end', borderTopWidth: 0.5, borderTopColor: '#E2E6EA' }}>
-                <Text style={{ fontSize: 10, color: '#687076', fontWeight: '500' }}>{String(startHour + i).padStart(2, '0')}:00</Text>
+              <View key={i} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 2, paddingRight: 4, alignItems: 'flex-end', borderTopWidth: 0.5, borderTopColor: '#EDE2D6' }}>
+                <Text style={{ fontSize: 10, color: '#6E5F54', fontWeight: '500' }}>{String(startHour + i).padStart(2, '0')}:00</Text>
               </View>
             ))}
           </View>
@@ -311,7 +311,7 @@ export function PlanningDirection() {
                 onPress={() => openNew(dateStr, '09:00')}>
                 {/* Lignes horizontales */}
                 {Array.from({ length: totalHours }, (_, i) => (
-                  <View key={i} style={{ height: HOUR_HEIGHT, borderTopWidth: 0.5, borderTopColor: '#E2E6EA', borderRightWidth: 0.5, borderRightColor: '#E2E6EA' }} />
+                  <View key={i} style={{ height: HOUR_HEIGHT, borderTopWidth: 0.5, borderTopColor: '#EDE2D6', borderRightWidth: 0.5, borderRightColor: '#EDE2D6' }} />
                 ))}
                 {/* Events positionnés */}
                 {dayEvents.map(evt => {
@@ -342,7 +342,7 @@ export function PlanningDirection() {
           <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '92%' }} onPress={e => e.stopPropagation()}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#11181C' }}>{editId ? 'Modifier' : 'Nouveau RDV'}</Text>
+                <Text style={{ fontSize: 18, fontWeight: '700', color: '#2B1D14' }}>{editId ? 'Modifier' : 'Nouveau RDV'}</Text>
                 {editId && (
                   <Pressable onPress={() => { deleteAgendaEvent(editId); setShowForm(false); }} style={{ padding: 6 }}>
                     <Text style={{ color: '#E74C3C', fontWeight: '600' }}>Supprimer</Text>
@@ -360,10 +360,10 @@ export function PlanningDirection() {
               <Text style={labelStyle}>Date : {form.date.split('-').reverse().join('/')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }} keyboardShouldPersistTaps="handled">
                 {dateOptions.map(opt => (
-                  <Pressable key={opt.value} style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, backgroundColor: form.date === opt.value ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: form.date === opt.value ? '#2C2C2C' : '#E2E6EA', minWidth: 60, alignItems: 'center' }}
+                  <Pressable key={opt.value} style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, backgroundColor: form.date === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.date === opt.value ? '#5C1F2E' : '#EDE2D6', minWidth: 60, alignItems: 'center' }}
                     onPress={() => setForm(f => ({ ...f, date: opt.value }))}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: form.date === opt.value ? '#fff' : '#11181C' }}>{opt.label.split(' ')[0]}</Text>
-                    <Text style={{ fontSize: 9, color: form.date === opt.value ? 'rgba(255,255,255,0.7)' : '#687076' }}>{opt.label.split(' ').slice(1).join(' ')}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: form.date === opt.value ? '#fff' : '#2B1D14' }}>{opt.label.split(' ')[0]}</Text>
+                    <Text style={{ fontSize: 9, color: form.date === opt.value ? 'rgba(255,255,255,0.7)' : '#6E5F54' }}>{opt.label.split(' ').slice(1).join(' ')}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
@@ -372,18 +372,18 @@ export function PlanningDirection() {
               <Text style={labelStyle}>Début : {form.heureDebut}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
                 {heureOptions.map(opt => (
-                  <Pressable key={`d_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureDebut === opt.value ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: form.heureDebut === opt.value ? '#2C2C2C' : '#E2E6EA' }}
+                  <Pressable key={`d_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureDebut === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.heureDebut === opt.value ? '#5C1F2E' : '#EDE2D6' }}
                     onPress={() => setForm(f => ({ ...f, heureDebut: opt.value }))}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: form.heureDebut === opt.value ? '#fff' : '#687076' }}>{opt.label}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: form.heureDebut === opt.value ? '#fff' : '#6E5F54' }}>{opt.label}</Text>
                   </Pressable>
                 ))}
               </View>
               <Text style={labelStyle}>Fin : {form.heureFin || '—'}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
                 {heureOptions.map(opt => (
-                  <Pressable key={`f_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureFin === opt.value ? '#2C2C2C' : '#F5EDE3', borderWidth: 1, borderColor: form.heureFin === opt.value ? '#2C2C2C' : '#E2E6EA' }}
+                  <Pressable key={`f_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureFin === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.heureFin === opt.value ? '#5C1F2E' : '#EDE2D6' }}
                     onPress={() => setForm(f => ({ ...f, heureFin: opt.value }))}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: form.heureFin === opt.value ? '#fff' : '#687076' }}>{opt.label}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: form.heureFin === opt.value ? '#fff' : '#6E5F54' }}>{opt.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -417,7 +417,7 @@ export function PlanningDirection() {
                 <>
                   <Text style={labelStyle}>Fin de récurrence</Text>
                   <Pressable style={inputStyle} onPress={() => {/* TODO: date picker */}}>
-                    <Text style={{ fontSize: 14, color: form.recurrenceFinDate ? '#11181C' : '#B0BEC5' }}>
+                    <Text style={{ fontSize: 14, color: form.recurrenceFinDate ? '#2B1D14' : '#9A8C80' }}>
                       {form.recurrenceFinDate ? form.recurrenceFinDate.split('-').reverse().join('/') : 'Sélectionner...'}
                     </Text>
                   </Pressable>
@@ -429,7 +429,7 @@ export function PlanningDirection() {
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
                 {COULEURS.map(c => (
                   <Pressable key={c} onPress={() => setForm(f => ({ ...f, couleur: c }))}
-                    style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c, borderWidth: form.couleur === c ? 3 : 0, borderColor: '#11181C' }} />
+                    style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c, borderWidth: form.couleur === c ? 3 : 0, borderColor: '#2B1D14' }} />
                 ))}
               </View>
 
@@ -455,7 +455,7 @@ export function PlanningDirection() {
                 ))}
               </View>
 
-              <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: form.titre.trim() ? 1 : 0.5 }}
+              <Pressable style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: form.titre.trim() ? 1 : 0.5 }}
                 onPress={handleSave} disabled={!form.titre.trim()}>
                 <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? 'Modifier' : 'Créer le rendez-vous'}</Text>
               </Pressable>
@@ -468,11 +468,11 @@ export function PlanningDirection() {
   );
 }
 
-const labelStyle = { fontSize: 12, fontWeight: '600' as const, color: '#687076', marginBottom: 4, marginTop: 8 };
-const inputStyle = { backgroundColor: '#F5EDE3', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 4 };
+const labelStyle = { fontSize: 12, fontWeight: '600' as const, color: '#6E5F54', marginBottom: 4, marginTop: 8 };
+const inputStyle = { backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 4 };
 const chipStyle = (active: boolean, color?: string) => ({
   paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14,
-  backgroundColor: active ? (color || '#2C2C2C') : '#F5EDE3',
-  borderWidth: 1, borderColor: active ? (color || '#2C2C2C') : '#E2E6EA',
+  backgroundColor: active ? (color || '#5C1F2E') : '#F1E7DC',
+  borderWidth: 1, borderColor: active ? (color || '#5C1F2E') : '#EDE2D6',
 });
-const chipTextStyle = (active: boolean) => ({ fontSize: 12, fontWeight: '600' as const, color: active ? '#fff' : '#687076' });
+const chipTextStyle = (active: boolean) => ({ fontSize: 12, fontWeight: '600' as const, color: active ? '#fff' : '#6E5F54' });

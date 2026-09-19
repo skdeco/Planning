@@ -111,18 +111,18 @@ function Calendar({ value, onChange, minDate, maxDate }: CalendarProps) {
 
 const calS = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
-  navBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2F4F7', alignItems: 'center', justifyContent: 'center' },
-  navArrow: { fontSize: 18, color: '#1A3A6B', fontWeight: '700' },
-  title: { fontSize: 15, fontWeight: '700', color: '#11181C' },
+  navBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FAF5EF', alignItems: 'center', justifyContent: 'center' },
+  navArrow: { fontSize: 18, color: '#5C1F2E', fontWeight: '700' },
+  title: { fontSize: 15, fontWeight: '700', color: '#2B1D14' },
   weekRow: { flexDirection: 'row', marginBottom: 6 },
-  weekDay: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#687076', textTransform: 'uppercase' },
+  weekDay: { flex: 1, textAlign: 'center', fontSize: 11, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cell: { width: '14.28%' as any, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 18, marginVertical: 1 },
-  cellToday: { borderWidth: 1.5, borderColor: '#1A3A6B' },
-  cellSel: { backgroundColor: '#1A3A6B' },
+  cellToday: { borderWidth: 1.5, borderColor: '#5C1F2E' },
+  cellSel: { backgroundColor: '#5C1F2E' },
   cellDis: { opacity: 0.3 },
-  cellText: { fontSize: 13, color: '#11181C', fontWeight: '500' },
-  cellTextToday: { color: '#1A3A6B', fontWeight: '700' },
+  cellText: { fontSize: 13, color: '#2B1D14', fontWeight: '500' },
+  cellTextToday: { color: '#5C1F2E', fontWeight: '700' },
   cellTextSel: { color: '#fff', fontWeight: '700' },
   cellTextDis: { color: '#aaa' },
 });
@@ -184,7 +184,7 @@ export function DateField({ label, value, onChange, minDate, maxDate, placeholde
 
 const dfS = StyleSheet.create({
   container: { marginBottom: 12 },
-  label: { fontSize: 13, fontWeight: '600', color: '#11181C', marginBottom: 6 },
+  label: { fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -196,7 +196,7 @@ const dfS = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#fff',
   },
-  fieldText: { fontSize: 15, color: '#11181C' },
+  fieldText: { fontSize: 15, color: '#2B1D14' },
   placeholder: { color: '#aaa' },
   icon: { fontSize: 16 },
   overlay: {
@@ -218,16 +218,16 @@ const dfS = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#11181C' },
+  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#2B1D14' },
   closeBtn: {
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: '#F2F4F7',
+    backgroundColor: '#FAF5EF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  closeTxt: { fontSize: 12, color: '#687076', fontWeight: '700' },
+  closeTxt: { fontSize: 12, color: '#6E5F54', fontWeight: '700' },
   clearBtn: {
     marginTop: 12,
     padding: 10,

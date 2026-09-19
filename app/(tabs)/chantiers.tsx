@@ -1377,26 +1377,26 @@ export default function ChantiersScreen() {
         <View style={{ flexDirection: 'row', gap: 10, marginTop: 8, flexWrap: 'wrap' }}>
           {notesActives.length > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <StickyNote size={12} color="#8C8077" strokeWidth={2} />
-              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{notesActives.length}</Text>
+              <StickyNote size={12} color="#6E5F54" strokeWidth={2} />
+              <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{notesActives.length}</Text>
             </View>
           )}
           {nbPlans > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Ruler size={12} color="#8C8077" strokeWidth={2} />
-              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbPlans}</Text>
+              <Ruler size={12} color="#6E5F54" strokeWidth={2} />
+              <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{nbPlans}</Text>
             </View>
           )}
           {nbPhotos > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Camera size={12} color="#8C8077" strokeWidth={2} />
-              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbPhotos}</Text>
+              <Camera size={12} color="#6E5F54" strokeWidth={2} />
+              <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{nbPhotos}</Text>
             </View>
           )}
           {nbAchats > 0 && (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <ShoppingCart size={12} color="#8C8077" strokeWidth={2} />
-              <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{nbAchats}</Text>
+              <ShoppingCart size={12} color="#6E5F54" strokeWidth={2} />
+              <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{nbAchats}</Text>
             </View>
           )}
         </View>
@@ -1435,13 +1435,13 @@ export default function ChantiersScreen() {
       {/* Onglets Chantiers / SAV */}
       {isAdmin && (data.ticketsSAV || []).length > 0 && (
         <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, gap: 8 }}>
-          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#F5EDE3' }, vueChantiersTab === 'chantiers' && { borderColor: '#2C2C2C', backgroundColor: '#2C2C2C' }]}
+          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#F1E7DC' }, vueChantiersTab === 'chantiers' && { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' }]}
             onPress={() => setVueChantiersTab('chantiers')}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'chantiers' ? '#fff' : '#687076' }}>Chantiers</Text>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'chantiers' ? '#fff' : '#6E5F54' }}>Chantiers</Text>
           </Pressable>
-          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#E2E6EA', alignItems: 'center', backgroundColor: '#F5EDE3' }, vueChantiersTab === 'sav' && { borderColor: '#E74C3C', backgroundColor: '#E74C3C' }]}
+          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#F1E7DC' }, vueChantiersTab === 'sav' && { borderColor: '#E74C3C', backgroundColor: '#E74C3C' }]}
             onPress={() => setVueChantiersTab('sav')}>
-            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'sav' ? '#fff' : '#687076' }}>SAV ({(data.ticketsSAV || []).filter(t => t.statut !== 'clos').length})
+            <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'sav' ? '#fff' : '#6E5F54' }}>SAV ({(data.ticketsSAV || []).filter(t => t.statut !== 'clos').length})
             </Text>
           </Pressable>
         </View>
@@ -1455,18 +1455,18 @@ export default function ChantiersScreen() {
               const statutOrdre: Record<string, number> = { ouvert: 0, en_cours: 1, resolu: 2, clos: 3 };
               return (statutOrdre[a.statut] || 0) - (statutOrdre[b.statut] || 0) || b.createdAt.localeCompare(a.createdAt);
             });
-            const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#2C2C2C', haute: '#F59E0B', urgente: '#E74C3C' };
+            const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#5C1F2E', haute: '#F59E0B', urgente: '#E74C3C' };
             const statutLabels: Record<string, { label: string; bg: string; text: string }> = {
               ouvert: { label: '🔴 Ouvert', bg: '#FEF2F2', text: '#DC2626' },
               en_cours: { label: '🟡 En cours', bg: '#FFF3CD', text: '#856404' },
               resolu: { label: '🟢 Résolu', bg: '#D4EDDA', text: '#155724' },
-              clos: { label: '⚪ Clos', bg: '#F5EDE3', text: '#687076' },
+              clos: { label: '⚪ Clos', bg: '#F1E7DC', text: '#6E5F54' },
             };
 
             if (allTickets.length === 0) return (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <View style={{ marginBottom: 12 }}><Wrench size={38} color="#B8AA97" strokeWidth={1.6} /></View>
-                <Text style={{ fontSize: 15, color: '#687076' }}>Aucun ticket SAV</Text>
+                <View style={{ marginBottom: 12 }}><Wrench size={38} color="#9A8C80" strokeWidth={1.6} /></View>
+                <Text style={{ fontSize: 15, color: '#6E5F54' }}>Aucun ticket SAV</Text>
               </View>
             );
 
@@ -1499,28 +1499,28 @@ export default function ChantiersScreen() {
                   const st = statutLabels[t.statut] || statutLabels.ouvert;
                   const assigneEmp = t.assigneA ? data.employes.find(e => e.id === t.assigneA) : null;
                   return (
-                    <Pressable key={t.id} style={{ backgroundColor: '#fff', borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E2E6EA', borderLeftWidth: 4, borderLeftColor: prioColors[t.priorite] || '#2C2C2C' }}
+                    <Pressable key={t.id} style={{ backgroundColor: '#fff', borderRadius: 14, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#EDE2D6', borderLeftWidth: 4, borderLeftColor: prioColors[t.priorite] || '#5C1F2E' }}
                       onPress={() => { setSavChantierId(t.chantierId); }}>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#11181C' }}>{t.objet}</Text>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14' }}>{t.objet}</Text>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                            <View style={{ backgroundColor: ch?.couleur || '#2C2C2C', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
+                            <View style={{ backgroundColor: ch?.couleur || '#5C1F2E', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                               <Text style={{ fontSize: 9, fontWeight: '700', color: '#fff' }}>{ch?.nom || '?'}</Text>
                             </View>
                             <View style={{ backgroundColor: st.bg, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
                               <Text style={{ fontSize: 9, fontWeight: '700', color: st.text }}>{st.label}</Text>
                             </View>
-                            <Text style={{ fontSize: 9, color: '#B0BEC5' }}>Prio: {t.priorite}</Text>
+                            <Text style={{ fontSize: 9, color: '#9A8C80' }}>Prio: {t.priorite}</Text>
                           </View>
                         </View>
                       </View>
-                      {t.description && <Text style={{ fontSize: 11, color: '#687076', marginTop: 4 }} numberOfLines={2}>{t.description}</Text>}
+                      {t.description && <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 4 }} numberOfLines={2}>{t.description}</Text>}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                        <Text style={{ fontSize: 10, color: '#B0BEC5' }}>{t.dateOuverture}</Text>
-                        {assigneEmp && <Text style={{ fontSize: 10, color: '#2C2C2C' }}>{assigneEmp.prenom} {assigneEmp.nom}</Text>}
+                        <Text style={{ fontSize: 10, color: '#9A8C80' }}>{t.dateOuverture}</Text>
+                        {assigneEmp && <Text style={{ fontSize: 10, color: '#5C1F2E' }}>{assigneEmp.prenom} {assigneEmp.nom}</Text>}
                         {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60' }}>{t.resoluPar}</Text>}
-                        {t.photos && t.photos.length > 0 && <Text style={{ fontSize: 10, color: '#687076' }}>{t.photos.length}</Text>}
+                        {t.photos && t.photos.length > 0 && <Text style={{ fontSize: 10, color: '#6E5F54' }}>{t.photos.length}</Text>}
                       </View>
                     </Pressable>
                   );
@@ -1588,7 +1588,7 @@ export default function ChantiersScreen() {
             const listOfThisType = apporteursAll.filter(a => a.type === filterContactType);
             if (listOfThisType.length === 0) {
               return (
-                <Text style={{ fontSize: 11, color: '#8C8077', fontStyle: 'italic' }}>
+                <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic' }}>
                   Aucun {APPORTEUR_TYPE_LABELS[filterContactType].label.toLowerCase()} enregistré.
                 </Text>
               );
@@ -1623,7 +1623,7 @@ export default function ChantiersScreen() {
           !isHydrated ? (
             <View>
               {[0, 1, 2, 3].map(i => (
-                <View key={i} style={[styles.card, { borderLeftColor: '#EDE5DA', marginBottom: 10 }]}>
+                <View key={i} style={[styles.card, { borderLeftColor: '#EDE2D6', marginBottom: 10 }]}>
                   <Skeleton width="55%" height={16} borderRadius={6} />
                   <Skeleton width="80%" height={11} borderRadius={5} style={{ marginTop: 14 }} />
                   <Skeleton width="45%" height={11} borderRadius={5} style={{ marginTop: 7 }} />
@@ -1632,8 +1632,8 @@ export default function ChantiersScreen() {
             </View>
           ) : (
             <View style={styles.emptyState}>
-              <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E8DC', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                <Building2 size={34} color="#B8AA97" strokeWidth={1.6} />
+              <View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                <Building2 size={34} color="#9A8C80" strokeWidth={1.6} />
               </View>
               <Text style={styles.emptyText}>{t.chantiers.noChantiers}</Text>
               {isAdmin && <Text style={styles.emptyHint}>{t.chantiers.noChantierHint}</Text>}
@@ -1669,7 +1669,7 @@ export default function ChantiersScreen() {
                 <>
                   {/* En-tête chantier */}
                   <View style={{ alignItems: 'center', marginBottom: 16 }}>
-                    <View style={{ width: 40, height: 4, backgroundColor: '#E2E6EA', borderRadius: 2, marginBottom: 12 }} />
+                    <View style={{ width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, marginBottom: 12 }} />
                     <Pressable
                       onPress={() => setActionChantier(null)}
                       hitSlop={12}
@@ -1681,7 +1681,7 @@ export default function ChantiersScreen() {
                     </Pressable>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                       <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: ch.couleur }} />
-                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>{ch.nom}</Text>
+                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#2B1D14' }}>{ch.nom}</Text>
                     </View>
                     <View style={[styles.statutBadge, { backgroundColor: statut.bg, marginTop: 6 }]}>
                       <Text style={[styles.statutText, { color: statut.text }]}>{statutLabel(ch.statut)}</Text>
@@ -1742,15 +1742,15 @@ export default function ChantiersScreen() {
                   {/* Changement rapide de statut */}
                   {isAdmin && (
                     <View style={{ marginTop: 16 }}>
-                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#687076', textAlign: 'center', marginBottom: 6 }}>Changer le statut :</Text>
+                      <Text style={{ fontSize: 11, fontWeight: '600', color: '#6E5F54', textAlign: 'center', marginBottom: 6 }}>Changer le statut :</Text>
                       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, justifyContent: 'center', paddingHorizontal: 8 }}>
                         {STATUTS.map(s => {
                           const st = STATUT_COLORS[s];
                           const active = ch.statut === s;
                           return (
-                            <Pressable key={s} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: active ? st.bg : '#F5EDE3', borderWidth: 1.5, borderColor: active ? st.text : '#E2E6EA' }}
+                            <Pressable key={s} style={{ paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: active ? st.bg : '#F1E7DC', borderWidth: 1.5, borderColor: active ? st.text : '#EDE2D6' }}
                               onPress={() => { updateChantier({ ...ch, statut: s }); setActionChantier(null); }}>
-                              <Text style={{ fontSize: 11, fontWeight: '700', color: active ? st.text : '#687076' }}>{statutLabel(s)}</Text>
+                              <Text style={{ fontSize: 11, fontWeight: '700', color: active ? st.text : '#6E5F54' }}>{statutLabel(s)}</Text>
                             </Pressable>
                           );
                         })}
@@ -1800,7 +1800,7 @@ export default function ChantiersScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>{editId ? t.chantiers.edit : t.chantiers.add}</Text>
               <Pressable onPress={() => setShowForm(false)}>
-                <X size={20} color="#8C8077" strokeWidth={2} />
+                <X size={20} color="#6E5F54" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -1811,7 +1811,7 @@ export default function ChantiersScreen() {
                   value={form.nom}
                   onChangeText={v => setForm(f => ({ ...f, nom: v }))}
                   placeholder="Ex: Villa Dupont"
-                  placeholderTextColor="#B0BEC5"
+                  placeholderTextColor="#9A8C80"
                   returnKeyType="next"
                 />
               </FormField>
@@ -1822,7 +1822,7 @@ export default function ChantiersScreen() {
                   value={form.rue}
                   onChangeText={v => setForm(f => ({ ...f, rue: v }))}
                   placeholder="Ex: 45 avenue Foch"
-                  placeholderTextColor="#B0BEC5"
+                  placeholderTextColor="#9A8C80"
                   returnKeyType="next"
                 />
               </FormField>
@@ -1835,7 +1835,7 @@ export default function ChantiersScreen() {
                       value={form.codePostal}
                       onChangeText={v => setForm(f => ({ ...f, codePostal: v }))}
                       placeholder="75016"
-                      placeholderTextColor="#B0BEC5"
+                      placeholderTextColor="#9A8C80"
                       keyboardType="number-pad"
                       returnKeyType="next"
                     />
@@ -1848,7 +1848,7 @@ export default function ChantiersScreen() {
                       value={form.ville}
                       onChangeText={v => setForm(f => ({ ...f, ville: v }))}
                       placeholder="Paris"
-                      placeholderTextColor="#B0BEC5"
+                      placeholderTextColor="#9A8C80"
                       returnKeyType="next"
                     />
                   </FormField>
@@ -1861,7 +1861,7 @@ export default function ChantiersScreen() {
                   value={form.pays}
                   onChangeText={v => setForm(f => ({ ...f, pays: v }))}
                   placeholder="France"
-                  placeholderTextColor="#B0BEC5"
+                  placeholderTextColor="#9A8C80"
                   returnKeyType="next"
                 />
               </FormField>
@@ -1875,7 +1875,7 @@ export default function ChantiersScreen() {
                     value={form.adresse}
                     onChangeText={v => setForm(f => ({ ...f, adresse: v }))}
                     placeholder="Ex: 12 rue des Lilas, Paris"
-                    placeholderTextColor="#B0BEC5"
+                    placeholderTextColor="#9A8C80"
                     returnKeyType="next"
                   />
                 </FormField>
@@ -1924,8 +1924,8 @@ export default function ChantiersScreen() {
                   directement dans le planning, pas via le formulaire chantier. */}
 
               {/* ═══ Section Contacts (4 types) ═══ */}
-              <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 12, borderWidth: 1, borderColor: '#E8DDD0' }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 10 }}>Contacts</Text>
+              <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF5EF', borderRadius: 12, borderWidth: 1, borderColor: '#EDE2D6' }}>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 10 }}>Contacts</Text>
 
                 {(['architecte', 'apporteur', 'contractant', 'client'] as const).map((ty) => {
                   const meta = APPORTEUR_TYPE_LABELS[ty];
@@ -1961,9 +1961,9 @@ export default function ChantiersScreen() {
                         return (
                           <Pressable
                             onPress={() => setForm(f => ({ ...f, [finKey]: !(f[finKey] as boolean) }))}
-                            style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#E8DDD0', paddingHorizontal: 12, paddingVertical: 10 }}
+                            style={{ marginTop: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#fff', borderRadius: 10, borderWidth: 1, borderColor: '#EDE2D6', paddingHorizontal: 12, paddingVertical: 10 }}
                           >
-                            <Text style={{ fontSize: 12, color: '#2C2C2C', fontWeight: '600', flex: 1 }}>Autoriser à voir les finances du chantier
+                            <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600', flex: 1 }}>Autoriser à voir les finances du chantier
                             </Text>
                             <View style={{ width: 44, height: 26, borderRadius: 13, padding: 3, backgroundColor: on ? '#2E7D32' : '#D8D0C6', alignItems: on ? 'flex-end' : 'flex-start' }}>
                               <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' }} />
@@ -2005,7 +2005,7 @@ export default function ChantiersScreen() {
                     {form.afficherPlanningAuClient ? 'Oui — le client voit le planning' : 'Non — masqué au client'}
                   </Text>
                 </Pressable>
-                <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 4, lineHeight: 14 }}>
+                <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 4, lineHeight: 14 }}>
                   Les architectes et apporteurs voient toujours le planning. Cette option contrôle uniquement ce que voit le client.
                 </Text>
               </FormField>
@@ -2029,12 +2029,12 @@ export default function ChantiersScreen() {
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
               {!quickClientCreds ? (
                 <>
-                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginBottom: 6 }}>Nouveau client</Text>
-                  <Text style={{ fontSize: 12, color: '#687076', marginBottom: 14 }}>
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 6 }}>Nouveau client</Text>
+                  <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 14 }}>
                     Créez un client et son accès en une étape. Un identifiant + mot de passe sont générés automatiquement.
                   </Text>
 
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginBottom: 4 }}>Prénom *</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginBottom: 4 }}>Prénom *</Text>
                   <TextInput
                     style={styles.input}
                     value={quickClient.prenom}
@@ -2042,7 +2042,7 @@ export default function ChantiersScreen() {
                     placeholder="Jean"
                     autoCapitalize="words"
                   />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Nom *</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 10, marginBottom: 4 }}>Nom *</Text>
                   <TextInput
                     style={styles.input}
                     value={quickClient.nom}
@@ -2050,7 +2050,7 @@ export default function ChantiersScreen() {
                     placeholder="Dupont"
                     autoCapitalize="words"
                   />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Email</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 10, marginBottom: 4 }}>Email</Text>
                   <TextInput
                     style={styles.input}
                     value={quickClient.email}
@@ -2060,7 +2060,7 @@ export default function ChantiersScreen() {
                     autoCorrect={false}
                     keyboardType="email-address"
                   />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Téléphone</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 10, marginBottom: 4 }}>Téléphone</Text>
                   <TextInput
                     style={styles.input}
                     value={quickClient.telephone}
@@ -2068,7 +2068,7 @@ export default function ChantiersScreen() {
                     placeholder="06 12 34 56 78"
                     keyboardType="phone-pad"
                   />
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#2C2C2C', marginTop: 10, marginBottom: 4 }}>Société (optionnel)</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 10, marginBottom: 4 }}>Société (optionnel)</Text>
                   <TextInput
                     style={styles.input}
                     value={quickClient.societe}
@@ -2077,34 +2077,34 @@ export default function ChantiersScreen() {
                   />
 
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                    <Pressable onPress={() => setShowQuickClient(false)} style={{ flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                      <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Annuler</Text>
+                    <Pressable onPress={() => setShowQuickClient(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                      <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
                     </Pressable>
                     <Pressable
                       onPress={saveQuickClient}
                       disabled={!quickClient.prenom.trim() || !quickClient.nom.trim() || quickClientSaving}
-                      style={{ flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (!quickClient.prenom.trim() || !quickClient.nom.trim() || quickClientSaving) ? 0.5 : 1 }}
+                      style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (!quickClient.prenom.trim() || !quickClient.nom.trim() || quickClientSaving) ? 0.5 : 1 }}
                     >
-                      <Text style={{ color: '#C9A96E', fontWeight: '800' }}>{quickClientSaving ? 'Création…' : 'Créer le client'}</Text>
+                      <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>{quickClientSaving ? 'Création…' : 'Créer le client'}</Text>
                     </Pressable>
                   </View>
                 </>
               ) : (
                 <>
                   <Text style={{ fontSize: 20, fontWeight: '800', color: '#2E7D32', marginBottom: 6 }}>Client créé</Text>
-                  <Text style={{ fontSize: 12, color: '#687076', marginBottom: 14 }}>
+                  <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 14 }}>
                     Le client a été créé et rattaché à ce chantier. Transmettez-lui les identifiants ci-dessous.
                   </Text>
-                  <View style={{ backgroundColor: '#FAF7F3', borderRadius: 10, padding: 14, borderLeftWidth: 4, borderLeftColor: '#C9A96E' }}>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C6D2F', textTransform: 'uppercase' }}>Identifiant</Text>
-                    <Text selectable style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginTop: 4, marginBottom: 10 }}>
+                  <View style={{ backgroundColor: '#FAF5EF', borderRadius: 10, padding: 14, borderLeftWidth: 4, borderLeftColor: '#5C1F2E' }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#5C1F2E', textTransform: 'uppercase' }}>Identifiant</Text>
+                    <Text selectable style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginTop: 4, marginBottom: 10 }}>
                       {quickClientCreds.identifiant}
                     </Text>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#8C6D2F', textTransform: 'uppercase' }}>Mot de passe</Text>
-                    <Text selectable style={{ fontSize: 16, fontWeight: '800', color: '#2C2C2C', marginTop: 4 }}>
+                    <Text style={{ fontSize: 10, fontWeight: '700', color: '#5C1F2E', textTransform: 'uppercase' }}>Mot de passe</Text>
+                    <Text selectable style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginTop: 4 }}>
                       {quickClientCreds.motDePasse}
                     </Text>
-                    <Text style={{ fontSize: 10, color: '#8C8077', marginTop: 10, fontStyle: 'italic' }}>
+                    <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 10, fontStyle: 'italic' }}>
                       Ces identifiants restent disponibles dans la fiche client (Équipe → Apporteurs).
                     </Text>
                   </View>
@@ -2117,16 +2117,16 @@ export default function ChantiersScreen() {
                           navigator.clipboard?.writeText(txt);
                         } catch {}
                       }}
-                      style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 12 }}
+                      style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 12 }}
                     >
-                      <Text style={{ color: '#C9A96E', fontWeight: '800' }}>Copier (lien + identifiants)</Text>
+                      <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>Copier (lien + identifiants)</Text>
                     </Pressable>
                   )}
                   <Pressable
                     onPress={() => setShowQuickClient(false)}
-                    style={{ backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 8 }}
+                    style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 8 }}
                   >
-                    <Text style={{ color: '#2C2C2C', fontWeight: '700' }}>Fermer</Text>
+                    <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Fermer</Text>
                   </Pressable>
                 </>
               )}
@@ -2160,7 +2160,7 @@ export default function ChantiersScreen() {
                 })()}
               </View>
               <Pressable onPress={() => backToDash(() => setShowFiche(false))}>
-                <X size={20} color="#8C8077" strokeWidth={2} />
+                <X size={20} color="#6E5F54" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -2280,7 +2280,7 @@ export default function ChantiersScreen() {
                         const stIds = [...new Set(data.affectations.filter(a => a.chantierId === ficheId && a.soustraitantId).map(a => a.soustraitantId!))];
                         const emps = empIds.map(id => data.employes.find(e => e.id === id)).filter(Boolean) as typeof data.employes;
                         const sts = stIds.map(id => data.sousTraitants.find(s => s.id === id)).filter((s): s is NonNullable<typeof s> => !!s);
-                        if (emps.length === 0 && sts.length === 0) return <Text style={{ fontSize: 12, color: '#687076', fontStyle: 'italic' }}>Aucun employé affecté via le planning</Text>;
+                        if (emps.length === 0 && sts.length === 0) return <Text style={{ fontSize: 12, color: '#6E5F54', fontStyle: 'italic' }}>Aucun employé affecté via le planning</Text>;
                         return (
                           <>
                             {emps.map(emp => {
@@ -2329,14 +2329,14 @@ export default function ChantiersScreen() {
                 return (
                   <>
                     {/* Total */}
-                    <View style={{ backgroundColor: '#EEF2F8', borderRadius: 14, padding: 14, marginBottom: 12, alignItems: 'center' }}>
-                      <Text style={{ fontSize: 22, fontWeight: '800', color: '#2C2C2C' }}>{totalAchats.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
-                      <Text style={{ fontSize: 12, color: '#687076' }}>Total achats ({achats.length} dépense{achats.length > 1 ? 's' : ''})</Text>
+                    <View style={{ backgroundColor: '#F2E4E1', borderRadius: 14, padding: 14, marginBottom: 12, alignItems: 'center' }}>
+                      <Text style={{ fontSize: 22, fontWeight: '800', color: '#5C1F2E' }}>{totalAchats.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
+                      <Text style={{ fontSize: 12, color: '#6E5F54' }}>Total achats ({achats.length} dépense{achats.length > 1 ? 's' : ''})</Text>
                     </View>
 
                     {/* Bouton ajouter */}
                     <Pressable
-                      style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
+                      style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
                       onPress={() => {
                         setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr2, fournisseur: '', fichier: '', note: '' });
                         setAchatFichierUri(null);
@@ -2350,12 +2350,12 @@ export default function ChantiersScreen() {
 
                     {/* Formulaire inline ajout/édition achat (UX simplifiée : champs essentiels visibles, détails repliés) */}
                     {showAchatFormFiche && (
-                      <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
+                      <View style={{ backgroundColor: '#F2E4E1', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
 
                         {/* Bouton facture (priorité visuelle) */}
                         <View style={{ marginBottom: 8 }}>
-                          <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                          <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#EDE2D6' }}
                             onPress={async () => {
                               try {
                                 const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
@@ -2367,7 +2367,7 @@ export default function ChantiersScreen() {
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
+                            <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
                           </Pressable>
                           <DocInboxButton folder={`chantiers/${ficheId}/achats`} onUploaded={({ url }) => { setAchatFichierUri(url); void analyserFacture(url); }} />
                         </View>
@@ -2382,15 +2382,15 @@ export default function ChantiersScreen() {
                         )}
 
                         {/* Libellé (optionnel — auto-généré si vide) */}
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" placeholderTextColor="#9DA6B0" />
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" placeholderTextColor="#9A8C80" />
 
                         {/* Toggle détails */}
                         <Pressable
                           onPress={() => setShowDetailsAchat(v => !v)}
-                          style={{ backgroundColor: '#F5EDE3', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginVertical: 8 }}
+                          style={{ backgroundColor: '#F1E7DC', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginVertical: 8 }}
                         >
-                          <Text style={{ fontSize: 12, color: '#687076', fontWeight: '600' }}>
+                          <Text style={{ fontSize: 12, color: '#6E5F54', fontWeight: '600' }}>
                             {showDetailsAchat ? '− Masquer les détails' : '+ Plus de détails'}
                           </Text>
                         </Pressable>
@@ -2399,20 +2399,20 @@ export default function ChantiersScreen() {
                         {showDetailsAchat && (
                           <>
                             <View style={{ flexDirection: 'row', gap: 6 }}>
-                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
-                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" placeholderTextColor="#9A8C80" keyboardType="decimal-pad" />
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9A8C80" keyboardType="decimal-pad" />
                             </View>
                             <View style={{ marginBottom: 6 }}>
                               <FournisseurPicker value={achatForm.fournisseur} onChange={v => setAchatForm(f => ({ ...f, fournisseur: v }))} />
                             </View>
-                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9DA6B0" />
+                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9A8C80" />
                           </>
                         )}
 
-                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (achatForm.libelle.trim() || achatFichierUri) ? 1 : 0.5 }}
+                        <Pressable style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (achatForm.libelle.trim() || achatFichierUri) ? 1 : 0.5 }}
                           disabled={!achatForm.libelle.trim() && !achatFichierUri}
                           onPress={() => {
                             if (!ficheId) return;
@@ -2463,8 +2463,8 @@ export default function ChantiersScreen() {
 
                     {/* Tableau des achats */}
                     {achats.length > 0 && (
-                      <View style={{ borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 10, overflow: 'hidden' }}>
-                        <View style={{ flexDirection: 'row', backgroundColor: '#2C2C2C', paddingVertical: 8, paddingHorizontal: 6 }}>
+                      <View style={{ borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 10, overflow: 'hidden' }}>
+                        <View style={{ flexDirection: 'row', backgroundColor: '#5C1F2E', paddingVertical: 8, paddingHorizontal: 6 }}>
                           <Text style={{ flex: 1.5, fontSize: 10, fontWeight: '700', color: '#fff' }}>Libellé</Text>
                           <Text style={{ flex: 1, fontSize: 10, fontWeight: '700', color: '#fff' }}>Fournisseur</Text>
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>H.T.</Text>
@@ -2475,7 +2475,7 @@ export default function ChantiersScreen() {
                         {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
                           <Pressable
                             key={dep.id}
-                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#FFF8E1' : (idx % 2 === 0 ? '#fff' : '#F8F9FA'), borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#F2E4E1' : (idx % 2 === 0 ? '#fff' : '#FAF5EF'), borderTopWidth: 1, borderTopColor: '#EDE2D6', alignItems: 'center' }}
                             onPress={() => {
                               const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
                               if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
@@ -2509,11 +2509,11 @@ export default function ChantiersScreen() {
                               }
                             }}
                           >
-                            <Text style={{ flex: 1.5, fontSize: 11, color: '#11181C' }} numberOfLines={1}>{dep.libelle}</Text>
-                            <Text style={{ flex: 1, fontSize: 10, color: '#687076' }} numberOfLines={1}>{dep.fournisseur || '—'}</Text>
-                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '600', color: '#11181C', textAlign: 'right' }}>{dep.montant.toLocaleString('fr-FR')} €</Text>
+                            <Text style={{ flex: 1.5, fontSize: 11, color: '#2B1D14' }} numberOfLines={1}>{dep.libelle}</Text>
+                            <Text style={{ flex: 1, fontSize: 10, color: '#6E5F54' }} numberOfLines={1}>{dep.fournisseur || '—'}</Text>
+                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '600', color: '#2B1D14', textAlign: 'right' }}>{dep.montant.toLocaleString('fr-FR')} €</Text>
                             <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '700', color: '#E74C3C', textAlign: 'right' }}>{(dep.montantTTC || dep.montant).toLocaleString('fr-FR')} €</Text>
-                            <Text style={{ flex: 0.7, fontSize: 9, color: '#687076', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
+                            <Text style={{ flex: 0.7, fontSize: 9, color: '#6E5F54', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
                             <View style={{ width: 30, alignItems: 'center' }}>
                               {dep.fichier ? (
                                 <Pressable onPress={(e) => { e.stopPropagation?.(); openDocPreview(dep.fichier!); }}>
@@ -2529,8 +2529,8 @@ export default function ChantiersScreen() {
                     )}
                     {achats.length === 0 && (
                       <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-                        <View style={{ marginBottom: 12 }}><Receipt size={36} color="#B8AA97" strokeWidth={1.6} /></View>
-                        <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
+                        <View style={{ marginBottom: 12 }}><Receipt size={36} color="#9A8C80" strokeWidth={1.6} /></View>
+                        <Text style={{ fontSize: 14, color: '#6E5F54' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
                     {(() => {
@@ -2541,7 +2541,7 @@ export default function ChantiersScreen() {
                         </Text>
                       );
                     })()}
-                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
+                    <Text style={{ fontSize: 10, color: '#9A8C80', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
                   </>
                 );
               })()}
@@ -2576,7 +2576,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === notesChantierId)?.nom ?? ''}</Text>
               </View>
               <Pressable onPress={() => setShowNotes(false)}>
-                <X size={20} color="#8C8077" strokeWidth={2} />
+                <X size={20} color="#6E5F54" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -2694,7 +2694,7 @@ export default function ChantiersScreen() {
                       value={newNoteTexte}
                       onChangeText={setNewNoteTexte}
                       placeholder={t.chantiers.addNoteLabel}
-                      placeholderTextColor="#B0BEC5"
+                      placeholderTextColor="#9A8C80"
                       multiline
                     />
 
@@ -2816,7 +2816,7 @@ export default function ChantiersScreen() {
                     <>
                       <Text style={styles.noteHistSection}>{t.chantiers.archivedNotes}</Text>
                       {getNotesArchivees(notesChantierId).map(note => (
-                        <View key={note.id} style={[styles.noteCard, { opacity: 0.85, borderLeftColor: '#B0BEC5' }]}>
+                        <View key={note.id} style={[styles.noteCard, { opacity: 0.85, borderLeftColor: '#9A8C80' }]}>
                           <View style={styles.noteHeader}>
                             <Text style={styles.noteAuteur}>{note.auteurNom}</Text>
                             <Text style={styles.noteDate}>
@@ -2981,7 +2981,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === achatsChantierId)?.nom ?? ''}</Text>
               </View>
               <Pressable onPress={() => backToDash(() => setAchatsChantierId(null))}>
-                <X size={20} color="#8C8077" strokeWidth={2} />
+                <X size={20} color="#6E5F54" strokeWidth={2} />
               </Pressable>
             </View>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 30 }}>
@@ -2995,19 +2995,19 @@ export default function ChantiersScreen() {
                   <>
                     {/* Totaux */}
                     <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-                      <View style={{ flex: 1, backgroundColor: '#EEF2F8', borderRadius: 14, padding: 12, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#11181C' }}>{totalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
-                        <Text style={{ fontSize: 10, color: '#687076' }}>Total H.T.</Text>
+                      <View style={{ flex: 1, backgroundColor: '#F2E4E1', borderRadius: 14, padding: 12, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#2B1D14' }}>{totalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
+                        <Text style={{ fontSize: 10, color: '#6E5F54' }}>Total H.T.</Text>
                       </View>
                       <View style={{ flex: 1, backgroundColor: '#FDECEA', borderRadius: 14, padding: 12, alignItems: 'center' }}>
                         <Text style={{ fontSize: 18, fontWeight: '800', color: '#E74C3C' }}>{totalTTC.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
-                        <Text style={{ fontSize: 10, color: '#687076' }}>Total T.T.C.</Text>
+                        <Text style={{ fontSize: 10, color: '#6E5F54' }}>Total T.T.C.</Text>
                       </View>
                     </View>
 
                     {/* Bouton ajouter */}
                     <Pressable
-                      style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
+                      style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12 }}
                       onPress={() => {
                         setAchatForm({ libelle: '', montantHT: '', montantTTC: '', date: todayStr3, fournisseur: '', fichier: '', note: '' });
                         setAchatFichierUri(null);
@@ -3022,12 +3022,12 @@ export default function ChantiersScreen() {
 
                     {/* Formulaire inline ajout/édition achat (UX simplifiée : champs essentiels visibles, détails repliés) */}
                     {showAchatForm && (
-                      <View style={{ backgroundColor: '#EBF0FF', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
+                      <View style={{ backgroundColor: '#F2E4E1', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
 
                         {/* Bouton facture (priorité visuelle) */}
                         <View style={{ marginBottom: 8 }}>
-                          <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#E2E6EA' }}
+                          <Pressable style={{ backgroundColor: '#fff', borderRadius: 8, padding: 10, alignItems: 'center', borderWidth: 1, borderColor: '#EDE2D6' }}
                             onPress={async () => {
                               try {
                                 const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: false, compressImages: true });
@@ -3040,7 +3040,7 @@ export default function ChantiersScreen() {
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#2C2C2C', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
+                            <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
                           </Pressable>
                           <DocInboxButton folder={`chantiers/${achatsChantierId}/achats`} onUploaded={({ url }) => { setAchatFichierUri(url); void analyserFacture(url); }} />
                         </View>
@@ -3055,15 +3055,15 @@ export default function ChantiersScreen() {
                         )}
 
                         {/* Libellé (optionnel — auto-généré si vide) */}
-                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" placeholderTextColor="#9DA6B0" />
+                        <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                          value={achatForm.libelle} onChangeText={v => setAchatForm(f => ({ ...f, libelle: v }))} placeholder="Libellé (optionnel)" placeholderTextColor="#9A8C80" />
 
                         {/* Toggle détails */}
                         <Pressable
                           onPress={() => setShowDetailsAchat(v => !v)}
-                          style={{ backgroundColor: '#F5EDE3', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginVertical: 8 }}
+                          style={{ backgroundColor: '#F1E7DC', borderRadius: 8, paddingVertical: 10, alignItems: 'center', marginVertical: 8 }}
                         >
-                          <Text style={{ fontSize: 12, color: '#687076', fontWeight: '600' }}>
+                          <Text style={{ fontSize: 12, color: '#6E5F54', fontWeight: '600' }}>
                             {showDetailsAchat ? '− Masquer les détails' : '+ Plus de détails'}
                           </Text>
                         </Pressable>
@@ -3072,20 +3072,20 @@ export default function ChantiersScreen() {
                         {showDetailsAchat && (
                           <>
                             <View style={{ flexDirection: 'row', gap: 6 }}>
-                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
-                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9DA6B0" keyboardType="decimal-pad" />
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                                value={achatForm.montantHT} onChangeText={v => setAchatForm(f => ({ ...f, montantHT: v }))} placeholder="HT (€)" placeholderTextColor="#9A8C80" keyboardType="decimal-pad" />
+                              <TextInput style={{ flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                                value={achatForm.montantTTC} onChangeText={v => setAchatForm(f => ({ ...f, montantTTC: v }))} placeholder="TTC (€)" placeholderTextColor="#9A8C80" keyboardType="decimal-pad" />
                             </View>
                             <View style={{ marginBottom: 6 }}>
                               <FournisseurPicker value={achatForm.fournisseur} onChange={v => setAchatForm(f => ({ ...f, fournisseur: v }))} />
                             </View>
-                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E6EA', marginBottom: 6, color: '#11181C' }}
-                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9DA6B0" />
+                            <TextInput style={{ backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 6, color: '#2B1D14' }}
+                              value={achatForm.note} onChangeText={v => setAchatForm(f => ({ ...f, note: v }))} placeholder="Note (optionnel)" placeholderTextColor="#9A8C80" />
                           </>
                         )}
 
-                        <Pressable style={{ backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (achatForm.libelle.trim() || achatFichierUri) ? 1 : 0.5 }}
+                        <Pressable style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (achatForm.libelle.trim() || achatFichierUri) ? 1 : 0.5 }}
                           disabled={!achatForm.libelle.trim() && !achatFichierUri}
                           onPress={() => {
                             if (!achatsChantierId) return;
@@ -3137,8 +3137,8 @@ export default function ChantiersScreen() {
 
                     {/* Tableau */}
                     {achats.length > 0 && (
-                      <View style={{ borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 10, overflow: 'hidden' }}>
-                        <View style={{ flexDirection: 'row', backgroundColor: '#2C2C2C', paddingVertical: 8, paddingHorizontal: 6 }}>
+                      <View style={{ borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 10, overflow: 'hidden' }}>
+                        <View style={{ flexDirection: 'row', backgroundColor: '#5C1F2E', paddingVertical: 8, paddingHorizontal: 6 }}>
                           <Text style={{ flex: 1.5, fontSize: 10, fontWeight: '700', color: '#fff' }}>Libellé</Text>
                           <Text style={{ flex: 1, fontSize: 10, fontWeight: '700', color: '#fff' }}>Fournisseur</Text>
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>H.T.</Text>
@@ -3149,7 +3149,7 @@ export default function ChantiersScreen() {
                         {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
                           <Pressable
                             key={dep.id}
-                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#FFF8E1' : (idx % 2 === 0 ? '#fff' : '#F8F9FA'), borderTopWidth: 1, borderTopColor: '#E2E6EA', alignItems: 'center' }}
+                            style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#F2E4E1' : (idx % 2 === 0 ? '#fff' : '#FAF5EF'), borderTopWidth: 1, borderTopColor: '#EDE2D6', alignItems: 'center' }}
                             onPress={() => {
                               const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
                               if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
@@ -3185,13 +3185,13 @@ export default function ChantiersScreen() {
                             }}
                           >
                             <View style={{ flex: 1.5 }}>
-                              <Text style={{ fontSize: 11, color: '#11181C' }} numberOfLines={1}>{dep.libelle}</Text>
-                              {dep.note && <Text style={{ fontSize: 9, color: '#687076', fontStyle: 'italic' }} numberOfLines={1}>{dep.note}</Text>}
+                              <Text style={{ fontSize: 11, color: '#2B1D14' }} numberOfLines={1}>{dep.libelle}</Text>
+                              {dep.note && <Text style={{ fontSize: 9, color: '#6E5F54', fontStyle: 'italic' }} numberOfLines={1}>{dep.note}</Text>}
                             </View>
-                            <Text style={{ flex: 1, fontSize: 10, color: '#687076' }} numberOfLines={1}>{dep.fournisseur || '—'}</Text>
-                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '600', color: '#11181C', textAlign: 'right' }}>{dep.montant.toLocaleString('fr-FR')} €</Text>
+                            <Text style={{ flex: 1, fontSize: 10, color: '#6E5F54' }} numberOfLines={1}>{dep.fournisseur || '—'}</Text>
+                            <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '600', color: '#2B1D14', textAlign: 'right' }}>{dep.montant.toLocaleString('fr-FR')} €</Text>
                             <Text style={{ flex: 0.7, fontSize: 11, fontWeight: '700', color: '#E74C3C', textAlign: 'right' }}>{(dep.montantTTC || dep.montant).toLocaleString('fr-FR')} €</Text>
-                            <Text style={{ flex: 0.7, fontSize: 9, color: '#687076', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
+                            <Text style={{ flex: 0.7, fontSize: 9, color: '#6E5F54', textAlign: 'right' }}>{dep.date.split('-').reverse().join('/')}</Text>
                             <View style={{ width: 30, alignItems: 'center' }}>
                               {dep.fichier ? (
                                 <Pressable onPress={(e) => { e.stopPropagation?.(); openDocPreview(dep.fichier!); }}>
@@ -3207,8 +3207,8 @@ export default function ChantiersScreen() {
                     )}
                     {achats.length === 0 && (
                       <View style={{ alignItems: 'center', paddingVertical: 24 }}>
-                        <View style={{ marginBottom: 12 }}><Receipt size={36} color="#B8AA97" strokeWidth={1.6} /></View>
-                        <Text style={{ fontSize: 14, color: '#687076' }}>Aucun achat enregistré</Text>
+                        <View style={{ marginBottom: 12 }}><Receipt size={36} color="#9A8C80" strokeWidth={1.6} /></View>
+                        <Text style={{ fontSize: 14, color: '#6E5F54' }}>Aucun achat enregistré</Text>
                       </View>
                     )}
                     {(() => {
@@ -3219,7 +3219,7 @@ export default function ChantiersScreen() {
                         </Text>
                       );
                     })()}
-                    <Text style={{ fontSize: 10, color: '#B0BEC5', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
+                    <Text style={{ fontSize: 10, color: '#9A8C80', textAlign: 'center', marginTop: 12 }}>Touchez une ligne pour modifier ou supprimer</Text>
                   </>
                 );
               })()}
@@ -3241,7 +3241,7 @@ export default function ChantiersScreen() {
                 <Text style={styles.modalSubtitle}>{data.chantiers.find(c => c.id === plansChantierId)?.nom ?? ''}</Text>
               </View>
               <Pressable onPress={() => backToDash(() => setShowPlans(false))}>
-                <X size={20} color="#8C8077" strokeWidth={2} />
+                <X size={20} color="#6E5F54" strokeWidth={2} />
               </Pressable>
             </View>
 
@@ -3439,7 +3439,7 @@ export default function ChantiersScreen() {
                     value={newPlanNom}
                     onChangeText={setNewPlanNom}
                     placeholder={t.chantiers.planName}
-                    placeholderTextColor="#B0BEC5"
+                    placeholderTextColor="#9A8C80"
                   />
 
                   {/* Preview fichier sélectionné */}
@@ -3782,7 +3782,7 @@ export default function ChantiersScreen() {
                 <Text style={savListeStyles.nouveauBtnText}>+ Nouveau</Text>
               </Pressable>
               <Pressable onPress={() => backToDash(() => setSavChantierId(null))} style={savListeStyles.closeBtn}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#2C2C2C' }}>✕</Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E' }}>✕</Text>
               </Pressable>
             </View>
 
@@ -3793,7 +3793,7 @@ export default function ChantiersScreen() {
                   .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
                 if (tickets.length === 0) {
                   return (
-                    <Text style={{ textAlign: 'center', color: '#B0BEC5', paddingVertical: 24, fontSize: 13 }}>
+                    <Text style={{ textAlign: 'center', color: '#9A8C80', paddingVertical: 24, fontSize: 13 }}>
                       Aucun ticket SAV. Tape "+ Nouveau" pour créer le premier.
                     </Text>
                   );
@@ -3936,12 +3936,12 @@ const savListeStyles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 16,
     paddingVertical: 14,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     gap: 10,
   },
   title: { fontSize: 18, fontWeight: '800', color: '#fff' },
-  chantierNom: { fontSize: 12, color: '#C9A96E', marginTop: 2 },
-  nouveauBtn: { backgroundColor: '#C9A96E', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
+  chantierNom: { fontSize: 12, color: '#FFFFFF', marginTop: 2 },
+  nouveauBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16 },
   nouveauBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   card: {
@@ -3950,13 +3950,13 @@ const savListeStyles = StyleSheet.create({
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
   },
-  tapZone: { paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F5EDE3' },
-  cardObjet: { fontSize: 14, fontWeight: '700', color: '#2C2C2C' },
-  cardPriorite: { fontSize: 11, color: '#687076' },
-  cardAssigne: { fontSize: 11, color: '#687076', marginTop: 4 },
-  cardCreepar: { fontSize: 10, color: '#C9A96E', fontStyle: 'italic', marginTop: 2 },
+  tapZone: { paddingBottom: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' },
+  cardObjet: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
+  cardPriorite: { fontSize: 11, color: '#6E5F54' },
+  cardAssigne: { fontSize: 11, color: '#6E5F54', marginTop: 4 },
+  cardCreepar: { fontSize: 10, color: '#5C1F2E', fontStyle: 'italic', marginTop: 2 },
   statutBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   actionsRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
   actionBtn: { flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
@@ -3964,7 +3964,7 @@ const savListeStyles = StyleSheet.create({
   actionResoluText: { color: '#2E7D32', fontSize: 11, fontWeight: '700' },
   actionEnCours: { backgroundColor: '#FFF9C4' },
   actionEnCoursText: { color: '#F57F17', fontSize: 11, fontWeight: '700' },
-  actionEdit: { backgroundColor: '#F5EDE3' },
+  actionEdit: { backgroundColor: '#F1E7DC' },
   actionDelete: { backgroundColor: '#FFEBEE' },
 });
 
@@ -3980,13 +3980,13 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 26,
     fontWeight: '800',
-    color: '#11181C',
+    color: '#2B1D14',
   },
-  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F5EDE3', borderRadius: 10, borderWidth: 1, borderColor: '#E2E6EA' },
-  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#11181C' },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F1E7DC', borderRadius: 10, borderWidth: 1, borderColor: '#EDE2D6' },
+  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#2B1D14' },
   searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   newBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 22,
@@ -4006,7 +4006,7 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     padding: 16,
     borderLeftWidth: 4,
-    shadowColor: '#2A2622',
+    shadowColor: '#2B1D14',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.07,
     shadowRadius: 14,
@@ -4057,7 +4057,7 @@ const styles = StyleSheet.create({
   },
   actionBtnEdit: {
     fontSize: 16,
-    color: '#687076',
+    color: '#6E5F54',
   },
   actionBtnDelete: {
     fontSize: 16,
@@ -4095,14 +4095,14 @@ const styles = StyleSheet.create({
     marginTop: 4,
     paddingVertical: 7,
     paddingHorizontal: 12,
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
     borderRadius: 8,
     alignSelf: 'flex-start',
   },
   fichePreviewText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   emptyState: {
     padding: 40,
@@ -4110,12 +4110,12 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '500',
   },
   emptyHint: {
     fontSize: 13,
-    color: '#B0BEC5',
+    color: '#9A8C80',
     marginTop: 6,
   },
   // Modals
@@ -4143,7 +4143,7 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
@@ -4157,35 +4157,35 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   modalSubtitle: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   modalClose: {
     fontSize: 18,
-    color: '#687076',
+    color: '#6E5F54',
     padding: 4,
   },
   fieldLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   input: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#11181C',
+    color: '#2B1D14',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   dateRow: {
     flexDirection: 'row',
@@ -4200,17 +4200,17 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#E2E6EA',
-    backgroundColor: '#F5EDE3',
+    borderColor: '#EDE2D6',
+    backgroundColor: '#F1E7DC',
   },
   chipActive: {
-    borderColor: '#2C2C2C',
-    backgroundColor: '#2C2C2C',
+    borderColor: '#5C1F2E',
+    backgroundColor: '#5C1F2E',
   },
   chipText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#687076',
+    color: '#6E5F54',
   },
   chipTextActive: {
     color: '#fff',
@@ -4228,7 +4228,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   colorSwatchActive: {
-    borderColor: '#11181C',
+    borderColor: '#2B1D14',
     transform: [{ scale: 1.15 }],
   },
   empRow: {
@@ -4238,13 +4238,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 10,
     marginBottom: 6,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   empRowSelected: {
-    borderColor: '#2C2C2C',
-    backgroundColor: '#EEF2F8',
+    borderColor: '#5C1F2E',
+    backgroundColor: '#F2E4E1',
   },
   empAvatar: {
     width: 32,
@@ -4262,15 +4262,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 14,
     fontWeight: '500',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   empRowMetier: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginRight: 8,
   },
   empCheck: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '700',
     fontSize: 15,
   },
@@ -4279,31 +4279,31 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#E2E6EA',
-    backgroundColor: '#F5EDE3',
+    borderColor: '#EDE2D6',
+    backgroundColor: '#F1E7DC',
     alignSelf: 'flex-start',
   },
   toggleBtnActive: {
-    borderColor: '#2C2C2C',
-    backgroundColor: '#EEF2F8',
+    borderColor: '#5C1F2E',
+    backgroundColor: '#F2E4E1',
   },
   toggleBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
   },
   toggleBtnTextActive: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
   saveBtn: {
     marginTop: 16,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: 'center',
   },
   saveBtnDisabled: {
-    backgroundColor: '#B0BEC5',
+    backgroundColor: '#9A8C80',
   },
   saveBtnText: {
     color: '#fff',
@@ -4326,20 +4326,20 @@ const styles = StyleSheet.create({
   ficheSectionLabel: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#687076',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 6,
   },
   ficheInput: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#11181C',
+    color: '#2B1D14',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   ficheSectionPhotos: {
     marginBottom: 16,
@@ -4357,7 +4357,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 10,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
   },
   pdfThumb: {
     width: 80,
@@ -4399,26 +4399,26 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#2C2C2C',
+    borderColor: '#5C1F2E',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
     gap: 4,
   },
   photoAddIcon: {
     fontSize: 24,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '700',
   },
   photoAddText: {
     fontSize: 11,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '600',
   },
   ficheUpdated: {
     fontSize: 11,
-    color: '#B0BEC5',
+    color: '#9A8C80',
     textAlign: 'center',
     marginBottom: 8,
     fontStyle: 'italic',
@@ -4465,21 +4465,21 @@ const styles = StyleSheet.create({
   noteAuteur: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   noteDate: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
   },
   noteTexte: {
     fontSize: 14,
-    color: '#11181C',
+    color: '#2B1D14',
     lineHeight: 20,
     marginBottom: 8,
   },
   noteDest: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     fontStyle: 'italic',
     marginBottom: 8,
   },
@@ -4513,7 +4513,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E2E6EA',
+    borderTopColor: '#EDE2D6',
   },
   // Onglets notes
   noteTabRow: {
@@ -4521,22 +4521,22 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
+    borderBottomColor: '#EDE2D6',
     paddingBottom: 8,
   },
   noteTab: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   noteTabActive: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
   },
   noteTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
   },
   noteTabTextActive: {
     color: '#fff',
@@ -4546,7 +4546,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
     borderRadius: 8,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -4554,16 +4554,16 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   notePJPickBtn: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   notePJPickText: {
     fontSize: 13,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '600',
   },
   notePJIcon: {
@@ -4571,14 +4571,14 @@ const styles = StyleSheet.create({
   },
   notePJText: {
     fontSize: 13,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '500',
   },
   // Historique notes
   noteHistSection: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#687076',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginTop: 12,
@@ -4592,7 +4592,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginBottom: 8,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
     overflow: 'hidden',
   },
   planCardContent: {
@@ -4608,16 +4608,16 @@ const styles = StyleSheet.create({
   planNom: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 2,
   },
   planMeta: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
   },
   planViewBtn: {
     fontSize: 13,
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '600',
   },
   planDeleteBtn: {
@@ -4625,14 +4625,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     backgroundColor: '#FFF0F0',
     borderLeftWidth: 1,
-    borderLeftColor: '#E2E6EA',
+    borderLeftColor: '#EDE2D6',
   },
   planArchiveBtn: {
     paddingHorizontal: 12,
     paddingVertical: 12,
     backgroundColor: '#F6F3EE',
     borderLeftWidth: 1,
-    borderLeftColor: '#E2E6EA',
+    borderLeftColor: '#EDE2D6',
   },
   planDeleteBtnText: {
     fontSize: 16,

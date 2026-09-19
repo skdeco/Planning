@@ -135,7 +135,7 @@ export function WeekGridView({
       style={styles.gridScroll}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#2C2C2C']} tintColor="#2C2C2C" />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />
       }
     >
       {/* En-tête des jours */}
@@ -277,12 +277,12 @@ export function WeekGridView({
 const styles = StyleSheet.create({
   gridScroll: {
     flex: 1,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   gridRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
+    borderBottomColor: '#EDE2D6',
   },
   nameCell: {
     minHeight: 50,
@@ -291,17 +291,17 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
     justifyContent: 'center',
     borderRightWidth: 1,
-    borderRightColor: '#E2E6EA',
+    borderRightColor: '#EDE2D6',
     position: 'relative',
     overflow: 'hidden',
   },
   headerCell: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   chantierName: {
     fontSize: 10,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
     lineHeight: 14,
   },
   colorBar: {
@@ -315,34 +315,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     borderRightWidth: 0.5,
-    borderRightColor: '#E2E6EA',
+    borderRightColor: '#EDE2D6',
   },
   dayHeaderCellToday: {
-    backgroundColor: '#EEF2F8',
+    backgroundColor: '#F2E4E1',
   },
   dayName: {
     fontSize: 11,
     fontWeight: '500',
-    color: '#687076',
+    color: '#6E5F54',
   },
   dayNameToday: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '700',
   },
   dayNum: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
     marginTop: 2,
   },
   dayNumToday: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '600',
   },
   chantierRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
+    borderBottomColor: '#EDE2D6',
     minHeight: 70,
   },
   legendSection: {
@@ -376,11 +376,11 @@ const styles = StyleSheet.create({
   legendLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   legendSub: {
     fontSize: 10,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 1,
   },
   legendDotST: {

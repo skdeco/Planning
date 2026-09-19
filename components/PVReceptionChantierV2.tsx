@@ -776,7 +776,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                 onChangeText={setPaiementModalite}
                 onBlur={() => persistPaiement(paiementModalite)}
                 placeholder={DEFAULT_PAIEMENT}
-                placeholderTextColor="#9DA6B0"
+                placeholderTextColor="#9A8C80"
                 multiline
                 numberOfLines={3}
                 textAlignVertical="top"
@@ -1067,7 +1067,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                     value={persoInput}
                     onChangeText={setPersoInput}
                     placeholder='Ex: "Bureau Jean"'
-                    placeholderTextColor="#9DA6B0"
+                    placeholderTextColor="#9A8C80"
                     returnKeyType="done"
                     onSubmitEditing={addPersoToSelection}
                   />
@@ -1220,7 +1220,7 @@ function ReserveEditorModal({
               value={description}
               onChangeText={setDescription}
               placeholder="Ex: Carrelage cassé dans le coin droit"
-              placeholderTextColor="#9DA6B0"
+              placeholderTextColor="#9A8C80"
               multiline
               numberOfLines={3}
               textAlignVertical="top"
@@ -1266,7 +1266,7 @@ function ReserveEditorModal({
                     value={categorieLibre}
                     onChangeText={setCategorieLibre}
                     placeholder="Catégorie libre (ex: Aménagement extérieur)"
-                    placeholderTextColor="#9DA6B0"
+                    placeholderTextColor="#9A8C80"
                   />
                 )}
               </>
@@ -1278,7 +1278,7 @@ function ReserveEditorModal({
                   value={categorieLibre}
                   onChangeText={setCategorieLibre}
                   placeholder="Ex: Plomberie, Électricité, ..."
-                  placeholderTextColor="#9DA6B0"
+                  placeholderTextColor="#9A8C80"
                 />
               </>
             )}
@@ -1337,16 +1337,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
+    borderBottomColor: '#EDE2D6',
   },
   title: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   numeroPV: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   closeBtnPressable: {
@@ -1354,10 +1354,10 @@ const styles = StyleSheet.create({
   },
   closeBtn: {
     fontSize: 18,
-    color: '#687076',
+    color: '#6E5F54',
   },
   pdfBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 8,
@@ -1382,7 +1382,7 @@ const styles = StyleSheet.create({
     paddingBottom: 30,
   },
   infoCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
     padding: 12,
     marginBottom: 16,
@@ -1392,12 +1392,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '600',
   },
   infoValue: {
     fontSize: 14,
-    color: '#11181C',
+    color: '#2B1D14',
     fontWeight: '700',
   },
   emptyState: {
@@ -1411,12 +1411,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 4,
   },
   emptyText: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     textAlign: 'center',
     paddingHorizontal: 20,
   },
@@ -1429,21 +1429,21 @@ const styles = StyleSheet.create({
   piecesTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   addPiecesBtn: {
     paddingHorizontal: 12,
     paddingVertical: 6,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 8,
   },
   addPiecesBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   pieceCard: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
@@ -1457,7 +1457,7 @@ const styles = StyleSheet.create({
   pieceNom: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   pieceRemoveBtn: {
     fontSize: 16,
@@ -1476,13 +1476,13 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: '#E2E6EA',
+    borderTopColor: '#EDE2D6',
     gap: 8,
   },
   // Réserves
   emptyReserves: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 12,
@@ -1512,16 +1512,16 @@ const styles = StyleSheet.create({
   },
   reserveDescription: {
     fontSize: 13,
-    color: '#11181C',
+    color: '#2B1D14',
     fontWeight: '600',
   },
   reserveDescriptionLevee: {
     textDecorationLine: 'line-through',
-    color: '#687076',
+    color: '#6E5F54',
   },
   reserveCategorie: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   reserveActionBtn: {
@@ -1533,11 +1533,11 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingTop: 8,
     borderTopWidth: 1,
-    borderTopColor: '#E2E6EA',
+    borderTopColor: '#EDE2D6',
   },
   photosLabel: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 6,
     fontWeight: '600',
   },
@@ -1553,11 +1553,11 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 6,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   photoEmoji: {
     fontSize: 24,
@@ -1579,28 +1579,28 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   photoAddBtn: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderStyle: 'dashed',
   },
   photoAddText: {
     fontSize: 24,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '300',
   },
   // Bouton + Ajouter une réserve
   addReserveBtn: {
     marginTop: 8,
     paddingVertical: 10,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 8,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
     borderStyle: 'dashed',
   },
   addReserveBtnText: {
     fontSize: 13,
-    color: '#11181C',
+    color: '#2B1D14',
     fontWeight: '600',
   },
   // Boutons
@@ -1612,7 +1612,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   btnPrimary: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
   },
   btnPrimaryText: {
     color: '#fff',
@@ -1620,10 +1620,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   btnSecondary: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   btnSecondaryText: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1643,18 +1643,18 @@ const styles = StyleSheet.create({
   paiementBlock: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
   },
   paiementLabel: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 4,
   },
   paiementHint: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     fontStyle: 'italic',
     marginBottom: 10,
   },
@@ -1665,13 +1665,13 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     fontSize: 13,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
-    color: '#11181C',
+    borderColor: '#EDE2D6',
+    color: '#2B1D14',
     minHeight: 60,
   },
   paiementReadOnly: {
     fontSize: 13,
-    color: '#11181C',
+    color: '#2B1D14',
     paddingHorizontal: 4,
     paddingVertical: 6,
     fontStyle: 'italic',
@@ -1683,12 +1683,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   recapTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 10,
   },
   recapLigne: {
@@ -1699,31 +1699,31 @@ const styles = StyleSheet.create({
   },
   recapLabel: {
     fontSize: 12,
-    color: '#11181C',
+    color: '#2B1D14',
     flex: 1,
     marginRight: 8,
   },
   recapLabelBold: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     flex: 1,
     marginRight: 8,
   },
   recapMontant: {
     fontSize: 12,
-    color: '#11181C',
+    color: '#2B1D14',
     fontVariant: ['tabular-nums'],
   },
   recapMontantBold: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     fontVariant: ['tabular-nums'],
   },
   recapSep: {
     height: 1,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     marginVertical: 6,
   },
   recapResteLabel: {
@@ -1741,7 +1741,7 @@ const styles = StyleSheet.create({
   },
   recapEmpty: {
     fontSize: 11,
-    color: '#9DA6B0',
+    color: '#9A8C80',
     fontStyle: 'italic',
     textAlign: 'center',
     paddingVertical: 8,
@@ -1749,7 +1749,7 @@ const styles = StyleSheet.create({
   recapNote: {
     marginTop: 10,
     padding: 8,
-    backgroundColor: '#FFF8E1',
+    backgroundColor: '#F2E4E1',
     borderRadius: 6,
     borderLeftWidth: 3,
     borderLeftColor: '#F0AD4E',
@@ -1763,47 +1763,47 @@ const styles = StyleSheet.create({
     marginTop: 8,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 6,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
     borderStyle: 'dashed',
   },
   toggleRecapText: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '600',
   },
   // Bloc signatures
   avenantsBlock: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
   },
   signaturesBlock: {
     marginTop: 20,
     padding: 12,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
   },
   signaturesTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 12,
   },
   signatureCard: {
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
+    borderBottomColor: '#EDE2D6',
   },
   signatureLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 6,
   },
   signatureImageBox: {
@@ -1811,7 +1811,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     padding: 8,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   signaturePlaceholder: {
     fontSize: 12,
@@ -1820,7 +1820,7 @@ const styles = StyleSheet.create({
   },
   signaturePending: {
     fontSize: 11,
-    color: '#9DA6B0',
+    color: '#9A8C80',
     fontStyle: 'italic',
   },
   // Modal SignaturePad
@@ -1839,7 +1839,7 @@ const styles = StyleSheet.create({
   signaturePadTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 12,
     textAlign: 'center',
   },
@@ -1880,7 +1880,7 @@ const styles = StyleSheet.create({
   sheetHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 2,
     alignSelf: 'center',
     marginTop: 8,
@@ -1893,16 +1893,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E6EA',
+    borderBottomColor: '#EDE2D6',
   },
   sheetTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   sheetClose: {
     fontSize: 18,
-    color: '#687076',
+    color: '#6E5F54',
     padding: 4,
   },
   sheetContent: {
@@ -1911,7 +1911,7 @@ const styles = StyleSheet.create({
   },
   sheetSubtitle: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 12,
     fontStyle: 'italic',
   },
@@ -1925,31 +1925,31 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   sheetItemSelected: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
   },
   sheetCheckbox: {
     fontSize: 18,
-    color: '#11181C',
+    color: '#2B1D14',
   },
   sheetItemText: {
     fontSize: 14,
-    color: '#11181C',
+    color: '#2B1D14',
     flex: 1,
   },
   sheetItemPerso: {
     fontSize: 10,
-    color: '#687076',
+    color: '#6E5F54',
     fontStyle: 'italic',
   },
   persoBox: {
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: '#E2E6EA',
+    borderTopColor: '#EDE2D6',
   },
   persoLabel: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 8,
     fontWeight: '600',
   },
@@ -1960,20 +1960,20 @@ const styles = StyleSheet.create({
   },
   persoInput: {
     flex: 1,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
-    color: '#11181C',
+    borderColor: '#EDE2D6',
+    color: '#2B1D14',
   },
   persoAddBtn: {
     width: 40,
     height: 40,
     borderRadius: 8,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1990,7 +1990,7 @@ const styles = StyleSheet.create({
     padding: 16,
     backgroundColor: '#fff',
     borderTopWidth: 1,
-    borderTopColor: '#E2E6EA',
+    borderTopColor: '#EDE2D6',
   },
   // Modal éditeur réserve
   editorOverlay: {
@@ -2006,7 +2006,7 @@ const styles = StyleSheet.create({
   },
   editorPieceLabel: {
     fontSize: 11,
-    color: '#687076',
+    color: '#6E5F54',
     paddingHorizontal: 16,
     paddingVertical: 8,
     fontStyle: 'italic',
@@ -2017,20 +2017,20 @@ const styles = StyleSheet.create({
   },
   editorLabel: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '600',
     marginBottom: 6,
     marginTop: 12,
   },
   editorInput: {
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 14,
     borderWidth: 1,
-    borderColor: '#E2E6EA',
-    color: '#11181C',
+    borderColor: '#EDE2D6',
+    color: '#2B1D14',
     minHeight: 44,
   },
   // Lots devis chips
@@ -2044,17 +2044,17 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 14,
     borderWidth: 1.5,
-    borderColor: '#E2E6EA',
-    backgroundColor: '#F8F9FA',
+    borderColor: '#EDE2D6',
+    backgroundColor: '#FAF5EF',
   },
   lotChipActive: {
-    backgroundColor: '#2C2C2C',
-    borderColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
+    borderColor: '#5C1F2E',
   },
   lotChipText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
   },
   lotChipTextActive: {
     color: '#fff',

@@ -138,7 +138,7 @@ const LIST_ITEM_BG = '#F8F9FB';
 const DELETE_BTN_BG = '#FFF0F0';
 
 /** Couleur des placeholders TextInput. Pas de token DS équivalent. */
-const PLACEHOLDER_COLOR = '#B0BEC5';
+const PLACEHOLDER_COLOR = '#9A8C80';
 
 // — Magic numbers non couverts par les tokens —
 

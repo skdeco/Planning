@@ -146,7 +146,7 @@ export default function PlanningExterne() {
 
   if (mesChantiers.length === 0) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: '#F5EDE3' }} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#F1E7DC' }} contentContainerStyle={{ padding: 20 }}>
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>Aucun chantier dans votre planning.</Text>
         </View>
@@ -155,7 +155,7 @@ export default function PlanningExterne() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F5EDE3' }}>
+    <View style={{ flex: 1, backgroundColor: '#F1E7DC' }}>
       {/* Sélecteur de chantier */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierTabs} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 12 }}>
         {mesChantiers.map(c => (
@@ -216,7 +216,7 @@ export default function PlanningExterne() {
                   const width = durationDays * dayW;
                   const isEnCours = today >= s && today <= e;
                   return (
-                    <View key={l.id} style={[styles.ganttRow, idx % 2 === 0 && { backgroundColor: '#FAF7F3' }]}>
+                    <View key={l.id} style={[styles.ganttRow, idx % 2 === 0 && { backgroundColor: '#FAF5EF' }]}>
                       <View style={{ width: labelColW, paddingHorizontal: 8, justifyContent: 'center' }}>
                         <Text style={styles.lotLabel} numberOfLines={2}>{l.nom}</Text>
                         {!l.manuel && <Text style={styles.prorataTag}>prorata</Text>}
@@ -228,12 +228,12 @@ export default function PlanningExterne() {
                             {
                               left,
                               width,
-                              backgroundColor: isEnCours ? '#C9A96E' : '#E8DDD0',
-                              borderColor: isEnCours ? '#8C6D2F' : '#C9A96E',
+                              backgroundColor: isEnCours ? '#5C1F2E' : '#EDE2D6',
+                              borderColor: isEnCours ? '#5C1F2E' : '#5C1F2E',
                             },
                           ]}
                         >
-                          <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#8C6D2F' }]} numberOfLines={1}>
+                          <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#5C1F2E' }]} numberOfLines={1}>
                             {isEnCours ? '🔨 En cours' : l.manuel ? '📅 Planifié' : '~ Prévu'}
                           </Text>
                         </View>
@@ -269,7 +269,7 @@ export default function PlanningExterne() {
                 </View>
               ))}
               {joursAvecEquipe.size > 30 && (
-                <Text style={{ fontSize: 11, color: '#8C8077', alignSelf: 'center' }}>+ {joursAvecEquipe.size - 30} autres</Text>
+                <Text style={{ fontSize: 11, color: '#6E5F54', alignSelf: 'center' }}>+ {joursAvecEquipe.size - 30} autres</Text>
               )}
             </View>
           </View>
@@ -289,28 +289,28 @@ export default function PlanningExterne() {
 
 const styles = StyleSheet.create({
   chantierTabs: {
-    maxHeight: 54, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E8DDD0', flexGrow: 0,
+    maxHeight: 54, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexGrow: 0,
   },
   chantierChip: {
     paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: '#F5EDE3', borderWidth: 1, borderColor: '#E8DDD0',
+    backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6',
   },
   chantierChipActive: {
-    backgroundColor: '#2C2C2C', borderColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E', borderColor: '#5C1F2E',
   },
-  chantierChipText: { fontSize: 12, fontWeight: '700', color: '#2C2C2C' },
-  title: { fontSize: 17, fontWeight: '800', color: '#2C2C2C', marginBottom: 2 },
-  subtitle: { fontSize: 12, color: '#8C8077', marginBottom: 16 },
+  chantierChipText: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
+  title: { fontSize: 17, fontWeight: '800', color: '#5C1F2E', marginBottom: 2 },
+  subtitle: { fontSize: 12, color: '#6E5F54', marginBottom: 16 },
   weekHeader: {
-    borderWidth: 1, borderColor: '#E8DDD0', backgroundColor: '#fff',
+    borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center', paddingVertical: 6,
   },
-  weekHeaderText: { fontSize: 10, fontWeight: '700', color: '#2C2C2C' },
+  weekHeaderText: { fontSize: 10, fontWeight: '700', color: '#5C1F2E' },
   ganttRow: {
-    flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 1, borderBottomColor: '#E8DDD0',
+    flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 1, borderBottomColor: '#EDE2D6',
   },
-  lotLabel: { fontSize: 12, fontWeight: '700', color: '#2C2C2C' },
-  prorataTag: { fontSize: 9, color: '#8C8077', fontStyle: 'italic' },
+  lotLabel: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
+  prorataTag: { fontSize: 9, color: '#6E5F54', fontStyle: 'italic' },
   ganttBar: {
     position: 'absolute', top: 6, bottom: 6,
     borderWidth: 1, borderRadius: 6,
@@ -322,7 +322,7 @@ const styles = StyleSheet.create({
     marginTop: 24, padding: 12, backgroundColor: '#fff',
     borderRadius: 10, borderLeftWidth: 3, borderLeftColor: '#2E7D32',
   },
-  equipeTitle: { fontSize: 12, fontWeight: '800', color: '#2C2C2C' },
+  equipeTitle: { fontSize: 12, fontWeight: '800', color: '#5C1F2E' },
   equipeChip: {
     backgroundColor: '#D4EDDA', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
   },
@@ -331,11 +331,11 @@ const styles = StyleSheet.create({
     padding: 32, backgroundColor: '#fff', borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
   },
-  emptyText: { fontSize: 13, color: '#8C8077', textAlign: 'center' },
+  emptyText: { fontSize: 13, color: '#6E5F54', textAlign: 'center' },
   legendBox: {
-    marginTop: 20, padding: 12, backgroundColor: '#FAF7F3', borderRadius: 10,
-    borderLeftWidth: 3, borderLeftColor: '#C9A96E',
+    marginTop: 20, padding: 12, backgroundColor: '#FAF5EF', borderRadius: 10,
+    borderLeftWidth: 3, borderLeftColor: '#5C1F2E',
   },
-  legendTitle: { fontSize: 11, fontWeight: '800', color: '#8C6D2F', marginBottom: 4 },
-  legendText: { fontSize: 11, color: '#687076', lineHeight: 16 },
+  legendTitle: { fontSize: 11, fontWeight: '800', color: '#5C1F2E', marginBottom: 4 },
+  legendText: { fontSize: 11, color: '#6E5F54', lineHeight: 16 },
 });

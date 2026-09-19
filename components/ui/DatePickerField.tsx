@@ -59,8 +59,8 @@ export function DatePickerField({ value, onChange, placeholder = 'Sélectionner 
         onChange={e => onChange(e.target.value)}
         style={{
           padding: 12, borderRadius: 10, border: '1.5px solid #E8DDD0',
-          fontSize: 14, backgroundColor: '#FAF7F3', color: '#2C2C2C',
-          width: '100%', boxSizing: 'border-box', outlineColor: '#C9A96E',
+          fontSize: 14, backgroundColor: '#FAF5EF', color: '#5C1F2E',
+          width: '100%', boxSizing: 'border-box', outlineColor: '#5C1F2E',
         } as any}
       />
     );
@@ -79,7 +79,7 @@ export function DatePickerField({ value, onChange, placeholder = 'Sélectionner 
   return (
     <>
       <Pressable onPress={() => setShowPicker(true)} style={styles.inputBox}>
-        <Text style={[styles.inputText, !value && { color: '#B0BEC5' }]}>
+        <Text style={[styles.inputText, !value && { color: '#9A8C80' }]}>
           {value ? formatFR(value) : placeholder}
         </Text>
       </Pressable>
@@ -119,7 +119,7 @@ export function DatePickerField({ value, onChange, placeholder = 'Sélectionner 
                       isDisabled && styles.cellDisabled,
                     ]}
                   >
-                    <Text style={[styles.cellText, isSel && { color: '#fff', fontWeight: '800' }, isDisabled && { color: '#B0BEC5' }]}>
+                    <Text style={[styles.cellText, isSel && { color: '#fff', fontWeight: '800' }, isDisabled && { color: '#9A8C80' }]}>
                       {c.day}
                     </Text>
                   </Pressable>
@@ -143,14 +143,14 @@ export function DatePickerField({ value, onChange, placeholder = 'Sélectionner 
 
 const styles = StyleSheet.create({
   inputBox: {
-    backgroundColor: '#FAF7F3',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     borderWidth: 1.5,
-    borderColor: '#E8DDD0',
+    borderColor: '#EDE2D6',
     paddingHorizontal: 12,
     paddingVertical: 14,
   },
-  inputText: { fontSize: 14, color: '#2C2C2C' },
+  inputText: { fontSize: 14, color: '#5C1F2E' },
   overlay: {
     flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'center', alignItems: 'center', padding: 20,
@@ -162,27 +162,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10,
   },
   navBtn: {
-    paddingHorizontal: 14, paddingVertical: 6, backgroundColor: '#F5EDE3', borderRadius: 8,
+    paddingHorizontal: 14, paddingVertical: 6, backgroundColor: '#F1E7DC', borderRadius: 8,
   },
-  navBtnText: { fontSize: 20, fontWeight: '800', color: '#2C2C2C' },
-  monthTitle: { fontSize: 15, fontWeight: '800', color: '#2C2C2C' },
+  navBtnText: { fontSize: 20, fontWeight: '800', color: '#5C1F2E' },
+  monthTitle: { fontSize: 15, fontWeight: '800', color: '#5C1F2E' },
   dowRow: { flexDirection: 'row', marginBottom: 4 },
-  dowCell: { flex: 1, textAlign: 'center', fontSize: 11, color: '#8C8077', fontWeight: '700' },
+  dowCell: { flex: 1, textAlign: 'center', fontSize: 11, color: '#6E5F54', fontWeight: '700' },
   grid: { flexDirection: 'row', flexWrap: 'wrap' },
   cellEmpty: { width: `${100 / 7}%`, aspectRatio: 1 },
   cell: {
     width: `${100 / 7}%`, aspectRatio: 1, alignItems: 'center', justifyContent: 'center', borderRadius: 8,
   },
-  cellSelected: { backgroundColor: '#C9A96E' },
-  cellToday: { borderWidth: 1, borderColor: '#C9A96E' },
+  cellSelected: { backgroundColor: '#5C1F2E' },
+  cellToday: { borderWidth: 1, borderColor: '#5C1F2E' },
   cellDisabled: { opacity: 0.3 },
-  cellText: { fontSize: 13, color: '#2C2C2C' },
+  cellText: { fontSize: 13, color: '#5C1F2E' },
   clearBtn: {
-    flex: 1, backgroundColor: '#F5EDE3', borderRadius: 10, paddingVertical: 10, alignItems: 'center',
+    flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, alignItems: 'center',
   },
-  clearBtnText: { color: '#8C8077', fontWeight: '700' },
+  clearBtnText: { color: '#6E5F54', fontWeight: '700' },
   closeBtn: {
-    flex: 1, backgroundColor: '#2C2C2C', borderRadius: 10, paddingVertical: 10, alignItems: 'center',
+    flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 10, alignItems: 'center',
   },
-  closeBtnText: { color: '#C9A96E', fontWeight: '700' },
+  closeBtnText: { color: '#FFFFFF', fontWeight: '700' },
 });

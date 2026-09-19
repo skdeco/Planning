@@ -317,12 +317,12 @@ export function ModalAjoutEmployesST({
             {/* Plage de jours pour l'affectation (admin) */}
             {(modalSection === 'employes' || modalSection === 'st') && modal && (
               <View style={{ paddingHorizontal: 4, paddingBottom: 8 }}>
-                <Text style={[styles.noteLabel, { fontSize: 12, color: '#687076', marginBottom: 4 }]}>
+                <Text style={[styles.noteLabel, { fontSize: 12, color: '#6E5F54', marginBottom: 4 }]}>
                   Plage d'affectation (optionnel)
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Text style={{ fontSize: 12, color: '#444', minWidth: 30 }}>Du :</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#2C2C2C' }}>{modal.date.split('-').reverse().join('/')}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{modal.date.split('-').reverse().join('/')}</Text>
                   <Text style={{ fontSize: 12, color: '#444', marginLeft: 8, minWidth: 30 }}>Au :</Text>
                   <DatePicker
                     value={affectationDateFin || modal.date}
@@ -447,7 +447,7 @@ export function ModalAjoutEmployesST({
                   value={interventionForm.libelle}
                   onChangeText={v => setInterventionForm(f => ({ ...f, libelle: v }))}
                   placeholder="Ex: Menuiserie Dupont, Livraison matériaux..."
-                  placeholderTextColor="#B0BEC5"
+                  placeholderTextColor="#9A8C80"
                   autoFocus
                 />
                 <Text style={[styles.intervFormLabel, { marginTop: 12 }]}>Description (optionnel)</Text>
@@ -456,7 +456,7 @@ export function ModalAjoutEmployesST({
                   value={interventionForm.description}
                   onChangeText={v => setInterventionForm(f => ({ ...f, description: v }))}
                   placeholder="Détails, contact, numéro de téléphone..."
-                  placeholderTextColor="#B0BEC5"
+                  placeholderTextColor="#9A8C80"
                   multiline
                 />
                 <View style={styles.intervDateRow}>
@@ -566,7 +566,7 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
@@ -580,30 +580,30 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 13,
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 16,
   },
   modalXBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalXText: {
     fontSize: 14,
-    color: '#687076',
+    color: '#6E5F54',
     fontWeight: '700',
   },
   modalCloseBtn: {
     marginTop: 16,
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -616,14 +616,14 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
     marginBottom: 8,
   },
 
   // — Tabs section —
   modalSectionTabs: {
     flexDirection: 'row',
-    backgroundColor: '#E2E6EA',
+    backgroundColor: '#EDE2D6',
     borderRadius: 10,
     padding: 3,
     marginBottom: 12,
@@ -645,10 +645,10 @@ const styles = StyleSheet.create({
   modalSectionTabText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
   },
   modalSectionTabTextActive: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
   },
 
   // — Listes employés / ST —
@@ -659,13 +659,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     borderRadius: 10,
     marginBottom: 6,
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderWidth: 1.5,
     borderColor: 'transparent',
   },
   modalEmpRowSelected: {
-    borderColor: '#2C2C2C',
-    backgroundColor: '#EEF2F8',
+    borderColor: '#5C1F2E',
+    backgroundColor: '#F2E4E1',
   },
   modalAvatar: {
     width: 36,
@@ -683,15 +683,15 @@ const styles = StyleSheet.create({
   modalEmpName: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   modalEmpMetier: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 1,
   },
   modalCheck: {
-    color: '#2C2C2C',
+    color: '#5C1F2E',
     fontWeight: '700',
     fontSize: 16,
   },
@@ -700,20 +700,20 @@ const styles = StyleSheet.create({
   intervFormLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#687076',
+    color: '#6E5F54',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
   intervFormInput: {
-    backgroundColor: '#F5EDE3',
+    backgroundColor: '#F1E7DC',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#11181C',
+    color: '#2B1D14',
     borderWidth: 1,
-    borderColor: '#E2E6EA',
+    borderColor: '#EDE2D6',
   },
   intervDateRow: {
     flexDirection: 'row',
@@ -734,11 +734,11 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   intervColorSwatchActive: {
-    borderColor: '#11181C',
+    borderColor: '#2B1D14',
     transform: [{ scale: 1.2 }],
   },
   intervSaveBtn: {
-    backgroundColor: '#2C2C2C',
+    backgroundColor: '#5C1F2E',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -752,7 +752,7 @@ const styles = StyleSheet.create({
   intervExistingRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#FAF5EF',
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
@@ -762,11 +762,11 @@ const styles = StyleSheet.create({
   intervExistingLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#11181C',
+    color: '#2B1D14',
   },
   intervExistingDates: {
     fontSize: 12,
-    color: '#687076',
+    color: '#6E5F54',
     marginTop: 2,
   },
   intervExistingDelete: {
