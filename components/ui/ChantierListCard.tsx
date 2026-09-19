@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { DS, font, radius, space, shadows } from '../../constants/design';
 import { StatusBadge } from './StatusBadge';
+import { Ico } from './Ico';
 import {
   ChantierCardHeader,
   type StatutChantier,
@@ -231,7 +232,7 @@ export function ChantierListCard({
             return (
               <StatusBadge
                 key={`contact-${c.role}-${i}`}
-                label={`${meta.emoji} ${c.nom}`}
+                label={`${meta.label} · ${c.nom}`}
                 bg={meta.bg}
                 color={meta.color}
                 size="sm"
@@ -261,13 +262,10 @@ export function ChantierListCard({
             const value = counts![key] as number;
             const meta  = COUNT_META[key];
             return (
-              <Text
-                key={`count-${key}`}
-                style={styles.countText}
-                accessibilityLabel={`${meta.label}: ${value}`}
-              >
-                {`${meta.emoji} ${value}`}
-              </Text>
+              <View key={`count-${key}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} accessibilityLabel={`${meta.label}: ${value}`}>
+                <Ico e={meta.emoji} size={13} color={DS.textSecondary} />
+                <Text style={styles.countText}>{value}</Text>
+              </View>
             );
           })}
         </View>

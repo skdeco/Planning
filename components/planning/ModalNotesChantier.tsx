@@ -551,9 +551,7 @@ function NoteCard({
           accessibilityRole="button"
           accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'pièce jointe'}`}
         >
-          <Text style={styles.attachmentEmoji}>
-            {note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}
-          </Text>
+          <Ico e={note.pieceJointeType === 'pdf' ? '📄' : '🖼️'} size={18} />
           <Text style={styles.attachmentName} numberOfLines={1}>
             {note.pieceJointeNom || (note.pieceJointeType === 'pdf' ? 'PDF' : 'Image')}
           </Text>

@@ -1042,7 +1042,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                       accessibilityRole="checkbox"
                       accessibilityState={{ checked: isSelected }}
                     >
-                      <Text style={styles.sheetCheckbox}>{isSelected ? '☑' : '☐'}</Text>
+                      <Ico e={isSelected ? '☑' : '☐'} size={18} />
                       <Text style={styles.sheetItemText}>{nom}</Text>
                     </Pressable>
                   );

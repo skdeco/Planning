@@ -1471,7 +1471,7 @@ export default function EquipeScreen() {
                         autoCorrect={false}
                       />
                       <Pressable style={styles.mdpToggle} onPress={() => setShowApporteurMdp(v => !v)}>
-                        <Text style={styles.mdpToggleText}>{showApporteurMdp ? '🙈' : '👁'}</Text>
+                        <Ico e={showApporteurMdp ? '🙈' : '👁'} size={18} />
                       </Pressable>
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
@@ -1668,7 +1668,7 @@ export default function EquipeScreen() {
               <View style={styles.mdpRow}>
                 <TextInput style={[styles.input, { flex: 1 }]} value={form.motDePasse} onChangeText={v => setForm(f => ({ ...f, motDePasse: v }))} placeholder="Ex: 1234" placeholderTextColor="#9A8C80" secureTextEntry={!showMdp} autoCapitalize="none" autoCorrect={false} />
                 <Pressable style={styles.mdpToggle} onPress={() => setShowMdp(v => !v)}>
-                  <Text style={styles.mdpToggleText}>{showMdp ? '🙈' : '👁'}</Text>
+                  <Ico e={showMdp ? '🙈' : '👁'} size={18} />
                 </Pressable>
               </View>
 
@@ -1941,7 +1941,7 @@ export default function EquipeScreen() {
               <View style={styles.mdpRow}>
                 <TextInput style={[styles.input, { flex: 1 }]} value={stForm.motDePasse} onChangeText={v => setSTForm(f => ({ ...f, motDePasse: v }))} placeholder={t.equipe.st1234Ph} placeholderTextColor="#9A8C80" secureTextEntry={!showSTMdp} autoCapitalize="none" autoCorrect={false} />
                 <Pressable style={styles.mdpToggle} onPress={() => setShowSTMdp(v => !v)}>
-                  <Text style={styles.mdpToggleText}>{showSTMdp ? '🙈' : '👁'}</Text>
+                  <Ico e={showSTMdp ? '🙈' : '👁'} size={18} />
                 </Pressable>
               </View>
 

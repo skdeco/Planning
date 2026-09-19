@@ -20,12 +20,13 @@ const MAP: Record<string, LucideIcon> = {
   '📋': ClipboardList, '🤝': Handshake, '🛒': ShoppingCart, '👤': User, '👥': Users, '💬': MessageCircle, '🔧': Wrench,
   '📍': MapPin, '📦': Package, '🎥': Video, '💰': Wallet, '💶': Euro, '🎯': Target, '🧾': Receipt, '🚨': Siren, '✍': PenLine,
   '🔔': Bell, '📞': Phone, '✉': Mail, '🎤': Mic, '📭': Inbox, '🏪': Store, '🏖': Sun, '🏥': Hospital, '⬛': Square, '☑': SquareCheck,
+  '💸': Wallet, '📑': FileText, '🟡': Circle, '🟢': Circle, '⚪': Circle, '🏛': Building2, '💼': Wallet, '🏢': Building2, '💻': Video,
   '➤': Send, '➕': Plus, '⬇': ArrowDown, '🔴': Circle,
 };
 
 export function Ico({ e, size = 16, color }: { e: string; size?: number; color?: string }) {
   const key = e.replace(/️/g, '');
   const Icon = MAP[key] ?? Circle;
-  const c = color ?? (key === '🗑' || key === '🔴' || key === '🚨' ? DS.error : key === '⚠' ? DS.warning : key === '✅' ? DS.success : DS.primary);
+  const c = color ?? (key === '🗑' || key === '🔴' || key === '🚨' ? DS.error : key === '⚠' || key === '🟡' ? DS.warning : key === '🟢' ? DS.success : key === '✅' ? DS.success : DS.primary);
   return <Icon size={size} color={c} strokeWidth={1.9} />;
 }

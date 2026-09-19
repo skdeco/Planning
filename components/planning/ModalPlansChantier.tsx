@@ -19,6 +19,7 @@ import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButto
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import type { InboxItem } from '@/lib/share/inboxStore';
 import type { PickedFile } from '@/lib/share/pickNativeFile';
+import { Ico } from '@/components/ui/Ico';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -360,9 +361,7 @@ export function ModalPlansChantier({
 
                 {fichier && (
                   <View style={styles.fileSelectedRow}>
-                    <Text style={styles.fileSelectedEmoji}>
-                      {(fichier.startsWith('data:application/pdf') || fichier.toLowerCase().endsWith('.pdf')) ? '📄' : '🖼️'}
-                    </Text>
+                    <Ico e={(fichier.startsWith('data:application/pdf') || fichier.toLowerCase().endsWith('.pdf')) ? '📄' : '🖼️'} size={18} />
                     <Text
                       style={styles.fileSelectedLabel}
                       numberOfLines={1}

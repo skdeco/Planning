@@ -597,9 +597,7 @@ export default function MessagerieScreen() {
             {(['all', 'text', 'photo', 'pdf'] as const).map(tp => (
               <Pressable key={tp} style={[styles.filterChip, listFilterType === tp && styles.filterChipActive]}
                 onPress={() => setListFilterType(listFilterType === tp ? 'all' : tp)}>
-                <Text style={[styles.filterChipText, listFilterType === tp && styles.filterChipTextActive]}>
-                  {tp === 'all' ? 'Tout' : tp === 'text' ? '💬' : tp === 'photo' ? '📷' : '📄'}
-                </Text>
+                <Ico e={tp === 'all' ? 'Tout' : tp === 'text' ? '💬' : tp === 'photo' ? '📷' : '📄'} size={18} />
               </Pressable>
             ))}
             <Pressable style={{ marginLeft: 'auto', paddingVertical: 4, paddingHorizontal: 8 }} onPress={() => {
@@ -980,7 +978,7 @@ export default function MessagerieScreen() {
                       {/* Actions rapides */}
                       <View style={styles.msgQuickActions}>
                         <Pressable onPress={() => handleArchive(msg)} style={styles.msgQuickBtn}>
-                          <Text style={{ fontSize: 11 }}>{msg.archive ? '📂' : '📁'}</Text>
+                          <Ico e={msg.archive ? '📂' : '📁'} size={18} />
                         </Pressable>
                         <Pressable onPress={() => handleDelete(msg)} style={styles.msgQuickBtn}>
                           <Ico e="🗑" size={13} />

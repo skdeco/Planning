@@ -492,7 +492,7 @@ export default function DashboardScreen() {
                       <View key={ticket.id} style={{ borderBottomWidth: ticket.id !== mesSavTickets[mesSavTickets.length - 1].id ? 0.5 : 0, borderBottomColor: '#F1E7DC' }}>
                         <Pressable style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, gap: 8 }}
                           onPress={() => setSavDetailId(isOpen ? null : ticket.id)}>
-                          <Text style={{ fontSize: 12 }}>{statutLabel}</Text>
+                          <Ico e={statutLabel} size={12} />
                           <View style={{ flex: 1 }}>
                             <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14' }} numberOfLines={1}>{ticket.objet}</Text>
                             <Text style={{ fontSize: 10, color: '#6E5F54' }}>{ch?.nom} · {ticket.priorite}</Text>
@@ -1073,7 +1073,7 @@ export default function DashboardScreen() {
                 {visibleAlertes.slice(0, 15).map((a) => (
                   <Pressable key={a.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: a.color + '14', borderRadius: 14, padding: 12 }}
                     onPress={a.onPress}>
-                    <Text style={{ fontSize: 14 }}>{a.icon}</Text>
+                    <Ico e={a.icon} size={16} color={a.color} />
                     <Text style={{ fontSize: 12, color: '#2B1D14', flex: 1 }} numberOfLines={2}>{a.text}</Text>
                     <Pressable
                       onPress={(e) => { e.stopPropagation(); setDismissedAlertes(new Set([...dismissedAlertes, a.id])); }}

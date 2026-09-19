@@ -8,6 +8,7 @@ import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { verifierMotDePasse, preparerChangementMotDePasse } from '@/lib/externAuth';
+import { Ico } from '@/components/ui/Ico';
 
 export default function LoginScreen() {
   const { data, setCurrentUser, updateApporteur } = useApp();
@@ -149,7 +150,7 @@ export default function LoginScreen() {
                 style={styles.eyeBtn}
                 onPress={() => setShowPassword(v => !v)}
               >
-                <Text style={styles.eyeIcon}>{showPassword ? '🙈' : '👁'}</Text>
+                <Ico e={showPassword ? '🙈' : '👁'} size={18} />
               </Pressable>
             </View>
 

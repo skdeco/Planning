@@ -2634,7 +2634,7 @@ export default function ChantiersScreen() {
                           accessibilityRole="button"
                           accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'la pièce jointe'}`}
                         >
-                          <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
+                          <Ico e={note.pieceJointeType === 'pdf' ? '📄' : '🖼️'} size={18} />
                           <Text style={styles.notePJText}>{note.pieceJointeNom || (note.pieceJointeType === 'pdf' ? 'PDF' : 'Image')}</Text>
                         </Pressable>
                       )}
@@ -2840,7 +2840,7 @@ export default function ChantiersScreen() {
                               accessibilityRole="button"
                               accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'la pièce jointe'}`}
                             >
-                              <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
+                              <Ico e={note.pieceJointeType === 'pdf' ? '📄' : '🖼️'} size={18} />
                               <Text style={styles.notePJText}>{note.pieceJointeNom || 'Fichier'}</Text>
                             </Pressable>
                           )}
@@ -2923,7 +2923,7 @@ export default function ChantiersScreen() {
                               accessibilityRole="button"
                               accessibilityLabel={`Ouvrir ${note.pieceJointeNom || 'la pièce jointe'}`}
                             >
-                              <Text style={styles.notePJIcon}>{note.pieceJointeType === 'pdf' ? '📄' : '🖼️'}</Text>
+                              <Ico e={note.pieceJointeType === 'pdf' ? '📄' : '🖼️'} size={18} />
                               <Text style={styles.notePJText}>{note.pieceJointeNom || 'Fichier'}</Text>
                             </Pressable>
                           )}
@@ -3309,7 +3309,7 @@ export default function ChantiersScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={`Ouvrir ${plan.nom}`}
                           >
-                            <Text style={styles.planIcon}>{(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
+                            <Ico e={(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'} size={18} />
                             <View style={{ flex: 1 }}>
                               <Text style={styles.planNom}>{plan.nom}</Text>
                               <Text style={styles.planMeta}>
@@ -3393,7 +3393,7 @@ export default function ChantiersScreen() {
                             accessibilityRole="button"
                             accessibilityLabel={`Ouvrir ${plan.nom} (archivé)`}
                           >
-                            <Text style={styles.planIcon}>{(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'}</Text>
+                            <Ico e={(plan.fichier?.toLowerCase().endsWith('.pdf') || plan.fichier?.includes('application/pdf')) ? '📄' : '🖼️'} size={18} />
                             <View style={{ flex: 1 }}>
                               <Text style={styles.planNom}>{plan.nom}</Text>
                               <Text style={styles.planMeta}>Archivé · {plan.archivedAt ? new Date(plan.archivedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' }) : '—'}
@@ -3453,9 +3453,7 @@ export default function ChantiersScreen() {
                   {/* Preview fichier sélectionné */}
                   {newPlanFichier && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-                      <Text style={styles.notePJIcon}>
-                        {(newPlanFichier.startsWith('data:application/pdf') || newPlanFichier.toLowerCase().endsWith('.pdf')) ? '📄' : '🖼️'}
-                      </Text>
+                      <Ico e={(newPlanFichier.startsWith('data:application/pdf') || newPlanFichier.toLowerCase().endsWith('.pdf')) ? '📄' : '🖼️'} size={18} />
                       <Text style={[styles.notePJText, { flex: 1 }]} numberOfLines={1}>{t.common.fileSelected}</Text>
                       <Pressable onPress={() => setNewPlanFichier(null)}>
                         <Text style={{ color: '#E74C3C', fontWeight: '700' }}>✕</Text>
