@@ -1265,6 +1265,7 @@ export interface MarcheChantier {
   devisSigneNom?: string;
   dateDevis?: string;               // YYYY-MM-DD
   dateSignature?: string;           // YYYY-MM-DD si signé
+  dateDebutTravaux?: string;        // YYYY-MM-DD — démarrage des travaux (lu sur le devis ou saisi)
   signatureClientUri?: string;  // image base64/URL signature client
   signatureClientDate?: string; // ISO datetime
   paiements: PaiementRecu[];

@@ -318,3 +318,77 @@ export function parseSaisieManuelle(texte: string): LotExtrait[] {
   }
   return lots;
 }
+
+// ─── Dates du devis ───────────────────────────────────────────────────────────
+
+const MOIS_FR: Record<string, number> = {
+  janvier: 1, janv: 1, fevrier: 2, fevr: 2, fev: 2, mars: 3, avril: 4, avr: 4, mai: 5, juin: 6,
+  juillet: 7, juil: 7, aout: 8, septembre: 9, sept: 9, octobre: 10, oct: 10, novembre: 11, nov: 11, decembre: 12, dec: 12,
+};
+const DATE_SRC = "(\\d{1,2})\\s*(?:[\\/.\\-]|\\s)\\s*(\\d{1,2}|[a-zA-Zéèêûôàç]{3,9})\\.?\\s*(?:[\\/.\\-]|\\s)\\s*(\\d{4}|\\d{2})";
+
+function sansAccents(s: string): string {
+  return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+}
+
+/** Convertit jour / mois (chiffre ou nom) / année en YYYY-MM-DD, ou null si invalide. */
+function versYMD(j: string, m: string, a: string): string | null {
+  const jour = parseInt(j, 10);
+  const mois = /^\d+$/.test(m) ? parseInt(m, 10) : MOIS_FR[sansAccents(m).replace(/\.$/, '')];
+  let annee = parseInt(a, 10);
+  if (a.length === 2) annee += 2000;
+  if (!mois || !jour || jour > 31 || mois > 12 || annee < 2015 || annee > 2100) return null;
+  const d = new Date(annee, mois - 1, jour);
+  if (d.getMonth() !== mois - 1) return null;
+  return `${annee}-${String(mois).padStart(2, '0')}-${String(jour).padStart(2, '0')}`;
+}
+
+/** Première date valide trouvée dans les `portee` caractères qui suivent un des libellés. */
+function dateApres(texte: string, libelles: string[], portee = 60): string | null {
+  for (const lib of libelles) {
+    const re = new RegExp(`${lib}[^0-9]{0,${portee}}?${DATE_SRC}`, 'gi');
+    let m: RegExpExecArray | null;
+    while ((m = re.exec(texte)) !== null) {
+      const ymd = versYMD(m[1], m[2], m[3]);
+      if (ymd) return ymd;
+    }
+  }
+  return null;
+}
+
+/**
+ * Extrait les dates utiles d'un devis (texte du PDF) :
+ * - dateDevis          : date d'émission du devis
+ * - dateDebutTravaux   : date de démarrage / début des travaux
+ * - dateSignature      : date de signature, UNIQUEMENT si elle est présente sous forme de
+ *                        texte (signature électronique, « Signé le … », « Fait à …, le … »).
+ *                        Une date écrite à la main n'est pas du texte : elle ne peut pas être lue ici.
+ */
+export function extraireDatesDevis(texte: string): { dateDevis?: string; dateDebutTravaux?: string; dateSignature?: string } {
+  if (!texte) return {};
+  const t = texte.replace(/ /g, ' ');
+  const dateDebutTravaux = dateApres(t, [
+    'd[ée]marrage\\s+(?:pr[ée]vu\\w*\\s+)?(?:des\\s+|du\\s+)?(?:travaux|chantier)',
+    'd[ée]but\\s+(?:pr[ée]vu\\w*\\s+)?(?:des\\s+|du\\s+)?(?:travaux|chantier)',
+    'date\\s+de\\s+(?:d[ée]but|d[ée]marrage)',
+    'commencement\\s+des\\s+travaux',
+    'd[ée]but\\s+d.intervention',
+  ]) || undefined;
+  const dateSignature = dateApres(t, [
+    'sign[ée]e?\\s+(?:[ée]lectroniquement\\s+)?le',
+    'date\\s+de\\s+signature',
+    'bon\\s+pour\\s+accord',
+    'lu\\s+et\\s+approuv[ée]',
+    'fait\\s+[àa]\\s+[^\\n]{0,40}?,?\\s+le',
+  ], 80) || undefined;
+  const dateDevis = dateApres(t, [
+    'date\\s+(?:du\\s+|de\\s+)?devis',
+    'date\\s+d.[ée]mission',
+    '[ée]mis\\s+le',
+    'devis\\s+(?:n[°ºo]?\\s*[\\w\\-\\/]+\\s+)?(?:du|en\\s+date\\s+du)',
+    'en\\s+date\\s+du',
+    '(?:^|\\n)\\s*date\\s*:?',
+    '(?:^|\\n)\\s*le',
+  ], 40) || undefined;
+  return { dateDevis, dateDebutTravaux, dateSignature };
+}

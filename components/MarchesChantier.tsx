@@ -62,7 +62,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   // ── Form marché ──
   const [showMarcheForm, setShowMarcheForm] = useState(false);
   const [editMarche, setEditMarche] = useState<MarcheChantier | null>(null);
-  const [marcheForm, setMarcheForm] = useState({ libelle: '', montantHT: '', montantTTC: '', dateDevis: '', dateSignature: '' });
+  const [marcheForm, setMarcheForm] = useState({ libelle: '', montantHT: '', montantTTC: '', dateDevis: '', dateSignature: '', dateDebutTravaux: '' });
   const [marcheDevisInitial, setMarcheDevisInitial] = useState<{ uri: string; nom: string } | null>(null);
   const [marcheDevisSigne, setMarcheDevisSigne] = useState<{ uri: string; nom: string } | null>(null);
   const [devisAutoExtractLoading, setDevisAutoExtractLoading] = useState(false);
@@ -73,15 +73,15 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   const [chooser, setChooser] = useState<{ title: string; message?: string; options: { text: string; primary?: boolean; onPress: () => void }[] } | null>(null);
 
   /** Lit les totaux HT / TTC d'un devis PDF déjà envoyé sur le stockage (URL distante). */
-  const lireMontantsDevis = async (uri: string): Promise<{ ht?: number; ttc?: number; lisible: boolean }> => {
+  const lireMontantsDevis = async (uri: string): Promise<{ ht?: number; ttc?: number; lisible: boolean; dateDevis?: string; dateDebutTravaux?: string; dateSignature?: string }> => {
     const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
     const texte = await extractTextFromPdfUrl(uri);
     if (!texte) return { lisible: false };
-    const { extraireRecapDevis, extraireTotalTTC } = await import('@/lib/devisParser');
+    const { extraireRecapDevis, extraireTotalTTC, extraireDatesDevis } = await import('@/lib/devisParser');
     const recap = extraireRecapDevis(texte);
     const ttc = recap.totalTTC || extraireTotalTTC(texte) || undefined;
     const ht = recap.totalNetHT || recap.totalBrutHT || undefined;
-    return { ht, ttc, lisible: true };
+    return { ht, ttc, lisible: true, ...extraireDatesDevis(texte) };
   };
   const fmtEur = (n: number) => `${n.toLocaleString('fr-FR')} €`;
 
@@ -98,9 +98,25 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       if (!uploaded.uri || uploaded.uri.startsWith('file://')) { setDevisAutoExtractMsg("Envoi du fichier impossible — montants à saisir à la main"); return; }
       const fichier = { uri: uploaded.uri, nom: uploaded.nom || f.nom };
       if (source === 'signe') setMarcheDevisSigne(fichier); else setMarcheDevisInitial(fichier);
-      const { ht, ttc, lisible } = await lireMontantsDevis(uploaded.uri);
-      if (!lisible) { setDevisAutoExtractMsg('Devis illisible automatiquement (PDF scanné ?) — montants à saisir à la main'); return; }
-      if (!ht && !ttc) { setDevisAutoExtractMsg('HT/TTC non détectés dans le devis'); return; }
+      const { ht, ttc, lisible, dateDevis, dateDebutTravaux, dateSignature } = await lireMontantsDevis(uploaded.uri);
+      // Devis signé : date de signature = celle lue dans le document, sinon le jour de l'import.
+      // (Une date écrite à la main n'est pas lisible automatiquement : elle reste modifiable dans le champ.)
+      if (source === 'signe') {
+        setMarcheForm(prev => ({ ...prev, dateSignature: dateSignature || prev.dateSignature || todayYMD() }));
+      }
+      if (!lisible) { setDevisAutoExtractMsg(`Devis illisible automatiquement (PDF scanné ?) — montants à saisir à la main${source === 'signe' ? ' · date de signature : aujourd\'hui' : ''}`); return; }
+      const datesLues: string[] = [];
+      setMarcheForm(prev => {
+        const next = { ...prev };
+        if (dateDebutTravaux && (source === 'signe' || !prev.dateDebutTravaux)) next.dateDebutTravaux = dateDebutTravaux;
+        if (dateDevis && source === 'initial') next.dateDevis = dateDevis;
+        if (dateDevis && source === 'signe' && !marcheDevisInitial) next.dateDevis = dateDevis;
+        return next;
+      });
+      if (dateDebutTravaux) datesLues.push(`démarrage ${dateDebutTravaux}`);
+      if (source === 'signe') datesLues.push(dateSignature ? `signé le ${dateSignature}` : "signature : date du jour (date manuscrite non lisible)");
+      else if (dateDevis) datesLues.push(`devis du ${dateDevis}`);
+      if (!ht && !ttc) { setDevisAutoExtractMsg(['HT/TTC non détectés dans le devis', ...datesLues].join(' · ')); return; }
       const signeDejaJoint = source === 'initial' && !!marcheDevisSigne;
       const filled: string[] = [];
       setMarcheForm(prev => {
@@ -115,7 +131,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       if (ttc) filled.push(`TTC ${fmtEur(ttc)}`);
       setDevisAutoExtractMsg(signeDejaJoint
         ? `Devis initial lu (${filled.join(' · ')}) — les montants du devis signé sont conservés`
-        : `${source === 'signe' ? 'Montants du devis signé' : 'Auto-rempli'} : ${filled.join(' · ')}`);
+        : `${source === 'signe' ? 'Repris du devis signé' : 'Auto-rempli'} : ${[...filled, ...datesLues].join(' · ')}`);
     } catch (e) {
       console.warn('[MarchesChantier] auto-extract devis échoué:', e);
       setDevisAutoExtractMsg('Analyse du devis impossible — montants à saisir à la main');
@@ -192,7 +208,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           return;
         }
         // Restaurer
-        setMarcheForm(saved.marcheForm || { libelle: '', montantHT: '', montantTTC: '', dateDevis: '', dateSignature: '' });
+        setMarcheForm(saved.marcheForm || { libelle: '', montantHT: '', montantTTC: '', dateDevis: '', dateSignature: '', dateDebutTravaux: '' });
         setCommissionEnabled(!!saved.commissionEnabled);
         // Auto-sélectionner le dernier apporteur créé (si nouvel apporteur ajouté depuis le save)
         const restoredCommission = saved.commissionForm || { apporteurId: '', modeCommission: 'pourcentage', valeur: '', baseCalcul: 'HT', statut: 'a_payer', datePaiement: '', note: '' };
@@ -284,7 +300,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   // depuis l'Alert de prévention doublons).
   const proceedNewMarche = () => {
     setEditMarche(null);
-    setMarcheForm({ libelle: 'Marché initial', montantHT: '', montantTTC: '', dateDevis: todayYMD(), dateSignature: '' });
+    setMarcheForm({ libelle: 'Marché initial', montantHT: '', montantTTC: '', dateDevis: todayYMD(), dateSignature: '', dateDebutTravaux: '' });
     setMarcheDevisInitial(null);
     setMarcheDevisSigne(null);
     setDevisAutoExtractMsg(null);
@@ -319,6 +335,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       montantTTC: String(m.montantTTC),
       dateDevis: m.dateDevis || '',
       dateSignature: m.dateSignature || '',
+      dateDebutTravaux: m.dateDebutTravaux || '',
     });
     setMarcheDevisInitial(m.devisInitialUri ? { uri: m.devisInitialUri, nom: m.devisInitialNom || 'Devis' } : null);
     setMarcheDevisSigne(m.devisSigneUri ? { uri: m.devisSigneUri, nom: m.devisSigneNom || 'Devis signé' } : null);
@@ -382,6 +399,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       devisSigneNom: devisS.nom || editMarche?.devisSigneNom,
       dateDevis: marcheForm.dateDevis || undefined,
       dateSignature: marcheForm.dateSignature || undefined,
+      dateDebutTravaux: marcheForm.dateDebutTravaux || undefined,
       paiements: editMarche?.paiements || [],
       // V11 fix : la modification effaçait les lots d'avancement, les snapshots
       // et la signature client (champs absents du formulaire) — on les préserve.
@@ -394,6 +412,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       updatedAt: now,
     };
     if (editMarche) updateMarcheChantier(m); else addMarcheChantier(m);
+    // Si le chantier n'a pas encore de date de début, on reprend celle du devis (jamais d'écrasement).
+    if (m.dateDebutTravaux && chantier && !chantier.dateDebut) updateChantier({ ...chantier, dateDebut: m.dateDebutTravaux });
     setShowMarcheForm(false);
   };
 
@@ -671,6 +691,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           Reçu : {fmt(totalRecuM)} € · Reste : {fmt(resteM)} €
                         </Text>
                         {m.dateSignature && <Text style={{ fontSize: 10, color: '#27AE60', marginTop: 2 }}>Signé le {m.dateSignature}</Text>}
+                        {m.dateDebutTravaux && <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>Démarrage des travaux : {m.dateDebutTravaux}</Text>}
                         {m.commission && (() => {
                           const app = apporteurs.find(a => a.id === m.commission!.apporteurId);
                           const montantC = getCommissionAmount(m);
@@ -756,10 +777,14 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 // Le devis signé fait foi : on relit ses montants et on met le marché à jour.
                                 let maj: Partial<MarcheChantier> = {};
                                 try {
-                                  const { ht, ttc } = await lireMontantsDevis(uploaded.uri);
-                                  if (ht) maj.montantHT = ht;
-                                  if (ttc) maj.montantTTC = ttc;
+                                  const lu = await lireMontantsDevis(uploaded.uri);
+                                  if (lu.ht) maj.montantHT = lu.ht;
+                                  if (lu.ttc) maj.montantTTC = lu.ttc;
+                                  if (lu.dateDebutTravaux) maj.dateDebutTravaux = lu.dateDebutTravaux;
+                                  if (lu.dateSignature) maj.dateSignature = lu.dateSignature;
                                 } catch {}
+                                // Date de signature : lue dans le document, sinon conservée, sinon jour de l'import.
+                                if (!maj.dateSignature) maj.dateSignature = m.dateSignature || todayYMD();
                                 updateMarcheChantier({ ...m, ...maj, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
                                 if (maj.montantHT || maj.montantTTC) toast.success(`Montants repris du devis signé : ${[maj.montantHT ? `HT ${fmtEur(maj.montantHT)}` : '', maj.montantTTC ? `TTC ${fmtEur(maj.montantTTC)}` : ''].filter(Boolean).join(' · ')}`);
                                 else toast('Devis signé ajouté — montants non détectés, inchangés');
@@ -1116,6 +1141,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   <TextInput style={inp} value={marcheForm.dateSignature} onChangeText={v => setMarcheForm(f => ({ ...f, dateSignature: v }))} placeholder="2026-04-15" />
                 </View>
               </View>
+              <Text style={lbl}>Démarrage des travaux (YYYY-MM-DD)</Text>
+              <TextInput style={inp} value={marcheForm.dateDebutTravaux} onChangeText={v => setMarcheForm(f => ({ ...f, dateDebutTravaux: v }))} placeholder="2026-05-04" />
 
               <Text style={lbl}>Devis initial</Text>
               <Pressable style={fileBtn} onPress={async () => {
