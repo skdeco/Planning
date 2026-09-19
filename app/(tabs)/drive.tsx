@@ -6,6 +6,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, TextInput } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
+import { BackToPlus } from '@/components/ui/BackToPlus';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { openDocPreview } from '@/lib/share/openDocPreview';
@@ -69,6 +70,7 @@ export default function DriveScreen() {
 
   return (
     <ScreenContainer>
+      <BackToPlus />
       <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>{t.drive.title}</Text>
         <Text style={styles.subtitle}>{rows.length} {t.drive.documents} — {t.drive.allChantiers}</Text>

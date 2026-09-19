@@ -6,6 +6,7 @@ import {
 } from 'react-native';
 import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
+import { BackToPlus } from '@/components/ui/BackToPlus';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { METIER_COLORS, type Acompte } from '@/app/types';
@@ -560,6 +561,7 @@ export default function ReportingScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+      <BackToPlus />
       {/* En-tête */}
       <View style={styles.header}>
         <View style={styles.headerLogoWrap}>

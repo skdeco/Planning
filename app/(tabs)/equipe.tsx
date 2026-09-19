@@ -10,6 +10,7 @@ import {
 import { useRefresh } from '@/hooks/useRefresh';
 import { toast } from 'sonner-native';
 import { ScreenContainer } from '@/components/screen-container';
+import { BackToPlus } from '@/components/ui/BackToPlus';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
@@ -1144,6 +1145,7 @@ export default function EquipeScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]">
+      <BackToPlus />
       {/* En-tête */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.equipe.title}</Text>

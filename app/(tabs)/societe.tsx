@@ -5,6 +5,7 @@ import {
 import { useRefresh } from '@/hooks/useRefresh';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { ScreenContainer } from '@/components/screen-container';
+import { BackToPlus } from '@/components/ui/BackToPlus';
 import { NotificationSettings } from '@/components/NotificationSettings';
 import { DataBackupCard } from '@/components/DataBackupCard';
 import { useApp } from '@/app/context/AppContext';
@@ -200,6 +201,7 @@ export default function SocieteScreen() {
 
   return (
     <ScreenContainer>
+      <BackToPlus />
       <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Text style={styles.title}>{t.societe.title}</Text>
         <Text style={styles.subtitle}>{t.societe.subtitle}</Text>

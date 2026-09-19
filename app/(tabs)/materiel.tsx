@@ -15,6 +15,7 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { ScreenContainer } from '@/components/screen-container';
+import { BackToPlus } from '@/components/ui/BackToPlus';
 import type { ListeMateriau, MateriauItem } from '@/app/types';
 import { CatalogueArticles } from '@/components/CatalogueArticles';
 import { FournisseursManager } from '@/components/fournisseurs/FournisseursManager';
@@ -917,6 +918,7 @@ export default function MaterielScreen() {
 
   return (
     <ScreenContainer>
+      <BackToPlus screen="materiel" />
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>{t.materiel.title}</Text>

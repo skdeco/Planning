@@ -32,13 +32,18 @@
 
 ## Dette technique ouverte
 
-### DESIGN-SYSTEM-REFONTE-001
-Étendre le design system bordeaux (couleur primaire `#5C1F2E`, crème `#FBF7F2`,
-typo Georgia pour titres, sections numérotées italic) à toute l'application.
-Pour l'instant appliqué uniquement au PDF du PV de réception (PV-5).
-Sessions futures : refonte écran par écran (portail client, écrans admin).
-Estimation : 3-5 sessions complètes.
-Tokens à créer dans `lib/design/tokens.ts` au démarrage du sprint.
+### DESIGN-SYSTEM-REFONTE-001 — en cours (branche `refonte-design`, sept. 2026)
+Direction retenue : **sable & bordeaux**. Fond `#FAF5EF`, cartes blanches très arrondies
+(rayon 24) à ombre douce, accent unique bordeaux `#5C1F2E`, pastilles `#F2E4E1`,
+texte `#2B1D14` / secondaire `#6E5F54`, titres d'écran en Fraunces (`screenTitle`),
+listes groupées façon Réglages iOS, sélecteurs à segments, barre d'onglets flottante.
+Fait : tokens (`constants/design.ts`), remappage des anciennes couleurs en dur, barre à
+5 onglets + écran Plus (`app/(tabs)/gestion.tsx`), fiche chantier en 4 sections
+(`ChantierDetailDashboard`), accueil admin allégé, vue Jour du planning (`DayListView`),
+retour « ‹ Plus » (`BackToPlus`).
+Reste : remplacer les couleurs en dur restantes par les tokens `DS.*`, accueil employé,
+modales (rayons/ombres), écrans Équipe / Matériel / RH / Reporting / Portail client,
+emojis encore utilisés comme icônes, mode sombre.
 
 ### DETTE-PV-DATAURI
 Les signatures du PV V2 (`signatureEntrepriseUri`, `signatureClientUri`) sont
