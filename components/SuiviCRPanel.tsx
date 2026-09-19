@@ -1084,8 +1084,8 @@ function RDVForm({ rdv, isAdmin, readOnly, onSave, onDelete }: RDVFormProps) {
 // ─── Styles ───────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: { flex: 1, backgroundColor: DS.cremeFond, borderTopLeftRadius: 20, borderTopRightRadius: 20, overflow: 'hidden' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet: { flex: 1, backgroundColor: DS.cremeFond, borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', padding: 14, paddingTop: 18, borderBottomWidth: 1, borderBottomColor: DS.border, gap: 6 },
   backBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: DS.cremeNude, alignItems: 'center', justifyContent: 'center' },
   closeBtn: { width: 28, height: 28, borderRadius: 14, backgroundColor: DS.cremeNude, alignItems: 'center', justifyContent: 'center' },

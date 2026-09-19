@@ -1345,7 +1345,7 @@ export default function PlanningScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '90%', maxWidth: 420 }}>
             <ScrollView style={{ maxHeight: 500 }} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 20, textAlign: 'center' }}>{t.planningAdmin.adminSettings}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 20, textAlign: 'center' }}>{t.planningAdmin.adminSettings}</Text>
 
               {/* Identifiant */}
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.planningAdmin.loginId}</Text>
@@ -1809,8 +1809,8 @@ const styles = StyleSheet.create({
   },
   modalSheet: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 36 : 20,
   },
@@ -1823,8 +1823,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'Fraunces_600SemiBold',
     color: '#2B1D14',
     marginBottom: 4,
   },

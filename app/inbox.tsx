@@ -244,7 +244,7 @@ export default function InboxScreen(): React.ReactElement {
         <Modal transparent visible animationType="slide" onRequestClose={cancelPlace}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
             <Pressable style={{ flex: 1 }} onPress={cancelPlace} />
-            <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: space.lg, maxHeight: '80%' }}>
+            <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, maxHeight: '80%' }}>
               <Text style={{ fontSize: font.title, fontWeight: font.bold, color: DS.textStrong, marginBottom: 4 }} numberOfLines={1}>Placer « {placing.filename} »</Text>
 
               {!targetChantierId ? (

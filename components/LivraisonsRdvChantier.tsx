@@ -634,7 +634,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
 
       {/* Modal livraison */}
       <Modal visible={showLivForm} animationType="fade" transparent onRequestClose={() => setShowLivForm(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={styles.modal}>
               <Text style={styles.modalTitle}>{editLivId ? 'Modifier la livraison' : 'Nouvelle livraison'}</Text>
@@ -712,7 +712,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
 
       {/* Modal RDV */}
       <Modal visible={showRdvForm} animationType="fade" transparent onRequestClose={() => setShowRdvForm(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={styles.modal}>
               <Text style={styles.modalTitle}>{editRdvId ? 'Modifier le RDV' : 'Nouveau RDV de chantier'}</Text>
@@ -847,8 +847,8 @@ const styles = StyleSheet.create({
   rdvMeta: { fontSize: 11, color: '#5C1F2E', fontWeight: '700', marginTop: 2 },
   rdvDetail: { fontSize: 11, color: '#6E5F54', marginTop: 2 },
   rdvNote: { fontSize: 11, color: '#5C1F2E', fontStyle: 'italic', marginTop: 4 },
-  modal: { backgroundColor: '#fff', borderRadius: 16, padding: 20 },
-  modalTitle: { fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 12 },
+  modal: { backgroundColor: '#fff', borderRadius: 24, padding: 20 },
+  modalTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#5C1F2E', marginBottom: 12 },
   label: { fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginBottom: 4 },
   input: { backgroundColor: '#FAF5EF', borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#5C1F2E' },
   chip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' },

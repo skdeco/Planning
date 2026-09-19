@@ -199,7 +199,7 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#FAF5EF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%' },
+  sheet: { backgroundColor: '#FAF5EF', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EDE4D8' },
   title: { fontSize: 18, fontWeight: '800', color: '#5C1F2E' },
   close: { fontSize: 20, color: '#6E5F54', paddingHorizontal: 4 },

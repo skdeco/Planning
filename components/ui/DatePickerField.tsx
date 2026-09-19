@@ -152,11 +152,11 @@ const styles = StyleSheet.create({
   },
   inputText: { fontSize: 14, color: '#5C1F2E' },
   overlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.5)',
+    flex: 1, backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center', alignItems: 'center', padding: 20,
   },
   sheet: {
-    backgroundColor: '#fff', borderRadius: 16, padding: 16, width: '100%', maxWidth: 360,
+    backgroundColor: '#fff', borderRadius: 24, padding: 16, width: '100%', maxWidth: 360,
   },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10,

@@ -664,13 +664,13 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
   return (
     <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }}>
         <Pressable style={{ height: '10%' }} onPress={onClose} />
-        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, height: '90%' }}>
+        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, height: '90%' }}>
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
             <View>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: '#2B1D14' }}>Marchés</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>Marchés</Text>
               <Text style={{ fontSize: 12, color: '#6E5F54' }}>{chantier?.nom}</Text>
             </View>
             <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
@@ -1159,11 +1159,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
       {/* ── Modal Form Marché ── */}
       <ModalKeyboard visible={showMarcheForm} animationType="fade" transparent onRequestClose={() => setShowMarcheForm(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setShowMarcheForm(false)} />
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '90%' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '90%' }}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 12 }}>{editMarche ? 'Modifier le marché' : 'Nouveau marché'}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>{editMarche ? 'Modifier le marché' : 'Nouveau marché'}</Text>
               <Text style={lbl}>Libellé *</Text>
               <TextInput style={inp} value={marcheForm.libelle} onChangeText={v => setMarcheForm(f => ({ ...f, libelle: v }))} placeholder="Marché initial" />
               <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -1356,11 +1356,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
       {/* ── Modal Form Supplément ── */}
       <ModalKeyboard visible={showSuppForm} animationType="fade" transparent onRequestClose={() => setShowSuppForm(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setShowSuppForm(false)} />
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '90%' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '90%' }}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 12 }}>{editSupp ? 'Modifier le supplément' : 'Nouveau supplément'}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>{editSupp ? 'Modifier le supplément' : 'Nouveau supplément'}</Text>
               <Text style={lbl}>Libellé *</Text>
               <TextInput style={inp} value={suppForm.libelle} onChangeText={v => setSuppForm(f => ({ ...f, libelle: v }))} placeholder="Ex: Pose carrelage SDB" />
               <Text style={lbl}>Description</Text>
@@ -1429,11 +1429,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
       {/* ── Modal Form Paiement ── */}
       <ModalKeyboard visible={showPaiementForm} animationType="fade" transparent onRequestClose={() => setShowPaiementForm(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setShowPaiementForm(false)} />
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '85%' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '85%' }}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 12 }}>Nouveau paiement</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>Nouveau paiement</Text>
               <Text style={lbl}>Date</Text>
               <DateInput style={inp} value={paiementForm.date} onChangeDate={v => setPaiementForm(f => ({ ...f, date: v }))} />
               <Text style={lbl}>Montant (€) *</Text>
@@ -1510,7 +1510,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       <Modal visible={chooser !== null} transparent animationType="fade" onRequestClose={() => setChooser(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 }} onPress={() => setChooser(null)}>
           <Pressable style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, gap: 8, maxWidth: 440, width: '100%', alignSelf: 'center' }} onPress={() => {}}>
-            <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14' }}>{chooser?.title}</Text>
+            <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{chooser?.title}</Text>
             {!!chooser?.message && <Text style={{ fontSize: 13, color: '#6E5F54', marginBottom: 6 }}>{chooser.message}</Text>}
             {chooser?.options.map((o, i) => (
               <Pressable

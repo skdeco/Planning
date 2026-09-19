@@ -1876,8 +1876,8 @@ const styles = StyleSheet.create({
   },
   modalSheet: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 36 : 20,
   },
@@ -1890,8 +1890,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'Fraunces_600SemiBold',
     color: '#2B1D14',
     marginBottom: 4,
   },

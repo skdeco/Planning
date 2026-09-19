@@ -2031,7 +2031,7 @@ export default function ChantiersScreen() {
 
       {/* ── Modal Création rapide client + espace client ── */}
       <ModalKeyboard visible={showQuickClient} animationType="fade" transparent onRequestClose={() => setShowQuickClient(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
               {!quickClientCreds ? (
@@ -3003,7 +3003,7 @@ export default function ChantiersScreen() {
                     {/* Totaux */}
                     <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
                       <View style={{ flex: 1, backgroundColor: '#F2E4E1', borderRadius: 14, padding: 12, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 18, fontWeight: '800', color: '#2B1D14' }}>{totalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
+                        <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{totalHT.toLocaleString('fr-FR', { minimumFractionDigits: 2 })} €</Text>
                         <Text style={{ fontSize: 10, color: '#6E5F54' }}>Total H.T.</Text>
                       </View>
                       <View style={{ flex: 1, backgroundColor: '#FDECEA', borderRadius: 14, padding: 12, alignItems: 'center' }}>
@@ -3644,7 +3644,7 @@ export default function ChantiersScreen() {
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setLivraisonsChantierId(null))} />
-          <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12 }}>
+          <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12 }}>
             <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 8 }} />
             {(() => {
               const ch = data.chantiers.find(c => c.id === livraisonsChantierId);
@@ -3684,7 +3684,7 @@ export default function ChantiersScreen() {
       >
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
           <Pressable style={{ flex: 0.05 }} onPress={() => backToDash(() => setMessagerieChantierId(null))} />
-          <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, paddingTop: 12 }}>
+          <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12 }}>
             <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 8 }} />
             {(() => {
               const ch = data.chantiers.find(c => c.id === messagerieChantierId);
@@ -3774,7 +3774,7 @@ export default function ChantiersScreen() {
 
       {/* ── Modal SAV (refacto C3b : utilise ModalSAVDetail + ModalNouveauTicketSAV) ── */}
       <Modal visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => backToDash(() => setSavChantierId(null))}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }}>
           <Pressable style={{ flex: 1 }} onPress={() => backToDash(() => setSavChantierId(null))} />
           <View style={savListeStyles.container}>
             <View style={savListeStyles.header}>
@@ -4122,8 +4122,8 @@ const styles = StyleSheet.create({
   },
   modalSheet: {
     backgroundColor: '#fff',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 20,
     paddingBottom: Platform.OS === 'ios' ? 36 : 20,
     maxHeight: '92%',
@@ -4151,8 +4151,8 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'Fraunces_600SemiBold',
     color: '#2B1D14',
   },
   modalSubtitle: {

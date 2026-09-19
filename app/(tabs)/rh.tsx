@@ -1071,9 +1071,9 @@ const styles = StyleSheet.create({
   paieEmployeNom: { fontSize: 12, fontWeight: '600', color: '#2B1D14', maxWidth: 70 },
   paieEmployeAction: { fontSize: 10, color: '#6E5F54', marginTop: 2 },
   // Modals
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20 },
-  sheetTitle: { fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 16, textAlign: 'center' },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20 },
+  sheetTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 16, textAlign: 'center' },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
   input: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 12 },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },

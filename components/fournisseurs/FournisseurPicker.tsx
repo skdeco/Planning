@@ -60,7 +60,7 @@ export function FournisseurPicker({ value, onChange, placeholder = 'Choisir un f
       <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setOpen(false)} />
-          <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: space.lg, maxHeight: '75%' }}>
+          <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, maxHeight: '75%' }}>
             <Text style={{ fontSize: font.title, fontWeight: font.bold, color: DS.textStrong, marginBottom: space.sm }}>Fournisseur</Text>
             <TextInput
               value={q}

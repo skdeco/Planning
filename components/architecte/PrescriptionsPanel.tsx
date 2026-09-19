@@ -641,7 +641,7 @@ const styles = StyleSheet.create({
   },
   // Formulaire (overlay inline)
   formOverlay: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(42,38,34,0.42)', justifyContent: 'flex-end' },
-  formSheet: { backgroundColor: DS.surface, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: space.xl, maxHeight: '88%' },
+  formSheet: { backgroundColor: DS.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.xl, maxHeight: '88%' },
   formTitle: { fontSize: font.title, fontWeight: font.heavy, color: DS.sombre, marginBottom: space.md, textTransform: 'uppercase' },
   segRow: { flexDirection: 'row', gap: space.sm, marginBottom: space.md, alignItems: 'center' },
   tvaLabel: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, marginRight: space.xs },

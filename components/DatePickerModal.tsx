@@ -207,7 +207,7 @@ const dfS = StyleSheet.create({
   },
   sheet: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 24,
     padding: 20,
     width: 320,
     maxWidth: '90%',
@@ -218,7 +218,7 @@ const dfS = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  sheetTitle: { fontSize: 16, fontWeight: '700', color: '#2B1D14' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' },
   closeBtn: {
     width: 28,
     height: 28,

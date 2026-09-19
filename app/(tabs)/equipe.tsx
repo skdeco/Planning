@@ -2391,8 +2391,8 @@ export default function EquipeScreen() {
 
       {/* ── Modal Nouveau Métier ── */}
       <Modal visible={showNewMetier} transparent animationType="fade" onRequestClose={() => setShowNewMetier(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 400 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, width: '100%', maxWidth: 400 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#2B1D14', marginBottom: 16 }}>{t.equipe.newMetier}</Text>
             <TextInput
               style={{ borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 10, padding: 12, fontSize: 14, marginBottom: 12 }}
@@ -2428,10 +2428,10 @@ export default function EquipeScreen() {
 
       {/* ── Modal Disponibilité ── */}
       <Modal visible={showDispo} transparent animationType="slide" onRequestClose={() => setShowDispo(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '80%' }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '80%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 18, fontWeight: '800', color: '#2B1D14' }}>{t.equipe.dispo}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{t.equipe.dispo}</Text>
               <Pressable onPress={() => setShowDispo(false)}>
                 <Text style={{ fontSize: 20, color: '#6E5F54' }}>✕</Text>
               </Pressable>
@@ -2566,10 +2566,10 @@ const styles = StyleSheet.create({
   emptyState: { padding: 40, alignItems: 'center' },
   emptyText: { fontSize: 15, color: '#6E5F54' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
+  modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
   modalHandle: { width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#2B1D14' },
+  modalTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' },
   modalClose: { fontSize: 18, color: '#6E5F54', padding: 4 },
   nameRow: { flexDirection: 'row' },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
@@ -2649,11 +2649,11 @@ const stStyles = StyleSheet.create({
   actionButtonLabel: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
   // Modals communs
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
-  sheetSmall: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '70%' },
+  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
+  sheetSmall: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '70%' },
   handle: { width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sheetTitle: { fontSize: 18, fontWeight: '700', color: '#2B1D14', flex: 1, marginRight: 8 },
+  sheetTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', flex: 1, marginRight: 8 },
   closeX: { fontSize: 18, color: '#6E5F54', padding: 4 },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
   input: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' },

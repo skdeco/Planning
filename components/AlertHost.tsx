@@ -40,7 +40,7 @@ export function AlertHost() {
     <Modal visible transparent animationType="fade" onRequestClose={() => close(cancel)}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <View style={{ backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, gap: 8, width: '100%', maxWidth: 440 }}>
-          <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14' }}>{current.title}</Text>
+          <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{current.title}</Text>
           {!!current.message && <Text style={{ fontSize: 14, color: '#6E5F54', marginBottom: 6 }}>{current.message}</Text>}
           {actions.map((b, i) => {
             const danger = b.style === 'destructive';

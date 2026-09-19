@@ -1087,13 +1087,13 @@ const styles = StyleSheet.create({
   histTimeMissing: { color: '#9A8C80' },
 
   // Modal photos
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
   modalBox: {
-    backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20,
+    backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28,
     padding: 20, paddingBottom: 36, maxHeight: '85%',
   },
   modalHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#2B1D14' },
+  modalTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' },
   modalCloseBtn: { padding: 4 },
   modalCloseText: { fontSize: 18, color: '#6E5F54' },
   modalSubtitle: { fontSize: 13, color: '#6E5F54', marginBottom: 16, lineHeight: 18 },

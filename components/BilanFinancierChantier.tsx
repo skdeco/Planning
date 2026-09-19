@@ -231,12 +231,12 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
 
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', flex: 1 }}>
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
             <View>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14' }}>Bilan financier</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>Bilan financier</Text>
               <Text style={{ fontSize: 13, color: '#6E5F54' }}>{chantier.nom}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -253,7 +253,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             {/* Résumé */}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               <View style={cardS}>
-                <Text style={{ fontSize: 18, fontWeight: '800', color: '#5C1F2E' }}>{fmt(bilan.totalGeneral)}</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{fmt(bilan.totalGeneral)}</Text>
                 <Text style={{ fontSize: 10, color: '#6E5F54' }}>Coût total</Text>
               </View>
               <View style={cardS}>

@@ -155,7 +155,7 @@ export function PlanningDirection() {
   const PickerModal = ({ visible, onClose, options, onSelect, title }: { visible: boolean; onClose: () => void; options: { label: string; value: string }[]; onSelect: (v: string) => void; title: string }) => (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 }} onPress={onClose}>
-        <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 8, width: '100%', maxWidth: 320, maxHeight: 400 }}>
+        <View style={{ backgroundColor: '#fff', borderRadius: 24, padding: 8, width: '100%', maxWidth: 320, maxHeight: 400 }}>
           <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{title}</Text>
           <ScrollView>
             {options.map(opt => (
@@ -339,11 +339,11 @@ export function PlanningDirection() {
 
       {/* Modal formulaire RDV */}
       <ModalKeyboard visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }} onPress={() => setShowForm(false)}>
-          <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, maxHeight: '92%' }} onPress={e => e.stopPropagation()}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }} onPress={() => setShowForm(false)}>
+          <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '92%' }} onPress={e => e.stopPropagation()}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#2B1D14' }}>{editId ? 'Modifier' : 'Nouveau RDV'}</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{editId ? 'Modifier' : 'Nouveau RDV'}</Text>
                 {editId && (
                   <Pressable onPress={() => { deleteAgendaEvent(editId); setShowForm(false); }} style={{ padding: 6 }}>
                     <Text style={{ color: '#E74C3C', fontWeight: '600' }}>Supprimer</Text>

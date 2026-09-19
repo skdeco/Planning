@@ -91,11 +91,11 @@ export function CatalogueArticles({ visible, onClose }: Props) {
 
   return (
     <ModalKeyboard visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '95%', flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '95%', flex: 1 }}>
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
-            <Text style={{ fontSize: 18, fontWeight: '700', color: '#2B1D14' }}>Catalogue articles</Text>
+            <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>Catalogue articles</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={openNew}>
                 <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>+ Article</Text>
@@ -173,7 +173,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', padding: 16 }} onPress={() => setShowForm(false)}>
           <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '85%' }} onPress={e => e.stopPropagation()}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 12 }}>{editId ? 'Modifier l\'article' : 'Nouvel article'}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>{editId ? 'Modifier l\'article' : 'Nouvel article'}</Text>
 
               <Text style={lbl}>Nom *</Text>
               <TextInput style={inp} value={form.nom} onChangeText={v => setForm(f => ({ ...f, nom: v }))} placeholder="Ex: Disjoncteur 20A" />

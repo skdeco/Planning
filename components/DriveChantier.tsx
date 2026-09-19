@@ -156,7 +156,7 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#FAF5EF', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%' },
+  sheet: { backgroundColor: '#FAF5EF', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EDE4D8',

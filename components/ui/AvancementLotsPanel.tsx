@@ -708,19 +708,19 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     paddingHorizontal: 20,
   },
   modalSheet: {
     backgroundColor: DS.surface,
-    borderRadius: 16,
+    borderRadius: 24,
     padding: 18,
     maxHeight: '85%',
   },
   modalTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'Fraunces_600SemiBold',
     color: DS.sombre,
     marginBottom: 12,
   },

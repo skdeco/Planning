@@ -1826,7 +1826,7 @@ const styles = StyleSheet.create({
   // Modal SignaturePad
   signaturePadOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 16,
@@ -1896,8 +1896,8 @@ const styles = StyleSheet.create({
     borderBottomColor: '#EDE2D6',
   },
   sheetTitle: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'Fraunces_600SemiBold',
     color: '#2B1D14',
   },
   sheetClose: {

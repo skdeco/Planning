@@ -1296,9 +1296,9 @@ const styles = StyleSheet.create({
   addItemBtn: { marginTop: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 6, borderStyle: 'dashed' },
   addItemBtnText: { color: '#5C1F2E', fontSize: 13, fontWeight: '600' },
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 20, paddingBottom: 40 },
-  modalTitle: { fontSize: 18, fontWeight: '700', color: '#5C1F2E', marginBottom: 4 },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 40 },
+  modalTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#5C1F2E', marginBottom: 4 },
   modalSubtitle: { fontSize: 13, color: '#888', marginBottom: 16 },
   inputLabel: { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 4 },
   input: { borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, padding: 10, fontSize: 15, marginBottom: 12, backgroundColor: '#FAF5EF', color: '#2B1D14' },

@@ -84,7 +84,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
       >
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)' }}>
         <Pressable style={{ flex: 0.08 }} onPress={actions.close} />
-        <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: 16 }}>
+        <View style={{ flex: 1, backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 16 }}>
           <View style={styles.modalHandle} />
           <View style={styles.modalHeaderRow}>
               <View style={{ flex: 1 }}>
@@ -618,8 +618,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   modalTitle: {
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 20,
+    fontFamily: 'Fraunces_600SemiBold',
     color: '#2B1D14',
     marginBottom: 4,
   },
@@ -789,7 +789,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 2,
     right: 2,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     borderRadius: 10,
     width: 20,
     height: 20,

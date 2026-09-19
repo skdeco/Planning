@@ -665,7 +665,7 @@ export default function MessagerieScreen() {
           <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }} onPress={() => setShowGroupModal(false)}>
             <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 420, maxHeight: '80%' }} onPress={() => {}}>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', textAlign: 'center', marginBottom: 16 }}>Message de groupe</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', textAlign: 'center', marginBottom: 16 }}>Message de groupe</Text>
 
                 {/* Type de diffusion */}
                 <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 8 }}>Envoyer à</Text>
@@ -1282,7 +1282,7 @@ const styles = StyleSheet.create({
   archiveDiscussionBtnText: { fontSize: 13, fontWeight: '600', color: '#E65100' },
   // Menu contextuel
   contextOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center' as const, alignItems: 'center' as const, padding: 24 },
-  contextMenu: { backgroundColor: '#fff', borderRadius: 14, padding: 8, width: '100%', maxWidth: 320 },
+  contextMenu: { backgroundColor: '#fff', borderRadius: 24, padding: 8, width: '100%', maxWidth: 320 },
   contextTitle: { fontSize: 13, color: '#6E5F54', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' },
   contextBtn: { paddingHorizontal: 16, paddingVertical: 14, borderRadius: 8 },
   contextBtnDanger: {},

@@ -148,8 +148,8 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
 
       {/* Modal édition */}
       <Modal visible={show} animationType="slide" transparent onRequestClose={() => setShow(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', flex: 1 }}>
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <View>
                 <Text style={{ fontSize: 16, fontWeight: '800' }}>PV de réception</Text>
@@ -209,7 +209,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
 
       {/* Pad de signature */}
       <Modal visible={signaturePadVisible} animationType="fade" transparent onRequestClose={() => setSignaturePadVisible(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16 }}>
             <Text style={{ fontSize: 15, fontWeight: '800', marginBottom: 10, color: '#5C1F2E' }}>Signature client — PV de réception</Text>
             <SignaturePad

@@ -345,11 +345,11 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
   },
   sheet: {
     backgroundColor: DS.surface,
-    borderRadius: 16,
+    borderRadius: 24,
     maxHeight: '85%',
     width: '100%',
     maxWidth: 600,

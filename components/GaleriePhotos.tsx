@@ -365,12 +365,12 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
             )}
             {/* Navigation prev/next */}
             {hasPrev && (
-              <Pressable style={{ position: 'absolute', left: 8, top: '40%', width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }} onPress={goPrev}>
+              <Pressable style={{ position: 'absolute', left: 8, top: '40%', width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }} onPress={goPrev}>
                 <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>‹</Text>
               </Pressable>
             )}
             {hasNext && (
-              <Pressable style={{ position: 'absolute', right: 8, top: '40%', width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }} onPress={goNext}>
+              <Pressable style={{ position: 'absolute', right: 8, top: '40%', width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center' }} onPress={goNext}>
                 <Text style={{ color: '#fff', fontSize: 22, fontWeight: '700' }}>›</Text>
               </Pressable>
             )}
@@ -428,8 +428,8 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
-  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, minHeight: 300 },
+  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
+  sheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, minHeight: 300 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' },
   titre: { fontSize: 17, fontWeight: '700', color: '#2B1D14' },
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' },
@@ -457,13 +457,13 @@ const styles = StyleSheet.create({
   // Miniatures
   empty: { alignItems: 'center', padding: 48 },
   thumb: { borderRadius: 8, overflow: 'hidden', backgroundColor: '#F1E7DC' },
-  thumbOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', paddingHorizontal: 4, paddingVertical: 2 },
+  thumbOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 4, paddingVertical: 2 },
   thumbInfo: { color: '#fff', fontSize: 10, fontWeight: '600', textAlign: 'center' },
   thumbLegendeTag: { position: 'absolute', top: 4, left: 4, backgroundColor: 'rgba(26,58,107,0.8)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, maxWidth: '80%' },
   // Visionneuse
   viewer: { flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center' },
   viewerImg: { width: '100%', height: '80%' },
-  viewerInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'flex-end', padding: 20, paddingBottom: 40, backgroundColor: 'rgba(0,0,0,0.6)' },
+  viewerInfo: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'flex-end', padding: 20, paddingBottom: 40, backgroundColor: 'rgba(0,0,0,0.45)' },
   viewerActionBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
   viewerClose: { position: 'absolute', top: 50, right: 20, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' },
 });

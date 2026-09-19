@@ -144,7 +144,7 @@ export function FournisseursManager({ onClose, title = 'Fournisseurs' }: Props) 
       <Modal visible={form !== null} transparent animationType="slide" onRequestClose={() => setForm(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setForm(null)} />
-          <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 20, borderTopRightRadius: 20, padding: space.lg, maxHeight: '90%' }}>
+          <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, maxHeight: '90%' }}>
             <Text style={{ fontSize: font.title, fontWeight: font.bold, color: DS.textStrong, marginBottom: space.md }}>
               {form?.id ? 'Modifier le fournisseur' : 'Nouveau fournisseur'}
             </Text>

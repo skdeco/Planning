@@ -307,7 +307,7 @@ export default function DashboardScreen() {
               <Pressable style={{ flex: 1, backgroundColor: '#F2E4E1', borderRadius: 14, padding: 14, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => router.push('/(tabs)/messagerie' as any)}>
                 <Text style={{ fontSize: 20 }}>💬</Text>
-                <Text style={{ fontSize: 18, fontWeight: '800', color: '#5C1F2E' }}>{nbMsgsNonLus}</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{nbMsgsNonLus}</Text>
                 <Text style={{ fontSize: 9, color: '#6E5F54' }}>messages</Text>
               </Pressable>
             )}
@@ -1363,10 +1363,10 @@ export default function DashboardScreen() {
 
         {/* Modal historique complet */}
         <Modal visible={showHistorique} transparent animationType="slide" onRequestClose={() => setShowHistorique(false)}>
-          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-            <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', padding: 16 }}>
+          <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+            <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%', padding: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 18, fontWeight: '700', color: '#2B1D14' }}>{t.dash.fullHistory}</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{t.dash.fullHistory}</Text>
                 <Pressable onPress={() => setShowHistorique(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '700' }}>✕</Text>
                 </Pressable>

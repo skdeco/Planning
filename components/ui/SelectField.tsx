@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
   chevron: { fontSize: 12, color: '#6E5F54' },
   dot: { width: 10, height: 10, borderRadius: 5 },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
-  sheet: { backgroundColor: '#fff', borderRadius: 16, padding: 12, maxWidth: 480, width: '100%', alignSelf: 'center' },
+  sheet: { backgroundColor: '#fff', borderRadius: 24, padding: 12, maxWidth: 480, width: '100%', alignSelf: 'center' },
   title: { fontSize: 15, fontWeight: '800', color: '#5C1F2E', marginBottom: 8, paddingHorizontal: 4 },
   search: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#5C1F2E', marginBottom: 8 },
   empty: { fontSize: 13, color: '#B0A99F', fontStyle: 'italic', textAlign: 'center', paddingVertical: 20 },

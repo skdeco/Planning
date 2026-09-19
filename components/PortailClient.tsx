@@ -1265,7 +1265,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   if (!chantier) {
     return (
       <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center' }}>
             <Text style={{ fontSize: 15, color: '#6E5F54', marginBottom: 16 }}>Chantier introuvable</Text>
             <Pressable onPress={onClose} style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingHorizontal: 20, paddingVertical: 10 }}>
@@ -2404,7 +2404,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
       {/* ── Modal Picker Contact ── */}
       <Modal visible={pickerType !== null} animationType="fade" transparent onRequestClose={() => setPickerType(null)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '80%' }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 12 }}>
               {pickerType && `${APPORTEUR_TYPE_LABELS[pickerType].emoji} Sélectionner ${APPORTEUR_TYPE_LABELS[pickerType].label}`}
@@ -2443,8 +2443,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
       {/* ── Modal Photos Picker ── */}
       <Modal visible={showPhotosPicker} animationType="slide" transparent onRequestClose={() => setShowPhotosPicker(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '90%', flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%', flex: 1 }}>
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
               <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E' }}>Photos affichées dans le portail</Text>
               <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>
@@ -2485,7 +2485,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
       {/* ── Modal Form Corps de métier ── */}
       <Modal visible={showCorpsForm} animationType="fade" transparent onRequestClose={() => setShowCorpsForm(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView
             style={{ maxHeight: '90%' }}
             contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}
@@ -2653,7 +2653,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
       {/* ── Modal commentaire client ── */}
       <Modal visible={!!commentaireLotId} animationType="fade" transparent onRequestClose={() => setCommentaireLotId(null)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 20 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 4 }}>Nouveau commentaire</Text>
             <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 12 }}>
@@ -2685,8 +2685,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
       {/* ── Modal Import lots depuis devis ── */}
       <Modal visible={showImportDevis} animationType="slide" transparent onRequestClose={() => setShowImportDevis(false)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 20, borderTopRightRadius: 20, maxHeight: '92%', flex: 1 }}>
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', flex: 1 }}>
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E' }}>Importer les lots du devis</Text>
@@ -2871,7 +2871,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.45)',
     justifyContent: 'flex-end',
   },
   container: {
