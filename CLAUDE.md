@@ -41,9 +41,11 @@ Fait : tokens (`constants/design.ts`), remappage des anciennes couleurs en dur, 
 5 onglets + écran Plus (`app/(tabs)/gestion.tsx`), fiche chantier en 4 sections
 (`ChantierDetailDashboard`), accueil admin allégé, vue Jour du planning (`DayListView`),
 retour « ‹ Plus » (`BackToPlus`).
-Reste : remplacer les couleurs en dur restantes par les tokens `DS.*`, accueil employé,
-modales (rayons/ombres), écrans Équipe / Matériel / RH / Reporting / Portail client,
-emojis encore utilisés comme icônes, mode sombre.
+Fait aussi : accueil employé, titres Fraunces + cartes/boutons/segments sur tous les onglets,
+modales (rayon 28, voile 0.45, titres Fraunces), emojis d'interface → `components/ui/Ico.tsx`,
+dates JJ/MM/AAAA (`lib/date/format.ts`, `DateInput`), `ComboSelect`, `AlertHost` (Alert.alert sur le web).
+Reste : remplacer les couleurs en dur par les tokens `DS.*`, emojis restants dans des expressions
+(Onboarding, PV V2, types BADGE/APPORTEUR), densité de la grille 7 jours, mode sombre.
 
 ### DETTE-PV-DATAURI
 Les signatures du PV V2 (`signatureEntrepriseUri`, `signatureClientUri`) sont
