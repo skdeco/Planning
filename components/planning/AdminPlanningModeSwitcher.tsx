@@ -85,16 +85,16 @@ export function AdminPlanningModeSwitcher({
         accessibilityState={{ selected: isEquipeActive }}
         style={[
           styles.button,
-          { backgroundColor: isEquipeActive ? DS.primary : DS.background },
+          isEquipeActive && styles.buttonOn,
         ]}
       >
         <Text
           style={[
             styles.label,
-            { color: isEquipeActive ? DS.textInverse : DS.textAlt },
+            isEquipeActive && styles.labelOn,
           ]}
         >
-          {MODE_META.equipe.emoji} {t.planningAdmin.teamPlanning}
+          {t.planningAdmin.teamPlanning}
         </Text>
       </Pressable>
 
@@ -104,16 +104,16 @@ export function AdminPlanningModeSwitcher({
         accessibilityState={{ selected: isDirectionActive }}
         style={[
           styles.button,
-          { backgroundColor: isDirectionActive ? DS.primary : DS.background },
+          isDirectionActive && styles.buttonOn,
         ]}
       >
         <Text
           style={[
             styles.label,
-            { color: isDirectionActive ? DS.textInverse : DS.textAlt },
+            isDirectionActive && styles.labelOn,
           ]}
         >
-          {MODE_META.direction.emoji} {t.planningAdmin.directionPlanning}
+          {t.planningAdmin.directionPlanning}
         </Text>
       </Pressable>
     </View>
@@ -123,25 +123,18 @@ export function AdminPlanningModeSwitcher({
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  // Sélecteur à segments (piste sable, segment actif blanc)
   wrapper: {
-    flexDirection:     'row',
-    backgroundColor:   DS.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: DS.borderAlt,
-    paddingHorizontal: space.md,            // 12
-    paddingVertical:   SWITCHER_WRAPPER_PV, // 6
-    gap:               SWITCHER_GAP,        // 6
+    flexDirection:    'row',
+    backgroundColor:  DS.segment,
+    borderRadius:     radius.full,
+    marginHorizontal: space.lg,
+    marginVertical:   SWITCHER_WRAPPER_PV,
+    padding:          3,
+    gap:              2,
   },
-
-  button: {
-    flex:            1,
-    paddingVertical: space.sm,   // 8
-    borderRadius:    radius.sm,  // 8
-    alignItems:      'center',
-  },
-
-  label: {
-    fontSize:   font.body, // 13
-    fontWeight: font.bold, // '700'
-  },
+  button: { flex: 1, height: 34, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center' },
+  buttonOn: { backgroundColor: DS.surface, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
+  label: { fontSize: font.body, fontWeight: font.medium, color: DS.text },
+  labelOn: { fontWeight: font.semibold },
 });

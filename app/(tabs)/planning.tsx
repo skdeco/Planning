@@ -40,6 +40,8 @@ import {
 } from '@/components/planning/ModalNotesChantier';
 import { GanttTimelineAdmin } from '@/components/planning/GanttTimelineAdmin';
 import { WeekGridView } from '@/components/planning/WeekGridView';
+import { DayListView } from '@/components/planning/DayListView';
+import { todayYMD } from '@/lib/date/today';
 import {
   ModalAjoutEmployesST,
   type InterventionFormValues,
@@ -205,7 +207,9 @@ export default function PlanningScreen() {
     return (dow === 0 || dow === 6) ? 1 : 0;
   });
   const [monthOffset, setMonthOffset] = useState(0);
-  const [viewMode, setViewMode] = useState<'semaine' | 'mois' | 'gantt'>('semaine');
+  // Vue « Jour » par défaut sur téléphone ; la grille 7 jours reste la vue par défaut sur grand écran.
+  const [viewMode, setViewMode] = useState<'jour' | 'semaine' | 'mois' | 'gantt'>(() => (Dimensions.get('window').width < 700 ? 'jour' : 'semaine'));
+  const [selectedDay, setSelectedDay] = useState<string>(() => todayYMD());
   const [showDatePicker, setShowDatePicker] = useState(false);
   // Modal admin : ajout/suppression d'employés dans une cellule
   const [modal, setModal] = useState<{ chantierId: string; date: string } | null>(null);
@@ -784,6 +788,9 @@ export default function PlanningScreen() {
           {planningMode === 'equipe' && (
             <>
               <View style={styles.viewToggle}>
+                <Pressable style={[styles.viewToggleBtn, viewMode === 'jour' && styles.viewToggleBtnActive]} onPress={() => setViewMode('jour')}>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'jour' && styles.viewToggleBtnTextActive]}>Jour</Text>
+                </Pressable>
                 <Pressable style={[styles.viewToggleBtn, viewMode === 'semaine' && styles.viewToggleBtnActive]} onPress={() => setViewMode('semaine')}>
                   <Text style={[styles.viewToggleBtnText, viewMode === 'semaine' && styles.viewToggleBtnTextActive]}>7j</Text>
                 </Pressable>
@@ -903,14 +910,14 @@ export default function PlanningScreen() {
       <>
       <View style={styles.weekInfo}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={styles.weekLabel}>{viewMode === 'semaine' ? weekLabel : monthData.label}</Text>
-          <Pressable style={{ padding: 4 }} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}>
+          <Text style={styles.weekLabel}>{(viewMode === 'semaine' || viewMode === 'jour') ? weekLabel : monthData.label}</Text>
+          <Pressable style={{ padding: 4 }} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}>
             <Text style={{ fontSize: 16, color: '#5C1F2E' }}>‹</Text>
           </Pressable>
           <Pressable style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }} onPress={() => setShowDatePicker(true)}>
             <Text style={{ fontSize: 10, fontWeight: '600', color: '#5C1F2E' }}>{t.common.today_short}</Text>
           </Pressable>
-          <Pressable style={{ padding: 4 }} onPress={() => viewMode === 'semaine' ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}>
+          <Pressable style={{ padding: 4 }} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}>
             <Text style={{ fontSize: 16, color: '#5C1F2E' }}>›</Text>
           </Pressable>
         </View>
@@ -994,7 +1001,10 @@ export default function PlanningScreen() {
             const pickedMonday = addDays(day, pickedMondayOff);
             const diffDays = Math.round((pickedMonday.getTime() - thisMonday.getTime()) / (1000 * 60 * 60 * 24));
             setWeekOffset(Math.round(diffDays / 7));
-            setViewMode('semaine');
+            // Sur téléphone, un jour choisi dans le mois ouvre la vue Jour ; sinon la grille 7 jours.
+            const y = day.getFullYear(), mo = String(day.getMonth() + 1).padStart(2, '0'), dd = String(day.getDate()).padStart(2, '0');
+            setSelectedDay(`${y}-${mo}-${dd}`);
+            setViewMode(Dimensions.get('window').width < 700 ? 'jour' : 'semaine');
           }}
         />
       )}
@@ -1005,6 +1015,24 @@ export default function PlanningScreen() {
           monthOffset={monthOffset}
           onPrevMonths={() => setMonthOffset(m => m - 3)}
           onNextMonths={() => setMonthOffset(m => m + 3)}
+        />
+      )}
+
+      {/* Vue Jour — liste par chantier (mêmes modales que la grille) */}
+      {viewMode === 'jour' && (
+        <DayListView
+          weekOffset={weekOffset}
+          selectedDate={selectedDay}
+          onSelectDate={setSelectedDay}
+          isAdmin={isAdmin}
+          onOpenChantierActions={(id) => setActionsChantierId(id)}
+          onOpenEmpNote={openNoteModal}
+          onOpenSTNote={openSTNoteModal}
+          onOpenIntervention={openInterventionModal}
+          onOpenAjoutModal={(chantierId, dateStr) => {
+            setInterventionForm({ libelle: '', description: '', dateDebut: dateStr, dateFin: dateStr, couleur: INTERVENTION_COLORS[0] });
+            setModal({ chantierId, date: dateStr });
+          }}
         />
       )}
 
@@ -1590,7 +1618,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingTop: 6,
     paddingBottom: 4,
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#FAF5EF',
   },
   headerLogoWrap: {
     flexDirection: 'row',
@@ -1978,29 +2006,11 @@ const styles = StyleSheet.create({
     color: '#5C1F2E',
   },
   // ── Toggle vue semaine/mois ──
-  viewToggle: {
-    flexDirection: 'row',
-    backgroundColor: '#EDE2D6',
-    borderRadius: 8,
-    padding: 2,
-    marginRight: 4,
-  },
-  viewToggleBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 6,
-  },
-  viewToggleBtnActive: {
-    backgroundColor: '#5C1F2E',
-  },
-  viewToggleBtnText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: '#6E5F54',
-  },
-  viewToggleBtnTextActive: {
-    color: '#fff',
-  },
+  viewToggle: { flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' },
+  viewToggleBtn: { paddingHorizontal: 14, height: 30, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  viewToggleBtnActive: { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
+  viewToggleBtnText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
+  viewToggleBtnTextActive: { color: '#2B1D14', fontWeight: '600' },
   // ── Badge matériel non acheté ──
   materielBadge: {
     position: 'relative',
