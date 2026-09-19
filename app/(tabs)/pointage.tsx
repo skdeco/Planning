@@ -7,6 +7,7 @@ import {
 import { useRefresh } from '@/hooks/useRefresh';
 import { toast } from 'sonner-native';
 import { ScreenContainer } from '@/components/screen-container';
+import { BackToPlus } from '@/components/ui/BackToPlus';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import type { Pointage, PhotoChantier, Chantier } from '@/app/types';
@@ -603,6 +604,7 @@ export default function PointageScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+      <BackToPlus />
       <View style={styles.header}>
         <Text style={styles.headerSub}>{t.pointage.title}</Text>
       </View>

@@ -5,7 +5,6 @@ import {
 } from 'react-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
-import { BackToPlus } from '@/components/ui/BackToPlus';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useRouter } from 'expo-router';
@@ -799,7 +798,6 @@ export default function MessagerieScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
-      <BackToPlus screen="messagerie" />
       {/* Header */}
       <View style={styles.header}>
         {isAdmin && (

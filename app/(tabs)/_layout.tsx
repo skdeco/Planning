@@ -83,8 +83,8 @@ export default function TabLayout() {
     0
   );
 
-  // Pastille de l'onglet Plus : demandes RH à traiter (+ messages non lus quand Messages est rangé dans Plus)
-  const badgePlus = nbDemandesEnAttente + (isEmploye && doitPointer ? nbMessagesNonLus : 0);
+  // Pastille de l'onglet Plus : demandes RH à traiter
+  const badgePlus = nbDemandesEnAttente;
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.background }}>
@@ -159,7 +159,7 @@ export default function TabLayout() {
         name="pointage"
         options={{
           title: t.nav.pointage,
-          href: (isEmploye && doitPointer) ? undefined : null,
+          href: null, // « Horaires » : via l'écran Plus ; l'accueil employé affiche arrivée / départ
           tabBarIcon: ({ color }) => (
             <IconSymbol size={23} name="clock.fill" color={color} />
           ),
@@ -196,8 +196,7 @@ export default function TabLayout() {
         name="messagerie"
         options={{
           title: t.nav.messages,
-          // Employé qui pointe : la barre est déjà pleine (Accueil, Planning, Pointage, Matériel, Plus) → Messages passe dans Plus.
-          href: (isApporteur || (isEmploye && doitPointer)) ? null : undefined,
+          href: isApporteur ? null : undefined,
           tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
           tabBarBadgeStyle: { backgroundColor: DS.primary, fontSize: 10 },
           tabBarIcon: ({ color }) => (

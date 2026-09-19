@@ -287,31 +287,35 @@ export default function DashboardScreen() {
             <Text style={screenTitle}>{t.home.hello} {emp?.prenom || ''}</Text>
           </View>
 
-          {/* Pointage — masqué pour un employé dispensé de pointage (doitPointer === false),
-              cohérent avec l'onglet Pointage lui-même masqué dans ce cas. */}
+          {/* Pointage du jour : arrivée + départ du chantier (l'écran Horaires complet est dans Plus).
+              Masqué pour un employé dispensé de pointage (doitPointer === false). */}
           {data.employes.find(e => e.id === myId)?.doitPointer !== false && (
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-            <Pressable style={{ flex: 2, backgroundColor: myPointagesDuJour.debut ? '#D4EDDA' : '#5C1F2E', borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}
-              onPress={() => router.push('/(tabs)/pointage' as any)}>
-              {myPointagesDuJour.debut ? <CircleCheck size={24} color="#155724" strokeWidth={2} /> : <Clock size={24} color="#fff" strokeWidth={2} />}
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 16, fontWeight: '700', color: myPointagesDuJour.debut ? '#155724' : '#fff' }}>
-                  {myPointagesDuJour.debut ? `${myPointagesDuJour.debut}${myPointagesDuJour.fin ? ` → ${myPointagesDuJour.fin}` : ` (${t.home.inProgress})`}` : t.home.clockMyArrival}
+            {([
+              { cle: 'debut', label: t.pointage.arrival, heure: myPointagesDuJour.debut, actif: !myPointagesDuJour.debut },
+              { cle: 'fin', label: t.pointage.departure, heure: myPointagesDuJour.fin, actif: !!myPointagesDuJour.debut && !myPointagesDuJour.fin },
+            ] as const).map(p => (
+              <Pressable
+                key={p.cle}
+                accessibilityRole="button"
+                accessibilityLabel={`${p.label} : ${p.heure || t.home.tapToClock}`}
+                onPress={() => router.push('/(tabs)/pointage' as any)}
+                style={{ flex: 1, borderRadius: 24, padding: 16, gap: 6, backgroundColor: p.heure ? '#D4EDDA' : p.actif ? DS.primary : DS.surface, ...(p.heure || p.actif ? {} : shadows.sm) }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  {p.heure
+                    ? <CircleCheck size={18} color="#155724" strokeWidth={2} />
+                    : <Clock size={18} color={p.actif ? '#fff' : DS.textSecondary} strokeWidth={2} />}
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: p.heure ? '#155724' : p.actif ? 'rgba(255,255,255,0.85)' : DS.textSecondary }}>{p.label}</Text>
+                </View>
+                <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontSize: 26, color: p.heure ? '#155724' : p.actif ? '#fff' : DS.textMuted }}>
+                  {p.heure || '—:—'}
                 </Text>
-                <Text style={{ fontSize: 12, color: myPointagesDuJour.debut ? '#1E7A3C' : 'rgba(255,255,255,0.8)' }}>
-                  {myPointagesDuJour.debut ? t.home.clockOk : t.home.tapToClock}
+                <Text style={{ fontSize: 12, color: p.heure ? '#1E7A3C' : p.actif ? 'rgba(255,255,255,0.8)' : DS.textSecondary }}>
+                  {p.heure ? t.home.clockOk : p.actif ? t.home.tapToClock : ' '}
                 </Text>
-              </View>
-            </Pressable>
-            {/* Messagerie désactivée côté UI — bloc neutralisé (réversible : retirer false &&) */}
-            {false && nbMsgsNonLus > 0 && (
-              <Pressable style={{ flex: 1, backgroundColor: '#F2E4E1', borderRadius: 14, padding: 14, alignItems: 'center', justifyContent: 'center' }}
-                onPress={() => router.push('/(tabs)/messagerie' as any)}>
-                <Ico e="💬" size={22} />
-                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{nbMsgsNonLus}</Text>
-                <Text style={{ fontSize: 9, color: '#6E5F54' }}>messages</Text>
               </Pressable>
-            )}
+            ))}
           </View>
           )}
 

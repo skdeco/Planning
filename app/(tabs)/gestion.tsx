@@ -8,7 +8,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { ChartBar, Users, Building2, FolderOpen, ChevronRight, Store, ShoppingCart, HardHat, ClipboardList, LogOut, MessageCircle } from 'lucide-react-native';
+import { ChartBar, Users, Building2, FolderOpen, ChevronRight, Store, ShoppingCart, HardHat, ClipboardList, LogOut, Clock } from 'lucide-react-native';
 import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { FournisseursManager } from '@/components/fournisseurs/FournisseursManager';
@@ -77,13 +77,9 @@ export default function PlusScreen() {
   const employe = isEmploye ? data.employes.find(e => e.id === currentUser?.employeId) : null;
   const isRH = isAdmin || employe?.isRH === true;
   const isAcheteur = isAdmin || employe?.isAcheteur === true;
-  // Employé : « Matériel » est dans la barre d'onglets. S'il pointe, « Messages » est rangé ici.
+  // Employé : « Matériel » est dans la barre d'onglets ; « Horaires » (pointage complet) est rangé ici.
   const materielDansLaBarre = isEmploye;
-  const messagesIci = isEmploye && employe?.doitPointer !== false;
-  const myId = currentUser?.employeId || '';
-  const nbMessagesNonLus = messagesIci
-    ? (data.messagesPrive || []).filter(m => m.conversationId === myId && !m.lu && m.expediteurRole === 'admin').length
-    : 0;
+  const pointageIci = isEmploye && employe?.doitPointer !== false;
 
   const nbDemandesEnAttente = isRH
     ? (data.demandesConge || []).filter(d => d.statut === 'en_attente').length +
@@ -127,8 +123,8 @@ export default function PlusScreen() {
   if (!materielDansLaBarre) {
     terrain.push({ key: 'materiel', title: t.gestion.materielAchats, icon: ShoppingCart, onPress: go('/(tabs)/materiel'), badge: nbNonAchetes });
   }
-  if (messagesIci) {
-    terrain.push({ key: 'messages', title: t.nav.messages, icon: MessageCircle, onPress: go('/(tabs)/messagerie'), badge: nbMessagesNonLus });
+  if (pointageIci) {
+    terrain.push({ key: 'pointage', title: t.nav.pointage, icon: Clock, onPress: go('/(tabs)/pointage') });
   }
   if (isAdmin) {
     terrain.push({ key: 'st', title: t.nav.sousTraitants, icon: HardHat, onPress: go('/(tabs)/equipe?tab=soustraitants'), detail: String(data.sousTraitants.length) });
