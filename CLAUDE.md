@@ -44,8 +44,8 @@ retour « ‹ Plus » (`BackToPlus`).
 Fait aussi : accueil employé, titres Fraunces + cartes/boutons/segments sur tous les onglets,
 modales (rayon 28, voile 0.45, titres Fraunces), emojis d'interface → `components/ui/Ico.tsx`,
 dates JJ/MM/AAAA (`lib/date/format.ts`, `DateInput`), `ComboSelect`, `AlertHost` (Alert.alert sur le web).
-Reste : remplacer les couleurs en dur par les tokens `DS.*`, emojis restants dans des expressions
-(Onboarding, PV V2, types BADGE/APPORTEUR), densité de la grille 7 jours, mode sombre.
+Fait aussi : grille 7 jours, portail client, derniers emojis, thème clair imposé (`lib/theme-provider.tsx`).
+Reste : remplacer les couleurs en dur par les tokens `DS.*` — prérequis d'un vrai mode sombre.
 
 ### DETTE-PV-DATAURI
 Les signatures du PV V2 (`signatureEntrepriseUri`, `signatureClientUri`) sont
