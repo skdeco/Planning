@@ -19,8 +19,9 @@ import { SignerDevisOverlay } from '@/components/SignerDevisOverlay';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { DateInput } from '@/components/ui/DateInput';
 import { formatDateFR } from '@/lib/date/format';
+import { ComboSelect } from '@/components/ui/ComboSelect';
 import {
-  MODES_PAIEMENT,
+  MODES_PAIEMENT, APPORTEUR_TYPE_LABELS,
   type MarcheChantier, type SupplementMarche, type PaiementRecu,
   type ModePaiement, type StatutSupplement, type CommissionApporteur,
 } from '@/app/types';
@@ -177,6 +178,21 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   }>({
     apporteurId: '', modeCommission: 'pourcentage', valeur: '', baseCalcul: 'HT', statut: 'a_payer', datePaiement: '', note: '',
   });
+
+  /** Part créer un apporteur dans Équipe ; le formulaire en cours est sauvegardé et restauré au retour. */
+  const allerAjouterApporteur = async () => {
+  // Sauvegarder le formulaire en cours pour le restaurer au retour
+  await AsyncStorage.setItem(PENDING_MARCHE_KEY, JSON.stringify({
+    chantierId,
+    editMarcheId: editMarche?.id || null,
+    marcheForm,
+    commissionEnabled: true,
+    commissionForm,
+    timestamp: Date.now(),
+  }));
+  onClose();
+  router.push('/(tabs)/equipe?tab=apporteurs&returnToMarche=1');
+};
 
   // ── Form supplément ──
   const [showSuppForm, setShowSuppForm] = useState(false);
@@ -1188,19 +1204,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                     <Text style={lbl}>Apporteur *</Text>
                     {apporteurs.length === 0 ? (
                       <Pressable
-                        onPress={async () => {
-  // Sauvegarder le formulaire en cours pour le restaurer au retour
-  await AsyncStorage.setItem(PENDING_MARCHE_KEY, JSON.stringify({
-    chantierId,
-    editMarcheId: editMarche?.id || null,
-    marcheForm,
-    commissionEnabled: true,
-    commissionForm,
-    timestamp: Date.now(),
-  }));
-  onClose();
-  router.push('/(tabs)/equipe?tab=apporteurs&returnToMarche=1');
-}}
+                        onPress={allerAjouterApporteur}
                         style={{ backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#5C1F2E', borderStyle: 'dashed', borderRadius: 8, padding: 10, alignItems: 'center', marginBottom: 8 }}
                       >
                         <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>
@@ -1208,43 +1212,19 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         </Text>
                       </Pressable>
                     ) : (
-                      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
-                        <View style={{ flexDirection: 'row', gap: 6 }}>
-                          {apporteurs.map(a => (
-                            <Pressable
-                              key={a.id}
-                              style={{
-                                paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, borderWidth: 1.5,
-                                borderColor: commissionForm.apporteurId === a.id ? '#5C1F2E' : '#EDE2D6',
-                                backgroundColor: commissionForm.apporteurId === a.id ? '#5C1F2E' : '#F1E7DC',
-                              }}
-                              onPress={() => setCommissionForm(f => ({ ...f, apporteurId: a.id }))}
-                            >
-                              <Text style={{ fontSize: 12, fontWeight: '600', color: commissionForm.apporteurId === a.id ? '#fff' : '#5C1F2E' }}>
-                                {a.prenom} {a.nom}
-                              </Text>
-                            </Pressable>
-                          ))}
-                          <Pressable
-                            onPress={async () => {
-  // Sauvegarder le formulaire en cours pour le restaurer au retour
-  await AsyncStorage.setItem(PENDING_MARCHE_KEY, JSON.stringify({
-    chantierId,
-    editMarcheId: editMarche?.id || null,
-    marcheForm,
-    commissionEnabled: true,
-    commissionForm,
-    timestamp: Date.now(),
-  }));
-  onClose();
-  router.push('/(tabs)/equipe?tab=apporteurs&returnToMarche=1');
-}}
-                            style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#5C1F2E', backgroundColor: '#F2E4E1' }}
-                          >
-                            <Text style={{ fontSize: 12, fontWeight: '600', color: '#5C1F2E' }}>+ Ajouter</Text>
-                          </Pressable>
-                        </View>
-                      </ScrollView>
+                      <ComboSelect
+                        options={apporteurs.map(a => ({
+                          id: a.id,
+                          label: `${a.prenom} ${a.nom}`.trim() || a.societe || 'Sans nom',
+                          detail: [APPORTEUR_TYPE_LABELS[a.type]?.label, a.societe].filter(Boolean).join(' · '),
+                        }))}
+                        value={commissionForm.apporteurId}
+                        onChange={id => setCommissionForm(f => ({ ...f, apporteurId: id }))}
+                        placeholder="Choisir un apporteur…"
+                        searchPlaceholder="Taper un nom, une société…"
+                        addLabel="Ajouter un apporteur"
+                        onAdd={allerAjouterApporteur}
+                      />
                     )}
 
                     <Text style={lbl}>Mode</Text>
