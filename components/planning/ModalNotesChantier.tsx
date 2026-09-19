@@ -21,6 +21,7 @@ import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButto
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import type { InboxItem } from '@/lib/share/inboxStore';
 import type { PickedFile } from '@/lib/share/pickNativeFile';
+import { Ico } from '@/components/ui/Ico';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -239,11 +240,11 @@ function buildListItems(notes: NoteChantierEntry[], admin: boolean): ListItem[] 
   const autresNotes = notes.filter(n => n.auteurId !== 'admin');
   const items: ListItem[] = [];
   if (mesNotes.length > 0) {
-    items.push({ kind: 'header', title: '📝 Mes notes', count: mesNotes.length });
+    items.push({ kind: 'header', title: 'Mes notes', count: mesNotes.length });
     mesNotes.forEach(n => items.push({ kind: 'note', note: n }));
   }
   if (autresNotes.length > 0) {
-    items.push({ kind: 'header', title: '👥 Notes des autres', count: autresNotes.length });
+    items.push({ kind: 'header', title: 'Notes des autres', count: autresNotes.length });
     autresNotes.forEach(n => items.push({ kind: 'note', note: n }));
   }
   return items;
@@ -436,7 +437,7 @@ export function ModalNotesChantier({
                           accessibilityRole="button"
                           accessibilityLabel="Aperçu du PDF"
                         >
-                          <Text style={styles.pdfEmoji}>📄</Text>
+                          <Ico e="📄" size={16} />
                         </Pressable>
                       ) : (
                         <Pressable
@@ -578,7 +579,7 @@ function NoteCard({
                   accessibilityRole="button"
                   accessibilityLabel="Ouvrir le PDF"
                 >
-                  <Text style={styles.pdfEmoji}>📄</Text>
+                  <Ico e="📄" size={16} />
                 </Pressable>
               );
             }

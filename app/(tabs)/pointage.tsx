@@ -17,6 +17,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import * as Location from 'expo-location';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
+import { Ico } from '@/components/ui/Ico';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran
 // (photos pointage fin journée). Aligné avec equipe.tsx + financier-st.tsx.
@@ -938,7 +939,7 @@ export default function PointageScreen() {
                       <RNImage source={{ uri: f.uri }} style={styles.photoPreviewImg} />
                     ) : (
                       <View style={styles.photoPreviewPdf}>
-                        <Text style={styles.photoPreviewPdfIcon}>📄</Text>
+                        <Ico e="📄" size={16} />
                       </View>
                     )}
                     <Text style={styles.photoPreviewName} numberOfLines={1}>{f.name}</Text>

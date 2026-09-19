@@ -6,6 +6,7 @@ import { DS, font, radius, space } from '@/constants/design';
 import { useApp } from '@/app/context/AppContext';
 import { fournisseurSlug } from '@/app/context/AppContext';
 import type { Fournisseur } from '@/app/types';
+import { Ico } from '@/components/ui/Ico';
 
 /**
  * Carnet d'adresses fournisseurs : liste des fiches + formulaire détaillé
@@ -118,12 +119,12 @@ export function FournisseursManager({ onClose, title = 'Fournisseurs' }: Props) 
               </View>
               {f.telephone ? (
                 <Pressable onPress={() => call(f.telephone)} hitSlop={8} style={{ padding: space.xs }}>
-                  <Text style={{ fontSize: 18 }}>📞</Text>
+                  <Ico e="📞" size={20} />
                 </Pressable>
               ) : null}
               {f.email ? (
                 <Pressable onPress={() => mail(f.email)} hitSlop={8} style={{ padding: space.xs }}>
-                  <Text style={{ fontSize: 18 }}>✉️</Text>
+                  <Ico e="✉️" size={20} />
                 </Pressable>
               ) : null}
               <Pressable onPress={() => remove(f)} hitSlop={8} style={{ padding: space.xs }}>

@@ -14,6 +14,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { DS, font, space } from '@/constants/design';
 import { useInbox } from '@/hooks/useInbox';
+import { Ico } from '@/components/ui/Ico';
 
 export function InboxBanner(): React.ReactElement | null {
   const { count } = useInbox();
@@ -42,7 +43,7 @@ export function InboxBanner(): React.ReactElement | null {
         gap: space.sm,
       }}
     >
-      <Text style={{ fontSize: font.md }}>📥</Text>
+      <Ico e="📥" size={16} />
       <Text
         style={{
           flex: 1,

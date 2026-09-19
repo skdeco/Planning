@@ -67,6 +67,7 @@ import { BilanFinancierChantier } from '@/components/BilanFinancierChantier';
 import { MarchesChantier } from '@/components/MarchesChantier';
 import { DateInput } from '@/components/ui/DateInput';
 import { formatDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 // expo-print et expo-sharing nécessitent un build natif — import dynamique uniquement
 const getPrintModule = () => import('expo-print').catch(() => null);
 const getSharingModule = () => import('expo-sharing').catch(() => null);
@@ -815,7 +816,7 @@ export default function PlanningScreen() {
                 style={[styles.saisieBtn, { position: 'relative' }]}
                 onPress={() => setShowRetardModal(true)}
               >
-                <Text style={styles.saisieBtnText}>⏰</Text>
+                <Ico e="⏰" size={16} />
                 {nbRetards > 0 && (
                   <View style={[styles.materielBadgeCount, { position: 'absolute', top: -4, right: -4, width: 16, height: 16 }]}>
                     <Text style={[styles.materielBadgeCountText, { fontSize: 9 }]}>{nbRetards}</Text>
@@ -1159,7 +1160,7 @@ export default function PlanningScreen() {
                               }
                             }}
                           >
-                            <Text style={styles.fichePdfIcon}>📄</Text>
+                            <Ico e="📄" size={16} />
                             <Text style={styles.fichePdfLabel}>PDF</Text>
                           </Pressable>
                         );
@@ -1308,7 +1309,7 @@ export default function PlanningScreen() {
         visible={showGalerieGlobale}
         onClose={() => { setShowGalerieGlobale(false); setGalerieChantierId(undefined); }}
         chantierId={galerieChantierId}
-        titre="📷 Galerie photos"
+        titre="Galerie photos"
       />
 
       {/* ── Modal Notes Chantier (Planning) ── */}

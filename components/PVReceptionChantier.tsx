@@ -11,6 +11,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { SignaturePad } from '@/components/SignaturePad';
 import { todayYMD } from '@/lib/date/today';
+import { Ico } from '@/components/ui/Ico';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -136,7 +137,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
       <View style={{ flexDirection: 'row', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
         {canEdit && (
           <Pressable style={styles.btn} onPress={openForm}>
-            <Text style={styles.btnText}>{hasPv ? '✏️ Modifier le PV' : '+ Démarrer un PV'}</Text>
+            <Text style={styles.btnText}>{hasPv ? 'Modifier le PV' : '+ Démarrer un PV'}</Text>
           </Pressable>
         )}
         {hasPv && !cloture && canSign && (
@@ -179,7 +180,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
                           <Text style={[styles.statusBtnText, item.conforme === true && { color: '#fff' }]}>✓</Text>
                         </Pressable>
                         <Pressable onPress={() => toggleItem(item.id, false)} style={[styles.statusBtn, item.conforme === false && styles.statusKo]}>
-                          <Text style={[styles.statusBtnText, item.conforme === false && { color: '#fff' }]}>🔴</Text>
+                          <Ico e="🔴" size={16} color="#fff" />
                         </Pressable>
                         <Pressable onPress={() => toggleItem(item.id, null)} style={[styles.statusBtn, item.conforme === null && styles.statusNeutral]}>
                           <Text style={[styles.statusBtnText, item.conforme === null && { color: '#fff' }]}>?</Text>

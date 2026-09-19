@@ -14,6 +14,7 @@ import { DOC_SOCIETE_CATEGORIES, type DocSocieteCategorie, type DocumentSociete 
 import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { todayYMD } from '@/lib/date/today';
+import { Ico } from '@/components/ui/Ico';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 function daysBetween(a: string, b: string): number {
@@ -293,7 +294,7 @@ export default function SocieteScreen() {
                       </Text>
                       {(d.dateEmission || d.dateExpiration) && (
                         <Text style={styles.docDates}>
-                          {d.dateEmission && `📅 ${t.societe.issued} ${formatFR(d.dateEmission, dateLocale)}`}
+                          {d.dateEmission && `${t.societe.issued} ${formatFR(d.dateEmission, dateLocale)}`}
                           {d.dateEmission && d.dateExpiration && '  ·  '}
                           {d.dateExpiration && (
                             <Text style={expExpired ? { color: '#B83A2E', fontWeight: '700' } : expSoon ? { color: '#F57C00', fontWeight: '700' } : undefined}>{t.societe.expires} {formatFR(d.dateExpiration, dateLocale)}
@@ -307,10 +308,10 @@ export default function SocieteScreen() {
                 </Pressable>
                 <View style={styles.docActions}>
                   <Pressable onPress={() => openEdit(d)} style={styles.docActionBtn}>
-                    <Text style={styles.docActionText}>✏️</Text>
+                    <Ico e="✏️" size={16} />
                   </Pressable>
                   <Pressable onPress={() => confirmDelete(d)} style={[styles.docActionBtn, { backgroundColor: '#FBEFEC' }]}>
-                    <Text style={styles.docActionText}>🗑</Text>
+                    <Ico e="🗑" size={16} />
                   </Pressable>
                 </View>
               </View>
@@ -366,7 +367,7 @@ export default function SocieteScreen() {
               <Text style={[styles.label, { marginTop: 10 }]}>{t.societe.file}</Text>
               <Pressable onPress={pickFichier} style={styles.filePickerBtn}>
                 <Text style={styles.filePickerText}>
-                  {form.fichierUri ? `📎 ${form.fichierNom || t.societe.fileSelected}` : t.societe.selectFile}
+                  {form.fichierUri ? `${form.fichierNom || t.societe.fileSelected}` : t.societe.selectFile}
                 </Text>
               </Pressable>
               {form.fichierUri && form.fichierType === 'image' && (

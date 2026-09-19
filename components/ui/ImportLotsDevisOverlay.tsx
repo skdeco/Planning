@@ -121,7 +121,7 @@ export function ImportLotsDevisOverlay({
         if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
         else Alert.alert('Aucun lot détecté', msg);
       } else if (remiseHT > 0) {
-        const msg = `✓ ${detected.length} lots détectés\n🎯 Remise de ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata (total brut ${totalBrutHT.toLocaleString('fr-FR')} €)`;
+        const msg = `✓ ${detected.length} lots détectés\n Remise de ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata (total brut ${totalBrutHT.toLocaleString('fr-FR')} €)`;
         if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
         else Alert.alert('Extraction', msg);
       }
@@ -153,7 +153,7 @@ export function ImportLotsDevisOverlay({
       if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
       else Alert.alert('Aucun lot détecté', msg);
     } else if (remiseInfo) {
-      const msg = `✓ ${detected.length} lots détectés\n🎯 Remise de ${remiseInfo.remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata`;
+      const msg = `✓ ${detected.length} lots détectés\n Remise de ${remiseInfo.remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata`;
       if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }
       else Alert.alert('Extraction', msg);
     }
@@ -248,7 +248,7 @@ export function ImportLotsDevisOverlay({
               >
                 <Wand2 size={14} color={DS.cremeFond} strokeWidth={2.5} />
                 <Text style={styles.detectBtnText}>
-                  {pdfExtractLoading ? '⏳ Analyse en cours…' : '🤖 Analyser le devis PDF'}
+                  {pdfExtractLoading ? 'Analyse en cours…' : 'Analyser le devis PDF'}
                 </Text>
               </Pressable>
             </>

@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
 import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
+import { Ico } from '@/components/ui/Ico';
 import {
   getEmployeColor,
   type Chantier,
@@ -163,7 +164,7 @@ export function WeekGridCell({
               onPress={() => openers.empNote(chantier.id, dateStr, emp.id)}
               onLongPress={isAdmin ? () => {
                 if (Platform.OS === 'web') {
-                  const choice = window.prompt(`${emp.prenom} — Choisir :\n1 = Déplacer\n2 = ${isAtelier ? 'Remettre sur chantier' : 'Mettre en atelier 🏭'}`);
+                  const choice = window.prompt(`${emp.prenom} — Choisir :\n1 = Déplacer\n2 = ${isAtelier ? 'Remettre sur chantier' : 'Mettre en atelier '}`);
                   if (choice === '2') toggleLieuTravail(chantier.id, emp.id, dateStr);
                   else if (choice === '1') {
                     const ids = getOrdreChantiers(emp.id, dateStr);
@@ -173,7 +174,7 @@ export function WeekGridCell({
                 } else {
                   Alert.alert(emp.prenom, 'Que voulez-vous faire ?', [
                     { text: 'Annuler', style: 'cancel' },
-                    { text: isAtelier ? '🏗 Remettre sur chantier' : '🏭 Mettre en atelier', onPress: () => toggleLieuTravail(chantier.id, emp.id, dateStr) },
+                    { text: isAtelier ? 'Remettre sur chantier' : 'Mettre en atelier', onPress: () => toggleLieuTravail(chantier.id, emp.id, dateStr) },
                     { text: '↔ Déplacer', onPress: () => {
                       const ids = getOrdreChantiers(emp.id, dateStr);
                       if (ids.length >= 2) openers.ordre(emp.id, dateStr, ids);
@@ -269,7 +270,7 @@ export function WeekGridCell({
           style={[styles.intervBandeau, { backgroundColor: interv.couleur }]}
           onPress={() => isAdmin ? openers.intervention(chantier.id, dateStr, interv.id) : undefined}
         >
-          <Text style={styles.intervBandeauIcon}>⚡</Text>
+          <Ico e="⚡" size={16} />
           <Text style={styles.intervBandeauText} numberOfLines={1}>
             {interv.libelle.length > 5 ? interv.libelle.slice(0, 4) + '…' : interv.libelle}
           </Text>

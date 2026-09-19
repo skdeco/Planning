@@ -27,6 +27,7 @@ import { extractTextFromPdfUrl } from '@/lib/pdfExtract';
 import { extraireTotauxFacture, extraireFournisseur } from '@/lib/factureParser';
 import { envoyerFactureChaintrust } from '@/lib/chaintrust';
 import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie, type DepenseChantier, type PhotoChantier, type PlanChantier } from '@/app/types';
+import { Ico } from '@/components/ui/Ico';
 
 function getFileIcon(mimeType: string): string {
   if (mimeType === 'application/pdf') return '📄';
@@ -231,7 +232,7 @@ export default function InboxScreen(): React.ReactElement {
 
       {items.length === 0 ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: space.xxxl }}>
-          <Text style={{ fontSize: 48, marginBottom: space.md }}>📥</Text>
+          <Ico e="📥" size={28} />
           <Text style={{ color: DS.text, fontSize: font.title, fontWeight: font.semibold, marginBottom: space.sm, textAlign: 'center' }}>Aucun fichier en attente</Text>
           <Text style={{ color: DS.textSecondary, fontSize: font.md, textAlign: 'center', lineHeight: 20 }}>Partagez un fichier vers SK DECO depuis Mail, Photos ou Files pour le voir ici.</Text>
         </View>
@@ -276,14 +277,14 @@ export default function InboxScreen(): React.ReactElement {
                       ))}
                     </View>
                     <Pressable onPress={placePlans} disabled={busy} style={{ backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md, paddingVertical: space.md, alignItems: 'center', marginBottom: space.sm }}>
-                      <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>📐 Plans</Text>
+                      <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>Plans</Text>
                     </Pressable>
                     <Pressable onPress={placeAchat} disabled={busy} style={{ backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md, paddingVertical: space.md, alignItems: 'center', marginBottom: space.sm }}>
-                      <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>🧾 Achats (facture)</Text>
+                      <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>Achats (facture)</Text>
                     </Pressable>
                     {isImage && (
                       <Pressable onPress={placePhotos} disabled={busy} style={{ backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border, borderRadius: radius.md, paddingVertical: space.md, alignItems: 'center' }}>
-                        <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>🖼️ Photos</Text>
+                        <Text style={{ color: DS.text, fontSize: font.md, fontWeight: font.semibold }}>Photos</Text>
                       </Pressable>
                     )}
                   </ScrollView>

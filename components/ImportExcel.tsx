@@ -15,7 +15,7 @@ interface Props {
 
 const TEMPLATES: Record<ImportType, { label: string; description: string; colonnes: string[]; exemple: string[][] }> = {
   employes: {
-    label: '👷 Employés',
+    label: 'Employés',
     description: 'Importer des employés avec leurs informations',
     colonnes: ['Prénom', 'Nom', 'Métier', 'Identifiant', 'Mot de passe', 'Téléphone', 'Email', 'Tarif journalier'],
     exemple: [
@@ -24,7 +24,7 @@ const TEMPLATES: Record<ImportType, { label: string; description: string; colonn
     ],
   },
   articles: {
-    label: '📦 Articles catalogue',
+    label: 'Articles catalogue',
     description: 'Importer des articles avec prix et fournisseur',
     colonnes: ['Nom', 'Catégorie', 'Description', 'Référence', 'Prix unitaire', 'Unité', 'Fournisseur', 'Lien fournisseur'],
     exemple: [
@@ -33,7 +33,7 @@ const TEMPLATES: Record<ImportType, { label: string; description: string; colonn
     ],
   },
   chantiers: {
-    label: '🏗 Chantiers',
+    label: 'Chantiers',
     description: 'Importer des chantiers avec adresse et dates',
     colonnes: ['Nom', 'Adresse', 'Date début (JJ/MM/AAAA)', 'Date fin (JJ/MM/AAAA)', 'Statut (actif/en_attente)'],
     exemple: [
@@ -159,7 +159,7 @@ export function ImportExcel({ visible, onClose }: Props) {
       }
       setResult(`✓ ${count} ${importType === 'employes' ? 'employé(s)' : importType === 'articles' ? 'article(s)' : 'chantier(s)'} importé(s)`);
     } catch (err) {
-      setResult('❌ Erreur lors de l\'import');
+      setResult('Erreur lors de l\'import');
     }
     setImporting(false);
   };

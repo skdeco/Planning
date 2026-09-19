@@ -244,7 +244,7 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
     if (tokens.length === 0) return;
     sendPushNotification(
       tokens,
-      `📅 Nouveau RDV chantier — ${rdv.libelle}`,
+      `Nouveau RDV chantier — ${rdv.libelle}`,
       `${chantier?.nom || ''} · ${formatDateFR(rdv.dateISO)}${rdv.heure ? ' à ' + rdv.heure : ''}`,
       { type: 'rdv_chantier', chantierId, rdvId: rdv.id }
     );

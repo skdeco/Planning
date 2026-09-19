@@ -10,6 +10,7 @@ import { todayYMD } from '@/lib/date/today';
 import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButton';
 import type { PickedFile } from '@/lib/share/pickNativeFile';
 import type { PhotoChantier } from '@/app/types';
+import { Ico } from '@/components/ui/Ico';
 
 type TriMode = 'chantier' | 'employe' | 'semaine';
 
@@ -224,7 +225,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
               acceptPdf={false}
               multiple
               compressImages
-              label={`📸 ${t.galerie.add}`}
+              label={`${t.galerie.add}`}
               disabled={!chantierId && !uploadChantierId}
             />
           </View>
@@ -283,7 +284,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
 
           {allPhotos.length === 0 ? (
             <View style={styles.empty}>
-              <Text style={{ fontSize: 48, marginBottom: 12 }}>📷</Text>
+              <Ico e="📷" size={28} />
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14', marginBottom: 8 }}>{t.galerie.noPhoto}</Text>
               <Text style={{ fontSize: 13, color: '#6E5F54', textAlign: 'center' }}>
                 {t.galerie.noPhotoHint}
@@ -316,7 +317,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
                             {item.uri ? (
                               <Image source={{ uri: item.uri }} style={{ width: itemSize - (selectedIds.has(item.id) ? 6 : 0), height: itemSize - (selectedIds.has(item.id) ? 6 : 0), borderRadius: 8 }} resizeMode="cover" />
                             ) : (
-                              <View style={{ width: itemSize, height: itemSize, borderRadius: 8, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Text style={{ fontSize: 20 }}>📷</Text></View>
+                              <View style={{ width: itemSize, height: itemSize, borderRadius: 8, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Ico e="📷" size={22} /></View>
                             )}
                             {selectedIds.has(item.id) && (
                               <View style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
@@ -359,7 +360,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
               <Image source={{ uri: selectedPhoto.uri }} style={styles.viewerImg} resizeMode="contain" />
             ) : (
               <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: 48 }}>📷</Text>
+                <Ico e="📷" size={28} />
                 <Text style={{ color: 'rgba(255,255,255,0.6)', marginTop: 8 }}>{t.galerie.photoUnavailable}</Text>
               </View>
             )}
@@ -401,7 +402,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
                   </Pressable>
                 )}
                 <Pressable style={styles.viewerActionBtn} onPress={() => downloadPhoto(selectedPhoto)}>
-                  <Text style={{ fontSize: 18 }}>⬇</Text>
+                  <Ico e="⬇" size={20} />
                 </Pressable>
                 {isAdmin && (
                   <Pressable style={[styles.viewerActionBtn, { backgroundColor: 'rgba(239,68,68,0.3)' }]}
@@ -410,7 +411,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
                       deletePhotoChantier(selectedPhoto.id);
                       setSelectedPhoto(next);
                     }}>
-                    <Text style={{ fontSize: 18 }}>🗑</Text>
+                    <Ico e="🗑" size={20} />
                   </Pressable>
                 )}
               </View>

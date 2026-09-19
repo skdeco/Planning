@@ -14,6 +14,7 @@ import { DatePicker } from '@/components/DatePicker';
 import { calcSalaireMensuel } from '@/lib/paie/calcSalaireMensuel';
 import { FileSpreadsheet, FileText, CalendarDays, HardHat } from 'lucide-react-native';
 import { formatDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -743,7 +744,7 @@ export default function ReportingScreen() {
                     <View style={styles.acomptesSection}>
                       {acomptesEmpJour.map(ac => (
                         <View key={ac.id} style={styles.acompteRow}>
-                          <Text style={styles.acompteIcon}>💶</Text>
+                          <Ico e="💶" size={16} />
                           <Text style={styles.acompteMontant}>{ac.montant} €</Text>
                           {ac.commentaire ? <Text style={styles.acompteComment}>{ac.commentaire}</Text> : null}
                           <Pressable onPress={() => handleDeleteAcompte(ac)} style={styles.acompteDelete}>
@@ -966,7 +967,7 @@ export default function ReportingScreen() {
                   <Text style={styles.sectionTitle}>{t.reporting.monthDeposits}</Text>
                   {rapportEmploye.acomptesMois.map(ac => (
                     <View key={ac.id} style={styles.acompteRow}>
-                      <Text style={styles.acompteIcon}>💶</Text>
+                      <Ico e="💶" size={16} />
                       <Text style={styles.acompteDate}>{formatDateFr(ac.date, dateLocale)}</Text>
                       <Text style={styles.acompteMontant}>{ac.montant} €</Text>
                       {ac.commentaire ? <Text style={styles.acompteComment}>{ac.commentaire}</Text> : null}
@@ -1055,7 +1056,7 @@ export default function ReportingScreen() {
                                 }}
                                 style={{ marginTop: 2 }}
                               >
-                                <Text style={styles.gpsBtnText}>📍</Text>
+                                <Ico e="📍" size={16} />
                               </Pressable>
                             )}
                           </>
@@ -1082,7 +1083,7 @@ export default function ReportingScreen() {
                                 }}
                                 style={{ marginTop: 2 }}
                               >
-                                <Text style={styles.gpsBtnText}>📍</Text>
+                                <Ico e="📍" size={16} />
                               </Pressable>
                             )}
                           </>
@@ -1155,7 +1156,7 @@ export default function ReportingScreen() {
                       <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>{t.reporting.arrival}</Text>
                       <Text style={[styles.saisieCellHeure, styles.saisieHeaderText]}>{t.reporting.departure}</Text>
                       <Text style={[styles.saisieCellDuree, styles.saisieHeaderText]}>{t.reporting.pointedBy}</Text>
-                      <Text style={[styles.saisieCellAction, styles.saisieHeaderText]}>✏️</Text>
+                      <Ico e="✏️" size={16} />
                     </View>
                     {joursDuMois.map(dateStr => {
                       const p = pts[dateStr];
@@ -1193,13 +1194,13 @@ export default function ReportingScreen() {
                             <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : isForcedPres ? '#27AE60' : '#9A8C80', fontWeight: (isAbsent || isForcedPres) ? '700' : '400' }]}>
                               {debut ? debut.heure : isAbsent ? t.reporting.absent : isForcedPres ? t.reporting.present : '—'}
                             </Text>
-                            {debut?.saisieManuelle && <Text style={styles.saisieManuelleIcon}>✏️</Text>}
+                            {debut?.saisieManuelle && <Ico e="✏️" size={16} />}
                           </View>
                           <View style={[styles.saisieCellHeure, fin?.saisieManuelle && styles.saisieCellManuelle]}>
                             <Text style={[styles.saisieCellText, !fin && { color: '#9A8C80' }]}>
                               {fin ? fin.heure : '—'}
                             </Text>
-                            {fin?.saisieManuelle && <Text style={styles.saisieManuelleIcon}>✏️</Text>}
+                            {fin?.saisieManuelle && <Ico e="✏️" size={16} />}
                           </View>
                           <View style={styles.saisieCellDuree}>
                             {(() => {
@@ -1219,7 +1220,7 @@ export default function ReportingScreen() {
                             })()}
                           </View>
                           <View style={styles.saisieCellAction}>
-                            <Text style={{ fontSize: 14 }}>✏️</Text>
+                            <Ico e="✏️" size={16} />
                           </View>
                         </Pressable>
                       );

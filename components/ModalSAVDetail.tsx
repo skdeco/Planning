@@ -21,6 +21,7 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { todayYMD } from '@/lib/date/today';
 import { formatDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 
 const PRIO_LABELS: Record<PrioriteSAV, string> = {
   basse: 'Basse',
@@ -266,7 +267,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
       >
         {isPdf(uri) ? (
           <View style={{ width: size, height: size, borderRadius: 6, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ fontSize: size * 0.4 }}>📄</Text>
+            <Ico e="📄" size={16} />
           </View>
         ) : (
           <Image source={{ uri }} style={{ width: size, height: size, borderRadius: 6 }} resizeMode="cover" />
@@ -309,7 +310,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                   <Text style={styles.objet}>{ticket.objet}</Text>
                   {isAdminMode && (
                     <Pressable onPress={() => setEditingHeader(true)} style={{ padding: 4 }}>
-                      <Text style={{ fontSize: 14 }}>✏️</Text>
+                      <Ico e="✏️" size={16} />
                     </Pressable>
                   )}
                 </View>
@@ -456,11 +457,11 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                         onPress={() => openDocPreview(f.uri)}
                         style={styles.fichierRow}
                       >
-                        <Text style={{ fontSize: 18 }}>📄</Text>
+                        <Ico e="📄" size={20} />
                         <Text style={styles.fichierNom} numberOfLines={1}>{f.nom}</Text>
                         {isAdminMode && (
                           <Pressable onPress={() => removePdfFile(f.uri)} style={{ padding: 6 }}>
-                            <Text style={{ fontSize: 14 }}>🗑</Text>
+                            <Ico e="🗑" size={16} />
                           </Pressable>
                         )}
                       </Pressable>
@@ -579,13 +580,13 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                   onPress={() => setEditingHeader(true)}
                   style={[styles.actionBtn, styles.actionEdit]}
                 >
-                  <Text>✏️</Text>
+                  <Ico e="✏️" size={16} />
                 </Pressable>
                 <Pressable
                   onPress={confirmDelete}
                   style={[styles.actionBtn, styles.actionDelete]}
                 >
-                  <Text>🗑</Text>
+                  <Ico e="🗑" size={16} />
                 </Pressable>
               </View>
             )}

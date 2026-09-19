@@ -49,6 +49,7 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 import { canVoirOnglet, type OngletPortail } from '@/lib/portail/permissions';
 import { DateInput } from '@/components/ui/DateInput';
+import { Ico } from '@/components/ui/Ico';
 
 /** Filtre mime pour InboxPickerButton : photos + PDF (réutilisé d'autres écrans). */
 const inboxMimeFilterImagePdf = (m: string): boolean =>
@@ -699,7 +700,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   // Extraction automatique depuis le PDF uploadé (via API serveur — web + mobile)
   const extraireAutoDepuisPdf = async () => {
     if (!premierDevisUri) {
-      const msg = 'Aucun devis PDF lié à ce chantier. Uploadez-en un dans 💼 Marchés.';
+      const msg = 'Aucun devis PDF lié à ce chantier. Uploadez-en un dans Marchés.';
       if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Pas de devis', msg);
       return;
     }
@@ -720,7 +721,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       if (lots.length === 0) {
         window.alert(`Texte extrait (${texte.length} caractères) mais aucun lot détecté. Passez en mode "Coller devis" pour ajuster manuellement.`);
       } else if (remiseHT > 0) {
-        const msg = `✓ ${lots.length} lots détectés\n🎯 Remise de ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata (total brut ${totalBrutHT.toLocaleString('fr-FR')} €)`;
+        const msg = `✓ ${lots.length} lots détectés\n Remise de ${remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata (total brut ${totalBrutHT.toLocaleString('fr-FR')} €)`;
         if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Extraction', msg);
       }
     } catch (e) {
@@ -748,7 +749,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       if (Platform.OS === 'web') window.alert(msg);
       else Alert.alert('Aucun lot détecté', msg);
     } else if (remiseInfo) {
-      const msg = `✓ ${lots.length} lots détectés\n🎯 Remise de ${remiseInfo.remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata`;
+      const msg = `✓ ${lots.length} lots détectés\n Remise de ${remiseInfo.remiseHT.toLocaleString('fr-FR', { maximumFractionDigits: 2 })} € HT ventilée au prorata`;
       if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Extraction', msg);
     }
   };
@@ -812,7 +813,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
       const texte = await extractTextFromPdfUrl(premierDevisUri);
       if (!texte) {
-        if (!silent && Platform.OS === 'web') window.alert("Impossible d'extraire le texte du PDF. Utilisez le bouton 📋 Extraire les lots du devis.");
+        if (!silent && Platform.OS === 'web') window.alert("Impossible d'extraire le texte du PDF. Utilisez le bouton Extraire les lots du devis.");
         return;
       }
       const { lots, remiseHT } = extraireLotsAvecRemise(texte);
@@ -1188,7 +1189,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
     // 3. Générer le PDF dans un second temps — ne doit pas bloquer ni crasher
     setTimeout(() => {
       openHtmlForPrint(buildSituationHTML(snap), `point_financier_${snap.numero}`).catch(() => {
-        const msg = `Point financier ${snap.numero} enregistré. Le PDF n'a pas pu être généré — utilisez le bouton 📄 PDF dans l'historique.`;
+        const msg = `Point financier ${snap.numero} enregistré. Le PDF n'a pas pu être généré — utilisez le bouton PDF dans l'historique.`;
         if (Platform.OS === 'web') window.alert(msg); else Alert.alert('Info', msg);
       });
     }, 200);
@@ -1852,7 +1853,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                               }}>
                                 <Text style={{ fontSize: 10, color: '#6E5F54', fontWeight: '700' }}>
                                   {cc.auteurNom} ({cc.auteurType}) · {new Date(cc.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                                  {unreadByAdmin ? '  🔴 Non lu' : ''}
+                                  {unreadByAdmin ? 'Non lu' : ''}
                                 </Text>
                                 <Text style={{ fontSize: 12, color: '#5C1F2E', marginTop: 3 }}>{cc.texte}</Text>
                               </View>
@@ -2138,7 +2139,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                       style={styles.planRow}
                       onPress={() => openDocPreview(plan.fichier)}
                     >
-                      <Text style={{ fontSize: 18 }}>📄</Text>
+                      <Ico e="📄" size={20} />
                       <View style={{ flex: 1 }}>
                         <Text style={styles.planNom} numberOfLines={1}>{plan.nom || 'Plan sans nom'}</Text>
                         <Text style={styles.planMeta}>
@@ -2173,7 +2174,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           accessibilityRole="button"
                           accessibilityLabel={`Archiver ${plan.nom}`}
                         >
-                          <Text style={{ fontSize: 14 }}>📁</Text>
+                          <Ico e="📁" size={16} />
                         </Pressable>
                       )}
                       {isAdmin && (
@@ -2191,7 +2192,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           }}
                           style={{ padding: 6 }}
                         >
-                          <Text style={{ fontSize: 14 }}>🗑</Text>
+                          <Ico e="🗑" size={16} />
                         </Pressable>
                       )}
                     </Pressable>
@@ -2731,7 +2732,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             <ScrollView contentContainerStyle={{ padding: 16 }}>
               <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 8 }}>
                 {importMode === 'pdf'
-                  ? '🤖 Extraction automatique depuis le PDF déjà uploadé dans Marchés. Cliquez sur le bouton ci-dessous.'
+                  ? 'Extraction automatique depuis le PDF déjà uploadé dans Marchés. Cliquez sur le bouton ci-dessous.'
                   : importMode === 'coller'
                   ? 'Copiez-collez le texte du devis PDF ici. L\'app détectera automatiquement les lots et leurs montants HT.'
                   : 'Un lot par ligne. Ex :\nÉlectricité 5000\nPlomberie 8000\nPeinture, 3200'}
@@ -2744,7 +2745,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     style={{ backgroundColor: '#5C1F2E', borderRadius: 10, padding: 14, alignItems: 'center', opacity: pdfExtractLoading ? 0.5 : 1 }}
                   >
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>
-                      {pdfExtractLoading ? '⏳ Analyse en cours...' : '🤖 Analyser le devis PDF'}
+                      {pdfExtractLoading ? 'Analyse en cours...' : 'Analyser le devis PDF'}
                     </Text>
                   </Pressable>
                   {importTexte && (

@@ -256,7 +256,7 @@ export default function FinancierSTScreen() {
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14' }}>{docType.label}</Text>
                         <Text style={{ fontSize: 10, color: doc ? '#10B981' : '#5C1F2E', marginTop: 2 }}>
-                          {doc ? `✅ ${t.financierSt.providedOn} ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : `⚠️ ${t.financierSt.missing}`}
+                          {doc ? `✅ ${t.financierSt.providedOn} ${new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}` : `${t.financierSt.missing}`}
                         </Text>
                       </View>
                       {doc ? (
@@ -374,7 +374,7 @@ export default function FinancierSTScreen() {
                           <InboxPickerButton
                             onPick={(item) => addFromInboxDevisFichier(devis.id, item)}
                             mimeFilter={inboxMimeFilterImagePdf}
-                            label="📥 Importer mon devis depuis Inbox"
+                            label="Importer mon devis depuis Inbox"
                           />
                         </View>
                       )}

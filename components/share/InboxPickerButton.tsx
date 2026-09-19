@@ -25,6 +25,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS, font, radius, space } from '@/constants/design';
 import { notifyInboxChanged, useInbox } from '@/hooks/useInbox';
 import { removeInboxItem, type InboxItem } from '@/lib/share/inboxStore';
+import { Ico } from '@/components/ui/Ico';
 
 export interface InboxPickerButtonProps {
   onPick: (item: InboxItem) => Promise<boolean>;
@@ -83,7 +84,7 @@ export function InboxPickerButton({
   // mid-flow → on affiche l'empty state avant fermeture). Sinon return null.
   if (filtered.length === 0 && !isOpen) return null;
 
-  const buttonLabel = label ?? `📥 Importer depuis Inbox (${filtered.length})`;
+  const buttonLabel = label ?? `Importer depuis Inbox (${filtered.length})`;
 
   const handleClose = (): void => {
     if (loadingId !== null) return;
@@ -261,7 +262,7 @@ export function InboxPickerButton({
                 padding: space.xxxl,
               }}
             >
-              <Text style={{ fontSize: 48, marginBottom: space.md }}>📥</Text>
+              <Ico e="📥" size={28} />
               <Text
                 style={{
                   color: DS.textSecondary,

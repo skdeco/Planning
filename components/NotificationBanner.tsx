@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, Modal } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
+import { Ico } from '@/components/ui/Ico';
 
 const ACTION_ICONS: Record<string, string> = {
   pointage: '🕐',
@@ -33,7 +34,7 @@ export function NotificationBanner() {
   return (
     <>
       <Pressable style={styles.banner} onPress={handleOpen}>
-        <Text style={styles.bannerIcon}>🔔</Text>
+        <Ico e="🔔" size={16} />
         <Text style={styles.bannerText}>
           {notifications.length} notification{notifications.length > 1 ? 's' : ''} depuis votre dernière visite
         </Text>

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, type StyleProp, type ViewStyle } from 'react-native';
 import { DS, font, space } from '../../constants/design';
+import { Ico } from '@/components/ui/Ico';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ export interface EmptyStateProps {
   /**
    * Illustration, emoji ou icône affichée au-dessus du titre.
    * La taille est libre — le parent (ou l'appelant) la définit.
-   * @example `icon={<Text style={{ fontSize: 36 }}>📭</Text>}`
+   * @example `icon={<Ico e=" " size={28} />}`
    */
   icon?: React.ReactNode;
 
@@ -59,7 +60,7 @@ export interface EmptyStateProps {
  * @example Pleine page avec emoji
  * ```tsx
  * <EmptyState
- *   icon={<Text style={{ fontSize: 36 }}>📭</Text>}
+ *   icon={<Ico e="📭" size={28} />}
  *   title="Aucun rendez-vous ce jour"
  * />
  * ```
@@ -76,7 +77,7 @@ export interface EmptyStateProps {
  * @example Avec bouton CTA
  * ```tsx
  * <EmptyState
- *   icon={<Text style={{ fontSize: 36 }}>🔧</Text>}
+ *   icon={<Ico e="🔧" size={28} />}
  *   title="Aucun ticket SAV"
  *   action={<Pressable onPress={onCreate}><Text>Créer un ticket</Text></Pressable>}
  * />

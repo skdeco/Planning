@@ -2,6 +2,7 @@ import { Tabs, Redirect } from 'expo-router';
 import { Platform, View, Text, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/app/context/AppContext';
+import { Ico } from '@/components/ui/Ico';
 
 export default function ExterneLayout() {
   const insets = useSafeAreaInsets();
@@ -48,14 +49,14 @@ export default function ExterneLayout() {
           name="mes-chantiers"
           options={{
             title: 'Mes chantiers',
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>🏗️</Text>,
+            tabBarIcon: ({ color }) => <Ico e="🏗️" size={24} />,
           }}
         />
         <Tabs.Screen
           name="planning"
           options={{
             title: 'Planning',
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 22, color }}>📅</Text>,
+            tabBarIcon: ({ color }) => <Ico e="📅" size={24} />,
           }}
         />
       </Tabs>

@@ -9,6 +9,7 @@ import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { useConfirm } from '@/hooks/useConfirm';
 import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie } from '@/app/types';
+import { Ico } from '@/components/ui/Ico';
 
 /**
  * DriveChantier — Drive documentaire par chantier (Tier 3 A2).
@@ -130,7 +131,7 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
                           <Text style={[styles.shareTxt, doc.partageExterne === true && styles.shareTxtOn]}>{doc.partageExterne === true ? 'Partagé' : 'Privé'}</Text>
                         </Pressable>
                         <Pressable onPress={() => handleDelete(doc)} hitSlop={8} style={styles.delBtn}>
-                          <Text style={styles.del}>🗑</Text>
+                          <Ico e="🗑" size={16} />
                         </Pressable>
                       </>)}
                     </View>

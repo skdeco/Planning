@@ -336,7 +336,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                         {c.apporteurNom} <Text style={{ color: '#6E5F54' }}>— {c.marcheLib}</Text>
                       </Text>
                       <Text style={{ fontSize: 10, color: c.statut === 'paye' ? '#27AE60' : '#E74C3C', fontWeight: '700', width: 60, textAlign: 'right' }}>
-                        {c.statut === 'paye' ? '✓ Payé' : '⏳ À payer'}
+                        {c.statut === 'paye' ? '✓ Payé' : 'À payer'}
                       </Text>
                       <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', width: 65, textAlign: 'right' }}>{fmt(c.montant)}</Text>
                     </View>

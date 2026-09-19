@@ -22,6 +22,7 @@ import { FournisseursManager } from '@/components/fournisseurs/FournisseursManag
 import { SelectField } from '@/components/ui/SelectField';
 import { router } from 'expo-router';
 import { apiCall } from '@/lib/_core/api';
+import { Ico } from '@/components/ui/Ico';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function genId() { return `mat_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
@@ -35,14 +36,14 @@ function sendNotificationEmail(
   if (acheteurs.length === 0) return;
   if (typeof window !== 'undefined' && 'Notification' in window) {
     if (Notification.permission === 'granted') {
-      new Notification('🛒 Nouvelle liste matériel', {
+      new Notification('Nouvelle liste matériel', {
         body: `${employeNom} a ajouté ${articles.length} article(s) pour ${chantierNom}`,
         icon: '/favicon.ico',
       });
     } else if (Notification.permission !== 'denied') {
       Notification.requestPermission().then(perm => {
         if (perm === 'granted') {
-          new Notification('🛒 Nouvelle liste matériel', {
+          new Notification('Nouvelle liste matériel', {
             body: `${employeNom} a ajouté ${articles.length} article(s) pour ${chantierNom}`,
           });
         }
@@ -836,7 +837,7 @@ export default function MaterielScreen() {
                           <Text style={{ fontSize: 10, color: '#999' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
                         </View>
                         <Pressable onPress={() => setFournisseurPickerModal({ listeId: item.listeId, itemId: item.id, nom: item.texte, currentFournisseur: item.fournisseur || '' })}>
-                          <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{item.fournisseur ? `🏪 ${item.fournisseur}` : '🏪 Assigner fournisseur'}</Text>
+                          <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{item.fournisseur ? `${item.fournisseur}` : 'Assigner fournisseur'}</Text>
                         </Pressable>
                         {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
                       </View>
@@ -853,7 +854,7 @@ export default function MaterielScreen() {
                     {fournisseurs.map(f => (
                       <View key={f} style={{ marginBottom: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F1E7DC', borderRadius: 6, marginBottom: 4 }}>
-                          <Text style={{ fontSize: 12 }}>🏪</Text>
+                          <Ico e="🏪" size={14} />
                           <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E' }}>{f}</Text>
                           <Text style={{ fontSize: 10, color: '#6E5F54' }}>({parFournisseur[f].length})</Text>
                         </View>
@@ -863,7 +864,7 @@ export default function MaterielScreen() {
                     {sansFournisseur.length > 0 && fournisseurs.length > 0 && (
                       <View style={{ marginBottom: 8 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F1E7DC', borderRadius: 6, marginBottom: 4 }}>
-                          <Text style={{ fontSize: 12 }}>📦</Text>
+                          <Ico e="📦" size={14} />
                           <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54' }}>{t.materiel.noFournisseur}</Text>
                           <Text style={{ fontSize: 10, color: '#6E5F54' }}>({sansFournisseur.length})</Text>
                         </View>
@@ -933,7 +934,7 @@ export default function MaterielScreen() {
       {isAcheteur && (
         <Pressable style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 12, marginBottom: 6, backgroundColor: '#F2E4E1', paddingVertical: 8, borderRadius: 8 }}
           onPress={() => setShowCatalogue(true)}>
-          <Text style={{ fontSize: 14 }}>📦</Text>
+          <Ico e="📦" size={16} />
           <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>Gérer le catalogue ({(data.catalogueArticles || []).length} articles)</Text>
         </Pressable>
       )}

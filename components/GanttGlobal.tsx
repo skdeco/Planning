@@ -151,7 +151,7 @@ export function GanttGlobal({ visible, onClose }: Props) {
                             ]}
                           >
                             <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#5C1F2E' }]} numberOfLines={1}>
-                              {isTermine ? '✓ Clôturé' : isEnCours ? '🔨 En cours' : '📅 Planifié'}
+                              {isTermine ? '✓ Clôturé' : isEnCours ? 'En cours' : 'Planifié'}
                             </Text>
                           </View>
                         </View>

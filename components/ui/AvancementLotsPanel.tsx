@@ -26,7 +26,7 @@ export interface AvancementLotsPanelProps {
   isAdmin: boolean;
   /** Callback "Importer depuis le devis" — si défini, affiche le bouton. */
   onPressImport?: () => void;
-  /** Titre personnalisable (par défaut "📊 Avancement par lot"). */
+  /** Titre personnalisable (par défaut "Avancement par lot"). */
   title?: string;
   /** Variante de mise en page : version compacte pour intégration en card. */
   compact?: boolean;
@@ -52,7 +52,7 @@ export function AvancementLotsPanel({
   onChangeLots,
   isAdmin,
   onPressImport,
-  title = '📊 Avancement par lot',
+  title = 'Avancement par lot',
   compact = false,
   snapshots,
   onChangeSnapshots,

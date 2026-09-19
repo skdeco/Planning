@@ -88,6 +88,7 @@ import type {
 } from '@/app/types';
 import type { MessagePrive } from '@/app/types/messages';
 import { EMPLOYE_COLORS } from '@/app/types';
+import { Ico } from '@/components/ui/Ico';
 import { formatDateFR } from '@/lib/date/format';
 
 interface AppContextType {
@@ -664,7 +665,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const localEmployes = (localRaw?.employes as unknown[] || []).length;
       const localChantiers = (localRaw?.chantiers as unknown[] || []).length;
 
-      console.log(`📊 Chargement: Supabase=${supabaseEmployes} emp / Local=${localEmployes} emp`);
+      console.log(`Chargement: Supabase=${supabaseEmployes} emp / Local=${localEmployes} emp`);
 
       let loadedData: ReturnType<typeof migrateData> | null = null;
 
@@ -679,10 +680,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // CAS FALLBACK : Supabase vide ou inaccessible, mais cache local a des données
         // → Utiliser le cache local ET synchroniser vers Supabase
         loadedData = migrateData(localRaw);
-        console.log(`⚠️ Supabase vide, utilisation du cache local (${localEmployes} emp)`);
+        console.log(`Supabase vide, utilisation du cache local (${localEmployes} emp)`);
         // Synchroniser immédiatement vers Supabase pour les autres appareils
         safeSaveToSupabase(localRaw, showSaveError)
-          .then(ok => console.log(ok ? '✅ Cache local synchronisé vers Supabase' : '⚠️ Sync Supabase échouée'));
+          .then(ok => console.log(ok ? '✅ Cache local synchronisé vers Supabase' : 'Sync Supabase échouée'));
       } else if (supabaseRaw && Object.keys(supabaseRaw).length > 0) {
         // Supabase a des données mais pas d'employés (notes, photos, etc.)
         loadedData = migrateData(supabaseRaw);
@@ -2206,7 +2207,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       {sessionExpired && (
         <View style={sessionStyles.overlay}>
           <View style={sessionStyles.box}>
-            <Text style={sessionStyles.icon}>⚠️</Text>
+            <Ico e="⚠️" size={16} />
             <Text style={sessionStyles.title}>Session expirée</Text>
             <Text style={sessionStyles.message}>
               Cette application a été ouverte dans un autre onglet.{'\n'}

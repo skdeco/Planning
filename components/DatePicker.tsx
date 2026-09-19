@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { Ico } from '@/components/ui/Ico';
 import {
   View, Text, StyleSheet, Pressable, Modal, TextInput,
 } from 'react-native';
@@ -108,7 +109,7 @@ export function DatePicker({ value, onChange, label, placeholder = 'JJ/MM/AAAA',
         <Text style={[styles.inputText, !value && styles.placeholder]}>
           {value ? formatDisplay(value) : placeholder}
         </Text>
-        <Text style={styles.calIcon}>📅</Text>
+        <Ico e="📅" size={16} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>

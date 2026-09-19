@@ -14,6 +14,7 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getStaffNotifTokens } from '@/lib/notif/getStaffNotifTokens';
+import { Ico } from '@/components/ui/Ico';
 
 interface Props {
   chantierId: string;
@@ -207,7 +208,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
       const tokens = getStaffNotifTokens(data, 'livraisonRecue');
       if (tokens.length > 0) {
         const nomChantier = chantierCurrent?.nom || 'chantier';
-        sendPushNotification(tokens, '📦 Livraison reçue', `${l.titre} — ${nomChantier}`);
+        sendPushNotification(tokens, 'Livraison reçue', `${l.titre} — ${nomChantier}`);
       }
     }
   };
@@ -562,10 +563,10 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
               {(isAdmin || l.createdBy === (currentUser?.apporteurId || currentUser?.employeId)) && (
                 <>
                   <Pressable onPress={() => openEditLiv(l)} style={styles.miniBtn}>
-                    <Text style={styles.miniBtnText}>✏️</Text>
+                    <Ico e="✏️" size={16} />
                   </Pressable>
                   <Pressable onPress={() => confirmDeleteLiv(l)} style={[styles.miniBtn, styles.miniBtnDel]}>
-                    <Text style={styles.miniBtnText}>🗑</Text>
+                    <Ico e="🗑" size={16} />
                   </Pressable>
                 </>
               )}
@@ -614,10 +615,10 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                 {isAdmin && (
                   <View style={styles.livActions}>
                     <Pressable onPress={() => openEditRdv(r)} style={styles.miniBtn}>
-                      <Text style={styles.miniBtnText}>✏️</Text>
+                      <Ico e="✏️" size={16} />
                     </Pressable>
                     <Pressable onPress={() => confirmDeleteRdv(r)} style={[styles.miniBtn, styles.miniBtnDel]}>
-                      <Text style={styles.miniBtnText}>🗑</Text>
+                      <Ico e="🗑" size={16} />
                     </Pressable>
                   </View>
                 )}
@@ -672,7 +673,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
               <TextInput style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]} value={livForm.note} onChangeText={v => setLivForm(f => ({ ...f, note: v }))} placeholder="Instructions particulières..." multiline />
               <Pressable onPress={pickPhotoEtiquette} style={{ marginTop: 10, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' }}>
                 <Text style={{ color: '#5C1F2E', fontWeight: '700', fontSize: 12 }}>
-                  {livForm.photoEtiquetteUri ? '✓ Photo étiquette ajoutée' : '📷 Photo d\'étiquette (optionnel)'}
+                  {livForm.photoEtiquetteUri ? '✓ Photo étiquette ajoutée' : 'Photo d\'étiquette (optionnel)'}
                 </Text>
               </Pressable>
               {/* V10 — case Monte-charge requis (débloque les sous-cases mairie + prévenir côté admin sur la card) */}
@@ -796,7 +797,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                 {(['chantier', 'visio', 'bureau'] as const).map(l => (
                   <Pressable key={l} onPress={() => setRdvForm(f => ({ ...f, lieu: l }))} style={[styles.chip, rdvForm.lieu === l && styles.chipActive]}>
                     <Text style={[styles.chipText, rdvForm.lieu === l && { color: '#fff' }]}>
-                      {l === 'chantier' ? '🏗 Chantier' : l === 'visio' ? '💻 Visio' : '🏢 Bureau'}
+                      {l === 'chantier' ? 'Chantier' : l === 'visio' ? 'Visio' : 'Bureau'}
                     </Text>
                   </Pressable>
                 ))}

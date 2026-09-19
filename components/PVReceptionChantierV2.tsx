@@ -21,6 +21,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { SignaturePad } from '@/components/SignaturePad';
 import { AvenantPvPanel } from '@/components/AvenantPvPanel';
+import { Ico } from '@/components/ui/Ico';
 
 const DEFAULT_PAIEMENT = 'chèque ou virement instantané, avant de quitter le chantier';
 
@@ -511,7 +512,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
             accessibilityLabel="Supprimer le PV"
             style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E74C3C', backgroundColor: '#FEE2E2', marginBottom: 12 }}
           >
-            <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C' }}>🗑  Supprimer ce PV</Text>
+            <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C' }}> Supprimer ce PV</Text>
           </Pressable>
         )}
         {isClotured && (
@@ -542,7 +543,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
 
         {pieces.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyEmoji}>📋</Text>
+            <Ico e="📋" size={16} />
             <Text style={styles.emptyTitle}>PV vide</Text>
             <Text style={styles.emptyText}>
               {isAdmin
@@ -611,7 +612,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                         accessibilityLabel={`Retirer ${piece.nom}`}
                         hitSlop={8}
                       >
-                        <Text style={styles.pieceRemoveBtn}>🗑</Text>
+                        <Ico e="🗑" size={16} />
                       </Pressable>
                     )}
                   </Pressable>
@@ -668,13 +669,13 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                                       onPress={() => openReserveEditor(piece.id, reserve)}
                                       hitSlop={8}
                                     >
-                                      <Text style={styles.reserveActionBtn}>✏️</Text>
+                                      <Ico e="✏️" size={16} />
                                     </Pressable>
                                     <Pressable
                                       onPress={() => deleteReserve(piece.id, reserve.id)}
                                       hitSlop={8}
                                     >
-                                      <Text style={styles.reserveActionBtn}>🗑</Text>
+                                      <Ico e="🗑" size={16} />
                                     </Pressable>
                                   </View>
                                 )}
@@ -692,7 +693,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                                           onPress={() => openDocPreview(url)}
                                           style={styles.photoThumb}
                                         >
-                                          <Text style={styles.photoEmoji}>📷</Text>
+                                          <Ico e="📷" size={16} />
                                         </Pressable>
                                       ))}
                                     </View>
@@ -716,7 +717,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                                             onPress={() => openDocPreview(url)}
                                             style={[styles.photoThumb, { backgroundColor: '#E8F5E9' }]}
                                           >
-                                            <Text style={styles.photoEmoji}>📷</Text>
+                                            <Ico e="📷" size={16} />
                                           </Pressable>
                                           {isAdmin && !isClotured && (
                                             <Pressable
@@ -861,8 +862,8 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               >
                 <Text style={styles.toggleRecapText}>
                   {afficherRecap
-                    ? '👁 Détail affiché — masquer si factures non émises'
-                    : '👁‍🗨 Détail masqué — afficher'}
+                    ? 'Détail affiché — masquer si factures non émises'
+                    : '‍ Détail masqué — afficher'}
                 </Text>
               </Pressable>
             )}
@@ -963,7 +964,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
         <View style={styles.signaturePadOverlay}>
           <View style={styles.signaturePadBox}>
             <Text style={styles.signaturePadTitle}>
-              {showSignaturePad === 'entreprise' ? '✍️ Signature entreprise' : '✍️ Signature client'}
+              {showSignaturePad === 'entreprise' ? 'Signature entreprise' : 'Signature client'}
             </Text>
             <SignaturePad
               width={300}
@@ -1054,7 +1055,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                     onPress={() => toggleSelected(nom)}
                     style={[styles.sheetItem, styles.sheetItemSelected]}
                   >
-                    <Text style={styles.sheetCheckbox}>☑</Text>
+                    <Ico e="☑" size={16} />
                     <Text style={styles.sheetItemText}>{nom}</Text>
                     <Text style={styles.sheetItemPerso}>(perso)</Text>
                   </Pressable>
@@ -1204,7 +1205,7 @@ function ReserveEditorModal({
           <View style={styles.sheetHandle} />
           <View style={styles.sheetHeader}>
             <Text style={styles.sheetTitle}>
-              {reserve ? '✏️ Modifier la réserve' : '+ Nouvelle réserve'}
+              {reserve ? 'Modifier la réserve' : '+ Nouvelle réserve'}
             </Text>
             <Pressable onPress={onClose} hitSlop={8}>
               <Text style={styles.sheetClose}>✕</Text>
@@ -1288,7 +1289,7 @@ function ReserveEditorModal({
               {photos.map((url, i) => (
                 <View key={url + i} style={styles.photoThumbWrap}>
                   <Pressable onPress={() => openDocPreview(url)} style={styles.photoThumb}>
-                    <Text style={styles.photoEmoji}>📷</Text>
+                    <Ico e="📷" size={16} />
                   </Pressable>
                   <Pressable
                     onPress={() => removePhoto(url)}

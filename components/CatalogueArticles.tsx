@@ -5,6 +5,7 @@ import {
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
 import { CATEGORIES_ARTICLES, type ArticleCatalogue, type CategorieArticle } from '@/app/types';
+import { Ico } from '@/components/ui/Ico';
 
 function genId() { return `art_${Date.now()}_${Math.random().toString(36).slice(2)}`; }
 
@@ -136,7 +137,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
           <ScrollView contentContainerStyle={{ padding: 12, paddingBottom: 32 }}>
             {articles.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 32 }}>
-                <Text style={{ fontSize: 36, marginBottom: 8 }}>📦</Text>
+                <Ico e="📦" size={28} />
                 <Text style={{ fontSize: 15, color: '#6E5F54' }}>Aucun article dans le catalogue</Text>
                 <Text style={{ fontSize: 12, color: '#9A8C80', marginTop: 4 }}>Cliquez "+ Article" pour commencer</Text>
               </View>
@@ -158,7 +159,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
                       </View>
                     </View>
                     <Pressable onPress={() => handleDelete(a.id, a.nom)} style={{ padding: 4 }}>
-                      <Text style={{ color: '#E74C3C', fontSize: 12 }}>🗑</Text>
+                      <Ico e="🗑" size={14} color="#E74C3C" />
                     </Pressable>
                   </Pressable>
                 ))}

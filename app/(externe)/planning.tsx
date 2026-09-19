@@ -234,7 +234,7 @@ export default function PlanningExterne() {
                           ]}
                         >
                           <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#5C1F2E' }]} numberOfLines={1}>
-                            {isEnCours ? '🔨 En cours' : l.manuel ? '📅 Planifié' : '~ Prévu'}
+                            {isEnCours ? 'En cours' : l.manuel ? 'Planifié' : '~ Prévu'}
                           </Text>
                         </View>
                       </View>

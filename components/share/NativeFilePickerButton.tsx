@@ -46,15 +46,15 @@ function defaultLabel(
   opts: Pick<NativeFilePickerButtonProps, 'acceptImages' | 'acceptPdf' | 'acceptCamera'>,
 ): string {
   // Combinaisons single
-  if (opts.acceptCamera && !opts.acceptImages && !opts.acceptPdf) return '📸 Prendre une photo';
-  if (opts.acceptImages && !opts.acceptPdf && !opts.acceptCamera) return '📷 Ajouter une photo';
-  if (opts.acceptPdf && !opts.acceptImages && !opts.acceptCamera) return '📄 Ajouter un PDF';
+  if (opts.acceptCamera && !opts.acceptImages && !opts.acceptPdf) return 'Prendre une photo';
+  if (opts.acceptImages && !opts.acceptPdf && !opts.acceptCamera) return 'Ajouter une photo';
+  if (opts.acceptPdf && !opts.acceptImages && !opts.acceptCamera) return 'Ajouter un PDF';
   // Combinaisons multi
-  if (opts.acceptImages && opts.acceptPdf && !opts.acceptCamera) return '📷 Ajouter photo / PDF';
-  if (opts.acceptImages && opts.acceptCamera && !opts.acceptPdf) return '📷 Photo / 📸 Caméra';
-  if (opts.acceptPdf && opts.acceptCamera && !opts.acceptImages) return '📄 PDF / 📸 Caméra';
-  if (opts.acceptImages && opts.acceptPdf && opts.acceptCamera) return '📎 Ajouter (photo / caméra / PDF)';
-  return '📎 Ajouter';
+  if (opts.acceptImages && opts.acceptPdf && !opts.acceptCamera) return 'Ajouter photo / PDF';
+  if (opts.acceptImages && opts.acceptCamera && !opts.acceptPdf) return 'Photo / Caméra';
+  if (opts.acceptPdf && opts.acceptCamera && !opts.acceptImages) return 'PDF / Caméra';
+  if (opts.acceptImages && opts.acceptPdf && opts.acceptCamera) return 'Ajouter (photo / caméra / PDF)';
+  return 'Ajouter';
 }
 
 export function NativeFilePickerButton({

@@ -24,6 +24,7 @@ import { Onboarding } from '@/components/Onboarding';
 import { DashboardKPI } from '@/components/DashboardKPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -306,7 +307,7 @@ export default function DashboardScreen() {
             {false && nbMsgsNonLus > 0 && (
               <Pressable style={{ flex: 1, backgroundColor: '#F2E4E1', borderRadius: 14, padding: 14, alignItems: 'center', justifyContent: 'center' }}
                 onPress={() => router.push('/(tabs)/messagerie' as any)}>
-                <Text style={{ fontSize: 20 }}>💬</Text>
+                <Ico e="💬" size={22} />
                 <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{nbMsgsNonLus}</Text>
                 <Text style={{ fontSize: 9, color: '#6E5F54' }}>messages</Text>
               </Pressable>
@@ -345,7 +346,7 @@ export default function DashboardScreen() {
                 return (
                 <View key={i} style={[styles.statCard, {}]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                    {note.savTicketId && <Text style={{ fontSize: 12 }}>🔧</Text>}
+                    {note.savTicketId && <Ico e="🔧" size={14} />}
                     <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E' }}>{note.chantierNom}</Text>
                     <Text style={{ fontSize: 10, color: '#9A8C80' }}>par {note.auteurNom}</Text>
                   </View>
@@ -369,7 +370,7 @@ export default function DashboardScreen() {
                                 const url = await uploadFileToStorage(file.uri, 'tasks/photos', `task_${task.id}_${Date.now()}_${Math.random().toString(36).slice(2)}`);
                                 if (url) addTaskPhoto(note.affectationId, note.noteId, task.id, url);
                               }
-                            }}><Text style={{ fontSize: 18 }}>📷</Text></Pressable>
+                            }}><Ico e="📷" size={20} /></Pressable>
                             <InboxPickerButton
                               label="📥"
                               buttonStyle={{ padding: 2, paddingHorizontal: 4, backgroundColor: 'transparent', borderWidth: 0 }}
@@ -397,7 +398,7 @@ export default function DashboardScreen() {
                                     >
                                       {isPdf ? (
                                         <View style={{ width: 44, height: 44, borderRadius: 4, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
-                                          <Text style={{ fontSize: 16 }}>📄</Text>
+                                          <Ico e="📄" size={18} />
                                         </View>
                                       ) : (
                                         <Image source={{ uri }} style={{ width: 44, height: 44, borderRadius: 4 }} resizeMode="cover" />
@@ -458,7 +459,7 @@ export default function DashboardScreen() {
                         });
                       }
                     }}>
-                    <Text style={{ fontSize: 12 }}>📷</Text>
+                    <Ico e="📷" size={14} />
                     <Text style={{ fontSize: 11, fontWeight: '600', color: '#5C1F2E' }}>{t.home.addPhoto}</Text>
                   </Pressable>
                 </View>
@@ -476,7 +477,7 @@ export default function DashboardScreen() {
                 style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FEF2F2', borderRadius: savExpanded ? 12 : 12, borderBottomLeftRadius: savExpanded ? 0 : 12, borderBottomRightRadius: savExpanded ? 0 : 12, padding: 12, borderWidth: 1, borderColor: '#FECACA', gap: 10 }}
                 onPress={() => { setSavExpanded(v => !v); setSavDetailId(null); }}
               >
-                <Text style={{ fontSize: 18 }}>🔧</Text>
+                <Ico e="🔧" size={20} />
                 <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: '#DC2626' }}>{t.home.seeDetail}</Text>
                 <Text style={{ fontSize: 14, color: '#DC2626' }}>{savExpanded ? '▾' : '▸'}</Text>
               </Pressable>
@@ -536,7 +537,7 @@ export default function DashboardScreen() {
                                       Alert.alert(t.home.resolveSavTitle, t.home.resolveSavMsg, [
                                         { text: 'Annuler', style: 'cancel' },
                                         { text: t.home.resolveWithoutPhoto, onPress: () => updateTicketSAV({ ...ticket, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() }) },
-                                        { text: `📷 ${t.home.addPhoto}`, onPress: async () => {
+                                        { text: `${t.home.addPhoto}`, onPress: async () => {
                                           const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
                                           if (!files || files.length === 0) {
                                             updateTicketSAV({ ...ticket, statut: 'resolu', dateResolution: todayYMD(), resoluPar: userName, updatedAt: new Date().toISOString() });
@@ -601,7 +602,7 @@ export default function DashboardScreen() {
                   style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F2E4E1', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8 }}
                   onPress={() => { setGalerieChantierId(c.id); setGalerieVisible(true); }}
                 >
-                  <Text style={{ fontSize: 12 }}>📸</Text>
+                  <Ico e="📸" size={14} />
                   <Text style={{ fontSize: 12, fontWeight: '600', color: '#5C1F2E' }}>Photos ({(data.photosChantier || []).filter(p => p.chantierId === c.id).length})</Text>
                 </Pressable>
                 {c.adresse && (
@@ -698,7 +699,7 @@ export default function DashboardScreen() {
                 <View style={styles.statCard}>
                   {mesConges.map(d => (
                     <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}>
-                      <Text style={{ fontSize: 14 }}>🏖</Text>
+                      <Ico e="🏖" size={16} />
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Congé {formatDateFR(d.dateDebut)} → {formatDateFR(d.dateFin)}</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
@@ -707,7 +708,7 @@ export default function DashboardScreen() {
                   ))}
                   {mesAvances.map(d => (
                     <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}>
-                      <Text style={{ fontSize: 14 }}>💰</Text>
+                      <Ico e="💰" size={16} />
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Avance de {d.montant} €</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
@@ -716,7 +717,7 @@ export default function DashboardScreen() {
                   ))}
                   {mesMaladies.map(d => (
                     <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
-                      <Text style={{ fontSize: 14 }}>🏥</Text>
+                      <Ico e="🏥" size={16} />
                       <View style={{ flex: 1 }}>
                         <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Arrêt maladie {formatDateFR(d.dateDebut)}</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
@@ -1107,7 +1108,7 @@ export default function DashboardScreen() {
                       <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14' }}>{evt.titre}</Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                         {evt.heureFin ? <Text style={{ fontSize: 11, color: '#6E5F54' }}>{evt.heureDebut} → {evt.heureFin}</Text> : null}
-                        {evt.lieu ? <Text style={{ fontSize: 11, color: '#6E5F54' }}>· 📍 {evt.lieu}</Text> : null}
+                        {evt.lieu ? <Text style={{ fontSize: 11, color: '#6E5F54' }}>· {evt.lieu}</Text> : null}
                         {ch ? <Text style={{ fontSize: 11, color: ch.couleur, fontWeight: '600' }}>· {ch.nom}</Text> : null}
                       </View>
                     </View>
@@ -1288,14 +1289,14 @@ export default function DashboardScreen() {
             style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
             onPress={() => router.push('/(tabs)/reporting' as any)}
           >
-            <Text style={{ fontSize: 16 }}>📄</Text>
+            <Ico e="📄" size={18} />
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E' }}>{t.dash.exportReport}</Text>
           </Pressable>
           <Pressable
             style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
             onPress={() => setShowImport(true)}
           >
-            <Text style={{ fontSize: 16 }}>📥</Text>
+            <Ico e="📥" size={18} />
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>{t.dash.importExcel}</Text>
           </Pressable>
         </View>

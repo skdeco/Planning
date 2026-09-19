@@ -70,6 +70,7 @@ import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
 import * as FileSystem from 'expo-file-system/legacy';
 import { requireOptionalNativeModule } from 'expo-modules-core';
 import { formatDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 
 // Filtre mime utilisé par les pickers Notes Chantier + Plans Chantier (photos + PDF).
 const inboxMimeFilterImagePdf = (m: string): boolean =>
@@ -1459,10 +1460,10 @@ export default function ChantiersScreen() {
             });
             const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#5C1F2E', haute: '#F59E0B', urgente: '#E74C3C' };
             const statutLabels: Record<string, { label: string; bg: string; text: string }> = {
-              ouvert: { label: '🔴 Ouvert', bg: '#FEF2F2', text: '#DC2626' },
-              en_cours: { label: '🟡 En cours', bg: '#FFF3CD', text: '#856404' },
-              resolu: { label: '🟢 Résolu', bg: '#D4EDDA', text: '#155724' },
-              clos: { label: '⚪ Clos', bg: '#F1E7DC', text: '#6E5F54' },
+              ouvert: { label: 'Ouvert', bg: '#FEF2F2', text: '#DC2626' },
+              en_cours: { label: 'En cours', bg: '#FFF3CD', text: '#856404' },
+              resolu: { label: 'Résolu', bg: '#D4EDDA', text: '#155724' },
+              clos: { label: 'Clos', bg: '#F1E7DC', text: '#6E5F54' },
             };
 
             if (allTickets.length === 0) return (
@@ -2003,7 +2004,7 @@ export default function ChantiersScreen() {
                 </Pressable>
               </FormField>
 
-              <FormField label="📅 Afficher le planning au client">
+              <FormField label="Afficher le planning au client">
                 <Pressable
                   style={[styles.toggleBtn, form.afficherPlanningAuClient && styles.toggleBtnActive]}
                   onPress={() => setForm(f => ({ ...f, afficherPlanningAuClient: !f.afficherPlanningAuClient }))}
@@ -2221,7 +2222,7 @@ export default function ChantiersScreen() {
                           acceptPdf={false}
                           multiple={false}
                           compressImages
-                          label={fiche.photoEmplacementCle ? '📷 Changer la photo' : '📷 Ajouter photo cachette'}
+                          label={fiche.photoEmplacementCle ? 'Changer la photo' : 'Ajouter photo cachette'}
                         />
                         <InboxPickerButton
                           onPick={handleClePickFromInbox}
@@ -2358,7 +2359,7 @@ export default function ChantiersScreen() {
                     {/* Formulaire inline ajout/édition achat (UX simplifiée : champs essentiels visibles, détails repliés) */}
                     {showAchatFormFiche && (
                       <View style={{ backgroundColor: '#F2E4E1', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 8 }}>{editAchatId ? 'Modifier l\'achat' : 'Nouvel achat'}</Text>
 
                         {/* Bouton facture (priorité visuelle) */}
                         <View style={{ marginBottom: 8 }}>
@@ -2374,14 +2375,14 @@ export default function ChantiersScreen() {
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
+                            <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{achatAnalyse ? 'Analyse du PDF…' : 'Ajouter une facture'}</Text>
                           </Pressable>
                           <DocInboxButton folder={`chantiers/${ficheId}/achats`} onUploaded={({ url }) => { setAchatFichierUri(url); void analyserFacture(url); }} />
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
                             <Pressable onPress={() => openDocPreview(achatFichierUri)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Text style={{ fontSize: 14 }}>📄</Text>
+                              <Ico e="📄" size={16} />
                               <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>Document joint (toucher pour voir)</Text>
                             </Pressable>
                             <Pressable onPress={() => { setAchatFichierUri(null); setAchatFichierLocalUri(null); }}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
@@ -2477,7 +2478,7 @@ export default function ChantiersScreen() {
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>H.T.</Text>
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>T.T.C.</Text>
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>Date</Text>
-                          <Text style={{ width: 30, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'center' }}>📄</Text>
+                          <Ico e="📄" size={12} color="#fff" />
                         </View>
                         {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
                           <Pressable
@@ -2485,8 +2486,8 @@ export default function ChantiersScreen() {
                             style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#F2E4E1' : (idx % 2 === 0 ? '#fff' : '#FAF5EF'), borderTopWidth: 1, borderTopColor: '#EDE2D6', alignItems: 'center' }}
                             onPress={() => {
                               const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
-                              if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
-                              actions.push({ text: '✏️ Modifier', onPress: () => {
+                              if (dep.fichier) actions.push({ text: 'Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
+                              actions.push({ text: 'Modifier', onPress: () => {
                                 setAchatForm({
                                   libelle: dep.libelle || '',
                                   montantHT: dep.montant ? String(dep.montant) : '',
@@ -2501,7 +2502,7 @@ export default function ChantiersScreen() {
                                 setShowDetailsAchat(true);
                                 setShowAchatFormFiche(true);
                               } });
-                              actions.push({ text: '🗑 Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) });
+                              actions.push({ text: 'Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) });
                               actions.push({ text: 'Annuler', style: 'cancel' });
                               Alert.alert(dep.libelle || 'Achat', '', actions);
                             }}
@@ -2524,10 +2525,10 @@ export default function ChantiersScreen() {
                             <View style={{ width: 30, alignItems: 'center' }}>
                               {dep.fichier ? (
                                 <Pressable onPress={(e) => { e.stopPropagation?.(); openDocPreview(dep.fichier!); }}>
-                                  <Text style={{ fontSize: 16 }}>📄</Text>
+                                  <Ico e="📄" size={18} />
                                 </Pressable>
                               ) : (
-                                <Text style={{ fontSize: 14 }} accessibilityLabel="Facture manquante">⚠️</Text>
+                                <Ico e="⚠️" size={16} />
                               )}
                             </View>
                           </Pressable>
@@ -2651,7 +2652,7 @@ export default function ChantiersScreen() {
                                   accessibilityRole="button"
                                   accessibilityLabel="Ouvrir le PDF"
                                 >
-                                  <Text style={{ fontSize: 22 }}>📄</Text>
+                                  <Ico e="📄" size={24} />
                                 </Pressable>
                               );
                             }
@@ -2714,7 +2715,7 @@ export default function ChantiersScreen() {
                             <View key={idx} style={{ marginRight: 8, position: 'relative' }}>
                               {isPdf ? (
                                 <View style={{ width: 56, height: 56, borderRadius: 6, backgroundColor: '#FFF3CD', alignItems: 'center', justifyContent: 'center' }}>
-                                  <Text style={{ fontSize: 22 }}>📄</Text>
+                                  <Ico e="📄" size={24} />
                                 </View>
                               ) : (
                                 <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
@@ -2857,7 +2858,7 @@ export default function ChantiersScreen() {
                                       accessibilityRole="button"
                                       accessibilityLabel="Ouvrir le PDF"
                                     >
-                                      <Text style={{ fontSize: 20 }}>📄</Text>
+                                      <Ico e="📄" size={22} />
                                     </Pressable>
                                   );
                                 }
@@ -2940,7 +2941,7 @@ export default function ChantiersScreen() {
                                       accessibilityRole="button"
                                       accessibilityLabel="Ouvrir le PDF"
                                     >
-                                      <Text style={{ fontSize: 20 }}>📄</Text>
+                                      <Ico e="📄" size={22} />
                                     </Pressable>
                                   );
                                 }
@@ -3030,7 +3031,7 @@ export default function ChantiersScreen() {
                     {/* Formulaire inline ajout/édition achat (UX simplifiée : champs essentiels visibles, détails repliés) */}
                     {showAchatForm && (
                       <View style={{ backgroundColor: '#F2E4E1', borderRadius: 14, padding: 12, marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}>
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 8 }}>{editAchatId ? '✏️ Modifier l\'achat' : '🧾 Nouvel achat'}</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 8 }}>{editAchatId ? 'Modifier l\'achat' : 'Nouvel achat'}</Text>
 
                         {/* Bouton facture (priorité visuelle) */}
                         <View style={{ marginBottom: 8 }}>
@@ -3047,14 +3048,14 @@ export default function ChantiersScreen() {
                                 Alert.alert('Erreur', "Impossible d'ajouter le fichier");
                               }
                             }}>
-                            <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{achatAnalyse ? '🔍 Analyse du PDF…' : 'Ajouter une facture'}</Text>
+                            <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{achatAnalyse ? 'Analyse du PDF…' : 'Ajouter une facture'}</Text>
                           </Pressable>
                           <DocInboxButton folder={`chantiers/${achatsChantierId}/achats`} onUploaded={({ url }) => { setAchatFichierUri(url); void analyserFacture(url); }} />
                         </View>
                         {achatFichierUri && (
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, backgroundColor: '#fff', borderRadius: 8 }}>
                             <Pressable onPress={() => openDocPreview(achatFichierUri)} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                              <Text style={{ fontSize: 14 }}>📄</Text>
+                              <Ico e="📄" size={16} />
                               <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600' }}>Document joint (toucher pour voir)</Text>
                             </Pressable>
                             <Pressable onPress={() => { setAchatFichierUri(null); setAchatFichierLocalUri(null); }}><Text style={{ fontSize: 14, color: '#E74C3C' }}>✕</Text></Pressable>
@@ -3151,7 +3152,7 @@ export default function ChantiersScreen() {
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>H.T.</Text>
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>T.T.C.</Text>
                           <Text style={{ flex: 0.7, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'right' }}>Date</Text>
-                          <Text style={{ width: 30, fontSize: 10, fontWeight: '700', color: '#fff', textAlign: 'center' }}>📄</Text>
+                          <Ico e="📄" size={12} color="#fff" />
                         </View>
                         {achats.sort((a, b) => b.date.localeCompare(a.date)).map((dep, idx) => (
                           <Pressable
@@ -3159,8 +3160,8 @@ export default function ChantiersScreen() {
                             style={{ flexDirection: 'row', paddingVertical: 10, paddingHorizontal: 6, backgroundColor: !dep.fichier ? '#F2E4E1' : (idx % 2 === 0 ? '#fff' : '#FAF5EF'), borderTopWidth: 1, borderTopColor: '#EDE2D6', alignItems: 'center' }}
                             onPress={() => {
                               const actions: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = [];
-                              if (dep.fichier) actions.push({ text: '👁 Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
-                              actions.push({ text: '✏️ Modifier', onPress: () => {
+                              if (dep.fichier) actions.push({ text: 'Voir le fichier', onPress: () => openDocPreview(dep.fichier!) });
+                              actions.push({ text: 'Modifier', onPress: () => {
                                 setAchatForm({
                                   libelle: dep.libelle || '',
                                   montantHT: dep.montant ? String(dep.montant) : '',
@@ -3176,7 +3177,7 @@ export default function ChantiersScreen() {
                                 setShowDetailsAchat(true);
                                 setShowAchatForm(true);
                               } });
-                              actions.push({ text: '🗑 Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) });
+                              actions.push({ text: 'Supprimer', style: 'destructive', onPress: () => deleteDepense(dep.id) });
                               actions.push({ text: 'Annuler', style: 'cancel' });
                               Alert.alert(dep.libelle || 'Achat', '', actions);
                             }}
@@ -3202,10 +3203,10 @@ export default function ChantiersScreen() {
                             <View style={{ width: 30, alignItems: 'center' }}>
                               {dep.fichier ? (
                                 <Pressable onPress={(e) => { e.stopPropagation?.(); openDocPreview(dep.fichier!); }}>
-                                  <Text style={{ fontSize: 14 }}>📄</Text>
+                                  <Ico e="📄" size={16} />
                                 </Pressable>
                               ) : (
-                                <Text style={{ fontSize: 14 }} accessibilityLabel="Facture manquante">⚠️</Text>
+                                <Ico e="⚠️" size={16} />
                               )}
                             </View>
                           </Pressable>
@@ -3313,7 +3314,7 @@ export default function ChantiersScreen() {
                               <Text style={styles.planNom}>{plan.nom}</Text>
                               <Text style={styles.planMeta}>
                                 {new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                {plan.visiblePar !== 'tous' && ` • ${plan.visiblePar === 'employes' ? '👷 Employés' : plan.visiblePar === 'soustraitants' ? '👤 ST' : '👥 Sélection'}`}
+                                {plan.visiblePar !== 'tous' && ` • ${plan.visiblePar === 'employes' ? ' Employés' : plan.visiblePar === 'soustraitants' ? ' ST' : ' Sélection'}`}
                               </Text>
                             </View>
                             <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
@@ -3335,7 +3336,7 @@ export default function ChantiersScreen() {
                               accessibilityRole="button"
                               accessibilityLabel={`Archiver ${plan.nom}`}
                             >
-                              <Text style={styles.planDeleteBtnText}>📁</Text>
+                              <Ico e="📁" size={16} />
                             </Pressable>
                           )}
                           {isAdmin && (
@@ -3360,7 +3361,7 @@ export default function ChantiersScreen() {
                                 }
                               }}
                             >
-                              <Text style={styles.planDeleteBtnText}>🗑</Text>
+                              <Ico e="🗑" size={16} />
                             </Pressable>
                           )}
                         </View>
@@ -3427,7 +3428,7 @@ export default function ChantiersScreen() {
                               accessibilityRole="button"
                               accessibilityLabel={`Supprimer la version archivée ${plan.nom}`}
                             >
-                              <Text style={styles.planDeleteBtnText}>🗑</Text>
+                              <Ico e="🗑" size={16} />
                             </Pressable>
                           )}
                         </View>
@@ -3507,7 +3508,7 @@ export default function ChantiersScreen() {
                       accessibilityLabel="Sélectionner un lot"
                     >
                       <Text style={{ fontSize: 14, color: newPlanLotId ? DS.sombre : DS.textSecondary }}>
-                        {newPlanLotId ? `🏷️ ${getLotNom(newPlanLotId)}` : 'Sélectionner un lot…'}
+                        {newPlanLotId ? `${getLotNom(newPlanLotId)}` : 'Sélectionner un lot…'}
                       </Text>
                       <Text style={{ fontSize: 12, color: DS.textSecondary }}>▼</Text>
                     </Pressable>
@@ -3524,7 +3525,7 @@ export default function ChantiersScreen() {
                           onPress={() => setNewPlanVisiblePar(v)}
                         >
                           <Text style={[styles.chipText, newPlanVisiblePar === v && styles.chipTextActive]}>
-                            {v === 'tous' ? 'Tous' : v === 'employes' ? '👷 Employés' : v === 'soustraitants' ? '👤 Sous-traitants' : '👥 Par personne'}
+                            {v === 'tous' ? 'Tous' : v === 'employes' ? 'Employés' : v === 'soustraitants' ? 'Sous-traitants' : 'Par personne'}
                           </Text>
                         </Pressable>
                       ))}
@@ -3631,7 +3632,7 @@ export default function ChantiersScreen() {
       {bilanChantierId && (
         <BilanFinancierChantier visible={!!bilanChantierId} onClose={() => backToDash(() => setBilanChantierId(null))} chantierId={bilanChantierId} />
       )}
-      <GaleriePhotos visible={showGalerie !== null} onClose={() => backToDash(() => setShowGalerie(null))} chantierId={showGalerie || undefined} titre={`📷 Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
+      <GaleriePhotos visible={showGalerie !== null} onClose={() => backToDash(() => setShowGalerie(null))} chantierId={showGalerie || undefined} titre={`Galerie — ${data.chantiers.find(c => c.id === showGalerie)?.nom || ''}`} />
       {/* V10 — Modal Notes unifiée (planning), ouverte depuis tuile Notes du dashboard chantier */}
       <ModalNotes noteModal={noteModalChantier} setNoteModal={setNoteModalChantier} />
 
@@ -3855,7 +3856,7 @@ export default function ChantiersScreen() {
                           onPress={() => openSavDetailFromListe(t.id)}
                           style={[savListeStyles.actionBtn, savListeStyles.actionEdit]}
                         >
-                          <Text>✏️</Text>
+                          <Ico e="✏️" size={16} />
                         </Pressable>
                         <Pressable
                           onPress={() => {
@@ -3870,7 +3871,7 @@ export default function ChantiersScreen() {
                           }}
                           style={[savListeStyles.actionBtn, savListeStyles.actionDelete]}
                         >
-                          <Text>🗑</Text>
+                          <Ico e="🗑" size={16} />
                         </Pressable>
                       </View>
                     </View>

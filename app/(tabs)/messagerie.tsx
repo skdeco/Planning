@@ -15,6 +15,7 @@ import type { InboxItem } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 import { DateInput } from '@/components/ui/DateInput';
+import { Ico } from '@/components/ui/Ico';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran (messagerie =
 // photos/vidéos uniquement). Diffère de inboxMimeFilterImagePdf utilisé
@@ -295,7 +296,7 @@ export default function MessagerieScreen() {
           expediteurRole: myRole as 'admin' | 'employe' | 'soustraitant',
           expediteurId: myConvId,
           expediteurNom,
-          contenu: file.type.startsWith('video/') ? '🎥 Vidéo' : '📷 Photo',
+          contenu: file.type.startsWith('video/') ? 'Vidéo' : 'Photo',
           chantierId: selectedChantierId || undefined,
           fichiers: [uri],
           createdAt: now(),
@@ -338,7 +339,7 @@ export default function MessagerieScreen() {
         expediteurRole: myRole as 'admin' | 'employe' | 'soustraitant',
         expediteurId: myConvId,
         expediteurNom,
-        contenu: isVideo ? '🎥 Vidéo' : '📷 Photo',
+        contenu: isVideo ? 'Vidéo' : 'Photo',
         chantierId: selectedChantierId || undefined,
         fichiers: [dataUri],
         createdAt: now(),
@@ -379,7 +380,7 @@ export default function MessagerieScreen() {
             expediteurRole: myRole as 'admin' | 'employe' | 'soustraitant',
             expediteurId: myConvId,
             expediteurNom,
-            contenu: '🎤 Message vocal',
+            contenu: 'Message vocal',
             audioUri: base64,
             audioDuration: recordingDuration,
             createdAt: now(),
@@ -813,7 +814,7 @@ export default function MessagerieScreen() {
             onPress={() => setShowArchive(v => !v)}
           >
             <Text style={[styles.archiveToggleText, showArchive && styles.archiveToggleTextActive]}>
-              {showArchive ? `📂 ${t.messagerie.archived}` : `📁 ${t.messagerie.archives}`}
+              {showArchive ? `${t.messagerie.archived}` : `${t.messagerie.archives}`}
             </Text>
           </Pressable>
         )}
@@ -877,7 +878,7 @@ export default function MessagerieScreen() {
             {(['all', 'text', 'photo', 'pdf'] as const).map(t => (
               <Pressable key={t} style={[styles.filterChip, filterType === t && styles.filterChipActive]} onPress={() => setFilterType(filterType === t ? 'all' : t)}>
                 <Text style={[styles.filterChipText, filterType === t && styles.filterChipTextActive]}>
-                  {t === 'all' ? 'Tout' : t === 'text' ? '💬 Texte' : t === 'photo' ? '📷 Photos' : '📄 PDF'}
+                  {t === 'all' ? 'Tout' : t === 'text' ? 'Texte' : t === 'photo' ? 'Photos' : 'PDF'}
                 </Text>
               </Pressable>
             ))}
@@ -939,7 +940,7 @@ export default function MessagerieScreen() {
                       {/* Audio (message vocal) */}
                       {msg.audioUri && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                          <Text style={{ fontSize: 20 }}>🎤</Text>
+                          <Ico e="🎤" size={22} />
                           <View style={{ flex: 1, height: 4, backgroundColor: isMine ? 'rgba(255,255,255,0.3)' : '#EDE2D6', borderRadius: 2 }} />
                           <Text style={{ fontSize: 11, color: isMine ? 'rgba(255,255,255,0.7)' : '#6E5F54' }}>{msg.audioDuration ? `${Math.floor(msg.audioDuration / 60)}:${String(msg.audioDuration % 60).padStart(2, '0')}` : '0:00'}</Text>
                         </View>
@@ -971,7 +972,7 @@ export default function MessagerieScreen() {
                             {msg.lu && msg.luAt ? ` ${formatHeure(msg.luAt)}` : ''}
                           </Text>
                         )}
-                        {msg.archive && <Text style={styles.msgArchiveBadge}>📁</Text>}
+                        {msg.archive && <Ico e="📁" size={16} />}
                         {msg.scheduledAt && new Date(msg.scheduledAt) > new Date() && (
                           <Text style={{ fontSize: 9, color: '#F59E0B', fontWeight: '600' }}>{msg.scheduledAt.slice(0, 16).replace('T', ' ')}</Text>
                         )}
@@ -982,7 +983,7 @@ export default function MessagerieScreen() {
                           <Text style={{ fontSize: 11 }}>{msg.archive ? '📂' : '📁'}</Text>
                         </Pressable>
                         <Pressable onPress={() => handleDelete(msg)} style={styles.msgQuickBtn}>
-                          <Text style={{ fontSize: 11 }}>🗑</Text>
+                          <Ico e="🗑" size={13} />
                         </Pressable>
                       </View>
                     </View>
@@ -1119,23 +1120,23 @@ export default function MessagerieScreen() {
                   <View style={{ flex: 1, height: 3, backgroundColor: '#E74C3C', borderRadius: 2, opacity: 0.3 }} />
                 </View>
                 <Pressable style={[styles.sendBtn, { backgroundColor: '#E74C3C' }]} onPress={stopRecording}>
-                  <Text style={styles.sendBtnText}>⬛</Text>
+                  <Ico e="⬛" size={16} />
                 </Pressable>
               </>
             ) : (
               /* Mode texte normal */
               <>
                 <Pressable style={styles.photoBtn} onPress={handleUploadPhoto}>
-                  <Text style={styles.photoBtnText}>📎</Text>
+                  <Ico e="📎" size={16} />
                 </Pressable>
                 {Platform.OS === 'web' && (
                   <Pressable style={styles.photoBtn} onPress={startRecording}>
-                    <Text style={styles.photoBtnText}>🎤</Text>
+                    <Ico e="🎤" size={16} />
                   </Pressable>
                 )}
                 {isAdmin && (
                   <Pressable style={[styles.photoBtn, showSchedule && { backgroundColor: '#F2E4E1' }]} onPress={() => setShowSchedule(v => !v)}>
-                    <Text style={styles.photoBtnText}>⏰</Text>
+                    <Ico e="⏰" size={16} />
                   </Pressable>
                 )}
                 <TextInput
@@ -1179,7 +1180,7 @@ export default function MessagerieScreen() {
                 onPress={() => { handleArchive(contextMsg); setContextMsg(null); }}
               >
                 <Text style={styles.contextBtnText}>
-                  {contextMsg.archive ? '📂 Désarchiver' : '📁 Archiver'}
+                  {contextMsg.archive ? 'Désarchiver' : 'Archiver'}
                 </Text>
               </Pressable>
               <Pressable

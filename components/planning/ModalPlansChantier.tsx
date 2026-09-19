@@ -119,9 +119,9 @@ const EMOJI = {
   /** Bouton fermer (✕). */
   close: '✕',
   /** Radios de visibilité. */
-  employes:   '👷 Employés',
-  soustraits: '👤 ST',
-  specifique: '👥 Sélection',
+  employes:   'Employés',
+  soustraits: 'ST',
+  specifique: 'Sélection',
 } as const;
 
 // ─── Constantes internes ──────────────────────────────────────────────────────

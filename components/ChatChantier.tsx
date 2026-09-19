@@ -14,6 +14,7 @@ import * as Notifications from 'expo-notifications';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
+import { Ico } from '@/components/ui/Ico';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -192,8 +193,8 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
 
     // Notifier l'autre partie par push (atteint le destinataire même app fermée)
     try {
-      const titre = `💬 ${newMsg.auteurNom}`;
-      const corps = `${chantier.nom} : ${texte.trim() || '📎 Pièce jointe'}`;
+      const titre = `${newMsg.auteurNom}`;
+      const corps = `${chantier.nom} : ${texte.trim() || ' Pièce jointe'}`;
       // Données à jour (message ajouté) pour calculer le badge exact du destinataire
       const updatedChantiers = data.chantiers.map(c =>
         c.id === chantier.id ? { ...c, messagesChantier: [...messages, newMsg] } : c,
@@ -368,7 +369,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
           multiline
         />
         <Pressable onPress={envoyer} disabled={(!texte.trim() && !pjUri) || activeParticipants.length === 0} style={[styles.sendBtn, ((!texte.trim() && !pjUri) || activeParticipants.length === 0) && { opacity: 0.4 }]}>
-          <Text style={styles.sendBtnText}>➤</Text>
+          <Ico e="➤" size={16} />
         </Pressable>
       </View>
     </View>

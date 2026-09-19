@@ -25,6 +25,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { DS } from '@/constants/design';
 import { formatDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -146,7 +147,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                     accessibilityRole="button"
                                     accessibilityLabel="Ouvrir le PDF"
                                   >
-                                    <Text style={styles.pdfThumbIcon}>📄</Text>
+                                    <Ico e="📄" size={16} />
                                     <Text style={styles.pdfThumbLabel}>PDF</Text>
                                   </Pressable>
                                 );
@@ -208,7 +209,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                             accessibilityLabel={isPdf ? 'Ouvrir le document' : 'Ouvrir la photo'}
                                           >
                                             <Text style={{ fontSize: 12, color: DS.bordeaux, fontWeight: '600', textDecorationLine: 'underline' }}>
-                                              {isPdf ? '📄 Document' : '📷 Photo'}
+                                              {isPdf ? 'Document' : 'Photo'}
                                             </Text>
                                           </Pressable>
                                         );
@@ -384,7 +385,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                 </View>
                                 <Text style={[styles.taskText, task.fait && styles.taskTextDone, { flex: 1 }]}>{task.texte}</Text>
                                 <Pressable onPress={handleAddPhoto} style={{ paddingHorizontal: 6, paddingVertical: 4 }} accessibilityRole="button" accessibilityLabel="Ajouter une photo à la tâche">
-                                  <Text style={{ color: '#5C1F2E', fontSize: 16 }}>➕</Text>
+                                  <Ico e="➕" size={18} color="#5C1F2E" />
                                 </Pressable>
                                 <Pressable
                                   onPress={() => {
@@ -416,7 +417,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                           accessibilityLabel={isPdf ? 'Ouvrir le document' : 'Ouvrir la photo'}
                                         >
                                           <Text style={{ fontSize: 12, color: DS.bordeaux, fontWeight: '600', textDecorationLine: 'underline' }}>
-                                            {isPdf ? '📄 Document' : '📷 Photo'}
+                                            {isPdf ? 'Document' : 'Photo'}
                                           </Text>
                                         </Pressable>
                                         <Pressable

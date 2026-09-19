@@ -8,6 +8,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useRefresh } from '@/hooks/useRefresh';
 import type { AgendaEvent } from '@/app/types';
 import { formatDateFR, parseDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 
 const COULEURS = ['#2C2C2C', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
 const JOURS_COURT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -217,7 +218,7 @@ export function PlanningDirection() {
           <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
             {evtsJour.length === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
-                <Text style={{ fontSize: 36, marginBottom: 8 }}>📭</Text>
+                <Ico e="📭" size={28} />
                 <Text style={{ fontSize: 14, color: '#6E5F54' }}>Aucun rendez-vous</Text>
                 <Pressable style={{ marginTop: 12, backgroundColor: '#5C1F2E', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }} onPress={() => openNew(dateStr)}>
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>+ Ajouter un RDV</Text>
@@ -262,7 +263,7 @@ export function PlanningDirection() {
                         )}
                       </View>
                       <Pressable onPress={() => deleteAgendaEvent(evt.id)} style={{ padding: 6 }}>
-                        <Text style={{ fontSize: 14, color: '#E74C3C' }}>🗑</Text>
+                        <Ico e="🗑" size={16} color="#E74C3C" />
                       </Pressable>
                     </View>
                   </Pressable>

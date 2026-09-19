@@ -890,7 +890,7 @@ export default function RHScreen() {
               }}
             >
               <Text style={styles.uploadArretBtnText}>
-                {arretForm.justificatif ? `✅ ${arretForm.justificatifNom || t.rh.fileLoaded}` : `📎 ${t.rh.attachProof}`}
+                {arretForm.justificatif ? `✅ ${arretForm.justificatifNom || t.rh.fileLoaded}` : `${t.rh.attachProof}`}
               </Text>
             </Pressable>
             {arretForm.justificatif ? (
@@ -1004,7 +1004,7 @@ export default function RHScreen() {
             <View style={styles.statutRow}>
               {(['approuve', 'refuse'] as const).map(s => (
                 <Pressable key={s} style={[styles.statutBtn, reponseForm.statut === s && styles.statutBtnActive, { borderColor: s === 'approuve' ? '#27AE60' : '#E74C3C' }]} onPress={() => setReponseForm(f => ({ ...f, statut: s }))}>
-                  <Text style={[styles.statutBtnText, reponseForm.statut === s && { color: s === 'approuve' ? '#27AE60' : '#E74C3C' }]}>{s === 'approuve' ? '✅ Approuver' : '❌ Refuser'}</Text>
+                  <Text style={[styles.statutBtnText, reponseForm.statut === s && { color: s === 'approuve' ? '#27AE60' : '#E74C3C' }]}>{s === 'approuve' ? '✅ Approuver' : 'Refuser'}</Text>
                 </Pressable>
               ))}
             </View>

@@ -19,6 +19,7 @@ import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
+import { Ico } from '@/components/ui/Ico';
 
 /** Labels client-friendly pour les priorités (différents des labels admin). */
 const PRIO_CLIENT_LABELS: Record<PrioriteSAV, string> = {
@@ -266,10 +267,10 @@ export function ModalNouveauTicketSAV({ visible, chantierId, chantierNom, creePa
               <View style={{ gap: 6, marginBottom: 8 }}>
                 {fichiers.map(f => (
                   <View key={f.uri} style={styles.fichierRow}>
-                    <Text style={{ fontSize: 18 }}>📄</Text>
+                    <Ico e="📄" size={20} />
                     <Text style={styles.fichierNom} numberOfLines={1}>{f.nom}</Text>
                     <Pressable onPress={() => removeFichier(f.uri)} style={{ padding: 6 }}>
-                      <Text style={{ fontSize: 14 }}>🗑</Text>
+                      <Ico e="🗑" size={16} />
                     </Pressable>
                   </View>
                 ))}

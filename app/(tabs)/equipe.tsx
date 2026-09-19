@@ -31,6 +31,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { formatDateFR } from '@/lib/date/format';
+import { Ico } from '@/components/ui/Ico';
 
 // Filtre mime utilisé par tous les InboxPickerButton de cet écran
 // (documents RH employés, docs ST, devis, factures).
@@ -1050,7 +1051,7 @@ export default function EquipeScreen() {
           {(isAdmin || isRH) && (
             <Pressable style={styles.credentialBtn} onPress={() => handleCopy(`Identifiant : ${item.identifiant}, MDP : ${item.motDePasse}`, `all_${item.id}`)}>
               <Text style={styles.credentialBtnText} numberOfLines={1}>
-                {copiedField === `all_${item.id}` ? '✓ Copié !' : `📋 ${item.identifiant} · MDP : ${item.motDePasse}`}
+                {copiedField === `all_${item.id}` ? '✓ Copié !' : `${item.identifiant} · MDP : ${item.motDePasse}`}
               </Text>
             </Pressable>
           )}
@@ -1132,7 +1133,7 @@ export default function EquipeScreen() {
           <View style={styles.cardBottomRow}>
             <Pressable style={styles.credentialBtn} onPress={() => handleCopy(`Identifiant : ${item.identifiant}, MDP : ${item.motDePasse}`, `stall_${item.id}`)}>
               <Text style={styles.credentialBtnText} numberOfLines={1}>
-                {copiedField === `stall_${item.id}` ? '✓ Copié !' : `📋 ${item.identifiant} · MDP : ${item.motDePasse}`}
+                {copiedField === `stall_${item.id}` ? '✓ Copié !' : `${item.identifiant} · MDP : ${item.motDePasse}`}
               </Text>
             </Pressable>
             <View style={{ flex: 1 }} />
@@ -1196,7 +1197,7 @@ export default function EquipeScreen() {
           {/* Bouton disponibilité */}
           <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#EBF5FB', borderRadius: 10, padding: 10, marginBottom: 8, marginHorizontal: 16 }}
             onPress={() => setShowDispo(true)}>
-            <Text style={{ fontSize: 16 }}>📅</Text>
+            <Ico e="📅" size={18} />
             <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>{t.equipe.dispoTitle}</Text>
             <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600', marginLeft: 'auto' }}>{disponibilite.libres.length} libre{disponibilite.libres.length > 1 ? 's' : ''}</Text>
           </Pressable>
@@ -1344,8 +1345,8 @@ export default function EquipeScreen() {
                         </View>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 2, flexWrap: 'wrap' }}>
                           {a.societe ? <Text style={styles.contactInfo}>{a.societe}</Text> : null}
-                          {a.telephone ? <Text style={styles.contactInfo}>· 📞 {a.telephone}</Text> : null}
-                          {a.email ? <Text style={styles.contactInfo}>· ✉ {a.email}</Text> : null}
+                          {a.telephone ? <Text style={styles.contactInfo}>· {a.telephone}</Text> : null}
+                          {a.email ? <Text style={styles.contactInfo}>· {a.email}</Text> : null}
                         </View>
                       </View>
                     </View>
@@ -1677,7 +1678,7 @@ export default function EquipeScreen() {
                 {(['mensuel', 'journalier'] as const).map(m => (
                   <Pressable key={m} style={[styles.roleChip, form.modeSalaire === m && styles.roleChipActive]} onPress={() => setForm(f => ({ ...f, modeSalaire: m }))}>
                     <Text style={[styles.roleChipText, form.modeSalaire === m && styles.roleChipTextActive]}>
-                      {m === 'mensuel' ? `💶 ${t.equipe.monthly}` : `📅 ${t.equipe.daily}`}
+                      {m === 'mensuel' ? `${t.equipe.monthly}` : `${t.equipe.daily}`}
                     </Text>
                   </Pressable>
                 ))}
@@ -1752,7 +1753,7 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldLabel}>{t.equipe.buyerRole}</Text>
                   <Text style={styles.fieldHint}>{t.equipe.buyerHint}</Text>
                 </View>
-                <Switch value={form.isAcheteur} onValueChange={v => confirmAccreditation('isAcheteur', v, 'Acheteur 🛒')} trackColor={{ false: '#EDE2D6', true: '#5C1F2E' }} thumbColor="#fff" />
+                <Switch value={form.isAcheteur} onValueChange={v => confirmAccreditation('isAcheteur', v, 'Acheteur')} trackColor={{ false: '#EDE2D6', true: '#5C1F2E' }} thumbColor="#fff" />
               </View>
 
               {/* Accréditation RH */}
@@ -1761,7 +1762,7 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldLabel}>{t.equipe.hrRole}</Text>
                   <Text style={styles.fieldHint}>{t.equipe.hrHint}</Text>
                 </View>
-                <Switch value={form.isRH} onValueChange={v => confirmAccreditation('isRH', v, 'Ressources Humaines 👥')} trackColor={{ false: '#EDE2D6', true: '#27AE60' }} thumbColor="#fff" />
+                <Switch value={form.isRH} onValueChange={v => confirmAccreditation('isRH', v, 'Ressources Humaines')} trackColor={{ false: '#EDE2D6', true: '#27AE60' }} thumbColor="#fff" />
               </View>
 
               {/* Accréditation Commercial */}
@@ -1770,7 +1771,7 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldLabel}>{t.equipe.commercialRole}</Text>
                   <Text style={styles.fieldHint}>{t.equipe.commercialHint}</Text>
                 </View>
-                <Switch value={form.isCommercial} onValueChange={v => confirmAccreditation('isCommercial', v, 'Commercial 💼')} trackColor={{ false: '#EDE2D6', true: '#F39C12' }} thumbColor="#fff" />
+                <Switch value={form.isCommercial} onValueChange={v => confirmAccreditation('isCommercial', v, 'Commercial')} trackColor={{ false: '#EDE2D6', true: '#F39C12' }} thumbColor="#fff" />
               </View>
 
               {/* Horaires théoriques */}
@@ -1824,8 +1825,8 @@ export default function EquipeScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {docsEmployeId
-                  ? `📂 Documents de ${data.employes.find(e => e.id === docsEmployeId)?.prenom || ''} ${data.employes.find(e => e.id === docsEmployeId)?.nom || ''}`
-                  : '📂 Documents RH'
+                  ? `Documents de ${data.employes.find(e => e.id === docsEmployeId)?.prenom || ''} ${data.employes.find(e => e.id === docsEmployeId)?.nom || ''}`
+                  : 'Documents RH'
                 }
               </Text>
               <Pressable onPress={() => setShowDocsModal(false)}>
@@ -1878,7 +1879,7 @@ export default function EquipeScreen() {
                               style={docStyles.docDelete}
                               onPress={() => handleDeleteDoc(doc.id, doc.libelle || DOC_RH_LABELS[doc.type])}
                             >
-                              <Text style={docStyles.docDeleteText}>🗑</Text>
+                              <Ico e="🗑" size={16} />
                             </Pressable>
                           )}
                         </View>
@@ -2004,10 +2005,10 @@ export default function EquipeScreen() {
                               </View>
                               <View style={stStyles.cardActions}>
                                 <Pressable style={stStyles.actionBtn} onPress={() => openEditDevis(devis)}>
-                                  <Text style={stStyles.actionEdit}>✏</Text>
+                                  <Ico e="✏" size={16} />
                                 </Pressable>
                                 <Pressable style={stStyles.actionBtn} onPress={() => handleDeleteDevis(devis)}>
-                                  <Text style={stStyles.actionDelete}>🗑</Text>
+                                  <Ico e="🗑" size={16} />
                                 </Pressable>
                               </View>
                             </View>
@@ -2050,7 +2051,7 @@ export default function EquipeScreen() {
                                 <InboxPickerButton
                                   onPick={(item) => addFromInboxDevisFichier(devis.id, item)}
                                   mimeFilter={inboxMimeFilterImagePdf}
-                                  label="📥 Importer devis depuis Inbox"
+                                  label="Importer devis depuis Inbox"
                                 />
                               </View>
                             )}
@@ -2059,7 +2060,7 @@ export default function EquipeScreen() {
                                 <InboxPickerButton
                                   onPick={(item) => addFromInboxDevisSigne(devis.id, item)}
                                   mimeFilter={inboxMimeFilterImagePdf}
-                                  label="📥 Importer devis signé depuis Inbox"
+                                  label="Importer devis signé depuis Inbox"
                                 />
                               </View>
                             )}
@@ -2099,7 +2100,7 @@ export default function EquipeScreen() {
                                     <Pressable onPress={async () => {
                                       if (await confirmDelete(`Supprimer cet acompte de ${a.montant} € ?`)) deleteAcompteST(a.id);
                                     }}>
-                                      <Text style={stStyles.actionDelete}>🗑</Text>
+                                      <Ico e="🗑" size={16} />
                                     </Pressable>
                                   </View>
                                 ))
@@ -2139,7 +2140,7 @@ export default function EquipeScreen() {
                           <View style={{ flex: 1, marginRight: 10 }}>
                             <Text style={stStyles.docTypeLabel}>{td.label}</Text>
                             <Text style={[stStyles.docTypeStatus, { color: existing ? '#27AE60' : '#E67E22' }]}>
-                              {existing ? `✅ Fourni le ${new Date(existing.uploadedAt).toLocaleDateString('fr-FR')}` : '⚠️ Manquant'}
+                              {existing ? `✅ Fourni le ${new Date(existing.uploadedAt).toLocaleDateString('fr-FR')}` : 'Manquant'}
                             </Text>
                           </View>
                           {existing ? (
@@ -2269,7 +2270,7 @@ export default function EquipeScreen() {
             <Text style={stStyles.fieldLabel}>{t.equipe.labelReq}</Text>
             <TextInput style={stStyles.input} value={docLibelle} onChangeText={setDocLibelle} placeholder={t.equipe.labelPh} placeholderTextColor="#9A8C80" />
             <Pressable style={stStyles.uploadBtn} onPress={handlePickDocLibre}>
-              <Text style={stStyles.uploadBtnText}>{docFichier ? '✅ Fichier sélectionné' : '⬆ Choisir un fichier'}</Text>
+              <Text style={stStyles.uploadBtnText}>{docFichier ? '✅ Fichier sélectionné' : 'Choisir un fichier'}</Text>
             </Pressable>
             <View style={{ marginTop: 4 }}>
               <InboxPickerButton

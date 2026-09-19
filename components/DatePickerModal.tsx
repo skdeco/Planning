@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Ico } from '@/components/ui/Ico';
 import {
   View, Text, StyleSheet, Pressable, Modal, Platform,
 } from 'react-native';
@@ -152,7 +153,7 @@ export function DateField({ label, value, onChange, minDate, maxDate, placeholde
         <Text style={[dfS.fieldText, !value && dfS.placeholder]}>
           {displayValue || placeholder}
         </Text>
-        <Text style={dfS.icon}>📅</Text>
+        <Ico e="📅" size={16} />
       </Pressable>
 
       <Modal visible={showPicker} transparent animationType="fade" onRequestClose={() => setShowPicker(false)}>
