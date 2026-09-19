@@ -278,35 +278,26 @@ export default function DashboardScreen() {
     return (
       <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />}>
-          {/* Header compact */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 22, fontWeight: '800', color: '#2B1D14' }}>{t.home.hello} {emp?.prenom || ''} 👋</Text>
-              <Text style={{ fontSize: 12, color: '#6E5F54', textTransform: 'capitalize' }}>
-                {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
-              </Text>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <LanguageFlag />
-              <Pressable style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: '#FEF2F2', alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: '#FECACA' }}
-                onPress={() => { if (Platform.OS === 'web') { if (window.confirm(t.home.logoutTitle)) logout(); } else Alert.alert(t.home.logoutTitle, t.home.logoutMsg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.home.logout, style: 'destructive', onPress: logout }]); }}>
-                <Text style={{ fontSize: 14, color: '#EF4444' }}>⏻</Text>
-              </Pressable>
-            </View>
+          {/* En-tête : date + salutation (langue et déconnexion sont dans l'écran Plus) */}
+          <View style={{ marginTop: 8, marginBottom: 14 }}>
+            <Text style={{ fontSize: 14, color: DS.textSecondary, textTransform: 'capitalize' }}>
+              {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
+            </Text>
+            <Text style={screenTitle}>{t.home.hello} {emp?.prenom || ''}</Text>
           </View>
 
           {/* Pointage — masqué pour un employé dispensé de pointage (doitPointer === false),
               cohérent avec l'onglet Pointage lui-même masqué dans ce cas. */}
           {data.employes.find(e => e.id === myId)?.doitPointer !== false && (
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-            <Pressable style={{ flex: 2, backgroundColor: myPointagesDuJour.debut ? '#D4EDDA' : '#5C1F2E', borderRadius: 14, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 10 }}
+            <Pressable style={{ flex: 2, backgroundColor: myPointagesDuJour.debut ? '#D4EDDA' : '#5C1F2E', borderRadius: 24, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}
               onPress={() => router.push('/(tabs)/pointage' as any)}>
               {myPointagesDuJour.debut ? <CircleCheck size={24} color="#155724" strokeWidth={2} /> : <Clock size={24} color="#fff" strokeWidth={2} />}
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: myPointagesDuJour.debut ? '#155724' : '#fff' }}>
+                <Text style={{ fontSize: 16, fontWeight: '700', color: myPointagesDuJour.debut ? '#155724' : '#fff' }}>
                   {myPointagesDuJour.debut ? `${myPointagesDuJour.debut}${myPointagesDuJour.fin ? ` → ${myPointagesDuJour.fin}` : ` (${t.home.inProgress})`}` : t.home.clockMyArrival}
                 </Text>
-                <Text style={{ fontSize: 10, color: myPointagesDuJour.debut ? '#27AE60' : 'rgba(255,255,255,0.7)' }}>
+                <Text style={{ fontSize: 12, color: myPointagesDuJour.debut ? '#1E7A3C' : 'rgba(255,255,255,0.8)' }}>
                   {myPointagesDuJour.debut ? t.home.clockOk : t.home.tapToClock}
                 </Text>
               </View>
@@ -326,7 +317,7 @@ export default function DashboardScreen() {
           {/* Bouton "Je suis en retard" */}
           {!myPointagesDuJour.debut && myChantiers.length > 0 && (
             <Pressable
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#FFF3E0', paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: '#FFE082', marginBottom: 8 }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: DS.surface, minHeight: 46, borderRadius: 999, borderWidth: 1, borderColor: DS.border, marginBottom: 8 }}
               onPress={() => {
                 const motifs = [t.home.lateReasonTraffic, t.home.lateReasonVehicle, t.home.lateReasonMedical, t.home.lateReasonPersonal, t.home.lateReasonOther];
                 const signaler = (motif: string) => {
@@ -340,8 +331,8 @@ export default function DashboardScreen() {
                   Alert.alert(t.home.imLate, t.home.selectReason, motifs.map(m => ({ text: m, onPress: () => signaler(m) })));
                 }
               }}>
-              <Text style={{ fontSize: 14 }}>⚠️</Text>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#E65100' }}>{t.home.imLate}</Text>
+              <Clock size={17} color={DS.primary} strokeWidth={2} />
+              <Text style={{ fontSize: 14, fontWeight: '600', color: DS.primary }}>{t.home.imLate}</Text>
             </Pressable>
           )}
 
@@ -352,7 +343,7 @@ export default function DashboardScreen() {
               {myNotesJour.map((note, i) => {
                 const empName = emp?.prenom || '';
                 return (
-                <View key={i} style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: note.savTicketId ? '#E74C3C' : '#5C1F2E' }]}>
+                <View key={i} style={[styles.statCard, {}]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                     {note.savTicketId && <Text style={{ fontSize: 12 }}>🔧</Text>}
                     <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E' }}>{note.chantierNom}</Text>
@@ -593,7 +584,7 @@ export default function DashboardScreen() {
             <View style={styles.statCard}><Text style={{ color: '#6E5F54', textAlign: 'center' }}>{t.home.noChantierToday}</Text></View>
           )}
           {myChantiers.map(c => (
-            <Pressable key={c.id} style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: c.couleur || '#5C1F2E' }]}
+            <Pressable key={c.id} style={[styles.statCard, {}]}
               onPress={() => router.push('/(tabs)/planning' as any)}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14' }}>{c.nom}</Text>
               {c.adresse ? <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>{c.adresse}</Text> : null}
@@ -1107,7 +1098,7 @@ export default function DashboardScreen() {
               {rdvJour.map(evt => {
                 const ch = evt.chantierId ? data.chantiers.find(c => c.id === evt.chantierId) : null;
                 return (
-                  <Pressable key={evt.id} style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: evt.couleur || '#5C1F2E', flexDirection: 'row', alignItems: 'center', gap: 10 }]}
+                  <Pressable key={evt.id} style={[styles.statCard, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
                     onPress={() => router.push('/(tabs)/planning' as any)}>
                     <View style={{ backgroundColor: (evt.couleur || '#5C1F2E') + '15', width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 12, fontWeight: '800', color: evt.couleur || '#5C1F2E' }}>{evt.heureDebut}</Text>
@@ -1212,7 +1203,7 @@ export default function DashboardScreen() {
                 const margeColor = item.marge >= 0 ? '#27AE60' : '#E74C3C';
                 return (
                   <FadeInView key={item.chantier.id} delay={idx * 80}>
-                    <View style={[styles.statCard, { borderLeftWidth: 4, borderLeftColor: item.chantier.couleur || '#5C1F2E', marginBottom: 6 }]}>
+                    <View style={[styles.statCard, { marginBottom: 6 }]}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
                         <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: item.chantier.couleur || '#5C1F2E' }} />
                         <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14', flex: 1 }} numberOfLines={1}>{item.chantier.nom}</Text>
@@ -1294,14 +1285,14 @@ export default function DashboardScreen() {
         {showOutils && (
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
           <Pressable
-            style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderLeftWidth: 4, borderLeftColor: '#5C1F2E' }]}
+            style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
             onPress={() => router.push('/(tabs)/reporting' as any)}
           >
             <Text style={{ fontSize: 16 }}>📄</Text>
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E' }}>{t.dash.exportReport}</Text>
           </Pressable>
           <Pressable
-            style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderLeftWidth: 4, borderLeftColor: '#27AE60' }]}
+            style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
             onPress={() => setShowImport(true)}
           >
             <Text style={{ fontSize: 16 }}>📥</Text>
@@ -1328,7 +1319,7 @@ export default function DashboardScreen() {
             <>
               <Text style={styles.sectionTitle}>Notes du jour ({allNotesJour.length})</Text>
               {allNotesJour.map(n => (
-                <View key={n.id} style={[styles.statCard, { borderLeftWidth: 3, borderLeftColor: n.savTicketId ? '#E74C3C' : '#6E5F54' }]}>
+                <View key={n.id} style={[styles.statCard, {}]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
                     <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E' }}>{n.chantierNom}</Text>
                     <Text style={{ fontSize: 10, color: '#6E5F54' }}>→ {n.employeNom}</Text>
