@@ -277,7 +277,7 @@ export function WeekGridView({
 const styles = StyleSheet.create({
   gridScroll: {
     flex: 1,
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#FFFFFF',
   },
   gridRow: {
     flexDirection: 'row',
@@ -296,10 +296,10 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   headerCell: {
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#FAF5EF',
   },
   chantierName: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     color: '#2B1D14',
     lineHeight: 14,
@@ -313,7 +313,8 @@ const styles = StyleSheet.create({
   },
   dayHeaderCell: {
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingVertical: 8,
+    backgroundColor: '#FAF5EF',
     borderRightWidth: 0.5,
     borderRightColor: '#EDE2D6',
   },
@@ -322,7 +323,8 @@ const styles = StyleSheet.create({
   },
   dayName: {
     fontSize: 11,
-    fontWeight: '500',
+    fontWeight: '600',
+    letterSpacing: 0.3,
     color: '#6E5F54',
   },
   dayNameToday: {
@@ -330,7 +332,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dayNum: {
-    fontSize: 13,
+    fontSize: 15,
     fontWeight: '600',
     color: '#2B1D14',
     marginTop: 2,

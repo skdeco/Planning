@@ -297,9 +297,9 @@ export function WeekGridCell({
 
 const styles = StyleSheet.create({
   cell: {
-    paddingVertical: 3,
-    paddingHorizontal: 0,
-    gap: 1,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+    gap: 2,
     borderRightWidth: 0.5,
     borderRightColor: '#EDE2D6',
     alignItems: 'stretch',
@@ -308,28 +308,28 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2E4E1',
   },
   cellOutOfRange: {
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#FAF5EF',
   },
   badgeWrapper: {
     position: 'relative',
   },
   empBadge: {
     width: '100%',
-    paddingVertical: 4,
+    paddingVertical: 5,
     paddingHorizontal: 0,
-    borderRadius: 3,
+    borderRadius: 7,
     alignItems: 'center',
     position: 'relative',
   },
   empBadgeText: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   stBadge: {
     width: '100%',
-    paddingVertical: 4,
+    paddingVertical: 5,
     paddingHorizontal: 0,
-    borderRadius: 3,
+    borderRadius: 7,
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: 'rgba(255,255,255,0.6)',
@@ -395,16 +395,16 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 4,
     paddingHorizontal: 4,
-    borderRadius: 3,
-    borderWidth: 2,
+    borderRadius: 7,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.8)',
     gap: 2,
     // Fond hachuré simulé par une ombre colorée
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.12,
     shadowRadius: 2,
-    elevation: 3,
+    elevation: 1,
   },
   intervBandeauIcon: {
     fontSize: 9,
@@ -425,7 +425,7 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     fontSize: 16,
-    color: '#6E5F54',
+    color: '#B5A99E',
     fontWeight: '400',
   },
 });
