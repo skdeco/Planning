@@ -107,7 +107,26 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       if (source === 'signe') {
         setMarcheForm(prev => ({ ...prev, dateSignature: dateSignature || prev.dateSignature || todayYMD() }));
       }
-      if (!lisible) { setDevisAutoExtractMsg(`Devis illisible automatiquement (PDF scanné ?) — montants à saisir à la main${source === 'signe' ? ' · date de signature : aujourd\'hui' : ''}`); return; }
+      if (!lisible) {
+        if (source === 'signe' && marcheDevisInitial?.uri && !marcheDevisInitial.uri.startsWith('file://')) {
+          // Devis signé = scan : on se base sur le devis initial et on prévient l'utilisateur.
+          const init = await lireMontantsDevis(marcheDevisInitial.uri);
+          if (init.lisible && (init.ht || init.ttc)) {
+            setMarcheForm(prev => ({
+              ...prev,
+              montantHT: init.ht ? String(init.ht) : prev.montantHT,
+              montantTTC: init.ttc ? String(init.ttc) : prev.montantTTC,
+              dateDebutTravaux: prev.dateDebutTravaux || init.dateDebutTravaux || '',
+            }));
+            setDevisAutoExtractMsg(`Le devis signé est un scan (texte illisible) : montants repris du devis initial — ${[init.ht ? `HT ${fmtEur(init.ht)}` : '', init.ttc ? `TTC ${fmtEur(init.ttc)}` : ''].filter(Boolean).join(' · ')}. Date de signature : aujourd'hui (modifiable).`);
+            return;
+          }
+        }
+        setDevisAutoExtractMsg(source === 'signe'
+          ? "Le devis signé est un scan (texte illisible) et aucun devis initial lisible n'est joint — montants à saisir à la main. Date de signature : aujourd'hui (modifiable)."
+          : 'Devis illisible automatiquement (scan ?) — montants à saisir à la main');
+        return;
+      }
       const datesLues: string[] = [];
       setMarcheForm(prev => {
         const next = { ...prev };
@@ -794,8 +813,15 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 if (!uploaded.uri) return;
                                 // Le devis signé fait foi : on relit ses montants et on met le marché à jour.
                                 let maj: Partial<MarcheChantier> = {};
+                                let estScan = false;
                                 try {
-                                  const lu = await lireMontantsDevis(uploaded.uri);
+                                  let lu = await lireMontantsDevis(uploaded.uri);
+                                  if (!lu.lisible) {
+                                    // Scan : on garde les montants du marché (issus du devis initial) et on prévient.
+                                    toast("Le devis signé est un scan : texte illisible, les montants du devis initial sont conservés.");
+                                    lu = { lisible: false };
+                                    estScan = true;
+                                  }
                                   if (lu.ht) maj.montantHT = lu.ht;
                                   if (lu.ttc) maj.montantTTC = lu.ttc;
                                   if (lu.dateDebutTravaux) maj.dateDebutTravaux = lu.dateDebutTravaux;
@@ -805,7 +831,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 if (!maj.dateSignature) maj.dateSignature = m.dateSignature || todayYMD();
                                 updateMarcheChantier({ ...m, ...maj, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
                                 if (maj.montantHT || maj.montantTTC) toast.success(`Montants repris du devis signé : ${[maj.montantHT ? `HT ${fmtEur(maj.montantHT)}` : '', maj.montantTTC ? `TTC ${fmtEur(maj.montantTTC)}` : ''].filter(Boolean).join(' · ')}`);
-                                else toast('Devis signé ajouté — montants non détectés, inchangés');
+                                else if (!estScan) toast('Devis signé ajouté — montants non détectés, inchangés');
                               }}
                             >
                               <Upload size={17} color="#DC2626" strokeWidth={2} />

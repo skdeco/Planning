@@ -65,6 +65,8 @@ export function ImportLotsDevisOverlay({
   const [lotsDetectes, setLotsDetectes] = useState<LotExtrait[]>([]);
   const [lotsSelection, setLotsSelection] = useState<Record<number, boolean>>({});
   const [pdfExtractLoading, setPdfExtractLoading] = useState(false);
+  // Message affiché quand le devis signé est un scan et que l'analyse s'appuie sur le devis initial
+  const [noticeScan, setNoticeScan] = useState<string | null>(null);
 
   // Reset à chaque ouverture
   React.useEffect(() => {
@@ -87,12 +89,20 @@ export function ImportLotsDevisOverlay({
     setPdfExtractLoading(true);
     try {
       const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
+      setNoticeScan(null);
       let texte = await extractTextFromPdfUrl(devisUri);
-      // Devis signé scanné (image) ou sans lot lisible → on essaie l'autre devis du marché.
+      // Devis signé scanné (image, aucun texte) ou sans lot lisible → on s'appuie sur le devis initial et on le dit.
       if (devisUriSecours && devisUriSecours !== devisUri && (!texte || extraireLotsAvecRemise(texte).lots.length === 0)) {
+        const estScan = !texte || texte.replace(/\s/g, '').length < 40;
         const texteSecours = await extractTextFromPdfUrl(devisUriSecours);
-        if (texteSecours && extraireLotsAvecRemise(texteSecours).lots.length > 0) texte = texteSecours;
-        else if (!texte) texte = texteSecours;
+        if (texteSecours) {
+          texte = texteSecours;
+          setNoticeScan(estScan
+            ? "Le devis signé est un scan (image) : son texte ne peut pas être lu. L'analyse des lots se base sur le devis initial — vérifiez qu'il correspond bien à la version signée."
+            : "Aucun lot lisible dans le devis signé : l'analyse se base sur le devis initial — vérifiez qu'il correspond bien à la version signée.");
+        }
+      } else if (!devisUriSecours && (!texte || texte.replace(/\s/g, '').length < 40)) {
+        setNoticeScan("Ce devis est un scan (image) : son texte ne peut pas être lu automatiquement. Ajoutez le devis initial (PDF d'origine) au marché, ou utilisez « Coller texte devis ».");
       }
       if (!texte) {
         const msg = "Impossible d'extraire le texte du PDF. Essayez le mode 'Coller texte devis'.";
@@ -226,6 +236,11 @@ export function ImportLotsDevisOverlay({
                 <Text style={styles.pdfInfoText} numberOfLines={2}>{devisNom || 'Devis lié à ce chantier'}
                 </Text>
               </View>
+              {!!noticeScan && (
+                <View style={{ backgroundColor: '#FEF3C7', borderRadius: 10, padding: 10, marginTop: 8, borderWidth: 1, borderColor: '#E5A840' }}>
+                  <Text style={{ fontSize: 12, color: '#7A4B00', fontWeight: '600' }}>{noticeScan}</Text>
+                </View>
+              )}
               <Pressable
                 onPress={extraireAutoDepuisPdf}
                 disabled={pdfExtractLoading}
