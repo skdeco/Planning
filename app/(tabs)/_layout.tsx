@@ -142,9 +142,6 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Agenda caché (intégré dans Planning) */}
-      <Tabs.Screen name="agenda" options={{ href: null }} />
-
       {/* ═══ ONGLET 3 : Chantiers (admin + apporteur read-only) / Pointage (employé) ═══ */}
       <Tabs.Screen
         name="chantiers"

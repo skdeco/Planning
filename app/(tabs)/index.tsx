@@ -15,7 +15,6 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { todayYMD } from '@/lib/date/today';
-import { BADGE_TYPES } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useRefresh } from '@/hooks/useRefresh';
@@ -29,7 +28,7 @@ function toYMD(d: Date): string {
 }
 
 export default function DashboardScreen() {
-  const { data, currentUser, isHydrated, logout, toggleTask, addTaskPhoto, removeTaskPhoto, addRetardPlanifie, updateTicketSAV, upsertNote, updateEmploye, updateApporteur, addBadgeEmploye } = useApp();
+  const { data, currentUser, isHydrated, logout, toggleTask, addTaskPhoto, removeTaskPhoto, addRetardPlanifie, updateTicketSAV, upsertNote, updateEmploye, updateApporteur } = useApp();
   const { t, language } = useLanguage();
   const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
   const router = useRouter();
@@ -292,30 +291,6 @@ export default function DashboardScreen() {
               </Pressable>
             </View>
           </View>
-
-          {/* Badges motivationnels */}
-          {(() => {
-            const mesBadges = (data.badgesEmployes || []).filter(b => b.employeId === myId).slice(-5).reverse();
-            if (mesBadges.length === 0) return null;
-            return (
-              <View style={{ marginBottom: 12 }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#1A1A1A', marginBottom: 6 }}>{t.home.myBadges}</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                  {mesBadges.map(b => {
-                    const bt = BADGE_TYPES[b.type];
-                    return (
-                      <View key={b.id} style={{ backgroundColor: '#FFF9F0', borderRadius: 12, padding: 10, borderWidth: 1, borderColor: '#C9A96E', minWidth: 120 }}>
-                        <Text style={{ fontSize: 22, textAlign: 'center' }}>{bt?.emoji || '🏆'}</Text>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: '#C9A96E', textAlign: 'center', marginTop: 2 }}>{bt?.label || b.type}</Text>
-                        {b.message ? <Text style={{ fontSize: 10, color: '#687076', textAlign: 'center', marginTop: 2 }} numberOfLines={2}>{b.message}</Text> : null}
-                        <Text style={{ fontSize: 9, color: '#B0BEC5', textAlign: 'center', marginTop: 4 }}>{t.home.by} {b.envoyePar} · {b.createdAt.slice(0, 10)}</Text>
-                      </View>
-                    );
-                  })}
-                </ScrollView>
-              </View>
-            );
-          })()}
 
           {/* Pointage — masqué pour un employé dispensé de pointage (doitPointer === false),
               cohérent avec l'onglet Pointage lui-même masqué dans ce cas. */}

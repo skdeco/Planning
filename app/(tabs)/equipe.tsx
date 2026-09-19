@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { HardHat, Award, FolderOpen, Pencil, Trash2, Coins, FileText, Users, Truck } from 'lucide-react-native';
+import { HardHat, FolderOpen, Pencil, Trash2, Coins, FileText, Users, Truck } from 'lucide-react-native';
 import { FadeInView } from '@/components/ui/animated';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
@@ -18,9 +18,9 @@ import { useConfirm } from '@/hooks/useConfirm';
 import {
   METIER_COLORS, HORAIRES_DEFAUT, EMPLOYE_COLORS, ST_COLORS,
   DOC_RH_LABELS, DOC_RH_ORDER, METIER_PERSO_COLORS,
-  getMetierColors, getMetiersList, BADGE_TYPES, APPORTEUR_TYPE_LABELS,
+  getMetierColors, getMetiersList, APPORTEUR_TYPE_LABELS,
   type Employe, type Metier, type HorairesHebdo, type DocumentRHEmploye, type SousTraitant, type MetierPerso,
-  type BadgeEmploye, type Apporteur,
+  type Apporteur,
   type DevisST, type AcompteST, type DocumentST,
 } from '@/app/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -143,7 +143,7 @@ const DEFAULT_FORM: EmployeForm = {
 };
 
 export default function EquipeScreen() {
-  const { data, currentUser, isHydrated, addEmploye, updateEmploye, deleteEmploye, addSousTraitant, updateSousTraitant, deleteSousTraitant, addDocumentRH, deleteDocumentRH, addMetierPerso, deleteMetierPerso, addBadgeEmploye, addApporteur, updateApporteur, deleteApporteur, addDevis, updateDevis, deleteDevis, addAcompteST, updateAcompteST, deleteAcompteST } = useApp();
+  const { data, currentUser, isHydrated, addEmploye, updateEmploye, deleteEmploye, addSousTraitant, updateSousTraitant, deleteSousTraitant, addDocumentRH, deleteDocumentRH, addMetierPerso, deleteMetierPerso, addApporteur, updateApporteur, deleteApporteur, addDevis, updateDevis, deleteDevis, addAcompteST, updateAcompteST, deleteAcompteST } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const router = useRouter();
@@ -205,9 +205,6 @@ export default function EquipeScreen() {
   const [historiqueEmployeId, setHistoriqueEmployeId] = useState<string | null>(null);
 
   // Modal badge employé
-  const [badgeEmployeId, setBadgeEmployeId] = useState<string | null>(null);
-  const [badgeType, setBadgeType] = useState<string>('ponctualite');
-  const [badgeMessage, setBadgeMessage] = useState('');
 
   // Métiers dynamiques (défaut + perso)
   const metierColors = useMemo(() => getMetierColors(data.metiersPerso), [data.metiersPerso]);
@@ -1065,11 +1062,6 @@ export default function EquipeScreen() {
           {isAdmin && (
             <Pressable style={styles.actionBtnRound} onPress={() => setHistoriqueEmployeId(item.id)}>
               <HardHat size={15} color="#2C2C2C" strokeWidth={2} />
-            </Pressable>
-          )}
-          {isAdmin && (
-            <Pressable style={[styles.actionBtnRound, { backgroundColor: '#FFF8E1' }]} onPress={() => { setBadgeEmployeId(item.id); setBadgeType('ponctualite'); setBadgeMessage(''); }}>
-              <Award size={15} color="#8C6D2F" strokeWidth={2} />
             </Pressable>
           )}
           {(isAdmin || isRH) && (
@@ -2391,77 +2383,6 @@ export default function EquipeScreen() {
               );
             })()}
           </Pressable>
-        </View>
-      </Modal>
-
-      {/* ── Modal Badge Employé ── */}
-      <Modal visible={badgeEmployeId !== null} transparent animationType="fade" onRequestClose={() => setBadgeEmployeId(null)}>
-        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, width: '100%', maxWidth: 400 }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: '#11181C' }}>{t.equipe.sendBadge}</Text>
-              <Pressable onPress={() => setBadgeEmployeId(null)}><Text style={{ fontSize: 18, color: '#687076' }}>✕</Text></Pressable>
-            </View>
-            {badgeEmployeId && (() => {
-              const emp = data.employes.find(e => e.id === badgeEmployeId);
-              if (!emp) return null;
-              return (
-                <Text style={{ fontSize: 13, color: '#687076', marginBottom: 12 }}>
-                  Pour : <Text style={{ fontWeight: '700', color: '#11181C' }}>{emp.prenom} {emp.nom}</Text>
-                </Text>
-              );
-            })()}
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t.equipe.badgeType}</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
-              {Object.entries(BADGE_TYPES).map(([key, { label, emoji }]) => (
-                <Pressable key={key}
-                  style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: badgeType === key ? '#FFB800' : '#E2E6EA', backgroundColor: badgeType === key ? '#FFF8E1' : '#F5EDE3' }}
-                  onPress={() => setBadgeType(key)}>
-                  <Text style={{ fontSize: 13, fontWeight: badgeType === key ? '700' : '500', color: badgeType === key ? '#856404' : '#687076' }}>{emoji} {label}</Text>
-                </Pressable>
-              ))}
-            </View>
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#687076', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 }}>{t.equipe.messageOptional}</Text>
-            <TextInput
-              style={{ borderWidth: 1, borderColor: '#E2E6EA', borderRadius: 10, padding: 12, fontSize: 14, marginBottom: 16, backgroundColor: '#F5EDE3' }}
-              placeholder={t.equipe.badgeMessagePh}
-              placeholderTextColor="#B0BEC5"
-              value={badgeMessage}
-              onChangeText={setBadgeMessage}
-              multiline
-              numberOfLines={2}
-            />
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Pressable style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: '#F5EDE3', alignItems: 'center' }} onPress={() => setBadgeEmployeId(null)}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: '#687076' }}>{t.common.cancel}</Text>
-              </Pressable>
-              <Pressable
-                style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: '#FFB800', alignItems: 'center' }}
-                onPress={() => {
-                  if (!badgeEmployeId) return;
-                  const badge: BadgeEmploye = {
-                    id: `badge_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-                    employeId: badgeEmployeId,
-                    type: badgeType as BadgeEmploye['type'],
-                    message: badgeMessage.trim() || undefined,
-                    envoyePar: currentUser?.employeId === 'admin' ? 'Admin' : (() => {
-                      const emp = data.employes.find(e => e.id === currentUser?.employeId);
-                      return emp ? `${emp.prenom} ${emp.nom}` : 'Admin';
-                    })(),
-                    createdAt: new Date().toISOString(),
-                  };
-                  addBadgeEmploye(badge);
-                  setBadgeEmployeId(null);
-                  if (Platform.OS === 'web') {
-                    alert('Badge envoy\u00e9 !');
-                  } else {
-                    Alert.alert(t.equipe.badgeSent, `${BADGE_TYPES[badgeType]?.emoji} ${BADGE_TYPES[badgeType]?.label}`);
-                  }
-                }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: '#000' }}>{t.common.send}</Text>
-              </Pressable>
-            </View>
-          </View>
         </View>
       </Modal>
 
