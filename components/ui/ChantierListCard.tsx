@@ -7,7 +7,7 @@ import {
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
-import { DS, font, radius, space } from '../../constants/design';
+import { DS, font, radius, space, shadows } from '../../constants/design';
 import { StatusBadge } from './StatusBadge';
 import {
   ChantierCardHeader,
@@ -142,7 +142,6 @@ const COUNT_ORDER: Array<keyof ChantierCounts> = [
 // ─── Constantes internes ──────────────────────────────────────────────────────
 
 // Valeur fine non couverte par les tokens du design system
-const CARD_BORDER_LEFT_WIDTH = 4;
 
 // Suffixe hex (~9%) pour dériver le fond "soft" d'une couleur métier opaque.
 // Convention établie dans l'app (cf. StatusBadge — palettes métier).
@@ -208,12 +207,16 @@ export function ChantierListCard({
       accessibilityRole={isInteractive ? 'button' : undefined}
       style={({ pressed }) => [
         styles.card,
-        { borderLeftColor: couleur },
         pressed && isInteractive && styles.cardPressed,
         style,
       ]}
     >
-      <ChantierCardHeader nom={nom} adresse={adresse} statut={statut} />
+      <View style={styles.headerRow}>
+        <View style={[styles.colorDot, { backgroundColor: couleur }]} />
+        <View style={{ flex: 1 }}>
+          <ChantierCardHeader nom={nom} adresse={adresse} statut={statut} />
+        </View>
+      </View>
 
       {hasAnyDate && (
         <Text style={styles.dates}>
@@ -278,12 +281,13 @@ export function ChantierListCard({
 const styles = StyleSheet.create({
   card: {
     backgroundColor: DS.surface,
-    borderRadius:    radius.md,           // 12
-    borderWidth:     1,
-    borderColor:     DS.border,
-    borderLeftWidth: CARD_BORDER_LEFT_WIDTH, // 4
-    padding:         space.md,            // 12
+    borderRadius:    radius.xl,
+    padding:         space.lg,
+    ...shadows.md,
   },
+
+  headerRow: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
+  colorDot:  { width: 10, height: 10, borderRadius: 5, marginTop: 6 },
 
   cardPressed: {
     opacity: 0.85,
