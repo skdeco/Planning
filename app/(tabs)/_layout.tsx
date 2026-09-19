@@ -83,8 +83,8 @@ export default function TabLayout() {
     0
   );
 
-  // Pastille de l'onglet Plus : demandes RH à traiter (+ articles à acheter pour un employé acheteur)
-  const badgePlus = nbDemandesEnAttente + (isEmploye && doitPointer && isAcheteur ? nbNonAchetes : 0);
+  // Pastille de l'onglet Plus : demandes RH à traiter (+ messages non lus quand Messages est rangé dans Plus)
+  const badgePlus = nbDemandesEnAttente + (isEmploye && doitPointer ? nbMessagesNonLus : 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.background }}>
@@ -181,8 +181,8 @@ export default function TabLayout() {
         name="materiel"
         options={{
           title: t.nav.materiel,
-          // Dans la barre seulement pour un employé dispensé de pointage ; sinon via l'écran Plus
-          href: (isEmploye && !doitPointer) ? undefined : null,
+          // Employé : accès direct dans la barre. Admin : via l'écran Plus.
+          href: isEmploye ? undefined : null,
           tabBarBadge: isAcheteur && nbNonAchetes > 0 ? nbNonAchetes : undefined,
           tabBarBadgeStyle: { backgroundColor: DS.primary, fontSize: 10 },
           tabBarIcon: ({ color }) => (
@@ -196,7 +196,8 @@ export default function TabLayout() {
         name="messagerie"
         options={{
           title: t.nav.messages,
-          href: isApporteur ? null : undefined,
+          // Employé qui pointe : la barre est déjà pleine (Accueil, Planning, Pointage, Matériel, Plus) → Messages passe dans Plus.
+          href: (isApporteur || (isEmploye && doitPointer)) ? null : undefined,
           tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
           tabBarBadgeStyle: { backgroundColor: DS.primary, fontSize: 10 },
           tabBarIcon: ({ color }) => (
