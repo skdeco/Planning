@@ -9,6 +9,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const PENDING_MARCHE_KEY = 'sk_pending_marche_form';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
+import { toast } from 'sonner-native';
 import { useApp } from '@/app/context/AppContext';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { todayYMD } from '@/lib/date/today';
@@ -66,6 +67,85 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   const [marcheDevisSigne, setMarcheDevisSigne] = useState<{ uri: string; nom: string } | null>(null);
   const [devisAutoExtractLoading, setDevisAutoExtractLoading] = useState(false);
   const [devisAutoExtractMsg, setDevisAutoExtractMsg] = useState<string | null>(null);
+  const [suppAutoExtractLoading, setSuppAutoExtractLoading] = useState(false);
+  const [suppAutoExtractMsg, setSuppAutoExtractMsg] = useState<string | null>(null);
+  // Sélecteur multi-options multiplateforme (remplace Alert.alert à N boutons)
+  const [chooser, setChooser] = useState<{ title: string; message?: string; options: { text: string; primary?: boolean; onPress: () => void }[] } | null>(null);
+
+  /** Lit les totaux HT / TTC d'un devis PDF déjà envoyé sur le stockage (URL distante). */
+  const lireMontantsDevis = async (uri: string): Promise<{ ht?: number; ttc?: number; lisible: boolean }> => {
+    const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
+    const texte = await extractTextFromPdfUrl(uri);
+    if (!texte) return { lisible: false };
+    const { extraireRecapDevis, extraireTotalTTC } = await import('@/lib/devisParser');
+    const recap = extraireRecapDevis(texte);
+    const ttc = recap.totalTTC || extraireTotalTTC(texte) || undefined;
+    const ht = recap.totalNetHT || recap.totalBrutHT || undefined;
+    return { ht, ttc, lisible: true };
+  };
+  const fmtEur = (n: number) => `${n.toLocaleString('fr-FR')} €`;
+
+  /**
+   * Devis choisi dans le formulaire Marché. Le devis SIGNÉ fait foi : ses montants
+   * remplacent ceux du formulaire. Le devis initial ne remplit que des champs vides,
+   * et jamais si un devis signé est déjà joint.
+   */
+  const analyserDevisMarche = async (f: { uri: string; nom: string }, source: 'initial' | 'signe') => {
+    setDevisAutoExtractMsg(null);
+    setDevisAutoExtractLoading(true);
+    try {
+      const uploaded = await uploadIfNeeded(f, source === 'signe' ? 'marche/devis-signe' : 'marche/devis');
+      if (!uploaded.uri || uploaded.uri.startsWith('file://')) { setDevisAutoExtractMsg("Envoi du fichier impossible — montants à saisir à la main"); return; }
+      const fichier = { uri: uploaded.uri, nom: uploaded.nom || f.nom };
+      if (source === 'signe') setMarcheDevisSigne(fichier); else setMarcheDevisInitial(fichier);
+      const { ht, ttc, lisible } = await lireMontantsDevis(uploaded.uri);
+      if (!lisible) { setDevisAutoExtractMsg('Devis illisible automatiquement (PDF scanné ?) — montants à saisir à la main'); return; }
+      if (!ht && !ttc) { setDevisAutoExtractMsg('HT/TTC non détectés dans le devis'); return; }
+      const signeDejaJoint = source === 'initial' && !!marcheDevisSigne;
+      const filled: string[] = [];
+      setMarcheForm(prev => {
+        const curHT = parseFloat((prev.montantHT || '').replace(',', '.')) || 0;
+        const curTTC = parseFloat((prev.montantTTC || '').replace(',', '.')) || 0;
+        const next = { ...prev };
+        if (ht && (source === 'signe' || (!signeDejaJoint && curHT === 0))) next.montantHT = String(ht);
+        if (ttc && (source === 'signe' || (!signeDejaJoint && curTTC === 0))) next.montantTTC = String(ttc);
+        return next;
+      });
+      if (ht) filled.push(`HT ${fmtEur(ht)}`);
+      if (ttc) filled.push(`TTC ${fmtEur(ttc)}`);
+      setDevisAutoExtractMsg(signeDejaJoint
+        ? `Devis initial lu (${filled.join(' · ')}) — les montants du devis signé sont conservés`
+        : `${source === 'signe' ? 'Montants du devis signé' : 'Auto-rempli'} : ${filled.join(' · ')}`);
+    } catch (e) {
+      console.warn('[MarchesChantier] auto-extract devis échoué:', e);
+      setDevisAutoExtractMsg('Analyse du devis impossible — montants à saisir à la main');
+    } finally {
+      setDevisAutoExtractLoading(false);
+    }
+  };
+
+  /** Même logique pour le devis d'un supplément (remplit les champs vides). */
+  const analyserDevisSupp = async (f: { uri: string; nom: string }) => {
+    setSuppAutoExtractMsg(null);
+    setSuppAutoExtractLoading(true);
+    try {
+      const uploaded = await uploadIfNeeded(f, 'supplements/devis');
+      if (!uploaded.uri || uploaded.uri.startsWith('file://')) return;
+      setSuppDevis({ uri: uploaded.uri, nom: uploaded.nom || f.nom });
+      const { ht, ttc, lisible } = await lireMontantsDevis(uploaded.uri);
+      if (!lisible || (!ht && !ttc)) { setSuppAutoExtractMsg('HT/TTC non détectés — montants à saisir à la main'); return; }
+      setSuppForm(prev => {
+        const curHT = parseFloat((prev.montantHT || '').replace(',', '.')) || 0;
+        const curTTC = parseFloat((prev.montantTTC || '').replace(',', '.')) || 0;
+        return { ...prev, montantHT: ht && curHT === 0 ? String(ht) : prev.montantHT, montantTTC: ttc && curTTC === 0 ? String(ttc) : prev.montantTTC };
+      });
+      setSuppAutoExtractMsg(`Auto-rempli : ${[ht ? `HT ${fmtEur(ht)}` : '', ttc ? `TTC ${fmtEur(ttc)}` : ''].filter(Boolean).join(' · ')}`);
+    } catch (e) {
+      console.warn('[MarchesChantier] auto-extract supplément échoué:', e);
+    } finally {
+      setSuppAutoExtractLoading(false);
+    }
+  };
   // ── Commission apporteur (dans le form marché) ──
   const [commissionEnabled, setCommissionEnabled] = useState(false);
   const [commissionForm, setCommissionForm] = useState<{
@@ -221,19 +301,15 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       proceedNewMarche();
       return;
     }
-    // 3 plus récents pour respecter la limite iOS Alert (~5 boutons visibles)
-    const recentMarches = marches.slice(-3);
-    const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = recentMarches.map(m => ({
-      text: `Modifier "${m.libelle}"`,
-      onPress: () => openEditMarche(m),
-    }));
-    buttons.push({ text: '+ Créer un nouveau marché', onPress: proceedNewMarche });
-    buttons.push({ text: 'Annuler', style: 'cancel' });
-    Alert.alert(
-      `${marches.length} marché${marches.length > 1 ? 's' : ''} existant${marches.length > 1 ? 's' : ''} pour ce chantier`,
-      'Pour ajouter un devis signé à un marché existant, modifiez-le plutôt que d\'en créer un nouveau.',
-      buttons,
-    );
+    // Sélecteur intégré (Alert.alert à plusieurs boutons n'existe pas sur le web → « rien ne se passe »)
+    setChooser({
+      title: `${marches.length} marché${marches.length > 1 ? 's' : ''} existant${marches.length > 1 ? 's' : ''} pour ce chantier`,
+      message: "Pour ajouter un devis signé à un marché existant, modifiez-le plutôt que d'en créer un nouveau.",
+      options: [
+        ...marches.slice(-5).map(m => ({ text: `Modifier « ${m.libelle} »`, onPress: () => openEditMarche(m) })),
+        { text: '+ Créer un nouveau marché', primary: true, onPress: proceedNewMarche },
+      ],
+    });
   };
   const openEditMarche = (m: MarcheChantier) => {
     setEditMarche(m);
@@ -340,6 +416,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
     setSuppForm({ libelle: '', description: '', montantHT: '', montantTTC: '', statut: 'en_attente', dateProposition: todayYMD(), dateAccord: '' });
     setSuppDevis(null);
     setSuppFacture(null);
+    setSuppAutoExtractMsg(null);
     setShowSuppForm(true);
   };
 
@@ -350,18 +427,14 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       proceedNewSupp();
       return;
     }
-    const recentSupps = supplements.slice(-3);
-    const buttons: { text: string; style?: 'cancel' | 'destructive'; onPress?: () => void }[] = recentSupps.map(s => ({
-      text: `Modifier "${s.libelle}"`,
-      onPress: () => openEditSupp(s),
-    }));
-    buttons.push({ text: '+ Créer un nouveau supplément', onPress: proceedNewSupp });
-    buttons.push({ text: 'Annuler', style: 'cancel' });
-    Alert.alert(
-      `${supplements.length} supplément${supplements.length > 1 ? 's' : ''} existant${supplements.length > 1 ? 's' : ''}`,
-      'Pour modifier un supplément existant, sélectionnez-le ci-dessous.',
-      buttons,
-    );
+    setChooser({
+      title: `${supplements.length} supplément${supplements.length > 1 ? 's' : ''} existant${supplements.length > 1 ? 's' : ''}`,
+      message: 'Modifiez un supplément existant, ou créez-en un nouveau.',
+      options: [
+        ...supplements.slice(-5).map(s => ({ text: `Modifier « ${s.libelle} »`, onPress: () => openEditSupp(s) })),
+        { text: '+ Créer un nouveau supplément', primary: true, onPress: proceedNewSupp },
+      ],
+    });
   };
   const openEditSupp = (s: SupplementMarche) => {
     setEditSupp(s);
@@ -679,7 +752,17 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 const f = await pickFile('devis-signe');
                                 if (!f) return;
                                 const uploaded = await uploadIfNeeded(f, 'marche/devis-signe');
-                                if (uploaded.uri) updateMarcheChantier({ ...m, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
+                                if (!uploaded.uri) return;
+                                // Le devis signé fait foi : on relit ses montants et on met le marché à jour.
+                                let maj: Partial<MarcheChantier> = {};
+                                try {
+                                  const { ht, ttc } = await lireMontantsDevis(uploaded.uri);
+                                  if (ht) maj.montantHT = ht;
+                                  if (ttc) maj.montantTTC = ttc;
+                                } catch {}
+                                updateMarcheChantier({ ...m, ...maj, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom });
+                                if (maj.montantHT || maj.montantTTC) toast.success(`Montants repris du devis signé : ${[maj.montantHT ? `HT ${fmtEur(maj.montantHT)}` : '', maj.montantTTC ? `TTC ${fmtEur(maj.montantTTC)}` : ''].filter(Boolean).join(' · ')}`);
+                                else toast('Devis signé ajouté — montants non détectés, inchangés');
                               }}
                             >
                               <Upload size={17} color="#DC2626" strokeWidth={2} />
@@ -859,7 +942,15 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                                 const f = await pickFile('devis-signe');
                                 if (!f) return;
                                 const uploaded = await uploadIfNeeded(f, 'supplements/devis-signe');
-                                if (uploaded.uri) updateSupplementMarche({ ...s, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom, updatedAt: new Date().toISOString() });
+                                if (!uploaded.uri) return;
+                                let majS: Partial<SupplementMarche> = {};
+                                try {
+                                  const { ht, ttc } = await lireMontantsDevis(uploaded.uri);
+                                  if (ht) majS.montantHT = ht;
+                                  if (ttc) majS.montantTTC = ttc;
+                                } catch {}
+                                updateSupplementMarche({ ...s, ...majS, devisSigneUri: uploaded.uri, devisSigneNom: uploaded.nom, updatedAt: new Date().toISOString() });
+                                if (majS.montantHT || majS.montantTTC) toast.success('Montants repris du devis signé');
                               }}
                             >
                               <Upload size={17} color="#DC2626" strokeWidth={2} />
@@ -1031,55 +1122,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 const f = await pickFile('devis');
                 if (!f) return;
                 setMarcheDevisInitial(f);
-                // Auto-extraction silencieuse HT/TTC depuis le devis PDF
-                // (utile pour pré-remplir les champs montants).
-                setDevisAutoExtractMsg(null);
-                setDevisAutoExtractLoading(true);
-                try {
-                  // 1. Upload sur Supabase (URL distante requise par l'API)
-                  const uploaded = await uploadIfNeeded(f, 'marche/devis');
-                  if (!uploaded.uri || uploaded.uri.startsWith('file://')) {
-                    setDevisAutoExtractLoading(false);
-                    return;
-                  }
-                  // 2. Mémorise le PDF avec son URL distante (évite re-upload au save)
-                  setMarcheDevisInitial({ uri: uploaded.uri, nom: uploaded.nom || f.nom });
-                  // 3. Extrait le texte côté serveur
-                  const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
-                  const texte = await extractTextFromPdfUrl(uploaded.uri);
-                  if (!texte) { setDevisAutoExtractLoading(false); return; }
-                  // 4. Parse le récap (totaux HT/TTC)
-                  const { extraireRecapDevis, extraireTotalTTC } = await import('@/lib/devisParser');
-                  const recap = extraireRecapDevis(texte);
-                  const totalTTC = recap.totalTTC || extraireTotalTTC(texte);
-                  const totalHT = recap.totalNetHT || recap.totalBrutHT;
-                  // Remplit si vide OU à 0 (n'écrase pas une saisie réelle > 0)
-                  const currentHT = parseFloat((marcheForm.montantHT || '').replace(',', '.')) || 0;
-                  const currentTTC = parseFloat((marcheForm.montantTTC || '').replace(',', '.')) || 0;
-                  let filled: string[] = [];
-                  if (totalHT && currentHT === 0) {
-                    setMarcheForm(prev => ({ ...prev, montantHT: String(totalHT) }));
-                    filled.push(`HT ${totalHT.toLocaleString('fr-FR')} €`);
-                  }
-                  if (totalTTC && currentTTC === 0) {
-                    setMarcheForm(prev => ({ ...prev, montantTTC: String(totalTTC) }));
-                    filled.push(`TTC ${totalTTC.toLocaleString('fr-FR')} €`);
-                  }
-                  if (filled.length > 0) {
-                    setDevisAutoExtractMsg(`Auto-rempli : ${filled.join(' · ')}`);
-                  } else if (!totalHT && !totalTTC) {
-                    setDevisAutoExtractMsg('HT/TTC non détectés dans le devis');
-                  }
-                } catch (e) {
-                  console.warn('[MarchesChantier] auto-extract devis échoué:', e);
-                } finally {
-                  setDevisAutoExtractLoading(false);
-                }
+                await analyserDevisMarche(f, 'initial');
               }}>
                 <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{marcheDevisInitial ? `${marcheDevisInitial.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
               {devisAutoExtractLoading && (
-                <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis pour pré-remplir HT/TTC...
+                <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis en cours…
                 </Text>
               )}
               {devisAutoExtractMsg && (
@@ -1089,7 +1137,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               )}
 
               <Text style={lbl}>Devis signé</Text>
-              <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis-signe'); if (f) setMarcheDevisSigne(f); }}>
+              <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis-signe'); if (!f) return; setMarcheDevisSigne(f); await analyserDevisMarche(f, 'signe'); }}>
                 <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{marcheDevisSigne ? `${marcheDevisSigne.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
@@ -1325,9 +1373,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               </View>
 
               <Text style={lbl}>Devis</Text>
-              <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis'); if (f) setSuppDevis(f); }}>
+              <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis'); if (!f) return; setSuppDevis(f); await analyserDevisSupp(f); }}>
                 <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{suppDevis ? `${suppDevis.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
+              {suppAutoExtractLoading && <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis en cours…</Text>}
+              {suppAutoExtractMsg && <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600', marginTop: 4 }}>{suppAutoExtractMsg}</Text>}
 
               <Text style={lbl}>Facture</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture'); if (f) setSuppFacture(f); }}>
@@ -1421,6 +1471,28 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           </View>
         </View>
       </ModalKeyboard>
+      {/* ── Sélecteur multi-options (fonctionne sur iOS, Android et web) ── */}
+      <Modal visible={chooser !== null} transparent animationType="fade" onRequestClose={() => setChooser(null)}>
+        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 }} onPress={() => setChooser(null)}>
+          <Pressable style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, gap: 8, maxWidth: 440, width: '100%', alignSelf: 'center' }} onPress={() => {}}>
+            <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14' }}>{chooser?.title}</Text>
+            {!!chooser?.message && <Text style={{ fontSize: 13, color: '#6E5F54', marginBottom: 6 }}>{chooser.message}</Text>}
+            {chooser?.options.map((o, i) => (
+              <Pressable
+                key={i}
+                accessibilityRole="button"
+                onPress={() => { const fn = o.onPress; setChooser(null); fn(); }}
+                style={{ minHeight: 46, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: o.primary ? '#5C1F2E' : '#F2E4E1' }}
+              >
+                <Text style={{ fontSize: 14, fontWeight: '600', color: o.primary ? '#fff' : '#5C1F2E' }} numberOfLines={1}>{o.text}</Text>
+              </Pressable>
+            ))}
+            <Pressable onPress={() => setChooser(null)} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#6E5F54' }}>Annuler</Text>
+            </Pressable>
+          </Pressable>
+        </Pressable>
+      </Modal>
     </ModalKeyboard>
   );
 }
