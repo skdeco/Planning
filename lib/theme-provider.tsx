@@ -12,7 +12,11 @@ type ThemeContextValue = {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const systemScheme = useSystemColorScheme() ?? "light";
+  // Thème clair imposé : les écrans sont dessinés en clair (sable & bordeaux). Sans cela, un iPhone
+  // en mode sombre mélange éléments sombres (système, classes NativeWind) et écrans clairs.
+  // Un vrai mode sombre passera par les tokens DS.* (voir CLAUDE.md).
+  useSystemColorScheme();
+  const systemScheme: ColorScheme = "light";
   const [colorScheme, setColorSchemeState] = useState<ColorScheme>(systemScheme);
 
   const applyScheme = useCallback((scheme: ColorScheme) => {
