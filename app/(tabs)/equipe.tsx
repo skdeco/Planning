@@ -30,6 +30,7 @@ import { DatePicker } from '@/components/DatePicker';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { formatDateFR } from '@/lib/date/format';
 
 // Filtre mime utilisé par tous les InboxPickerButton de cet écran
 // (documents RH employés, docs ST, devis, factures).
@@ -2076,7 +2077,7 @@ export default function EquipeScreen() {
                                   <View key={a.id} style={stStyles.acompteRow}>
                                     <View style={{ flex: 1 }}>
                                       <Text style={stStyles.acompteMontant}>{fmtST(a.montant)}</Text>
-                                      <Text style={stStyles.acompteDate}>{a.date}{a.commentaire ? ` — ${a.commentaire}` : ''}</Text>
+                                      <Text style={stStyles.acompteDate}>{formatDateFR(a.date)}{a.commentaire ? ` — ${a.commentaire}` : ''}</Text>
                                       {a.facture ? (
                                         <Pressable onPress={() => openDocPreview(a.facture!)}>
                                           <Text style={stStyles.factureLink}>{t.equipe.invoice}</Text>

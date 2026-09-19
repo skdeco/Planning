@@ -48,6 +48,7 @@ import { getInboxItemPath } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 import { canVoirOnglet, type OngletPortail } from '@/lib/portail/permissions';
+import { DateInput } from '@/components/ui/DateInput';
 
 /** Filtre mime pour InboxPickerButton : photos + PDF (réutilisé d'autres écrans). */
 const inboxMimeFilterImagePdf = (m: string): boolean =>
@@ -1534,7 +1535,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         {versementForm && versementForm.flux === s.key ? (
                           <View style={styles.versForm}>
                             <TextInput style={styles.versInput} placeholder="Montant TTC" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={versementForm.montant} onChangeText={t => setVersementForm(f => (f ? { ...f, montant: t } : f))} />
-                            <TextInput style={styles.versInput} placeholder="AAAA-MM-JJ" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={versementForm.date} onChangeText={t => setVersementForm(f => (f ? { ...f, date: t } : f))} />
+                            <DateInput style={styles.versInput} placeholderTextColor={DS.textAlt} autoCapitalize="none" value={versementForm.date} onChangeDate={t => setVersementForm(f => (f ? { ...f, date: t } : f))} />
                             <Pressable style={styles.versSave} onPress={saveVersement}><Text style={styles.versSaveTxt}>OK</Text></Pressable>
                             <Pressable hitSlop={8} onPress={() => setVersementForm(null)}><Text style={styles.versDel}>✕</Text></Pressable>
                           </View>

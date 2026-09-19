@@ -20,6 +20,7 @@ import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { todayYMD } from '@/lib/date/today';
+import { formatDateFR } from '@/lib/date/format';
 
 const PRIO_LABELS: Record<PrioriteSAV, string> = {
   basse: 'Basse',
@@ -321,7 +322,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                     <Text style={[styles.badgeText, { color: statutColors.text }]}>{STATUT_LABELS[ticket.statut]}</Text>
                   </View>
                 </View>
-                <Text style={styles.meta}>Ouvert le {ticket.dateOuverture}</Text>
+                <Text style={styles.meta}>Ouvert le {formatDateFR(ticket.dateOuverture)}</Text>
               </View>
             ) : (
               <View style={styles.card}>
@@ -481,7 +482,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                 {ticket.statut === 'resolu' && (
                   <Text style={styles.meta}>
                     Résolu{ticket.resoluPar ? ` par ${ticket.resoluPar}` : ''}
-                    {ticket.dateResolution ? ` le ${ticket.dateResolution}` : ''}
+                    {ticket.dateResolution ? ` le ${formatDateFR(ticket.dateResolution)}` : ''}
                   </Text>
                 )}
                 {(ticket.photosResolution || []).length > 0 ? (

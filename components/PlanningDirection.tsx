@@ -7,6 +7,7 @@ import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
 import { useRefresh } from '@/hooks/useRefresh';
 import type { AgendaEvent } from '@/app/types';
+import { formatDateFR, parseDateFR } from '@/lib/date/format';
 
 const COULEURS = ['#2C2C2C', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
 const JOURS_COURT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -230,7 +231,7 @@ export function PlanningDirection() {
                     onPress={() => openEdit(evt)}
                     onLongPress={() => {
                       if (Platform.OS === 'web') {
-                        const nd = window.prompt('Déplacer à quelle date ? (AAAA-MM-JJ)', evt.date);
+                        const nd = parseDateFR(window.prompt('Déplacer à quelle date ? (JJ/MM/AAAA)', formatDateFR(evt.date)));
                         if (nd && nd !== evt.date) updateAgendaEvent({ ...evt, date: nd });
                       } else {
                         const jours: string[] = [];

@@ -88,6 +88,7 @@ import type {
 } from '@/app/types';
 import type { MessagePrive } from '@/app/types/messages';
 import { EMPLOYE_COLORS } from '@/app/types';
+import { formatDateFR } from '@/lib/date/format';
 
 interface AppContextType {
   data: AppData;
@@ -1066,7 +1067,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addAffectation = (a: Affectation) => {
     const emp = data.employes.find(e => e.id === a.employeId);
     const ch = data.chantiers.find(c => c.id === a.chantierId);
-    if (emp && ch) logActivity('affectation', `${emp.prenom} ${emp.nom} affecté à ${ch.nom} (${a.dateDebut})`, a.chantierId);
+    if (emp && ch) logActivity('affectation', `${emp.prenom} ${emp.nom} affecté à ${ch.nom} (${formatDateFR(a.dateDebut)})`, a.chantierId);
     setData(p => {
       // Anti-doublon : ne pas ajouter si même employé+chantier+dateDebut+dateFin existe déjà
       const duplicate = p.affectations.some(x =>
@@ -1431,7 +1432,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const addDemandeConge = (d: DemandeConge) => {
     const emp = data.employes.find(e => e.id === d.employeId);
     const empName = emp ? `${emp.prenom} ${emp.nom}` : 'Employé';
-    logActivity('conge', `Demande de congé de ${empName} (${d.dateDebut} → ${d.dateFin})`, d.employeId);
+    logActivity('conge', `Demande de congé de ${empName} (${formatDateFR(d.dateDebut)} → ${formatDateFR(d.dateFin)})`, d.employeId);
     setData(p => ({ ...p, demandesConge: [...(p.demandesConge || []), d] }));
   };
   const updateDemandeConge = (d: DemandeConge) =>

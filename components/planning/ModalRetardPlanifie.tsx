@@ -9,6 +9,7 @@ import {
 import { DS, font, radius, space } from '../../constants/design';
 import { ModalKeyboard } from '../ModalKeyboard';
 import { DatePicker } from '../DatePicker';
+import { formatDateFR } from '@/lib/date/format';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -285,7 +286,7 @@ export function ModalRetardPlanifie({
                 <View key={r.id} style={styles.listItem}>
                   <View style={styles.listItemContent}>
                     <Text style={styles.listItemHeader}>
-                      {r.date} — {r.heureArrivee}
+                      {formatDateFR(r.date)} — {r.heureArrivee}
                     </Text>
                     <Text style={styles.listItemMotif}>{r.motif}</Text>
                     {r.lu && (
@@ -297,7 +298,7 @@ export function ModalRetardPlanifie({
                   <Pressable
                     onPress={() => onDelete(r.id)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Supprimer le retard du ${r.date}`}
+                    accessibilityLabel={`Supprimer le retard du ${formatDateFR(r.date)}`}
                     style={styles.removeBtn}
                     hitSlop={{ top: 4, bottom: 4, left: 4, right: 4 }}
                   >

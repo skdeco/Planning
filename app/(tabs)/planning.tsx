@@ -65,6 +65,8 @@ import { ChantierActionsModal } from '@/components/ChantierActionsModal';
 import { PortailClient } from '@/components/PortailClient';
 import { BilanFinancierChantier } from '@/components/BilanFinancierChantier';
 import { MarchesChantier } from '@/components/MarchesChantier';
+import { DateInput } from '@/components/ui/DateInput';
+import { formatDateFR } from '@/lib/date/format';
 // expo-print et expo-sharing nécessitent un build natif — import dynamique uniquement
 const getPrintModule = () => import('expo-print').catch(() => null);
 const getSharingModule = () => import('expo-sharing').catch(() => null);
@@ -1236,22 +1238,20 @@ export default function PlanningScreen() {
               <View style={styles.intervDateRow}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.intervFormLabel}>Du *</Text>
-                  <TextInput
+                  <DateInput
                     style={styles.intervFormInput}
                     value={interventionForm.dateDebut}
-                    onChangeText={v => setInterventionForm(f => ({ ...f, dateDebut: v }))}
-                    placeholder="AAAA-MM-JJ"
+                    onChangeDate={v => setInterventionForm(f => ({ ...f, dateDebut: v }))}
                     placeholderTextColor="#9A8C80"
                     keyboardType="numbers-and-punctuation"
                   />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.intervFormLabel}>Au *</Text>
-                  <TextInput
+                  <DateInput
                     style={styles.intervFormInput}
                     value={interventionForm.dateFin}
-                    onChangeText={v => setInterventionForm(f => ({ ...f, dateFin: v }))}
-                    placeholder="AAAA-MM-JJ"
+                    onChangeDate={v => setInterventionForm(f => ({ ...f, dateFin: v }))}
                     placeholderTextColor="#9A8C80"
                     keyboardType="numbers-and-punctuation"
                   />
@@ -1542,7 +1542,7 @@ export default function PlanningScreen() {
                     Ordre de passage — {emp?.prenom} {emp?.nom}
                   </Text>
                   <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 12 }}>
-                    {ordreModal.date} · Appuyez sur ↑ / ↓ pour réordonner
+                    {formatDateFR(ordreModal.date)} · Appuyez sur ↑ / ↓ pour réordonner
                   </Text>
                   {ordreModal.chantierIds.map((cId, idx) => {
                     const ch = data.chantiers.find(c => c.id === cId);

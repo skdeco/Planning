@@ -24,6 +24,7 @@ import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { DS } from '@/constants/design';
+import { formatDateFR } from '@/lib/date/format';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -108,7 +109,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                   <Text style={styles.modalSubtitle}>
                     {noteModal.mode === 'chantier'
                       ? `Toutes les notes du chantier (${noteModal.allNotes.length})`
-                      : `${data.chantiers.find(c => c.id === noteModal.chantierId)?.nom} — ${noteModal.date}`}
+                      : `${data.chantiers.find(c => c.id === noteModal.chantierId)?.nom} — ${formatDateFR(noteModal.date)}`}
                   </Text>
                 )}
               </View>

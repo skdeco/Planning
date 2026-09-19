@@ -12,6 +12,7 @@ import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { useConfirm } from '@/hooks/useConfirm';
 import { toast } from 'sonner-native';
+import { formatDateFR } from '@/lib/date/format';
 
 // Filtre mime utilisé par tous les InboxPickerButton de cet écran
 // (devis, factures, documents légaux ST). Aligné avec equipe.tsx.
@@ -387,7 +388,7 @@ export default function FinancierSTScreen() {
                               <View style={{ flex: 1 }}>
                                 <View style={styles.acompteRowHeader}>
                                   <Text style={styles.acompteMontant}>{fmt(a.montant)}</Text>
-                                  <Text style={styles.acompteDate}>{a.date}</Text>
+                                  <Text style={styles.acompteDate}>{formatDateFR(a.date)}</Text>
                                 </View>
                                 {a.commentaire ? <Text style={styles.acompteComment}>{a.commentaire}</Text> : null}
                                 {a.facture ? (

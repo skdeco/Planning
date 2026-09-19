@@ -69,6 +69,7 @@ import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
 import { pickNativeFile, type PickedFile } from '@/lib/share/pickNativeFile';
 import * as FileSystem from 'expo-file-system/legacy';
 import { requireOptionalNativeModule } from 'expo-modules-core';
+import { formatDateFR } from '@/lib/date/format';
 
 // Filtre mime utilisé par les pickers Notes Chantier + Plans Chantier (photos + PDF).
 const inboxMimeFilterImagePdf = (m: string): boolean =>
@@ -1006,7 +1007,7 @@ export default function ChantiersScreen() {
     // Onglet Notes chantier
     XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(
       notes.length ? notes.map(n => ({
-        Date: n.createdAt?.slice(0, 10) || '',
+        Date: formatDateFR(n.createdAt?.slice(0, 10)),
         Texte: n.texte || '',
         Auteur: n.auteurNom || n.auteurId || '',
         Destinataires: Array.isArray(n.destinataires) ? n.destinataires.join(', ') : (n.destinataires || 'tous'),
@@ -1045,7 +1046,7 @@ export default function ChantiersScreen() {
       docs.length ? docs.map(d => ({
         Type: d.type,
         Libellé: d.libelle,
-        'Uploadé le': d.uploadedAt?.slice(0, 10) || '',
+        'Uploadé le': formatDateFR(d.uploadedAt?.slice(0, 10)),
         'Uploadé par': d.uploadedBy || '',
         Commentaire: d.commentaire || '',
       })) : [{ info: 'Aucun document' }]
@@ -1318,7 +1319,7 @@ export default function ChantiersScreen() {
           </View>
           <View style={styles.cardMetaRow}>
             <CalendarClock size={13} color={DS.textAlt} strokeWidth={2} />
-            <Text style={styles.cardMetaText}>{item.dateDebut} → {item.dateFin}</Text>
+            <Text style={styles.cardMetaText}>{formatDateFR(item.dateDebut)} → {formatDateFR(item.dateFin)}</Text>
           </View>
         </View>
 
@@ -1517,7 +1518,7 @@ export default function ChantiersScreen() {
                       </View>
                       {t.description && <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 4 }} numberOfLines={2}>{t.description}</Text>}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                        <Text style={{ fontSize: 10, color: '#9A8C80' }}>{t.dateOuverture}</Text>
+                        <Text style={{ fontSize: 10, color: '#9A8C80' }}>{formatDateFR(t.dateOuverture)}</Text>
                         {assigneEmp && <Text style={{ fontSize: 10, color: '#5C1F2E' }}>{assigneEmp.prenom} {assigneEmp.nom}</Text>}
                         {t.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60' }}>{t.resoluPar}</Text>}
                         {t.photos && t.photos.length > 0 && <Text style={{ fontSize: 10, color: '#6E5F54' }}>{t.photos.length}</Text>}

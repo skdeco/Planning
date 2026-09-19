@@ -6,6 +6,8 @@ import { useApp } from '@/app/context/AppContext';
 import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DateInput } from '@/components/ui/DateInput';
+import { formatDateFR } from '@/lib/date/format';
 
 /**
  * DemarchePanel — démarches & échéances administratives (PC, DOC, DAACT,
@@ -115,7 +117,7 @@ export function DemarchePanel({ visible, onClose, chantierId }: DemarchePanelPro
                       <Pressable style={{ flex: 1 }} onPress={() => openEdit(d)}>
                         <Text style={[styles.itemNom, d.statut === 'fait' && styles.itemDone]}>{d.libelle}</Text>
                         {(d.dateEcheance || d.faitLe) ? (
-                          <Text style={styles.itemMeta}>{d.statut === 'fait' && d.faitLe ? `Fait ${d.faitLe}` : d.dateEcheance ? `Échéance ${d.dateEcheance}` : ''}</Text>
+                          <Text style={styles.itemMeta}>{d.statut === 'fait' && d.faitLe ? `Fait ${formatDateFR(d.faitLe)}` : d.dateEcheance ? `Échéance ${formatDateFR(d.dateEcheance)}` : ''}</Text>
                         ) : null}
                       </Pressable>
                       {d.statut === 'en_attente' ? (
@@ -148,7 +150,7 @@ export function DemarchePanel({ visible, onClose, chantierId }: DemarchePanelPro
                   ))}
                 </View>
                 <TextInput style={styles.input} placeholder="Libellé (ex: Dépôt du permis de construire)" placeholderTextColor={DS.textAlt} value={form.libelle} onChangeText={t => set({ libelle: t })} />
-                <TextInput style={styles.input} placeholder="Échéance (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateEcheance} onChangeText={t => set({ dateEcheance: t })} />
+                <DateInput style={styles.input} placeholder="Échéance (JJ/MM/AAAA)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateEcheance} onChangeDate={t => set({ dateEcheance: t })} />
                 <Text style={styles.formLabel}>Statut</Text>
                 <View style={styles.chipRow}>
                   {STATUT_CYCLE.map(s => (

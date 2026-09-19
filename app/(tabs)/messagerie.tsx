@@ -14,6 +14,7 @@ import { inboxItemToDataUri } from '@/lib/share/inboxToDataUri';
 import type { InboxItem } from '@/lib/share/inboxStore';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
+import { DateInput } from '@/components/ui/DateInput';
 
 // Filtre mime utilisé par l'InboxPickerButton de cet écran (messagerie =
 // photos/vidéos uniquement). Diffère de inboxMimeFilterImagePdf utilisé
@@ -586,9 +587,9 @@ export default function MessagerieScreen() {
           {/* Date + Type */}
           <View style={styles.filterRow}>
             <Text style={styles.filterLabel}>Du</Text>
-            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={listFilterDateFrom} onChangeText={setListFilterDateFrom} maxLength={10} />
+            <DateInput style={styles.filterInput} value={listFilterDateFrom} onChangeDate={setListFilterDateFrom} />
             <Text style={styles.filterLabel}>au</Text>
-            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={listFilterDateTo} onChangeText={setListFilterDateTo} maxLength={10} />
+            <DateInput style={styles.filterInput} value={listFilterDateTo} onChangeDate={setListFilterDateTo} />
           </View>
           <View style={styles.filterRow}>
             <Text style={styles.filterLabel}>Type</Text>
@@ -849,9 +850,9 @@ export default function MessagerieScreen() {
           {/* Date */}
           <View style={styles.filterRow}>
             <Text style={styles.filterLabel}>Du</Text>
-            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={filterDateFrom} onChangeText={setFilterDateFrom} maxLength={10} />
+            <DateInput style={styles.filterInput} value={filterDateFrom} onChangeDate={setFilterDateFrom} />
             <Text style={styles.filterLabel}>au</Text>
-            <TextInput style={styles.filterInput} placeholder="AAAA-MM-JJ" value={filterDateTo} onChangeText={setFilterDateTo} maxLength={10} />
+            <DateInput style={styles.filterInput} value={filterDateTo} onChangeDate={setFilterDateTo} />
           </View>
           {/* Qui */}
           <View style={styles.filterRow}>

@@ -13,6 +13,7 @@ import { METIER_COLORS, type Acompte } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
 import { calcSalaireMensuel } from '@/lib/paie/calcSalaireMensuel';
 import { FileSpreadsheet, FileText, CalendarDays, HardHat } from 'lucide-react-native';
+import { formatDateFR } from '@/lib/date/format';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -430,7 +431,7 @@ export default function ReportingScreen() {
       const chantier = data.chantiers.find(c => c.id === liste.chantierId);
       const emp = data.employes.find(e => e.id === liste.employeId);
       liste.items.filter(i => i.achete).forEach(item => {
-        rows.push([chantier?.nom || '', emp ? `${emp.prenom} ${emp.nom}` : '', item.texte, item.quantite || '', item.achetePar || '', item.acheteAt ? item.acheteAt.slice(0, 10) : '']);
+        rows.push([chantier?.nom || '', emp ? `${emp.prenom} ${emp.nom}` : '', item.texte, item.quantite || '', item.achetePar || '', item.acheteAt ? formatDateFR(item.acheteAt) : '']);
       });
     });
     const csv = rows.map(r => r.map(c => `"${String(c).replace(/"/g, '""')}"`).join(sep)).join('\n');

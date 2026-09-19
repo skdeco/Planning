@@ -8,6 +8,7 @@ import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DateInput } from '@/components/ui/DateInput';
 
 /**
  * PhasePanel — planning de phases (DET) : jalons clés + phases/lots avec
@@ -228,7 +229,7 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
                 <Text style={styles.formTitle}>Générer le planning</Text>
                 <Text style={styles.hint}>Répartition automatique des {lots.length} lots du devis au prorata de leur montant. Tu ajusteras ensuite chaque phase si besoin.</Text>
                 <View style={styles.row2}>
-                  <TextInput style={[styles.input, styles.flex1]} placeholder="Début (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={genDebut} onChangeText={setGenDebut} />
+                  <DateInput style={[styles.input, styles.flex1]} placeholder="Début (JJ/MM/AAAA)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={genDebut} onChangeDate={setGenDebut} />
                   <TextInput style={[styles.input, styles.flex1]} placeholder="Durée totale (jours)" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={genDuree} onChangeText={setGenDuree} />
                 </View>
                 {apercuGen.length > 0 && (
@@ -260,8 +261,8 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
                 <Text style={styles.formTitle}>{editId ? 'Modifier' : 'Nouvelle phase'}</Text>
                 <TextInput style={styles.input} placeholder="Libellé (ex: Menuiseries ext.)" placeholderTextColor={DS.textAlt} value={form.libelle} onChangeText={t => set({ libelle: t })} />
                 <View style={styles.row2}>
-                  <TextInput style={[styles.input, styles.flex1]} placeholder="Début (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateDebut} onChangeText={t => set({ dateDebut: t })} />
-                  <TextInput style={[styles.input, styles.flex1]} placeholder="Fin (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateFin} onChangeText={t => set({ dateFin: t })} />
+                  <DateInput style={[styles.input, styles.flex1]} placeholder="Début (JJ/MM/AAAA)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateDebut} onChangeDate={t => set({ dateDebut: t })} />
+                  <DateInput style={[styles.input, styles.flex1]} placeholder="Fin (JJ/MM/AAAA)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.dateFin} onChangeDate={t => set({ dateFin: t })} />
                 </View>
                 <TextInput style={styles.input} placeholder="Avancement % (0-100)" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.avancement} onChangeText={t => set({ avancement: t })} />
                 <Pressable style={[styles.saveBtn, !form.libelle.trim() && styles.saveBtnDisabled]} onPress={save}>

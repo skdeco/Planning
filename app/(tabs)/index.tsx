@@ -23,6 +23,7 @@ import { useNotifications } from '@/hooks/useNotifications';
 import { Onboarding } from '@/components/Onboarding';
 import { DashboardKPI } from '@/components/DashboardKPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { formatDateFR } from '@/lib/date/format';
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -529,8 +530,8 @@ export default function DashboardScreen() {
                                 </ScrollView>
                               </View>
                             )}
-                            {ticket.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60', fontWeight: '600' }}>Résolu par {ticket.resoluPar} le {ticket.dateResolution}</Text>}
-                            <Text style={{ fontSize: 9, color: '#9A8C80' }}>Ouvert le {ticket.dateOuverture}</Text>
+                            {ticket.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60', fontWeight: '600' }}>Résolu par {ticket.resoluPar} le {formatDateFR(ticket.dateResolution)}</Text>}
+                            <Text style={{ fontSize: 9, color: '#9A8C80' }}>Ouvert le {formatDateFR(ticket.dateOuverture)}</Text>
 
                             {/* Actions employe */}
                             {ticket.statut !== 'resolu' && ticket.statut !== 'clos' && (
@@ -708,7 +709,7 @@ export default function DashboardScreen() {
                     <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}>
                       <Text style={{ fontSize: 14 }}>🏖</Text>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Congé {d.dateDebut} → {d.dateFin}</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Congé {formatDateFR(d.dateDebut)} → {formatDateFR(d.dateFin)}</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>
@@ -726,7 +727,7 @@ export default function DashboardScreen() {
                     <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
                       <Text style={{ fontSize: 14 }}>🏥</Text>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Arrêt maladie {d.dateDebut}</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Arrêt maladie {formatDateFR(d.dateDebut)}</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>

@@ -27,7 +27,7 @@ function toISO(d: Date): string {
 function formatFR(s: string): string {
   if (!s) return '';
   const d = parseISO(s);
-  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
+  return d.toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit', year: 'numeric' }); // JJ/MM/AAAA
 }
 
 export function DatePickerField({ value, onChange, placeholder = 'Sélectionner une date', minDate }: Props) {

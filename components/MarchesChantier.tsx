@@ -17,6 +17,8 @@ import { AvancementLotsPanel } from '@/components/ui/AvancementLotsPanel';
 import { ImportLotsDevisOverlay } from '@/components/ui/ImportLotsDevisOverlay';
 import { SignerDevisOverlay } from '@/components/SignerDevisOverlay';
 import { sendPushNotification } from '@/hooks/useNotifications';
+import { DateInput } from '@/components/ui/DateInput';
+import { formatDateFR } from '@/lib/date/format';
 import {
   MODES_PAIEMENT,
   type MarcheChantier, type SupplementMarche, type PaiementRecu,
@@ -113,9 +115,9 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
         if (dateDevis && source === 'signe' && !marcheDevisInitial) next.dateDevis = dateDevis;
         return next;
       });
-      if (dateDebutTravaux) datesLues.push(`démarrage ${dateDebutTravaux}`);
-      if (source === 'signe') datesLues.push(dateSignature ? `signé le ${dateSignature}` : "signature : date du jour (date manuscrite non lisible)");
-      else if (dateDevis) datesLues.push(`devis du ${dateDevis}`);
+      if (dateDebutTravaux) datesLues.push(`démarrage ${formatDateFR(dateDebutTravaux)}`);
+      if (source === 'signe') datesLues.push(dateSignature ? `signé le ${formatDateFR(dateSignature)}` : "signature : date du jour (date manuscrite non lisible)");
+      else if (dateDevis) datesLues.push(`devis du ${formatDateFR(dateDevis)}`);
       if (!ht && !ttc) { setDevisAutoExtractMsg(['HT/TTC non détectés dans le devis', ...datesLues].join(' · ')); return; }
       const signeDejaJoint = source === 'initial' && !!marcheDevisSigne;
       const filled: string[] = [];
@@ -690,8 +692,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         <Text style={{ fontSize: 11, color: resteM > 0 ? '#DC2626' : '#27AE60', fontWeight: '600', marginTop: 2 }}>
                           Reçu : {fmt(totalRecuM)} € · Reste : {fmt(resteM)} €
                         </Text>
-                        {m.dateSignature && <Text style={{ fontSize: 10, color: '#27AE60', marginTop: 2 }}>Signé le {m.dateSignature}</Text>}
-                        {m.dateDebutTravaux && <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>Démarrage des travaux : {m.dateDebutTravaux}</Text>}
+                        {m.dateSignature && <Text style={{ fontSize: 10, color: '#27AE60', marginTop: 2 }}>Signé le {formatDateFR(m.dateSignature)}</Text>}
+                        {m.dateDebutTravaux && <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>Démarrage des travaux : {formatDateFR(m.dateDebutTravaux)}</Text>}
                         {m.commission && (() => {
                           const app = apporteurs.find(a => a.id === m.commission!.apporteurId);
                           const montantC = getCommissionAmount(m);
@@ -831,7 +833,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                               <View style={{ flex: 1 }}>
                                 <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>{fmt(p.montant)} €</Text>
-                                <Text style={{ fontSize: 10, color: '#6E5F54' }}>{p.date} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
+                                <Text style={{ fontSize: 10, color: '#6E5F54' }}>{formatDateFR(p.date)} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
                                 {p.note && <Text style={{ fontSize: 10, color: '#6E5F54', fontStyle: 'italic' }}>{p.note}</Text>}
                               </View>
                               {p.factureUri && (
@@ -1027,7 +1029,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                               <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 6, padding: 8, marginBottom: 4, gap: 6 }}>
                                 <View style={{ flex: 1 }}>
                                   <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>{fmt(p.montant)} €</Text>
-                                  <Text style={{ fontSize: 10, color: '#6E5F54' }}>{p.date} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
+                                  <Text style={{ fontSize: 10, color: '#6E5F54' }}>{formatDateFR(p.date)} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
                                 </View>
                                 {p.factureUri && (
                                   <Pressable onPress={() => openDoc(p.factureUri)}>
@@ -1133,16 +1135,16 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
-                  <Text style={lbl}>Date devis (YYYY-MM-DD)</Text>
-                  <TextInput style={inp} value={marcheForm.dateDevis} onChangeText={v => setMarcheForm(f => ({ ...f, dateDevis: v }))} placeholder="2026-04-09" />
+                  <Text style={lbl}>Date devis</Text>
+                  <DateInput style={inp} value={marcheForm.dateDevis} onChangeDate={v => setMarcheForm(f => ({ ...f, dateDevis: v }))} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={lbl}>Date signature</Text>
-                  <TextInput style={inp} value={marcheForm.dateSignature} onChangeText={v => setMarcheForm(f => ({ ...f, dateSignature: v }))} placeholder="2026-04-15" />
+                  <DateInput style={inp} value={marcheForm.dateSignature} onChangeDate={v => setMarcheForm(f => ({ ...f, dateSignature: v }))} />
                 </View>
               </View>
-              <Text style={lbl}>Démarrage des travaux (YYYY-MM-DD)</Text>
-              <TextInput style={inp} value={marcheForm.dateDebutTravaux} onChangeText={v => setMarcheForm(f => ({ ...f, dateDebutTravaux: v }))} placeholder="2026-05-04" />
+              <Text style={lbl}>Démarrage des travaux</Text>
+              <DateInput style={inp} value={marcheForm.dateDebutTravaux} onChangeDate={v => setMarcheForm(f => ({ ...f, dateDebutTravaux: v }))} />
 
               <Text style={lbl}>Devis initial</Text>
               <Pressable style={fileBtn} onPress={async () => {
@@ -1318,11 +1320,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                     {commissionForm.statut === 'paye' && (
                       <>
                         <Text style={lbl}>Date de paiement</Text>
-                        <TextInput
+                        <DateInput
                           style={inp}
                           value={commissionForm.datePaiement}
-                          onChangeText={v => setCommissionForm(f => ({ ...f, datePaiement: v }))}
-                          placeholder="YYYY-MM-DD"
+                          onChangeDate={v => setCommissionForm(f => ({ ...f, datePaiement: v }))}
                         />
                       </>
                     )}
@@ -1389,12 +1390,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={lbl}>Date proposition</Text>
-                  <TextInput style={inp} value={suppForm.dateProposition} onChangeText={v => setSuppForm(f => ({ ...f, dateProposition: v }))} placeholder="2026-04-09" />
+                  <DateInput style={inp} value={suppForm.dateProposition} onChangeDate={v => setSuppForm(f => ({ ...f, dateProposition: v }))} />
                 </View>
                 {suppForm.statut === 'accepte' && (
                   <View style={{ flex: 1 }}>
                     <Text style={lbl}>Date accord</Text>
-                    <TextInput style={inp} value={suppForm.dateAccord} onChangeText={v => setSuppForm(f => ({ ...f, dateAccord: v }))} placeholder="2026-04-15" />
+                    <DateInput style={inp} value={suppForm.dateAccord} onChangeDate={v => setSuppForm(f => ({ ...f, dateAccord: v }))} />
                   </View>
                 )}
               </View>
@@ -1427,7 +1428,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
               <Text style={{ fontSize: 17, fontWeight: '700', color: '#2B1D14', marginBottom: 12 }}>Nouveau paiement</Text>
               <Text style={lbl}>Date</Text>
-              <TextInput style={inp} value={paiementForm.date} onChangeText={v => setPaiementForm(f => ({ ...f, date: v }))} placeholder="2026-04-09" />
+              <DateInput style={inp} value={paiementForm.date} onChangeDate={v => setPaiementForm(f => ({ ...f, date: v }))} />
               <Text style={lbl}>Montant (€) *</Text>
               <TextInput style={inp} value={paiementForm.montant} onChangeText={v => setPaiementForm(f => ({ ...f, montant: v }))} keyboardType="decimal-pad" placeholder="2500" />
               <Text style={lbl}>Mode de paiement</Text>

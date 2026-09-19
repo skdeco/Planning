@@ -15,6 +15,7 @@ import { useApp } from '@/app/context/AppContext';
 import { DatePicker } from '@/components/DatePicker';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { METIER_COLORS, INTERVENTION_COLORS, type Affectation } from '@/app/types';
+import { formatDateFR } from '@/lib/date/format';
 
 // ─── Helpers de date locaux ───────────────────────────────────────────────────
 //
@@ -284,7 +285,7 @@ export function ModalAjoutEmployesST({
               </Pressable>
             </View>
             {modal && (
-              <Text style={styles.modalSubtitle}>{modal.date}</Text>
+              <Text style={styles.modalSubtitle}>{formatDateFR(modal.date)}</Text>
             )}
 
             {/* Onglets Employés / Sous-traitants / Externe */}
@@ -516,7 +517,7 @@ export function ModalAjoutEmployesST({
                       <View key={interv.id} style={[styles.intervExistingRow, { borderLeftColor: interv.couleur }]}>
                         <View style={{ flex: 1 }}>
                           <Text style={styles.intervExistingLabel}>{interv.libelle}</Text>
-                          <Text style={styles.intervExistingDates}>{interv.dateDebut} → {interv.dateFin}</Text>
+                          <Text style={styles.intervExistingDates}>{formatDateFR(interv.dateDebut)} → {formatDateFR(interv.dateFin)}</Text>
                         </View>
                         <Pressable onPress={() => deleteIntervention(interv.id)} style={styles.intervExistingDelete}>
                           <Text style={{ color: '#E74C3C', fontSize: 16 }}>🗑</Text>

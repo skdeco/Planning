@@ -9,6 +9,7 @@ import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { DateInput } from '@/components/ui/DateInput';
 
 /**
  * SousTraitantsChantier — sous-traitants affiliés à un chantier : devis + acomptes
@@ -200,7 +201,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
                     <Text style={styles.formTitle}>Acompte versé</Text>
                     <View style={styles.row2}>
                       <TextInput style={[styles.input, styles.flex1]} placeholder="Montant € HT" placeholderTextColor={DS.textAlt} keyboardType="decimal-pad" value={form.montant} onChangeText={t => setForm({ ...form, montant: t })} />
-                      <TextInput style={[styles.input, styles.flex1]} placeholder="Date (AAAA-MM-JJ)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.date} onChangeText={t => setForm({ ...form, date: t })} />
+                      <DateInput style={[styles.input, styles.flex1]} placeholder="Date (JJ/MM/AAAA)" placeholderTextColor={DS.textAlt} autoCapitalize="none" value={form.date} onChangeDate={t => setForm({ ...form, date: t })} />
                     </View>
                     <TextInput style={styles.input} placeholder="Commentaire (optionnel)" placeholderTextColor={DS.textAlt} value={form.commentaire} onChangeText={t => setForm({ ...form, commentaire: t })} />
                     <Pressable style={styles.attach} onPress={() => pickAndUpload(url => setForm(f => (f && f.kind === 'acompte' ? { ...f, facture: url } : f)))} disabled={uploading}>

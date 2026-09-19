@@ -19,6 +19,7 @@ import { sendPushNotification } from '@/hooks/useNotifications';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
+import { DateInput } from '@/components/ui/DateInput';
 
 export interface SuiviCRPanelProps {
   visible: boolean;
@@ -465,11 +466,10 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
       {/* Date */}
       <View style={styles.formRow}>
         <Text style={styles.fieldLabel}>Date du CR</Text>
-        <TextInput
+        <DateInput
           style={styles.dateInput}
           value={draft.date}
-          onChangeText={v => setDraft(p => ({ ...p, date: v }))}
-          placeholder="YYYY-MM-DD"
+          onChangeDate={v => setDraft(p => ({ ...p, date: v }))}
           editable={!ro}
         />
       </View>
@@ -1024,11 +1024,10 @@ function RDVForm({ rdv, isAdmin, readOnly, onSave, onDelete }: RDVFormProps) {
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
           <Text style={styles.fieldLabel}>Date</Text>
-          <TextInput
+          <DateInput
             style={styles.dateInput}
             value={draft.dateISO}
-            onChangeText={v => setDraft(p => ({ ...p, dateISO: v }))}
-            placeholder="YYYY-MM-DD"
+            onChangeDate={v => setDraft(p => ({ ...p, dateISO: v }))}
             editable={!ro}
           />
         </View>

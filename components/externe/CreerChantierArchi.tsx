@@ -4,6 +4,7 @@ import { useApp } from '@/app/context/AppContext';
 import { CHANTIER_COLORS } from '@/app/types';
 import type { Apporteur, Chantier } from '@/app/types';
 import { DS } from '@/constants/design';
+import { DateInput } from '@/components/ui/DateInput';
 
 /**
  * CreerChantierArchi — l'ARCHITECTE crée lui-même un chantier (Niveau 1, mono-tenant).
@@ -145,11 +146,11 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.label}>Début</Text>
-                  <TextInput style={styles.input} placeholder="AAAA-MM-JJ" placeholderTextColor="#9A8C80" autoCapitalize="none" value={dateDebut} onChangeText={setDateDebut} />
+                  <DateInput style={styles.input} placeholderTextColor="#9A8C80" autoCapitalize="none" value={dateDebut} onChangeDate={setDateDebut} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.label}>Fin prévue</Text>
-                  <TextInput style={styles.input} placeholder="AAAA-MM-JJ" placeholderTextColor="#9A8C80" autoCapitalize="none" value={dateFin} onChangeText={setDateFin} />
+                  <DateInput style={styles.input} placeholderTextColor="#9A8C80" autoCapitalize="none" value={dateFin} onChangeDate={setDateFin} />
                 </View>
               </View>
 
