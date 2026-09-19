@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert, Linking, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock, CircleCheck, Navigation, Check, Camera } from 'lucide-react-native';
+import { Clock, CircleCheck, Navigation, Check, Camera, Search, ChevronRight, ShoppingCart, ClipboardList } from 'lucide-react-native';
+import { DS, screenTitle, radius, shadows } from '@/constants/design';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
 import { LanguageFlag } from '@/components/LanguageFlag';
@@ -233,6 +234,7 @@ export default function DashboardScreen() {
   const [showAlertes, setShowAlertes] = useState(false);
   // Dashboard admin : reporting financier détaillé replié par défaut (allègement du scroll).
   const [showFinancesDetail, setShowFinancesDetail] = useState(false);
+  const [showOutils, setShowOutils] = useState(false);
   // Recherche globale (modal dédié GlobalSearch)
   const [searchOpen, setSearchOpen] = useState(false);
   // Pense-bête
@@ -807,53 +809,53 @@ export default function DashboardScreen() {
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
-      {/* Bannière achats FIXE en haut, hors du scroll */}
-      {stats.materielNonAchete > 0 && (
-        <Pressable
-          style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#DC2626', paddingHorizontal: 16, paddingVertical: 10, gap: 10 }}
-          onPress={() => router.push('/(tabs)/materiel' as any)}
-        >
-          <Text style={{ fontSize: 18 }}>🛒</Text>
-          <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: '#fff' }}>{stats.materielNonAchete} {t.dash.itemsToBuyLabel}</Text>
-          <Text style={{ fontSize: 14, color: '#fff', fontWeight: '700' }}>{t.dash.see}</Text>
-        </Pressable>
-      )}
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
-        {/* Header avec dégradé */}
-        <FadeInView duration={500}>
-          <View
-            style={{ borderRadius: 20, padding: 20, marginBottom: 16, backgroundColor: '#5C1F2E', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12, elevation: 6 }}
-          >
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 26, fontWeight: '800', color: '#FFFFFF', letterSpacing: -0.5 }}>{t.home.hello} 👋</Text>
-                <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.6)', marginTop: 4, textTransform: 'capitalize', fontWeight: '400' }}>
-                  {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-                </Text>
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <LanguageFlag />
-                <Pressable
-                  style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.12)', alignItems: 'center', justifyContent: 'center' }}
-                  onPress={() => {
-                    if (Platform.OS === 'web') { if (window.confirm(t.home.logoutTitle)) logout(); }
-                    else Alert.alert(t.home.logoutTitle, t.home.logoutMsg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.home.logout, style: 'destructive', onPress: logout }]);
-                  }}
-                >
-                  <Text style={{ fontSize: 16, color: '#fff' }}>⏻</Text>
-                </Pressable>
-              </View>
-            </View>
+        {/* En-tête : date + salutation (langue et déconnexion sont dans l'écran Plus) */}
+        <FadeInView duration={400}>
+          <View style={{ marginTop: 8, marginBottom: 14 }}>
+            <Text style={{ fontSize: 14, color: DS.textSecondary, textTransform: 'capitalize' }}>
+              {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </Text>
+            <Text style={screenTitle}>{t.home.hello}</Text>
           </View>
         </FadeInView>
 
         {/* Recherche globale — ouvre le modal dédié (filtres par type) */}
-        <FadeInView delay={100}>
-        <Pressable onPress={() => setSearchOpen(true)} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, borderWidth: 1, borderColor: '#EDE2D6', paddingHorizontal: 14, paddingVertical: 13, marginBottom: 12, shadowColor: '#5C1F2E', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 }}>
-          <Text style={{ fontSize: 14, color: '#9A8C80', marginRight: 8 }}>🔍</Text>
-          <Text style={{ flex: 1, fontSize: 14, color: '#9A8C80' }}>{t.dash.searchEverywhere}</Text>
-        </Pressable>
+        <FadeInView delay={80}>
+          <Pressable onPress={() => setSearchOpen(true)} accessibilityRole="search" style={styles.searchPill}>
+            <Search size={19} color={DS.textSecondary} strokeWidth={1.9} />
+            <Text style={{ flex: 1, fontSize: 16, color: DS.textSecondary }}>{t.dash.searchEverywhere}</Text>
+          </Pressable>
         </FadeInView>
+
+        {/* À traiter — ce qui attend une action de l'admin */}
+        {(stats.demandesRH > 0 || stats.materielNonAchete > 0) && (
+          <>
+            <Text style={styles.sectionTitle}>À traiter</Text>
+            <View style={styles.listCard}>
+              {stats.demandesRH > 0 && (
+                <Pressable style={styles.listRow} onPress={() => router.push('/(tabs)/rh' as any)}>
+                  <View style={styles.listIcon}><ClipboardList size={18} color={DS.primary} strokeWidth={1.9} /></View>
+                  <View style={[styles.listInner, stats.materielNonAchete > 0 && styles.listSeparator]}>
+                    <Text style={styles.listTitle}>Demandes RH en attente</Text>
+                    <View style={styles.countBadge}><Text style={styles.countBadgeText}>{stats.demandesRH}</Text></View>
+                    <ChevronRight size={16} color={DS.textSecondary} />
+                  </View>
+                </Pressable>
+              )}
+              {stats.materielNonAchete > 0 && (
+                <Pressable style={styles.listRow} onPress={() => router.push('/(tabs)/materiel' as any)}>
+                  <View style={styles.listIcon}><ShoppingCart size={18} color={DS.primary} strokeWidth={1.9} /></View>
+                  <View style={styles.listInner}>
+                    <Text style={styles.listTitle}>{t.dash.itemsToBuyLabel}</Text>
+                    <View style={styles.countBadge}><Text style={styles.countBadgeText}>{stats.materielNonAchete}</Text></View>
+                    <ChevronRight size={16} color={DS.textSecondary} />
+                  </View>
+                </Pressable>
+              )}
+            </View>
+          </>
+        )}
 
         {/* Alertes système — rappels automatiques */}
         {(() => {
@@ -1076,7 +1078,7 @@ export default function DashboardScreen() {
               {showAlertes && (
               <View style={{ gap: 4, marginBottom: 8 }}>
                 {visibleAlertes.slice(0, 15).map((a) => (
-                  <Pressable key={a.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: a.color + '12', borderRadius: 8, padding: 10, borderLeftWidth: 3, borderLeftColor: a.color }}
+                  <Pressable key={a.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: a.color + '14', borderRadius: 14, padding: 12 }}
                     onPress={a.onPress}>
                     <Text style={{ fontSize: 14 }}>{a.icon}</Text>
                     <Text style={{ fontSize: 12, color: '#2B1D14', flex: 1 }} numberOfLines={2}>{a.text}</Text>
@@ -1124,45 +1126,50 @@ export default function DashboardScreen() {
           );
         })()}
 
-        <Text style={styles.sectionTitle}>{t.dash.overview}</Text>
-        <View style={styles.statsGrid}>
-          <Pressable style={[styles.statCard, { borderLeftColor: '#5C1F2E', width: '48%' as any }]} onPress={() => router.push('/(tabs)/chantiers' as any)}>
-            <Text style={[styles.statValue, { color: '#5C1F2E' }]}>{stats.chantiersActifs}</Text>
-            <Text style={styles.statLabel}>{t.dash.activeChantiers}</Text>
+        {/* Aujourd'hui — synthèse + pointage par chantier */}
+        <Text style={styles.sectionTitle}>Aujourd'hui</Text>
+        <View style={styles.listCard}>
+          <Pressable style={[styles.listRow, { minHeight: 60 }]} onPress={() => router.push('/(tabs)/planning' as any)}>
+            <View style={[styles.listInner, styles.listSeparator, { paddingLeft: 2 }]}>
+              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 }}>
+                <Text style={styles.bigNumber}>{stats.chantiersActifs}</Text>
+                <Text style={styles.listTitleInline}>{t.dash.activeChantiers}</Text>
+                <Text style={[styles.bigNumber, { marginLeft: 8 }]}>{stats.employesAujourdhui}</Text>
+                <Text style={styles.listTitleInline}>{t.dash.assignedPeople}</Text>
+              </View>
+              <ChevronRight size={16} color={DS.primary} />
+            </View>
           </Pressable>
-          <Pressable style={[styles.statCard, { borderLeftColor: '#F59E0B', width: '48%' as any }]} onPress={() => router.push('/(tabs)/planning' as any)}>
-            <Text style={[styles.statValue, { color: '#F59E0B' }]}>{stats.employesAujourdhui}</Text>
-            <Text style={styles.statLabel}>{t.dash.assignedPeople}</Text>
-          </Pressable>
-          <Pressable style={[styles.statCard, { borderLeftColor: '#00BCD4', width: '48%' as any }]} onPress={() => router.push('/(tabs)/planning' as any)}>
-            <Text style={[styles.statValue, { color: '#00BCD4' }]}>{stats.nbArrivees} / {stats.nbDeparts}</Text>
-            <Text style={styles.statLabel}>{t.dash.arrivalsDepartures}</Text>
-          </Pressable>
-          <Pressable style={[styles.statCard, { borderLeftColor: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60', width: '48%' as any }]} onPress={() => router.push('/(tabs)/reporting' as any)}>
-            <Text style={[styles.statValue, { color: recapHebdo.nbRetards > 0 ? '#E74C3C' : '#27AE60' }]}>{recapHebdo.nbRetards}</Text>
-            <Text style={styles.statLabel}>{t.dash.delaysWeek}</Text>
-          </Pressable>
-        </View>
-
-        {/* Couverture chantiers — 2 colonnes */}
-        <Text style={styles.sectionTitle}>{t.dash.dayCoverage}</Text>
-        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
           {data.chantiers.filter(c => c.statut === 'actif').map(c => {
             const nbAffectes = new Set(
               data.affectations.filter(a => a.chantierId === c.id && a.dateDebut <= today && a.dateFin >= today).map(a => a.employeId)
             ).size;
+            if (nbAffectes === 0) return null;
             const nbPointes = data.pointages.filter(p =>
               p.date === today && p.type === 'debut' &&
               data.affectations.some(a => a.chantierId === c.id && a.employeId === p.employeId && a.dateDebut <= today && a.dateFin >= today)
             ).length;
-            const color = nbAffectes === 0 ? '#EDE2D6' : nbPointes >= nbAffectes ? '#27AE60' : nbPointes > 0 ? '#F59E0B' : '#EF4444';
+            const color = nbPointes >= nbAffectes ? DS.success : nbPointes > 0 ? DS.warning : DS.error;
             return (
-              <View key={c.id} style={[styles.statCard, { width: '48%' as any, borderLeftWidth: 4, borderLeftColor: color, paddingVertical: 8, paddingHorizontal: 10 }]}>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }} numberOfLines={1}>{c.nom}</Text>
-                <Text style={{ fontSize: 11, color, fontWeight: '700', marginTop: 2 }}>{nbPointes}/{nbAffectes} {t.dash.clocked}</Text>
-              </View>
+              <Pressable key={c.id} style={styles.listRow} onPress={() => router.push('/(tabs)/planning' as any)}>
+                <View style={[styles.listIcon, { backgroundColor: 'transparent' }]}>
+                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.couleur || DS.primary }} />
+                </View>
+                <View style={[styles.listInner, styles.listSeparator]}>
+                  <Text style={styles.listTitle} numberOfLines={1}>{c.nom}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color }}>{nbPointes}/{nbAffectes} {t.dash.clocked}</Text>
+                </View>
+              </Pressable>
             );
           })}
+          <Pressable style={styles.listRow} onPress={() => router.push('/(tabs)/reporting' as any)}>
+            <View style={styles.listIcon}><Clock size={18} color={DS.primary} strokeWidth={1.9} /></View>
+            <View style={styles.listInner}>
+              <Text style={styles.listTitle}>{t.dash.delaysWeek}</Text>
+              <Text style={{ fontSize: 15, fontWeight: '600', color: recapHebdo.nbRetards > 0 ? DS.error : DS.success }}>{recapHebdo.nbRetards}</Text>
+              <ChevronRight size={16} color={DS.textSecondary} />
+            </View>
+          </Pressable>
         </View>
 
         {/* Tableau de bord financier admin (CA signé / en cours / encaissé). */}
@@ -1278,33 +1285,13 @@ export default function DashboardScreen() {
         })()}
         </>)}
 
-        {/* Alertes (messages + RH, sans matériel qui est déjà en haut) */}
-        {(stats.msgsNonLus > 0 || stats.demandesRH > 0) && (
-          <>
-            <Text style={styles.sectionTitle}>{t.dash.alerts}</Text>
-            <View style={styles.alertsContainer}>
-              {/* Messagerie désactivée côté UI — bloc neutralisé (réversible : retirer false &&) */}
-              {false && stats.msgsNonLus > 0 && (
-                <Pressable style={styles.alertCard} onPress={() => router.push('/(tabs)/messagerie' as any)}>
-                  <Text style={styles.alertIcon}>💬</Text>
-                  <Text style={styles.alertText}>{stats.msgsNonLus} message{stats.msgsNonLus > 1 ? 's' : ''} non lu{stats.msgsNonLus > 1 ? 's' : ''}</Text>
-                  <Text style={styles.alertArrow}>→</Text>
-                </Pressable>
-              )}
-              {stats.demandesRH > 0 && (
-                <Pressable style={styles.alertCard} onPress={() => router.push('/(tabs)/rh' as any)}>
-                  <Text style={styles.alertIcon}>📋</Text>
-                  <Text style={styles.alertText}>{stats.demandesRH} demande{stats.demandesRH > 1 ? 's' : ''} RH en attente</Text>
-                  <Text style={styles.alertArrow}>→</Text>
-                </Pressable>
-              )}
-            </View>
-          </>
-        )}
-
-        {/* Export rapide */}
-        {/* Export + Import */}
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 20 }}>
+        {/* Outils & historique — repliés par défaut pour alléger l'accueil */}
+        <Pressable onPress={() => setShowOutils(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 12 }}>
+          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Outils & activité récente</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: DS.primary }}>{showOutils ? '▲ Masquer' : '▼ Afficher'}</Text>
+        </Pressable>
+        {showOutils && (
+        <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
           <Pressable
             style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, borderLeftWidth: 4, borderLeftColor: '#5C1F2E' }]}
             onPress={() => router.push('/(tabs)/reporting' as any)}
@@ -1320,6 +1307,7 @@ export default function DashboardScreen() {
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>{t.dash.importExcel}</Text>
           </Pressable>
         </View>
+        )}
 
         {/* Toutes les notes du jour */}
         {(() => {
@@ -1357,7 +1345,7 @@ export default function DashboardScreen() {
         })()}
 
         {/* Activité récente — tout en bas */}
-        {activiteRecente.length > 0 && (
+        {showOutils && activiteRecente.length > 0 && (
           <>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 10 }}>
               <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14' }}>{t.dash.recentActivity}</Text>
@@ -1457,12 +1445,23 @@ const styles = StyleSheet.create({
   header: { marginBottom: 24 },
   greeting: { fontSize: 28, fontWeight: '800', color: '#2B1D14', letterSpacing: -0.5 },
   date: { fontSize: 14, color: '#6E5F54', marginTop: 4, textTransform: 'capitalize', fontWeight: '400' },
-  sectionTitle: { fontSize: 12, fontWeight: '700', color: '#6E5F54', marginTop: 24, marginBottom: 10, letterSpacing: 1, textTransform: 'uppercase' },
+  sectionTitle: { fontSize: 13, fontWeight: '600', color: '#6E5F54', marginTop: 20, marginBottom: 8, paddingHorizontal: 6, letterSpacing: 0.4, textTransform: 'uppercase' },
+  searchPill: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: DS.surface, ...shadows.sm },
+  listCard: { backgroundColor: DS.surface, borderRadius: radius.xl, ...shadows.md },
+  listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingLeft: 14 },
+  listIcon: { width: 30, height: 30, borderRadius: 9, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' },
+  listInner: { flex: 1, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 },
+  listSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: DS.border },
+  listTitle: { flex: 1, fontSize: 16, color: DS.text },
+  listTitleInline: { fontSize: 15, color: DS.text },
+  bigNumber: { fontFamily: 'Fraunces_600SemiBold', fontSize: 26, color: DS.primary },
+  countBadge: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 7, backgroundColor: DS.primary, alignItems: 'center', justifyContent: 'center' },
+  countBadgeText: { fontSize: 12.5, fontWeight: '700', color: '#FFFFFF' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statCard: {
-    backgroundColor: '#fff', borderRadius: 14, padding: 16,
-    borderLeftWidth: 4,
-    shadowColor: '#5C1F2E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    backgroundColor: '#fff', borderRadius: 20, padding: 16,
+    borderLeftWidth: 0,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 18, elevation: 2,
     marginBottom: 6,
   },
   statValue: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
