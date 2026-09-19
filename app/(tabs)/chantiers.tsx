@@ -37,7 +37,7 @@ import { ChantierDetailDashboard } from '@/components/ui/ChantierDetailDashboard
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
-import { DS } from '@/constants/design';
+import { DS, screenTitle } from '@/constants/design';
 import { MapPin, CalendarClock, Building2, StickyNote, Ruler, Camera, ShoppingCart, X, Wrench, Receipt } from 'lucide-react-native';
 import { FadeInView, Skeleton } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
@@ -1645,11 +1645,11 @@ export default function ChantiersScreen() {
       )}
 
       {/* ── Modal menu actions chantier ── */}
-      <Modal visible={actionChantier !== null} transparent animationType="fade" onRequestClose={() => setActionChantier(null)}>
+      <Modal visible={actionChantier !== null} transparent animationType="slide" onRequestClose={() => setActionChantier(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           {/* Fermeture uniquement en tapant en dehors de la feuille (zone sombre), pas sur un vide de la grille */}
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setActionChantier(null)} />
-          <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingTop: 16, maxHeight: '92%' }}>
+          <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12, maxHeight: '92%' }}>
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: Platform.OS === 'ios' ? 40 : 20 }}>
             {actionChantier && (() => {
               const ch = actionChantier;
@@ -1668,27 +1668,32 @@ export default function ChantiersScreen() {
               return (
                 <>
                   {/* En-tête chantier */}
-                  <View style={{ alignItems: 'center', marginBottom: 16 }}>
-                    <View style={{ width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, marginBottom: 12 }} />
-                    <Pressable
-                      onPress={() => setActionChantier(null)}
-                      hitSlop={12}
-                      accessibilityRole="button"
-                      accessibilityLabel="Fermer"
-                      style={{ position: 'absolute', top: 0, right: 0, width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.successSoft }}
-                    >
-                      <X size={24} color={DS.success} strokeWidth={2.5} />
-                    </Pressable>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                      <View style={{ width: 14, height: 14, borderRadius: 4, backgroundColor: ch.couleur }} />
-                      <Text style={{ fontSize: 18, fontWeight: '800', color: '#2B1D14' }}>{ch.nom}</Text>
-                    </View>
-                    <View style={[styles.statutBadge, { backgroundColor: statut.bg, marginTop: 6 }]}>
-                      <Text style={[styles.statutText, { color: statut.text }]}>{statutLabel(ch.statut)}</Text>
+                  <View style={{ marginBottom: 16 }}>
+                    <View style={{ alignSelf: 'center', width: 40, height: 4, backgroundColor: DS.border, borderRadius: 2, marginBottom: 14 }} />
+                    <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 12 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={[screenTitle, { fontSize: 28, lineHeight: 33 }]}>{ch.nom}</Text>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 8 }}>
+                          <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: ch.couleur }} />
+                          <View style={[styles.statutBadge, { backgroundColor: statut.bg }]}>
+                            <Text style={[styles.statutText, { color: statut.text }]}>{statutLabel(ch.statut)}</Text>
+                          </View>
+                          {!!ch.adresse && <Text style={{ flexShrink: 1, fontSize: 14, color: DS.textSecondary }} numberOfLines={1}>{ch.adresse}</Text>}
+                        </View>
+                      </View>
+                      <Pressable
+                        onPress={() => setActionChantier(null)}
+                        hitSlop={12}
+                        accessibilityRole="button"
+                        accessibilityLabel="Fermer"
+                        style={{ width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.soft }}
+                      >
+                        <X size={20} color={DS.primary} strokeWidth={2.2} />
+                      </Pressable>
                     </View>
                   </View>
 
-                  {/* Dashboard V10 — grille de tuiles + footer actions */}
+                  {/* Actions rapides + 4 sections (Suivi / Finances / Documents / Équipe) */}
                   <ChantierDetailDashboard
                     isAdmin={isAdmin}
                     counts={{

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
 import {
   Info,
   LayoutGrid,
@@ -30,15 +31,17 @@ import {
   Flag,
   HardHat,
   FilePlus,
+  ChevronRight,
+  Eye,
   type LucideIcon,
 } from 'lucide-react-native';
-import { DS } from '@/constants/design';
-import { SectionTile } from './SectionTile';
+import { DS, radius, shadows, font } from '@/constants/design';
 import type { TileKey, TileMode } from '@/lib/portail/dashboardAccess';
 
 /**
- * ChantierDetailDashboard — Grille de tuiles pour la vue d'ensemble d'un chantier (palette V10).
- * Remplace le menu d'actions emoji historique dans la modal `actionChantier` de chantiers.tsx.
+ * ChantierDetailDashboard — Vue d'ensemble d'un chantier (refonte sept. 2026).
+ * 4 actions rapides + 4 sections (Suivi / Finances / Documents / Équipe) présentées
+ * en listes, à la place de l'ancienne grille de 27 tuiles.
  *
  * Composant purement présentationnel : counts + handlers passés en props,
  * toute la logique métier (récupération counts, ouverture modals) reste dans
@@ -109,15 +112,16 @@ export interface ChantierDetailDashboardProps {
 interface TileSpec {
   icon: LucideIcon;
   label: string;
-  variant: 'bordeaux' | 'marron';
   onPress: () => void;
   badge?: number;
   adminOnly?: boolean;
   /** Clé pour le résolveur d'accès portail (absente = jamais affichée au portail). */
   key?: TileKey;
-  /** Tuile réservée au portail (jamais affichée à l'admin), ex. Honoraires, Mes finances. */
+  /** Entrée réservée au portail (jamais affichée à l'admin), ex. Honoraires, Mes finances. */
   portalOnly?: boolean;
 }
+
+type SectionId = 'suivi' | 'finances' | 'documents' | 'equipe';
 
 export function ChantierDetailDashboard({
   isAdmin,
@@ -131,59 +135,82 @@ export function ChantierDetailDashboard({
     if (tile.portalOnly) return 'hidden';
     return tile.adminOnly && !isAdmin ? 'hidden' : 'act';
   };
-  // Tuiles regroupées par famille pour hiérarchiser (plutôt que 14 tuiles à plat).
-  const groups: { titre: string; tiles: TileSpec[] }[] = [
+
+  // Actions rapides (toujours visibles en haut de la fiche).
+  const quick: TileSpec[] = [
+    { icon: Navigation,  label: 'Y aller', key: 'yAller', onPress: handlers.onPressYAller },
+    { icon: Camera,      label: 'Photos',  key: 'photos', onPress: handlers.onPressPhotos, badge: counts.photos },
+    { icon: CheckSquare, label: 'Notes',   key: 'notes',  onPress: handlers.onPressNotes,  badge: counts.notes },
+    { icon: Info,        label: 'Infos',   key: 'fiche',  onPress: handlers.onPressFiche },
+  ];
+
+  const sections: { id: SectionId; titre: string; tiles: TileSpec[] }[] = [
     {
-      titre: 'Conception',
+      id: 'suivi',
+      titre: 'Suivi',
       tiles: [
-        { icon: Package, label: 'Prescriptions', key: 'prescriptions', variant: 'bordeaux', onPress: handlers.onPressPrescriptions },
-        { icon: Wallet,  label: 'Budget',        key: 'budget',        variant: 'bordeaux', onPress: handlers.onPressBudget },
-        { icon: Ruler,   label: 'Métrés',        key: 'metres',        variant: 'bordeaux', onPress: handlers.onPressMetres },
-        { icon: Receipt, label: 'Honoraires',    key: 'honoraires',    variant: 'bordeaux', onPress: handlers.onPressHonoraires ?? noop, portalOnly: true },
-        { icon: Wallet,  label: 'Mes finances',  key: 'finances',      variant: 'bordeaux', onPress: handlers.onPressFinances ?? noop, portalOnly: true },
+        { icon: CheckSquare,   label: 'Notes',           key: 'notes',     onPress: handlers.onPressNotes,     badge: counts.notes },
+        { icon: ClipboardList, label: 'Comptes rendus',  key: 'suivis',    onPress: handlers.onPressSuivis,    badge: counts.notesPlanning },
+        { icon: Camera,        label: 'Photos',          key: 'photos',    onPress: handlers.onPressPhotos,    badge: counts.photos },
+        { icon: LayoutGrid,    label: 'Plans',           key: 'plans',     onPress: handlers.onPressPlans,     badge: counts.plans },
+        { icon: CalendarRange, label: 'Phases',          key: 'phases',    onPress: handlers.onPressPhases },
+        { icon: Truck,         label: 'Livraisons',      key: 'livraison', onPress: handlers.onPressLivraison, badge: counts.livraisons },
       ],
     },
     {
-      titre: 'Suivi & terrain',
-      tiles: [
-        { icon: CheckSquare,   label: 'Notes',     key: 'notes',   variant: 'bordeaux', onPress: handlers.onPressNotes,  badge: counts.notes },
-        { icon: Camera,        label: 'Photos',    key: 'photos',  variant: 'marron',   onPress: handlers.onPressPhotos, badge: counts.photos },
-        { icon: ClipboardList, label: 'Suivis CR', key: 'suivis',  variant: 'bordeaux', onPress: handlers.onPressSuivis, badge: counts.notesPlanning },
-        { icon: CalendarRange, label: 'Phases',    key: 'phases',  variant: 'bordeaux', onPress: handlers.onPressPhases },
-        { icon: Navigation,    label: 'Y aller',   key: 'yAller',  variant: 'marron',   onPress: handlers.onPressYAller },
-      ],
-    },
-    {
+      id: 'finances',
       titre: 'Finances',
       tiles: [
-        { icon: Briefcase,    label: 'Marchés',     key: 'marches',       variant: 'bordeaux', onPress: handlers.onPressMarches,     badge: counts.marches, adminOnly: true },
-        { icon: ShoppingCart, label: 'Achats',      key: 'achats',        variant: 'marron',   onPress: handlers.onPressAchats,      badge: counts.achats,  adminOnly: true },
-        { icon: TrendingUp,   label: 'Rentabilité', key: 'rentabilite',   variant: 'bordeaux', onPress: handlers.onPressRentabilite, adminOnly: true },
-        { icon: HardHat,      label: 'Sous-traitants', key: 'sousTraitants', variant: 'marron', onPress: handlers.onPressSousTraitants, adminOnly: true },
-        { icon: Scale,        label: 'Consultation',key: 'consultation',  variant: 'bordeaux', onPress: handlers.onPressConsultation, adminOnly: true },
+        { icon: Briefcase,    label: 'Marchés',      key: 'marches',      onPress: handlers.onPressMarches,      badge: counts.marches, adminOnly: true },
+        { icon: ShoppingCart, label: 'Achats',       key: 'achats',       onPress: handlers.onPressAchats,       badge: counts.achats,  adminOnly: true },
+        { icon: TrendingUp,   label: 'Rentabilité',  key: 'rentabilite',  onPress: handlers.onPressRentabilite,  adminOnly: true },
+        { icon: Wallet,       label: 'Budget',       key: 'budget',       onPress: handlers.onPressBudget },
+        { icon: Ruler,        label: 'Métrés',       key: 'metres',       onPress: handlers.onPressMetres },
+        { icon: Scale,        label: 'Consultation', key: 'consultation', onPress: handlers.onPressConsultation, adminOnly: true },
+        { icon: Receipt,      label: 'Honoraires',   key: 'honoraires',   onPress: handlers.onPressHonoraires ?? noop, portalOnly: true },
+        { icon: Wallet,       label: 'Mes finances', key: 'finances',     onPress: handlers.onPressFinances ?? noop,   portalOnly: true },
       ],
     },
     {
-      titre: 'Documents & réception',
+      id: 'documents',
+      titre: 'Documents',
       tiles: [
-        { icon: FolderOpen, label: 'Documents',    key: 'drive',         variant: 'bordeaux', onPress: handlers.onPressDrive, adminOnly: true },
-        { icon: Info,       label: 'Infos utiles', key: 'fiche',         variant: 'bordeaux', onPress: handlers.onPressFiche },
-        { icon: LayoutGrid, label: 'Plans',        key: 'plans',         variant: 'bordeaux', onPress: handlers.onPressPlans,     badge: counts.plans },
-        { icon: FileCheck,  label: 'PV réception', key: 'pv',            variant: 'bordeaux', onPress: handlers.onPressPV,        adminOnly: true },
-        { icon: Landmark,   label: 'Administratif',key: 'administratif', variant: 'bordeaux', onPress: handlers.onPressAdministratif, adminOnly: true },
-        { icon: Truck,      label: 'Livraison',    key: 'livraison',     variant: 'marron',   onPress: handlers.onPressLivraison, badge: counts.livraisons },
+        { icon: FolderOpen, label: 'Documents',       key: 'drive',         onPress: handlers.onPressDrive,         adminOnly: true },
+        { icon: Info,       label: 'Infos utiles',    key: 'fiche',         onPress: handlers.onPressFiche },
+        { icon: Package,    label: 'Prescriptions',   key: 'prescriptions', onPress: handlers.onPressPrescriptions },
+        { icon: FileCheck,  label: 'PV de réception', key: 'pv',            onPress: handlers.onPressPV,            adminOnly: true },
+        { icon: Landmark,   label: 'Administratif',   key: 'administratif', onPress: handlers.onPressAdministratif, adminOnly: true },
+        { icon: Wrench,     label: 'SAV',             key: 'sav',           onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
       ],
     },
     {
-      titre: 'Client & SAV',
+      id: 'equipe',
+      titre: 'Équipe',
       tiles: [
-        { icon: Wrench,        label: 'SAV',            key: 'sav',        variant: 'bordeaux', onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
-        { icon: User,          label: 'Portail client',                    variant: 'marron',   onPress: handlers.onPressPortailClient, adminOnly: true },
-        { icon: Users,         label: 'Annuaire',       key: 'annuaire',   variant: 'bordeaux', onPress: handlers.onPressAnnuaire },
-        { icon: MessageCircle, label: 'Messagerie',     key: 'messagerie', variant: 'bordeaux', onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
+        { icon: HardHat,       label: 'Sous-traitants', key: 'sousTraitants', onPress: handlers.onPressSousTraitants, adminOnly: true },
+        { icon: Users,         label: 'Annuaire',       key: 'annuaire',      onPress: handlers.onPressAnnuaire },
+        { icon: User,          label: 'Portail client',                       onPress: handlers.onPressPortailClient, adminOnly: true },
+        { icon: MessageCircle, label: 'Messagerie',     key: 'messagerie',    onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
       ],
     },
   ];
+
+  const visibles = sections
+    .map(sec => ({ ...sec, rows: sec.tiles.map(tile => ({ tile, mode: resolveMode(tile) })).filter(x => x.mode !== 'hidden') }))
+    .filter(sec => sec.rows.length > 0);
+  const quickVisibles = quick.map(tile => ({ tile, mode: resolveMode(tile) })).filter(x => x.mode !== 'hidden');
+
+  const [sectionId, setSectionId] = useState<SectionId>('suivi');
+  const current = useMemo(
+    () => visibles.find(sec => sec.id === sectionId) ?? visibles[0],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [sectionId, visibles.map(v => v.id + v.rows.length).join('|')],
+  );
+
+  const tap = (fn: () => void) => () => {
+    if (Platform.OS === 'ios') Haptics.selectionAsync();
+    fn();
+  };
 
   const hasFooterActions =
     isAdmin && (
@@ -194,31 +221,71 @@ export function ChantierDetailDashboard({
 
   return (
     <View style={styles.container}>
-      {groups.map((group) => {
-        const gTiles = group.tiles
-          .map(tile => ({ tile, mode: resolveMode(tile) }))
-          .filter(x => x.mode !== 'hidden');
-        if (gTiles.length === 0) return null;
-        return (
-          <View key={group.titre} style={styles.group}>
-            <Text style={styles.groupTitle}>{group.titre}</Text>
-            <View style={styles.grid}>
-              {gTiles.map(({ tile, mode }, i) => (
-                <View key={`${tile.label}-${i}`} style={styles.tileWrap}>
-                  <SectionTile
-                    icon={tile.icon}
-                    label={tile.label}
-                    variant={tile.variant}
-                    onPress={tile.onPress}
-                    badge={tile.badge}
-                    readonly={mode === 'read'}
-                  />
+      {quickVisibles.length > 0 && (
+        <View style={styles.quickRow}>
+          {quickVisibles.map(({ tile }) => {
+            const Icon = tile.icon;
+            return (
+              <Pressable
+                key={`q-${tile.label}`}
+                accessibilityRole="button"
+                accessibilityLabel={tile.label}
+                onPress={tap(tile.onPress)}
+                style={({ pressed }) => [styles.quickBtn, pressed && styles.pressed]}
+              >
+                <Icon size={22} color={DS.primary} strokeWidth={1.9} />
+                <Text style={styles.quickLabel} numberOfLines={1}>{tile.label}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+
+      {visibles.length > 1 && (
+        <View style={styles.segment} accessibilityRole="tablist">
+          {visibles.map(sec => {
+            const on = sec.id === current?.id;
+            return (
+              <Pressable
+                key={sec.id}
+                accessibilityRole="tab"
+                accessibilityState={{ selected: on }}
+                onPress={tap(() => setSectionId(sec.id))}
+                style={[styles.segmentItem, on && styles.segmentItemOn]}
+              >
+                <Text style={[styles.segmentText, on && styles.segmentTextOn]} numberOfLines={1}>{sec.titre}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+
+      {current && (
+        <View style={styles.card}>
+          {current.rows.map(({ tile, mode }, i) => {
+            const Icon = tile.icon;
+            const last = i === current.rows.length - 1;
+            return (
+              <Pressable
+                key={`${tile.label}-${i}`}
+                accessibilityRole="button"
+                onPress={tap(tile.onPress)}
+                style={({ pressed }) => [styles.row, pressed && styles.pressed]}
+              >
+                <View style={styles.rowIcon}>
+                  <Icon size={18} color={DS.primary} strokeWidth={1.9} />
                 </View>
-              ))}
-            </View>
-          </View>
-        );
-      })}
+                <View style={[styles.rowInner, !last && styles.rowSeparator]}>
+                  <Text style={styles.rowTitle} numberOfLines={1}>{tile.label}</Text>
+                  {mode === 'read' && <Eye size={15} color={DS.textSecondary} strokeWidth={1.9} />}
+                  {!!tile.badge && tile.badge > 0 && <Text style={styles.rowDetail}>{tile.badge}</Text>}
+                  <ChevronRight size={16} color={DS.textSecondary} />
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       {hasFooterActions && (
         <View style={styles.footer}>
@@ -249,60 +316,35 @@ export function ChantierDetailDashboard({
 }
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 16,
+  container: { gap: 14 },
+  pressed: { opacity: 0.6 },
+  quickRow: { flexDirection: 'row', gap: 8 },
+  quickBtn: {
+    flex: 1, height: 68, borderRadius: radius.lg, backgroundColor: DS.surface,
+    alignItems: 'center', justifyContent: 'center', gap: 5, ...shadows.sm,
   },
-  group: {
-    gap: 8,
-  },
-  groupTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: DS.marron,
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 2,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8, // V10 Option A : gap réduit pour densité
-  },
-  tileWrap: {
-    // Mobile : 3 colonnes fluides. Web : largeur fixe pour éviter des tuiles
-    // géantes sur grand écran (la grille wrap remplit la ligne naturellement).
-    ...(Platform.OS === 'web' ? { width: 170 } : { width: '31.8%' as const }),
-  },
-  footer: {
-    gap: 8,
-    marginTop: 4,
-  },
+  quickLabel: { fontSize: 12, fontWeight: font.medium, color: DS.primary },
+  segment: { flexDirection: 'row', gap: 2, padding: 3, borderRadius: radius.full, backgroundColor: DS.segment },
+  segmentItem: { flex: 1, height: 34, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4 },
+  segmentItemOn: { backgroundColor: DS.surface, ...shadows.sm },
+  segmentText: { fontSize: 13, fontWeight: font.medium, color: DS.text },
+  segmentTextOn: { fontWeight: font.semibold },
+  card: { backgroundColor: DS.surface, borderRadius: radius.xl, ...shadows.md },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingLeft: 14 },
+  rowIcon: { width: 30, height: 30, borderRadius: 9, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' },
+  rowInner: { flex: 1, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 },
+  rowSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: DS.border },
+  rowTitle: { flex: 1, fontSize: font.lg, color: DS.text },
+  rowDetail: { fontSize: font.subhead, color: DS.textSecondary },
+  footer: { gap: 8, marginTop: 4 },
   footerBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: DS.cremeNude,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.full, backgroundColor: DS.soft,
   },
   footerBtnDanger: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
-    backgroundColor: DS.errorSoft,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8,
+    paddingVertical: 12, paddingHorizontal: 16, borderRadius: radius.full, backgroundColor: DS.errorSoft,
   },
-  footerBtnText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: DS.bordeaux,
-  },
-  footerBtnDangerText: {
-    color: DS.error,
-  },
+  footerBtnText: { fontSize: 13, fontWeight: '600', color: DS.bordeaux },
+  footerBtnDangerText: { color: DS.error },
 });
