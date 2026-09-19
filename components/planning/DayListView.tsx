@@ -7,10 +7,10 @@
  * les actions (notes, ajout, actions chantier) sont remontées au parent, qui
  * réutilise exactement les mêmes modales que la vue Semaine.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { ChevronRight, Plus, StickyNote } from 'lucide-react-native';
+import { ChevronRight, ChevronDown, Plus, StickyNote, CalendarOff } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
 import { getMetierColors } from '@/app/types';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
@@ -46,6 +46,7 @@ export function DayListView({
   } = usePlanningWeekData(weekOffset);
   const metiers = useMemo(() => getMetierColors(data.metiersPerso), [data.metiersPerso]);
 
+  const [showVides, setShowVides] = useState(false);
   const todayStr = toYMD(new Date());
   const day = days.find(d => toYMD(d) === selectedDate) ?? days.find(d => toYMD(d) === todayStr) ?? days[0];
   const dateStr = toYMD(day);
@@ -102,7 +103,11 @@ export function DayListView({
       </View>
 
       {actifs.length === 0 && (
-        <Text style={styles.empty}>Aucune affectation ce jour-là.</Text>
+        <View style={styles.emptyCard}>
+          <View style={styles.emptyIcon}><CalendarOff size={20} color={DS.primary} strokeWidth={1.8} /></View>
+          <Text style={styles.emptyTitle}>Aucune affectation ce jour-là</Text>
+          {isAdmin && vides.length > 0 && <Text style={styles.empty}>Choisissez un chantier ci-dessous pour y placer quelqu'un.</Text>}
+        </View>
       )}
 
       {actifs.map(({ ch, employes, sts, interventions }) => (
@@ -148,7 +153,11 @@ export function DayListView({
 
       {isAdmin && vides.length > 0 && (
         <>
-          <Text style={styles.sectionLabel}>Sans affectation</Text>
+          <Pressable style={styles.sectionToggle} onPress={tap(() => setShowVides(v => !v))} accessibilityRole="button" accessibilityState={{ expanded: showVides || actifs.length === 0 }}>
+            <Text style={styles.sectionLabel}>Sans affectation ({vides.length})</Text>
+            {(showVides || actifs.length === 0) ? <ChevronDown size={16} color={DS.textSecondary} /> : <ChevronRight size={16} color={DS.textSecondary} />}
+          </Pressable>
+          {(showVides || actifs.length === 0) && (
           <View style={styles.listCard}>
             {vides.map(({ ch }, i) => (
               <Pressable key={ch.id} style={styles.listRow} onPress={tap(() => onOpenAjoutModal(ch.id, dateStr))}>
@@ -160,6 +169,7 @@ export function DayListView({
               </Pressable>
             ))}
           </View>
+          )}
         </>
       )}
     </ScrollView>
@@ -168,7 +178,7 @@ export function DayListView({
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 32, gap: 12 },
-  week: { flexDirection: 'row' },
+  week: { flexDirection: 'row', backgroundColor: DS.surface, borderRadius: radius.xl, paddingTop: 10, paddingBottom: 4, paddingHorizontal: 4, ...shadows.sm },
   weekDay: { flex: 1, alignItems: 'center', gap: 3, minHeight: 62 },
   weekLetter: { fontSize: 11, fontWeight: font.semibold, color: DS.textSecondary },
   weekNum: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
@@ -176,10 +186,14 @@ const styles = StyleSheet.create({
   weekNumText: { fontSize: 17, color: DS.text },
   weekNumTextOn: { color: DS.textInverse, fontWeight: font.semibold },
   weekDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: DS.primary },
-  dayHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 2 },
-  dayTitle: { fontSize: 20, fontWeight: font.bold, letterSpacing: -0.3, color: DS.text },
+  dayHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 6, marginTop: 4 },
+  dayTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 22, letterSpacing: -0.3, color: DS.text },
   dayMeta: { fontSize: 14, color: DS.textSecondary },
-  empty: { fontSize: 14, color: DS.textSecondary, textAlign: 'center', paddingVertical: 24 },
+  empty: { fontSize: 13, color: DS.textSecondary, textAlign: 'center' },
+  emptyCard: { backgroundColor: DS.surface, borderRadius: radius.xl, paddingVertical: 22, paddingHorizontal: 18, alignItems: 'center', gap: 8, ...shadows.sm },
+  emptyIcon: { width: 44, height: 44, borderRadius: 22, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' },
+  emptyTitle: { fontSize: 16, fontWeight: font.semibold, color: DS.text },
+  sectionToggle: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingRight: 8, marginTop: 8, minHeight: 32 },
   card: { backgroundColor: DS.surface, borderRadius: radius.xl, padding: 14, gap: 8, ...shadows.md },
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 28 },
   colorDot: { width: 10, height: 10, borderRadius: 5 },
@@ -191,7 +205,7 @@ const styles = StyleSheet.create({
   chipAdd: { paddingLeft: 9, paddingRight: 9, backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.primary, borderStyle: 'dashed' },
   chipDot: { width: 8, height: 8, borderRadius: 4 },
   chipText: { fontSize: 13, fontWeight: font.medium, color: DS.text, flexShrink: 1 },
-  sectionLabel: { fontSize: 13, fontWeight: font.semibold, letterSpacing: 0.4, textTransform: 'uppercase', color: DS.textSecondary, paddingHorizontal: 6, marginTop: 8 },
+  sectionLabel: { fontSize: 13, fontWeight: font.semibold, letterSpacing: 0.4, textTransform: 'uppercase', color: DS.textSecondary, paddingHorizontal: 6 },
   listCard: { backgroundColor: DS.surface, borderRadius: radius.xl, ...shadows.md },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48, paddingLeft: 16 },
   listInner: { flex: 1, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 14 },

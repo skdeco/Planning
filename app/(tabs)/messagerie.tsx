@@ -481,6 +481,7 @@ export default function MessagerieScreen() {
   );
 
   // ─── Filtres page d'accueil admin ──────────────────────────────────────────
+  const [showListFilters, setShowListFilters] = useState(false);
   const [listFilterChantier, setListFilterChantier] = useState<string | 'all'>('all');
   const [listFilterWho, setListFilterWho] = useState<string | 'all'>('all');
   const [listFilterDateFrom, setListFilterDateFrom] = useState('');
@@ -539,22 +540,33 @@ export default function MessagerieScreen() {
     return (
       <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <Text style={styles.headerTitle}>{t.messagerie.title}</Text>
+          <Text style={[styles.headerTitle, { fontSize: 32, lineHeight: 38, letterSpacing: -0.5 }]}>{t.messagerie.title}</Text>
           {totalNonLus > 0 && (
             <View style={styles.headerBadge}>
               <Text style={styles.headerBadgeText}>{totalNonLus} {t.messagerie.unread}</Text>
             </View>
           )}
           <Pressable
-            style={{ backgroundColor: '#5C1F2E', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 }}
+            style={{ backgroundColor: '#5C1F2E', borderRadius: 999, paddingHorizontal: 14, height: 36, justifyContent: 'center' }}
             onPress={() => { setGroupType('equipe'); setGroupChantierId(null); setGroupMessage(''); setShowGroupModal(true); }}
           >
-            <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>Diffusion</Text>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Diffusion</Text>
           </Pressable>
         </View>
 
-        {/* Filtres — toujours visibles */}
-        <View style={styles.filterPanel}>
+        {/* Filtres — repliés par défaut pour laisser la place aux conversations */}
+        {(() => {
+          const nbFiltres = (listFilterChantier !== 'all' ? 1 : 0) + (listFilterWho !== 'all' ? 1 : 0) + (listFilterDateFrom || listFilterDateTo ? 1 : 0) + (listFilterType !== 'all' ? 1 : 0);
+          return (
+            <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 8 }}>
+              <Pressable style={[styles.filtersBtn, (showListFilters || nbFiltres > 0) && styles.filtersBtnOn]} onPress={() => setShowListFilters(v => !v)}>
+                <Text style={[styles.filtersBtnText, (showListFilters || nbFiltres > 0) && { color: '#5C1F2E' }]}>Filtres{nbFiltres > 0 ? ` (${nbFiltres})` : ''}</Text>
+              </Pressable>
+            </View>
+          );
+        })()}
+        {showListFilters && (
+        <View style={styles.filterCard}>
           {/* Chantiers */}
           <View style={styles.filterRow}>
             <Text style={styles.filterLabel}>Chantier</Text>
@@ -597,16 +609,19 @@ export default function MessagerieScreen() {
             {(['all', 'text', 'photo', 'pdf'] as const).map(tp => (
               <Pressable key={tp} style={[styles.filterChip, listFilterType === tp && styles.filterChipActive]}
                 onPress={() => setListFilterType(listFilterType === tp ? 'all' : tp)}>
-                <Ico e={tp === 'all' ? 'Tout' : tp === 'text' ? '💬' : tp === 'photo' ? '📷' : '📄'} size={18} />
+                <Text style={[styles.filterChipText, listFilterType === tp && styles.filterChipTextActive]}>
+                  {tp === 'all' ? 'Tout' : tp === 'text' ? 'Texte' : tp === 'photo' ? 'Photos' : 'PDF'}
+                </Text>
               </Pressable>
             ))}
             <Pressable style={{ marginLeft: 'auto', paddingVertical: 4, paddingHorizontal: 8 }} onPress={() => {
               setListFilterChantier('all'); setListFilterWho('all'); setListFilterDateFrom(''); setListFilterDateTo(''); setListFilterType('all');
             }}>
-              <Text style={{ fontSize: 11, color: '#E74C3C', fontWeight: '600' }}>Réinitialiser</Text>
+              <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>Réinitialiser</Text>
             </Pressable>
           </View>
         </View>
+        )}
 
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
           {[...chantierGroups.entries()].map(([chId, convs]) => {
@@ -614,24 +629,25 @@ export default function MessagerieScreen() {
             return (
               <View key={chId}>
                 {chantier && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 12, marginBottom: 6 }}>
-                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: chantier.couleur || '#5C1F2E' }} />
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>{chantier.nom}</Text>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, marginBottom: 8, paddingHorizontal: 6 }}>
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: chantier.couleur || '#5C1F2E' }} />
+                    <Text style={styles.groupLabel} numberOfLines={1}>{chantier.nom}</Text>
                   </View>
                 )}
                 {!chantier && chId === '__none__' && convs.length > 0 && (
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#6E5F54', marginTop: 12, marginBottom: 6 }}>Sans chantier</Text>
+                  <Text style={[styles.groupLabel, { marginTop: 14, marginBottom: 8, paddingHorizontal: 6 }]}>Sans chantier</Text>
                 )}
-                {convs.map(conv => (
+                <View style={styles.convGroup}>
+                {convs.map((conv, ci) => (
                   <Pressable
                     key={conv.id}
-                    style={[styles.convCard, conv.nbNonLus > 0 && styles.convCardUnread]}
+                    style={styles.convCard}
                     onPress={() => setSelectedConvId(conv.id)}
                   >
-                    <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#5C1F2E' : '#00BCD4' }]}>
-                      <Text style={styles.convAvatarText}>{conv.nom[0].toUpperCase()}</Text>
+                    <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#F2E4E1' : '#F1E7DC' }]}>
+                      <Text style={[styles.convAvatarText, { color: conv.type === 'employe' ? '#5C1F2E' : '#6E5F54' }]}>{(conv.nom[0] || '?').toUpperCase()}</Text>
                     </View>
-                    <View style={styles.convInfo}>
+                    <View style={[styles.convInfo, ci < convs.length - 1 && styles.convSeparator]}>
                       <View style={styles.convRow}>
                         <Text style={styles.convNom} numberOfLines={1}>{conv.nom}</Text>
                         {conv.dernierMessageAt && (
@@ -651,6 +667,7 @@ export default function MessagerieScreen() {
                     </View>
                   </Pressable>
                 ))}
+                </View>
               </View>
             );
           })}
@@ -1201,8 +1218,8 @@ export default function MessagerieScreen() {
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
   headerTitle: { flex: 1, fontFamily: 'Fraunces_600SemiBold', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: '#2B1D14' },
-  headerBadge: { backgroundColor: '#E74C3C', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
-  headerBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
+  headerBadge: { backgroundColor: '#F2E4E1', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  headerBadgeText: { color: '#5C1F2E', fontSize: 12, fontWeight: '700' },
   backBtn: { paddingRight: 4 },
   backBtnText: { color: '#5C1F2E', fontWeight: '600', fontSize: 14 },
   archiveToggle: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
@@ -1210,16 +1227,23 @@ const styles = StyleSheet.create({
   archiveToggleText: { fontSize: 11, color: '#6E5F54', fontWeight: '600' },
   archiveToggleTextActive: { color: '#5C1F2E' },
   scroll: { flex: 1 },
-  scrollContent: { padding: 12, paddingBottom: 24 },
+  scrollContent: { paddingHorizontal: 16, paddingTop: 0, paddingBottom: 110 },
   // Liste conversations
-  convCard: { flexDirection: 'row', backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 10, alignItems: 'center', gap: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  convGroup: { backgroundColor: '#fff', borderRadius: 24, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  convCard: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 14, minHeight: 68 },
+  convSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
+  groupLabel: { flex: 1, fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
+  filtersBtn: { height: 34, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#fff', justifyContent: 'center', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  filtersBtnOn: { backgroundColor: '#F2E4E1' },
+  filtersBtnText: { fontSize: 13, fontWeight: '600', color: '#2B1D14' },
+  filterCard: { backgroundColor: '#fff', borderRadius: 20, marginHorizontal: 16, marginBottom: 8, padding: 14, gap: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   convCardUnread: { borderLeftWidth: 3, borderLeftColor: '#5C1F2E' },
-  convAvatar: { width: 46, height: 46, borderRadius: 23, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  convAvatarText: { color: '#fff', fontWeight: '800', fontSize: 18 },
-  convInfo: { flex: 1 },
+  convAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  convAvatarText: { color: '#5C1F2E', fontWeight: '700', fontSize: 17 },
+  convInfo: { flex: 1, alignSelf: 'stretch', justifyContent: 'center', paddingRight: 14, paddingVertical: 12, gap: 2 },
   convRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  convNom: { fontSize: 15, fontWeight: '700', color: '#2B1D14', flex: 1 },
-  convHeure: { fontSize: 11, color: '#6E5F54' },
+  convNom: { fontSize: 16, fontWeight: '600', color: '#2B1D14', flex: 1 },
+  convHeure: { fontSize: 12, color: '#6E5F54', marginLeft: 8 },
   convDernier: { fontSize: 13, color: '#6E5F54', flex: 1 },
   convType: { fontSize: 11, color: '#9A8C80', marginTop: 2 },
   unreadBadge: { backgroundColor: '#5C1F2E', borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
@@ -1257,19 +1281,19 @@ const styles = StyleSheet.create({
   sendBtnDisabled: { backgroundColor: '#9A8C80' },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   // Programmation message
-  scheduleBar: { backgroundColor: '#FAFBFC', borderTopWidth: 1, borderTopColor: '#EDE2D6', padding: 10 },
+  scheduleBar: { backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#EDE2D6', padding: 10 },
   scheduleChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' },
   scheduleChipActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
   scheduleChipText: { fontSize: 12, fontWeight: '600', color: '#6E5F54' },
   // Barre et panneau de filtres
   filterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', paddingVertical: 6 },
-  filterPanel: { backgroundColor: '#FAFBFC', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', padding: 12, gap: 8 },
+  filterPanel: { backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', padding: 12, gap: 8 },
   filterRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, flexWrap: 'wrap' as const },
-  filterLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', minWidth: 28 },
+  filterLabel: { fontSize: 13, fontWeight: '600', color: '#6E5F54', minWidth: 28 },
   filterInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 12, color: '#2B1D14', width: 105 },
-  filterChip: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
-  filterChipActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
-  filterChipText: { fontSize: 11, fontWeight: '600', color: '#6E5F54' },
+  filterChip: { paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 999, backgroundColor: '#F1E7DC' },
+  filterChipActive: { backgroundColor: '#5C1F2E' },
+  filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
   filterChipTextActive: { color: '#fff' },
   // Sélecteur de chantier
   chantierBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', maxHeight: 44 },

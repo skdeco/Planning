@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert, Linking, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock, CircleCheck, Navigation, Check, Camera, Search, ChevronRight, ShoppingCart, ClipboardList } from 'lucide-react-native';
+import { Clock, CircleCheck, Navigation, Check, Camera, Search, ChevronRight, ChevronDown, X, ShoppingCart, ClipboardList } from 'lucide-react-native';
 import { DS, screenTitle, radius, shadows } from '@/constants/design';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
@@ -844,7 +844,7 @@ export default function DashboardScreen() {
                 <Pressable style={styles.listRow} onPress={() => router.push('/(tabs)/materiel' as any)}>
                   <View style={styles.listIcon}><ShoppingCart size={18} color={DS.primary} strokeWidth={1.9} /></View>
                   <View style={styles.listInner}>
-                    <Text style={styles.listTitle}>{t.dash.itemsToBuyLabel}</Text>
+                    <Text style={styles.listTitle}>{t.dash.itemsToBuyLabel.charAt(0).toUpperCase() + t.dash.itemsToBuyLabel.slice(1)}</Text>
                     <View style={styles.countBadge}><Text style={styles.countBadgeText}>{stats.materielNonAchete}</Text></View>
                     <ChevronRight size={16} color={DS.textSecondary} />
                   </View>
@@ -1053,7 +1053,7 @@ export default function DashboardScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Pressable onPress={() => setShowAlertes(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
                   <Text style={styles.sectionTitle}>{t.dash.alerts} ({visibleAlertes.length})</Text>
-                  <Text style={{ fontSize: 12, color: '#6E5F54' }}>{showAlertes ? '▾' : '▸'}</Text>
+                  <View style={{ marginTop: 12 }}>{showAlertes ? <ChevronDown size={16} color={DS.textSecondary} /> : <ChevronRight size={16} color={DS.textSecondary} />}</View>
                 </Pressable>
                 {showAlertes && (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -1073,18 +1073,21 @@ export default function DashboardScreen() {
                 )}
               </View>
               {showAlertes && (
-              <View style={{ gap: 4, marginBottom: 8 }}>
-                {visibleAlertes.slice(0, 15).map((a) => (
-                  <Pressable key={a.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: a.color + '14', borderRadius: 14, padding: 12 }}
-                    onPress={a.onPress}>
-                    <Ico e={a.icon} size={16} color={a.color} />
-                    <Text style={{ fontSize: 12, color: '#2B1D14', flex: 1 }} numberOfLines={2}>{a.text}</Text>
-                    <Pressable
-                      onPress={(e) => { e.stopPropagation(); setDismissedAlertes(new Set([...dismissedAlertes, a.id])); }}
-                      hitSlop={10}
-                      style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: 'rgba(0,0,0,0.1)', alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 14, color: '#6E5F54', lineHeight: 16, fontWeight: '700' }}>✕</Text>
-                    </Pressable>
+              <View style={[styles.listCard, { marginBottom: 8 }]}>
+                {visibleAlertes.slice(0, 15).map((a, idx, arr) => (
+                  <Pressable key={a.id} style={[styles.listRow, { minHeight: 56 }]} onPress={a.onPress}>
+                    <View style={[styles.listIcon, { backgroundColor: a.color + '1A' }]}>
+                      <Ico e={a.icon} size={16} color={a.color} />
+                    </View>
+                    <View style={[styles.listInner, idx < arr.length - 1 && styles.listSeparator, { paddingVertical: 10 }]}>
+                      <Text style={{ fontSize: 14, lineHeight: 19, color: DS.text, flex: 1 }} numberOfLines={2}>{a.text}</Text>
+                      <Pressable
+                        onPress={(e) => { e.stopPropagation(); setDismissedAlertes(new Set([...dismissedAlertes, a.id])); }}
+                        hitSlop={10}
+                        style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: DS.segment, alignItems: 'center', justifyContent: 'center' }}>
+                        <X size={13} color={DS.textSecondary} strokeWidth={2.4} />
+                      </Pressable>
+                    </View>
                   </Pressable>
                 ))}
               </View>
@@ -1128,11 +1131,16 @@ export default function DashboardScreen() {
         <View style={styles.listCard}>
           <Pressable style={[styles.listRow, { minHeight: 60 }]} onPress={() => router.push('/(tabs)/planning' as any)}>
             <View style={[styles.listInner, styles.listSeparator, { paddingLeft: 2 }]}>
-              <View style={{ flex: 1, flexDirection: 'row', alignItems: 'baseline', flexWrap: 'wrap', gap: 6 }}>
-                <Text style={styles.bigNumber}>{stats.chantiersActifs}</Text>
-                <Text style={styles.listTitleInline}>{t.dash.activeChantiers}</Text>
-                <Text style={[styles.bigNumber, { marginLeft: 8 }]}>{stats.employesAujourdhui}</Text>
-                <Text style={styles.listTitleInline}>{t.dash.assignedPeople}</Text>
+              <View style={{ flex: 1, flexDirection: 'row', paddingVertical: 12 }}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bigNumber}>{stats.chantiersActifs}</Text>
+                  <Text style={styles.statCaption} numberOfLines={1}>{t.dash.activeChantiers}</Text>
+                </View>
+                <View style={{ width: StyleSheet.hairlineWidth, backgroundColor: DS.border, marginHorizontal: 14 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.bigNumber}>{stats.employesAujourdhui}</Text>
+                  <Text style={styles.statCaption} numberOfLines={1}>{t.dash.assignedPeople}</Text>
+                </View>
               </View>
               <ChevronRight size={16} color={DS.primary} />
             </View>
@@ -1171,15 +1179,15 @@ export default function DashboardScreen() {
 
         {/* Tableau de bord financier admin (CA signé / en cours / encaissé). */}
         {isAdmin && (
-          <FadeInView delay={50}>
+          <FadeInView delay={50} style={{ marginTop: 8 }}>
             <DashboardKPI />
           </FadeInView>
         )}
 
         {/* Reporting financier détaillé — repliable pour alléger le dashboard (Rentabilité + CA). */}
         <Pressable onPress={() => setShowFinancesDetail(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 4 }}>
-          <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>{t.dash.financesDetail}</Text>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{showFinancesDetail ? '▲ Masquer' : '▼ Afficher'}</Text>
+          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>{t.dash.financesDetail}</Text>
+          <View style={styles.toggleChip}>{showFinancesDetail ? <ChevronDown size={16} color={DS.primary} /> : <ChevronRight size={16} color={DS.primary} />}</View>
         </Pressable>
         {showFinancesDetail && (<>
         {/* Rentabilité par chantier */}
@@ -1285,7 +1293,7 @@ export default function DashboardScreen() {
         {/* Outils & historique — repliés par défaut pour alléger l'accueil */}
         <Pressable onPress={() => setShowOutils(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 12 }}>
           <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Outils & activité récente</Text>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: DS.primary }}>{showOutils ? '▲ Masquer' : '▼ Afficher'}</Text>
+          <View style={styles.toggleChip}>{showOutils ? <ChevronDown size={16} color={DS.primary} /> : <ChevronRight size={16} color={DS.primary} />}</View>
         </Pressable>
         {showOutils && (
         <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
@@ -1450,6 +1458,8 @@ const styles = StyleSheet.create({
   listInner: { flex: 1, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 12 },
   listSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: DS.border },
   listTitle: { flex: 1, fontSize: 16, color: DS.text },
+  statCaption: { fontSize: 13, color: DS.textSecondary, marginTop: 2 },
+  toggleChip: { width: 30, height: 30, borderRadius: 15, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' },
   listTitleInline: { fontSize: 15, color: DS.text },
   bigNumber: { fontFamily: 'Fraunces_600SemiBold', fontSize: 26, color: DS.primary },
   countBadge: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 7, backgroundColor: DS.primary, alignItems: 'center', justifyContent: 'center' },

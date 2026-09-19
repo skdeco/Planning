@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/app/context/AppContext';
 
 export function SyncIndicator() {
   const { syncStatus } = useApp();
+  const insets = useSafeAreaInsets();
   const [isOnline, setIsOnline] = useState(true);
   const [lastSyncAgo, setLastSyncAgo] = useState('');
   const lastSyncTime = useRef(Date.now());
@@ -44,7 +46,8 @@ export function SyncIndicator() {
   const effectiveStatus = !isOnline ? 'offline' : syncStatus;
 
   // Synced récemment → petit indicateur vert discret
-  if (effectiveStatus === 'synced' && !lastSyncAgo) return null;
+  // Synchronisé = rien à signaler : on n'affiche la pastille que s'il se passe quelque chose
+  if (effectiveStatus === 'synced') return null;
 
   const configs = {
     synced: { color: '#27AE60', label: lastSyncAgo ? `Sync il y a ${lastSyncAgo}` : '' },
@@ -56,9 +59,11 @@ export function SyncIndicator() {
   if (!config.label) return null;
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.dot, { backgroundColor: config.color }]} />
-      <Text style={[styles.label, { color: config.color }]}>{config.label}</Text>
+    <View pointerEvents="none" style={[styles.wrap, { top: insets.top + 4 }]}>
+      <View style={styles.container}>
+        <View style={[styles.dot, { backgroundColor: config.color }]} />
+        <Text style={[styles.label, { color: config.color }]}>{config.label}</Text>
+      </View>
     </View>
   );
 }
@@ -68,10 +73,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 3,
+    paddingVertical: 5,
+    paddingHorizontal: 12,
     gap: 6,
-    backgroundColor: '#FAFBFC',
+    borderRadius: 999,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#EDE2D6',
+    shadowColor: '#2B1D14',
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
   },
+  wrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center', zIndex: 999 },
   dot: { width: 7, height: 7, borderRadius: 4 },
   label: { fontSize: 11, fontWeight: '600' },
 });

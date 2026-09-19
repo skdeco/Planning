@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { ChevronDown, ChevronRight } from 'lucide-react-native';
 import { DS, font, space } from '../../constants/design';
 import { useLanguage } from '@/app/context/LanguageContext';
 
@@ -150,7 +151,6 @@ export function AlertesChantiersRetard({
 
   const hasRetard   = chantiersEnRetard.length > 0;
   const bgColor     = hasRetard ? DS.errorSoft : DS.warningSoft;
-  const borderColor = hasRetard ? DS.error     : DS.warning;
   const titleColor  = hasRetard ? ALERTE_TEXT_ERROR : ALERTE_TEXT_WARNING;
 
   return (
@@ -160,14 +160,14 @@ export function AlertesChantiersRetard({
       accessibilityState={{ expanded }}
       style={[
         styles.container,
-        { backgroundColor: bgColor, borderLeftColor: borderColor },
+        { backgroundColor: bgColor },
       ]}
     >
       <View style={styles.headerRow}>
-        <Text style={[styles.title, { color: titleColor }]}>{totalAlertes} t.planningAdmin.alertsChantiers
+        <Text style={[styles.title, { color: titleColor }]}>{totalAlertes} {t.planningAdmin.alertsChantiers}
           {hasRetard ? ` (${chantiersEnRetard.length} ${t.planningAdmin.lateCount})` : ''}
         </Text>
-        <Text style={styles.toggleArrow}>{expanded ? '▲' : '▼'}</Text>
+        {expanded ? <ChevronDown size={16} color={titleColor} /> : <ChevronRight size={16} color={titleColor} />}
       </View>
 
       {expanded && (
@@ -204,11 +204,11 @@ export function AlertesChantiersRetard({
 
 const styles = StyleSheet.create({
   container: {
-    marginHorizontal: space.md,                // 12
-    marginTop:        space.sm,                // 8
-    padding:          ALERTE_PADDING,          // 10
-    borderRadius:     ALERTE_RADIUS,           // 10
-    borderLeftWidth:  ALERTE_BORDER_LEFT_WIDTH, // 4
+    marginHorizontal: 16,
+    marginBottom:     10,
+    paddingVertical:  12,
+    paddingHorizontal: 16,
+    borderRadius:     16,
   },
 
   headerRow: {

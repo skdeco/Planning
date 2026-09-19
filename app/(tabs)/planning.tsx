@@ -1,17 +1,17 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Copy, Camera, FileText, Download, Settings } from 'lucide-react-native';
+import { Copy, Camera, FileText, Download, Settings, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
   TouchableWithoutFeedback, Image, Alert, RefreshControl, Linking,
 } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
+import { screenTitle } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
-import { LanguageFlag } from '@/components/LanguageFlag';
 import { useRefresh } from '@/hooks/useRefresh';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
 import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
@@ -777,37 +777,8 @@ export default function PlanningScreen() {
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       {/* En-tête */}
       <View style={styles.header}>
-        {/* Logo + titre sur une seule ligne */}
-        <View style={styles.headerLogoWrap}>
-          <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
-          {isAdmin && (
-            <Pressable style={{ marginLeft: 4 }} onPress={openAdminSettings}>
-              <Settings size={15} color="#6E5F54" strokeWidth={2} />
-            </Pressable>
-          )}
-        </View>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.navRow}>
-          {/* Toggle vue semaine / mois / gantt — masqué en planning direction */}
-          {planningMode === 'equipe' && (
-            <>
-              <View style={styles.viewToggle}>
-                <Pressable style={[styles.viewToggleBtn, viewMode === 'jour' && styles.viewToggleBtnActive]} onPress={() => setViewMode('jour')}>
-                  <Text style={[styles.viewToggleBtnText, viewMode === 'jour' && styles.viewToggleBtnTextActive]}>Jour</Text>
-                </Pressable>
-                <Pressable style={[styles.viewToggleBtn, viewMode === 'semaine' && styles.viewToggleBtnActive]} onPress={() => setViewMode('semaine')}>
-                  <Text style={[styles.viewToggleBtnText, viewMode === 'semaine' && styles.viewToggleBtnTextActive]}>7j</Text>
-                </Pressable>
-                <Pressable style={[styles.viewToggleBtn, viewMode === 'mois' && styles.viewToggleBtnActive]} onPress={() => setViewMode('mois')}>
-                  <Text style={[styles.viewToggleBtnText, viewMode === 'mois' && styles.viewToggleBtnTextActive]}>{t.planning.monthView}</Text>
-                </Pressable>
-                {isAdmin && (
-                  <Pressable style={[styles.viewToggleBtn, viewMode === 'gantt' && styles.viewToggleBtnActive]} onPress={() => setViewMode('gantt')}>
-                    <Text style={[styles.viewToggleBtnText, viewMode === 'gantt' && styles.viewToggleBtnTextActive]}>{t.nav.chantiers}</Text>
-                  </Pressable>
-                )}
-              </View>
-            </>
-          )}
+        <Text style={screenTitle}>Planning</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 1, marginLeft: 12 }} contentContainerStyle={styles.navRow}>
           {/* Bouton retard planifié (employé non-admin) */}
           {!isAdmin && !isST && currentUser?.employeId && (() => {
             const nbRetards = (data.retardsPlanifies || []).filter(r => r.employeId === currentUser.employeId && !r.lu).length;
@@ -892,12 +863,33 @@ export default function PlanningScreen() {
               <Download size={17} color="#5C1F2E" strokeWidth={2} />
             </Pressable>
           )}
-          <LanguageFlag />
-          <Pressable style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutBtnText}>⏻</Text>
-          </Pressable>
+          {isAdmin && (
+            <Pressable style={styles.galerieBtn} onPress={openAdminSettings} accessibilityLabel="Réglages du planning">
+              <Settings size={17} color="#5C1F2E" strokeWidth={2} />
+            </Pressable>
+          )}
         </ScrollView>
       </View>
+
+          {/* Toggle vue semaine / mois / gantt — masqué en planning direction */}
+          {planningMode === 'equipe' && (
+              <View style={[styles.viewToggle, { marginHorizontal: 16, marginBottom: 10 }]}>
+                <Pressable style={[styles.viewToggleBtn, viewMode === 'jour' && styles.viewToggleBtnActive]} onPress={() => setViewMode('jour')}>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'jour' && styles.viewToggleBtnTextActive]}>Jour</Text>
+                </Pressable>
+                <Pressable style={[styles.viewToggleBtn, viewMode === 'semaine' && styles.viewToggleBtnActive]} onPress={() => setViewMode('semaine')}>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'semaine' && styles.viewToggleBtnTextActive]}>7j</Text>
+                </Pressable>
+                <Pressable style={[styles.viewToggleBtn, viewMode === 'mois' && styles.viewToggleBtnActive]} onPress={() => setViewMode('mois')}>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'mois' && styles.viewToggleBtnTextActive]}>{t.planning.monthView}</Text>
+                </Pressable>
+                {isAdmin && (
+                  <Pressable style={[styles.viewToggleBtn, viewMode === 'gantt' && styles.viewToggleBtnActive]} onPress={() => setViewMode('gantt')}>
+                    <Text style={[styles.viewToggleBtnText, viewMode === 'gantt' && styles.viewToggleBtnTextActive]}>{t.nav.chantiers}</Text>
+                  </Pressable>
+                )}
+              </View>
+          )}
 
       {/* Sélecteur Planning Équipe / Direction (admin) */}
       {isAdmin && <AdminPlanningModeSwitcher value={planningMode} onChange={setPlanningMode} />}
@@ -912,16 +904,18 @@ export default function PlanningScreen() {
       {(planningMode === 'equipe' || !isAdmin) && (
       <>
       <View style={styles.weekInfo}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-          <Text style={styles.weekLabel}>{(viewMode === 'semaine' || viewMode === 'jour') ? weekLabel : monthData.label}</Text>
-          <Pressable style={{ padding: 4 }} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)}>
-            <Text style={{ fontSize: 16, color: '#5C1F2E' }}>‹</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+          <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)} accessibilityLabel="Précédent">
+            <ChevronLeft size={18} color="#5C1F2E" strokeWidth={2.2} />
           </Pressable>
-          <Pressable style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 }} onPress={() => setShowDatePicker(true)}>
-            <Text style={{ fontSize: 10, fontWeight: '600', color: '#5C1F2E' }}>{t.common.today_short}</Text>
+          <Pressable onPress={() => setShowDatePicker(true)} style={{ flexShrink: 1 }}>
+            <Text style={styles.weekLabel} numberOfLines={1}>{(viewMode === 'semaine' || viewMode === 'jour') ? weekLabel : monthData.label}</Text>
           </Pressable>
-          <Pressable style={{ padding: 4 }} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)}>
-            <Text style={{ fontSize: 16, color: '#5C1F2E' }}>›</Text>
+          <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)} accessibilityLabel="Suivant">
+            <ChevronRight size={18} color="#5C1F2E" strokeWidth={2.2} />
+          </Pressable>
+          <Pressable style={{ backgroundColor: '#F2E4E1', paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 999 }} onPress={() => setShowDatePicker(true)}>
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{t.common.today_short}</Text>
           </Pressable>
         </View>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
@@ -1616,9 +1610,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingTop: 6,
-    paddingBottom: 4,
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 10,
     backgroundColor: '#FAF5EF',
   },
   headerLogoWrap: {
@@ -1643,13 +1637,16 @@ const styles = StyleSheet.create({
   navRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 8,
+    paddingVertical: 4,
+    paddingHorizontal: 2,
   },
   galerieBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#F2E4E1',
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -1698,9 +1695,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 8,
   },
+  weekNavBtn: { width: 30, height: 30, borderRadius: 15, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 3, elevation: 1 },
   weekLabel: {
-    fontSize: 16,
-    fontWeight: '700',
+    fontSize: 15,
+    fontWeight: '600',
     color: '#2B1D14',
   },
   chantierCount: {
@@ -2008,7 +2006,7 @@ const styles = StyleSheet.create({
   },
   // ── Toggle vue semaine/mois ──
   viewToggle: { flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' },
-  viewToggleBtn: { paddingHorizontal: 14, height: 30, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+  viewToggleBtn: { flex: 1, paddingHorizontal: 8, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
   viewToggleBtnActive: { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
   viewToggleBtnText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
   viewToggleBtnTextActive: { color: '#2B1D14', fontWeight: '600' },

@@ -88,7 +88,6 @@ export default function TabLayout() {
 
   return (
     <View style={{ flex: 1, backgroundColor: DS.background }}>
-    <SyncIndicator />
     <NotificationListener />
     <Tabs
       screenOptions={{
@@ -284,6 +283,7 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    <SyncIndicator />
     </View>
   );
 }
