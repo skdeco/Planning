@@ -39,6 +39,8 @@ export interface ImportLotsDevisOverlayProps {
   devisUri?: string;
   /** Nom du fichier devis (affiché dans l'overlay). */
   devisNom?: string;
+  /** Second devis à essayer si le premier est illisible ou sans lot détecté (ex. devis initial quand le signé est un scan). */
+  devisUriSecours?: string;
 }
 
 function genId(prefix: string): string {
@@ -56,6 +58,7 @@ export function ImportLotsDevisOverlay({
   onImport,
   devisUri,
   devisNom,
+  devisUriSecours,
 }: ImportLotsDevisOverlayProps) {
   const [importMode, setImportMode] = useState<'pdf' | 'coller' | 'rapide'>('coller');
   const [importTexte, setImportTexte] = useState('');
@@ -84,7 +87,13 @@ export function ImportLotsDevisOverlay({
     setPdfExtractLoading(true);
     try {
       const { extractTextFromPdfUrl } = await import('@/lib/pdfExtract');
-      const texte = await extractTextFromPdfUrl(devisUri);
+      let texte = await extractTextFromPdfUrl(devisUri);
+      // Devis signé scanné (image) ou sans lot lisible → on essaie l'autre devis du marché.
+      if (devisUriSecours && devisUriSecours !== devisUri && (!texte || extraireLotsAvecRemise(texte).lots.length === 0)) {
+        const texteSecours = await extractTextFromPdfUrl(devisUriSecours);
+        if (texteSecours && extraireLotsAvecRemise(texteSecours).lots.length > 0) texte = texteSecours;
+        else if (!texte) texte = texteSecours;
+      }
       if (!texte) {
         const msg = "Impossible d'extraire le texte du PDF. Essayez le mode 'Coller texte devis'.";
         if (Platform.OS === 'web') { if (typeof window !== 'undefined') window.alert(msg); }

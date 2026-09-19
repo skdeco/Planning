@@ -257,8 +257,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   // Cible : un marché ou un supplément spécifique (les lots sont attachés
   // à un parent unique, plus au chantier).
   const [importLotsTarget, setImportLotsTarget] = useState<
-    | { type: 'marche'; id: string; devisUri?: string; devisNom?: string }
-    | { type: 'supplement'; id: string; devisUri?: string; devisNom?: string }
+    | { type: 'marche'; id: string; devisUri?: string; devisNom?: string; devisUriSecours?: string }
+    | { type: 'supplement'; id: string; devisUri?: string; devisNom?: string; devisUriSecours?: string }
     | null
   >(null);
 
@@ -821,7 +821,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           lots={m.avancementCorps || []}
                           isAdmin={isAdmin}
                           onChangeLots={(lots) => updateMarcheChantier({ ...m, avancementCorps: lots })}
-                          onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'marche', id: m.id, devisUri: m.devisInitialUri, devisNom: m.devisInitialNom }) : undefined}
+                          onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'marche', id: m.id, devisUri: m.devisSigneUri || m.devisInitialUri, devisNom: m.devisSigneUri ? (m.devisSigneNom || 'Devis signé') : m.devisInitialNom, devisUriSecours: m.devisSigneUri ? m.devisInitialUri : undefined }) : undefined}
                           title="Avancement de ce marché"
                           compact
                           snapshots={m.snapshots}
@@ -1016,7 +1016,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             lots={s.avancementCorps || []}
                             isAdmin={isAdmin}
                             onChangeLots={(lots) => updateSupplementMarche({ ...s, avancementCorps: lots, updatedAt: new Date().toISOString() })}
-                            onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'supplement', id: s.id, devisUri: s.devisUri, devisNom: s.devisNom }) : undefined}
+                            onPressImport={isAdmin ? () => setImportLotsTarget({ type: 'supplement', id: s.id, devisUri: s.devisSigneUri || s.devisUri, devisNom: s.devisSigneUri ? (s.devisSigneNom || 'Devis signé') : s.devisNom, devisUriSecours: s.devisSigneUri ? s.devisUri : undefined }) : undefined}
                             title="Avancement de ce supplément"
                             compact
                             snapshots={s.snapshots}
@@ -1095,6 +1095,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               lotsActuels={lotsActuels}
               devisUri={importLotsTarget.devisUri}
               devisNom={importLotsTarget.devisNom}
+              devisUriSecours={importLotsTarget.devisUriSecours}
               onImport={(nouveauxLots) => {
                 if (importLotsTarget.type === 'marche') {
                   const m = marches.find(x => x.id === importLotsTarget.id);
