@@ -140,15 +140,10 @@ const styles = StyleSheet.create({
   title: { fontSize: 14, fontWeight: '800', color: '#5C1F2E', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.5 },
   kpiCard: {
     backgroundColor: '#fff',
-    borderLeftWidth: 4,
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 12,
     minWidth: 140,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 4,
-    elevation: 2,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   kpiIcon: { fontSize: 18, marginBottom: 6 },
   kpiLabel: { fontSize: 11, color: '#6E5F54', fontWeight: '600', textTransform: 'uppercase' },

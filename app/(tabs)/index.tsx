@@ -1452,9 +1452,8 @@ const styles = StyleSheet.create({
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statCard: {
     backgroundColor: '#fff', borderRadius: 20, padding: 16,
-    borderLeftWidth: 0,
-    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 18, elevation: 2,
     marginBottom: 6,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   statValue: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
   statLabel: { fontSize: 12, color: '#6E5F54', marginTop: 4, fontWeight: '500' },

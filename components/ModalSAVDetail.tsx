@@ -616,7 +616,7 @@ const styles = StyleSheet.create({
   headerSub: { color: '#FFFFFF', fontSize: 11, fontWeight: '600', marginTop: 2, fontStyle: 'italic' },
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   closeBtnText: { color: '#5C1F2E', fontSize: 14, fontWeight: '800' },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#EDE2D6' },
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#EDE2D6' },
   sectionTitle: { fontSize: 13, fontWeight: '800', color: '#5C1F2E', marginBottom: 8 },
   objet: { flex: 1, fontSize: 16, fontWeight: '800', color: '#2B1D14' },
   description: { fontSize: 13, color: '#5C1F2E', marginTop: 6, lineHeight: 19 },

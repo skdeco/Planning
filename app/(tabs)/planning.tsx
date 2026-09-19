@@ -1471,7 +1471,7 @@ export default function PlanningScreen() {
                   <View style={{ gap: 4, marginBottom: 16 }}>
                     {/* Même chantier (changer juste la date) */}
                     <Pressable
-                      style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === moveModal.chantierId ? '#E8F0FE' : '#F1E7DC', borderWidth: moveTargetChantierId === moveModal.chantierId ? 1.5 : 0, borderColor: '#5C1F2E' }}
+                      style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === moveModal.chantierId ? '#F2E4E1' : '#F1E7DC', borderWidth: moveTargetChantierId === moveModal.chantierId ? 1.5 : 0, borderColor: '#5C1F2E' }}
                       onPress={() => setMoveTargetChantierId(moveModal.chantierId)}>
                       <View style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: fromChantier?.couleur, marginRight: 8 }} />
                       <Text style={{ fontSize: 13, color: '#2B1D14', fontWeight: moveTargetChantierId === moveModal.chantierId ? '700' : '400' }}>{fromChantier?.nom} (même)</Text>
@@ -1479,7 +1479,7 @@ export default function PlanningScreen() {
                     {availableChantiers.map(c => (
                       <Pressable
                         key={c.id}
-                        style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === c.id ? '#E8F0FE' : '#F1E7DC', borderWidth: moveTargetChantierId === c.id ? 1.5 : 0, borderColor: '#5C1F2E' }}
+                        style={{ flexDirection: 'row', alignItems: 'center', padding: 10, borderRadius: 8, backgroundColor: moveTargetChantierId === c.id ? '#F2E4E1' : '#F1E7DC', borderWidth: moveTargetChantierId === c.id ? 1.5 : 0, borderColor: '#5C1F2E' }}
                         onPress={() => setMoveTargetChantierId(c.id)}>
                         <View style={{ width: 12, height: 12, borderRadius: 3, backgroundColor: c.couleur, marginRight: 8 }} />
                         <Text style={{ fontSize: 13, color: '#2B1D14', fontWeight: moveTargetChantierId === c.id ? '700' : '400' }}>{c.nom}</Text>

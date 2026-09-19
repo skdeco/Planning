@@ -107,7 +107,7 @@ export function DataBackupCard() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: DS.surface,
-    borderRadius: radius.lg,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: DS.border,
     padding: space.lg,

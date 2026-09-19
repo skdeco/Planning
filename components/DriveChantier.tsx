@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
   catBlock: { backgroundColor: '#fff', borderRadius: 12, padding: 12, gap: 8 },
   catHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   catTitle: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
-  addBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, backgroundColor: '#F0E6DC' },
+  addBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#F0E6DC' },
   addBtnText: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
   shareBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F1E7DC', marginRight: 4 },
   shareBtnOn: { backgroundColor: '#E7F1EA' },

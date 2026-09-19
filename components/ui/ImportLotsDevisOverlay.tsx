@@ -488,7 +488,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: DS.bordeaux,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 999,
     alignItems: 'center',
   },
   saveBtnText: {

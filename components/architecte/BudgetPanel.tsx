@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   deltaLabel: { fontSize: font.tiny, fontWeight: font.bold, textTransform: 'uppercase', letterSpacing: 0.5 },
   deltaValue: { fontSize: font.subhead, fontWeight: font.heavy, marginTop: 2 },
   sectionTitle: { fontSize: font.compact, fontWeight: font.bold, color: DS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: space.sm },
-  cmpCard: { backgroundColor: DS.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: DS.border, padding: space.lg, marginBottom: space.lg },
+  cmpCard: { backgroundColor: DS.surface, borderRadius: 20, borderWidth: 1, borderColor: DS.border, padding: space.lg, marginBottom: space.lg },
   cmpRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: space.xs },
   cmpLabel: { fontSize: font.body, color: DS.textSecondary },
   cmpVal: { fontSize: font.body, fontWeight: font.bold, color: DS.sombre },

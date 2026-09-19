@@ -2240,16 +2240,12 @@ const sessionStyles = StyleSheet.create({
   },
   box: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 32,
     maxWidth: 380,
     width: '90%',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 20,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   icon: { fontSize: 40, marginBottom: 12 },
   title: { fontSize: 20, fontWeight: '700', color: '#2B1D14', marginBottom: 10, textAlign: 'center' },

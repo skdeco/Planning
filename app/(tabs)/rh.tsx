@@ -431,7 +431,6 @@ export default function RHScreen() {
       <BackToPlus />
       {/* Header */}
       <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
-        <Users size={18} color="#5C1F2E" strokeWidth={2} />
         <Text style={styles.headerTitle}>{t.rh.title}</Text>
         {nbEnAttente > 0 && (
           <View style={styles.headerBadge}>
@@ -732,7 +731,7 @@ export default function RHScreen() {
                       </Pressable>
                       {/* Télécharger — web uniquement ; sur mobile "Voir" ouvre le PDF avec le partage natif iOS */}
                       {Platform.OS === 'web' && (
-                        <Pressable style={[styles.voirBtn, { backgroundColor: '#EFF6FF' }]} onPress={() => {
+                        <Pressable style={[styles.voirBtn, { backgroundColor: '#F2E4E1' }]} onPress={() => {
                           const a = document.createElement('a');
                           a.href = f.fichier;
                           a.download = `fiche-paie-${f.mois}.pdf`;
@@ -1023,17 +1022,17 @@ export default function RHScreen() {
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 14, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#5C1F2E' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 4, paddingBottom: 10 },
+  headerTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
   headerBadge: { backgroundColor: '#E74C3C', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 3 },
   headerBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  soldeCard: { backgroundColor: '#fff', borderRadius: 12, padding: 16, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 },
+  soldeCard: { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   soldeRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around' },
   soldeItem: { alignItems: 'center' },
   soldeValue: { fontSize: 28, fontWeight: '800', color: '#5C1F2E' },
   soldeLabel: { fontSize: 12, color: '#6E5F54', marginTop: 2, fontWeight: '500' },
   soldeSeparator: { width: 1, height: 40, backgroundColor: '#EDE2D6' },
-  tabs: { flexDirection: 'row', backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', paddingHorizontal: 8 },
+  tabs: { flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', paddingHorizontal: 8 },
   tab: { flex: 1, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4, borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabActive: { borderBottomColor: '#5C1F2E' },
   tabText: { fontSize: 11, color: '#6E5F54', fontWeight: '500', textAlign: 'center' },
@@ -1042,10 +1041,10 @@ const styles = StyleSheet.create({
   tabBadgeText: { color: '#fff', fontSize: 9, fontWeight: '800' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 32 },
-  addBtn: { backgroundColor: '#5C1F2E', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
+  addBtn: { backgroundColor: '#5C1F2E', borderRadius: 999, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   emptyText: { textAlign: 'center', color: '#6E5F54', fontSize: 14, marginTop: 32 },
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 6, elevation: 2 },
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
   cardEmploye: { fontSize: 13, fontWeight: '700', color: '#5C1F2E' },
   cardTitle: { fontSize: 15, fontWeight: '600', color: '#2B1D14', marginBottom: 4 },
@@ -1078,7 +1077,7 @@ const styles = StyleSheet.create({
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
   input: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 12 },
   inputMulti: { minHeight: 80, textAlignVertical: 'top' },
-  saveBtn: { backgroundColor: '#5C1F2E', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
+  saveBtn: { backgroundColor: '#5C1F2E', borderRadius: 999, paddingVertical: 14, alignItems: 'center', marginTop: 4 },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   infoText: { fontSize: 13, color: '#6E5F54', fontStyle: 'italic', marginBottom: 12, lineHeight: 18 },
   statutRow: { flexDirection: 'row', gap: 12, marginBottom: 16 },
@@ -1087,7 +1086,7 @@ const styles = StyleSheet.create({
   statutBtnText: { fontWeight: '700', fontSize: 14, color: '#6E5F54' },
   // Badges notification
   cardEnAttente: { borderLeftWidth: 3, borderLeftColor: '#E67E22' },
-  uploadArretBtn: { backgroundColor: '#F0F4FF', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: '#5C1F2E', borderStyle: 'dashed', alignItems: 'center', marginBottom: 8 },
+  uploadArretBtn: { backgroundColor: '#F2E4E1', borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, borderWidth: 1, borderColor: '#5C1F2E', borderStyle: 'dashed', alignItems: 'center', marginBottom: 8 },
   uploadArretBtnText: { fontSize: 14, color: '#5C1F2E', fontWeight: '600' },
   removeFileText: { fontSize: 12, color: '#E74C3C', textAlign: 'center', marginBottom: 8 },
   justificatifLink: { fontSize: 13, color: '#5C1F2E', fontWeight: '600', marginTop: 4 },

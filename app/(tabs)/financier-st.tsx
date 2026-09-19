@@ -437,7 +437,7 @@ function FinanceCell({ label, value, color }: { label: string; value: string; co
 
 const styles = StyleSheet.create({
   header: { paddingHorizontal: 16, paddingTop: 12, paddingBottom: 12 },
-  headerTitle: { fontSize: 26, fontWeight: '800', color: '#2B1D14' },
+  headerTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
   scroll: { flex: 1, paddingHorizontal: 16 },
   emptyState: { padding: 40, alignItems: 'center' },
   emptyText: { fontSize: 15, color: '#6E5F54', fontWeight: '500' },
@@ -454,9 +454,8 @@ const styles = StyleSheet.create({
   financeCellValue: { fontSize: 14, fontWeight: '800' },
   // Devis card
   devisCard: {
-    backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
-    borderLeftWidth: 3, borderLeftColor: '#5C1F2E',
+    backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 10,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   devisHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
   devisObjetBadge: { backgroundColor: '#F2E4E1', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },

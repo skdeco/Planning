@@ -151,7 +151,7 @@ export function GanttTimelineAdmin({
                 const isWeekend = d.getDay() === 0 || d.getDay() === 6;
                 const isT = toYMD(d) === todayStr;
                 return (
-                  <View key={i} style={{ width: DAY_W, alignItems: 'center', justifyContent: 'center', backgroundColor: isT ? '#E8F0FE' : isWeekend ? '#FAF5EF' : 'transparent', borderRightWidth: d.getDate() === 1 ? 1 : 0, borderRightColor: '#EDE2D6' }}>
+                  <View key={i} style={{ width: DAY_W, alignItems: 'center', justifyContent: 'center', backgroundColor: isT ? '#F2E4E1' : isWeekend ? '#FAF5EF' : 'transparent', borderRightWidth: d.getDate() === 1 ? 1 : 0, borderRightColor: '#EDE2D6' }}>
                     <Text style={{ fontSize: 8, color: isT ? '#5C1F2E' : '#9A8C80' }}>{d.getDate()}</Text>
                   </View>
                 );

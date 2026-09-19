@@ -224,7 +224,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12 },
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 12 },
   title: { fontSize: 14, fontWeight: '800', color: '#5C1F2E' },
   empty: { fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
   meta: { fontSize: 12, color: '#6E5F54', marginTop: 2 },

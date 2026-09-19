@@ -589,7 +589,6 @@ export default function PointageScreen() {
     return (
       <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
-          <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
           <Text style={styles.headerSub}>{t.pointage.title}</Text>
         </View>
         <View style={styles.adminMsg}>
@@ -604,7 +603,6 @@ export default function PointageScreen() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
         <Text style={styles.headerSub}>{t.pointage.title}</Text>
       </View>
 
@@ -991,10 +989,10 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'flex-end',
     paddingHorizontal: 16, paddingTop: 8, paddingBottom: 4,
-    backgroundColor: '#F1E7DC', gap: 8,
+    gap: 8,
   },
   headerLogo: { width: 72, height: 36 },
-  headerSub: { fontSize: 12, color: '#6E5F54', marginBottom: 2 },
+  headerSub: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
   adminMsg: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32 },
   adminMsgText: { fontSize: 16, color: '#6E5F54', textAlign: 'center', lineHeight: 24 },
 
@@ -1002,10 +1000,9 @@ const styles = StyleSheet.create({
   identiteCard: {
     flexDirection: 'row', alignItems: 'center',
     margin: 16, marginBottom: 8,
-    backgroundColor: '#fff', borderRadius: 16, padding: 16,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 8, elevation: 3,
+    backgroundColor: '#fff', borderRadius: 20, padding: 16,
     gap: 14,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   identiteLeft: {},
   avatarCircle: {
@@ -1033,11 +1030,9 @@ const styles = StyleSheet.create({
 
   // Carte chantier
   chantierCard: {
-    backgroundColor: '#fff', borderRadius: 14, padding: 14,
+    backgroundColor: '#fff', borderRadius: 20, padding: 14,
     marginBottom: 12,
-    borderLeftWidth: 4,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.07, shadowRadius: 6, elevation: 2,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   chantierCardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12, gap: 10 },
   chantierDot: { width: 10, height: 10, borderRadius: 5, marginTop: 4 },
@@ -1075,9 +1070,8 @@ const styles = StyleSheet.create({
 
   // Historique
   histCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 10,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 4, elevation: 2,
+    backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 10,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   histDateRow: { flexDirection: 'row', alignItems: 'center', gap: 5, marginBottom: 10 },
   histDate: { fontSize: 13, fontWeight: '700', color: '#5C1F2E' },

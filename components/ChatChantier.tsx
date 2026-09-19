@@ -376,7 +376,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12 },
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 12 },
   cardFull: { flex: 1, marginBottom: 0 },
   contactRow: { flexGrow: 0, marginBottom: 8 },
   contactChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, backgroundColor: '#F0F0F0' },

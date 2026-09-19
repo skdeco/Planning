@@ -1298,11 +1298,12 @@ export default function ChantiersScreen() {
     return (
       <FadeInView delay={Math.min(index * 45, 360)}>
       <Pressable
-        style={[styles.card, { borderLeftColor: item.couleur }]}
+        style={styles.card}
         onPress={() => { hapticSelection(); if (!isApporteurUser) setActionChantier(item); }}
       >
         <View style={styles.cardHeader}>
           <View style={styles.cardTitleRow}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: item.couleur || DS.primary }} />
             <Text style={styles.cardName}>{item.nom}</Text>
             <View style={[styles.statutBadge, { backgroundColor: statut.bg }]}>
               <Text style={[styles.statutText, { color: statut.text }]}>
@@ -3952,7 +3953,7 @@ const savListeStyles = StyleSheet.create({
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 12,
     marginBottom: 10,
     borderWidth: 1,
@@ -3983,19 +3984,15 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 12,
   },
-  headerTitle: {
-    fontSize: 26,
-    fontWeight: '800',
-    color: '#2B1D14',
-  },
-  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F1E7DC', borderRadius: 10, borderWidth: 1, borderColor: '#EDE2D6' },
+  headerTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1 },
   searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#2B1D14' },
   searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   newBtn: {
     backgroundColor: '#5C1F2E',
     paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 22,
+    borderRadius: 999,
   },
   newBtnText: {
     color: '#fff',
@@ -4009,14 +4006,9 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 18,
+    borderRadius: 20,
     padding: 16,
-    borderLeftWidth: 4,
-    shadowColor: '#2B1D14',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.07,
-    shadowRadius: 14,
-    elevation: 2,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   cardHeader: {
     flexDirection: 'row',
@@ -4032,11 +4024,9 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   cardName: {
-    fontSize: 15,
-    fontWeight: '700',
+    fontSize: 16,
+    fontWeight: '600',
     color: DS.sombre,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
   },
   statutBadge: {
     paddingHorizontal: 8,
@@ -4305,7 +4295,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     backgroundColor: '#5C1F2E',
     paddingVertical: 15,
-    borderRadius: 12,
+    borderRadius: 999,
     alignItems: 'center',
   },
   saveBtnDisabled: {

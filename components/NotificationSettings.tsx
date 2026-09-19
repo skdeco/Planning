@@ -69,7 +69,7 @@ export function NotificationSettings() {
 const styles = StyleSheet.create({
   card: {
     backgroundColor: DS.surface,
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: DS.border,
     padding: 16,

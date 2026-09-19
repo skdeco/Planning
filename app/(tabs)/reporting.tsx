@@ -566,7 +566,6 @@ export default function ReportingScreen() {
       {/* En-tête */}
       <View style={styles.header}>
         <View style={styles.headerLogoWrap}>
-          <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
           <Text style={styles.headerSub}>{t.reporting.title}</Text>
         </View>
         {Platform.OS === 'web' && (
@@ -836,7 +835,7 @@ export default function ReportingScreen() {
                 {/* Mode journalier */}
                 {rapportEmploye.modeSalaire === 'journalier' && rapportEmploye.tarifJournalier != null && (
                   <>
-                    <View style={[styles.resumeMensuelRow, { backgroundColor: '#F0F4FF', borderRadius: 6, paddingHorizontal: 8, marginTop: 4 }]}>
+                    <View style={[styles.resumeMensuelRow, { backgroundColor: '#F2E4E1', borderRadius: 6, paddingHorizontal: 8, marginTop: 4 }]}>
                       <Text style={styles.resumeMensuelLabel}>{t.reporting.workingDays}</Text>
                       <Text style={styles.resumeMensuelValue}>{rapportEmploye.joursOuvrablesMois} j</Text>
                     </View>
@@ -1399,11 +1398,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
   },
-  headerSub: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#2B1D14',
-  },
+  headerSub: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
   exportBtns: {
     flexDirection: 'row',
     gap: 8,
@@ -1500,7 +1495,7 @@ const styles = StyleSheet.create({
   emptyCard: {
     margin: 16,
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 20,
     padding: 32,
     alignItems: 'center',
   },
@@ -1510,15 +1505,11 @@ const styles = StyleSheet.create({
   },
   empCard: {
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 20,
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 14,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.07,
-    shadowRadius: 6,
-    elevation: 2,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   empCardHeader: {
     flexDirection: 'row',

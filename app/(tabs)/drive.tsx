@@ -132,7 +132,7 @@ export default function DriveScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 24, fontWeight: '800', color: '#5C1F2E' },
+  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
   subtitle: { fontSize: 13, color: '#6E5F54', marginTop: 2, marginBottom: 12 },
   searchWrap: { marginBottom: 8 },
   search: { backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#EDE4D8', paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#5C1F2E' },

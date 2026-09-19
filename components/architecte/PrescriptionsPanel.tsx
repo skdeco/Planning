@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
   groupe: { marginBottom: space.lg },
   card: {
     flexDirection: 'row', alignItems: 'center', gap: space.md,
-    backgroundColor: DS.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: DS.border,
+    backgroundColor: DS.surface, borderRadius: 20, borderWidth: 1, borderColor: DS.border,
     padding: space.md, marginBottom: space.sm,
   },
   cardBody: { flex: 1, minWidth: 0 },

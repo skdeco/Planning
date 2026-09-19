@@ -424,8 +424,8 @@ export default function SocieteScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontSize: 20, fontWeight: '800', color: '#5C1F2E', marginBottom: 2 },
-  subtitle: { fontSize: 12, color: '#6E5F54', marginBottom: 12 },
+  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14', marginBottom: 2 },
+  subtitle: { fontSize: 14, color: '#6E5F54', marginBottom: 12 },
   alertesBox: {
     backgroundColor: '#F2E4E1', borderRadius: 12, padding: 12,
     borderLeftWidth: 4, borderLeftColor: '#F57C00',
@@ -455,7 +455,7 @@ const styles = StyleSheet.create({
   empty: { fontSize: 13, color: '#6E5F54', fontStyle: 'italic', textAlign: 'center', paddingVertical: 32 },
   docCard: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#fff', borderRadius: 12, padding: 12, marginBottom: 8,
+    backgroundColor: '#fff', borderRadius: 20, padding: 12, marginBottom: 8,
   },
   docNom: { fontSize: 14, fontWeight: '800', color: '#5C1F2E' },
   docMeta: { fontSize: 11, color: '#6E5F54', marginTop: 2 },
@@ -468,7 +468,7 @@ const styles = StyleSheet.create({
   },
   docActionText: { fontSize: 16 },
   addBtn: {
-    backgroundColor: '#5C1F2E', borderRadius: 12, paddingVertical: 14,
+    backgroundColor: '#5C1F2E', borderRadius: 999, paddingVertical: 14,
     alignItems: 'center', marginTop: 12,
   },
   addBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },

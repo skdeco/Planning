@@ -1489,7 +1489,7 @@ const styles = StyleSheet.create({
   },
   reserveCard: {
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 20,
     padding: 12,
     marginBottom: 8,
     borderWidth: 1,

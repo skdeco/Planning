@@ -2890,7 +2890,7 @@ const styles = StyleSheet.create({
   validerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: DS.surface, borderRadius: 10, paddingHorizontal: 12, paddingVertical: 11, marginBottom: 6 },
   validerRowText: { flex: 1, fontSize: 14, fontWeight: '600', color: DS.sombre },
   validerChevron: { fontSize: 20, fontWeight: '700', color: DS.bordeaux, marginLeft: 8 },
-  fluxCard: { backgroundColor: DS.surface, borderRadius: 12, borderWidth: 1, borderColor: DS.border, padding: 14, marginBottom: 12 },
+  fluxCard: { backgroundColor: DS.surface, borderRadius: 20, borderWidth: 1, borderColor: DS.border, padding: 14, marginBottom: 12 },
   fluxCardTitle: { fontSize: 12, fontWeight: '800', color: DS.bordeaux, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 10 },
   fluxRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 6 },
   fluxLabel: { fontSize: 14, color: DS.textSecondary },
@@ -2959,16 +2959,12 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
     borderWidth: 1,
     borderColor: '#F0F0F0',
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   contactPrincipalCard: {
     backgroundColor: '#F2E4E1',

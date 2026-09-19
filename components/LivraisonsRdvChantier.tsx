@@ -822,7 +822,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
 }
 
 const styles = StyleSheet.create({
-  card: { backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 12 },
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 12 },
   sectionTitle: { fontSize: 14, fontWeight: '800', color: '#5C1F2E', marginBottom: 10 },
   empty: { fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
   livCard: { flexDirection: 'row', backgroundColor: '#FAF5EF', borderRadius: 10, padding: 10, marginBottom: 8, gap: 8, borderLeftWidth: 3, borderLeftColor: '#5C1F2E' },
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
   miniBtnUndo: { backgroundColor: '#EDE2D6', borderColor: '#6E5F54' },
   miniBtnDel: { backgroundColor: '#FBEFEC', borderColor: '#E74C3C' },
   miniBtnText: { fontSize: 13 },
-  addBtn: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' },
+  addBtn: { backgroundColor: '#F1E7DC', borderRadius: 999, paddingVertical: 10, alignItems: 'center', marginTop: 6, borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' },
   addBtnText: { color: '#5C1F2E', fontSize: 12, fontWeight: '700' },
   divider: { height: 1, backgroundColor: '#EDE2D6', marginVertical: 14 },
   rdvCard: { flexDirection: 'row', backgroundColor: '#FAF5EF', borderRadius: 10, padding: 10, marginBottom: 8, gap: 8, borderLeftWidth: 3, borderLeftColor: '#5C1F2E' },

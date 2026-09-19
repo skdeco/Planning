@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
   hSub: { fontSize: font.compact, fontWeight: font.semibold, color: DS.textSecondary, textTransform: 'uppercase', marginTop: 2 },
   closeBtn: { width: 36, height: 36, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.cremeNude },
   scroll: { paddingHorizontal: space.lg, paddingBottom: 120 },
-  card: { backgroundColor: DS.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: DS.border, padding: space.md, marginBottom: space.sm },
+  card: { backgroundColor: DS.surface, borderRadius: 20, borderWidth: 1, borderColor: DS.border, padding: space.md, marginBottom: space.sm },
   cardTop: { flexDirection: 'row', alignItems: 'flex-start', gap: space.sm },
   numero: { fontSize: font.tiny, fontWeight: font.bold, color: DS.bordeaux, textTransform: 'uppercase', letterSpacing: 0.6 },
   objet: { fontSize: font.body, fontWeight: font.bold, color: DS.sombre, marginTop: 2 },

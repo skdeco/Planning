@@ -217,7 +217,7 @@ const styles = StyleSheet.create({
   chipTxtOn: { color: '#fff' },
   hint: { fontSize: 12, color: '#6E5F54', fontStyle: 'italic' },
   entrepriseNote: { fontSize: 12, color: '#5C1F2E', backgroundColor: '#F5ECDD', borderRadius: 10, padding: 10, marginTop: 6 },
-  saveBtn: { backgroundColor: DS.bordeaux, borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginTop: 10 },
+  saveBtn: { backgroundColor: DS.bordeaux, borderRadius: 999, paddingVertical: 14, alignItems: 'center', marginTop: 10 },
   saveBtnOff: { opacity: 0.4 },
   saveTxt: { color: '#fff', fontSize: 15, fontWeight: '800' },
   credIntro: { fontSize: 14, color: '#5C1F2E' },
