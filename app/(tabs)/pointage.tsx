@@ -587,7 +587,7 @@ export default function PointageScreen() {
   // ── Vue admin ────────────────────────────────────────────────────────────────
   if (isAdmin) {
     return (
-      <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
           <Text style={styles.headerSub}>{t.pointage.title}</Text>
@@ -602,7 +602,7 @@ export default function PointageScreen() {
   const hist = historique();
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <Image source={LOGO} style={styles.headerLogo} resizeMode="contain" />
         <Text style={styles.headerSub}>{t.pointage.title}</Text>

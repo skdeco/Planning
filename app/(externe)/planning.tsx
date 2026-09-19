@@ -146,7 +146,7 @@ export default function PlanningExterne() {
 
   if (mesChantiers.length === 0) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: '#F1E7DC' }} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 20 }}>
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>Aucun chantier dans votre planning.</Text>
         </View>
@@ -155,7 +155,7 @@ export default function PlanningExterne() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F1E7DC' }}>
+    <View style={{ flex: 1, backgroundColor: '#FAF5EF' }}>
       {/* Sélecteur de chantier */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierTabs} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 12 }}>
         {mesChantiers.map(c => (

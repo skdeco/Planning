@@ -698,7 +698,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
                 <Text style={{ fontSize: 14, color: '#2B1D14', fontWeight: '500' }}>Monte-charge requis</Text>
               </Pressable>
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                <Pressable onPress={() => setShowLivForm(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Pressable onPress={() => setShowLivForm(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                   <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
                 </Pressable>
                 <Pressable onPress={saveLiv} disabled={!livForm.titre.trim()} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !livForm.titre.trim() ? 0.5 : 1 }}>
@@ -806,7 +806,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
               <TextInput style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]} value={rdvForm.note} onChangeText={v => setRdvForm(f => ({ ...f, note: v }))} multiline placeholder="Points à aborder..." />
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                <Pressable onPress={() => setShowRdvForm(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Pressable onPress={() => setShowRdvForm(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                   <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
                 </Pressable>
                 <Pressable onPress={saveRdv} disabled={!rdvForm.titre.trim()} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !rdvForm.titre.trim() ? 0.5 : 1 }}>

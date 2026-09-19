@@ -535,7 +535,7 @@ export default function MessagerieScreen() {
     });
 
     return (
-      <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>{t.messagerie.title}</Text>
           {totalNonLus > 0 && (
@@ -733,7 +733,7 @@ export default function MessagerieScreen() {
 
                 {/* Actions */}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowGroupModal(false)}>
+                  <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowGroupModal(false)}>
                     <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>Annuler</Text>
                   </Pressable>
                   <Pressable
@@ -797,7 +797,7 @@ export default function MessagerieScreen() {
     : t.messagerie.administration;
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
         {isAdmin && (
@@ -1226,7 +1226,7 @@ const styles = StyleSheet.create({
   unreadBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
   emptyText: { textAlign: 'center', color: '#6E5F54', fontSize: 14, marginTop: 48 },
   // Messages
-  msgScroll: { flex: 1, backgroundColor: '#F1E7DC' },
+  msgScroll: { flex: 1, backgroundColor: '#FAF5EF' },
   msgScrollContent: { padding: 12, paddingBottom: 8 },
   dateSeparator: { alignItems: 'center', marginVertical: 12 },
   dateSeparatorText: { fontSize: 12, color: '#6E5F54', backgroundColor: '#EDE2D6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
@@ -1252,7 +1252,7 @@ const styles = StyleSheet.create({
   inputZone: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#EDE2D6', gap: 8 },
   photoBtn: { padding: 10, backgroundColor: '#F1E7DC', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   photoBtnText: { fontSize: 20 },
-  msgInput: { flex: 1, backgroundColor: '#F1E7DC', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#2B1D14', maxHeight: 120, borderWidth: 1, borderColor: '#EDE2D6' },
+  msgInput: { flex: 1, backgroundColor: '#FAF5EF', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#2B1D14', maxHeight: 120, borderWidth: 1, borderColor: '#EDE2D6' },
   sendBtn: { padding: 10, backgroundColor: '#5C1F2E', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
   sendBtnDisabled: { backgroundColor: '#9A8C80' },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },

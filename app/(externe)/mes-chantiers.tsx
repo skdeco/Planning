@@ -107,7 +107,7 @@ export default function MesChantiersExterne() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#F1E7DC' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
       {recapApporteur && recapApporteur.totalCom > 0 && (
         <View style={styles.recapBox}>
           <View style={styles.recapItem}>

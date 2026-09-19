@@ -426,7 +426,7 @@ export default function RHScreen() {
 
   // ─── Rendu ────────────────────────────────────────────────────────────────
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={[styles.header, { flexDirection: 'row', alignItems: 'center', gap: 8 }]}>
         <Users size={18} color="#5C1F2E" strokeWidth={2} />

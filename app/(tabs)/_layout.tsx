@@ -6,20 +6,19 @@ import { Platform } from "react-native";
 
 import { HapticTab } from "@/components/haptic-tab";
 import { IconSymbol } from "@/components/ui/icon-symbol";
-import { useColors } from "@/hooks/use-colors";
 import { useApp } from "@/app/context/AppContext";
-import { LanguageFlag } from "@/components/LanguageFlag";
 import { useLanguage } from "@/app/context/LanguageContext";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { SyncIndicator } from "@/components/SyncIndicator";
 import { NotificationListener } from "@/components/NotificationListener";
 import { useNotifications } from "@/hooks/useNotifications";
+import { DS, shadows } from "@/constants/design";
 
 export default function TabLayout() {
-  const colors = useColors();
   const insets = useSafeAreaInsets();
-  const bottomPadding = Platform.OS === "web" ? 16 : Math.max(insets.bottom, 8);
-  const tabBarHeight = Platform.OS === "web" ? 80 : 56 + bottomPadding;
+  // Barre flottante : pilule détachée des bords, posée sur le fond sable.
+  const isWeb = Platform.OS === "web";
+  const barBottomMargin = isWeb ? 12 : Math.max(insets.bottom, 10);
   const { currentUser, data, updateSousTraitant } = useApp();
   const { t } = useLanguage();
   const { pushToken } = useNotifications();
@@ -51,8 +50,6 @@ export default function TabLayout() {
   // Rôle RH : admin ou employé avec isRH = true
   const currentEmployeRH = data.employes.find(e => e.id === currentUser?.employeId);
   const isRH = isAdmin || currentEmployeRH?.isRH === true;
-  // Accès RH : admin, employé RH, ou employé normal (pour ses propres demandes) — pas ST ni apporteur
-  const hasRHAccess = !isST && !isApporteur;
 
   // Badge RH : demandes en attente (visible admin/RH uniquement)
   const nbDemandesEnAttente = isRH ? (
@@ -86,37 +83,42 @@ export default function TabLayout() {
     0
   );
 
+  // Pastille de l'onglet Plus : demandes RH à traiter (+ articles à acheter pour un employé acheteur)
+  const badgePlus = nbDemandesEnAttente + (isEmploye && doitPointer && isAcheteur ? nbNonAchetes : 0);
+
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: DS.background }}>
     <SyncIndicator />
     <NotificationListener />
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#5C1F2E',
-        tabBarInactiveTintColor: '#9A8C80',
+        tabBarActiveTintColor: DS.primary,
+        tabBarInactiveTintColor: DS.textSecondary,
+        tabBarActiveBackgroundColor: DS.soft,
         headerShown: false,
         tabBarButton: HapticTab,
+        sceneStyle: { backgroundColor: DS.background },
         tabBarStyle: {
-          paddingTop: 8,
-          paddingBottom: bottomPadding,
-          height: tabBarHeight,
-          backgroundColor: '#FFFFFF',
-          borderTopColor: '#F3F4F6',
+          height: 64,
+          marginHorizontal: 14,
+          marginBottom: barBottomMargin,
+          marginTop: 6,
+          paddingTop: 5,
+          paddingBottom: 5,
+          paddingHorizontal: 5,
+          borderRadius: 32,
           borderTopWidth: 1,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.06,
-          shadowRadius: 8,
-          elevation: 8,
-          // Sur web : scroll horizontal si trop d'onglets pour la largeur d'écran
-          ...(Platform.OS === 'web' ? { overflowX: 'auto' } as any : {}),
+          borderWidth: 1,
+          borderColor: DS.border,
+          borderTopColor: DS.border,
+          backgroundColor: DS.surface,
+          ...shadows.lg,
+          // Sur web : scroll horizontal si la largeur est insuffisante
+          ...(isWeb ? ({ overflowX: 'auto' } as object) : {}),
         },
-        tabBarLabelStyle: {
-          fontSize: Platform.OS === 'web' ? 10 : 11,
-          fontWeight: '600',
-          letterSpacing: -0.2,
-        },
-        tabBarItemStyle: Platform.OS === 'web' ? { minWidth: 80 } : undefined,
+        tabBarItemStyle: { borderRadius: 27, overflow: 'hidden', ...(isWeb ? { minWidth: 72 } : {}) },
+        tabBarIconStyle: { marginTop: 2 },
+        tabBarLabelStyle: { fontSize: 10, fontWeight: '600', letterSpacing: -0.1, marginBottom: 2 },
       }}
     >
       {/* ═══ ONGLET 1 : Accueil / Ma journée — en premier ═══ */}
@@ -126,7 +128,7 @@ export default function TabLayout() {
           title: isAdmin ? t.nav.home : t.nav.myDay,
           href: (isST || isApporteur) ? null : undefined,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="house.fill" color={color} />
+            <IconSymbol size={23} name="house.fill" color={color} />
           ),
         }}
       />
@@ -137,7 +139,7 @@ export default function TabLayout() {
         options={{
           title: t.nav.planning,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="calendar" color={color} />
+            <IconSymbol size={23} name="calendar" color={color} />
           ),
         }}
       />
@@ -149,7 +151,7 @@ export default function TabLayout() {
           title: isApporteur ? t.nav.myChantiers : t.nav.chantiers,
           href: (isAdmin || isApporteur) ? undefined : null,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="hammer.fill" color={color} />
+            <IconSymbol size={23} name="hammer.fill" color={color} />
           ),
         }}
       />
@@ -159,7 +161,7 @@ export default function TabLayout() {
           title: t.nav.pointage,
           href: (isEmploye && doitPointer) ? undefined : null,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="clock.fill" color={color} />
+            <IconSymbol size={23} name="clock.fill" color={color} />
           ),
         }}
       />
@@ -169,9 +171,9 @@ export default function TabLayout() {
         name="equipe"
         options={{
           title: t.nav.equipe,
-          href: isAdmin ? undefined : null,
+          href: null, // accessible via l'écran Plus
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="person.3.fill" color={color} />
+            <IconSymbol size={23} name="person.3.fill" color={color} />
           ),
         }}
       />
@@ -179,51 +181,12 @@ export default function TabLayout() {
         name="materiel"
         options={{
           title: t.nav.materiel,
-          href: (isST || isApporteur) ? null : undefined,
+          // Dans la barre seulement pour un employé dispensé de pointage ; sinon via l'écran Plus
+          href: (isEmploye && !doitPointer) ? undefined : null,
           tabBarBadge: isAcheteur && nbNonAchetes > 0 ? nbNonAchetes : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
+          tabBarBadgeStyle: { backgroundColor: DS.primary, fontSize: 10 },
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="cart.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* ═══ ONGLET 5 : Gestion (admin) — hub Reporting / RH / Société ═══ */}
-      <Tabs.Screen
-        name="gestion"
-        options={{
-          title: t.nav.gestion,
-          href: isAdmin ? undefined : null,
-          tabBarBadge: isAdmin && nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="square.grid.2x2.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* Reporting — accessible via le hub Gestion (caché du bar) */}
-      <Tabs.Screen
-        name="reporting"
-        options={{
-          title: t.nav.reporting,
-          href: null,
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="chart.bar.fill" color={color} />
-          ),
-        }}
-      />
-
-      {/* ═══ RH : direct pour les employés non-admin ; via Gestion pour l'admin ═══ */}
-      <Tabs.Screen
-        name="rh"
-        options={{
-          title: t.nav.rh,
-          href: (hasRHAccess && !isAdmin) ? undefined : null,
-          tabBarBadge: nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
-          tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="person.badge.clock.fill" color={color} />
+            <IconSymbol size={23} name="cart.fill" color={color} />
           ),
         }}
       />
@@ -235,9 +198,49 @@ export default function TabLayout() {
           title: t.nav.messages,
           href: isApporteur ? null : undefined,
           tabBarBadge: nbMessagesNonLus > 0 ? nbMessagesNonLus : undefined,
-          tabBarBadgeStyle: { backgroundColor: '#E74C3C', fontSize: 10 },
+          tabBarBadgeStyle: { backgroundColor: DS.primary, fontSize: 10 },
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="message.fill" color={color} />
+            <IconSymbol size={23} name="message.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* ═══ ONGLET 5 : Plus — Équipe, Matériel, Reporting, RH, Documents, Société ═══ */}
+      <Tabs.Screen
+        name="gestion"
+        options={{
+          title: t.gestion.plusTitle,
+          href: (isAdmin || isEmploye) ? undefined : null,
+          tabBarBadge: badgePlus > 0 ? badgePlus : undefined,
+          tabBarBadgeStyle: { backgroundColor: DS.primary, fontSize: 10 },
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={23} name="square.grid.2x2.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* Reporting — accessible via le hub Gestion (caché du bar) */}
+      <Tabs.Screen
+        name="reporting"
+        options={{
+          title: t.nav.reporting,
+          href: null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={23} name="chart.bar.fill" color={color} />
+          ),
+        }}
+      />
+
+      {/* ═══ RH : direct pour les employés non-admin ; via Gestion pour l'admin ═══ */}
+      <Tabs.Screen
+        name="rh"
+        options={{
+          title: t.nav.rh,
+          href: null, // accessible via l'écran Plus
+          tabBarBadge: nbDemandesEnAttente > 0 ? nbDemandesEnAttente : undefined,
+          tabBarBadgeStyle: { backgroundColor: DS.primary, fontSize: 10 },
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={23} name="person.badge.clock.fill" color={color} />
           ),
         }}
       />
@@ -258,7 +261,7 @@ export default function TabLayout() {
           title: t.nav.finances,
           href: isST ? undefined : null,
           tabBarIcon: ({ color }) => (
-            <IconSymbol size={26} name="eurosign.circle.fill" color={color} />
+            <IconSymbol size={23} name="eurosign.circle.fill" color={color} />
           ),
         }}
       />

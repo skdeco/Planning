@@ -226,7 +226,7 @@ export default function FinancierSTScreen() {
   const chantiersIds = Object.keys(devisByChantier);
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]">
+    <ScreenContainer containerClassName="bg-[#FAF5EF]">
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.nav.finances}</Text>
       </View>

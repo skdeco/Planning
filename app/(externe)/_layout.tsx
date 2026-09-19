@@ -12,7 +12,7 @@ export default function ExterneLayout() {
   if (currentUser.role !== 'apporteur') return <Redirect href={'/(tabs)' as any} />;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F1E7DC' }}>
+    <View style={{ flex: 1, backgroundColor: '#FAF5EF' }}>
       <View style={{
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingTop: insets.top + 8, paddingBottom: 10, paddingHorizontal: 16,

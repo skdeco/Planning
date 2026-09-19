@@ -767,7 +767,7 @@ export default function PlanningScreen() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       {/* En-tête */}
       <View style={styles.header}>
         {/* Logo + titre sur une seule ligne */}
@@ -1402,7 +1402,7 @@ export default function PlanningScreen() {
               {pwdError !== '' && <Text style={{ color: '#E74C3C', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{pwdError}</Text>}
               {pwdSuccess && <Text style={{ color: '#27AE60', fontSize: 13, marginBottom: 10, textAlign: 'center' }}>{t.planningAdmin.settingsSaved}</Text>}
               <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
-                <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
+                <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowPwdModal(false)}>
                   <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
                 </Pressable>
                 <Pressable style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={handleSaveAdminSettings}>
@@ -1470,7 +1470,7 @@ export default function PlanningScreen() {
                   </View>
 
                   <View style={{ flexDirection: 'row', gap: 10 }}>
-                    <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setMoveModal(null)}>
+                    <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setMoveModal(null)}>
                       <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
                     </Pressable>
                     <Pressable
@@ -1556,7 +1556,7 @@ export default function PlanningScreen() {
                     );
                   })}
                   <View style={{ flexDirection: 'row', gap: 10, marginTop: 12 }}>
-                    <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
+                    <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }} onPress={() => setOrdreModal(null)}>
                       <Text style={{ color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
                     </Pressable>
                     <Pressable

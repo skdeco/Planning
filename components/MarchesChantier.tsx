@@ -770,7 +770,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
                       {/* Actions marché */}
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-                        <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditMarche(m)}>
+                        <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditMarche(m)}>
                           <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>Modifier</Text>
                         </Pressable>
                         <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => handleDeleteMarche(m)}>
@@ -929,7 +929,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
                       {/* Actions */}
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-                        <Pressable style={{ flex: 1, backgroundColor: '#F1E7DC', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditSupp(s)}>
+                        <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditSupp(s)}>
                           <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>Modifier</Text>
                         </Pressable>
                         <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => handleDeleteSupp(s)}>
@@ -1299,7 +1299,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   <Pressable
                     key={st}
                     style={[
-                      { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#F1E7DC' },
+                      { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' },
                       suppForm.statut === st && { backgroundColor: st === 'accepte' ? '#D4EDDA' : st === 'refuse' ? '#FEF2F2' : '#FFF3CD', borderColor: st === 'accepte' ? '#27AE60' : st === 'refuse' ? '#E74C3C' : '#F59E0B' },
                     ]}
                     onPress={() => setSuppForm(f => ({ ...f, statut: st }))}

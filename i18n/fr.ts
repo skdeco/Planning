@@ -158,6 +158,12 @@ export default {
     actif: "Actif",
   },
   gestion: {
+    plusTitle: "Plus",
+    terrainSection: "Équipe & terrain",
+    materielAchats: "Matériel & achats",
+    mesDemandesRH: "Mes demandes RH",
+    compteSection: "Compte",
+    fournisseurs: "Fournisseurs",
     subtitle: "Reporting, ressources humaines et documents société",
     reportingTitle: "Reporting",
     reportingDesc: "Pointages, heures, paie et statistiques",

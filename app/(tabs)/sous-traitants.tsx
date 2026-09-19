@@ -22,7 +22,7 @@ export default function SousTraitantsRedirect() {
   }, [params.stId, params.view, router]);
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]">
+    <ScreenContainer containerClassName="bg-[#FAF5EF]">
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color="#5C1F2E" />
       </View>

@@ -195,7 +195,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
               </Pressable>
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 20 }}>
-                <Pressable onPress={() => setShow(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Pressable onPress={() => setShow(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                   <Text style={{ fontWeight: '700' }}>Annuler</Text>
                 </Pressable>
                 <Pressable onPress={save} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>

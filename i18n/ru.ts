@@ -154,6 +154,12 @@ export default {
     actif: "Активен",
   },
   gestion: {
+    plusTitle: "Ещё",
+    terrainSection: "Команда и объекты",
+    materielAchats: "Материалы и закупки",
+    mesDemandesRH: "Мои заявки HR",
+    compteSection: "Аккаунт",
+    fournisseurs: "Поставщики",
     subtitle: "Отчёты, кадры и документы компании",
     reportingTitle: "Отчёты",
     reportingDesc: "Отметки, часы, зарплата и статистика",

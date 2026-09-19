@@ -1421,7 +1421,7 @@ export default function ChantiersScreen() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]">
+    <ScreenContainer containerClassName="bg-[#FAF5EF]">
       {/* En-tête */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.chantiers.title}</Text>
@@ -1435,11 +1435,11 @@ export default function ChantiersScreen() {
       {/* Onglets Chantiers / SAV */}
       {isAdmin && (data.ticketsSAV || []).length > 0 && (
         <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, gap: 8 }}>
-          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#F1E7DC' }, vueChantiersTab === 'chantiers' && { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' }]}
+          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' }, vueChantiersTab === 'chantiers' && { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' }]}
             onPress={() => setVueChantiersTab('chantiers')}>
             <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'chantiers' ? '#fff' : '#6E5F54' }}>Chantiers</Text>
           </Pressable>
-          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#F1E7DC' }, vueChantiersTab === 'sav' && { borderColor: '#E74C3C', backgroundColor: '#E74C3C' }]}
+          <Pressable style={[{ flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' }, vueChantiersTab === 'sav' && { borderColor: '#E74C3C', backgroundColor: '#E74C3C' }]}
             onPress={() => setVueChantiersTab('sav')}>
             <Text style={{ fontSize: 13, fontWeight: '600', color: vueChantiersTab === 'sav' ? '#fff' : '#6E5F54' }}>SAV ({(data.ticketsSAV || []).filter(t => t.statut !== 'clos').length})
             </Text>
@@ -2077,7 +2077,7 @@ export default function ChantiersScreen() {
                   />
 
                   <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                    <Pressable onPress={() => setShowQuickClient(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                    <Pressable onPress={() => setShowQuickClient(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                       <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
                     </Pressable>
                     <Pressable

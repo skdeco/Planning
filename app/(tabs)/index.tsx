@@ -273,7 +273,7 @@ export default function DashboardScreen() {
     const nbMsgsNonLus = 0;
     const mesSavTickets = (data.ticketsSAV || []).filter(t => t.assigneA === myId && t.statut !== 'clos');
     return (
-      <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />}>
           {/* Header compact */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -770,7 +770,7 @@ export default function DashboardScreen() {
               </ScrollView>
               <View style={{ flexDirection: 'row', gap: 6 }}>
                 <TextInput
-                  style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' }}
+                  style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' }}
                   value={penseBeteText}
                   onChangeText={setPenseBeteText}
                   placeholder={t.home.reminderPlaceholder}
@@ -806,7 +806,7 @@ export default function DashboardScreen() {
   if (!isAdmin) return null;
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       {/* Bannière achats FIXE en haut, hors du scroll */}
       {stats.materielNonAchete > 0 && (
         <Pressable

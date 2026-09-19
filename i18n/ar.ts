@@ -154,6 +154,12 @@ export default {
     actif: "نشط",
   },
   gestion: {
+    plusTitle: "المزيد",
+    terrainSection: "الفريق والميدان",
+    materielAchats: "المواد والمشتريات",
+    mesDemandesRH: "طلباتي للموارد البشرية",
+    compteSection: "الحساب",
+    fournisseurs: "الموردون",
     subtitle: "التقارير والموارد البشرية ووثائق الشركة",
     reportingTitle: "التقارير",
     reportingDesc: "التسجيلات والساعات والرواتب والإحصاءات",

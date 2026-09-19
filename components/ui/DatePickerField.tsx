@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
   cellDisabled: { opacity: 0.3 },
   cellText: { fontSize: 13, color: '#5C1F2E' },
   clearBtn: {
-    flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 10, alignItems: 'center',
+    flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 10, alignItems: 'center',
   },
   clearBtnText: { color: '#6E5F54', fontWeight: '700' },
   closeBtn: {

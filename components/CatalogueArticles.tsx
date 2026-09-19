@@ -109,7 +109,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
           {/* Recherche */}
           <View style={{ flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' }}>
             <TextInput
-              style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, borderWidth: 1, borderColor: '#EDE2D6' }}
+              style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, borderWidth: 1, borderColor: '#EDE2D6' }}
               placeholder="Rechercher un article, référence, fournisseur..."
               placeholderTextColor="#999"
               value={search}

@@ -154,6 +154,12 @@ export default {
     actif: "Active",
   },
   gestion: {
+    plusTitle: "More",
+    terrainSection: "Team & field",
+    materielAchats: "Materials & purchases",
+    mesDemandesRH: "My HR requests",
+    compteSection: "Account",
+    fournisseurs: "Suppliers",
     subtitle: "Reporting, human resources and company documents",
     reportingTitle: "Reporting",
     reportingDesc: "Time tracking, hours, payroll and statistics",

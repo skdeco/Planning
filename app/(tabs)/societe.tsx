@@ -200,7 +200,7 @@ export default function SocieteScreen() {
 
   return (
     <ScreenContainer>
-      <ScrollView style={{ flex: 1, backgroundColor: '#F1E7DC' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Text style={styles.title}>{t.societe.title}</Text>
         <Text style={styles.subtitle}>{t.societe.subtitle}</Text>
 
@@ -400,7 +400,7 @@ export default function SocieteScreen() {
               />
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                <Pressable onPress={() => setShowForm(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                <Pressable onPress={() => setShowForm(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                   <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>{t.common.cancel}</Text>
                 </Pressable>
                 <Pressable

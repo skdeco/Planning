@@ -550,7 +550,7 @@ export default function ReportingScreen() {
 
   if (!isAdmin) {
     return (
-      <ScreenContainer containerClassName="bg-[#F5EDE3]">
+      <ScreenContainer containerClassName="bg-[#FAF5EF]">
         <View style={styles.center}>
           <Text style={styles.noAccess}>{t.common.adminOnly}</Text>
         </View>
@@ -559,7 +559,7 @@ export default function ReportingScreen() {
   }
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       {/* En-tête */}
       <View style={styles.header}>
         <View style={styles.headerLogoWrap}>

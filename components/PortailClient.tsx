@@ -2471,7 +2471,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               )}
             </ScrollView>
             <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#EDE2D6' }}>
-              <Pressable onPress={() => setShowPhotosPicker(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+              <Pressable onPress={() => setShowPhotosPicker(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
               <Pressable onPress={savePhotosSelection} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
@@ -2634,7 +2634,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-              <Pressable onPress={() => setShowCorpsForm(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+              <Pressable onPress={() => setShowCorpsForm(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
               <Pressable
@@ -2671,7 +2671,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
               autoFocus
             />
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 14 }}>
-              <Pressable onPress={() => setCommentaireLotId(null)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+              <Pressable onPress={() => setCommentaireLotId(null)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
               <Pressable onPress={saveCommentaireClient} disabled={!commentaireTexte.trim()} style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: !commentaireTexte.trim() ? 0.5 : 1 }}>
@@ -2800,7 +2800,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </ScrollView>
 
             <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: '#EDE2D6' }}>
-              <Pressable onPress={() => setShowImportDevis(false)} style={{ flex: 1, backgroundColor: '#F1E7DC', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+              <Pressable onPress={() => setShowImportDevis(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
                 <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>Annuler</Text>
               </Pressable>
               <Pressable

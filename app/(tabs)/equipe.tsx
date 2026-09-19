@@ -1143,7 +1143,7 @@ export default function EquipeScreen() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#F5EDE3]">
+    <ScreenContainer containerClassName="bg-[#FAF5EF]">
       {/* En-tête */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.equipe.title}</Text>
@@ -1472,7 +1472,7 @@ export default function EquipeScreen() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                       <Pressable
-                        style={{ flex: 1, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+                        style={{ flex: 1, backgroundColor: '#FAF5EF', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
                         onPress={genererMdpPourForm}
                       >
                         <Text style={{ color: '#5C1F2E', fontWeight: '700', fontSize: 12 }}>{t.equipe.generatePassword}</Text>
@@ -2409,7 +2409,7 @@ export default function EquipeScreen() {
               ))}
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Pressable style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: '#F1E7DC', alignItems: 'center' }} onPress={() => setShowNewMetier(false)}>
+              <Pressable style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: '#FAF5EF', alignItems: 'center' }} onPress={() => setShowNewMetier(false)}>
                 <Text style={{ fontSize: 14, fontWeight: '600', color: '#6E5F54' }}>{t.common.cancel}</Text>
               </Pressable>
               <Pressable
@@ -2528,7 +2528,7 @@ const styles = StyleSheet.create({
   addBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 22 },
   addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   tabRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, gap: 8 },
-  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#F1E7DC' },
+  tabBtn: { flex: 1, paddingVertical: 10, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' },
   tabBtnActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
   tabBtnText: { fontSize: 13, fontWeight: '600', color: '#6E5F54' },
   tabBtnTextActive: { color: '#fff' },
@@ -2583,7 +2583,7 @@ const styles = StyleSheet.create({
   colorSwatch: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: 'transparent' },
   colorSwatchActive: { borderColor: '#2B1D14', transform: [{ scale: 1.2 }] },
   roleRow: { flexDirection: 'row', gap: 10 },
-  roleChip: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#F1E7DC' },
+  roleChip: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' },
   roleChipActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
   roleChipText: { fontSize: 14, fontWeight: '600', color: '#6E5F54' },
   roleChipTextActive: { color: '#fff' },

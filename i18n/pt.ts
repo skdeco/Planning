@@ -154,6 +154,12 @@ export default {
     actif: "Ativa",
   },
   gestion: {
+    plusTitle: "Mais",
+    terrainSection: "Equipa e obra",
+    materielAchats: "Material e compras",
+    mesDemandesRH: "Os meus pedidos RH",
+    compteSection: "Conta",
+    fournisseurs: "Fornecedores",
     subtitle: "Relatórios, recursos humanos e documentos da empresa",
     reportingTitle: "Relatórios",
     reportingDesc: "Registos, horas, salários e estatísticas",
