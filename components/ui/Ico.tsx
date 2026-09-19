@@ -9,7 +9,7 @@ import {
   CircleCheck, TriangleAlert, Building2, Paperclip, Download, ChartBar, Eye, EyeOff, Folder, Zap, AlarmClock,
   ClipboardList, Handshake, ShoppingCart, User, Users, MessageCircle, Wrench, MapPin, Package, Video, Wallet,
   Target, Receipt, Siren, PenLine, Bell, Phone, Mail, Mic, Inbox, Euro, Store, Sun, Hospital, Square, SquareCheck,
-  Send, Plus, ArrowDown, Circle, type LucideIcon,
+  Send, Plus, ArrowDown, Circle, House, Clock, Link2, Scale, Star, Award, Landmark, Lightbulb, Rocket, ShieldCheck, type LucideIcon,
 } from 'lucide-react-native';
 import { DS } from '@/constants/design';
 
@@ -21,6 +21,8 @@ const MAP: Record<string, LucideIcon> = {
   '📍': MapPin, '📦': Package, '🎥': Video, '💰': Wallet, '💶': Euro, '🎯': Target, '🧾': Receipt, '🚨': Siren, '✍': PenLine,
   '🔔': Bell, '📞': Phone, '✉': Mail, '🎤': Mic, '📭': Inbox, '🏪': Store, '🏖': Sun, '🏥': Hospital, '⬛': Square, '☑': SquareCheck,
   '💸': Wallet, '📑': FileText, '🟡': Circle, '🟢': Circle, '⚪': Circle, '🏛': Building2, '💼': Wallet, '🏢': Building2, '💻': Video,
+  '🏠': House, '🕐': Clock, '🔗': Link2, '⬜': Square,
+  '⚖': Scale, '⭐': Star, '🏅': Award, '🏦': Landmark, '💡': Lightbulb, '🚀': Rocket, '🛡': ShieldCheck,
   '➤': Send, '➕': Plus, '⬇': ArrowDown, '🔴': Circle,
 };
 

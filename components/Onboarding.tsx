@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { Ico } from '@/components/ui/Ico';
 import {
   View,
   Text,
@@ -93,7 +94,7 @@ export function Onboarding({ visible, role, onComplete }: OnboardingProps) {
         >
           {slides.map((slide, i) => (
             <View key={i} style={[styles.slide, { width: SCREEN_WIDTH }]}>
-              <Text style={styles.icon}>{slide.icon}</Text>
+              <Ico e={slide.icon} size={56} />
               <Text style={styles.title}>{slide.title}</Text>
               <Text style={styles.description}>{slide.description}</Text>
             </View>

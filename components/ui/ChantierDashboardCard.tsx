@@ -163,9 +163,9 @@ export function ChantierDashboardCard({
   const hasActions    = hasPhotosBtn || hasNavBtn;
 
   const photosLabel = photosCount !== undefined
-    ? `${BUTTON_META.photos.emoji} ${BUTTON_META.photos.label} (${photosCount})`
-    : `${BUTTON_META.photos.emoji} ${BUTTON_META.photos.label}`;
-  const navLabel = `${BUTTON_META.navigate.emoji} ${BUTTON_META.navigate.label}`;
+    ? `${BUTTON_META.photos.label} (${photosCount})`
+    : `${BUTTON_META.photos.label}`;
+  const navLabel = BUTTON_META.navigate.label;
 
   return (
     <Pressable
@@ -193,7 +193,7 @@ export function ChantierDashboardCard({
                 style={styles.ficheLine}
                 accessibilityLabel={`${meta.label}: ${value}`}
               >
-                {`${meta.emoji} ${meta.label} : ${value}`}
+                {`${meta.label} : ${value}`}
               </Text>
             );
           })}

@@ -640,14 +640,10 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
                                     accessibilityRole="checkbox"
                                     accessibilityState={{ checked: isLevee }}
                                   >
-                                    <Text style={styles.checkboxIcon}>
-                                      {isLevee ? '✅' : '⬜'}
-                                    </Text>
+                                    <Ico e={isLevee ? '✅' : '⬜'} size={20} />
                                   </Pressable>
                                 ) : (
-                                  <Text style={styles.checkboxIcon}>
-                                    {isLevee ? '✅' : '⬜'}
-                                  </Text>
+                                  <Ico e={isLevee ? '✅' : '⬜'} size={20} />
                                 )}
                                 <View style={{ flex: 1 }}>
                                   <Text

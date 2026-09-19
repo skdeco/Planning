@@ -244,7 +244,7 @@ export default function SocieteScreen() {
               style={[styles.catChip, selectedCat === c.key && styles.catChipActive]}
             >
               <Text style={[styles.catChipText, selectedCat === c.key && { color: '#fff' }]}>
-                {c.emoji} {(t.cats.docSociete as Record<string,string>)[c.key]} ({c.count})
+                {(t.cats.docSociete as Record<string,string>)[c.key]} ({c.count})
               </Text>
             </Pressable>
           ))}
@@ -253,7 +253,7 @@ export default function SocieteScreen() {
         {/* Suggestions */}
         {selectedCat !== 'toutes' && selectedCatMeta && (
           <View style={styles.suggestionsBox}>
-            <Text style={styles.suggestionsTitle}>{t.societe.suggestions} {selectedCatMeta.emoji} {(t.cats.docSociete as Record<string,string>)[selectedCatMeta.key]}</Text>
+            <Text style={styles.suggestionsTitle}>{t.societe.suggestions} {(t.cats.docSociete as Record<string,string>)[selectedCatMeta.key]}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 6 }}>
               {selectedCatMeta.suggestions.map(s => (
                 <Pressable
@@ -285,7 +285,7 @@ export default function SocieteScreen() {
               <View key={d.id} style={styles.docCard}>
                 <Pressable onPress={() => ouvrirFichier(d.fichierUri)} style={{ flex: 1 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                    <Text style={{ fontSize: 18 }}>{cat?.emoji || '📄'}</Text>
+                    <Ico e={cat?.emoji || '📄'} size={20} />
                     <View style={{ flex: 1 }}>
                       <Text style={styles.docNom}>{d.nom}</Text>
                       <Text style={styles.docMeta}>
@@ -350,7 +350,7 @@ export default function SocieteScreen() {
                     style={[styles.catChip, form.categorie === c.key && styles.catChipActive]}
                   >
                     <Text style={[styles.catChipText, form.categorie === c.key && { color: '#fff' }]}>
-                      {c.emoji} {(t.cats.docSociete as Record<string,string>)[c.key]}
+                      {(t.cats.docSociete as Record<string,string>)[c.key]}
                     </Text>
                   </Pressable>
                 ))}

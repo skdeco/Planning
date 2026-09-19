@@ -1285,7 +1285,7 @@ export default function EquipeScreen() {
                   const active = filterApporteurType === ty;
                   return (
                     <Pressable key={ty} style={[styles.filterChip, active && { backgroundColor: meta?.couleur, borderColor: meta?.couleur }]} onPress={() => setFilterApporteurType(ty)}>
-                      <Text style={[styles.filterChipText, active && { color: '#fff' }]}>{meta?.emoji} {meta?.label || ty}</Text>
+                      <Text style={[styles.filterChipText, active && { color: '#fff' }]}>{meta?.label || ty}</Text>
                     </Pressable>
                   );
                 })}
@@ -1334,7 +1334,7 @@ export default function EquipeScreen() {
                           <Text style={styles.cardName} numberOfLines={1}>{a.prenom} {a.nom}</Text>
                           <View style={[styles.apporteurBadge, { backgroundColor: APPORTEUR_TYPE_LABELS[a.type]?.couleur || '#5C1F2E' }]}>
                             <Text style={styles.apporteurBadgeText}>
-                              {APPORTEUR_TYPE_LABELS[a.type]?.emoji || '🤝'} {APPORTEUR_TYPE_LABELS[a.type]?.label || a.type}
+                              {APPORTEUR_TYPE_LABELS[a.type]?.label || a.type}
                             </Text>
                           </View>
                           {a.accesApp && (
@@ -1396,7 +1396,7 @@ export default function EquipeScreen() {
                       onPress={() => setApporteurForm(f => ({ ...f, type: ty }))}
                     >
                       <Text style={[styles.apporteurChipText, active && { color: '#fff' }]}>
-                        {meta.emoji} {meta.label}
+                        {meta.label}
                       </Text>
                     </Pressable>
                   );
@@ -1521,10 +1521,10 @@ export default function EquipeScreen() {
                         {linkedChantiers.map(c => {
                           // Déterminer le(s) rôle(s) pour ce chantier
                           const roles: string[] = [];
-                          if (c.architecteId === editApporteurId) roles.push(APPORTEUR_TYPE_LABELS.architecte.emoji + ' Architecte');
-                          if (c.apporteurId === editApporteurId) roles.push(APPORTEUR_TYPE_LABELS.apporteur.emoji + ' Apporteur');
-                          if (c.contractantId === editApporteurId) roles.push(APPORTEUR_TYPE_LABELS.contractant.emoji + ' Contractant');
-                          if (c.clientApporteurId === editApporteurId) roles.push(APPORTEUR_TYPE_LABELS.client.emoji + ' Client');
+                          if (c.architecteId === editApporteurId) roles.push('Architecte');
+                          if (c.apporteurId === editApporteurId) roles.push('Apporteur');
+                          if (c.contractantId === editApporteurId) roles.push('Contractant');
+                          if (c.clientApporteurId === editApporteurId) roles.push('Client');
                           return (
                             <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, padding: 8, borderLeftWidth: 3, borderLeftColor: c.couleur }}>
                               <View style={{ flex: 1 }}>

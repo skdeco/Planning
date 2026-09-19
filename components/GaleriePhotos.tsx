@@ -238,7 +238,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
                 <Pressable key={mode} style={[styles.triBtn, triMode === mode && styles.triBtnActive]}
                   onPress={() => { setTriMode(mode); setExpandedGroup(null); }}>
                   <Text style={[styles.triBtnText, triMode === mode && styles.triBtnTextActive]}>
-                    {icon} {mode === 'chantier' ? t.galerie.byChantier : mode === 'employe' ? t.galerie.byEmploye : t.galerie.byWeek}
+                    {mode === 'chantier' ? t.galerie.byChantier : mode === 'employe' ? t.galerie.byEmploye : t.galerie.byWeek}
                   </Text>
                 </Pressable>
               ))}

@@ -1330,7 +1330,7 @@ export default function ChantiersScreen() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
             {archContact && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.architecte.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
-                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.architecte.emoji}</Text>
+                <Ico e={APPORTEUR_TYPE_LABELS.architecte.emoji} size={12} color="#6E5F54" />
                 <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.architecte.couleur, fontWeight: '700' }} numberOfLines={1}>
                   {archContact.prenom} {archContact.nom}
                 </Text>
@@ -1338,7 +1338,7 @@ export default function ChantiersScreen() {
             )}
             {apContact && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.apporteur.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
-                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.apporteur.emoji}</Text>
+                <Ico e={APPORTEUR_TYPE_LABELS.apporteur.emoji} size={12} color="#6E5F54" />
                 <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.apporteur.couleur, fontWeight: '700' }} numberOfLines={1}>
                   {apContact.prenom} {apContact.nom}
                 </Text>
@@ -1346,7 +1346,7 @@ export default function ChantiersScreen() {
             )}
             {contractContact && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.contractant.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
-                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.contractant.emoji}</Text>
+                <Ico e={APPORTEUR_TYPE_LABELS.contractant.emoji} size={12} color="#6E5F54" />
                 <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.contractant.couleur, fontWeight: '700' }} numberOfLines={1}>
                   {contractContact.prenom} {contractContact.nom}
                 </Text>
@@ -1354,7 +1354,7 @@ export default function ChantiersScreen() {
             )}
             {clientContact && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.client.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
-                <Text style={{ fontSize: 10 }}>{APPORTEUR_TYPE_LABELS.client.emoji}</Text>
+                <Ico e={APPORTEUR_TYPE_LABELS.client.emoji} size={12} color="#6E5F54" />
                 <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.client.couleur, fontWeight: '700' }} numberOfLines={1}>
                   {clientContact.prenom} {clientContact.nom}
                 </Text>
@@ -1947,7 +1947,7 @@ export default function ChantiersScreen() {
                   return (
                     <View key={ty} style={{ marginBottom: 10 }}>
                       <Text style={{ fontSize: 12, fontWeight: '700', color: meta.couleur, marginBottom: 6 }}>
-                        {meta.emoji} {meta.label}
+                        {meta.label}
                       </Text>
                       <SelectField
                         searchable
