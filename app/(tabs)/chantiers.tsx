@@ -38,7 +38,9 @@ import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMess
 import { InfosUtilesPanel } from '@/components/ui/InfosUtilesPanel';
 import { LOTS_DEFAUT, LOTS_TRIES, getLotNom } from '@/constants/lots';
 import { DS, screenTitle } from '@/constants/design';
-import { MapPin, CalendarClock, Building2, StickyNote, Ruler, Camera, ShoppingCart, X, Wrench, Receipt } from 'lucide-react-native';
+import { MapPin, CalendarClock, Building2, StickyNote, Ruler, Camera, ShoppingCart, X, Wrench, Receipt, ArrowUpDown } from 'lucide-react-native';
+import { OrdreChantiersModal } from '@/components/ui/OrdreChantiersModal';
+import { trierChantiers } from '@/lib/chantierOrder';
 import { FadeInView, Skeleton } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
 import { ModalNotes } from '@/components/planning/ModalNotes';
@@ -597,6 +599,7 @@ export default function ChantiersScreen() {
   // L'ancienne modal showNotes (lignes ~2362-2764) n'est plus ouverte par
   // openNotes() — dead code à nettoyer en F1d.
   const [showNotes, setShowNotes] = useState(false);
+  const [showOrdreChantiers, setShowOrdreChantiers] = useState(false);
   const [notesChantierId, setNotesChantierId] = useState<string | null>(null);
   const [newNoteTexte, setNewNoteTexte] = useState('');
   const [noteDestinataires, setNoteDestinataires] = useState<'tous' | string[]>('tous');
@@ -1279,8 +1282,8 @@ export default function ChantiersScreen() {
       const allowed = groupesStatut[filterStatut] || [];
       list = list.filter(c => allowed.includes(c.statut));
     }
-    return list;
-  }, [data.chantiers, searchQuery, filterContactType, filterContactId, filterStatut, isApporteurUser, currentUser?.apporteurId]);
+    return trierChantiers(list, data.chantierOrderPlanning, data.chantierTri);
+  }, [data.chantiers, data.chantierOrderPlanning, data.chantierTri, searchQuery, filterContactType, filterContactId, filterStatut, isApporteurUser, currentUser?.apporteurId]);
 
   const renderChantier = ({ item, index }: { item: Chantier; index: number }) => {
     const statut = STATUT_COLORS[item.statut] ?? STATUT_COLORS.actif; // fallback statut inconnu (données legacy)
@@ -1428,6 +1431,11 @@ export default function ChantiersScreen() {
       {/* En-tête */}
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.chantiers.title}</Text>
+        {isAdmin && (
+          <Pressable style={styles.ordreBtn} onPress={() => setShowOrdreChantiers(true)} accessibilityLabel="Ordre des chantiers">
+            <ArrowUpDown size={17} color="#5C1F2E" strokeWidth={2} />
+          </Pressable>
+        )}
         {isAdmin && (
           <Pressable style={styles.newBtn} onPress={openNew}>
             <Text style={styles.newBtnText}>{t.common.new}</Text>
@@ -3915,6 +3923,7 @@ export default function ChantiersScreen() {
           </Pressable>
         </Pressable>
       </Modal>
+      <OrdreChantiersModal visible={showOrdreChantiers} onClose={() => setShowOrdreChantiers(false)} />
     </ScreenContainer>
   );
 }
@@ -3983,7 +3992,8 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 12,
   },
-  headerTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
+  headerTitle: { flex: 1, fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
+  ordreBtn: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#FFFFFF', alignItems: 'center' as const, justifyContent: 'center' as const, marginRight: 8, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
   searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1 },
   searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#2B1D14' },
   searchClear: { paddingHorizontal: 12, paddingVertical: 10 },

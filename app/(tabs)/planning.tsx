@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Copy, Camera, FileText, Download, Settings, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { Copy, Camera, FileText, Download, Settings, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react-native';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { screenTitle } from '@/constants/design';
+import { OrdreChantiersModal } from '@/components/ui/OrdreChantiersModal';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { useApp } from '@/app/context/AppContext';
@@ -194,7 +195,7 @@ function genId(): string {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, addIntervention, updateIntervention, deleteIntervention, logout, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, updateChantierOrderPlanning, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, addIntervention, updateIntervention, deleteIntervention, logout, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const { width: windowWidth } = useWindowDimensions();
@@ -214,6 +215,7 @@ export default function PlanningScreen() {
   const [viewMode, setViewMode] = useState<'jour' | 'semaine' | 'mois' | 'gantt'>(() => (Dimensions.get('window').width < 700 ? 'jour' : 'semaine'));
   const [selectedDay, setSelectedDay] = useState<string>(() => todayYMD());
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [showOrdreChantiers, setShowOrdreChantiers] = useState(false);
   // Modal admin : ajout/suppression d'employés dans une cellule
   const [modal, setModal] = useState<{ chantierId: string; date: string } | null>(null);
   // Modal notes : visible par admin et employés
@@ -668,52 +670,12 @@ export default function PlanningScreen() {
     [visibleChantiers],
   );
 
-  // ─── Réorganisation des chantiers sur le Planning (admin) ─────────────────
-  // L'ordre de référence part de visibleChantiers pour que les nouveaux chantiers
-  // (non encore dans chantierOrderPlanning) soient pris en compte automatiquement.
-  const moveChantierInPlanning = useCallback((id: string, direction: 'up' | 'down' | 'top' | 'bottom') => {
-    const base = (data.chantierOrderPlanning && data.chantierOrderPlanning.length > 0)
-      ? [...data.chantierOrderPlanning]
-      : visibleChantiers.map(c => c.id);
-    // S'assurer que tous les chantiers visibles sont dans la liste (ajoute les absents en fin)
-    visibleChantiers.forEach(c => { if (!base.includes(c.id)) base.push(c.id); });
-    const idx = base.indexOf(id);
-    if (idx === -1) return;
-    const newOrder = [...base];
-    if (direction === 'up') {
-      if (idx <= 0) return;
-      [newOrder[idx - 1], newOrder[idx]] = [newOrder[idx], newOrder[idx - 1]];
-    } else if (direction === 'down') {
-      if (idx >= newOrder.length - 1) return;
-      [newOrder[idx + 1], newOrder[idx]] = [newOrder[idx], newOrder[idx + 1]];
-    } else if (direction === 'top') {
-      if (idx === 0) return;
-      newOrder.splice(idx, 1);
-      newOrder.unshift(id);
-    } else if (direction === 'bottom') {
-      if (idx === newOrder.length - 1) return;
-      newOrder.splice(idx, 1);
-      newOrder.push(id);
-    }
-    updateChantierOrderPlanning(newOrder);
-  }, [data.chantierOrderPlanning, visibleChantiers, updateChantierOrderPlanning]);
-
-  const showReorderMenu = useCallback((chantierId: string) => {
+  // ─── Réorganisation des chantiers : écran « Ordre des chantiers » (admin) ──
+  // L'ordre est partagé avec l'onglet Chantiers (voir lib/chantierOrder.ts).
+  const showReorderMenu = useCallback((_chantierId: string) => {
     if (!isAdmin) return;
-    const chantier = data.chantiers.find(c => c.id === chantierId);
-    if (!chantier) return;
-    Alert.alert(
-      chantier.nom,
-      'Réorganiser dans le planning :',
-      [
-        { text: '⇱ En premier', onPress: () => moveChantierInPlanning(chantierId, 'top') },
-        { text: '↑ Monter', onPress: () => moveChantierInPlanning(chantierId, 'up') },
-        { text: '↓ Descendre', onPress: () => moveChantierInPlanning(chantierId, 'down') },
-        { text: '⇲ En dernier', onPress: () => moveChantierInPlanning(chantierId, 'bottom') },
-        { text: 'Annuler', style: 'cancel' },
-      ]
-    );
-  }, [isAdmin, data.chantiers, moveChantierInPlanning]);
+    setShowOrdreChantiers(true);
+  }, [isAdmin]);
 
   /** Ouvre le modal de création/édition d'intervention */
   const openInterventionModal = (chantierId: string, dateStr: string, editId: string | null = null) => {
@@ -861,6 +823,11 @@ export default function PlanningScreen() {
           {isAdmin && (
             <Pressable style={styles.galerieBtn} onPress={handleExportData} accessibilityLabel="Exporter les données">
               <Download size={17} color="#5C1F2E" strokeWidth={2} />
+            </Pressable>
+          )}
+          {isAdmin && (
+            <Pressable style={styles.galerieBtn} onPress={() => setShowOrdreChantiers(true)} accessibilityLabel="Ordre des chantiers">
+              <ArrowUpDown size={17} color="#5C1F2E" strokeWidth={2} />
             </Pressable>
           )}
           {isAdmin && (
@@ -1601,6 +1568,7 @@ export default function PlanningScreen() {
 
     </>
     )}
+      <OrdreChantiersModal visible={showOrdreChantiers} onClose={() => setShowOrdreChantiers(false)} />
     </ScreenContainer>
   );
 }

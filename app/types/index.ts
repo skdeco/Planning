@@ -1491,8 +1491,10 @@ export interface AppData {
   // Ordre d'affectation quand un employé est sur plusieurs chantiers le même jour
   // clé : "employeId_YYYY-MM-DD", valeur : liste ordonnée de chantierId
   ordreAffectations?: Record<string, string[]>;
-  // Ordre personnalisé des chantiers dans la vue Planning (admin, réorganisation par long-press)
+  // Ordre personnalisé des chantiers (admin) — partagé par le Planning et l'onglet Chantiers
   chantierOrderPlanning?: string[];
+  // Mode de tri des chantiers choisi par l'admin ('manuel' par défaut)
+  chantierTri?: 'manuel' | 'nom' | 'dateFin';
   // Journal d'activité pour les notifications cross-utilisateurs
   activityLog?: ActivityLog[];
   // Badges motivationnels envoyés aux employés

@@ -1,6 +1,7 @@
 import { useMemo, useCallback } from 'react';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { trierChantiers } from '@/lib/chantierOrder';
 import type {
   Chantier,
   Employe,
@@ -136,22 +137,8 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
 
   // Chantiers visibles sur le planning
   const visibleChantiers = useMemo(() => {
-    const customOrder = data.chantierOrderPlanning || [];
-    const sortByOrdre = (arr: typeof data.chantiers) => {
-      // Tri par défaut (champ "ordre")
-      const base = [...arr].sort((a, b) => (a.ordre ?? 9999) - (b.ordre ?? 9999));
-      // Si un ordre personnalisé existe, on le superpose : les chantiers listés
-      // dans customOrder passent en premier dans l'ordre indiqué, les autres à la suite.
-      if (customOrder.length === 0) return base;
-      return base.sort((a, b) => {
-        const ia = customOrder.indexOf(a.id);
-        const ib = customOrder.indexOf(b.id);
-        if (ia === -1 && ib === -1) return 0;
-        if (ia === -1) return 1;
-        if (ib === -1) return -1;
-        return ia - ib;
-      });
-    };
+    const sortByOrdre = (arr: typeof data.chantiers) =>
+      trierChantiers(arr, data.chantierOrderPlanning, data.chantierTri);
     if (isAdmin) {
       return sortByOrdre(data.chantiers.filter(c => c.visibleSurPlanning));
     }

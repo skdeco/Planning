@@ -227,6 +227,7 @@ interface AppContextType {
   updateOrdreAffectation: (employeId: string, date: string, orderedChantierIds: string[]) => void;
   // Ordre personnalisé des chantiers dans la vue Planning (réorganisation par long-press)
   updateChantierOrderPlanning: (ids: string[]) => void;
+  updateChantierTri: (tri: 'manuel' | 'nom' | 'dateFin') => void;
   // Messagerie privée
   addMessagePrive: (m: MessagePrive) => void;
   updateMessagePrive: (m: MessagePrive) => void;
@@ -1864,6 +1865,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const updateChantierOrderPlanning = (ids: string[]) =>
     setData(p => ({ ...p, chantierOrderPlanning: ids }));
 
+  const updateChantierTri = (tri: 'manuel' | 'nom' | 'dateFin') =>
+    setData(p => ({ ...p, chantierTri: tri }));
+
   // ── Système de notifications / journal d'activité ──
   const logActivity = useCallback((action: string, description: string, targetId?: string) => {
     if (!currentUser) return;
@@ -2169,6 +2173,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addFournisseurFiche, updateFournisseurFiche, deleteFournisseurFiche,
       updateOrdreAffectation,
       updateChantierOrderPlanning,
+      updateChantierTri,
       addArticleCatalogue, updateArticleCatalogue, deleteArticleCatalogue,
       addAgendaEvent, updateAgendaEvent, deleteAgendaEvent,
       togglePresenceForcee,
