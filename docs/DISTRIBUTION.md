@@ -1,5 +1,18 @@
 # Distribution de SK DECO Planning
 
+## Où en est-on (20 septembre 2026)
+
+- **iPhone** : distribution par **TestFlight**, lien public
+  <https://testflight.apple.com/join/zY389HHT>. Version en ligne : 1.0.0 (22),
+  valable 90 jours. Fiche App Store créée (identifiant 6761059015), en cours de montage.
+- **Android** : lien d'installation direct, sans magasin ni compte —
+  <https://expo.dev/accounts/skdeco/projects/sk-deco-planning/builds/f5c09332-d08e-451f-9a64-58f92feb94fc>.
+  Notifications actives (Firebase configuré, clé FCM V1 déposée chez Expo).
+- **Mises à jour** : `eas update --channel preview` sert les deux plateformes d'un coup.
+- Textes de la fiche App Store : voir `FICHE-APP-STORE.md`.
+
+---
+
 Deux voies mènent à un téléphone, et elles fonctionnent en parallèle sur le même
 compte Apple et le même identifiant d'application (`bundleIdentifier`) :
 
@@ -135,7 +148,8 @@ le grand public. Deux réponses possibles si cela arrive :
 | --- | --- |
 | Enregistrer un iPhone | `eas device:create` |
 | Voir les appareils | `eas device:list` |
-| Compiler pour le lien direct | `eas build --platform ios --profile preview` |
+| Compiler pour le lien direct (iOS) | `eas build --platform ios --profile preview` |
+| Compiler pour Android (lien direct) | `eas build --platform android --profile preview` |
 | Mise à jour rapide (lien direct) | `eas update --channel preview --message "…"` |
 | Compiler pour l'App Store | `eas build --platform ios --profile production` |
 | Envoyer à l'App Store | `eas submit --platform ios --profile production` |
