@@ -1,6 +1,12 @@
 // Load environment variables with proper priority (system > .env)
 import "./scripts/load-env.js";
 import type { ExpoConfig } from "expo/config";
+import { existsSync } from "fs";
+
+// Fichier fourni par la console Firebase, nécessaire aux notifications Android.
+// Tant qu'il n'est pas déposé à la racine du projet, la compilation reste possible
+// mais les notifications push Android ne fonctionnent pas.
+const googleServices = existsSync("./google-services.json") ? "./google-services.json" : undefined;
 
 // Bundle ID format: space.manus.<project_name_dots>.<timestamp>
 // e.g., "my-app" created at 2024-01-15 10:30:45 -> "space.manus.my.app.t20240115103045"
@@ -36,7 +42,9 @@ const env = {
   logoUrl: "https://d2xsxph8kpxj0f.cloudfront.net/310519663461095243/FWHSQJAVitj9pHzN69C9yf/sk-deco-icon-PKhWxBQhiSUjHUHNgkrV9B.png",
   scheme: schemeFromBundleId,
   iosBundleId: iosBundleIdApple,
-  androidPackage: bundleId,
+  // Identifiant Android officiel — aligné sur iOS. Le schéma de liens profonds
+  // (env.scheme) reste dérivé de l'ancien identifiant pour ne pas casser les liens existants.
+  androidPackage: "fr.skdeco.planning",
 };
 
 const config: ExpoConfig = {
@@ -83,6 +91,7 @@ const config: ExpoConfig = {
     edgeToEdgeEnabled: true,
     predictiveBackGestureEnabled: false,
     package: env.androidPackage,
+    ...(googleServices ? { googleServicesFile: googleServices } : {}),
     permissions: ["POST_NOTIFICATIONS"],
     intentFilters: [
       {
