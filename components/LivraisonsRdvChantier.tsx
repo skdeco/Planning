@@ -20,7 +20,7 @@ interface Props {
   chantierId: string;
   isAdmin: boolean;
   /** Rôle externe (client/architecte/apporteur) — peut créer livraisons, lire RDV */
-  externRole?: 'client' | 'architecte' | 'apporteur' | 'contractant';
+  externRole?: 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial';
   createdByNom?: string;
   /** V10 — mode d'affichage : 'livraisons' | 'rdv' | 'both' (default). Permet
    *  de n'afficher qu'une section pour usage dans les tuiles V10 dédiées :

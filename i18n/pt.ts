@@ -1252,6 +1252,16 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    natureChantier: "Âmbito da obra",
+    natureGlobal: "Obra completa",
+    natureMenuiserie: "Carpintaria",
+    natureGlobalAide: "A SK DECO intervém em todas as especialidades.",
+    natureMenuiserieAide: "A SK DECO executa apenas o lote de carpintaria. Estas obras podem ser acompanhadas por comerciais.",
+    commerciauxRattaches: "Comerciais associados",
+    aucunCommercial: "Ainda não há comerciais registados.",
+    ajouterCommercial: "Adicionar um comercial",
+    chantiersMenuiserie: "Carpintaria",
+    chantiersGlobaux: "Obra completa",
     effacerSelection: "Limpar seleção",
     effacerRecherche: "Limpar pesquisa",
     notifAffectation: "Nova afetação no seu planeamento",

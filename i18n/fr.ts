@@ -1291,6 +1291,16 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    natureChantier: "Nature du chantier",
+    natureGlobal: "Global",
+    natureMenuiserie: "Menuiserie",
+    natureGlobalAide: "SK DECO intervient sur l'ensemble des corps d'état.",
+    natureMenuiserieAide: "SK DECO ne réalise que le lot menuiserie. Ces chantiers peuvent être suivis par des commerciaux.",
+    commerciauxRattaches: "Commerciaux rattachés",
+    aucunCommercial: "Aucun commercial enregistré pour l'instant.",
+    ajouterCommercial: "Ajouter un commercial",
+    chantiersMenuiserie: "Menuiserie",
+    chantiersGlobaux: "Globaux",
     effacerSelection: "Effacer la sélection",
     effacerRecherche: "Effacer la recherche",
     notifAffectation: "Nouvelle affectation sur votre planning",

@@ -45,6 +45,7 @@ const APPORTEUR_TYPE_ORDER: Record<string, number> = {
   architecte: 1,
   client: 2,
   contractant: 3,
+  commercial: 4,
 };
 
 // ─── Documents légaux requis pour un sous-traitant (checklist) ───────────────
@@ -182,7 +183,7 @@ export default function EquipeScreen() {
   useEffect(() => {
     if (apporteurFormAutoOpened) return;
     const ty = params.newApporteurType;
-    if (params.tab === 'apporteurs' && ty && ['architecte', 'apporteur', 'contractant', 'client'].includes(ty)) {
+    if (params.tab === 'apporteurs' && ty && ['architecte', 'apporteur', 'contractant', 'client', 'commercial'].includes(ty)) {
       setEditApporteurId(null);
       setApporteurForm({
         type: ty as Apporteur['type'],
@@ -1386,7 +1387,7 @@ export default function EquipeScreen() {
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={styles.fieldLabel}>{t.equipe.typeLabel}</Text>
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginBottom: 12 }}>
-                {(['architecte', 'apporteur', 'client'] as const).map(ty => {
+                {(['architecte', 'apporteur', 'client', 'commercial'] as const).map(ty => {
                   const meta = APPORTEUR_TYPE_LABELS[ty];
                   const active = apporteurForm.type === ty;
                   return (

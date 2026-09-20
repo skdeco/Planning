@@ -36,7 +36,7 @@ const PRIO_COLORS: Record<PrioriteSAV, { bg: string; border: string; text: strin
 };
 
 interface CreePar {
-  type: 'admin' | 'apporteur' | 'architecte' | 'contractant' | 'client';
+  type: 'admin' | 'apporteur' | 'architecte' | 'contractant' | 'client' | 'commercial';
   id: string;
   nom: string;
 }

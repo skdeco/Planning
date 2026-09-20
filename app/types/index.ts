@@ -274,6 +274,15 @@ export interface Chantier {
   dateDebut: string; // YYYY-MM-DD
   dateFin: string;   // YYYY-MM-DD
   statut: StatutChantier;
+  /**
+   * Nature du chantier :
+   *  - 'global'     : SK DECO intervient sur l'ensemble des corps d'état (défaut) ;
+   *  - 'menuiserie' : SK DECO ne réalise que le lot menuiserie / agencement.
+   * Sert notamment à ouvrir ces chantiers aux commerciaux (voir commerciauxIds).
+   */
+  nature?: 'global' | 'menuiserie';
+  /** Commerciaux (Apporteur type 'commercial') autorisés à suivre ce chantier. */
+  commerciauxIds?: string[];
   visibleSurPlanning: boolean;
   employeIds: string[];
   couleur: string;
@@ -320,7 +329,7 @@ export interface Chantier {
     titre?: string;
     ajoutParId: string;                 // apporteurId ou 'admin'
     ajoutParNom?: string;
-    ajoutParType?: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+    ajoutParType?: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial';
     lotId?: string;                     // lié à un lot (optionnel)
     pieceId?: string;                   // lié à une pièce (moodboard par pièce)
     note?: string;
@@ -331,7 +340,7 @@ export interface Chantier {
     id: string;
     auteurId: string;                   // 'admin' ou apporteurId
     auteurNom: string;
-    auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+    auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial';
     destinataireId?: string;            // [legacy] contact externe destinataire unique — conservé pour compat
     destinatairesIds?: string[];        // set des participants externes de la conversation (1 = privé, N = groupe)
     texte: string;
@@ -665,7 +674,7 @@ export interface SousTraitant {
 /** Un architecte, apporteur d'affaires, contractant ou client associé aux chantiers */
 export interface Apporteur {
   id: string;
-  type: 'architecte' | 'apporteur' | 'contractant' | 'client';
+  type: 'architecte' | 'apporteur' | 'contractant' | 'client' | 'commercial';
   prenom: string;
   nom: string;
   societe?: string;
@@ -702,6 +711,7 @@ export const APPORTEUR_TYPE_LABELS: Record<string, { label: string; emoji: strin
   apporteur:   { label: "Apporteur d'affaires",   emoji: '🤝', couleur: '#C9A96E' },
   contractant: { label: 'Contractant',            emoji: '🔗', couleur: '#10B981' },
   client:      { label: 'Client',                 emoji: '👤', couleur: '#E5A840' },
+  commercial:  { label: 'Commercial',             emoji: '💼', couleur: '#8C4A2F' },
 };
 
 /** Commission versée à un apporteur sur un marché */
@@ -1220,7 +1230,7 @@ export interface LotAvancement {
     id: string;
     auteurId: string;
     auteurNom: string;
-    auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant';
+    auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial';
     texte: string;
     createdAt: string;
     luParAdmin?: boolean;
@@ -1333,7 +1343,7 @@ export interface TicketSAV {
   commentaires?: { id: string; auteur: string; texte: string; date: string; photo?: string }[];
   /** Origine de création du ticket (pour traçabilité et badge "Signalé par"). */
   creePar?: {
-    type: 'admin' | 'apporteur' | 'architecte' | 'contractant' | 'client';
+    type: 'admin' | 'apporteur' | 'architecte' | 'contractant' | 'client' | 'commercial';
     id: string;        // id de l'apporteur ou 'admin'
     nom: string;       // nom affiché
     createdAt: string; // ISO datetime

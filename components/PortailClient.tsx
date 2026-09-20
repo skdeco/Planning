@@ -90,7 +90,7 @@ const SAV_STATUT_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 // Types de lien contact — ordre d'affichage en chips
-const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contractant'; field: keyof Chantier }> = [
+const LIEN_TYPES: Array<{ key: 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial'; field: keyof Chantier }> = [
   { key: 'architecte',  field: 'architecteId' },
   { key: 'apporteur',   field: 'apporteurId' },
   { key: 'client',      field: 'clientApporteurId' },
@@ -146,7 +146,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       setOngletActif(null);
     }
   }, [chantier, externAp, isAdmin, ongletActif]);
-  const [pickerType, setPickerType] = useState<'architecte' | 'apporteur' | 'contractant' | 'client' | null>(null);
+  const [pickerType, setPickerType] = useState<'architecte' | 'apporteur' | 'contractant' | 'client' | 'commercial' | null>(null);
   const [showPhotosPicker, setShowPhotosPicker] = useState(false);
   const [selectedPhotoIds, setSelectedPhotoIds] = useState<string[]>([]);
   const [showCorpsForm, setShowCorpsForm] = useState(false);
@@ -199,7 +199,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   };
   const saveCommentaireClient = () => {
     if (!commentaireLotId || !commentaireTexte.trim()) return;
-    const auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' =
+    const auteurType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial' =
       isAdmin ? 'admin' : (externAp?.type || 'client');
     mutateLot(commentaireLotId, l => ({
       ...l,
@@ -568,13 +568,20 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   }, [chantier, apporteurs, externAp]);
 
   // ── Handlers ──
-  const handleSelectContact = (type: 'architecte' | 'apporteur' | 'contractant' | 'client', apporteurId: string | null) => {
+  const handleSelectContact = (type: 'architecte' | 'apporteur' | 'contractant' | 'client' | 'commercial', apporteurId: string | null) => {
     if (!chantier) return;
     const updated: Chantier = { ...chantier };
     if (type === 'architecte')  updated.architecteId     = apporteurId || undefined;
     if (type === 'apporteur')   updated.apporteurId      = apporteurId || undefined;
     if (type === 'contractant') updated.contractantId    = apporteurId || undefined;
     if (type === 'client')      updated.clientApporteurId = apporteurId || undefined;
+    if (type === 'commercial') {
+      // Plusieurs commerciaux possibles : on ajoute ou on retire celui qui est touché.
+      const actuels = updated.commerciauxIds || [];
+      updated.commerciauxIds = apporteurId
+        ? (actuels.includes(apporteurId) ? actuels.filter(x => x !== apporteurId) : [...actuels, apporteurId])
+        : [];
+    }
     updateChantier(updated);
     setPickerType(null);
   };

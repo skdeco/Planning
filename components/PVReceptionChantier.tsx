@@ -27,7 +27,7 @@ const CHECKLIST_DEFAUT = [
 interface Props {
   chantier: Chantier;
   isAdmin: boolean;
-  externAp?: { type: 'client' | 'architecte' | 'apporteur' | 'contractant'; prenom: string; nom: string };
+  externAp?: { type: 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial'; prenom: string; nom: string };
 }
 
 export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {

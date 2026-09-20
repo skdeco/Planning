@@ -1262,6 +1262,16 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    natureChantier: "Project scope",
+    natureGlobal: "Full works",
+    natureMenuiserie: "Joinery",
+    natureGlobalAide: "SK DECO handles every trade on this project.",
+    natureMenuiserieAide: "SK DECO only handles the joinery package. Sales reps can follow these projects.",
+    commerciauxRattaches: "Assigned sales reps",
+    aucunCommercial: "No sales rep registered yet.",
+    ajouterCommercial: "Add a sales rep",
+    chantiersMenuiserie: "Joinery",
+    chantiersGlobaux: "Full works",
     effacerSelection: "Clear selection",
     effacerRecherche: "Clear search",
     notifAffectation: "New assignment on your schedule",

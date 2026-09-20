@@ -43,7 +43,7 @@ export function canVoirOnglet(
   // Finances : le client voit SON suivi (budget TTC, versements, validation d'étapes,
   // avenants) et l'architecte le détail — par défaut. L'apporteur d'affaires et le
   // contractant (tiers) sont en OPT-IN : masqués sauf autorisation explicite de l'admin.
-  if (onglet === 'chiffres') return contact.type === 'architecte' || contact.type === 'client';
+  if (onglet === 'chiffres') return contact.type === 'architecte' || contact.type === 'client' || contact.type === 'commercial';
 
   return true;
 }

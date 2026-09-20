@@ -1252,6 +1252,16 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    natureChantier: "Тип объекта",
+    natureGlobal: "Полный цикл",
+    natureMenuiserie: "Столярные работы",
+    natureGlobalAide: "SK DECO выполняет все виды работ на объекте.",
+    natureMenuiserieAide: "SK DECO выполняет только столярные работы. Такие объекты могут вести менеджеры.",
+    commerciauxRattaches: "Закреплённые менеджеры",
+    aucunCommercial: "Менеджеры пока не заведены.",
+    ajouterCommercial: "Добавить менеджера",
+    chantiersMenuiserie: "Столярные",
+    chantiersGlobaux: "Полный цикл",
     effacerSelection: "Очистить выбор",
     effacerRecherche: "Очистить поиск",
     notifAffectation: "Новое назначение в вашем графике",

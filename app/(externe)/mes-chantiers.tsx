@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
+import { chantiersDuContact } from '@/lib/portail/chantiersDuContact';
 import { PortailClient } from '@/components/PortailClient';
 import { CreerChantierArchi } from '@/components/externe/CreerChantierArchi';
 import { STATUT_LABELS, STATUT_COLORS } from '@/app/types';
@@ -21,13 +22,9 @@ export default function MesChantiersExterne() {
 
   const mesChantiers = useMemo(() => {
     if (!apporteurId) return [];
-    // Liste des chantiers où cet apporteur est lié (client, architecte, apporteur, contractant)
-    return data.chantiers.filter(c =>
-      c.clientApporteurId === apporteurId ||
-      c.architecteId === apporteurId ||
-      c.apporteurId === apporteurId ||
-      c.contractantId === apporteurId
-    );
+    // Liste des chantiers où ce contact est rattaché (client, architecte,
+    // apporteur, contractant ou commercial).
+    return chantiersDuContact(data.chantiers, apporteurId);
   }, [data.chantiers, apporteurId]);
 
   // Actifs = pas clôturé. Clôturés = limite 3 ans.

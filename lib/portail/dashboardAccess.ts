@@ -23,7 +23,7 @@ export type TileKey =
   | 'drive' | 'fiche' | 'plans' | 'pv' | 'administratif' | 'livraison'
   | 'sav' | 'annuaire' | 'messagerie';
 
-type PortailRole = 'architecte' | 'client' | 'apporteur' | 'contractant';
+type PortailRole = 'architecte' | 'client' | 'apporteur' | 'contractant' | 'commercial';
 
 /** Modes statiques par rôle (tuile absente = 'hidden'). */
 const ACCESS: Record<PortailRole, Partial<Record<TileKey, TileMode>>> = {
@@ -48,6 +48,13 @@ const ACCESS: Record<PortailRole, Partial<Record<TileKey, TileMode>>> = {
   },
   contractant: {
     fiche: 'read', photos: 'read', phases: 'read', plans: 'read', messagerie: 'act',
+  },
+  // Commercial : suit ses chantiers menuiserie de bout en bout et saisit ses marchés.
+  // Les coûts internes (achats, rentabilité, sous-traitants) lui restent masqués.
+  commercial: {
+    marches: 'act', finances: 'act', messagerie: 'act', suivis: 'act',
+    fiche: 'read', photos: 'read', phases: 'read', plans: 'read', metres: 'read',
+    pv: 'read', livraison: 'read', annuaire: 'read', drive: 'read', journal: 'read',
   },
 };
 

@@ -41,6 +41,7 @@ import { DS, screenTitle } from '@/constants/design';
 import { MapPin, CalendarClock, Building2, StickyNote, Ruler, Camera, ShoppingCart, X, Wrench, Receipt, ArrowUpDown } from 'lucide-react-native';
 import { OrdreChantiersModal } from '@/components/ui/OrdreChantiersModal';
 import { trierChantiers } from '@/lib/chantierOrder';
+import { estLieAuContact } from '@/lib/portail/chantiersDuContact';
 import { FadeInView, Skeleton } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
 import { ModalNotes } from '@/components/planning/ModalNotes';
@@ -153,6 +154,10 @@ interface ChantierForm {
   employeIds: string[];
   visibleSurPlanning: boolean;
   afficherPlanningAuClient: boolean;
+  /** Nature du chantier : tous corps d'état ou lot menuiserie seul. */
+  nature: 'global' | 'menuiserie';
+  /** Commerciaux autorisés à suivre ce chantier. */
+  commerciauxIds: string[];
   // Contacts externes
   architecteId: string;
   apporteurId: string;
@@ -181,6 +186,8 @@ const DEFAULT_FORM: ChantierForm = {
   employeIds: [],
   visibleSurPlanning: true,
   afficherPlanningAuClient: false,
+  nature: 'global',
+  commerciauxIds: [],
   architecteId: '',
   apporteurId: '',
   contractantId: '',
@@ -274,6 +281,7 @@ export default function ChantiersScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   // Filtre par statut de la liste chantiers (défaut : opérationnels = liste épurée).
   const [filterStatut, setFilterStatut] = useState<'en_cours' | 'a_letude' | 'termine' | 'archive' | 'tous'>('en_cours');
+  const [filterNature, setFilterNature] = useState<'toutes' | 'global' | 'menuiserie'>('toutes');
   const [bilanChantierId, setBilanChantierId] = useState<string | null>(null);
   // Protection contre la perte de données si refresh pendant édition
   useUnsavedChanges(showForm && form.nom.trim().length > 0);
@@ -370,7 +378,7 @@ export default function ChantiersScreen() {
   const [suiviEditingNote, setSuiviEditingNote] = useState<{ affId: string; note: Note } | null>(null);
   const [vueChantiersTab, setVueChantiersTab] = useState<'chantiers' | 'sav'>('chantiers');
   // Filtre par type de contact (architecte / apporteur / contractant / client)
-  const [filterContactType, setFilterContactType] = useState<'all' | 'architecte' | 'apporteur' | 'contractant' | 'client'>('all');
+  const [filterContactType, setFilterContactType] = useState<'all' | 'architecte' | 'apporteur' | 'contractant' | 'client' | 'commercial'>('all');
   const [filterContactId, setFilterContactId] = useState<string>('all'); // 'all' ou id d'un apporteur
   // C3b : refacto SAV vers ModalSAVDetail / ModalNouveauTicketSAV.
   // Plus d'état inline (savForm/showSavForm/editSavId/savPhotos/savFichiers).
@@ -394,6 +402,8 @@ export default function ChantiersScreen() {
       couleur: chantier.couleur,
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
+      nature: chantier.nature || 'global',
+      commerciauxIds: chantier.commerciauxIds || [],
       afficherPlanningAuClient: chantier.afficherPlanningAuClient === true,
       architecteId: chantier.architecteId || '',
       apporteurId: chantier.apporteurId || '',
@@ -456,7 +466,7 @@ export default function ChantiersScreen() {
   );
 
   // Helper : sauvegarder le formulaire + rediriger vers Équipe pour créer un apporteur
-  const goCreateApporteur = async (type: 'architecte' | 'apporteur' | 'contractant' | 'client') => {
+  const goCreateApporteur = async (type: 'architecte' | 'apporteur' | 'contractant' | 'client' | 'commercial') => {
     try {
       await AsyncStorage.setItem(PENDING_CHANTIER_FORM_KEY, JSON.stringify({
         editId,
@@ -735,6 +745,8 @@ export default function ChantiersScreen() {
       couleur: chantier.couleur,
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
+      nature: chantier.nature || 'global',
+      commerciauxIds: chantier.commerciauxIds || [],
       afficherPlanningAuClient: chantier.afficherPlanningAuClient === true,
       architecteId: chantier.architecteId || '',
       apporteurId: chantier.apporteurId || '',
@@ -842,6 +854,8 @@ export default function ChantiersScreen() {
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
         afficherPlanningAuClient: form.afficherPlanningAuClient,
+        nature: form.nature,
+        commerciauxIds: form.nature === 'menuiserie' ? form.commerciauxIds : [],
         fiche: existing?.fiche,
         // Legacy client text conservé si existant
         client: existing?.client,
@@ -868,6 +882,8 @@ export default function ChantiersScreen() {
         employeIds: form.employeIds,
         visibleSurPlanning: form.visibleSurPlanning,
         afficherPlanningAuClient: form.afficherPlanningAuClient,
+        nature: form.nature,
+        commerciauxIds: form.nature === 'menuiserie' ? form.commerciauxIds : [],
         architecteId: form.architecteId || undefined,
         apporteurId: form.apporteurId || undefined,
         contractantId: form.contractantId || undefined,
@@ -1243,12 +1259,7 @@ export default function ChantiersScreen() {
     // Apporteur : ne voit que ses chantiers liés
     if (isApporteurUser && currentUser?.apporteurId) {
       const myId = currentUser.apporteurId;
-      list = list.filter(c =>
-        c.architecteId === myId ||
-        c.apporteurId === myId ||
-        c.contractantId === myId ||
-        c.clientApporteurId === myId
-      );
+      list = list.filter(c => estLieAuContact(c, myId));
     }
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
@@ -1258,7 +1269,12 @@ export default function ChantiersScreen() {
         (c.ville || '').toLowerCase().includes(q)
       );
     }
-    if (filterContactType !== 'all') {
+    if (filterContactType === 'commercial') {
+      // Les commerciaux sont rattachés par liste, pas par champ unique.
+      list = filterContactId === 'all'
+        ? list.filter(c => (c.commerciauxIds || []).length > 0)
+        : list.filter(c => (c.commerciauxIds || []).includes(filterContactId));
+    } else if (filterContactType !== 'all') {
       const field: keyof Chantier =
         filterContactType === 'architecte'  ? 'architecteId' :
         filterContactType === 'apporteur'   ? 'apporteurId' :
@@ -1282,8 +1298,12 @@ export default function ChantiersScreen() {
       const allowed = groupesStatut[filterStatut] || [];
       list = list.filter(c => allowed.includes(c.statut));
     }
+    // Filtre par nature (global / menuiserie)
+    if (filterNature !== 'toutes') {
+      list = list.filter(c => (c.nature || 'global') === filterNature);
+    }
     return trierChantiers(list, data.chantierOrderPlanning, data.chantierTri);
-  }, [data.chantiers, data.chantierOrderPlanning, data.chantierTri, searchQuery, filterContactType, filterContactId, filterStatut, isApporteurUser, currentUser?.apporteurId]);
+  }, [data.chantiers, data.chantierOrderPlanning, data.chantierTri, searchQuery, filterContactType, filterContactId, filterStatut, filterNature, isApporteurUser, currentUser?.apporteurId]);
 
   const renderChantier = ({ item, index }: { item: Chantier; index: number }) => {
     const statut = STATUT_COLORS[item.statut] ?? STATUT_COLORS.actif; // fallback statut inconnu (données legacy)
@@ -1314,6 +1334,11 @@ export default function ChantiersScreen() {
                 {statutLabel(item.statut)}
               </Text>
             </View>
+            {item.nature === 'menuiserie' && (
+              <View style={[styles.statutBadge, { backgroundColor: '#F2E4E1' }]}>
+                <Text style={[styles.statutText, { color: '#8C4A2F' }]}>{t.ui.natureMenuiserie}</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -1590,10 +1615,26 @@ export default function ChantiersScreen() {
                   { value: 'architecte', label: t.chantiers.byArchitecte },
                   { value: 'apporteur', label: "Par apporteur d'affaires" },
                   { value: 'client', label: t.chantiers.byClient },
+                  { value: 'commercial', label: APPORTEUR_TYPE_LABELS.commercial.label },
                 ]}
                 onSelect={v => { setFilterContactType(v as typeof filterContactType); setFilterContactId('all'); }}
               />
             </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
+            {([['toutes', t.common.all], ['global', t.ui.chantiersGlobaux], ['menuiserie', t.ui.chantiersMenuiserie]] as const).map(([val, lib]) => {
+              const actif = filterNature === val;
+              return (
+                <Pressable
+                  key={val}
+                  style={[{ flex: 1, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+                    actif && { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 }]}
+                  onPress={() => setFilterNature(val)}
+                >
+                  <Text style={{ fontSize: 13, fontWeight: actif ? '600' : '500', color: actif ? '#5C1F2E' : '#2B1D14' }}>{lib}</Text>
+                </Pressable>
+              );
+            })}
           </View>
           {filterContactType !== 'all' && (() => {
             const listOfThisType = apporteursAll.filter(a => a.type === filterContactType);
@@ -1924,6 +1965,29 @@ export default function ChantiersScreen() {
                 />
               </FormField>
 
+              <FormField label={t.ui.natureChantier}>
+                <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
+                  {(['global', 'menuiserie'] as const).map(n => {
+                    const actif = form.nature === n;
+                    return (
+                      <Pressable
+                        key={n}
+                        style={[{ flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+                          actif && { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 }]}
+                        onPress={() => setForm(f => ({ ...f, nature: n }))}
+                      >
+                        <Text style={{ fontSize: 13.5, fontWeight: actif ? '600' : '500', color: actif ? '#5C1F2E' : '#2B1D14' }}>
+                          {n === 'global' ? t.ui.natureGlobal : t.ui.natureMenuiserie}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 6 }}>
+                  {form.nature === 'menuiserie' ? t.ui.natureMenuiserieAide : t.ui.natureGlobalAide}
+                </Text>
+              </FormField>
+
               <FormField label={t.common.color}>
                 <View style={styles.colorRow}>
                   {CHANTIER_COLORS.map(c => (
@@ -1999,6 +2063,50 @@ export default function ChantiersScreen() {
                     </View>
                   );
                 })}
+
+                {/* Commerciaux : uniquement sur les chantiers menuiserie, plusieurs possibles */}
+                {form.nature === 'menuiserie' && (() => {
+                  const commerciaux = apporteursAll.filter(a => a.type === 'commercial');
+                  const meta = APPORTEUR_TYPE_LABELS.commercial;
+                  return (
+                    <View style={{ marginTop: 4, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6', paddingTop: 12 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: meta.couleur, marginBottom: 6 }}>
+                        {t.ui.commerciauxRattaches}
+                      </Text>
+                      {commerciaux.length === 0 ? (
+                        <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{t.ui.aucunCommercial}</Text>
+                      ) : (
+                        <View style={{ gap: 6 }}>
+                          {commerciaux.map(c => {
+                            const coche = form.commerciauxIds.includes(c.id);
+                            return (
+                              <Pressable
+                                key={c.id}
+                                onPress={() => setForm(f => ({
+                                  ...f,
+                                  commerciauxIds: coche
+                                    ? f.commerciauxIds.filter(x => x !== c.id)
+                                    : [...f.commerciauxIds, c.id],
+                                }))}
+                                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#fff', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 11, borderWidth: 1, borderColor: coche ? meta.couleur : '#EDE2D6' }}
+                              >
+                                <View style={{ width: 22, height: 22, borderRadius: 7, borderWidth: 1.8, borderColor: coche ? meta.couleur : '#EDE2D6', backgroundColor: coche ? meta.couleur : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                                  {coche && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>✓</Text>}
+                                </View>
+                                <Text style={{ flex: 1, fontSize: 14.5, color: '#2B1D14' }} numberOfLines={1}>
+                                  {c.prenom} {c.nom}{c.societe ? ` · ${c.societe}` : ''}
+                                </Text>
+                              </Pressable>
+                            );
+                          })}
+                        </View>
+                      )}
+                      <Pressable onPress={() => goCreateApporteur('commercial')} style={{ marginTop: 8, alignSelf: 'flex-start' }}>
+                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: meta.couleur }}>+ {t.ui.ajouterCommercial}</Text>
+                      </Pressable>
+                    </View>
+                  );
+                })()}
               </View>
 
               <FormField label={t.common.visibleOnPlanning}>

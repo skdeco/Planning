@@ -2,6 +2,7 @@ import { useMemo, useCallback } from 'react';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { trierChantiers } from '@/lib/chantierOrder';
+import { estLieAuContact } from '@/lib/portail/chantiersDuContact';
 import type {
   Chantier,
   Employe,
@@ -153,12 +154,7 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
     if (currentUser?.role === 'apporteur' && currentUser?.apporteurId) {
       const myId = currentUser.apporteurId;
       return sortByOrdre(data.chantiers.filter(c =>
-        c.visibleSurPlanning && (
-          c.architecteId === myId ||
-          c.apporteurId === myId ||
-          c.contractantId === myId ||
-          c.clientApporteurId === myId
-        )
+        c.visibleSurPlanning && estLieAuContact(c, myId)
       ));
     }
     // Employé : uniquement les chantiers où il est affecté

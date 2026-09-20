@@ -1252,6 +1252,16 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    natureChantier: "نوع الموقع",
+    natureGlobal: "جميع الأعمال",
+    natureMenuiserie: "النجارة",
+    natureGlobalAide: "تتولى SK DECO جميع الأعمال في هذا الموقع.",
+    natureMenuiserieAide: "تتولى SK DECO أعمال النجارة فقط. يمكن للمندوبين متابعة هذه المواقع.",
+    commerciauxRattaches: "المندوبون المعيّنون",
+    aucunCommercial: "لا يوجد مندوبون مسجلون بعد.",
+    ajouterCommercial: "إضافة مندوب",
+    chantiersMenuiserie: "النجارة",
+    chantiersGlobaux: "جميع الأعمال",
     effacerSelection: "مسح الاختيار",
     effacerRecherche: "مسح البحث",
     notifAffectation: "تعيين جديد في جدولك",

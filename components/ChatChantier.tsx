@@ -21,7 +21,7 @@ function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random()
 interface Props {
   chantier: Chantier;
   isAdmin: boolean;
-  externAp?: { id: string; prenom: string; nom: string; type: 'client' | 'architecte' | 'apporteur' | 'contractant' };
+  externAp?: { id: string; prenom: string; nom: string; type: 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial' };
   currentUserNom?: string;
   /** Si true, occupe toute la hauteur disponible (flex:1) au lieu de maxHeight 360. */
   fullScreen?: boolean;
@@ -52,7 +52,7 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
   }, [fullScreen]);
 
   const monId = isAdmin ? 'admin' : (externAp?.id || '');
-  const monType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' =
+  const monType: 'admin' | 'client' | 'architecte' | 'apporteur' | 'contractant' | 'commercial' =
     isAdmin ? 'admin' : (externAp?.type || 'client');
 
   // ── Conversations par set de participants externes (privé = 1, groupe = N) ──

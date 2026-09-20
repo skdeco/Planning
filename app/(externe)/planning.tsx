@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, StyleSheet, Dimensions } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
+import { estLieAuContact } from '@/lib/portail/chantiersDuContact';
 import type { Chantier } from '@/app/types';
 import { canVoirOnglet } from '@/lib/portail/permissions';
 import { getChantierLots } from '@/lib/chantier/getChantierLots';
@@ -65,11 +66,7 @@ export default function PlanningExterne() {
     const apporteur = (data.apporteurs || []).find(a => a.id === apporteurId);
     const estClient = apporteur?.type === 'client';
     return data.chantiers.filter(c => {
-      const lie =
-        c.clientApporteurId === apporteurId ||
-        c.architecteId === apporteurId ||
-        c.apporteurId === apporteurId ||
-        c.contractantId === apporteurId;
+      const lie = estLieAuContact(c, apporteurId);
       if (!lie) return false;
       // Opt-in client (aligné sur PortailClient.peutVoirPlanning) : masqué tant que
       // l'admin n'a pas activé afficherPlanningAuClient (undefined = masqué).
