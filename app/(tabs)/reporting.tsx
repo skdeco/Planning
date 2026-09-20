@@ -7,6 +7,7 @@ import {
 import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { BackToPlus } from '@/components/ui/BackToPlus';
+import { SelectField } from '@/components/ui/SelectField';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { METIER_COLORS, type Acompte } from '@/app/types';
@@ -63,7 +64,7 @@ function ecartMinutes(heureReelle: string, heureTheorique: string, type: 'debut'
 function getPonctualiteColor(ecart: number): string {
   if (ecart > 15) return '#E74C3C';   // rouge : > 15 min
   if (ecart > 5)  return '#FF8C00';   // orange : 5-15 min
-  return '#27AE60';                    // vert : ok
+  return '#2E7D32';                    // vert : ok
 }
 
 /** Retourne le label d'écart */
@@ -584,7 +585,7 @@ export default function ReportingScreen() {
       </View>
 
       {/* Filtres */}
-      <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 8, gap: 6 }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#F1E7DC', borderRadius: 999, padding: 3, gap: 2 }}>
         <Pressable
           style={[styles.filterChip, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }, vue === 'journalier' && styles.filterChipActive]}
           onPress={() => setVue('journalier')}
@@ -615,24 +616,21 @@ export default function ReportingScreen() {
             </Pressable>
           </View>
 
-          {/* Filtre par chantier */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8, paddingHorizontal: 12 }} contentContainerStyle={{ gap: 6 }}>
-            <Pressable
-              style={[styles.filterChip, filterChantierId === 'all' && styles.filterChipActive]}
-              onPress={() => setFilterChantierId('all')}
-            >
-              <Text style={[styles.filterChipText, filterChantierId === 'all' && styles.filterChipTextActive]}>{t.common.all}</Text>
-            </Pressable>
-            {data.chantiers.filter(c => c.statut === 'actif').map(c => (
-              <Pressable
-                key={c.id}
-                style={[styles.filterChip, filterChantierId === c.id && { backgroundColor: c.couleur || '#5C1F2E', borderColor: c.couleur || '#5C1F2E' }]}
-                onPress={() => setFilterChantierId(filterChantierId === c.id ? 'all' : c.id)}
-              >
-                <Text style={[styles.filterChipText, filterChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+          {/* Filtre par chantier — liste déroulante avec recherche */}
+          <View style={{ paddingHorizontal: 16, marginBottom: 10 }}>
+            <SelectField
+              compact
+              searchable
+              value={filterChantierId}
+              title={t.ui.filtrerParChantier}
+              placeholder={t.ui.tousChantiers}
+              options={[
+                { value: 'all', label: t.ui.tousChantiers },
+                ...data.chantiers.filter(c => c.statut === 'actif').map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
+              ]}
+              onSelect={v => setFilterChantierId(v)}
+            />
+          </View>
 
           {/* Pointages du jour */}
           {pointagesJour.map(({ emp, debut, fin }) => {
@@ -669,7 +667,7 @@ export default function ReportingScreen() {
                     ) : isForcedPresent ? (
                       <Pressable onPress={() => isAdmin ? togglePresenceForcee(emp.id, selectedDate) : undefined}>
                         <View style={[styles.dureeBadge, { backgroundColor: '#F0FFF4', borderColor: '#C6F6D5' }]}>
-                          <Text style={[styles.dureeBadgeText, { color: '#27AE60' }]}>{t.reporting.present} ✓</Text>
+                          <Text style={[styles.dureeBadgeText, { color: '#2E7D32' }]}>{t.reporting.present} ✓</Text>
                         </View>
                       </Pressable>
                     ) : isAbsent ? (
@@ -856,8 +854,8 @@ export default function ReportingScreen() {
                     )}
                     {rapportEmploye.joursFeriesTravailles > 0 && (
                       <View style={[styles.resumeMensuelRow, { backgroundColor: '#E8F5E9', borderRadius: 6, paddingHorizontal: 8 }]}>
-                        <Text style={[styles.resumeMensuelLabel, { color: '#27AE60' }]}>{t.reporting.holidaysWorked}</Text>
-                        <Text style={[styles.resumeMensuelValue, { color: '#27AE60' }]}>+{rapportEmploye.joursFeriesTravailles} j (+{(rapportEmploye.joursFeriesTravailles * (rapportEmploye.tarifJournalier ?? 0)).toLocaleString('fr-FR')} €)</Text>
+                        <Text style={[styles.resumeMensuelLabel, { color: '#2E7D32' }]}>{t.reporting.holidaysWorked}</Text>
+                        <Text style={[styles.resumeMensuelValue, { color: '#2E7D32' }]}>+{rapportEmploye.joursFeriesTravailles} j (+{(rapportEmploye.joursFeriesTravailles * (rapportEmploye.tarifJournalier ?? 0)).toLocaleString('fr-FR')} €)</Text>
                       </View>
                     )}
                     {rapportEmploye.joursAbsents > 0 && (
@@ -866,7 +864,7 @@ export default function ReportingScreen() {
                         <Text style={[styles.resumeMensuelValue, { color: '#E74C3C' }]}>- {rapportEmploye.joursAbsents} j (- {(rapportEmploye.joursAbsents * (rapportEmploye.tarifJournalier ?? 0)).toLocaleString('fr-FR')} €)</Text>
                       </View>
                     )}
-                    <View style={[styles.resumeMensuelRow, { borderTopWidth: 1, borderTopColor: '#E0E0E0', marginTop: 4, paddingTop: 4 }]}>
+                    <View style={[styles.resumeMensuelRow, { borderTopWidth: 1, borderTopColor: '#EDE2D6', marginTop: 4, paddingTop: 4 }]}>
                       <Text style={styles.resumeMensuelLabel}>{t.reporting.salaryBeforeDeposit}</Text>
                       <Text style={[styles.resumeMensuelValue, { fontWeight: '700' }]}>{(rapportEmploye.salaireAvantAcompte ?? 0).toLocaleString('fr-FR')} €</Text>
                     </View>
@@ -1016,7 +1014,7 @@ export default function ReportingScreen() {
                       ]}
                     >
                       <View style={[styles.tableauCell, styles.tableauCellDate]}>
-                        <Text style={[styles.tableauDateText, isWeekend && styles.tableauDateWeekend, isFerie && { color: '#27AE60', fontWeight: '700' }]}>
+                        <Text style={[styles.tableauDateText, isWeekend && styles.tableauDateWeekend, isFerie && { color: '#2E7D32', fontWeight: '700' }]}>
                           {formatDateFr(dateStr, dateLocale)}{isFerie ? ' 🎉' : ''}
                         </Text>
                         {travailleTheo && horairesJour && (
@@ -1030,13 +1028,13 @@ export default function ReportingScreen() {
                           const chId = debut?.chantierId || fin?.chantierId;
                           if (chId) {
                             const ch = data.chantiers.find(c => c.id === chId);
-                            return <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }} numberOfLines={2}>{ch?.nom || '—'}</Text>;
+                            return <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }} numberOfLines={2}>{ch?.nom || '—'}</Text>;
                           }
                           const affs = data.affectations
                             .filter(a => a.employeId === empSelectionne.id && a.dateDebut <= dateStr && a.dateFin >= dateStr)
                             .map(a => data.chantiers.find(c => c.id === a.chantierId)?.nom || '')
                             .filter(Boolean);
-                          return <Text style={{ fontSize: 10, color: '#6E5F54' }} numberOfLines={2}>{affs.length > 0 ? affs.join(', ') : '—'}</Text>;
+                          return <Text style={{ fontSize: 12, color: '#6E5F54' }} numberOfLines={2}>{affs.length > 0 ? affs.join(', ') : '—'}</Text>;
                         })()}
                       </View>
                       <View style={[styles.tableauCell, styles.tableauCellHeure]}>
@@ -1061,7 +1059,7 @@ export default function ReportingScreen() {
                             )}
                           </>
                         ) : (
-                          <Text style={[styles.tableauAbsent, isAbsentLine && { color: '#E74C3C', fontWeight: '700' }, isForcedPresent && { color: '#27AE60', fontWeight: '700' }]}>
+                          <Text style={[styles.tableauAbsent, isAbsentLine && { color: '#E74C3C', fontWeight: '700' }, isForcedPresent && { color: '#2E7D32', fontWeight: '700' }]}>
                             {isAbsentLine ? 'Abs.' : isForcedPresent ? 'Prés.' : '—'}
                           </Text>
                         )}
@@ -1098,15 +1096,15 @@ export default function ReportingScreen() {
                           const isManuFin = fin?.saisieManuelle;
                           const isManu = isManuDebut || isManuFin;
                           if (!debut && !fin && !isForcedPresent) return <Text style={styles.tableauDureeText}>—</Text>;
-                          if (isForcedPresent && !debut && !fin) return <Text style={[styles.tableauDureeText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]}>Admin</Text>;
+                          if (isForcedPresent && !debut && !fin) return <Text style={[styles.tableauDureeText, { color: '#2E7D32', fontWeight: '700', fontSize: 12 }]}>Admin</Text>;
                           if (!isManu) {
                             const nom = empSelectionne ? empSelectionne.prenom : '';
-                            return <Text style={[styles.tableauDureeText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{nom}</Text>;
+                            return <Text style={[styles.tableauDureeText, { color: '#2E7D32', fontWeight: '700', fontSize: 12 }]} numberOfLines={1}>{nom}</Text>;
                           } else {
                             const modifieurId = (isManuDebut ? debut?.saisieParId : fin?.saisieParId) || 'admin';
                             const modifieur = data.employes.find(e => e.id === modifieurId);
                             const nomModif = modifieur ? modifieur.prenom : 'Admin';
-                            return <Text style={[styles.tableauDureeText, { color: '#E74C3C', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{nomModif}</Text>;
+                            return <Text style={[styles.tableauDureeText, { color: '#E74C3C', fontWeight: '700', fontSize: 12 }]} numberOfLines={1}>{nomModif}</Text>;
                           }
                         })()}
                       </View>
@@ -1191,7 +1189,7 @@ export default function ReportingScreen() {
                             {formatDateFr(dateStr)}
                           </Text>
                           <View style={[styles.saisieCellHeure, debut?.saisieManuelle && styles.saisieCellManuelle]}>
-                            <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : isForcedPres ? '#27AE60' : '#9A8C80', fontWeight: (isAbsent || isForcedPres) ? '700' : '400' }]}>
+                            <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : isForcedPres ? '#2E7D32' : '#9A8C80', fontWeight: (isAbsent || isForcedPres) ? '700' : '400' }]}>
                               {debut ? debut.heure : isAbsent ? t.reporting.absent : isForcedPres ? t.reporting.present : '—'}
                             </Text>
                             {debut?.saisieManuelle && <Ico e="✏️" size={16} />}
@@ -1208,14 +1206,14 @@ export default function ReportingScreen() {
                               const isManuFin = fin?.saisieManuelle;
                               const isManu = isManuDebut || isManuFin;
                               if (!debut && !fin && !isForcedPres) return <Text style={[styles.saisieCellText, { color: '#9A8C80' }]}>—</Text>;
-                              if (isForcedPres && !debut && !fin) return <Text style={[styles.saisieCellText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]}>Admin</Text>;
+                              if (isForcedPres && !debut && !fin) return <Text style={[styles.saisieCellText, { color: '#2E7D32', fontWeight: '700', fontSize: 12 }]}>Admin</Text>;
                               if (!isManu) {
-                                return <Text style={[styles.saisieCellText, { color: '#27AE60', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{emp.prenom}</Text>;
+                                return <Text style={[styles.saisieCellText, { color: '#2E7D32', fontWeight: '700', fontSize: 12 }]} numberOfLines={1}>{emp.prenom}</Text>;
                               } else {
                                 const modifieurId = (isManuDebut ? debut?.saisieParId : fin?.saisieParId) || 'admin';
                                 const modifieur = data.employes.find(e => e.id === modifieurId);
                                 const nomModif = modifieur ? modifieur.prenom : 'Admin';
-                                return <Text style={[styles.saisieCellText, { color: '#E74C3C', fontWeight: '700', fontSize: 10 }]} numberOfLines={1}>{nomModif}</Text>;
+                                return <Text style={[styles.saisieCellText, { color: '#E74C3C', fontWeight: '700', fontSize: 12 }]} numberOfLines={1}>{nomModif}</Text>;
                               }
                             })()}
                           </View>
@@ -1378,10 +1376,10 @@ export default function ReportingScreen() {
 }
 
 const styles = StyleSheet.create({
-  filterChip: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
-  filterChipActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
-  filterChipText: { fontSize: 12, fontWeight: '600', color: '#6E5F54', maxWidth: 120 },
-  filterChipTextActive: { color: '#fff' },
+  filterChip: { paddingHorizontal: 12, height: 34, justifyContent: 'center', borderRadius: 999, backgroundColor: 'transparent' },
+  filterChipActive: { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
+  filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14', maxWidth: 120 },
+  filterChipTextActive: { color: '#5C1F2E', fontWeight: '600' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1405,18 +1403,23 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   exportBtn: {
-    backgroundColor: '#5C1F2E',
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 8,
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 14,
+    paddingVertical: 9,
+    borderRadius: 999,
+    shadowColor: '#2B1D14',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 6,
+    elevation: 1,
   },
   exportBtnPDF: {
-    backgroundColor: '#E74C3C',
+    backgroundColor: '#F2E4E1',
   },
   exportBtnText: {
-    color: '#fff',
-    fontSize: 12,
-    fontWeight: '700',
+    color: '#5C1F2E',
+    fontSize: 13,
+    fontWeight: '600',
   },
   center: {
     flex: 1,
@@ -1431,19 +1434,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 16,
     marginVertical: 8,
-    backgroundColor: '#E8ECF2',
-    borderRadius: 12,
+    backgroundColor: '#F1E7DC',
+    borderRadius: 999,
     padding: 3,
   },
   vueBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 999,
     alignItems: 'center',
   },
   vueBtnActive: {
     backgroundColor: '#fff',
-    shadowColor: '#000',
+    shadowColor: '#2B1D14',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1475,7 +1478,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
+    shadowColor: '#2B1D14',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -1544,7 +1547,7 @@ const styles = StyleSheet.create({
     borderLeftColor: '#E74C3C',
   },
   horairesTheo: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#6E5F54',
     marginTop: 1,
   },
@@ -1565,7 +1568,7 @@ const styles = StyleSheet.create({
   pointageRow: {
     flexDirection: 'row',
     backgroundColor: '#FAF5EF',
-    borderRadius: 10,
+    borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 10,
   },
@@ -1579,7 +1582,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE2D6',
   },
   pointageLabel: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#6E5F54',
     fontWeight: '600',
     marginBottom: 4,
@@ -1594,19 +1597,19 @@ const styles = StyleSheet.create({
     color: '#9A8C80',
   },
   ecartText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '700',
     marginTop: 2,
   },
   gpsBtn: {
     marginTop: 5,
     backgroundColor: '#EEF2FF',
-    borderRadius: 6,
+    borderRadius: 12,
     paddingHorizontal: 6,
     paddingVertical: 3,
   },
   gpsBtnText: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#3B4A9E',
     fontWeight: '600',
   },
@@ -1618,7 +1621,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
     backgroundColor: '#fff',
-    borderRadius: 14,
+    borderRadius: 20,
     padding: 14,
   },
   acompteRow: {
@@ -1626,7 +1629,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
     backgroundColor: '#F2E4E1',
-    borderRadius: 8,
+    borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 7,
   },
@@ -1658,7 +1661,7 @@ const styles = StyleSheet.create({
   },
   addAcompteBtn: {
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 14,
     backgroundColor: '#F2E4E1',
     alignItems: 'center',
     borderWidth: 1,
@@ -1673,7 +1676,7 @@ const styles = StyleSheet.create({
   addAcompteBtnLarge: {
     marginTop: 10,
     paddingVertical: 12,
-    borderRadius: 10,
+    borderRadius: 16,
     backgroundColor: '#F2E4E1',
     alignItems: 'center',
     borderWidth: 1.5,
@@ -1689,7 +1692,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
     backgroundColor: '#F2E4E1',
-    borderRadius: 14,
+    borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1729,7 +1732,7 @@ const styles = StyleSheet.create({
   empChipDot: {
     width: 7,
     height: 7,
-    borderRadius: 4,
+    borderRadius: 10,
   },
   empChipText: {
     fontSize: 13,
@@ -1742,7 +1745,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     padding: 16,
-    shadowColor: '#000',
+    shadowColor: '#2B1D14',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07,
     shadowRadius: 6,
@@ -1811,13 +1814,13 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   tableauRowWeekend: {
-    backgroundColor: '#FAFAFA',
+    backgroundColor: '#FAF5EF',
   },
   tableauRowAnomalie: {
     backgroundColor: '#FFF5F5',
   },
   tableauHeaderText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '700',
     color: '#6E5F54',
     textTransform: 'uppercase',
@@ -1845,7 +1848,7 @@ const styles = StyleSheet.create({
     color: '#9A8C80',
   },
   tableauTheoText: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#9A8C80',
     marginTop: 1,
   },
@@ -1855,7 +1858,7 @@ const styles = StyleSheet.create({
     color: '#2B1D14',
   },
   tableauEcartText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     marginTop: 1,
   },
@@ -1912,7 +1915,7 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     backgroundColor: '#F1E7DC',
-    borderRadius: 10,
+    borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
@@ -1928,7 +1931,7 @@ const styles = StyleSheet.create({
   modalCancelBtn: {
     flex: 1,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 18,
     alignItems: 'center',
     backgroundColor: '#F1E7DC',
     borderWidth: 1,
@@ -1942,7 +1945,7 @@ const styles = StyleSheet.create({
   modalSaveBtn: {
     flex: 2,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: 18,
     alignItems: 'center',
     backgroundColor: '#5C1F2E',
   },
@@ -1961,7 +1964,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#000',
+    shadowColor: '#2B1D14',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07,
     shadowRadius: 6,
@@ -1989,7 +1992,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   saisieEmpMetier: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '600',
   },
   saisieTableHeader: {
@@ -1999,7 +2002,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 4,
   },
   saisieHeaderText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '700',
     color: '#6E5F54',
     textTransform: 'uppercase',
@@ -2048,13 +2051,13 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   saisieManuelleIcon: {
-    fontSize: 10,
+    fontSize: 12,
   },
   editAbsentBtn: {
     marginTop: 12,
     marginBottom: 8,
     paddingVertical: 10,
-    borderRadius: 10,
+    borderRadius: 16,
     alignItems: 'center',
     backgroundColor: '#F1E7DC',
     borderWidth: 1.5,

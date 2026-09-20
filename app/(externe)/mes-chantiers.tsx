@@ -92,7 +92,7 @@ export default function MesChantiersExterne() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
                 {st && (
                   <View style={{ backgroundColor: st.bg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 8 }}>
-                    <Text style={{ fontSize: 10, fontWeight: '700', color: st.text }}>{STATUT_LABELS[c.statut]}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: st.text }}>{STATUT_LABELS[c.statut]}</Text>
                   </View>
                 )}
                 {pct !== null && <Text style={styles.cardMeta}>Avancement {pct}%</Text>}
@@ -175,53 +175,51 @@ export default function MesChantiersExterne() {
 
 const styles = StyleSheet.create({
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#5C1F2E',
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 10,
   },
-  creerBtn: { backgroundColor: '#5C1F2E', borderRadius: 12, paddingVertical: 14, alignItems: 'center', marginBottom: 16 },
-  creerBtnText: { color: '#fff', fontSize: 15, fontWeight: '800' },
+  creerBtn: { backgroundColor: '#5C1F2E', borderRadius: 999, paddingVertical: 15, alignItems: 'center', marginBottom: 16 },
+  creerBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   card: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#fff',
-    borderRadius: 20,
-    padding: 14,
-    marginBottom: 10,
+    borderRadius: 24,
+    padding: 16,
+    marginBottom: 12,
     gap: 10,
     shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
-  cardTitle: { fontSize: 15, fontWeight: '800', color: '#5C1F2E' },
-  cardAddress: { fontSize: 12, color: '#6E5F54', marginTop: 2 },
-  cardMeta: { fontSize: 11, color: '#5C1F2E', fontWeight: '700', marginTop: 4 },
+  cardTitle: { fontSize: 16.5, fontWeight: '600', color: '#2B1D14' },
+  cardAddress: { fontSize: 13.5, color: '#6E5F54', marginTop: 2 },
+  cardMeta: { fontSize: 13, color: '#5C1F2E', fontWeight: '600', marginTop: 4 },
   cardArrow: { fontSize: 24, color: '#5C1F2E', fontWeight: '300' },
-  recapBox: { flexDirection: 'row', backgroundColor: '#5C1F2E', borderRadius: 12, padding: 16, marginBottom: 16, alignItems: 'center' },
+  recapBox: { flexDirection: 'row', backgroundColor: '#5C1F2E', borderRadius: 24, padding: 18, marginBottom: 16, alignItems: 'center' },
   recapItem: { flex: 1, alignItems: 'center' },
   recapSep: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(255,255,255,0.15)' },
-  recapVal: { fontSize: 20, fontWeight: '800', color: '#fff' },
-  recapLbl: { fontSize: 10, color: 'rgba(255,255,255,0.7)', marginTop: 2, textAlign: 'center' },
-  empty: { fontSize: 13, color: '#6E5F54', fontStyle: 'italic', textAlign: 'center', paddingVertical: 24 },
+  recapVal: { fontFamily: 'Fraunces_600SemiBold', fontSize: 24, color: '#fff' },
+  recapLbl: { fontSize: 12.5, color: 'rgba(255,255,255,0.75)', marginTop: 4, textAlign: 'center' },
+  empty: { fontSize: 14, color: '#6E5F54', textAlign: 'center', paddingVertical: 24 },
   toggleClos: {
     backgroundColor: '#fff',
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: 999,
+    padding: 14,
     marginTop: 16,
     marginBottom: 10,
     borderWidth: 1,
     borderColor: '#EDE2D6',
   },
-  toggleClosText: { fontSize: 13, fontWeight: '700', color: '#5C1F2E' },
+  toggleClosText: { fontSize: 14, fontWeight: '600', color: '#5C1F2E', textAlign: 'center' },
   infoBox: {
     marginTop: 24,
-    padding: 12,
-    backgroundColor: '#FAF5EF',
-    borderRadius: 10,
-    borderLeftWidth: 3,
-    borderLeftColor: '#5C1F2E',
+    padding: 16,
+    backgroundColor: '#F1E7DC',
+    borderRadius: 18,
   },
-  infoLabel: { fontSize: 10, color: '#6E5F54', fontWeight: '700', textTransform: 'uppercase' },
-  infoValue: { fontSize: 13, color: '#5C1F2E', fontWeight: '700', marginTop: 2 },
+  infoLabel: { fontSize: 12, color: '#6E5F54', fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase' },
+  infoValue: { fontSize: 14.5, color: '#2B1D14', fontWeight: '500', marginTop: 3 },
 });

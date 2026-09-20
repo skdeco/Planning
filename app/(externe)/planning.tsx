@@ -269,7 +269,7 @@ export default function PlanningExterne() {
                 </View>
               ))}
               {joursAvecEquipe.size > 30 && (
-                <Text style={{ fontSize: 11, color: '#6E5F54', alignSelf: 'center' }}>+ {joursAvecEquipe.size - 30} autres</Text>
+                <Text style={{ fontSize: 12.5, color: '#6E5F54', alignSelf: 'center' }}>+ {joursAvecEquipe.size - 30} autres</Text>
               )}
             </View>
           </View>
@@ -289,53 +289,52 @@ export default function PlanningExterne() {
 
 const styles = StyleSheet.create({
   chantierTabs: {
-    maxHeight: 54, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexGrow: 0,
+    maxHeight: 56, backgroundColor: 'transparent', flexGrow: 0,
   },
   chantierChip: {
-    paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20,
-    backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6',
+    paddingHorizontal: 16, height: 36, justifyContent: 'center', borderRadius: 999,
+    backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1,
   },
   chantierChipActive: {
-    backgroundColor: '#5C1F2E', borderColor: '#5C1F2E',
+    backgroundColor: '#5C1F2E',
   },
-  chantierChipText: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
-  title: { fontSize: 17, fontWeight: '800', color: '#5C1F2E', marginBottom: 2 },
-  subtitle: { fontSize: 12, color: '#6E5F54', marginBottom: 16 },
+  chantierChipText: { fontSize: 13.5, fontWeight: '500', color: '#2B1D14' },
+  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: '#2B1D14', marginBottom: 2 },
+  subtitle: { fontSize: 13.5, color: '#6E5F54', marginBottom: 16 },
   weekHeader: {
     borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center', paddingVertical: 6,
   },
-  weekHeaderText: { fontSize: 10, fontWeight: '700', color: '#5C1F2E' },
+  weekHeaderText: { fontSize: 12.5, fontWeight: '600', color: '#6E5F54' },
   ganttRow: {
     flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 1, borderBottomColor: '#EDE2D6',
   },
-  lotLabel: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
-  prorataTag: { fontSize: 9, color: '#6E5F54', fontStyle: 'italic' },
+  lotLabel: { fontSize: 13.5, fontWeight: '600', color: '#2B1D14' },
+  prorataTag: { fontSize: 11, color: '#9A8C80' },
   ganttBar: {
     position: 'absolute', top: 6, bottom: 6,
-    borderWidth: 1, borderRadius: 6,
+    borderWidth: 1, borderRadius: 12,
     alignItems: 'center', justifyContent: 'center',
     paddingHorizontal: 6,
   },
-  ganttBarText: { fontSize: 10, fontWeight: '800' },
+  ganttBarText: { fontSize: 12.5, fontWeight: '700' },
   equipeBox: {
-    marginTop: 24, padding: 12, backgroundColor: '#fff',
-    borderRadius: 10, borderLeftWidth: 3, borderLeftColor: '#2E7D32',
+    marginTop: 24, padding: 16, backgroundColor: '#fff', borderRadius: 24,
+    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2,
   },
-  equipeTitle: { fontSize: 12, fontWeight: '800', color: '#5C1F2E' },
+  equipeTitle: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
   equipeChip: {
-    backgroundColor: '#D4EDDA', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10,
+    backgroundColor: '#F1E7DC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
   },
-  equipeChipText: { fontSize: 10, fontWeight: '700', color: '#155724' },
+  equipeChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
   emptyBox: {
-    padding: 32, backgroundColor: '#fff', borderRadius: 12,
+    padding: 32, backgroundColor: '#fff', borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
   },
-  emptyText: { fontSize: 13, color: '#6E5F54', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#6E5F54', textAlign: 'center' },
   legendBox: {
-    marginTop: 20, padding: 12, backgroundColor: '#FAF5EF', borderRadius: 10,
-    borderLeftWidth: 3, borderLeftColor: '#5C1F2E',
+    marginTop: 20, padding: 14, backgroundColor: '#F1E7DC', borderRadius: 18,
   },
-  legendTitle: { fontSize: 11, fontWeight: '800', color: '#5C1F2E', marginBottom: 4 },
-  legendText: { fontSize: 11, color: '#6E5F54', lineHeight: 16 },
+  legendTitle: { fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 4 },
+  legendText: { fontSize: 13, color: '#6E5F54', lineHeight: 18 },
 });

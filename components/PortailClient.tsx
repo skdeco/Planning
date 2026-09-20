@@ -911,7 +911,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 <td style="padding:8px;">${m.libelle}</td>
                 ${showHT ? `<td style="padding:8px;text-align:right;">${fmt(m.montantHT)} EUR</td>` : ''}
                 <td style="padding:8px;text-align:right;">${fmt(m.montantTTC)} EUR</td>
-                <td style="padding:8px;text-align:right;color:${paye >= m.montantTTC ? '#27AE60' : '#E74C3C'}">${fmt(paye)} EUR</td>
+                <td style="padding:8px;text-align:right;color:${paye >= m.montantTTC ? '#2E7D32' : '#E74C3C'}">${fmt(paye)} EUR</td>
               </tr>`;
             }).join('')}
             ${supplements.map(s => {
@@ -920,7 +920,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 <td style="padding:8px;font-style:italic;">+ ${s.libelle}</td>
                 ${showHT ? `<td style="padding:8px;text-align:right;">${fmt(s.montantHT)} EUR</td>` : ''}
                 <td style="padding:8px;text-align:right;">${fmt(s.montantTTC)} EUR</td>
-                <td style="padding:8px;text-align:right;color:${paye >= s.montantTTC ? '#27AE60' : '#E74C3C'}">${fmt(paye)} EUR</td>
+                <td style="padding:8px;text-align:right;color:${paye >= s.montantTTC ? '#2E7D32' : '#E74C3C'}">${fmt(paye)} EUR</td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -1624,7 +1624,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                     <Text style={[styles.pfsResumeLabel, { color: '#5C1F2E', fontWeight: '800' }]}>Reste à régler</Text>
                     <Text style={[styles.pfsResumeValue, { color: '#5C1F2E', fontWeight: '800' }]}>{fmt(situationsAReglerClient.resteADate)} €</Text>
                   </View>
-                  <Text style={{ fontSize: 11, color: '#B0A99F', marginTop: 8 }}>
+                  <Text style={{ fontSize: 12.5, color: '#B0A99F', marginTop: 8 }}>
                     À terme, reste à régler sur l'ensemble du contrat : {fmt(resteAPayerChantier)} €
                   </Text>
                 </View>
@@ -1692,7 +1692,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   <View key={s.id} style={{ paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4' }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
                       <Text style={{ fontSize: 13, fontWeight: '800', color: '#5C1F2E' }}>{s.intitule}</Text>
-                      <Text style={{ fontSize: 11, color: '#6E5F54' }}>{new Date(s.dateGel).toLocaleDateString('fr-FR')}</Text>
+                      <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{new Date(s.dateGel).toLocaleDateString('fr-FR')}</Text>
                     </View>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 }}>
                       <Text style={{ fontSize: 12, color: '#6E5F54' }}>Facturé sur cette situation</Text>
@@ -1733,7 +1733,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 </View>
                 {avancementGlobalCorps != null && (
                   <View style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}>
-                    <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
+                    <Text style={{ color: '#fff', fontSize: 12.5, fontWeight: '800' }}>{avancementGlobalCorps}%</Text>
                   </View>
                 )}
               </Pressable>
@@ -1778,14 +1778,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                             )}
                           </View>
                           {(c.dateDebutPrevue || c.dateFinPrevue) && (
-                            <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>{c.dateDebutPrevue || '?'} → {c.dateFinPrevue || '?'}
+                            <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>{c.dateDebutPrevue || '?'} → {c.dateFinPrevue || '?'}
                             </Text>
                           )}
                         </Pressable>
                         <View style={{ alignItems: 'flex-end', marginLeft: 8 }}>
                           <Text style={{ fontSize: 13, fontWeight: '800', color: '#5C1F2E' }}>{c.pourcentage}%</Text>
                           {c.montant && c.pourcentage > 0 && !isClient && (
-                            <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '700', marginTop: 1 }}>
+                            <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '700', marginTop: 1 }}>
                               = {fmt((c.montant || 0) * (c.pourcentage / 100))} €
                             </Text>
                           )}
@@ -1816,7 +1816,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         <View style={{ marginTop: 8 }}>
                           {c.photosAvant && c.photosAvant.length > 0 && (
                             <View style={{ marginBottom: 6 }}>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#6E5F54', marginBottom: 4 }}>AVANT</Text>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54', marginBottom: 4 }}>AVANT</Text>
                               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                                 {c.photosAvant.map((p, i) => (
                                   <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#6E5F54' }} />
@@ -1826,7 +1826,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           )}
                           {c.photosApres && c.photosApres.length > 0 && (
                             <View>
-                              <Text style={{ fontSize: 10, fontWeight: '700', color: '#2E7D32', marginBottom: 4 }}>APRÈS</Text>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: '#2E7D32', marginBottom: 4 }}>APRÈS</Text>
                               <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
                                 {c.photosApres.map((p, i) => (
                                   <Image key={i} source={{ uri: p }} style={{ width: 72, height: 72, borderRadius: 6, borderWidth: 2, borderColor: '#2E7D32' }} />
@@ -1851,7 +1851,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                                 borderLeftWidth: 3,
                                 borderLeftColor: unreadByAdmin ? '#E74C3C' : (isMine ? '#6E5F54' : '#2E7D32'),
                               }}>
-                                <Text style={{ fontSize: 10, color: '#6E5F54', fontWeight: '700' }}>
+                                <Text style={{ fontSize: 12, color: '#6E5F54', fontWeight: '700' }}>
                                   {cc.auteurNom} ({cc.auteurType}) · {new Date(cc.createdAt).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
                                   {unreadByAdmin ? 'Non lu' : ''}
                                 </Text>
@@ -1867,7 +1867,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           onPress={() => openCommentaireClient(c.id)}
                           style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 8, borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E' }}
                         >
-                          <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '700' }}>Ajouter un commentaire</Text>
+                          <Text style={{ fontSize: 12.5, color: '#5C1F2E', fontWeight: '700' }}>Ajouter un commentaire</Text>
                         </Pressable>
                       )}
                       {/* Validation d'étape par le client sur un lot achevé — Tier 3 B */}
@@ -1876,7 +1876,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         if (valideLe) {
                           return (
                             <View style={{ marginTop: 6, paddingVertical: 6, alignItems: 'center', backgroundColor: '#E8F5E9', borderRadius: 8 }}>
-                              <Text style={{ fontSize: 11, color: '#2E7D32', fontWeight: '700' }}>Validé par le client le {new Date(valideLe).toLocaleDateString('fr-FR')}</Text>
+                              <Text style={{ fontSize: 12.5, color: '#2E7D32', fontWeight: '700' }}>Validé par le client le {new Date(valideLe).toLocaleDateString('fr-FR')}</Text>
                             </View>
                           );
                         }
@@ -1947,14 +1947,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                         </View>
                       )}
                       {Platform.OS !== 'web' && (
-                        <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic', marginTop: 6 }}>
+                        <Text style={{ fontSize: 12.5, color: '#6E5F54', fontStyle: 'italic', marginTop: 6 }}>
                           Ouvrez le devis sur la version web pour voir l'aperçu et copier-coller les lots.
                         </Text>
                       )}
                     </>
                   ) : (
                     <View style={{ backgroundColor: '#F2E4E1', borderRadius: 10, padding: 12, marginTop: 6 }}>
-                      <Text style={{ fontSize: 11, color: '#5C1F2E' }}>Aucun devis lié à ce chantier. Uploadez-en un dans 💼 Marchés pour voir l'aperçu ici et extraire automatiquement les lots.
+                      <Text style={{ fontSize: 12.5, color: '#5C1F2E' }}>Aucun devis lié à ce chantier. Uploadez-en un dans 💼 Marchés pour voir l'aperçu ici et extraire automatiquement les lots.
                       </Text>
                     </View>
                   )}
@@ -2122,7 +2122,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   <>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
                 <Text style={styles.sectionTitle}>Plans</Text>
-                <Text style={{ fontSize: 11, color: '#6E5F54' }}>
+                <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>
                   {activePlans.length} plan{activePlans.length > 1 ? 's' : ''}
                 </Text>
               </View>
@@ -2371,7 +2371,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                           ) : null}
                         </View>
                         <View style={[styles.savBadge, { backgroundColor: sc.bg }]}>
-                          <Text style={{ fontSize: 10, fontWeight: '700', color: sc.text }}>{SAV_STATUT_LABELS[t.statut] || t.statut}</Text>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: sc.text }}>{SAV_STATUT_LABELS[t.statut] || t.statut}</Text>
                         </View>
                         <Text style={styles.savChevron}>›</Text>
                       </Pressable>
@@ -2430,7 +2430,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 >
                   <View style={{ flex: 1 }}>
                     <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E' }}>{a.prenom} {a.nom}</Text>
-                    {a.societe && <Text style={{ fontSize: 11, color: '#6E5F54' }}>{a.societe}</Text>}
+                    {a.societe && <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{a.societe}</Text>}
                   </View>
                 </Pressable>
               ))}
@@ -2543,7 +2543,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 16, marginBottom: 6 }}>Planning prévu</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 4 }}>Début</Text>
+                <Text style={{ fontSize: 12.5, color: '#6E5F54', marginBottom: 4 }}>Début</Text>
                 <DatePickerField
                   value={corpsForm.dateDebutPrevue}
                   onChange={v => setCorpsForm(f => ({ ...f, dateDebutPrevue: v }))}
@@ -2551,7 +2551,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 4 }}>Fin</Text>
+                <Text style={{ fontSize: 12.5, color: '#6E5F54', marginBottom: 4 }}>Fin</Text>
                 <DatePickerField
                   value={corpsForm.dateFinPrevue}
                   onChange={v => setCorpsForm(f => ({ ...f, dateFinPrevue: v }))}
@@ -2560,7 +2560,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                 />
               </View>
             </View>
-            <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 10, fontStyle: 'italic' }}>
+            <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 10, fontStyle: 'italic' }}>
               Le statut "En cours" est automatique : actif si la date d'aujourd'hui est entre le début et la fin prévus.
             </Text>
 
@@ -2602,35 +2602,35 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginTop: 16, marginBottom: 6 }}>Comparatif Avant / Après</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, padding: 8 }}>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: '#6E5F54', marginBottom: 6 }}>AVANT ({lotPhotosAvant.length})</Text>
+                <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#6E5F54', marginBottom: 6 }}>AVANT ({lotPhotosAvant.length})</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
                   {lotPhotosAvant.map(uri => (
                     <View key={uri} style={{ position: 'relative' }}>
                       <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
                       <Pressable onPress={() => removeLotPhoto(uri, 'avant')} style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>✕</Text>
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✕</Text>
                       </Pressable>
                     </View>
                   ))}
                 </View>
                 <Pressable onPress={() => pickPhotoForLot('avant')} style={{ backgroundColor: '#fff', borderRadius: 8, paddingVertical: 6, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#6E5F54' }}>
-                  <Text style={{ fontSize: 11, color: '#6E5F54', fontWeight: '700' }}>+ Avant</Text>
+                  <Text style={{ fontSize: 12.5, color: '#6E5F54', fontWeight: '700' }}>+ Avant</Text>
                 </Pressable>
               </View>
               <View style={{ flex: 1, backgroundColor: '#F1F8F2', borderRadius: 10, padding: 8 }}>
-                <Text style={{ fontSize: 11, fontWeight: '800', color: '#2E7D32', marginBottom: 6 }}>APRÈS ({lotPhotosApres.length})</Text>
+                <Text style={{ fontSize: 12.5, fontWeight: '800', color: '#2E7D32', marginBottom: 6 }}>APRÈS ({lotPhotosApres.length})</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 6 }}>
                   {lotPhotosApres.map(uri => (
                     <View key={uri} style={{ position: 'relative' }}>
                       <Image source={{ uri }} style={{ width: 56, height: 56, borderRadius: 6 }} />
                       <Pressable onPress={() => removeLotPhoto(uri, 'apres')} style={{ position: 'absolute', top: -4, right: -4, width: 18, height: 18, borderRadius: 9, backgroundColor: '#E74C3C', alignItems: 'center', justifyContent: 'center' }}>
-                        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>✕</Text>
+                        <Text style={{ color: '#fff', fontSize: 12, fontWeight: '800' }}>✕</Text>
                       </Pressable>
                     </View>
                   ))}
                 </View>
                 <Pressable onPress={() => pickPhotoForLot('apres')} style={{ backgroundColor: '#fff', borderRadius: 8, paddingVertical: 6, alignItems: 'center', borderWidth: 1, borderStyle: 'dashed', borderColor: '#2E7D32' }}>
-                  <Text style={{ fontSize: 11, color: '#2E7D32', fontWeight: '700' }}>+ Après</Text>
+                  <Text style={{ fontSize: 12.5, color: '#2E7D32', fontWeight: '700' }}>+ Après</Text>
                 </Pressable>
               </View>
             </View>
@@ -2750,8 +2750,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   </Pressable>
                   {importTexte && (
                     <View style={{ marginTop: 12, backgroundColor: '#F1E7DC', borderRadius: 10, padding: 10, maxHeight: 150 }}>
-                      <Text style={{ fontSize: 10, fontWeight: '700', color: '#6E5F54', marginBottom: 4 }}>TEXTE EXTRAIT ({importTexte.length} caractères)</Text>
-                      <ScrollView><Text style={{ fontSize: 11, color: '#2B1D14' }} numberOfLines={10}>{importTexte.slice(0, 500)}...</Text></ScrollView>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54', marginBottom: 4 }}>TEXTE EXTRAIT ({importTexte.length} caractères)</Text>
+                      <ScrollView><Text style={{ fontSize: 12.5, color: '#2B1D14' }} numberOfLines={10}>{importTexte.slice(0, 500)}...</Text></ScrollView>
                     </View>
                   )}
                 </View>
@@ -2888,7 +2888,7 @@ const styles = StyleSheet.create({
   backBarText: { fontSize: 15, fontWeight: '700', color: DS.bordeaux },
   validerCard: { backgroundColor: DS.cremeNude, borderRadius: 20, padding: 12, marginBottom: 14 },
   validerTitle: { fontSize: 12, fontWeight: '800', color: DS.bordeaux, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 8 },
-  validerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: DS.surface, borderRadius: 14, paddingHorizontal: 12, paddingVertical: 12, marginBottom: 6 },
+  validerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: DS.surface, borderRadius: 20, paddingHorizontal: 12, paddingVertical: 12, marginBottom: 6 },
   validerRowText: { flex: 1, fontSize: 14, fontWeight: '600', color: DS.sombre },
   validerChevron: { fontSize: 20, fontWeight: '700', color: DS.bordeaux, marginLeft: 8 },
   fluxCard: { backgroundColor: DS.surface, borderRadius: 20, padding: 16, marginBottom: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
@@ -2901,7 +2901,7 @@ const styles = StyleSheet.create({
   fluxTotalVal: { fontSize: 17, fontWeight: '800', color: DS.bordeaux },
   fluxNote: { fontSize: 12, color: DS.textSecondary, fontStyle: 'italic', marginTop: 6 },
   sitHeadRow: { flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: DS.border, paddingBottom: 6, marginBottom: 2 },
-  sitHead: { fontSize: 10, fontWeight: '700', color: DS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'right' },
+  sitHead: { fontSize: 12, fontWeight: '700', color: DS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.3, textAlign: 'right' },
   sitCol0: { flex: 1.5, textAlign: 'left' },
   sitCol: { flex: 1, textAlign: 'right' },
   sitRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 6 },
@@ -2910,10 +2910,10 @@ const styles = StyleSheet.create({
   sitReste: { color: DS.bordeaux },
   versWrap: { paddingLeft: 10, paddingBottom: 6, marginTop: -2 },
   versRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 2 },
-  versTxt: { fontSize: 11, color: DS.textSecondary },
+  versTxt: { fontSize: 12.5, color: DS.textSecondary },
   versDel: { fontSize: 14, fontWeight: '700', color: DS.marron, paddingHorizontal: 4 },
   versForm: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 },
-  versInput: { flex: 1, borderWidth: 1, borderColor: DS.border, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6, fontSize: 12, color: DS.text, backgroundColor: DS.surfaceHover },
+  versInput: { flex: 1, borderWidth: 1, borderColor: DS.border, borderRadius: 14, paddingHorizontal: 8, paddingVertical: 6, fontSize: 12, color: DS.text, backgroundColor: DS.surfaceHover },
   versSave: { backgroundColor: DS.bordeaux, borderRadius: 8, paddingHorizontal: 12, paddingVertical: 7 },
   versSaveTxt: { color: DS.cremeFond, fontWeight: '700', fontSize: 12 },
   versAdd: { fontSize: 12, fontWeight: '700', color: DS.bordeaux, marginTop: 4 },
@@ -2944,7 +2944,7 @@ const styles = StyleSheet.create({
   closeBtn: {
     width: 32,
     height: 32,
-    borderRadius: 16,
+    borderRadius: 20,
     backgroundColor: 'rgba(255,255,255,0.15)',
     alignItems: 'center',
     justifyContent: 'center',
@@ -2968,14 +2968,14 @@ const styles = StyleSheet.create({
   },
   contactPrincipalCard: {
     backgroundColor: '#F2E4E1',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
     marginBottom: 12,
     borderWidth: 2,
     borderColor: '#5C1F2E',
   },
   contactPrincipalLabel: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '700',
     color: '#5C1F2E',
     textTransform: 'uppercase',
@@ -2996,7 +2996,7 @@ const styles = StyleSheet.create({
     flexDirection: 'column',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#EDE2D6',
     backgroundColor: '#FAF5EF',
@@ -3004,7 +3004,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
   },
   lienChipLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#6E5F54',
     textTransform: 'uppercase',
@@ -3032,13 +3032,13 @@ const styles = StyleSheet.create({
   progressBarBg: {
     height: 16,
     backgroundColor: '#EDE2D6',
-    borderRadius: 8,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
     backgroundColor: '#5C1F2E',
-    borderRadius: 8,
+    borderRadius: 14,
   },
   progressPct: {
     fontSize: 14,
@@ -3050,21 +3050,21 @@ const styles = StyleSheet.create({
   corpsBarBg: {
     height: 10,
     backgroundColor: '#EDE2D6',
-    borderRadius: 5,
+    borderRadius: 10,
     overflow: 'hidden',
     marginTop: 6,
   },
   corpsBarFill: {
     height: '100%',
     backgroundColor: '#5C1F2E',
-    borderRadius: 5,
+    borderRadius: 10,
   },
   addCorpsBtn: {
     backgroundColor: '#F2E4E1',
     borderWidth: 1,
     borderColor: '#5C1F2E',
     borderStyle: 'dashed',
-    borderRadius: 10,
+    borderRadius: 16,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: 10,
@@ -3078,10 +3078,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#5C1F2E',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 6,
+    borderRadius: 12,
   },
   gererPhotosBtnText: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#fff',
     fontWeight: '700',
   },
@@ -3099,7 +3099,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#F1E7DC',
   },
   marcheLabel: {
     fontSize: 14,
@@ -3123,7 +3123,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 14,
     marginTop: 4,
     backgroundColor: '#F1E7DC',
   },
@@ -3142,7 +3142,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
+    borderBottomColor: '#F1E7DC',
   },
   savObjet: {
     fontSize: 14,
@@ -3157,7 +3157,7 @@ const styles = StyleSheet.create({
   savBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 8,
+    borderRadius: 14,
     marginLeft: 8,
   },
   timelineRow: {
@@ -3174,7 +3174,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
   },
   timelineDate: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#6E5F54',
     marginBottom: 2,
   },
@@ -3189,7 +3189,7 @@ const styles = StyleSheet.create({
   },
   partagerBtn: {
     backgroundColor: '#5C1F2E',
-    borderRadius: 14,
+    borderRadius: 20,
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -3200,7 +3200,7 @@ const styles = StyleSheet.create({
   },
   fermerBtn: {
     backgroundColor: '#F1E7DC',
-    borderRadius: 14,
+    borderRadius: 20,
     paddingVertical: 14,
     alignItems: 'center',
   },
@@ -3229,7 +3229,7 @@ const styles = StyleSheet.create({
   },
   importDevisBtn: {
     backgroundColor: '#5C1F2E',
-    borderRadius: 10,
+    borderRadius: 16,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: 8,
@@ -3246,7 +3246,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAF5EF',
     borderWidth: 1,
     borderColor: '#EDE2D6',
-    borderRadius: 8,
+    borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 8,
     marginTop: 8,
@@ -3254,11 +3254,11 @@ const styles = StyleSheet.create({
   },
   devisLinkText: {
     flex: 1,
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#6E5F54',
   },
   devisLinkAction: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#5C1F2E',
   },
@@ -3295,7 +3295,7 @@ const styles = StyleSheet.create({
   },
   detecterBtn: {
     backgroundColor: '#5C1F2E',
-    borderRadius: 10,
+    borderRadius: 16,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 12,
@@ -3310,7 +3310,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     paddingHorizontal: 10,
-    borderRadius: 8,
+    borderRadius: 14,
     backgroundColor: '#FAF5EF',
     borderWidth: 1,
     borderColor: '#EDE2D6',
@@ -3320,7 +3320,7 @@ const styles = StyleSheet.create({
   lotCheckbox: {
     width: 22,
     height: 22,
-    borderRadius: 6,
+    borderRadius: 12,
     backgroundColor: '#fff',
     borderWidth: 2,
     borderColor: '#9A8C80',
@@ -3350,7 +3350,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2E4E1',
     borderWidth: 1,
     borderColor: '#EDE2D6',
-    borderRadius: 10,
+    borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginBottom: 10,
@@ -3379,14 +3379,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1E7DC',
     borderWidth: 1,
     borderColor: '#5C1F2E',
-    borderRadius: 10,
+    borderRadius: 16,
     paddingVertical: 10,
     paddingHorizontal: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
   reanalyserBtnText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '800',
     color: '#5C1F2E',
   },
@@ -3396,7 +3396,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 10,
     backgroundColor: '#FAF5EF',
-    borderRadius: 8,
+    borderRadius: 14,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginTop: 6,
@@ -3421,7 +3421,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FBEFEC',
     borderWidth: 1,
     borderColor: '#E74C3C',
-    borderRadius: 10,
+    borderRadius: 16,
     paddingVertical: 10,
     alignItems: 'center',
     marginTop: 8,
@@ -3438,12 +3438,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#5C1F2E',
     paddingHorizontal: 10,
     paddingVertical: 8,
-    borderRadius: 8,
+    borderRadius: 14,
     marginBottom: 4,
     gap: 6,
   },
   situationColHeader: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '800',
     color: '#5C1F2E',
     textTransform: 'uppercase',
@@ -3492,7 +3492,7 @@ const styles = StyleSheet.create({
   },
   factureBtn: {
     backgroundColor: '#5C1F2E',
-    borderRadius: 12,
+    borderRadius: 18,
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 12,
@@ -3504,7 +3504,7 @@ const styles = StyleSheet.create({
   },
   // ── Point financier de situation ──
   pfsSubtitle: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#6E5F54',
     marginTop: -6,
     marginBottom: 10,
@@ -3512,7 +3512,7 @@ const styles = StyleSheet.create({
   },
   pfsResumeBox: {
     backgroundColor: '#FAF5EF',
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 14,
   },
@@ -3548,7 +3548,7 @@ const styles = StyleSheet.create({
   },
   pfsHistItem: {
     backgroundColor: '#FAF5EF',
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 12,
     marginBottom: 10,
     borderLeftWidth: 4,
@@ -3564,7 +3564,7 @@ const styles = StyleSheet.create({
     color: '#5C1F2E',
   },
   pfsHistDate: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#6E5F54',
     marginTop: 2,
   },
@@ -3590,7 +3590,7 @@ const styles = StyleSheet.create({
   pfsBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: 18,
   },
   pfsBadgePayee: {
     backgroundColor: '#D4EDDA',
@@ -3599,7 +3599,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFF3CD',
   },
   pfsBadgeText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '800',
   },
   pfsHistActions: {
@@ -3612,10 +3612,10 @@ const styles = StyleSheet.create({
     backgroundColor: '#EDE2D6',
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   pfsActionBtnText: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '700',
     color: '#5C1F2E',
   },
@@ -3632,7 +3632,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F2E4E1',
     borderWidth: 1,
     borderColor: '#F1E7DC',
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 12,
     marginTop: 10,
   },
@@ -3660,7 +3660,7 @@ const styles = StyleSheet.create({
   },
   lotEnCoursCard: {
     backgroundColor: '#F2E4E1',
-    borderRadius: 10,
+    borderRadius: 16,
     padding: 10,
     borderLeftWidth: 4,
     borderLeftColor: '#F5C242',
@@ -3669,16 +3669,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#F5C242',
     paddingHorizontal: 8,
     paddingVertical: 2,
-    borderRadius: 10,
+    borderRadius: 16,
   },
   lotBadgeEnCoursText: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '800',
     color: '#5A4500',
   },
   lotCommentaireBox: {
     backgroundColor: '#F1E7DC',
-    borderRadius: 8,
+    borderRadius: 14,
     padding: 8,
     marginTop: 6,
     borderLeftWidth: 3,
@@ -3700,7 +3700,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#F1E7DC',
   },
   equipeJourLabel: {
-    fontSize: 10,
+    fontSize: 12,
     fontWeight: '700',
     color: '#6E5F54',
     textTransform: 'uppercase',
@@ -3708,7 +3708,7 @@ const styles = StyleSheet.create({
     width: 80,
   },
   equipeJourDate: {
-    fontSize: 11,
+    fontSize: 12.5,
     color: '#6E5F54',
     width: 60,
   },
@@ -3716,7 +3716,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   equipeBadgeVert: { backgroundColor: '#E8F5E9' },
   equipeBadgeVertText: { color: '#2E7D32', fontSize: 12, fontWeight: '600' },
@@ -3731,12 +3731,12 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 12,
     backgroundColor: '#FAF5EF',
-    borderRadius: 10,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: '#EDE2D6',
   },
   savCreeparBadge: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#5C1F2E',
     marginTop: 2,
     fontStyle: 'italic',
@@ -3751,11 +3751,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#5C1F2E',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 16,
+    borderRadius: 20,
   },
   savCreerBtnText: {
     color: '#fff',
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '700',
   },
 
@@ -3780,11 +3780,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 8,
     paddingHorizontal: 8,
-    borderRadius: 6,
+    borderRadius: 12,
     backgroundColor: '#F1E7DC',
   },
   lieAcompactType: {
-    fontSize: 11,
+    fontSize: 12.5,
     fontWeight: '600',
     color: '#6E5F54',
     width: 130,
@@ -3801,7 +3801,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   planShare: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#E7F1EA', marginRight: 4 },
-  planShareText: { fontSize: 11, fontWeight: '700', color: '#2E7D5B' },
+  planShareText: { fontSize: 12.5, fontWeight: '700', color: '#2E7D5B' },
   planSharePrive: { backgroundColor: '#F1E7DC' },
   planSharePriveText: { color: '#5C1F2E' },
   planRow: {
@@ -3810,7 +3810,7 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 10,
     paddingHorizontal: 12,
-    borderRadius: 8,
+    borderRadius: 14,
     backgroundColor: '#F1E7DC',
   },
   planNom: {
@@ -3819,7 +3819,7 @@ const styles = StyleSheet.create({
     color: '#5C1F2E',
   },
   planMeta: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#6E5F54',
     marginTop: 2,
   },
@@ -3856,7 +3856,7 @@ const styles = StyleSheet.create({
   },
   kpiCell: { flex: 1 },
   kpiLabel: {
-    fontSize: 10,
+    fontSize: 12,
     color: '#6E5F54',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
