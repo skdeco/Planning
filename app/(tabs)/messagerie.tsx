@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { ScreenContainer } from '@/components/screen-container';
+import { SelectField } from '@/components/ui/SelectField';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useRouter } from 'expo-router';
@@ -567,59 +568,67 @@ export default function MessagerieScreen() {
         })()}
         {showListFilters && (
         <View style={styles.filterCard}>
-          {/* Chantiers */}
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>Chantier</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-              <Pressable style={[styles.filterChip, listFilterChantier === 'all' && styles.filterChipActive]} onPress={() => setListFilterChantier('all')}>
-                <Text style={[styles.filterChipText, listFilterChantier === 'all' && styles.filterChipTextActive]}>Tous</Text>
-              </Pressable>
-              {data.chantiers.filter(c => c.statut === 'actif').map(c => (
-                <Pressable key={c.id} style={[styles.filterChip, listFilterChantier === c.id && { backgroundColor: c.couleur || '#5C1F2E', borderColor: c.couleur || '#5C1F2E' }]}
-                  onPress={() => setListFilterChantier(listFilterChantier === c.id ? 'all' : c.id)}>
-                  <Text style={[styles.filterChipText, listFilterChantier === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+          <View style={styles.filterGrid}>
+            <View style={styles.filterCell}>
+              <Text style={styles.filterLabel}>Chantier</Text>
+              <SelectField
+                compact
+                searchable
+                value={listFilterChantier}
+                title="Filtrer par chantier"
+                placeholder="Tous"
+                options={[
+                  { value: 'all', label: 'Tous les chantiers' },
+                  ...data.chantiers.filter(c => c.statut === 'actif').map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
+                ]}
+                onSelect={v => setListFilterChantier(v)}
+              />
+            </View>
+            <View style={styles.filterCell}>
+              <Text style={styles.filterLabel}>Qui</Text>
+              <SelectField
+                compact
+                searchable
+                value={listFilterWho}
+                title="Filtrer par personne"
+                placeholder="Tous"
+                options={[
+                  { value: 'all', label: 'Tout le monde' },
+                  ...data.employes.map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}`.trim() })),
+                ]}
+                onSelect={v => setListFilterWho(v)}
+              />
+            </View>
           </View>
-          {/* Qui */}
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>Qui</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-              <Pressable style={[styles.filterChip, listFilterWho === 'all' && styles.filterChipActive]} onPress={() => setListFilterWho('all')}>
-                <Text style={[styles.filterChipText, listFilterWho === 'all' && styles.filterChipTextActive]}>Tous</Text>
-              </Pressable>
-              {data.employes.map(e => (
-                <Pressable key={e.id} style={[styles.filterChip, listFilterWho === e.id && styles.filterChipActive]}
-                  onPress={() => setListFilterWho(listFilterWho === e.id ? 'all' : e.id)}>
-                  <Text style={[styles.filterChipText, listFilterWho === e.id && styles.filterChipTextActive]}>{e.prenom}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+          <View style={styles.filterGrid}>
+            <View style={styles.filterCell}>
+              <Text style={styles.filterLabel}>Type</Text>
+              <SelectField
+                compact
+                value={listFilterType}
+                title="Type de message"
+                options={[
+                  { value: 'all', label: 'Tout' },
+                  { value: 'text', label: 'Texte' },
+                  { value: 'photo', label: 'Photos' },
+                  { value: 'pdf', label: 'PDF' },
+                ]}
+                onSelect={v => setListFilterType(v as typeof listFilterType)}
+              />
+            </View>
+            <View style={styles.filterCell}>
+              <Text style={styles.filterLabel}>Du / au</Text>
+              <View style={{ flexDirection: 'row', gap: 6 }}>
+                <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={listFilterDateFrom} onChangeDate={setListFilterDateFrom} />
+                <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={listFilterDateTo} onChangeDate={setListFilterDateTo} />
+              </View>
+            </View>
           </View>
-          {/* Date + Type */}
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>Du</Text>
-            <DateInput style={styles.filterInput} value={listFilterDateFrom} onChangeDate={setListFilterDateFrom} />
-            <Text style={styles.filterLabel}>au</Text>
-            <DateInput style={styles.filterInput} value={listFilterDateTo} onChangeDate={setListFilterDateTo} />
-          </View>
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>Type</Text>
-            {(['all', 'text', 'photo', 'pdf'] as const).map(tp => (
-              <Pressable key={tp} style={[styles.filterChip, listFilterType === tp && styles.filterChipActive]}
-                onPress={() => setListFilterType(listFilterType === tp ? 'all' : tp)}>
-                <Text style={[styles.filterChipText, listFilterType === tp && styles.filterChipTextActive]}>
-                  {tp === 'all' ? 'Tout' : tp === 'text' ? 'Texte' : tp === 'photo' ? 'Photos' : 'PDF'}
-                </Text>
-              </Pressable>
-            ))}
-            <Pressable style={{ marginLeft: 'auto', paddingVertical: 4, paddingHorizontal: 8 }} onPress={() => {
-              setListFilterChantier('all'); setListFilterWho('all'); setListFilterDateFrom(''); setListFilterDateTo(''); setListFilterType('all');
-            }}>
-              <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>Réinitialiser</Text>
-            </Pressable>
-          </View>
+          <Pressable style={{ alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 8 }} onPress={() => {
+            setListFilterChantier('all'); setListFilterWho('all'); setListFilterDateFrom(''); setListFilterDateTo(''); setListFilterType('all');
+          }}>
+            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>Réinitialiser</Text>
+          </Pressable>
         </View>
         )}
 
@@ -835,74 +844,82 @@ export default function MessagerieScreen() {
         )}
       </View>
 
-      {/* Barre de filtres */}
+      {/* Barre de filtres — listes déroulantes avec saisie */}
       <View style={styles.filterBar}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 12, alignItems: 'center' }}>
-          {/* Chantiers */}
-          {mesChantiers.map(c => (
-            <Pressable
-              key={c.id}
-              style={[styles.chantierChip, selectedChantierId === c.id && { backgroundColor: c.couleur || '#5C1F2E', borderColor: c.couleur || '#5C1F2E' }]}
-              onPress={() => setSelectedChantierId(selectedChantierId === c.id ? null : c.id)}
-            >
-              <Text style={[styles.chantierChipText, selectedChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
-            </Pressable>
-          ))}
-          {/* Bouton filtres avancés — admin seulement */}
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 16 }}>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.filterLabel}>Chantier</Text>
+            <SelectField
+              compact
+              searchable
+              value={selectedChantierId || 'all'}
+              title="Chantier de la discussion"
+              placeholder="Tous"
+              options={[
+                { value: 'all', label: 'Tous les chantiers' },
+                ...mesChantiers.map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
+              ]}
+              onSelect={v => setSelectedChantierId(v === 'all' ? null : v)}
+            />
+          </View>
           {isAdmin && (
             <Pressable
-              style={[styles.chantierChip, showFilters && { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' }]}
+              style={[styles.filtersBtn, (showFilters || filterExpId !== 'all' || filterType !== 'all' || !!filterDateFrom || !!filterDateTo) && styles.filtersBtnOn]}
               onPress={() => setShowFilters(v => !v)}
             >
-              <Text style={[styles.chantierChipText, showFilters && { color: '#fff' }]}>Filtres</Text>
+              <Text style={styles.filtersBtnText}>Filtres</Text>
             </Pressable>
           )}
-        </ScrollView>
+        </View>
       </View>
 
       {/* Panneau filtres avancés */}
       {showFilters && (
         <View style={styles.filterPanel}>
-          {/* Date */}
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>Du</Text>
-            <DateInput style={styles.filterInput} value={filterDateFrom} onChangeDate={setFilterDateFrom} />
-            <Text style={styles.filterLabel}>au</Text>
-            <DateInput style={styles.filterInput} value={filterDateTo} onChangeDate={setFilterDateTo} />
+          <View style={styles.filterGrid}>
+            <View style={styles.filterCell}>
+              <Text style={styles.filterLabel}>De</Text>
+              <SelectField
+                compact
+                searchable
+                value={filterExpId}
+                title="Filtrer par expéditeur"
+                placeholder="Tous"
+                options={[
+                  { value: 'all', label: 'Tout le monde' },
+                  { value: 'admin', label: 'Admin' },
+                  ...data.employes.map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}`.trim() })),
+                ]}
+                onSelect={v => setFilterExpId(v)}
+              />
+            </View>
+            <View style={styles.filterCell}>
+              <Text style={styles.filterLabel}>Type</Text>
+              <SelectField
+                compact
+                value={filterType}
+                title="Type de message"
+                options={[
+                  { value: 'all', label: 'Tout' },
+                  { value: 'text', label: 'Texte' },
+                  { value: 'photo', label: 'Photos' },
+                  { value: 'pdf', label: 'PDF' },
+                ]}
+                onSelect={v => setFilterType(v as typeof filterType)}
+              />
+            </View>
           </View>
-          {/* Qui */}
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>De</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-              <Pressable style={[styles.filterChip, filterExpId === 'all' && styles.filterChipActive]} onPress={() => setFilterExpId('all')}>
-                <Text style={[styles.filterChipText, filterExpId === 'all' && styles.filterChipTextActive]}>Tous</Text>
-              </Pressable>
-              <Pressable style={[styles.filterChip, filterExpId === 'admin' && styles.filterChipActive]} onPress={() => setFilterExpId(filterExpId === 'admin' ? 'all' : 'admin')}>
-                <Text style={[styles.filterChipText, filterExpId === 'admin' && styles.filterChipTextActive]}>Admin</Text>
-              </Pressable>
-              {data.employes.slice(0, 8).map(e => (
-                <Pressable key={e.id} style={[styles.filterChip, filterExpId === e.id && styles.filterChipActive]} onPress={() => setFilterExpId(filterExpId === e.id ? 'all' : e.id)}>
-                  <Text style={[styles.filterChipText, filterExpId === e.id && styles.filterChipTextActive]}>{e.prenom}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+          <View style={styles.filterCell}>
+            <Text style={styles.filterLabel}>Du / au</Text>
+            <View style={{ flexDirection: 'row', gap: 6 }}>
+              <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={filterDateFrom} onChangeDate={setFilterDateFrom} />
+              <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={filterDateTo} onChangeDate={setFilterDateTo} />
+            </View>
           </View>
-          {/* Type */}
-          <View style={styles.filterRow}>
-            <Text style={styles.filterLabel}>Type</Text>
-            {(['all', 'text', 'photo', 'pdf'] as const).map(t => (
-              <Pressable key={t} style={[styles.filterChip, filterType === t && styles.filterChipActive]} onPress={() => setFilterType(filterType === t ? 'all' : t)}>
-                <Text style={[styles.filterChipText, filterType === t && styles.filterChipTextActive]}>
-                  {t === 'all' ? 'Tout' : t === 'text' ? 'Texte' : t === 'photo' ? 'Photos' : 'PDF'}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          {/* Reset */}
           <Pressable style={{ alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 10 }} onPress={() => {
             setFilterDateFrom(''); setFilterDateTo(''); setFilterExpId('all'); setFilterType('all');
           }}>
-            <Text style={{ fontSize: 12, color: '#E74C3C', fontWeight: '600' }}>Réinitialiser</Text>
+            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>Réinitialiser</Text>
           </Pressable>
         </View>
       )}
@@ -1233,7 +1250,7 @@ const styles = StyleSheet.create({
   convCard: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 14, minHeight: 68 },
   convSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
   groupLabel: { flex: 1, fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
-  filtersBtn: { height: 34, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#fff', justifyContent: 'center', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  filtersBtn: { height: 36, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#fff', justifyContent: 'center', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
   filtersBtnOn: { backgroundColor: '#F2E4E1' },
   filtersBtnText: { fontSize: 13, fontWeight: '600', color: '#2B1D14' },
   filterCard: { backgroundColor: '#fff', borderRadius: 20, marginHorizontal: 16, marginBottom: 8, padding: 14, gap: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
@@ -1286,11 +1303,13 @@ const styles = StyleSheet.create({
   scheduleChipActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
   scheduleChipText: { fontSize: 12, fontWeight: '600', color: '#6E5F54' },
   // Barre et panneau de filtres
-  filterBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', paddingVertical: 6 },
-  filterPanel: { backgroundColor: '#FFFFFF', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', padding: 12, gap: 8 },
+  filterBar: { backgroundColor: 'transparent', paddingBottom: 10 },
+  filterPanel: { backgroundColor: '#FFFFFF', borderRadius: 20, marginHorizontal: 16, marginBottom: 10, padding: 14, gap: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   filterRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, flexWrap: 'wrap' as const },
+  filterGrid: { flexDirection: 'row' as const, gap: 10 },
+  filterCell: { flex: 1, gap: 4 },
   filterLabel: { fontSize: 13, fontWeight: '600', color: '#6E5F54', minWidth: 28 },
-  filterInput: { backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6, fontSize: 12, color: '#2B1D14', width: 105 },
+  filterInput: { backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, fontSize: 13, color: '#2B1D14', width: 105 },
   filterChip: { paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 999, backgroundColor: '#F1E7DC' },
   filterChipActive: { backgroundColor: '#5C1F2E' },
   filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },

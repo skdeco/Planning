@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, ScrollView, TextInput } from 'react-native';
+import { ChevronDown, Check, Search } from 'lucide-react-native';
 
 /**
  * SelectField — liste déroulante réutilisable (remplace les rangées de chips).
@@ -43,7 +44,7 @@ export function SelectField({ value, options, onSelect, placeholder = 'Sélectio
         <Text style={[styles.value, compact && styles.valueCompact, !selected && styles.placeholder]} numberOfLines={1}>
           {selected ? selected.label : placeholder}
         </Text>
-        <Text style={styles.chevron}>▾</Text>
+        <ChevronDown size={16} color="#6E5F54" strokeWidth={2} />
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
@@ -51,14 +52,17 @@ export function SelectField({ value, options, onSelect, placeholder = 'Sélectio
           <Pressable style={styles.sheet} onPress={() => {}}>
             {title ? <Text style={styles.title}>{title}</Text> : null}
             {searchable && (
-              <TextInput
-                style={styles.search}
-                placeholder="Rechercher…"
-                placeholderTextColor="#B0A99F"
-                value={q}
-                onChangeText={setQ}
-                autoFocus
-              />
+              <View style={styles.searchWrap}>
+                <Search size={16} color="#6E5F54" strokeWidth={2} />
+                <TextInput
+                  style={styles.search}
+                  placeholder="Rechercher…"
+                  placeholderTextColor="#B0A99F"
+                  value={q}
+                  onChangeText={setQ}
+                  autoFocus
+                />
+              </View>
             )}
             <ScrollView style={{ maxHeight: 360 }} keyboardShouldPersistTaps="handled">
               {filtered.length === 0 ? (
@@ -69,7 +73,7 @@ export function SelectField({ value, options, onSelect, placeholder = 'Sélectio
                   <Pressable key={o.value} onPress={() => { onSelect(o.value); setOpen(false); }} style={[styles.option, active && styles.optionActive]}>
                     {o.color && <View style={[styles.dot, { backgroundColor: o.color }]} />}
                     <Text style={[styles.optionText, active && styles.optionTextActive]} numberOfLines={1}>{o.label}</Text>
-                    {active && <Text style={styles.check}>✓</Text>}
+                    {active && <Check size={16} color="#5C1F2E" strokeWidth={2.4} />}
                   </Pressable>
                 );
               })}
@@ -87,20 +91,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 10,
     paddingHorizontal: 12, paddingVertical: 11,
   },
-  fieldCompact: { paddingVertical: 8, borderRadius: 16, backgroundColor: '#F1E7DC', borderColor: '#EDE2D6' },
-  value: { flex: 1, fontSize: 14, color: '#5C1F2E', fontWeight: '600' },
-  valueCompact: { fontSize: 13 },
+  fieldCompact: { paddingVertical: 9, paddingHorizontal: 14, borderRadius: 999, backgroundColor: '#F1E7DC', borderColor: '#EDE2D6' },
+  value: { flex: 1, fontSize: 14, color: '#2B1D14', fontWeight: '500' },
+  valueCompact: { fontSize: 13.5 },
   placeholder: { color: '#B0A99F', fontWeight: '400' },
-  chevron: { fontSize: 12, color: '#6E5F54' },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', padding: 24 },
-  sheet: { backgroundColor: '#fff', borderRadius: 24, padding: 12, maxWidth: 480, width: '100%', alignSelf: 'center' },
-  title: { fontSize: 15, fontWeight: '800', color: '#5C1F2E', marginBottom: 8, paddingHorizontal: 4 },
-  search: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: '#5C1F2E', marginBottom: 8 },
+  overlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'center', padding: 24 },
+  sheet: { backgroundColor: '#fff', borderRadius: 28, padding: 14, maxWidth: 480, width: '100%', alignSelf: 'center' },
+  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 20, lineHeight: 26, color: '#2B1D14', marginBottom: 10, paddingHorizontal: 4 },
+  searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F1E7DC', borderRadius: 999, paddingHorizontal: 14, marginBottom: 10 },
+  search: { flex: 1, paddingVertical: 10, fontSize: 14.5, color: '#2B1D14' },
   empty: { fontSize: 13, color: '#B0A99F', fontStyle: 'italic', textAlign: 'center', paddingVertical: 20 },
-  option: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, paddingVertical: 12, borderRadius: 10 },
-  optionActive: { backgroundColor: '#F1E7DC' },
-  optionText: { flex: 1, fontSize: 14, color: '#5C1F2E' },
-  optionTextActive: { fontWeight: '700' },
-  check: { fontSize: 14, color: '#5C1F2E', fontWeight: '800' },
+  option: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, paddingVertical: 13, borderRadius: 14 },
+  optionActive: { backgroundColor: '#F2E4E1' },
+  optionText: { flex: 1, fontSize: 15, color: '#2B1D14' },
+  optionTextActive: { fontWeight: '600', color: '#5C1F2E' },
 });
