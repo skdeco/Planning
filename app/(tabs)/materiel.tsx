@@ -680,9 +680,9 @@ export default function MaterielScreen() {
         const archiveKey = `mes_${chantier.id}`;
         return (
           <View key={chantier.id} style={styles.chantierSection}>
-            <View style={[styles.chantierHeader, { borderLeftColor: chantier.couleur }]}>
-              <Text style={styles.chantierNom}>{chantier.nom}</Text>
-              <Text style={styles.chantierAdresse}>{chantier.adresse}</Text>
+            <View style={styles.chantierHeader}>
+              <View style={[styles.chantierDot, { backgroundColor: chantier.couleur || '#5C1F2E' }]} />
+              <Text style={styles.chantierNom} numberOfLines={1}>{chantier.nom}</Text>
             </View>
             <View style={styles.listeCard}>
               {itemsActifs.length === 0 && itemsAchetes.length === 0 && (
@@ -705,7 +705,7 @@ export default function MaterielScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
                         <Text style={styles.itemTexte} numberOfLines={1}>{item.texte}</Text>
-                        <Text style={{ fontSize: 10, color: '#999' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
+                        <Text style={{ fontSize: 12, color: '#9A8C80' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
                       </View>
                       {/* Fournisseur masqué dans la vue employé */}
                       {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
@@ -775,13 +775,13 @@ export default function MaterielScreen() {
 
         return (
           <View key={chantier.id} style={styles.chantierSection}>
-            <View style={[styles.chantierHeader, { borderLeftColor: chantier.couleur }]}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.chantierNom}>{chantier.nom}</Text>
-                  <Text style={styles.chantierAdresse}>{chantier.adresse}</Text>
+            <View style={[styles.chantierHeader, { flexDirection: 'column', alignItems: 'stretch', gap: 4 }]}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <View style={[styles.chantierDot, { backgroundColor: chantier.couleur || '#5C1F2E' }]} />
+                  <Text style={styles.chantierNom} numberOfLines={1}>{chantier.nom}</Text>
                 </View>
-                <View style={{ flexDirection: 'row', gap: 4 }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
                   {itemsActifs.length > 0 && (
                     <View style={styles.statsBadgeRed}>
                       <Text style={styles.statsBadgeRedText}>{itemsActifs.length}</Text>
@@ -796,7 +796,7 @@ export default function MaterielScreen() {
               </View>
               {isAdmin && listes.length > 0 && (
                 <Pressable onPress={async () => { if (await confirm(t.materiel.deleteThisListConfirm)) listes.forEach(l => deleteListeMateriau(l.id)); }} style={{ alignSelf: 'flex-end', marginTop: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#E74C3C' }}>{t.materiel.deleteThisList}</Text>
+                  <Text style={{ fontSize: 12.5, color: '#E74C3C', fontWeight: '600' }}>{t.materiel.deleteThisList}</Text>
                 </Pressable>
               )}
             </View>
@@ -834,7 +834,7 @@ export default function MaterielScreen() {
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                           {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
                           <Text style={styles.itemTexte} numberOfLines={1}>{item.texte}</Text>
-                          <Text style={{ fontSize: 10, color: '#999' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
+                          <Text style={{ fontSize: 12, color: '#9A8C80' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
                         </View>
                         <Pressable onPress={() => setFournisseurPickerModal({ listeId: item.listeId, itemId: item.id, nom: item.texte, currentFournisseur: item.fournisseur || '' })}>
                           <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{item.fournisseur ? `${item.fournisseur}` : 'Assigner fournisseur'}</Text>
@@ -974,13 +974,13 @@ export default function MaterielScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder={t.materiel.searchPlaceholder}
-          placeholderTextColor="#999"
+          placeholderTextColor="#9A8C80"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
           <Pressable onPress={() => setSearchQuery('')} style={styles.searchClear}>
-            <Text style={{ color: '#999', fontSize: 16 }}>&#10005;</Text>
+            <Text style={{ color: '#9A8C80', fontSize: 16 }}>&#10005;</Text>
           </Pressable>
         )}
       </View>
@@ -1175,7 +1175,7 @@ export default function MaterielScreen() {
           <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
             <Text style={styles.modalTitle}>{t.materiel.partialBuy}</Text>
             <Text style={styles.modalSubtitle}>{partielModal?.nom}</Text>
-            <Text style={{ fontSize: 13, color: '#555', marginBottom: 12 }}>
+            <Text style={{ fontSize: 14, color: '#6E5F54', marginBottom: 12 }}>
               Quantité demandée : <Text style={{ fontWeight: '700', color: '#5C1F2E' }}>{partielModal?.quantiteTotale}{partielModal?.quantiteUnite ? ` ${partielModal.quantiteUnite}` : ''}</Text>
             </Text>
 
@@ -1214,100 +1214,100 @@ export default function MaterielScreen() {
 
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 4 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14', flex: 1 },
-  badge: { backgroundColor: '#E74C3C', borderRadius: 12, minWidth: 24, height: 24, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F1E7DC', borderRadius: 10, borderWidth: 1, borderColor: '#EDE2D6' },
-  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#2B1D14' },
-  searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
-  tabBar: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F1E7DC', borderRadius: 999, padding: 3, gap: 2 },
-  tab: { flex: 1, height: 34, alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
-  tabActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 },
-  tabText: { fontSize: 13, color: '#2B1D14', fontWeight: '500' },
+  badge: { backgroundColor: '#F2E4E1', borderRadius: 999, minWidth: 28, height: 26, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 9 },
+  badgeText: { color: '#5C1F2E', fontSize: 13, fontWeight: '700' },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 10, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  searchInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#2B1D14' },
+  searchClear: { paddingHorizontal: 14, paddingVertical: 10 },
+  tabBar: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#F1E7DC', borderRadius: 999, padding: 3, gap: 2 },
+  tab: { flex: 1, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
+  tabActive: { backgroundColor: '#fff', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
+  tabText: { fontSize: 13.5, color: '#2B1D14', fontWeight: '500' },
   tabTextActive: { color: '#2B1D14', fontWeight: '600' },
   scroll: { flex: 1 },
-  scrollContent: { padding: 16, paddingBottom: 40 },
+  scrollContent: { padding: 16, paddingBottom: 110 },
   emptyState: { alignItems: 'center', paddingTop: 60 },
-  emptyStateText: { color: '#999', fontSize: 15 },
-  chantierSection: { marginBottom: 12 },
-  chantierHeader: { borderLeftWidth: 4, paddingLeft: 10, marginBottom: 6 },
-  chantierNom: { fontSize: 15, fontWeight: '700', color: '#5C1F2E' },
-  chantierAdresse: { fontSize: 11, color: '#888' },
-  chantierStats: { marginTop: 4, flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  chantierStatsText: { fontSize: 12, color: '#555', fontStyle: 'italic' },
-  listeCard: { backgroundColor: '#fff', borderRadius: 20, padding: 10, marginBottom: 6, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
-  listeCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 },
+  emptyStateText: { color: '#6E5F54', fontSize: 15 },
+  chantierSection: { marginBottom: 18 },
+  chantierHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 6, marginBottom: 8 },
+  chantierNom: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
+  chantierAdresse: { fontSize: 12.5, color: '#9A8C80' },
+  chantierDot: { width: 8, height: 8, borderRadius: 4 },
+  chantierStats: { marginTop: 2, flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 6, marginBottom: 8 },
+  chantierStatsText: { fontSize: 12.5, color: '#6E5F54' },
+  listeCard: { backgroundColor: '#fff', borderRadius: 24, padding: 14, marginBottom: 10, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  listeCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   employeHeader: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  employeAvatar: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', marginRight: 8 },
-  employeAvatarText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  employeNom: { fontSize: 14, fontWeight: '600', color: '#333' },
-  deleteListeBtn: { paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#FFF5F5', borderRadius: 6, borderWidth: 1, borderColor: '#FED7D7' },
-  deleteListeBtnText: { color: '#C53030', fontSize: 11, fontWeight: '600' },
-  emptyText: { color: '#aaa', fontSize: 13, fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
-  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
-  itemAchete: { opacity: 0.6 },
-  checkbox: { width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: '#CCC', alignItems: 'center', justifyContent: 'center', marginRight: 8, flexShrink: 0 },
+  employeAvatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
+  employeAvatarText: { color: '#fff', fontSize: 13, fontWeight: '700' },
+  employeNom: { fontSize: 15.5, fontWeight: '600', color: '#2B1D14' },
+  deleteListeBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#FEE2E2', borderRadius: 999 },
+  deleteListeBtnText: { color: '#C0392B', fontSize: 12.5, fontWeight: '600' },
+  emptyText: { color: '#9A8C80', fontSize: 13.5, textAlign: 'center', paddingVertical: 12 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
+  itemAchete: { opacity: 0.55 },
+  checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1.8, borderColor: '#EDE2D6', alignItems: 'center', justifyContent: 'center', marginRight: 10, flexShrink: 0 },
   checkboxAcheteur: { borderColor: '#5C1F2E' },
   checkboxInner: { fontSize: 14 },
-  checkboxChecked: { backgroundColor: '#27AE60', borderColor: '#27AE60' },
+  checkboxChecked: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
   checkboxCheckedInner: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  itemContent: { flex: 1, flexDirection: 'column', gap: 1 },
-  itemTexte: { fontSize: 13, color: '#333' },
-  itemTexteBarre: { textDecorationLine: 'line-through', color: '#999' },
-  itemQuantite: { fontSize: 12, color: '#5C1F2E', backgroundColor: '#F2E4E1', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, fontWeight: '700', minWidth: 24, textAlign: 'center' },
-  itemCommentaire: { fontSize: 11, color: '#666', fontStyle: 'italic', marginLeft: 30, marginTop: 1 },
-  achetePar: { fontSize: 11, color: '#27AE60', marginTop: 2 },
-  deleteBtn: { padding: 6, marginLeft: 4, flexShrink: 0 },
+  itemContent: { flex: 1, flexDirection: 'column', gap: 2 },
+  itemTexte: { fontSize: 15, color: '#2B1D14' },
+  itemTexteBarre: { textDecorationLine: 'line-through', color: '#9A8C80' },
+  itemQuantite: { fontSize: 12.5, color: '#5C1F2E', backgroundColor: '#F2E4E1', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, fontWeight: '700', minWidth: 28, textAlign: 'center' },
+  itemCommentaire: { fontSize: 12.5, color: '#6E5F54', marginLeft: 34, marginTop: 1 },
+  achetePar: { fontSize: 12, color: '#2E7D32', marginTop: 2 },
+  deleteBtn: { padding: 8, marginLeft: 4, flexShrink: 0 },
   deleteBtnText: { color: '#E74C3C', fontSize: 14, fontWeight: '700' },
-  archiveSection: { marginTop: 10, paddingTop: 8, borderTopWidth: 1, borderTopColor: '#E8F5E9' },
-  archiveTitle: { fontSize: 12, color: '#27AE60', fontWeight: '600', marginBottom: 6 },
+  archiveSection: { marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6' },
+  archiveTitle: { fontSize: 12.5, color: '#2E7D32', fontWeight: '600', marginBottom: 8 },
   archiveToggleBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingVertical: 8, paddingHorizontal: 10,
-    backgroundColor: '#F0FFF4', borderRadius: 8,
-    borderWidth: 1, borderColor: '#C6F6D5',
+    paddingVertical: 10, paddingHorizontal: 14,
+    backgroundColor: '#F1E7DC', borderRadius: 999,
   },
-  archiveToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  archiveToggleIcon: { fontSize: 13, color: '#276749', fontWeight: '700', width: 14 },
-  archiveToggleText: { fontSize: 13, color: '#276749', fontWeight: '600' },
+  archiveToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  archiveToggleIcon: { fontSize: 13, color: '#6E5F54', fontWeight: '700', width: 14 },
+  archiveToggleText: { fontSize: 13.5, color: '#2B1D14', fontWeight: '500' },
   archiveBadge: {
-    backgroundColor: '#C6F6D5', borderRadius: 12,
-    paddingHorizontal: 8, paddingVertical: 2,
+    backgroundColor: '#FFFFFF', borderRadius: 999,
+    paddingHorizontal: 10, paddingVertical: 3,
   },
-  archiveBadgeText: { fontSize: 11, color: '#276749', fontWeight: '700' },
+  archiveBadgeText: { fontSize: 12, color: '#6E5F54', fontWeight: '700' },
   archiveContent: {
-    marginTop: 6, paddingTop: 6,
-    borderTopWidth: 1, borderTopColor: '#E8F5E9',
+    marginTop: 8, paddingTop: 8,
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6',
   },
   // Vue acheteur
-  acheteurCard: { backgroundColor: '#fff', borderRadius: 20, padding: 12, marginBottom: 8, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
-  acheteurCardTitle: { fontSize: 13, fontWeight: '700', color: '#5C1F2E', marginBottom: 10, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#F2E4E1' },
-  acheteurItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#F8F8F8' },
-  archiveCard: { backgroundColor: '#F0FFF4', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#C6F6D5' },
-  archiveCardTitle: { fontSize: 13, fontWeight: '700', color: '#276749', marginBottom: 10, paddingBottom: 6, borderBottomWidth: 1, borderBottomColor: '#C6F6D5' },
+  acheteurCard: { backgroundColor: '#fff', borderRadius: 24, padding: 14, marginBottom: 10, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  acheteurCardTitle: { fontSize: 15.5, fontWeight: '600', color: '#2B1D14', marginBottom: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
+  acheteurItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
+  archiveCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#EDE2D6' },
+  archiveCardTitle: { fontSize: 15, fontWeight: '600', color: '#2E7D32', marginBottom: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
   employeTag: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginLeft: 6 },
-  employeTagText: { color: '#fff', fontSize: 10, fontWeight: '700' },
-  statsBadgeRed: { backgroundColor: '#FFF5F5', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, marginRight: 6, borderWidth: 1, borderColor: '#FED7D7' },
-  statsBadgeRedText: { color: '#C53030', fontSize: 11, fontWeight: '700' },
-  statsBadgeGreen: { backgroundColor: '#F0FFF4', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, borderWidth: 1, borderColor: '#C6F6D5' },
-  statsBadgeGreenText: { color: '#276749', fontSize: 11, fontWeight: '700' },
-  allDoneRow: { backgroundColor: '#F0FFF4', borderRadius: 10, padding: 12, marginBottom: 8, alignItems: 'center' },
-  allDoneText: { color: '#276749', fontSize: 13, fontWeight: '600' },
-  addItemBtn: { marginTop: 10, paddingVertical: 8, alignItems: 'center', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 6, borderStyle: 'dashed' },
-  addItemBtnText: { color: '#5C1F2E', fontSize: 13, fontWeight: '600' },
+  employeTagText: { color: '#fff', fontSize: 10.5, fontWeight: '700' },
+  statsBadgeRed: { backgroundColor: '#FEE2E2', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginRight: 6 },
+  statsBadgeRedText: { color: '#C0392B', fontSize: 12, fontWeight: '700' },
+  statsBadgeGreen: { backgroundColor: '#E6F0E7', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  statsBadgeGreenText: { color: '#2E7D32', fontSize: 12, fontWeight: '700' },
+  allDoneRow: { backgroundColor: '#E6F0E7', borderRadius: 16, padding: 14, marginBottom: 10, alignItems: 'center' },
+  allDoneText: { color: '#2E7D32', fontSize: 14, fontWeight: '600' },
+  addItemBtn: { marginTop: 12, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 999, borderStyle: 'dashed' },
+  addItemBtnText: { color: '#5C1F2E', fontSize: 14, fontWeight: '600' },
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 40 },
-  modalTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#5C1F2E', marginBottom: 4 },
-  modalSubtitle: { fontSize: 13, color: '#888', marginBottom: 16 },
-  inputLabel: { fontSize: 13, fontWeight: '600', color: '#555', marginBottom: 4 },
-  input: { borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, padding: 10, fontSize: 15, marginBottom: 12, backgroundColor: '#FAF5EF', color: '#2B1D14' },
-  inputMultiline: { height: 64, textAlignVertical: 'top' },
+  modalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 4 },
+  modalSubtitle: { fontSize: 13.5, color: '#6E5F54', marginBottom: 16 },
+  inputLabel: { fontSize: 13.5, fontWeight: '600', color: '#6E5F54', marginBottom: 6 },
+  input: { borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15.5, marginBottom: 14, backgroundColor: '#FAF5EF', color: '#2B1D14' },
+  inputMultiline: { height: 72, textAlignVertical: 'top' },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  btnCancel: { flex: 1, paddingVertical: 12, alignItems: 'center', borderWidth: 1, borderColor: '#DDD', borderRadius: 8 },
-  btnCancelText: { color: '#666', fontSize: 15 },
-  btnSave: { flex: 2, paddingVertical: 12, alignItems: 'center', backgroundColor: '#5C1F2E', borderRadius: 8 },
-  btnSaveText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  btnCancel: { flex: 1, paddingVertical: 14, alignItems: 'center', backgroundColor: '#F1E7DC', borderRadius: 999 },
+  btnCancelText: { color: '#2B1D14', fontSize: 15.5, fontWeight: '500' },
+  btnSave: { flex: 2, paddingVertical: 14, alignItems: 'center', backgroundColor: '#5C1F2E', borderRadius: 999 },
+  btnSaveText: { color: '#fff', fontSize: 15.5, fontWeight: '600' },
   btnDisabled: { opacity: 0.4 },
 });

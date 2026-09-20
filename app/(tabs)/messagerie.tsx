@@ -551,7 +551,7 @@ export default function MessagerieScreen() {
             style={{ backgroundColor: '#5C1F2E', borderRadius: 999, paddingHorizontal: 14, height: 36, justifyContent: 'center' }}
             onPress={() => { setGroupType('equipe'); setGroupChantierId(null); setGroupMessage(''); setShowGroupModal(true); }}
           >
-            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>Diffusion</Text>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{t.ui.diffusion}</Text>
           </Pressable>
         </View>
 
@@ -561,7 +561,7 @@ export default function MessagerieScreen() {
           return (
             <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 8 }}>
               <Pressable style={[styles.filtersBtn, (showListFilters || nbFiltres > 0) && styles.filtersBtnOn]} onPress={() => setShowListFilters(v => !v)}>
-                <Text style={[styles.filtersBtnText, (showListFilters || nbFiltres > 0) && { color: '#5C1F2E' }]}>Filtres{nbFiltres > 0 ? ` (${nbFiltres})` : ''}</Text>
+                <Text style={[styles.filtersBtnText, (showListFilters || nbFiltres > 0) && { color: '#5C1F2E' }]}>{t.ui.filtres}{nbFiltres > 0 ? ` (${nbFiltres})` : ''}</Text>
               </Pressable>
             </View>
           );
@@ -570,30 +570,30 @@ export default function MessagerieScreen() {
         <View style={styles.filterCard}>
           <View style={styles.filterGrid}>
             <View style={styles.filterCell}>
-              <Text style={styles.filterLabel}>Chantier</Text>
+              <Text style={styles.filterLabel}>{t.ui.chantier}</Text>
               <SelectField
                 compact
                 searchable
                 value={listFilterChantier}
-                title="Filtrer par chantier"
-                placeholder="Tous"
+                title={t.ui.filtrerParChantier}
+                placeholder={t.ui.tous}
                 options={[
-                  { value: 'all', label: 'Tous les chantiers' },
+                  { value: 'all', label: t.ui.tousChantiers },
                   ...data.chantiers.filter(c => c.statut === 'actif').map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
                 ]}
                 onSelect={v => setListFilterChantier(v)}
               />
             </View>
             <View style={styles.filterCell}>
-              <Text style={styles.filterLabel}>Qui</Text>
+              <Text style={styles.filterLabel}>{t.ui.qui}</Text>
               <SelectField
                 compact
                 searchable
                 value={listFilterWho}
-                title="Filtrer par personne"
-                placeholder="Tous"
+                title={t.ui.filtrerParPersonne}
+                placeholder={t.ui.tous}
                 options={[
-                  { value: 'all', label: 'Tout le monde' },
+                  { value: 'all', label: t.ui.toutLeMonde },
                   ...data.employes.map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}`.trim() })),
                 ]}
                 onSelect={v => setListFilterWho(v)}
@@ -602,22 +602,22 @@ export default function MessagerieScreen() {
           </View>
           <View style={styles.filterGrid}>
             <View style={styles.filterCell}>
-              <Text style={styles.filterLabel}>Type</Text>
+              <Text style={styles.filterLabel}>{t.ui.type}</Text>
               <SelectField
                 compact
                 value={listFilterType}
-                title="Type de message"
+                title={t.ui.typeDeMessage}
                 options={[
-                  { value: 'all', label: 'Tout' },
-                  { value: 'text', label: 'Texte' },
-                  { value: 'photo', label: 'Photos' },
+                  { value: 'all', label: t.ui.tout },
+                  { value: 'text', label: t.ui.texte },
+                  { value: 'photo', label: t.ui.photos },
                   { value: 'pdf', label: 'PDF' },
                 ]}
                 onSelect={v => setListFilterType(v as typeof listFilterType)}
               />
             </View>
             <View style={styles.filterCell}>
-              <Text style={styles.filterLabel}>Du / au</Text>
+              <Text style={styles.filterLabel}>{t.ui.duAu}</Text>
               <View style={{ flexDirection: 'row', gap: 6 }}>
                 <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={listFilterDateFrom} onChangeDate={setListFilterDateFrom} />
                 <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={listFilterDateTo} onChangeDate={setListFilterDateTo} />
@@ -627,7 +627,7 @@ export default function MessagerieScreen() {
           <Pressable style={{ alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 8 }} onPress={() => {
             setListFilterChantier('all'); setListFilterWho('all'); setListFilterDateFrom(''); setListFilterDateTo(''); setListFilterType('all');
           }}>
-            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>Réinitialiser</Text>
+            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{t.ui.reinitialiser}</Text>
           </Pressable>
         </View>
         )}
@@ -644,7 +644,7 @@ export default function MessagerieScreen() {
                   </View>
                 )}
                 {!chantier && chId === '__none__' && convs.length > 0 && (
-                  <Text style={[styles.groupLabel, { marginTop: 14, marginBottom: 8, paddingHorizontal: 6 }]}>Sans chantier</Text>
+                  <Text style={[styles.groupLabel, { marginTop: 14, marginBottom: 8, paddingHorizontal: 6 }]}>{t.ui.sansChantier}</Text>
                 )}
                 <View style={styles.convGroup}>
                 {convs.map((conv, ci) => (
@@ -848,15 +848,15 @@ export default function MessagerieScreen() {
       <View style={styles.filterBar}>
         <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, paddingHorizontal: 16 }}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.filterLabel}>Chantier</Text>
+            <Text style={styles.filterLabel}>{t.ui.chantier}</Text>
             <SelectField
               compact
               searchable
               value={selectedChantierId || 'all'}
-              title="Chantier de la discussion"
-              placeholder="Tous"
+              title={t.ui.chantierDiscussion}
+              placeholder={t.ui.tous}
               options={[
-                { value: 'all', label: 'Tous les chantiers' },
+                { value: 'all', label: t.ui.tousChantiers },
                 ...mesChantiers.map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
               ]}
               onSelect={v => setSelectedChantierId(v === 'all' ? null : v)}
@@ -867,7 +867,7 @@ export default function MessagerieScreen() {
               style={[styles.filtersBtn, (showFilters || filterExpId !== 'all' || filterType !== 'all' || !!filterDateFrom || !!filterDateTo) && styles.filtersBtnOn]}
               onPress={() => setShowFilters(v => !v)}
             >
-              <Text style={styles.filtersBtnText}>Filtres</Text>
+              <Text style={styles.filtersBtnText}>{t.ui.filtres}</Text>
             </Pressable>
           )}
         </View>
@@ -878,15 +878,15 @@ export default function MessagerieScreen() {
         <View style={styles.filterPanel}>
           <View style={styles.filterGrid}>
             <View style={styles.filterCell}>
-              <Text style={styles.filterLabel}>De</Text>
+              <Text style={styles.filterLabel}>{t.ui.de}</Text>
               <SelectField
                 compact
                 searchable
                 value={filterExpId}
-                title="Filtrer par expéditeur"
-                placeholder="Tous"
+                title={t.ui.filtrerParExpediteur}
+                placeholder={t.ui.tous}
                 options={[
-                  { value: 'all', label: 'Tout le monde' },
+                  { value: 'all', label: t.ui.toutLeMonde },
                   { value: 'admin', label: 'Admin' },
                   ...data.employes.map(e => ({ value: e.id, label: `${e.prenom} ${e.nom}`.trim() })),
                 ]}
@@ -894,15 +894,15 @@ export default function MessagerieScreen() {
               />
             </View>
             <View style={styles.filterCell}>
-              <Text style={styles.filterLabel}>Type</Text>
+              <Text style={styles.filterLabel}>{t.ui.type}</Text>
               <SelectField
                 compact
                 value={filterType}
-                title="Type de message"
+                title={t.ui.typeDeMessage}
                 options={[
-                  { value: 'all', label: 'Tout' },
-                  { value: 'text', label: 'Texte' },
-                  { value: 'photo', label: 'Photos' },
+                  { value: 'all', label: t.ui.tout },
+                  { value: 'text', label: t.ui.texte },
+                  { value: 'photo', label: t.ui.photos },
                   { value: 'pdf', label: 'PDF' },
                 ]}
                 onSelect={v => setFilterType(v as typeof filterType)}
@@ -910,7 +910,7 @@ export default function MessagerieScreen() {
             </View>
           </View>
           <View style={styles.filterCell}>
-            <Text style={styles.filterLabel}>Du / au</Text>
+            <Text style={styles.filterLabel}>{t.ui.duAu}</Text>
             <View style={{ flexDirection: 'row', gap: 6 }}>
               <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={filterDateFrom} onChangeDate={setFilterDateFrom} />
               <DateInput style={[styles.filterInput, { flex: 1, width: undefined }]} value={filterDateTo} onChangeDate={setFilterDateTo} />
@@ -919,7 +919,7 @@ export default function MessagerieScreen() {
           <Pressable style={{ alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 10 }} onPress={() => {
             setFilterDateFrom(''); setFilterDateTo(''); setFilterExpId('all'); setFilterType('all');
           }}>
-            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>Réinitialiser</Text>
+            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{t.ui.reinitialiser}</Text>
           </Pressable>
         </View>
       )}

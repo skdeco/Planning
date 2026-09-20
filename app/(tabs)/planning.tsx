@@ -739,7 +739,7 @@ export default function PlanningScreen() {
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       {/* En-tête */}
       <View style={styles.header}>
-        <Text style={screenTitle}>Planning</Text>
+        <Text style={screenTitle}>{t.planning.title}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 1, marginLeft: 12 }} contentContainerStyle={styles.navRow}>
           {/* Bouton retard planifié (employé non-admin) */}
           {!isAdmin && !isST && currentUser?.employeId && (() => {
@@ -826,7 +826,7 @@ export default function PlanningScreen() {
             </Pressable>
           )}
           {isAdmin && (
-            <Pressable style={styles.galerieBtn} onPress={() => setShowOrdreChantiers(true)} accessibilityLabel="Ordre des chantiers">
+            <Pressable style={styles.galerieBtn} onPress={() => setShowOrdreChantiers(true)} accessibilityLabel={t.ui.ordreChantiers}>
               <ArrowUpDown size={17} color="#5C1F2E" strokeWidth={2} />
             </Pressable>
           )}

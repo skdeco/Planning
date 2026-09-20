@@ -1043,7 +1043,7 @@ export default function DashboardScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                 <Pressable onPress={() => setDismissedAlertes(new Set())}
                   style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#6E5F54' }}>Afficher les alertes masquées ({hiddenCount})</Text>
+                  <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.ui.alertesMasquees} ({hiddenCount})</Text>
                 </Pressable>
               </View>
             );
@@ -1292,7 +1292,7 @@ export default function DashboardScreen() {
 
         {/* Outils & historique — repliés par défaut pour alléger l'accueil */}
         <Pressable onPress={() => setShowOutils(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 4, marginTop: 12 }}>
-          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>Outils & activité récente</Text>
+          <Text style={[styles.sectionTitle, { marginTop: 0, marginBottom: 0 }]}>{t.ui.outilsActivite}</Text>
           <View style={styles.toggleChip}>{showOutils ? <ChevronDown size={16} color={DS.primary} /> : <ChevronRight size={16} color={DS.primary} />}</View>
         </Pressable>
         {showOutils && (

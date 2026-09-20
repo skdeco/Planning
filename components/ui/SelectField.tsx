@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, ScrollView, TextInput } from 'react-native';
 import { ChevronDown, Check, Search } from 'lucide-react-native';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 /**
  * SelectField — liste déroulante réutilisable (remplace les rangées de chips).
@@ -24,7 +25,8 @@ interface SelectFieldProps {
   title?: string; // titre de la modale
 }
 
-export function SelectField({ value, options, onSelect, placeholder = 'Sélectionner…', searchable = false, compact = false, title }: SelectFieldProps) {
+export function SelectField({ value, options, onSelect, placeholder, searchable = false, compact = false, title }: SelectFieldProps) {
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState('');
 
@@ -42,7 +44,7 @@ export function SelectField({ value, options, onSelect, placeholder = 'Sélectio
       >
         {selected?.color && <View style={[styles.dot, { backgroundColor: selected.color }]} />}
         <Text style={[styles.value, compact && styles.valueCompact, !selected && styles.placeholder]} numberOfLines={1}>
-          {selected ? selected.label : placeholder}
+          {selected ? selected.label : (placeholder ?? t.ui.selectionner)}
         </Text>
         <ChevronDown size={16} color="#6E5F54" strokeWidth={2} />
       </Pressable>
@@ -56,7 +58,7 @@ export function SelectField({ value, options, onSelect, placeholder = 'Sélectio
                 <Search size={16} color="#6E5F54" strokeWidth={2} />
                 <TextInput
                   style={styles.search}
-                  placeholder="Rechercher…"
+                  placeholder={t.ui.rechercher}
                   placeholderTextColor="#B0A99F"
                   value={q}
                   onChangeText={setQ}
@@ -66,7 +68,7 @@ export function SelectField({ value, options, onSelect, placeholder = 'Sélectio
             )}
             <ScrollView style={{ maxHeight: 360 }} keyboardShouldPersistTaps="handled">
               {filtered.length === 0 ? (
-                <Text style={styles.empty}>Aucun résultat</Text>
+                <Text style={styles.empty}>{t.ui.aucunResultat}</Text>
               ) : filtered.map(o => {
                 const active = o.value === value;
                 return (

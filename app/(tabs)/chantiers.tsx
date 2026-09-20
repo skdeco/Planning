@@ -1432,7 +1432,7 @@ export default function ChantiersScreen() {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{t.chantiers.title}</Text>
         {isAdmin && (
-          <Pressable style={styles.ordreBtn} onPress={() => setShowOrdreChantiers(true)} accessibilityLabel="Ordre des chantiers">
+          <Pressable style={styles.ordreBtn} onPress={() => setShowOrdreChantiers(true)} accessibilityLabel={t.ui.ordreChantiers}>
             <ArrowUpDown size={17} color="#5C1F2E" strokeWidth={2} />
           </Pressable>
         )}

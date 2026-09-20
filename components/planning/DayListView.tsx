@@ -12,6 +12,7 @@ import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from 'react-n
 import * as Haptics from 'expo-haptics';
 import { ChevronRight, ChevronDown, Plus, StickyNote, CalendarOff } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { getMetierColors } from '@/app/types';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
 import { DS, radius, shadows, font } from '@/constants/design';
@@ -41,6 +42,7 @@ export function DayListView({
   onOpenChantierActions, onOpenEmpNote, onOpenSTNote, onOpenIntervention, onOpenAjoutModal,
 }: DayListViewProps) {
   const { data } = useApp();
+  const { t } = useLanguage();
   const {
     days, visibleChantiers, getEmployesForCell, getSTForCell, getInterventionsForCell, cellHasNotes,
   } = usePlanningWeekData(weekOffset);
@@ -105,8 +107,8 @@ export function DayListView({
       {actifs.length === 0 && (
         <View style={styles.emptyCard}>
           <View style={styles.emptyIcon}><CalendarOff size={20} color={DS.primary} strokeWidth={1.8} /></View>
-          <Text style={styles.emptyTitle}>Aucune affectation ce jour-là</Text>
-          {isAdmin && vides.length > 0 && <Text style={styles.empty}>Choisissez un chantier ci-dessous pour y placer quelqu'un.</Text>}
+          <Text style={styles.emptyTitle}>{t.ui.aucuneAffectationJour}</Text>
+          {isAdmin && vides.length > 0 && <Text style={styles.empty}>{t.ui.choisirChantierPlacer}</Text>}
         </View>
       )}
 
@@ -154,7 +156,7 @@ export function DayListView({
       {isAdmin && vides.length > 0 && (
         <>
           <Pressable style={styles.sectionToggle} onPress={tap(() => setShowVides(v => !v))} accessibilityRole="button" accessibilityState={{ expanded: showVides || actifs.length === 0 }}>
-            <Text style={styles.sectionLabel}>Sans affectation ({vides.length})</Text>
+            <Text style={styles.sectionLabel}>{t.ui.sansAffectation} ({vides.length})</Text>
             {(showVides || actifs.length === 0) ? <ChevronDown size={16} color={DS.textSecondary} /> : <ChevronRight size={16} color={DS.textSecondary} />}
           </Pressable>
           {(showVides || actifs.length === 0) && (

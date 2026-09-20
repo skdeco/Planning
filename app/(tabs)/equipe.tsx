@@ -1058,7 +1058,7 @@ export default function EquipeScreen() {
           {/* Pense-bêtes (visible admin uniquement) */}
           {isAdmin && (item.penseBetes || []).length > 0 && (
             <View style={{ backgroundColor: '#FFF3CD', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginRight: 4 }}>
-              <Text style={{ fontSize: 10, color: '#856404' }} numberOfLines={1}>{(item.penseBetes || []).length} note{(item.penseBetes || []).length > 1 ? 's' : ''}</Text>
+              <Text style={{ fontSize: 12.5, color: '#856404' }} numberOfLines={1}>{(item.penseBetes || []).length} note{(item.penseBetes || []).length > 1 ? 's' : ''}</Text>
             </View>
           )}
           <View style={{ flex: 1 }} />
@@ -1137,7 +1137,7 @@ export default function EquipeScreen() {
               </Text>
             </Pressable>
             <View style={{ flex: 1 }} />
-            <Text style={{ fontSize: 11, color: '#9A8C80' }}>{stMarchesCount} devis</Text>
+            <Text style={{ fontSize: 13, color: '#9A8C80' }}>{stMarchesCount} devis</Text>
           </View>
         )}
       </View>
@@ -1199,7 +1199,7 @@ export default function EquipeScreen() {
             onPress={() => setShowDispo(true)}>
             <Ico e="📅" size={18} />
             <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>{t.equipe.dispoTitle}</Text>
-            <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600', marginLeft: 'auto' }}>{disponibilite.libres.length} libre{disponibilite.libres.length > 1 ? 's' : ''}</Text>
+            <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '600', marginLeft: 'auto' }}>{disponibilite.libres.length} libre{disponibilite.libres.length > 1 ? 's' : ''}</Text>
           </Pressable>
 
           {/* Filtre métiers */}
@@ -1352,8 +1352,8 @@ export default function EquipeScreen() {
                     </View>
                     {calc.total > 0 && (
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#F1E7DC', paddingTop: 8 }}>
-                        <Text style={{ fontSize: 11, color: '#6E5F54' }}>Total : {fmtEur(calc.total)}</Text>
-                        <Text style={{ fontSize: 11, fontWeight: '700', color: calc.duDu > 0 ? '#E74C3C' : '#27AE60' }}>
+                        <Text style={{ fontSize: 13, color: '#6E5F54' }}>Total : {fmtEur(calc.total)}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '700', color: calc.duDu > 0 ? '#E74C3C' : '#27AE60' }}>
                           {calc.duDu > 0 ? `À payer : ${fmtEur(calc.duDu)}` : 'Tout payé ✓'}
                         </Text>
                       </View>
@@ -1495,7 +1495,7 @@ export default function EquipeScreen() {
                         </Pressable>
                       )}
                     </View>
-                    <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 6, lineHeight: 14 }}>
+                    <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 6, lineHeight: 14 }}>
                       Ce mot de passe est affiché uniquement pour l'admin. Le contact se connectera avec son identifiant + ce mot de passe. Stocké de manière sécurisée (SHA-256 + salt) en plus de la copie visible.
                     </Text>
                   </>
@@ -1529,10 +1529,10 @@ export default function EquipeScreen() {
                             <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, padding: 8, borderLeftWidth: 3, borderLeftColor: c.couleur }}>
                               <View style={{ flex: 1 }}>
                                 <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>{c.nom}</Text>
-                                <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 2 }}>
+                                <Text style={{ fontSize: 13, color: '#6E5F54', marginTop: 2 }}>
                                   {[c.rue, c.ville].filter(Boolean).join(', ') || c.adresse || '—'}
                                 </Text>
-                                <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>{roles.join(' · ')}</Text>
+                                <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 2 }}>{roles.join(' · ')}</Text>
                               </View>
                             </View>
                           );
@@ -1641,7 +1641,7 @@ export default function EquipeScreen() {
                       style={{ backgroundColor: '#FDECEA', borderRadius: 8, paddingVertical: 6, alignItems: 'center' }}
                       onPress={() => setForm(f => ({ ...f, photoProfil: '' }))}
                     >
-                      <Text style={{ color: '#E74C3C', fontSize: 11, fontWeight: '600' }}>{t.common.delete}</Text>
+                      <Text style={{ color: '#E74C3C', fontSize: 13, fontWeight: '600' }}>{t.common.delete}</Text>
                     </Pressable>
                   )}
                 </View>
@@ -2179,7 +2179,7 @@ export default function EquipeScreen() {
                           <View key={doc.id} style={stStyles.docTypeRow}>
                             <View style={{ flex: 1, marginRight: 10 }}>
                               <Text style={stStyles.docTypeLabel}>{doc.libelle}</Text>
-                              <Text style={[stStyles.docTypeStatus, { color: '#27AE60' }]}>{new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}
+                              <Text style={[stStyles.docTypeStatus, { color: '#2E7D32' }]}>{new Date(doc.uploadedAt).toLocaleDateString('fr-FR')}
                               </Text>
                             </View>
                             <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -2358,22 +2358,22 @@ export default function EquipeScreen() {
                           </Text>
                           {isActif && (
                             <View style={{ backgroundColor: '#D4EDDA', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
-                              <Text style={{ fontSize: 10, color: '#155724', fontWeight: '600' }}>{t.statut.actif}</Text>
+                              <Text style={{ fontSize: 12.5, color: '#155724', fontWeight: '600' }}>{t.statut.actif}</Text>
                             </View>
                           )}
                           {chantier?.statut === 'termine' && (
                             <View style={{ backgroundColor: '#D1ECF1', borderRadius: 6, paddingHorizontal: 6, paddingVertical: 2 }}>
-                              <Text style={{ fontSize: 10, color: '#0C5460', fontWeight: '600' }}>{t.equipe.finished}</Text>
+                              <Text style={{ fontSize: 12.5, color: '#0C5460', fontWeight: '600' }}>{t.equipe.finished}</Text>
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 4 }}>
+                        <Text style={{ fontSize: 13, color: '#6E5F54', marginTop: 4 }}>
                           Du {new Date(dateDebut + 'T12:00:00').toLocaleDateString('fr-FR')} au {new Date(dateFin + 'T12:00:00').toLocaleDateString('fr-FR')}
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 16, marginTop: 6 }}>
-                          <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{nbJours} affectation{nbJours > 1 ? 's' : ''}</Text>
+                          <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{nbJours} affectation{nbJours > 1 ? 's' : ''}</Text>
                           {totalMin > 0 && (
-                            <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{totalH}h{String(totalM).padStart(2, '0')} pointées</Text>
+                            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{totalH}h{String(totalM).padStart(2, '0')} pointées</Text>
                           )}
                         </View>
                       </View>
@@ -2477,7 +2477,7 @@ export default function EquipeScreen() {
 
             <ScrollView style={{ maxHeight: 400 }}>
               {/* Libres */}
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#27AE60', marginBottom: 8 }}>Libres ({disponibilite.libres.length})
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#2E7D32', marginBottom: 8 }}>Libres ({disponibilite.libres.length})
               </Text>
               {disponibilite.libres.length === 0 ? (
                 <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 16 }}>{t.equipe.noFreeToday}</Text>
@@ -2489,8 +2489,8 @@ export default function EquipeScreen() {
                       <View key={emp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: '#F0FFF4', borderRadius: 8 }}>
                         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: mc.color }} />
                         <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', flex: 1 }}>{emp.prenom} {(emp.nom || '').toUpperCase()}</Text>
-                        <Text style={{ fontSize: 11, color: mc.color, fontWeight: '600' }}>{metierLabel(emp.metier)}</Text>
-                        {emp.telephone ? <Text style={{ fontSize: 10, color: '#6E5F54' }}>{emp.telephone}</Text> : null}
+                        <Text style={{ fontSize: 13, color: mc.color, fontWeight: '600' }}>{metierLabel(emp.metier)}</Text>
+                        {emp.telephone ? <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{emp.telephone}</Text> : null}
                       </View>
                     );
                   })}
@@ -2512,7 +2512,7 @@ export default function EquipeScreen() {
                       <View key={emp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: '#FFF5F5', borderRadius: 8 }}>
                         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: mc.color }} />
                         <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', flex: 1 }}>{emp.prenom} {(emp.nom || '').toUpperCase()}</Text>
-                        {chantier && <Text style={{ fontSize: 11, color: chantier.couleur, fontWeight: '600' }}>{chantier.nom}</Text>}
+                        {chantier && <Text style={{ fontSize: 13, color: chantier.couleur, fontWeight: '600' }}>{chantier.nom}</Text>}
                       </View>
                     );
                   })}
@@ -2530,43 +2530,43 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
   headerTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
   addBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 },
-  addBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
+  addBtnText: { color: '#fff', fontWeight: '600', fontSize: 14.5 },
   tabRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, gap: 8 },
   tabBtn: { flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F1E7DC' },
   tabBtnActive: { backgroundColor: '#5C1F2E' },
-  tabBtnText: { fontSize: 13, fontWeight: '600', color: '#6E5F54' },
+  tabBtnText: { fontSize: 13.5, fontWeight: '500', color: '#2B1D14' },
   tabBtnTextActive: { color: '#fff' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 8, backgroundColor: '#F1E7DC', borderRadius: 10, borderWidth: 1, borderColor: '#EDE2D6' },
-  searchInput: { flex: 1, paddingHorizontal: 14, paddingVertical: 10, fontSize: 14, color: '#2B1D14' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  searchInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#2B1D14' },
   searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   filterScroll: { height: 44, minHeight: 44, flexShrink: 0, marginBottom: 8 },
   filterContent: { paddingHorizontal: 16, gap: 6, alignItems: 'center', height: 44 },
-  filterChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#fff', gap: 4 },
-  filterChipActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
-  filterChipText: { fontSize: 11, fontWeight: '600', color: '#6E5F54' },
+  filterChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 32, borderRadius: 999, backgroundColor: '#FFFFFF', gap: 6, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1 },
+  filterChipActive: { backgroundColor: '#5C1F2E' },
+  filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
   filterChipTextActive: { color: '#fff' },
-  filterDot: { width: 6, height: 6, borderRadius: 3 },
-  list: { paddingHorizontal: 16, paddingBottom: 24, gap: 8 },
-  card: { backgroundColor: '#fff', borderRadius: 20, padding: 16, gap: 8, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
-  avatar: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  avatarText: { color: '#fff', fontWeight: '800', fontSize: 16 },
-  cardName: { fontSize: 15, fontWeight: '700', color: '#2B1D14', flexShrink: 1 },
-  metierBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 2, borderRadius: 10 },
+  filterDot: { width: 7, height: 7, borderRadius: 4 },
+  list: { paddingHorizontal: 16, paddingBottom: 110, gap: 12 },
+  card: { backgroundColor: '#fff', borderRadius: 24, padding: 16, gap: 10, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  avatarText: { color: '#fff', fontWeight: '700', fontSize: 17 },
+  cardName: { fontSize: 16.5, fontWeight: '600', color: '#2B1D14', flexShrink: 1 },
+  metierBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   metierDot: { width: 6, height: 6, borderRadius: 3 },
-  metierText: { fontSize: 11, fontWeight: '600' },
-  chantierCount: { fontSize: 11, color: '#6E5F54' },
-  contactInfo: { fontSize: 11, color: '#6E5F54' },
-  salaireInfo: { fontSize: 11, color: '#27AE60', fontWeight: '700' },
+  metierText: { fontSize: 12.5, fontWeight: '600' },
+  chantierCount: { fontSize: 13, color: '#6E5F54' },
+  contactInfo: { fontSize: 13, color: '#6E5F54' },
+  salaireInfo: { fontSize: 13, color: '#2E7D32', fontWeight: '600' },
   badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  badge: { backgroundColor: '#F2E4E1', borderRadius: 6, paddingHorizontal: 7, paddingVertical: 2 },
-  badgeText: { fontSize: 10, fontWeight: '600', color: '#5C1F2E' },
-  cardBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 6, borderTopWidth: 1, borderTopColor: '#F1E7DC', paddingTop: 8 },
-  credentialBtn: { backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 5, borderWidth: 1, borderColor: '#EDE2D6' },
-  credentialBtnText: { fontSize: 11, fontWeight: '600', color: '#5C1F2E' },
-  actionBtnRound: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' },
+  badge: { backgroundColor: '#F2E4E1', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeText: { fontSize: 12, fontWeight: '600', color: '#5C1F2E' },
+  cardBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6', paddingTop: 10 },
+  credentialBtn: { backgroundColor: '#F1E7DC', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  credentialBtnText: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
+  actionBtnRound: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' },
   emptyState: { padding: 40, alignItems: 'center' },
   emptyText: { fontSize: 15, color: '#6E5F54' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
   modalHandle: { width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
@@ -2574,65 +2574,65 @@ const styles = StyleSheet.create({
   modalClose: { fontSize: 18, color: '#6E5F54', padding: 4 },
   nameRow: { flexDirection: 'row' },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
-  fieldHint: { fontSize: 11, color: '#9A8C80', marginTop: 4, fontStyle: 'italic' },
-  input: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' },
+  fieldHint: { fontSize: 12.5, color: '#9A8C80', marginTop: 4 },
+  input: { backgroundColor: '#FAF5EF', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15.5, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' },
   mdpRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  mdpToggle: { backgroundColor: '#F1E7DC', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#EDE2D6' },
+  mdpToggle: { backgroundColor: '#F1E7DC', borderRadius: 14, padding: 13 },
   mdpToggleText: { fontSize: 18 },
   metierGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  metierOption: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC', gap: 6 },
+  metierOption: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC', gap: 7 },
   metierOptionDot: { width: 8, height: 8, borderRadius: 4 },
-  metierOptionText: { fontSize: 13, fontWeight: '500', color: '#6E5F54' },
+  metierOptionText: { fontSize: 13.5, fontWeight: '500', color: '#2B1D14' },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 4 },
   colorSwatch: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: 'transparent' },
   colorSwatchActive: { borderColor: '#2B1D14', transform: [{ scale: 1.2 }] },
   roleRow: { flexDirection: 'row', gap: 10 },
-  roleChip: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' },
+  roleChip: { flex: 1, paddingVertical: 13, borderRadius: 999, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' },
   roleChipActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
   roleChipText: { fontSize: 14, fontWeight: '600', color: '#6E5F54' },
   roleChipTextActive: { color: '#fff' },
-  acheteurRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: '#F2E4E1', borderRadius: 10, borderWidth: 1, borderColor: '#D0D8E8', gap: 12 },
-  horairesToggle: { marginTop: 20, paddingVertical: 12, paddingHorizontal: 14, backgroundColor: '#F2E4E1', borderRadius: 10, borderWidth: 1, borderColor: '#D0D8E8' },
+  acheteurRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#F2E4E1', borderRadius: 16, gap: 12 },
+  horairesToggle: { marginTop: 20, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#F2E4E1', borderRadius: 16 },
   horairesToggleText: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
-  horairesToggleHint: { fontSize: 11, color: '#6E5F54', marginTop: 2 },
+  horairesToggleHint: { fontSize: 12.5, color: '#6E5F54', marginTop: 2 },
   horairesGrid: { marginTop: 10, gap: 8 },
-  horaireRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, gap: 10 },
+  horaireRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 9, gap: 10 },
   horaireJourWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 72 },
   horaireJour: { fontSize: 13, fontWeight: '700', color: '#2B1D14', width: 30 },
   horaireJourOff: { color: '#9A8C80' },
   horaireHeures: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  horaireInput: { flex: 1, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', textAlign: 'center' },
+  horaireInput: { flex: 1, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', textAlign: 'center' },
   horaireArrow: { fontSize: 14, color: '#6E5F54' },
   horaireRepos: { flex: 1, fontSize: 13, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center' },
   saveBtn: { marginTop: 20, backgroundColor: '#5C1F2E', paddingVertical: 15, borderRadius: 999, alignItems: 'center' },
   saveBtnDisabled: { backgroundColor: '#9A8C80' },
-  saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   // Apporteurs
-  apporteurBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 10 },
-  apporteurBadgeText: { fontSize: 10, fontWeight: '700', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.3 },
-  apporteurChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
+  apporteurBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
+  apporteurBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.3 },
+  apporteurChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
   apporteurChipActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
   apporteurChipText: { fontSize: 13, fontWeight: '500', color: '#6E5F54' },
   apporteurChipTextActive: { color: '#fff' },
-  commissionRecap: { backgroundColor: '#fff', borderRadius: 14, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#EDE2D6', borderLeftWidth: 4, borderLeftColor: '#5C1F2E' },
-  commissionRecapTitle: { fontSize: 13, fontWeight: '700', color: '#5C1F2E', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.3 },
-  commissionRecapRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderTopWidth: 1, borderTopColor: '#F1E7DC' },
+  commissionRecap: { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  commissionRecapTitle: { fontSize: 13, fontWeight: '600', color: '#6E5F54', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
+  commissionRecapRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6' },
   commissionRecapName: { fontSize: 14, color: '#2B1D14', fontWeight: '500' },
-  commissionRecapAmount: { fontSize: 14, fontWeight: '800', color: '#E74C3C' },
-  commissionRecapEmpty: { fontSize: 13, color: '#27AE60', fontWeight: '600', paddingVertical: 4 },
+  commissionRecapAmount: { fontSize: 14.5, fontWeight: '700', color: '#5C1F2E' },
+  commissionRecapEmpty: { fontSize: 13.5, color: '#2E7D32', fontWeight: '600', paddingVertical: 4 },
 });
 
 const docStyles = StyleSheet.create({
-  typeSection: { marginBottom: 16, backgroundColor: '#FAF5EF', borderRadius: 12, padding: 12 },
+  typeSection: { marginBottom: 16, backgroundColor: '#FAF5EF', borderRadius: 18, padding: 14 },
   typeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   typeLabel: { fontSize: 14, fontWeight: '700', color: '#5C1F2E', flex: 1 },
-  uploadBtn: { backgroundColor: '#5C1F2E', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 },
-  uploadBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  emptyDoc: { fontSize: 12, color: '#9A8C80', fontStyle: 'italic', paddingLeft: 4 },
-  docRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 8, padding: 10, marginTop: 6, borderWidth: 1, borderColor: '#EDE2D6' },
+  uploadBtn: { backgroundColor: '#5C1F2E', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  uploadBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  emptyDoc: { fontSize: 13, color: '#9A8C80', paddingLeft: 4 },
+  docRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#EDE2D6' },
   docName: { flex: 1 },
-  docNameText: { fontSize: 13, fontWeight: '600', color: '#2B1D14' },
-  docDate: { fontSize: 11, color: '#6E5F54', marginTop: 2 },
+  docNameText: { fontSize: 14.5, fontWeight: '500', color: '#2B1D14' },
+  docDate: { fontSize: 12.5, color: '#6E5F54', marginTop: 2 },
   docDelete: { padding: 6 },
   docDeleteText: { fontSize: 16 },
 });
@@ -2641,15 +2641,15 @@ const docStyles = StyleSheet.create({
 const stStyles = StyleSheet.create({
   // Boutons 3-actions carte ST
   actionButtonsRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
-  actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, paddingVertical: 8, paddingHorizontal: 6, borderRadius: 10, borderWidth: 1, borderColor: '#EDE2D6' },
+  actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 999 },
   actionButtonEdit: { backgroundColor: '#F1E7DC' },
-  actionButtonMoney: { backgroundColor: '#FFF3CD', borderColor: '#5C1F2E' },
-  actionButtonDocs: { backgroundColor: '#FDE2E2', borderColor: '#E67E22' },
-  actionButtonDocsOk: { backgroundColor: '#D4EDDA', borderColor: '#27AE60' },
+  actionButtonMoney: { backgroundColor: '#FEF3C7' },
+  actionButtonDocs: { backgroundColor: '#FEE2E2' },
+  actionButtonDocsOk: { backgroundColor: '#E6F0E7' },
   actionButtonIcon: { fontSize: 14 },
-  actionButtonLabel: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
+  actionButtonLabel: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
   // Modals communs
-  overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
   sheetSmall: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '70%' },
   handle: { width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
@@ -2657,17 +2657,17 @@ const stStyles = StyleSheet.create({
   sheetTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', flex: 1, marginRight: 8 },
   closeX: { fontSize: 18, color: '#6E5F54', padding: 4 },
   fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
-  input: { backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' },
+  input: { backgroundColor: '#FAF5EF', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15.5, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' },
   // Documents légaux — checklist
   docsHelper: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.3 },
   docTypeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#F1E7DC' },
   docTypeLabel: { fontSize: 14, fontWeight: '600', color: '#2B1D14' },
   docTypeStatus: { fontSize: 12, fontWeight: '600', marginTop: 2 },
-  docMiniBtn: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' },
-  docMiniBtnUpload: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
-  docMiniBtnDanger: { backgroundColor: '#FDE2E2', borderColor: '#E74C3C' },
-  docMiniBtnText: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
-  addOtherDocBtn: { marginTop: 16, backgroundColor: '#5C1F2E', paddingVertical: 12, borderRadius: 12, alignItems: 'center' },
+  docMiniBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#F1E7DC' },
+  docMiniBtnUpload: { backgroundColor: '#5C1F2E' },
+  docMiniBtnDanger: { backgroundColor: '#FEE2E2' },
+  docMiniBtnText: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
+  addOtherDocBtn: { marginTop: 16, backgroundColor: '#5C1F2E', paddingVertical: 14, borderRadius: 999, alignItems: 'center' },
   addOtherDocBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   // Finances
   newBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
@@ -2678,7 +2678,7 @@ const stStyles = StyleSheet.create({
   emptyText: { fontSize: 14, color: '#6E5F54', fontWeight: '500' },
   emptyHint: { fontSize: 12, color: '#9A8C80', marginTop: 4 },
   emptySmall: { fontSize: 13, color: '#9A8C80', paddingVertical: 8 },
-  marcheCard: { backgroundColor: '#fff', borderRadius: 20, padding: 14, marginBottom: 12, borderWidth: 1, borderColor: '#EDE2D6' },
+  marcheCard: { backgroundColor: '#fff', borderRadius: 24, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#EDE2D6' },
   marcheCardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
   marcheChantier: { fontSize: 15, fontWeight: '700', color: '#2B1D14' },
   devisObjet: { fontSize: 13, fontWeight: '600', color: '#5C1F2E', marginTop: 2 },

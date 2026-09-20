@@ -11,8 +11,9 @@ import React, { useMemo } from 'react';
 import { View, Text, Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { ChevronUp, ChevronDown, X } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, shadows, font } from '@/constants/design';
-import { ChantierTri, CHANTIER_TRI_LABELS, trierChantiers, deplacerChantier } from '@/lib/chantierOrder';
+import { ChantierTri, trierChantiers, deplacerChantier } from '@/lib/chantierOrder';
 
 const TRIS: ChantierTri[] = ['manuel', 'nom', 'dateFin'];
 
@@ -23,6 +24,8 @@ export interface OrdreChantiersModalProps {
 
 export function OrdreChantiersModal({ visible, onClose }: OrdreChantiersModalProps) {
   const { data, updateChantierOrderPlanning, updateChantierTri } = useApp();
+  const { t } = useLanguage();
+  const triLabels: Record<ChantierTri, string> = { manuel: t.ui.triManuel, nom: t.ui.triNom, dateFin: t.ui.triDateFin };
   const tri: ChantierTri = data.chantierTri || 'manuel';
 
   // Tous les chantiers sauf les archivés : l'ordre sert aux deux écrans.
@@ -45,15 +48,13 @@ export function OrdreChantiersModal({ visible, onClose }: OrdreChantiersModalPro
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <View style={styles.head}>
-            <Text style={styles.title}>Ordre des chantiers</Text>
+            <Text style={styles.title}>{t.ui.ordreChantiers}</Text>
             <Pressable onPress={onClose} hitSlop={10} style={styles.closeBtn} accessibilityLabel="Fermer">
               <X size={18} color={DS.textSecondary} strokeWidth={2.2} />
             </Pressable>
           </View>
 
-          <Text style={styles.intro}>
-            Cet ordre s'applique au Planning comme à la liste des chantiers.
-          </Text>
+          <Text style={styles.intro}>{t.ui.ordreIntro}</Text>
 
           <View style={styles.segment}>
             {TRIS.map(mode => (
@@ -65,16 +66,14 @@ export function OrdreChantiersModal({ visible, onClose }: OrdreChantiersModalPro
                 accessibilityState={{ selected: tri === mode }}
               >
                 <Text style={[styles.segmentText, tri === mode && styles.segmentTextOn]} numberOfLines={1}>
-                  {CHANTIER_TRI_LABELS[mode]}
+                  {triLabels[mode]}
                 </Text>
               </Pressable>
             ))}
           </View>
 
           <Text style={styles.hint}>
-            {manuel
-              ? 'Flèches pour déplacer. Appui long sur une flèche : tout en haut ou tout en bas.'
-              : 'Tri automatique. Repasse sur « Le mien » pour ranger à la main.'}
+            {manuel ? t.ui.ordreHintManuel : t.ui.ordreHintAuto}
           </Text>
 
           <ScrollView style={{ flexGrow: 0 }} contentContainerStyle={{ paddingBottom: 8 }} showsVerticalScrollIndicator={false}>
@@ -86,7 +85,7 @@ export function OrdreChantiersModal({ visible, onClose }: OrdreChantiersModalPro
                   <View style={[styles.rowInner, i < liste.length - 1 && styles.separator]}>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.nom} numberOfLines={1}>{c.nom}</Text>
-                      {!c.visibleSurPlanning && <Text style={styles.sub}>Masqué sur le planning</Text>}
+                      {!c.visibleSurPlanning && <Text style={styles.sub}>{t.ui.masqueSurPlanning}</Text>}
                     </View>
                     <Pressable
                       disabled={!manuel || i === 0}
@@ -111,12 +110,12 @@ export function OrdreChantiersModal({ visible, onClose }: OrdreChantiersModalPro
                   </View>
                 </View>
               ))}
-              {liste.length === 0 && <Text style={styles.empty}>Aucun chantier à ranger.</Text>}
+              {liste.length === 0 && <Text style={styles.empty}>{t.ui.aucunChantierRanger}</Text>}
             </View>
           </ScrollView>
 
           <Pressable style={styles.doneBtn} onPress={onClose}>
-            <Text style={styles.doneText}>Terminé</Text>
+            <Text style={styles.doneText}>{t.ui.termine}</Text>
           </Pressable>
         </View>
       </View>
