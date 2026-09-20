@@ -138,6 +138,7 @@ interface AppContextType {
   deleteIntervention: (id: string) => void;
   // Listes matériel
   upsertListeMateriau: (liste: ListeMateriau) => void;
+  updateMateriauItem: (listeId: string, itemId: string, patch: Partial<Pick<MateriauItem, 'texte' | 'quantite' | 'commentaire' | 'fournisseur'>>) => void;
   deleteListeMateriau: (id: string) => void;
   toggleMateriau: (listeId: string, itemId: string, achetePar: string, prixReel?: number, fournisseurReel?: string) => void;
   addMateriauItem: (listeId: string, item: MateriauItem) => void;
@@ -1399,6 +1400,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }),
     }));
 
+  /** Modifie le libellé / la quantité / le commentaire d'un article déjà saisi. */
+  const updateMateriauItem = (
+    listeId: string,
+    itemId: string,
+    patch: Partial<Pick<MateriauItem, 'texte' | 'quantite' | 'commentaire' | 'fournisseur'>>,
+  ) =>
+    setData(p => ({
+      ...p,
+      listesMateriaux: (p.listesMateriaux || []).map(l => {
+        if (l.id !== listeId) return l;
+        return {
+          ...l,
+          updatedAt: new Date().toISOString(),
+          items: l.items.map(item => (item.id === itemId ? { ...item, ...patch } : item)),
+        };
+      }),
+    }));
+
   const addMateriauItem = (listeId: string, item: MateriauItem) =>
     setData(p => ({
       ...p,
@@ -2145,7 +2164,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addMarche, updateMarche, deleteMarche,
       addAcompteST, updateAcompteST, deleteAcompteST,
       addIntervention, updateIntervention, deleteIntervention,
-      upsertListeMateriau, deleteListeMateriau, toggleMateriau, addMateriauItem, deleteMateriauItem,
+      upsertListeMateriau, deleteListeMateriau, toggleMateriau, addMateriauItem, updateMateriauItem, deleteMateriauItem,
       addDemandeConge, updateDemandeConge, deleteDemandeConge,
       addArretMaladie, updateArretMaladie, deleteArretMaladie,
       addDemandeAvance, updateDemandeAvance, deleteDemandeAvance,

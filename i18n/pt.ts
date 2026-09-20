@@ -737,6 +737,7 @@ export default {
     addList: "Nova lista",
     createList: "Criar lista",
     addItem: "Adicionar artigo",
+    editItem: "Editar artigo",
     deleteList: "Eliminar lista",
     deleteListBtn: "Eliminar lista",
     deleteListConfirm: "Eliminar toda a lista?",

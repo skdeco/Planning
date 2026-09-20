@@ -23,6 +23,7 @@ import { SelectField } from '@/components/ui/SelectField';
 import { router } from 'expo-router';
 import { apiCall } from '@/lib/_core/api';
 import { Ico } from '@/components/ui/Ico';
+import { Pencil } from 'lucide-react-native';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 function genId() { return `mat_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
@@ -117,7 +118,7 @@ export default function MaterielScreen() {
   const {
     data, currentUser, isHydrated,
     upsertListeMateriau, deleteListeMateriau,
-    toggleMateriau, addMateriauItem, deleteMateriauItem,
+    toggleMateriau, addMateriauItem, updateMateriauItem, deleteMateriauItem,
     addFournisseur, deleteFournisseur,
   } = useApp();
   const { t } = useLanguage();
@@ -189,6 +190,29 @@ export default function MaterielScreen() {
   const [newCommentaire, setNewCommentaire] = useState('');
   const [newFournisseur, setNewFournisseur] = useState('');
   const inputRef = useRef<TextInput>(null);
+
+  // ── Modification d'un article déjà saisi (libellé / quantité / commentaire) ──
+  const [editModal, setEditModal] = useState<{ listeId: string; itemId: string } | null>(null);
+  const [editTexte, setEditTexte] = useState('');
+  const [editQuantite, setEditQuantite] = useState('');
+  const [editCommentaire, setEditCommentaire] = useState('');
+
+  const openEditItem = (listeId: string, item: { id: string; texte: string; quantite?: string; commentaire?: string }) => {
+    setEditTexte(item.texte);
+    setEditQuantite(item.quantite || '');
+    setEditCommentaire(item.commentaire || '');
+    setEditModal({ listeId, itemId: item.id });
+  };
+
+  const handleSaveEdit = () => {
+    if (!editModal || !editTexte.trim()) return;
+    updateMateriauItem(editModal.listeId, editModal.itemId, {
+      texte: editTexte.trim(),
+      quantite: editQuantite.trim() || undefined,
+      commentaire: editCommentaire.trim() || undefined,
+    });
+    setEditModal(null);
+  };
 
   // Fournisseurs : fiches du carnet + legacy + ceux utilisés dans les articles
   const fournisseursList = [...new Set([
@@ -701,15 +725,21 @@ export default function MaterielScreen() {
                     >
                       <Text style={styles.checkboxInner}> </Text>
                     </Pressable>
-                    <View style={styles.itemContent}>
+                    <Pressable
+                      style={styles.itemContent}
+                      onPress={(isMine || isAdmin || isAcheteur) ? () => openEditItem(item.listeId, item) : undefined}
+                      disabled={!(isMine || isAdmin || isAcheteur)}
+                      accessibilityLabel={`Modifier ${item.texte}`}
+                    >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
                         <Text style={styles.itemTexte} numberOfLines={1}>{item.texte}</Text>
                         <Text style={{ fontSize: 12, color: '#9A8C80' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
+                        {(isMine || isAdmin || isAcheteur) && <Pencil size={13} color="#9A8C80" strokeWidth={2} />}
                       </View>
                       {/* Fournisseur masqué dans la vue employé */}
                       {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
-                    </View>
+                    </Pressable>
                     {isMine && (
                       <Pressable onPress={() => handleDeleteItem(item.listeId, item.id)} style={styles.deleteBtn}>
                         <Text style={styles.deleteBtnText}>✕</Text>
@@ -831,13 +861,18 @@ export default function MaterielScreen() {
                         <Text style={styles.checkboxInner}> </Text>
                       </Pressable>
                       <View style={styles.itemContent}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                        <Pressable
+                          style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
+                          onPress={() => openEditItem(item.listeId, item)}
+                          accessibilityLabel={`Modifier ${item.texte}`}
+                        >
                           {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
                           <Text style={styles.itemTexte} numberOfLines={1}>{item.texte}</Text>
                           <Text style={{ fontSize: 12, color: '#9A8C80' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
-                        </View>
+                          <Pencil size={13} color="#9A8C80" strokeWidth={2} />
+                        </Pressable>
                         <Pressable onPress={() => setFournisseurPickerModal({ listeId: item.listeId, itemId: item.id, nom: item.texte, currentFournisseur: item.fournisseur || '' })}>
-                          <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{item.fournisseur ? `${item.fournisseur}` : 'Assigner fournisseur'}</Text>
+                          <Text style={{ fontSize: 12.5, color: '#5C1F2E', fontWeight: '600' }}>{item.fournisseur ? `${item.fournisseur}` : 'Assigner fournisseur'}</Text>
                         </Pressable>
                         {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
                       </View>
@@ -1023,6 +1058,59 @@ export default function MaterielScreen() {
       <ConfirmModal />
 
       <CatalogueArticles visible={showCatalogue} onClose={() => setShowCatalogue(false)} />
+
+      {/* Modal de modification d'un article */}
+      <ModalKeyboard visible={!!editModal} transparent animationType="slide" onRequestClose={() => setEditModal(null)}>
+        <Pressable style={styles.modalOverlay} onPress={() => setEditModal(null)}>
+          <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
+            <Text style={styles.modalTitle}>{t.materiel.editItem}</Text>
+
+            <Text style={styles.inputLabel}>{t.materiel.article} *</Text>
+            <TextInput
+              style={styles.input}
+              value={editTexte}
+              onChangeText={setEditTexte}
+              returnKeyType="next"
+              autoFocus
+            />
+
+            <Text style={styles.inputLabel}>{t.materiel.quantity} ({t.common.optional})</Text>
+            <TextInput
+              style={styles.input}
+              placeholder={t.materiel.quantityPlaceholder}
+              placeholderTextColor="#9A8C80"
+              value={editQuantite}
+              onChangeText={setEditQuantite}
+              returnKeyType="next"
+            />
+
+            <Text style={styles.inputLabel}>{t.common.comment} ({t.common.optional})</Text>
+            <TextInput
+              style={[styles.input, styles.inputMultiline]}
+              placeholder={t.materiel.commentExample}
+              placeholderTextColor="#9A8C80"
+              value={editCommentaire}
+              onChangeText={setEditCommentaire}
+              multiline
+              numberOfLines={2}
+              returnKeyType="done"
+            />
+
+            <View style={styles.modalActions}>
+              <Pressable style={styles.btnCancel} onPress={() => setEditModal(null)}>
+                <Text style={styles.btnCancelText}>{t.common.cancel}</Text>
+              </Pressable>
+              <Pressable
+                style={[styles.btnSave, !editTexte.trim() && styles.btnDisabled]}
+                onPress={handleSaveEdit}
+                disabled={!editTexte.trim()}
+              >
+                <Text style={styles.btnSaveText}>{t.common.save}</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </ModalKeyboard>
 
       {/* Modal d'ajout d'article */}
       <ModalKeyboard visible={!!addModal} transparent animationType="slide" onRequestClose={() => setAddModal(null)}>
