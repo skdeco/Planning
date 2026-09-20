@@ -32,7 +32,8 @@
     "production": {
       "ios": {
         "appleId": "kevin.levy.1@hotmail.fr",
-        "appleTeamId": "ZTF67T3WUW"
+        "appleTeamId": "ZTF67T3WUW",
+        "ascAppId": "6761059015"
       }
     }
   }
