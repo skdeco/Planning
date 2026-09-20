@@ -31,11 +31,9 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "REMPLACER_par_votre_identifiant_apple@exemple.fr",
-        "ascAppId": "REMPLACER_par_l_App_ID_App_Store_Connect",
-        "appleTeamId": "REMPLACER_par_le_Team_ID"
-      },
-      "android": {}
+        "appleId": "kevin.levy.1@hotmail.fr",
+        "appleTeamId": "ZTF67T3WUW"
+      }
     }
   }
 }
