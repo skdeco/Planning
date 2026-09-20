@@ -57,7 +57,8 @@ const config: ExpoConfig = {
   userInterfaceStyle: "light",
   newArchEnabled: true,
   ios: {
-    supportsTablet: true,
+    // iPad non pris en charge : évite les captures d'écran iPad exigées par la fiche App Store.
+    supportsTablet: false,
     bundleIdentifier: env.iosBundleId,
     buildNumber: "22",
     infoPlist: {
