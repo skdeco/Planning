@@ -45,11 +45,10 @@ function formatDate(ymd: string) {
   const [y, m, d] = ymd.split('-');
   return `${d}/${m}/${y}`;
 }
-function formatMois(ym: string) {
+function formatMois(ym: string, moisCourts: readonly string[]) {
   if (!ym) return '—';
-  const MOIS = ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
   const [y, m] = ym.split('-');
-  return `${MOIS[parseInt(m, 10) - 1]} ${y}`;
+  return `${moisCourts[parseInt(m, 10) - 1]} ${y}`;
 }
 
 // Destinataires comptables (cabinet AVODA) pour la transmission des arrêts de travail.
@@ -218,7 +217,7 @@ export default function RHScreen() {
   const [paieEmployeId, setPaieEmployeId] = useState<string>('');
   const [paieMois, setPaieMois] = useState<string>('');
   const [paieAnnee, setPaieAnnee] = useState<string>(new Date().getFullYear().toString());
-  const MOIS_LABELS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+  const MOIS_LABELS: readonly string[] = t.ui.moisLongs;
   const ANNEES_LABELS = Array.from({ length: 5 }, (_, i) => (new Date().getFullYear() - i).toString());
   const [editAvance, setEditAvance] = useState<DemandeAvance | null>(null);
 
@@ -248,13 +247,13 @@ export default function RHScreen() {
     setShowCongeModal(false);
     setEditConge(null);
     setCongeForm({ dateDebut: '', dateFin: '', motif: '', employeId: '' });
-    toast.success(editConge ? 'Demande modifiée' : 'Demande de congé envoyée');
+    toast.success(editConge ? t.ui.demandeModifiee : t.ui.demandeEnvoyee);
   };
 
   const handleDeleteConge = (id: string) => {
-    const doDelete = () => { deleteDemandeConge(id); toast.success('Demande supprimée'); };
-    if (Platform.OS === 'web') { if ((typeof window !== 'undefined' && window.confirm ? window.confirm('Supprimer cette demande ?') : true)) doDelete(); }
-    else Alert.alert('Supprimer ?', '', [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: doDelete }]);
+    const doDelete = () => { deleteDemandeConge(id); toast.success(t.ui.demandeSupprimee); };
+    if (Platform.OS === 'web') { if ((typeof window !== 'undefined' && window.confirm ? window.confirm(t.ui.supprimerDemande) : true)) doDelete(); }
+    else Alert.alert(t.ui.supprimerDemande, '', [{ text: t.common.cancel, style: 'cancel' }, { text: t.common.delete, style: 'destructive', onPress: doDelete }]);
   };
 
   // ─── Actions arrêt maladie ───────────────────────────────────────────────
@@ -271,7 +270,7 @@ export default function RHScreen() {
     setShowArretModal(false);
     setEditArret(null);
     setArretForm({ dateDebut: '', dateFin: '', commentaire: '', justificatif: '', justificatifNom: '', employeId: '' });
-    toast.success(editArret ? 'Arrêt modifié' : 'Arrêt maladie enregistré');
+    toast.success(editArret ? t.ui.demandeModifiee : t.ui.arretEnregistre);
   };
 
   // ─── Actions avance ──────────────────────────────────────────────────────
@@ -287,7 +286,7 @@ export default function RHScreen() {
     setShowAvanceModal(false);
     setEditAvance(null);
     setAvanceForm({ montant: '', motif: '', employeId: '' });
-    toast.success(editAvance ? 'Demande modifiée' : "Demande d'avance envoyée");
+    toast.success(editAvance ? t.ui.demandeModifiee : t.ui.demandeEnvoyee);
   };
 
   // ─── Réponse RH ──────────────────────────────────────────────────────────
@@ -607,7 +606,7 @@ export default function RHScreen() {
                   )}
                   {(!isRH || d.statut === 'en_attente') && (
                     <Pressable style={styles.deleteBtn} onPress={async () => {
-                      if (await confirm('Supprimer cet arrêt maladie ?')) deleteArretMaladie(d.id);
+                      if (await confirm(t.ui.supprimerArret)) deleteArretMaladie(d.id);
                     }}>
                       <Text style={styles.deleteBtnText}>{t.common.delete}</Text>
                     </Pressable>
@@ -722,7 +721,7 @@ export default function RHScreen() {
                 {fichesAnnee.map(f => (
                   <View key={f.id} style={styles.card}>
                     {isRH && <Text style={styles.cardEmploye}>{getEmployeNom(f.employeId)}</Text>}
-                    <Text style={styles.cardTitle}>{formatMois(f.mois)}</Text>
+                    <Text style={styles.cardTitle}>{formatMois(f.mois, t.common.monthsShort)}</Text>
                     <Text style={styles.cardSub}>Déposée le {new Date(f.uploadedAt).toLocaleDateString('fr-FR')}</Text>
                     <View style={styles.cardActions}>
                       {/* Voir le document */}
@@ -745,9 +744,9 @@ export default function RHScreen() {
                         <Pressable style={styles.deleteBtn} onPress={() => {
                           const doDelete = () => deleteFichePaie(f.id);
                           if (Platform.OS === 'web') {
-                            if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`Supprimer la fiche de paie de ${getEmployeNom(f.employeId)} pour ${formatMois(f.mois)} ?\nCette action est irréversible.`) : true)) doDelete();
+                            if ((typeof window !== 'undefined' && window.confirm ? window.confirm(`Supprimer la fiche de paie de ${getEmployeNom(f.employeId)} pour ${formatMois(f.mois, t.common.monthsShort)} ?\nCette action est irréversible.`) : true)) doDelete();
                           } else {
-                            Alert.alert('Supprimer ?', `Fiche de ${getEmployeNom(f.employeId)} — ${formatMois(f.mois)}`, [
+                            Alert.alert('Supprimer ?', `Fiche de ${getEmployeNom(f.employeId)} — ${formatMois(f.mois, t.common.monthsShort)}`, [
                               { text: 'Annuler', style: 'cancel' },
                               { text: 'Supprimer', style: 'destructive', onPress: doDelete },
                             ]);

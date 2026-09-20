@@ -28,8 +28,7 @@ const inboxMimeFilterImagePdf = (m: string): boolean =>
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
 
-const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
-const JOURS_LONG = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+// Les libellés de mois et de jours viennent des traductions (t.common.monthsShort, t.ui.joursLongs).
 
 function toYMD(date: Date): string {
   const y = date.getFullYear();
@@ -40,9 +39,14 @@ function toYMD(date: Date): string {
 function toHM(date: Date): string {
   return date.toTimeString().slice(0, 5);
 }
-function formatDateFr(dateStr: string): string {
+/** Date longue localisée : « Lundi 12 Mai 2026 » selon la langue choisie. */
+function formatDateLongue(
+  dateStr: string,
+  jours: readonly string[],
+  moisCourts: readonly string[],
+): string {
   const d = new Date(dateStr + 'T12:00:00');
-  return `${JOURS_LONG[d.getDay()]} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`;
+  return `${jours[d.getDay()]} ${d.getDate()} ${moisCourts[d.getMonth()]} ${d.getFullYear()}`;
 }
 
 /** Distance en mètres entre deux coordonnées GPS (formule Haversine) */
@@ -72,11 +76,14 @@ async function geocodeAddress(adresse: string): Promise<{ lat: number; lng: numb
 }
 
 /** Obtient la position GPS courante — natif (iOS/Android) via expo-location, web via l'API navigateur. */
-async function getCurrentPosition(): Promise<{ latitude: number; longitude: number }> {
+async function getCurrentPosition(
+  messageGeoIndispo: string,
+  messageGeoRefusee: string,
+): Promise<{ latitude: number; longitude: number }> {
   if (Platform.OS === 'web') {
     return new Promise((resolve, reject) => {
       if (!navigator?.geolocation) {
-        reject(new Error('Géolocalisation non disponible'));
+        reject(new Error(messageGeoIndispo));
         return;
       }
       navigator.geolocation.getCurrentPosition(
@@ -89,7 +96,7 @@ async function getCurrentPosition(): Promise<{ latitude: number; longitude: numb
   // Natif : expo-location (navigator.geolocation n'existe pas en React Native).
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') {
-    throw new Error('Permission de localisation refusée');
+    throw new Error(messageGeoRefusee);
   }
   const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
   return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
@@ -402,7 +409,7 @@ export default function PointageScreen() {
 
       // Géolocalisation
       try {
-        const pos = await getCurrentPosition();
+        const pos = await getCurrentPosition(t.ui.geoIndispo, t.ui.geoRefusee);
         latitude = pos.latitude;
         longitude = pos.longitude;
         adresse = `${pos.latitude.toFixed(5)}, ${pos.longitude.toFixed(5)}`;
@@ -625,7 +632,7 @@ export default function PointageScreen() {
             <View style={styles.identiteRow}>
               <IconCalendar size={13} color="#6E5F54" />
               <Text style={styles.identiteDate}>
-                {JOURS_LONG[now.getDay()]} {now.getDate()} {MOIS[now.getMonth()]} {now.getFullYear()}
+                {t.ui.joursLongs[now.getDay()]} {now.getDate()} {t.common.monthsShort[now.getMonth()]} {now.getFullYear()}
               </Text>
             </View>
             <Text style={styles.identiteHeure}>{now.toTimeString().slice(0, 8)}</Text>
@@ -672,7 +679,7 @@ export default function PointageScreen() {
                 <View key={date} style={styles.histCard}>
                   <View style={styles.histDateRow}>
                     <IconCalendar size={13} color="#5C1F2E" />
-                    <Text style={styles.histDate}>{formatDateFr(date)}</Text>
+                    <Text style={styles.histDate}>{formatDateLongue(date, t.ui.joursLongs, t.common.monthsShort)}</Text>
                   </View>
                   {entries.map(([cId, { debut, fin }]) => {
                     const ch = cId !== '__global__' ? data.chantiers.find(c => c.id === cId) : null;
@@ -727,7 +734,7 @@ export default function PointageScreen() {
                         {/* Indicateur si modifié par admin */}
                         {(debut?.saisieManuelle || fin?.saisieManuelle) && (
                           <View style={{ marginTop: 4, paddingHorizontal: 6, paddingVertical: 2, backgroundColor: '#FFF3CD', borderRadius: 4, alignSelf: 'flex-start' }}>
-                            <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }}>{debut?.saisieManuelle ? 'Arrivée' : ''}{debut?.saisieManuelle && fin?.saisieManuelle ? ' + ' : ''}{fin?.saisieManuelle ? 'Départ' : ''} modifié par {(() => {
+                            <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }}>{debut?.saisieManuelle ? t.pointage.arrival : ''}{debut?.saisieManuelle && fin?.saisieManuelle ? ' + ' : ''}{fin?.saisieManuelle ? t.pointage.departure : ''} {t.ui.modifiePar} {(() => {
                                 const modId = (debut?.saisieManuelle ? debut?.saisieParId : fin?.saisieParId) || 'admin';
                                 const mod = data.employes.find(e => e.id === modId);
                                 return mod ? mod.prenom : 'Admin';
@@ -802,7 +809,7 @@ export default function PointageScreen() {
             const supH = Math.floor(heuresSup / 60);
             const supM = heuresSup % 60;
 
-            const MOIS_LONG = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+            const MOIS_LONG = t.ui.moisLongs;
 
             return (
               <View style={{ backgroundColor: '#fff', borderRadius: 14, padding: 16, shadowColor: '#2B1D14', shadowOpacity: 0.05, shadowRadius: 6, elevation: 2 }}>
@@ -852,11 +859,11 @@ export default function PointageScreen() {
                           const diff2 = (fh2 * 60 + fm2) - (dh2 * 60 + dm2);
                           if (diff2 > 0) duree = `${Math.floor(diff2 / 60)}h${String(diff2 % 60).padStart(2, '0')}`;
                         }
-                        return `<tr><td>${formatDateFr(date)}</td><td>${debut || '—'}</td><td>${fin || '—'}</td><td>${duree}</td></tr>`;
+                        return `<tr><td>${formatDateLongue(date, t.ui.joursLongs, t.common.monthsShort)}</td><td>${debut || '—'}</td><td>${fin || '—'}</td><td>${duree}</td></tr>`;
                       }).join('');
 
                       const html = `
-                        <html><head><title>Feuille de pointage - ${MOIS_LONG[moisActuel]} ${annee}</title>
+                        <html><head><title>${t.ui.feuillePointage} - ${MOIS_LONG[moisActuel]} ${annee}</title>
                         <style>
                           body { font-family: Arial, sans-serif; padding: 40px; color: #333; }
                           h1 { color: #2C2C2C; font-size: 22px; }
@@ -868,15 +875,15 @@ export default function PointageScreen() {
                           .summary { margin-top: 24px; padding: 16px; background: #F5EDE3; border-radius: 8px; }
                           .summary span { font-weight: bold; color: #2C2C2C; }
                         </style></head><body>
-                        <h1>Feuille de pointage</h1>
+                        <h1>${t.ui.feuillePointage}</h1>
                         <h2>${empNom} — ${MOIS_LONG[moisActuel]} ${annee}</h2>
                         <table>
-                          <thead><tr><th>Date</th><th>Arrivée</th><th>Départ</th><th>Durée</th></tr></thead>
+                          <thead><tr><th>${t.common.date}</th><th>${t.pointage.arrival}</th><th>${t.pointage.departure}</th><th>${t.pointage.duration}</th></tr></thead>
                           <tbody>${rows}</tbody>
                         </table>
                         <div class="summary">
-                          <p><span>${joursComplets}</span> jours pointés • <span>${totalH}h${String(totalM).padStart(2, '0')}</span> heures travaillées</p>
-                          ${heuresTheoriques > 0 ? `<p>Heures théoriques : <span>${theoriqueH}h${String(theoriqueM).padStart(2, '0')}</span> • Heures sup : <span>${supH}h${String(supM).padStart(2, '0')}</span></p>` : ''}
+                          <p><span>${joursComplets}</span> ${t.pointage.daysClocked} • <span>${totalH}h${String(totalM).padStart(2, '0')}</span> ${t.pointage.hoursWorked}</p>
+                          ${heuresTheoriques > 0 ? `<p>${t.ui.heuresTheoriques} : <span>${theoriqueH}h${String(theoriqueM).padStart(2, '0')}</span> • ${t.pointage.overtimeHours} : <span>${supH}h${String(supM).padStart(2, '0')}</span></p>` : ''}
                         </div>
                         <script>window.onload = function() { window.print(); }</script>
                         </body></html>

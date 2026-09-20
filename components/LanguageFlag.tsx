@@ -4,11 +4,20 @@ import {
   SafeAreaView, Platform,
 } from 'react-native';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { useApp } from '@/app/context/AppContext';
 import { LANGUAGES, type Language } from '@/i18n';
 
 export function LanguageFlag() {
   const { language, setLanguage, t } = useLanguage();
+  const { data, currentUser, updateEmploye } = useApp();
   const [showModal, setShowModal] = useState(false);
+
+  /** Enregistre la langue sur la fiche de l'employé : les notifications qui lui sont
+   *  envoyées depuis un autre appareil sont alors rédigées dans cette langue. */
+  const memoriserLangue = (code: Language) => {
+    const emp = currentUser?.employeId ? data.employes.find(e => e.id === currentUser.employeId) : null;
+    if (emp && emp.langue !== code) updateEmploye({ ...emp, langue: code });
+  };
 
   const currentLang = LANGUAGES.find(l => l.code === language);
 
@@ -44,6 +53,7 @@ export function LanguageFlag() {
                   style={[styles.langItem, isSelected && styles.langItemSelected]}
                   onPress={() => {
                     setLanguage(lang.code as Language);
+                    memoriserLangue(lang.code as Language);
                     setShowModal(false);
                   }}
                   activeOpacity={0.7}

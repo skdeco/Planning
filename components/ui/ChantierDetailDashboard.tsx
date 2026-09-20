@@ -35,6 +35,7 @@ import {
   Eye,
   type LucideIcon,
 } from 'lucide-react-native';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, shadows, font } from '@/constants/design';
 import type { TileKey, TileMode } from '@/lib/portail/dashboardAccess';
 
@@ -129,6 +130,7 @@ export function ChantierDetailDashboard({
   handlers,
   access,
 }: ChantierDetailDashboardProps) {
+  const { t } = useLanguage();
   const noop = () => {};
   const resolveMode = (tile: TileSpec): TileMode => {
     if (access) return tile.key ? access(tile.key) : 'hidden';
@@ -138,59 +140,59 @@ export function ChantierDetailDashboard({
 
   // Actions rapides (toujours visibles en haut de la fiche).
   const quick: TileSpec[] = [
-    { icon: Navigation,  label: 'Y aller', key: 'yAller', onPress: handlers.onPressYAller },
-    { icon: Camera,      label: 'Photos',  key: 'photos', onPress: handlers.onPressPhotos, badge: counts.photos },
-    { icon: CheckSquare, label: 'Notes',   key: 'notes',  onPress: handlers.onPressNotes,  badge: counts.notes },
-    { icon: Info,        label: 'Infos',   key: 'fiche',  onPress: handlers.onPressFiche },
+    { icon: Navigation,  label: t.home.goThere, key: 'yAller', onPress: handlers.onPressYAller },
+    { icon: Camera,      label: t.ui.photos,  key: 'photos', onPress: handlers.onPressPhotos, badge: counts.photos },
+    { icon: CheckSquare, label: t.planning.notes,   key: 'notes',  onPress: handlers.onPressNotes,  badge: counts.notes },
+    { icon: Info,        label: t.equipe.infos,   key: 'fiche',  onPress: handlers.onPressFiche },
   ];
 
   const sections: { id: SectionId; titre: string; tiles: TileSpec[] }[] = [
     {
       id: 'suivi',
-      titre: 'Suivi',
+      titre: t.ui.suivi,
       tiles: [
-        { icon: CheckSquare,   label: 'Notes',           key: 'notes',     onPress: handlers.onPressNotes,     badge: counts.notes },
-        { icon: ClipboardList, label: 'Comptes rendus',  key: 'suivis',    onPress: handlers.onPressSuivis,    badge: counts.notesPlanning },
-        { icon: Camera,        label: 'Photos',          key: 'photos',    onPress: handlers.onPressPhotos,    badge: counts.photos },
-        { icon: LayoutGrid,    label: 'Plans',           key: 'plans',     onPress: handlers.onPressPlans,     badge: counts.plans },
-        { icon: CalendarRange, label: 'Phases',          key: 'phases',    onPress: handlers.onPressPhases },
-        { icon: Truck,         label: 'Livraisons',      key: 'livraison', onPress: handlers.onPressLivraison, badge: counts.livraisons },
+        { icon: CheckSquare,   label: t.planning.notes,           key: 'notes',     onPress: handlers.onPressNotes,     badge: counts.notes },
+        { icon: ClipboardList, label: t.ui.comptesRendus,  key: 'suivis',    onPress: handlers.onPressSuivis,    badge: counts.notesPlanning },
+        { icon: Camera,        label: t.ui.photos,          key: 'photos',    onPress: handlers.onPressPhotos,    badge: counts.photos },
+        { icon: LayoutGrid,    label: t.common.plans,           key: 'plans',     onPress: handlers.onPressPlans,     badge: counts.plans },
+        { icon: CalendarRange, label: t.ui.phases,          key: 'phases',    onPress: handlers.onPressPhases },
+        { icon: Truck,         label: t.ui.livraisons,      key: 'livraison', onPress: handlers.onPressLivraison, badge: counts.livraisons },
       ],
     },
     {
       id: 'finances',
-      titre: 'Finances',
+      titre: t.equipe.finances,
       tiles: [
-        { icon: Briefcase,    label: 'Marchés',      key: 'marches',      onPress: handlers.onPressMarches,      badge: counts.marches, adminOnly: true },
-        { icon: ShoppingCart, label: 'Achats',       key: 'achats',       onPress: handlers.onPressAchats,       badge: counts.achats,  adminOnly: true },
-        { icon: TrendingUp,   label: 'Rentabilité',  key: 'rentabilite',  onPress: handlers.onPressRentabilite,  adminOnly: true },
-        { icon: Wallet,       label: 'Budget',       key: 'budget',       onPress: handlers.onPressBudget },
-        { icon: Ruler,        label: 'Métrés',       key: 'metres',       onPress: handlers.onPressMetres },
-        { icon: Scale,        label: 'Consultation', key: 'consultation', onPress: handlers.onPressConsultation, adminOnly: true },
-        { icon: Receipt,      label: 'Honoraires',   key: 'honoraires',   onPress: handlers.onPressHonoraires ?? noop, portalOnly: true },
-        { icon: Wallet,       label: 'Mes finances', key: 'finances',     onPress: handlers.onPressFinances ?? noop,   portalOnly: true },
+        { icon: Briefcase,    label: t.marches.title,      key: 'marches',      onPress: handlers.onPressMarches,      badge: counts.marches, adminOnly: true },
+        { icon: ShoppingCart, label: t.ui.achats,       key: 'achats',       onPress: handlers.onPressAchats,       badge: counts.achats,  adminOnly: true },
+        { icon: TrendingUp,   label: t.ui.rentabilite,  key: 'rentabilite',  onPress: handlers.onPressRentabilite,  adminOnly: true },
+        { icon: Wallet,       label: t.chantiers.budget,       key: 'budget',       onPress: handlers.onPressBudget },
+        { icon: Ruler,        label: t.ui.metres,       key: 'metres',       onPress: handlers.onPressMetres },
+        { icon: Scale,        label: t.ui.consultation, key: 'consultation', onPress: handlers.onPressConsultation, adminOnly: true },
+        { icon: Receipt,      label: t.ui.honoraires,   key: 'honoraires',   onPress: handlers.onPressHonoraires ?? noop, portalOnly: true },
+        { icon: Wallet,       label: t.nav.finances, key: 'finances',     onPress: handlers.onPressFinances ?? noop,   portalOnly: true },
       ],
     },
     {
       id: 'documents',
-      titre: 'Documents',
+      titre: t.equipe.documents,
       tiles: [
-        { icon: FolderOpen, label: 'Documents',       key: 'drive',         onPress: handlers.onPressDrive,         adminOnly: true },
-        { icon: Info,       label: 'Infos utiles',    key: 'fiche',         onPress: handlers.onPressFiche },
-        { icon: Package,    label: 'Prescriptions',   key: 'prescriptions', onPress: handlers.onPressPrescriptions },
-        { icon: FileCheck,  label: 'PV de réception', key: 'pv',            onPress: handlers.onPressPV,            adminOnly: true },
-        { icon: Landmark,   label: 'Administratif',   key: 'administratif', onPress: handlers.onPressAdministratif, adminOnly: true },
-        { icon: Wrench,     label: 'SAV',             key: 'sav',           onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
+        { icon: FolderOpen, label: t.equipe.documents,       key: 'drive',         onPress: handlers.onPressDrive,         adminOnly: true },
+        { icon: Info,       label: t.ui.infosUtiles,    key: 'fiche',         onPress: handlers.onPressFiche },
+        { icon: Package,    label: t.ui.prescriptions,   key: 'prescriptions', onPress: handlers.onPressPrescriptions },
+        { icon: FileCheck,  label: t.ui.pvReception, key: 'pv',            onPress: handlers.onPressPV,            adminOnly: true },
+        { icon: Landmark,   label: t.ui.administratif,   key: 'administratif', onPress: handlers.onPressAdministratif, adminOnly: true },
+        { icon: Wrench,     label: t.statut.sav,             key: 'sav',           onPress: handlers.onPressSAV,           badge: counts.sav, adminOnly: true },
       ],
     },
     {
       id: 'equipe',
-      titre: 'Équipe',
+      titre: t.nav.equipe,
       tiles: [
-        { icon: HardHat,       label: 'Sous-traitants', key: 'sousTraitants', onPress: handlers.onPressSousTraitants, adminOnly: true },
-        { icon: Users,         label: 'Annuaire',       key: 'annuaire',      onPress: handlers.onPressAnnuaire },
-        { icon: User,          label: 'Portail client',                       onPress: handlers.onPressPortailClient, adminOnly: true },
-        { icon: MessageCircle, label: 'Messagerie',     key: 'messagerie',    onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
+        { icon: HardHat,       label: t.nav.sousTraitants, key: 'sousTraitants', onPress: handlers.onPressSousTraitants, adminOnly: true },
+        { icon: Users,         label: t.ui.annuaire,       key: 'annuaire',      onPress: handlers.onPressAnnuaire },
+        { icon: User,          label: t.ui.portailClient,                       onPress: handlers.onPressPortailClient, adminOnly: true },
+        { icon: MessageCircle, label: t.ui.messagerie,     key: 'messagerie',    onPress: handlers.onPressMessagerie,    badge: counts.messages, adminOnly: true },
       ],
     },
   ];
@@ -292,13 +294,13 @@ export function ChantierDetailDashboard({
           {handlers.onPressEdit && (
             <Pressable onPress={handlers.onPressEdit} style={styles.footerBtn}>
               <Pencil size={16} color={DS.bordeaux} strokeWidth={2} />
-              <Text style={styles.footerBtnText}>Modifier le chantier</Text>
+              <Text style={styles.footerBtnText}>{t.ui.modifierChantier}</Text>
             </Pressable>
           )}
           {handlers.onPressCloturer && (
             <Pressable onPress={handlers.onPressCloturer} style={styles.footerBtn}>
               <CheckCircle2 size={16} color={DS.bordeaux} strokeWidth={2} />
-              <Text style={styles.footerBtnText}>Clôturer le chantier</Text>
+              <Text style={styles.footerBtnText}>{t.ui.cloturerChantier}</Text>
             </Pressable>
           )}
           {handlers.onPressSupprimer && (

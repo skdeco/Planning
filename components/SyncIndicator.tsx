@@ -2,10 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 export function SyncIndicator() {
   const { syncStatus } = useApp();
   const insets = useSafeAreaInsets();
+  const { t } = useLanguage();
   const [isOnline, setIsOnline] = useState(true);
   const [lastSyncAgo, setLastSyncAgo] = useState('');
   const lastSyncTime = useRef(Date.now());
@@ -50,10 +52,10 @@ export function SyncIndicator() {
   if (effectiveStatus === 'synced') return null;
 
   const configs = {
-    synced: { color: '#27AE60', label: lastSyncAgo ? `Sync il y a ${lastSyncAgo}` : '' },
-    saving: { color: '#F59E0B', label: 'Synchronisation...' },
-    error: { color: '#EF4444', label: 'Erreur de sync' },
-    offline: { color: '#EF4444', label: 'Hors ligne — données conservées localement' },
+    synced: { color: '#2E7D32', label: lastSyncAgo ? `${t.ui.syncPrefix} ${lastSyncAgo}` : '' },
+    saving: { color: '#E5A840', label: t.common.loading },
+    error: { color: '#E74C3C', label: t.ui.erreurSync },
+    offline: { color: '#E74C3C', label: t.ui.horsLigne },
   };
   const config = configs[effectiveStatus];
   if (!config.label) return null;

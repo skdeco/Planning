@@ -177,6 +177,8 @@ export const HORAIRES_DEFAUT: HorairesHebdo = {
 };
 
 export interface Employe {
+  /** Langue choisie par l'employé dans l'app — sert à lui envoyer les notifications dans sa langue. */
+  langue?: 'fr' | 'en' | 'es' | 'pt' | 'ru' | 'ar';
   id: string;
   prenom: string;
   nom: string;

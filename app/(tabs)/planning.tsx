@@ -74,17 +74,14 @@ const getPrintModule = () => import('expo-print').catch(() => null);
 const getSharingModule = () => import('expo-sharing').catch(() => null);
 
 // ─── Mini calendrier inline pour la navigation planning ───────────────────────
-const CAL_JOURS = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
-const CAL_MOIS = [
-  'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-  'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre',
-];
+// Les jours et mois affichés viennent des traductions (t.planning.weekDaysShort, t.ui.moisLongs).
 function parseYMDLocal(str: string): Date | null {
   if (!str || !/^\d{4}-\d{2}-\d{2}$/.test(str)) return null;
   const d = new Date(str + 'T00:00:00');
   return isNaN(d.getTime()) ? null : d;
 }
 function DatePickerCalendar({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const { t } = useLanguage();
   const init = parseYMDLocal(value) || new Date();
   const [calYear, setCalYear] = useState(init.getFullYear());
   const [calMonth, setCalMonth] = useState(init.getMonth());
@@ -110,11 +107,11 @@ function DatePickerCalendar({ value, onChange }: { value: string; onChange: (v: 
     <View>
       <View style={calStyles.header}>
         <Pressable style={calStyles.navBtn} onPress={prevMonth}><Text style={calStyles.navArrow}>‹</Text></Pressable>
-        <Text style={calStyles.title}>{CAL_MOIS[calMonth]} {calYear}</Text>
+        <Text style={calStyles.title}>{t.ui.moisLongs[calMonth]} {calYear}</Text>
         <Pressable style={calStyles.navBtn} onPress={nextMonth}><Text style={calStyles.navArrow}>›</Text></Pressable>
       </View>
       <View style={calStyles.weekRow}>
-        {CAL_JOURS.map(j => <Text key={j} style={calStyles.weekDay}>{j}</Text>)}
+        {t.planning.weekDaysShort.map((j: string) => <Text key={j} style={calStyles.weekDay}>{j}</Text>)}
       </View>
       <View style={calStyles.grid}>
         {cells.map((day, idx) => {
@@ -155,7 +152,6 @@ const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
 const NAME_COL_DEFAULT = 70;
 const DAY_COL = 80; // fallback pour les styles statiques
 
-const MOIS = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
 
 function addDays(date: Date, n: number): Date {
   const d = new Date(date);
@@ -541,8 +537,8 @@ export default function PlanningScreen() {
     try {
       const JOURS_PDF = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
       const weekDays = days.slice(0, 5); // Lundi à Vendredi
-      const mondayStr = `${weekDays[0].getDate()} ${MOIS[weekDays[0].getMonth()]}`;
-      const fridayStr = `${weekDays[4].getDate()} ${MOIS[weekDays[4].getMonth()]}`;
+      const mondayStr = `${weekDays[0].getDate()} ${t.common.monthsShort[weekDays[0].getMonth()]}`;
+      const fridayStr = `${weekDays[4].getDate()} ${t.common.monthsShort[weekDays[4].getMonth()]}`;
       const titre = `Semaine du ${mondayStr} au ${fridayStr} ${weekDays[4].getFullYear()}`;
 
       // Collecter tous les employés qui ont au moins une affectation cette semaine
@@ -640,7 +636,7 @@ export default function PlanningScreen() {
     const cells: (Date | null)[] = Array(dow).fill(null);
     for (let i = 1; i <= daysInMonth; i++) cells.push(new Date(y, m, i));
     while (cells.length % 7 !== 0) cells.push(null);
-    return { cells, year: y, month: m, label: `${CAL_MOIS[m]} ${y}` };
+    return { cells, year: y, month: m, label: `${t.ui.moisLongs[m]} ${y}` };
   }, [monthOffset]);
 
   // ─── Précalcul pour la vue mensuelle ──────────────────────────────────────
@@ -842,7 +838,7 @@ export default function PlanningScreen() {
           {planningMode === 'equipe' && (
               <View style={[styles.viewToggle, { marginHorizontal: 16, marginBottom: 10 }]}>
                 <Pressable style={[styles.viewToggleBtn, viewMode === 'jour' && styles.viewToggleBtnActive]} onPress={() => setViewMode('jour')}>
-                  <Text style={[styles.viewToggleBtnText, viewMode === 'jour' && styles.viewToggleBtnTextActive]}>Jour</Text>
+                  <Text style={[styles.viewToggleBtnText, viewMode === 'jour' && styles.viewToggleBtnTextActive]}>{t.ui.vueJour}</Text>
                 </Pressable>
                 <Pressable style={[styles.viewToggleBtn, viewMode === 'semaine' && styles.viewToggleBtnActive]} onPress={() => setViewMode('semaine')}>
                   <Text style={[styles.viewToggleBtnText, viewMode === 'semaine' && styles.viewToggleBtnTextActive]}>7j</Text>
@@ -872,13 +868,13 @@ export default function PlanningScreen() {
       <>
       <View style={styles.weekInfo}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
-          <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)} accessibilityLabel="Précédent">
+          <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)} accessibilityLabel={t.ui.precedent}>
             <ChevronLeft size={18} color="#5C1F2E" strokeWidth={2.2} />
           </Pressable>
           <Pressable onPress={() => setShowDatePicker(true)} style={{ flexShrink: 1 }}>
             <Text style={styles.weekLabel} numberOfLines={1}>{(viewMode === 'semaine' || viewMode === 'jour') ? weekLabel : monthData.label}</Text>
           </Pressable>
-          <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)} accessibilityLabel="Suivant">
+          <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w + 1) : setMonthOffset(m => m + 1)} accessibilityLabel={t.ui.suivant}>
             <ChevronRight size={18} color="#5C1F2E" strokeWidth={2.2} />
           </Pressable>
           <Pressable style={{ backgroundColor: '#F2E4E1', paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 999 }} onPress={() => setShowDatePicker(true)}>
@@ -1270,7 +1266,7 @@ export default function PlanningScreen() {
         visible={showGalerieGlobale}
         onClose={() => { setShowGalerieGlobale(false); setGalerieChantierId(undefined); }}
         chantierId={galerieChantierId}
-        titre="Galerie photos"
+        titre={t.galerie.title}
       />
 
       {/* ── Modal Notes Chantier (Planning) ── */}

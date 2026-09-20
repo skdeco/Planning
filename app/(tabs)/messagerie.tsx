@@ -733,7 +733,7 @@ export default function MessagerieScreen() {
                           Destinataires : {empsOnChantier.map(e => e.prenom).join(', ')}
                         </Text>
                       ) : (
-                        <Text style={{ fontSize: 11, color: '#E74C3C', marginTop: 6 }}>Aucun employé affecté à ce chantier.</Text>
+                        <Text style={{ fontSize: 12.5, color: '#E74C3C', marginTop: 6 }}>{t.ui.aucunEmployeChantier}</Text>
                       );
                     })()}
                   </View>
@@ -746,12 +746,12 @@ export default function MessagerieScreen() {
                 )}
 
                 {/* Message */}
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>Message</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.common.message}</Text>
                 <TextInput
                   style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 16, minHeight: 80, textAlignVertical: 'top' }}
                   value={groupMessage}
                   onChangeText={setGroupMessage}
-                  placeholder="Votre message..."
+                  placeholder={t.ui.votreMessage}
                   placeholderTextColor="#6E5F54"
                   multiline
                   maxLength={2000}
@@ -760,7 +760,7 @@ export default function MessagerieScreen() {
                 {/* Actions */}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
                   <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowGroupModal(false)}>
-                    <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>Annuler</Text>
+                    <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
                   </Pressable>
                   <Pressable
                     style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: groupMessage.trim() ? 1 : 0.5 }}
@@ -803,7 +803,7 @@ export default function MessagerieScreen() {
                       setGroupMessage('');
                     }}
                   >
-                    <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>Envoyer ({groupType === 'equipe' ? data.employes.length + data.sousTraitants.length : (() => {
+                    <Text style={{ fontSize: 15, color: '#fff', fontWeight: '700' }}>{t.common.send} ({groupType === 'equipe' ? data.employes.length + data.sousTraitants.length : (() => {
                       if (!groupChantierId) return 0;
                       return data.employes.filter(e => data.affectations.some(a => a.chantierId === groupChantierId && a.employeId === e.id)).length;
                     })()})</Text>
@@ -1029,24 +1029,24 @@ export default function MessagerieScreen() {
         {/* Bouton archiver la discussion */}
         {!showArchive && selectedChantierId && messages.length > 0 && (
           <Pressable style={styles.archiveDiscussionBtn} onPress={() => {
-            const chNom = data.chantiers.find(c => c.id === selectedChantierId)?.nom || 'ce chantier';
+            const chNom = data.chantiers.find(c => c.id === selectedChantierId)?.nom || t.ui.cetteDiscussion;
             if (Platform.OS === 'web') {
-              if (window.confirm(`Archiver toute la discussion "${chNom}" ?\nLes messages seront visibles dans les archives.`)) handleArchiveDiscussion();
+              if (window.confirm(`${t.ui.archiverDiscussion} — "${chNom}" ?`)) handleArchiveDiscussion();
             } else {
-              Alert.alert('Archiver la discussion', `Archiver tous les messages de "${chNom}" ?`, [
-                { text: 'Annuler', style: 'cancel' },
+              Alert.alert(t.ui.archiverDiscussion, `${t.ui.archiverDiscussion} — "${chNom}" ?`, [
+                { text: t.common.cancel, style: 'cancel' },
                 { text: 'Archiver', onPress: handleArchiveDiscussion },
               ]);
             }
           }}>
-            <Text style={styles.archiveDiscussionBtnText}>Clore et archiver cette discussion</Text>
+            <Text style={styles.archiveDiscussionBtnText}>{t.ui.cloreEtArchiver}</Text>
           </Pressable>
         )}
 
         {/* Bouton désarchiver */}
         {showArchive && selectedChantierId && messages.length > 0 && (
           <Pressable style={[styles.archiveDiscussionBtn, { backgroundColor: '#F2E4E1' }]} onPress={handleUnarchiveDiscussion}>
-            <Text style={[styles.archiveDiscussionBtnText, { color: '#5C1F2E' }]}>Restaurer cette discussion</Text>
+            <Text style={[styles.archiveDiscussionBtnText, { color: '#5C1F2E' }]}>{t.ui.restaurerDiscussion}</Text>
           </Pressable>
         )}
 
@@ -1077,13 +1077,13 @@ export default function MessagerieScreen() {
               </Pressable>
             </View>
             {/* Date rapide */}
-            <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 6, marginBottom: 4 }}>Date :</Text>
+            <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 6, marginBottom: 4 }}>{t.common.date} :</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
               {[
-                { label: `Aujourd'hui (${formatFr(todayYmd)})`, value: todayYmd },
-                { label: `Demain (${formatFr(demainYmd)})`, value: demainYmd },
-                { label: `Après-demain (${formatFr(apresDemainYmd)})`, value: apresDemainYmd },
-                { label: `Lundi (${formatFr(lundiYmd)})`, value: lundiYmd },
+                { label: `${t.common.today} (${formatFr(todayYmd)})`, value: todayYmd },
+                { label: `${t.ui.demain} (${formatFr(demainYmd)})`, value: demainYmd },
+                { label: `${t.ui.apresDemain} (${formatFr(apresDemainYmd)})`, value: apresDemainYmd },
+                { label: `${t.ui.joursLongs[1]} (${formatFr(lundiYmd)})`, value: lundiYmd },
               ].map(opt => (
                 <Pressable key={opt.value}
                   style={[styles.scheduleChip, scheduleDate === opt.value && styles.scheduleChipActive]}
@@ -1093,7 +1093,7 @@ export default function MessagerieScreen() {
               ))}
             </ScrollView>
             {/* Heure */}
-            <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 8, marginBottom: 4 }}>Heure :</Text>
+            <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 8, marginBottom: 4 }}>{t.ui.heureLabel}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
               {heures.map(h => (
                 <Pressable key={h}
@@ -1173,7 +1173,7 @@ export default function MessagerieScreen() {
                 )}
                 <TextInput
                   style={styles.msgInput}
-                  placeholder={showSchedule && scheduleDate ? `Programmé le ${scheduleDate}...` : t.messagerie.messagePlaceholder}
+                  placeholder={showSchedule && scheduleDate ? `${t.ui.programmeLe} ${scheduleDate}…` : t.messagerie.messagePlaceholder}
                   value={messageText}
                   onChangeText={setMessageText}
                   multiline
@@ -1205,24 +1205,24 @@ export default function MessagerieScreen() {
                 style={styles.contextBtn}
                 onPress={() => { setReplyTo(contextMsg); setContextMsg(null); }}
               >
-                <Text style={styles.contextBtnText}>↩️ Répondre</Text>
+                <Text style={styles.contextBtnText}>{t.common.reply}</Text>
               </Pressable>
               <Pressable
                 style={styles.contextBtn}
                 onPress={() => { handleArchive(contextMsg); setContextMsg(null); }}
               >
                 <Text style={styles.contextBtnText}>
-                  {contextMsg.archive ? 'Désarchiver' : 'Archiver'}
+                  {contextMsg.archive ? t.common.unarchive : t.common.archive}
                 </Text>
               </Pressable>
               <Pressable
                 style={[styles.contextBtn, styles.contextBtnDanger]}
                 onPress={() => { handleDelete(contextMsg); setContextMsg(null); }}
               >
-                <Text style={[styles.contextBtnText, { color: '#EF4444' }]}>Supprimer</Text>
+                <Text style={[styles.contextBtnText, { color: '#EF4444' }]}>{t.common.delete}</Text>
               </Pressable>
               <Pressable style={styles.contextBtn} onPress={() => setContextMsg(null)}>
-                <Text style={[styles.contextBtnText, { color: '#6E5F54' }]}>Annuler</Text>
+                <Text style={[styles.contextBtnText, { color: '#6E5F54' }]}>{t.common.cancel}</Text>
               </Pressable>
             </View>
           </Pressable>

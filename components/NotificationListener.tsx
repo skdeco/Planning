@@ -1,6 +1,8 @@
 import { useEffect, useRef, useMemo } from 'react';
 import * as Notifications from 'expo-notifications';
 import { useApp } from '@/app/context/AppContext';
+import { useLanguage } from '@/app/context/LanguageContext';
+import { getTranslations } from '@/i18n';
 import { useNotifications, sendPushNotification } from '@/hooks/useNotifications';
 import { todayYMD } from '@/lib/date/today';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
@@ -10,18 +12,38 @@ import { scheduleStDocReminders } from '@/lib/notif/scheduleStDocReminders';
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 
 /**
- * Récupère les push tokens des employés affectés à un chantier (sauf l'expéditeur).
+ * Envoie une notification aux employés donnés, chacun dans la langue qu'il a choisie
+ * dans l'application (regroupement par langue pour limiter le nombre d'envois).
  */
-function getChantierEmployeeTokens(chantierId: string, excludeId: string, affectations: any[], employes: any[]): string[] {
+function pushAuxEmployes(
+  employes: any[],
+  titre: (tr: ReturnType<typeof getTranslations>) => string,
+  corps: (tr: ReturnType<typeof getTranslations>) => string,
+) {
+  const parLangue = new Map<string, string[]>();
+  employes.forEach(e => {
+    if (!e?.pushToken) return;
+    const lg = e.langue || 'fr';
+    if (!parLangue.has(lg)) parLangue.set(lg, []);
+    parLangue.get(lg)!.push(e.pushToken);
+  });
+  parLangue.forEach((tokens, lg) => {
+    const tr = getTranslations(lg as any);
+    sendPushNotification(tokens, titre(tr), corps(tr));
+  });
+}
+
+/**
+ * Récupère les employés affectés à un chantier (sauf l'expéditeur) qui ont un push token.
+ */
+function getChantierEmployes(chantierId: string, excludeId: string, affectations: any[], employes: any[]): any[] {
   const todayStr = todayYMD();
   const employeIds = new Set(
     affectations
       .filter(a => a.chantierId === chantierId && a.employeId !== excludeId && a.dateDebut <= todayStr && a.dateFin >= todayStr)
       .map(a => a.employeId)
   );
-  return employes
-    .filter(e => employeIds.has(e.id) && e.pushToken)
-    .map(e => e.pushToken!);
+  return employes.filter(e => employeIds.has(e.id) && e.pushToken);
 }
 
 /**
@@ -38,6 +60,7 @@ function getSTToken(sousTraitants: any[], stId: string): string[] {
  */
 export function NotificationListener() {
   const { data, currentUser } = useApp();
+  const { t } = useLanguage();
   const { sendNotification } = useNotifications();
 
   const isAdmin = currentUser?.role === 'admin';
@@ -215,7 +238,7 @@ export function NotificationListener() {
       ? data.affectations.filter(a => a.soustraitantId === myId).length
       : data.affectations.filter(a => a.employeId === myId).length;
     if (prevAffectationsCount.current >= 0 && mesAffectations > prevAffectationsCount.current) {
-      sendNotification('SK DECO Planning', 'Nouvelle affectation sur votre planning');
+      sendNotification('SK DECO Planning', t.ui.notifAffectation);
     }
     prevAffectationsCount.current = mesAffectations;
   }, [data.affectations]);
@@ -225,7 +248,7 @@ export function NotificationListener() {
     if (!myId || isAdmin) return;
     const mesNotes = (data.notesChantier || []).filter(n => mesChantiersIds.has(n.chantierId) && n.auteurId !== myId).length;
     if (prevNotesCount.current >= 0 && mesNotes > prevNotesCount.current) {
-      sendNotification('SK DECO Planning', 'Nouvelle note sur votre chantier');
+      sendNotification('SK DECO Planning', t.ui.notifNoteChantier);
     }
     prevNotesCount.current = mesNotes;
   }, [data.notesChantier]);
@@ -235,7 +258,7 @@ export function NotificationListener() {
     if (!myId || isAdmin) return;
     const mesPhotos = (data.photosChantier || []).filter(p => mesChantiersIds.has(p.chantierId) && p.employeId !== myId).length;
     if (prevPhotosCount.current >= 0 && mesPhotos > prevPhotosCount.current) {
-      sendNotification('SK DECO Planning', 'Nouvelle photo sur votre chantier');
+      sendNotification('SK DECO Planning', t.ui.notifPhotoChantier);
     }
     prevPhotosCount.current = mesPhotos;
   }, [data.photosChantier]);
@@ -249,7 +272,7 @@ export function NotificationListener() {
       ...(data.arretsMaladie || []).filter(d => d.employeId === myId && d.statut !== 'en_attente'),
     ].length;
     if (prevCongesCount.current >= 0 && mesCongesTraites > prevCongesCount.current) {
-      sendNotification('SK DECO — RH', 'Votre demande a été traitée');
+      sendNotification('SK DECO — RH', t.ui.notifDemandeTraitee);
     }
     prevCongesCount.current = mesCongesTraites;
   }, [data.demandesConge, data.demandesAvance, data.arretsMaladie]);
@@ -290,10 +313,11 @@ export function NotificationListener() {
         const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
         sendPushNotification(adminTokens, 'Note chantier', msg);
         // Push vers les collègues du chantier
-        const colleagueTokens = getChantierEmployeeTokens(derniere.chantierId, myId, data.affectations, data.employes);
-        if (colleagueTokens.length > 0) {
-          sendPushNotification(colleagueTokens, 'Note chantier', msg);
-        }
+        pushAuxEmployes(
+          getChantierEmployes(derniere.chantierId, myId, data.affectations, data.employes),
+          tr => tr.ui.notifNoteChantier,
+          () => msg,
+        );
       }
     }
     prevPushNotesChantier.current = nb;
@@ -315,10 +339,11 @@ export function NotificationListener() {
         const msg = `${derniere.auteurNom} sur ${ch?.nom || 'chantier'}`;
         const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
         sendPushNotification(adminTokens, 'Note chantier', msg);
-        const colleagueTokens = getChantierEmployeeTokens(derniere.chantierId, myId, data.affectations, data.employes);
-        if (colleagueTokens.length > 0) {
-          sendPushNotification(colleagueTokens, 'Note chantier', msg);
-        }
+        pushAuxEmployes(
+          getChantierEmployes(derniere.chantierId, myId, data.affectations, data.employes),
+          tr => tr.ui.notifNoteChantier,
+          () => msg,
+        );
       }
     }
     prevPushNotesAffectation.current = nb;
@@ -338,10 +363,11 @@ export function NotificationListener() {
         const adminTokens = getAdminPushTokens(data.employes, data.adminEmployeId);
         sendPushNotification(adminTokens, 'Photo ajoutée', msg);
         // Push vers les collègues du chantier
-        const colleagueTokens = getChantierEmployeeTokens(derniere.chantierId, myId, data.affectations, data.employes);
-        if (colleagueTokens.length > 0) {
-          sendPushNotification(colleagueTokens, 'Photo chantier', msg);
-        }
+        pushAuxEmployes(
+          getChantierEmployes(derniere.chantierId, myId, data.affectations, data.employes),
+          tr => tr.ui.notifPhotoChantier,
+          () => msg,
+        );
       }
     }
     prevPushPhotosChantier.current = nb;
@@ -383,7 +409,8 @@ export function NotificationListener() {
         const emp = data.employes.find(e => e.id === derniere.employeId);
         if (emp?.pushToken) {
           const ch = data.chantiers.find(c => c.id === derniere.chantierId);
-          sendPushNotification([emp.pushToken], 'Nouvelle affectation', `${ch?.nom || 'Chantier'} — consultez votre planning`);
+          const tEmp = getTranslations(emp.langue || 'fr');
+          sendPushNotification([emp.pushToken], tEmp.ui.notifAffectation, ch?.nom || tEmp.ui.chantier);
         }
       }
     }
@@ -410,8 +437,9 @@ export function NotificationListener() {
       if (derniere) {
         const emp = data.employes.find(e => e.id === derniere.employeId);
         if (emp?.pushToken) {
-          const statut = derniere.statut === 'approuve' ? 'approuvée' : 'refusée';
-          sendPushNotification([emp.pushToken], 'SK DECO — RH', `Votre demande a été ${statut}`);
+          // Rédigé dans la langue choisie par l'employé sur son téléphone.
+          const tEmp = getTranslations(emp.langue || 'fr');
+          sendPushNotification([emp.pushToken], 'SK DECO — RH', tEmp.ui.notifDemandeTraitee);
         }
       }
     }
@@ -427,15 +455,18 @@ export function NotificationListener() {
       const derniere = (data.notesChantier || []).slice(-1)[0];
       if (derniere && derniere.auteurId === 'admin') {
         const ch = data.chantiers.find(c => c.id === derniere.chantierId);
-        const msg = `Nouvelle note sur ${ch?.nom || 'chantier'}`;
-        // Push employés
-        const empTokens = getChantierEmployeeTokens(derniere.chantierId, '', data.affectations, data.employes);
+        const msg = ch?.nom || '';
+        // Push employés — chacun dans sa langue
+        pushAuxEmployes(
+          getChantierEmployes(derniere.chantierId, '', data.affectations, data.employes),
+          tr => tr.ui.notifNoteChantier,
+          () => msg,
+        );
         // Push ST affectés au chantier
         const stIds = new Set(data.affectations.filter(a => a.chantierId === derniere.chantierId && a.soustraitantId).map(a => a.soustraitantId!));
         const stTokens = data.sousTraitants.filter(s => stIds.has(s.id) && s.pushToken).map(s => s.pushToken!);
-        const allTokens = [...empTokens, ...stTokens];
-        if (allTokens.length > 0) {
-          sendPushNotification(allTokens, 'Note chantier', msg);
+        if (stTokens.length > 0) {
+          sendPushNotification(stTokens, t.ui.notifNoteChantier, msg);
         }
       }
     }

@@ -8,6 +8,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, StyleSheet } from 'react-native';
 import { ChevronDown, ChevronUp, Search, Check, Plus, X } from 'lucide-react-native';
+import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, font } from '@/constants/design';
 
 export interface ComboOption {
@@ -33,9 +34,13 @@ export interface ComboSelectProps {
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
 
 export function ComboSelect({
-  options, value, onChange, placeholder = 'Sélectionner…', searchPlaceholder = 'Rechercher…',
-  onAdd, addLabel = 'Ajouter', clearable = false,
+  options, value, onChange, placeholder, searchPlaceholder,
+  onAdd, addLabel, clearable = false,
 }: ComboSelectProps) {
+  const { t } = useLanguage();
+  const placeholderTxt = placeholder ?? t.ui.selectionner;
+  const searchTxt = searchPlaceholder ?? t.ui.rechercher;
+  const addTxt = addLabel ?? t.common.add;
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const selected = options.find(o => o.id === value) || null;
@@ -62,12 +67,12 @@ export function ComboSelect({
       >
         <View style={{ flex: 1 }}>
           <Text style={[styles.fieldText, !selected && { color: DS.textMuted }]} numberOfLines={1}>
-            {selected ? selected.label : placeholder}
+            {selected ? selected.label : placeholderTxt}
           </Text>
           {!!selected?.detail && <Text style={styles.fieldDetail} numberOfLines={1}>{selected.detail}</Text>}
         </View>
         {clearable && selected && !open && (
-          <Pressable hitSlop={10} accessibilityLabel="Effacer la sélection" onPress={() => onChange('')}>
+          <Pressable hitSlop={10} accessibilityLabel={t.ui.effacerSelection} onPress={() => onChange('')}>
             <X size={16} color={DS.textSecondary} />
           </Pressable>
         )}
@@ -82,7 +87,7 @@ export function ComboSelect({
               style={styles.searchInput}
               value={query}
               onChangeText={setQuery}
-              placeholder={searchPlaceholder}
+              placeholder={searchTxt}
               placeholderTextColor={DS.textMuted}
               autoFocus
               autoCorrect={false}
@@ -91,7 +96,7 @@ export function ComboSelect({
               onSubmitEditing={() => { if (filtered.length === 1) choisir(filtered[0].id); }}
             />
             {query.length > 0 && (
-              <Pressable hitSlop={10} accessibilityLabel="Effacer la recherche" onPress={() => setQuery('')}>
+              <Pressable hitSlop={10} accessibilityLabel={t.ui.effacerRecherche} onPress={() => setQuery('')}>
                 <X size={16} color={DS.textSecondary} />
               </Pressable>
             )}
@@ -114,7 +119,7 @@ export function ComboSelect({
           {onAdd && (
             <Pressable accessibilityRole="button" onPress={() => { setOpen(false); onAdd(); }} style={styles.add}>
               <Plus size={16} color={DS.primary} strokeWidth={2.2} />
-              <Text style={styles.addText}>{addLabel}</Text>
+              <Text style={styles.addText}>{addTxt}</Text>
             </Pressable>
           )}
         </View>

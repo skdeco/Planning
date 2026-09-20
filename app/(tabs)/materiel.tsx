@@ -153,7 +153,7 @@ export default function MaterielScreen() {
       : catalogue.find(a => a.nom.toLowerCase() === articleNom.toLowerCase());
 
     if (!catalogueArticle?.lienFournisseur) {
-      setDispoResults(p => ({ ...p, [itemId]: { status: 'inconnu', label: 'Pas de lien fournisseur dans le catalogue' } }));
+      setDispoResults(p => ({ ...p, [itemId]: { status: 'inconnu', label: t.ui.pasDeLienFournisseur } }));
       return;
     }
 
@@ -475,7 +475,7 @@ export default function MaterielScreen() {
     const nouveau: MateriauItem = {
       ...original,
       id: genId(),
-      quantite: `${qtyAchete}${uniteStr} (acheté)`,
+      quantite: `${qtyAchete}${uniteStr} (${t.materiel.boughtWord})`,
       achete: true,
       achetePar: acheteurNom,
       acheteAt: now,
@@ -597,7 +597,13 @@ export default function MaterielScreen() {
                         <Text style={{ fontSize: 11, fontWeight: '600',
                           color: dispo.status === 'en_stock' ? '#155724' : dispo.status === 'stock_limite' ? '#856404' : dispo.status === 'rupture' ? '#B71C1C' : '#6E5F54'
                         }}>
-                          {dispo.status === 'en_stock' ? '🟢' : dispo.status === 'stock_limite' ? '🟡' : dispo.status === 'rupture' ? '🔴' : '⚪'} {dispo.label}
+                          {dispo.status === 'en_stock' ? '🟢' : dispo.status === 'stock_limite' ? '🟡' : dispo.status === 'rupture' ? '🔴' : '⚪'}{' '}
+                          {dispo.status === 'en_stock' ? t.ui.enStock
+                            : dispo.status === 'stock_limite' ? t.ui.stockLimite
+                            : dispo.status === 'rupture' ? t.ui.ruptureStock
+                            : dispo.status === 'erreur' ? t.ui.erreurVerification
+                            : t.ui.dispoNonDetectee}
+                          {dispo.magasin ? ` (${dispo.magasin})` : ''}
                         </Text>
                       </Pressable>
                     )}
@@ -729,7 +735,7 @@ export default function MaterielScreen() {
                       style={styles.itemContent}
                       onPress={(isMine || isAdmin || isAcheteur) ? () => openEditItem(item.listeId, item) : undefined}
                       disabled={!(isMine || isAdmin || isAcheteur)}
-                      accessibilityLabel={`Modifier ${item.texte}`}
+                      accessibilityLabel={`${t.common.edit} ${item.texte}`}
                     >
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
@@ -864,7 +870,7 @@ export default function MaterielScreen() {
                         <Pressable
                           style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}
                           onPress={() => openEditItem(item.listeId, item)}
-                          accessibilityLabel={`Modifier ${item.texte}`}
+                          accessibilityLabel={`${t.common.edit} ${item.texte}`}
                         >
                           {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
                           <Text style={styles.itemTexte} numberOfLines={1}>{item.texte}</Text>
@@ -1194,7 +1200,7 @@ export default function MaterielScreen() {
                     <Pressable
                       style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#EDE2D6', borderStyle: 'dashed' }}
                       onPress={() => setShowFournisseurModal(true)}>
-                      <Text style={{ fontSize: 12, color: '#6E5F54' }}>+ Ajouter</Text>
+                      <Text style={{ fontSize: 12, color: '#6E5F54' }}>{t.common.addBtn}</Text>
                     </Pressable>
                   )}
                 </ScrollView>
