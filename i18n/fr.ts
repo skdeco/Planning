@@ -1291,6 +1291,7 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    notifNouveauMarche: "Nouveau marché sur votre chantier",
     natureChantier: "Nature du chantier",
     natureGlobal: "Global",
     natureMenuiserie: "Menuiserie",

@@ -1252,6 +1252,7 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    notifNouveauMarche: "عقد جديد في موقعك",
     natureChantier: "نوع الموقع",
     natureGlobal: "جميع الأعمال",
     natureMenuiserie: "النجارة",

@@ -9,7 +9,7 @@ import { LANGUAGES, type Language } from '@/i18n';
 
 export function LanguageFlag() {
   const { language, setLanguage, t } = useLanguage();
-  const { data, currentUser, updateEmploye } = useApp();
+  const { data, currentUser, updateEmploye, updateApporteur } = useApp();
   const [showModal, setShowModal] = useState(false);
 
   /** Enregistre la langue sur la fiche de l'employé : les notifications qui lui sont
@@ -17,6 +17,8 @@ export function LanguageFlag() {
   const memoriserLangue = (code: Language) => {
     const emp = currentUser?.employeId ? data.employes.find(e => e.id === currentUser.employeId) : null;
     if (emp && emp.langue !== code) updateEmploye({ ...emp, langue: code });
+    const contact = currentUser?.apporteurId ? (data.apporteurs || []).find(a => a.id === currentUser.apporteurId) : null;
+    if (contact && contact.langue !== code) updateApporteur({ ...contact, langue: code });
   };
 
   const currentLang = LANGUAGES.find(l => l.code === language);

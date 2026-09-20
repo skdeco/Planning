@@ -690,6 +690,8 @@ export interface Apporteur {
   motDePasseSalt?: string;     // salt aléatoire par compte
   motDePasseVisible?: string;  // copie visible côté admin seulement (masquée par défaut avec œil)
   accesApp?: boolean;          // true si l'admin a activé l'accès à l'app
+  /** Langue choisie dans l'app — sert à lui écrire ses notifications dans sa langue. */
+  langue?: 'fr' | 'en' | 'es' | 'pt' | 'ru' | 'ar';
   derniereConnexion?: string;  // ISO datetime
   pushToken?: string;          // Expo Push Token pour notifications push
   /** Permissions par défaut sur le portail client (override possible par chantier) */

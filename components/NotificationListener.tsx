@@ -34,6 +34,38 @@ function pushAuxEmployes(
 }
 
 /**
+ * Commerciaux rattachés à un chantier et joignables (push token actif).
+ * Sert à les tenir informés de la vie de LEURS chantiers uniquement.
+ */
+function getCommerciauxDuChantier(chantierId: string, chantiers: any[], apporteurs: any[]): any[] {
+  const chantier = chantiers.find(c => c.id === chantierId);
+  const ids = new Set(chantier?.commerciauxIds || []);
+  if (ids.size === 0) return [];
+  return (apporteurs || []).filter(a => a.type === 'commercial' && ids.has(a.id) && a.pushToken);
+}
+
+/**
+ * Envoie une notification à des contacts externes, chacun dans sa langue.
+ */
+function pushAuxContacts(
+  contacts: any[],
+  titre: (tr: ReturnType<typeof getTranslations>) => string,
+  corps: (tr: ReturnType<typeof getTranslations>) => string,
+) {
+  const parLangue = new Map<string, string[]>();
+  contacts.forEach(c => {
+    if (!c?.pushToken) return;
+    const lg = c.langue || 'fr';
+    if (!parLangue.has(lg)) parLangue.set(lg, []);
+    parLangue.get(lg)!.push(c.pushToken);
+  });
+  parLangue.forEach((tokens, lg) => {
+    const tr = getTranslations(lg as any);
+    sendPushNotification(tokens, titre(tr), corps(tr));
+  });
+}
+
+/**
  * Récupère les employés affectés à un chantier (sauf l'expéditeur) qui ont un push token.
  */
 function getChantierEmployes(chantierId: string, excludeId: string, affectations: any[], employes: any[]): any[] {
@@ -318,6 +350,11 @@ export function NotificationListener() {
           tr => tr.ui.notifNoteChantier,
           () => msg,
         );
+        pushAuxContacts(
+          getCommerciauxDuChantier(derniere.chantierId, data.chantiers, data.apporteurs || []),
+          tr => tr.ui.notifNoteChantier,
+          () => msg,
+        );
       }
     }
     prevPushNotesChantier.current = nb;
@@ -344,6 +381,11 @@ export function NotificationListener() {
           tr => tr.ui.notifNoteChantier,
           () => msg,
         );
+        pushAuxContacts(
+          getCommerciauxDuChantier(derniere.chantierId, data.chantiers, data.apporteurs || []),
+          tr => tr.ui.notifNoteChantier,
+          () => msg,
+        );
       }
     }
     prevPushNotesAffectation.current = nb;
@@ -365,6 +407,11 @@ export function NotificationListener() {
         // Push vers les collègues du chantier
         pushAuxEmployes(
           getChantierEmployes(derniere.chantierId, myId, data.affectations, data.employes),
+          tr => tr.ui.notifPhotoChantier,
+          () => msg,
+        );
+        pushAuxContacts(
+          getCommerciauxDuChantier(derniere.chantierId, data.chantiers, data.apporteurs || []),
           tr => tr.ui.notifPhotoChantier,
           () => msg,
         );
@@ -468,10 +515,38 @@ export function NotificationListener() {
         if (stTokens.length > 0) {
           sendPushNotification(stTokens, t.ui.notifNoteChantier, msg);
         }
+        // Commerciaux rattachés au chantier
+        pushAuxContacts(
+          getCommerciauxDuChantier(derniere.chantierId, data.chantiers, data.apporteurs || []),
+          tr => tr.ui.notifNoteChantier,
+          () => msg,
+        );
       }
     }
     prevPushAdminNotes.current = nb;
   }, [data.notesChantier]);
+
+  // Marché ou avenant créé sur un chantier → push vers ses commerciaux
+  const prevPushMarches = useRef(-1);
+  useEffect(() => {
+    if (!isAdmin) return;
+    const marches = data.marchesChantier || [];
+    const supplements = data.supplementsMarche || [];
+    const nb = marches.length + supplements.length;
+    if (prevPushMarches.current >= 0 && nb > prevPushMarches.current) {
+      const dernier =
+        [...marches, ...supplements].slice(-1)[0] as { chantierId?: string } | undefined;
+      if (dernier?.chantierId) {
+        const ch = data.chantiers.find(c => c.id === dernier.chantierId);
+        pushAuxContacts(
+          getCommerciauxDuChantier(dernier.chantierId, data.chantiers, data.apporteurs || []),
+          tr => tr.ui.notifNouveauMarche,
+          () => ch?.nom || '',
+        );
+      }
+    }
+    prevPushMarches.current = nb;
+  }, [data.marchesChantier, data.supplementsMarche]);
 
   // Admin affecte un ST → push vers le ST
   const prevPushAdminSTAffectations = useRef(-1);

@@ -1252,6 +1252,7 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    notifNouveauMarche: "Novo contrato na sua obra",
     natureChantier: "Âmbito da obra",
     natureGlobal: "Obra completa",
     natureMenuiserie: "Carpintaria",

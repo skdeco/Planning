@@ -1252,6 +1252,7 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    notifNouveauMarche: "Новый договор по вашему объекту",
     natureChantier: "Тип объекта",
     natureGlobal: "Полный цикл",
     natureMenuiserie: "Столярные работы",

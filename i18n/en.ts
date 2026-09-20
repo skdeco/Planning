@@ -1262,6 +1262,7 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    notifNouveauMarche: "New contract on your project",
     natureChantier: "Project scope",
     natureGlobal: "Full works",
     natureMenuiserie: "Joinery",
