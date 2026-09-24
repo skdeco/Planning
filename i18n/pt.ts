@@ -1298,7 +1298,7 @@ export default {
     natureGlobal: "Obra completa",
     natureMenuiserie: "Carpintaria",
     natureGlobalAide: "A SK DECO intervém em todas as especialidades.",
-    natureMenuiserieAide: "A SK DECO executa apenas o lote de carpintaria. Estas obras podem ser acompanhadas por comerciais.",
+    natureMenuiserieAide: "A SK DECO realiza apenas o lote de marcenaria.",
     commerciauxRattaches: "Comerciais associados",
     aucunCommercial: "Ainda não há comerciais registados.",
     ajouterCommercial: "Adicionar um comercial",

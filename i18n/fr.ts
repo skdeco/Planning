@@ -1337,7 +1337,7 @@ export default {
     natureGlobal: "Global",
     natureMenuiserie: "Menuiserie",
     natureGlobalAide: "SK DECO intervient sur l'ensemble des corps d'état.",
-    natureMenuiserieAide: "SK DECO ne réalise que le lot menuiserie. Ces chantiers peuvent être suivis par des commerciaux.",
+    natureMenuiserieAide: "SK DECO ne réalise que le lot menuiserie.",
     commerciauxRattaches: "Commerciaux rattachés",
     aucunCommercial: "Aucun commercial enregistré pour l'instant.",
     ajouterCommercial: "Ajouter un commercial",

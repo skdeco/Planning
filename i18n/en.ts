@@ -1308,7 +1308,7 @@ export default {
     natureGlobal: "Full works",
     natureMenuiserie: "Joinery",
     natureGlobalAide: "SK DECO handles every trade on this project.",
-    natureMenuiserieAide: "SK DECO only handles the joinery package. Sales reps can follow these projects.",
+    natureMenuiserieAide: "SK DECO only carries out the joinery lot.",
     commerciauxRattaches: "Assigned sales reps",
     aucunCommercial: "No sales rep registered yet.",
     ajouterCommercial: "Add a sales rep",

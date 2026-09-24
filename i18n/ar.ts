@@ -1298,7 +1298,7 @@ export default {
     natureGlobal: "جميع الأعمال",
     natureMenuiserie: "النجارة",
     natureGlobalAide: "تتولى SK DECO جميع الأعمال في هذا الموقع.",
-    natureMenuiserieAide: "تتولى SK DECO أعمال النجارة فقط. يمكن للمندوبين متابعة هذه المواقع.",
+    natureMenuiserieAide: "تنفذ SK DECO حصة النجارة فقط.",
     commerciauxRattaches: "المندوبون المعيّنون",
     aucunCommercial: "لا يوجد مندوبون مسجلون بعد.",
     ajouterCommercial: "إضافة مندوب",

@@ -1298,7 +1298,7 @@ export default {
     natureGlobal: "Полный цикл",
     natureMenuiserie: "Столярные работы",
     natureGlobalAide: "SK DECO выполняет все виды работ на объекте.",
-    natureMenuiserieAide: "SK DECO выполняет только столярные работы. Такие объекты могут вести менеджеры.",
+    natureMenuiserieAide: "SK DECO выполняет только столярный лот.",
     commerciauxRattaches: "Закреплённые менеджеры",
     aucunCommercial: "Менеджеры пока не заведены.",
     ajouterCommercial: "Добавить менеджера",
