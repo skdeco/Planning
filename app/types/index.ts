@@ -263,6 +263,8 @@ export interface PlanChantier {
   lien3D?: string;          // lien externe visite 3D (Matterport/Kuula/panorama) — alternatif à `fichier` (glb/usdz)
 }
 
+export type CategorieChantier = 'chantier' | 'depannage' | 'lieuFixe';
+
 export interface Chantier {
   id: string;
   nom: string;
@@ -281,6 +283,13 @@ export interface Chantier {
    * Sert notamment à ouvrir ces chantiers aux commerciaux (voir commerciauxIds).
    */
   nature?: 'global' | 'menuiserie';
+  /**
+   * Catégorie du lieu :
+   *  - 'chantier'  : chantier classique (défaut) ;
+   *  - 'depannage' : intervention rapide, éphémère — se range seule après sa date de fin ;
+   *  - 'lieuFixe'  : atelier, dépôt… lieu permanent où l'on pointe, jamais terminé.
+   */
+  categorie?: CategorieChantier;
   /** Commerciaux (Apporteur type 'commercial') autorisés à suivre ce chantier. */
   commerciauxIds?: string[];
   visibleSurPlanning: boolean;

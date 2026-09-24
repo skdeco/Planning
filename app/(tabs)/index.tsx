@@ -96,7 +96,7 @@ export default function DashboardScreen() {
   const today = toYMD(new Date());
 
   const stats = useMemo(() => {
-    const chantiersActifs = data.chantiers.filter(c => c.statut === 'actif').length;
+    const chantiersActifs = data.chantiers.filter(c => c.statut === 'actif' && c.categorie !== 'lieuFixe').length;
     const employesTotal = data.employes.length;
     const employesAujourdhui = new Set(
       data.affectations.filter(a => a.dateDebut <= today && a.dateFin >= today).map(a => a.employeId)

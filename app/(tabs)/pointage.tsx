@@ -220,7 +220,11 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
       <View style={styles.chantierCardHeader}>
         <View style={[styles.chantierDot, { backgroundColor: couleur }]} />
         <View style={{ flex: 1 }}>
-          <Text style={styles.chantierCardNom} numberOfLines={1}>{chantier.nom}</Text>
+          <Text style={styles.chantierCardNom} numberOfLines={1}>
+            {chantier.nom}
+            {chantier.categorie === 'depannage' ? <Text style={{ color: '#B9770E', fontSize: 12 }}>  · {t.ui.catDepannage}</Text> : null}
+            {chantier.categorie === 'lieuFixe' ? <Text style={{ color: '#34506B', fontSize: 12 }}>  · {t.ui.catLieuFixe}</Text> : null}
+          </Text>
           {adresse ? (
             <View style={styles.adresseRow}>
               <IconLocation size={12} color="#9A8C80" />

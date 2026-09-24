@@ -53,8 +53,9 @@ import {
   METIER_COLORS, STATUT_LABELS, STATUT_COLORS, CHANTIER_COLORS,
   APPORTEUR_TYPE_LABELS,
   type Chantier, type StatutChantier, type FicheChantier, type NoteChantier, type PlanChantier, type TicketSAV, type PrioriteSAV, type StatutSAV,
-  type Apporteur, type Note, type TaskItem,
+  type Apporteur, type Note, type TaskItem, type CategorieChantier,
 } from '@/app/types';
+import type { TileKey } from '@/lib/portail/dashboardAccess';
 import { todayYMD } from '@/lib/date/today';
 import { genererNomAchatAuto } from '@/lib/achats/genererNomAuto';
 import { normalizePlanNom } from '@/lib/plans/normalizePlanNom';
@@ -116,6 +117,8 @@ interface ChantierForm {
   afficherPlanningAuClient: boolean;
   /** Nature du chantier : tous corps d'état ou lot menuiserie seul. */
   nature: 'global' | 'menuiserie';
+  /** Chantier classique, dépannage (éphémère) ou lieu fixe (atelier…). */
+  categorie: CategorieChantier;
   /** Commerciaux autorisés à suivre ce chantier. */
   commerciauxIds: string[];
   // Contacts externes
@@ -128,6 +131,12 @@ interface ChantierForm {
   apporteurVoitFinances: boolean;
   architecteVoitFinances: boolean;
 }
+
+/** Dépannage / lieu fixe : l'essentiel seulement — pas de marchés, CR, portail, finances. */
+const TUILES_MASQUEES_HORS_CHANTIER: TileKey[] = [
+  'suivis', 'phases', 'livraison', 'marches', 'rentabilite', 'budget', 'metres', 'consultation',
+  'honoraires', 'finances', 'prescriptions', 'pv', 'administratif', 'sousTraitants', 'annuaire',
+];
 
 // Clé AsyncStorage pour préserver le formulaire chantier quand on va créer un Apporteur
 const PENDING_CHANTIER_FORM_KEY = 'sk_pending_chantier_form';
@@ -147,6 +156,7 @@ const DEFAULT_FORM: ChantierForm = {
   visibleSurPlanning: true,
   afficherPlanningAuClient: false,
   nature: 'global',
+  categorie: 'chantier',
   commerciauxIds: [],
   architecteId: '',
   apporteurId: '',
@@ -242,6 +252,8 @@ export default function ChantiersScreen() {
   // Filtre par statut de la liste chantiers (défaut : opérationnels = liste épurée).
   const [filterStatut, setFilterStatut] = useState<'en_cours' | 'a_letude' | 'termine' | 'archive' | 'tous'>('en_cours');
   const [filterNature, setFilterNature] = useState<'toutes' | 'global' | 'menuiserie'>('toutes');
+  // Segment principal : chantiers classiques / dépannages (éphémères) / lieux fixes (atelier…)
+  const [filterCategorie, setFilterCategorie] = useState<CategorieChantier>('chantier');
   const [bilanChantierId, setBilanChantierId] = useState<string | null>(null);
   // Protection contre la perte de données si refresh pendant édition
   useUnsavedChanges(showForm && form.nom.trim().length > 0);
@@ -363,6 +375,7 @@ export default function ChantiersScreen() {
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
       nature: chantier.nature || 'global',
+      categorie: chantier.categorie || 'chantier',
       commerciauxIds: chantier.commerciauxIds || [],
       afficherPlanningAuClient: chantier.afficherPlanningAuClient === true,
       architecteId: chantier.architecteId || '',
@@ -687,7 +700,9 @@ export default function ChantiersScreen() {
 
   const openNew = () => {
     setEditId(null);
-    setForm(DEFAULT_FORM);
+    // Nouveau depuis le segment Dépannages / Lieux fixes → catégorie préremplie
+    const categorie: CategorieChantier = filterCategorie;
+    setForm({ ...DEFAULT_FORM, categorie, ...(categorie === 'lieuFixe' ? { dateDebut: todayYMD(), dateFin: '2099-12-31' } : {}) });
     setShowForm(true);
   };
 
@@ -707,6 +722,7 @@ export default function ChantiersScreen() {
       employeIds: [...chantier.employeIds],
       visibleSurPlanning: chantier.visibleSurPlanning,
       nature: chantier.nature || 'global',
+      categorie: chantier.categorie || 'chantier',
       commerciauxIds: chantier.commerciauxIds || [],
       afficherPlanningAuClient: chantier.afficherPlanningAuClient === true,
       architecteId: chantier.architecteId || '',
@@ -816,6 +832,7 @@ export default function ChantiersScreen() {
         visibleSurPlanning: form.visibleSurPlanning,
         afficherPlanningAuClient: form.afficherPlanningAuClient,
         nature: form.nature,
+        categorie: form.categorie,
         commerciauxIds: form.nature === 'menuiserie' ? form.commerciauxIds : [],
         fiche: existing?.fiche,
         // Legacy client text conservé si existant
@@ -844,6 +861,7 @@ export default function ChantiersScreen() {
         visibleSurPlanning: form.visibleSurPlanning,
         afficherPlanningAuClient: form.afficherPlanningAuClient,
         nature: form.nature,
+        categorie: form.categorie,
         commerciauxIds: form.nature === 'menuiserie' ? form.commerciauxIds : [],
         architecteId: form.architecteId || undefined,
         apporteurId: form.apporteurId || undefined,
@@ -1248,8 +1266,10 @@ export default function ChantiersScreen() {
         list = list.filter(c => (c as any)[field] === filterContactId);
       }
     }
+    // Catégorie (chantier / dépannage / lieu fixe) — les lieux fixes ignorent le statut.
+    if (isAdmin) list = list.filter(c => (c.categorie || 'chantier') === filterCategorie);
     // Filtre par statut — défaut "En cours" (opérationnels) pour garder la liste principale épurée.
-    if (filterStatut !== 'tous') {
+    if (filterStatut !== 'tous' && filterCategorie !== 'lieuFixe') {
       const groupesStatut: Record<string, StatutChantier[]> = {
         en_cours: ['actif', 'en_attente', 'en_pause', 'sav'],
         a_letude: ['a_letude'],
@@ -1264,7 +1284,16 @@ export default function ChantiersScreen() {
       list = list.filter(c => (c.nature || 'global') === filterNature);
     }
     return trierChantiers(list, data.chantierOrderPlanning, data.chantierTri);
-  }, [data.chantiers, data.chantierOrderPlanning, data.chantierTri, searchQuery, filterContactType, filterContactId, filterStatut, filterNature, isApporteurUser, currentUser?.apporteurId]);
+  }, [data.chantiers, data.chantierOrderPlanning, data.chantierTri, searchQuery, filterContactType, filterContactId, filterStatut, filterNature, filterCategorie, isAdmin, isApporteurUser, currentUser?.apporteurId]);
+
+  // Dépannages : se rangent tout seuls une fois la date de fin passée.
+  useEffect(() => {
+    if (!isAdmin) return;
+    const today = todayYMD();
+    data.chantiers
+      .filter(c => c.categorie === 'depannage' && c.dateFin && c.dateFin < today && ['actif', 'en_attente', 'en_pause'].includes(c.statut))
+      .forEach(c => updateChantier({ ...c, statut: 'termine' }));
+  }, [isAdmin, data.chantiers.length]);
 
   const renderChantier = ({ item, index }: { item: Chantier; index: number }) => {
     const statut = STATUT_COLORS[item.statut] ?? STATUT_COLORS.actif; // fallback statut inconnu (données legacy)
@@ -1295,7 +1324,17 @@ export default function ChantiersScreen() {
                 {statutLabel(item.statut)}
               </Text>
             </View>
-            {item.nature === 'menuiserie' && (
+            {item.categorie === 'depannage' && (
+              <View style={[styles.statutBadge, { backgroundColor: '#FDEBD0' }]}>
+                <Text style={[styles.statutText, { color: '#B9770E' }]}>{t.ui.catDepannage}</Text>
+              </View>
+            )}
+            {item.categorie === 'lieuFixe' && (
+              <View style={[styles.statutBadge, { backgroundColor: '#E8EEF5' }]}>
+                <Text style={[styles.statutText, { color: '#34506B' }]}>{t.ui.catLieuFixe}</Text>
+              </View>
+            )}
+            {item.nature === 'menuiserie' && (item.categorie || 'chantier') === 'chantier' && (
               <View style={[styles.statutBadge, { backgroundColor: '#F2E4E1' }]}>
                 <Text style={[styles.statutText, { color: '#8C4A2F' }]}>{t.ui.natureMenuiserie}</Text>
               </View>
@@ -1550,6 +1589,22 @@ export default function ChantiersScreen() {
       {/* Filtres liste — listes déroulantes (statut + contact) */}
       {isAdmin && (
         <View style={{ paddingHorizontal: 16, marginBottom: 6, marginTop: 4, gap: 8 }}>
+          <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
+            {([['chantier', t.nav.chantiers], ['depannage', t.ui.catDepannages], ['lieuFixe', t.ui.catLieuxFixes]] as const).map(([val, lib]) => {
+              const actif = filterCategorie === val;
+              return (
+                <Pressable
+                  key={val}
+                  style={[{ flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+                    actif && { backgroundColor: '#5C1F2E' }]}
+                  onPress={() => setFilterCategorie(val)}
+                >
+                  <Text style={{ fontSize: 13.5, fontWeight: '600', color: actif ? '#FFFFFF' : '#2B1D14' }}>{lib}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          {filterCategorie !== 'lieuFixe' && (
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <SelectField
@@ -1582,6 +1637,8 @@ export default function ChantiersScreen() {
               />
             </View>
           </View>
+          )}
+          {filterCategorie === 'chantier' && (
           <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
             {([['toutes', t.common.all], ['global', t.ui.chantiersGlobaux], ['menuiserie', t.ui.chantiersMenuiserie]] as const).map(([val, lib]) => {
               const actif = filterNature === val;
@@ -1597,6 +1654,7 @@ export default function ChantiersScreen() {
               );
             })}
           </View>
+          )}
           {filterContactType !== 'all' && (() => {
             const listOfThisType = apporteursAll.filter(a => a.type === filterContactType);
             if (listOfThisType.length === 0) {
@@ -1709,6 +1767,7 @@ export default function ChantiersScreen() {
                   {/* Actions rapides + 4 sections (Suivi / Finances / Documents / Équipe) */}
                   <ChantierDetailDashboard
                     isAdmin={isAdmin}
+                    masquer={(ch.categorie || 'chantier') !== 'chantier' ? TUILES_MASQUEES_HORS_CHANTIER : undefined}
                     counts={{
                       notes: notesCount,
                       plans: plansCount,
@@ -1901,6 +1960,34 @@ export default function ChantiersScreen() {
                 </FormField>
               )}
 
+              <FormField label={t.ui.categorieChantier}>
+                <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
+                  {(['chantier', 'depannage', 'lieuFixe'] as const).map(n => {
+                    const actif = form.categorie === n;
+                    return (
+                      <Pressable
+                        key={n}
+                        style={[{ flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+                          actif && { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 }]}
+                        onPress={() => setForm(f => ({
+                          ...f, categorie: n,
+                          ...(n === 'lieuFixe' ? { dateDebut: f.dateDebut || todayYMD(), dateFin: '2099-12-31', statut: 'actif' as StatutChantier } : {}),
+                          ...(n !== 'lieuFixe' && f.dateFin === '2099-12-31' ? { dateFin: '' } : {}),
+                        }))}
+                      >
+                        <Text style={{ fontSize: 13.5, fontWeight: actif ? '600' : '500', color: actif ? '#5C1F2E' : '#2B1D14' }}>
+                          {n === 'chantier' ? t.ui.catChantier : n === 'depannage' ? t.ui.catDepannage : t.ui.catLieuFixe}
+                        </Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+                <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 6 }}>
+                  {form.categorie === 'depannage' ? t.ui.catDepannageAide : form.categorie === 'lieuFixe' ? t.ui.catLieuFixeAide : t.ui.catChantierAide}
+                </Text>
+              </FormField>
+
+              {form.categorie !== 'lieuFixe' && (
               <View style={styles.dateRow}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <DatePicker
@@ -1918,7 +2005,9 @@ export default function ChantiersScreen() {
                   />
                 </View>
               </View>
+              )}
 
+              {form.categorie !== 'lieuFixe' && (
               <FormField label={t.common.status}>
                 <SelectField
                   value={form.statut}
@@ -1927,7 +2016,9 @@ export default function ChantiersScreen() {
                   onSelect={v => setForm(f => ({ ...f, statut: v as StatutChantier }))}
                 />
               </FormField>
+              )}
 
+              {form.categorie === 'chantier' && (
               <FormField label={t.ui.natureChantier}>
                 <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
                   {(['global', 'menuiserie'] as const).map(n => {
@@ -1950,6 +2041,7 @@ export default function ChantiersScreen() {
                   {form.nature === 'menuiserie' ? t.ui.natureMenuiserieAide : t.ui.natureGlobalAide}
                 </Text>
               </FormField>
+              )}
 
               <FormField label={t.common.color}>
                 <View style={styles.colorRow}>

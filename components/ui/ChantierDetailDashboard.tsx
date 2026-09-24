@@ -110,6 +110,8 @@ export interface ChantierDetailDashboardProps {
    * (agir / lecture / masqué) au lieu du filtre admin. L'admin ne passe pas ce prop.
    */
   access?: (key: TileKey) => TileMode;
+  /** Tuiles à masquer (ex. dépannage / lieu fixe : pas de marchés, CR, portail…). */
+  masquer?: TileKey[];
 }
 
 interface TileSpec {
@@ -131,10 +133,12 @@ export function ChantierDetailDashboard({
   counts,
   handlers,
   access,
+  masquer,
 }: ChantierDetailDashboardProps) {
   const { t } = useLanguage();
   const noop = () => {};
   const resolveMode = (tile: TileSpec): TileMode => {
+    if (masquer && tile.key && masquer.includes(tile.key)) return 'hidden';
     if (access) return tile.key ? access(tile.key) : 'hidden';
     if (tile.portalOnly) return 'hidden';
     return tile.adminOnly && !isAdmin ? 'hidden' : 'act';

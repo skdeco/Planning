@@ -175,7 +175,15 @@ export function WeekGridView({
             delayLongPress={400}
           >
             <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
-            <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
+              {chantier.categorie === 'depannage' && (
+                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#B9770E', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catDepannage}</Text>
+              )}
+              {chantier.categorie === 'lieuFixe' && (
+                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#34506B', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catLieuFixe}</Text>
+              )}
+            </View>
           </Pressable>
 
           {/* Cellules des jours */}
