@@ -1252,6 +1252,18 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    envoyerAuxEmployes: "Отправить сотрудникам",
+    pourQuelJour: "На какой день",
+    pourQui: "Кому",
+    autreDate: "Другая дата",
+    surCeChantier: "на этом объекте",
+    sectionDirection: "Руководство",
+    sectionEmployes: "Сотрудники",
+    noteDirection: "Заметка руководства",
+    noteDirectionAide: "Напоминания, заказы… видны только вам. Ссылка позволяет отправить их сотрудникам.",
+    aucuneNoteDirection: "Нет заметок руководства.",
+    transmiseLe: "Отправлена на",
+    aucunEmploye: "Нет сотрудников.",
     appeler: "Позвонить",
     positionArrivee: "Место прихода",
     positionDepart: "Место ухода",

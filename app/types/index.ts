@@ -408,6 +408,8 @@ export interface TaskItem {
   faitPar?: string;    // nom de celui qui a coché
   faitAt?: string;     // ISO datetime du cochage
   photos?: string[];   // URIs photos de preuve
+  /** Tâche issue d'une ligne de compte rendu : cocher ici coche aussi la ligne du CR. */
+  origineCR?: { suiviId: string; itemId: string };
 }
 
 // ─── Suivis CR (compte-rendu de chantier) ─────────────────────────────────
@@ -1144,6 +1146,8 @@ export interface NoteChantier {
   destinataires: 'tous' | string[];
   // IDs des personnes ayant archivé cette note
   archivedBy: string[];      // 'admin' ou id employé/ST
+  /** Note de direction transmise aux employés comme consigne (qui, quel jour). */
+  transmise?: { date: string; employeIds: string[]; le: string };
   // Pièces jointes (photos base64 ou PDF base64)
   pieceJointe?: string;      // base64 URI (image ou PDF)
   pieceJointeNom?: string;   // nom du fichier

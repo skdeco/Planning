@@ -1252,6 +1252,18 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    envoyerAuxEmployes: "إرسال إلى الموظفين",
+    pourQuelJour: "لأي يوم",
+    pourQui: "لمن",
+    autreDate: "تاريخ آخر",
+    surCeChantier: "في هذا الموقع",
+    sectionDirection: "الإدارة",
+    sectionEmployes: "الموظفون",
+    noteDirection: "ملاحظة الإدارة",
+    noteDirectionAide: "تذكيرات، طلبات للتنفيذ… مرئية لك فقط. يتيح لك الرابط إرسالها إلى الموظفين.",
+    aucuneNoteDirection: "لا توجد ملاحظة إدارة.",
+    transmiseLe: "أُرسلت ليوم",
+    aucunEmploye: "لا يوجد موظفون.",
     appeler: "اتصال",
     positionArrivee: "موقع الحضور",
     positionDepart: "موقع الانصراف",

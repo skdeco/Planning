@@ -1262,6 +1262,18 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    envoyerAuxEmployes: "Send to employees",
+    pourQuelJour: "For which day",
+    pourQui: "For whom",
+    autreDate: "Other date",
+    surCeChantier: "on this project",
+    sectionDirection: "Management",
+    sectionEmployes: "Employees",
+    noteDirection: "Management note",
+    noteDirectionAide: "Reminders, orders to place… visible only to you. A link lets you send them to employees.",
+    aucuneNoteDirection: "No management note.",
+    transmiseLe: "Sent for",
+    aucunEmploye: "No employee.",
     appeler: "Call",
     positionArrivee: "Arrival location",
     positionDepart: "Departure location",

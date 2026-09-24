@@ -1170,15 +1170,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   // ── Tâches (checklist dans les notes) ──
   const toggleTask = (affectationId: string, noteId: string, taskId: string, faitPar: string) =>
-    setData(p => ({
+    setData(p => {
+      const now = new Date().toISOString();
+      // Si la tâche vient d'une ligne de compte rendu, on répercute le cochage sur le CR.
+      const tacheSource = p.affectations.find(a => a.id === affectationId)?.notes.find(n => n.id === noteId)?.tasks?.find(t => t.id === taskId);
+      const nouvelEtat = tacheSource ? !tacheSource.fait : true;
+      const origine = tacheSource?.origineCR;
+      const suivisCR = origine
+        ? (p.suivisCR || []).map(cr => {
+            if (cr.id !== origine.suiviId) return cr;
+            return {
+              ...cr,
+              updatedAt: now,
+              sections: cr.sections.map(sec => ({
+                ...sec,
+                subSections: sec.subSections.map(sub => ({
+                  ...sub,
+                  items: sub.items.map(it =>
+                    it.kind === 'task' && it.task.id === origine.itemId
+                      ? { ...it, task: { ...it.task, fait: nouvelEtat, faitPar: nouvelEtat ? faitPar : undefined, faitAt: nouvelEtat ? now : undefined } }
+                      : it),
+                })),
+              })),
+            };
+          })
+        : p.suivisCR;
+      return {
       ...p,
+      suivisCR,
       affectations: p.affectations.map(a => {
         if (a.id !== affectationId) return a;
         return {
           ...a,
           notes: a.notes.map(n => {
             if (n.id !== noteId) return n;
-            const now = new Date().toISOString();
             return {
               ...n,
               updatedAt: now,
@@ -1190,7 +1215,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }),
         };
       }),
-    }));
+      };
+    });
 
   const addTaskPhoto = (affectationId: string, noteId: string, taskId: string, photoUri: string) =>
     setData(p => ({

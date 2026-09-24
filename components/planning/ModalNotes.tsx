@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Modal,
   View,
@@ -26,6 +26,8 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { DS } from '@/constants/design';
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
+import { useLanguage } from '@/app/context/LanguageContext';
+import { EnvoiConsigneSheet, type ConsigneAEnvoyer } from '@/components/ui/EnvoiConsigneSheet';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -67,8 +69,37 @@ export interface ModalNotesProps {
  * (préservation 1:1).
  */
 export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.ReactElement {
-  const { data, currentUser, toggleTask, addTask, deleteTask, addTaskPhoto, removeTaskPhoto } = useApp();
+  const { data, currentUser, toggleTask, addTask, deleteTask, addTaskPhoto, removeTaskPhoto, addNoteChantier, updateNoteChantier, deleteNoteChantier } = useApp();
   const isAdmin = currentUser?.role === 'admin';
+  const { t } = useLanguage();
+
+  // ── Notes de direction (mode chantier) : rappels de l'admin pour lui-même,
+  //    transmissibles en un geste aux employés comme consigne du jour. ──
+  const [consigneAEnvoyer, setConsigneAEnvoyer] = useState<ConsigneAEnvoyer | null>(null);
+  const [noteDirectionEnCours, setNoteDirectionEnCours] = useState<string | null>(null);
+  const [texteDirection, setTexteDirection] = useState('');
+  const [saisieDirection, setSaisieDirection] = useState(false);
+  const notesDirection = (noteModal?.mode === 'chantier' && isAdmin)
+    ? (data.notesChantier || [])
+        .filter(n => n.chantierId === noteModal.chantierId && Array.isArray(n.destinataires) && n.destinataires.length === 1 && n.destinataires[0] === 'admin' && !n.archivedBy?.includes('admin'))
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
+    : [];
+  const ajouterNoteDirection = () => {
+    const texte = texteDirection.trim();
+    if (!texte || !noteModal) return;
+    addNoteChantier({
+      id: `nc_${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      chantierId: noteModal.chantierId,
+      auteurId: 'admin',
+      auteurNom: currentUser?.nom || 'Admin',
+      texte,
+      createdAt: new Date().toISOString(),
+      destinataires: ['admin'],
+      archivedBy: [],
+    });
+    setTexteDirection('');
+    setSaisieDirection(false);
+  };
 
   const { draft, setDraft, ui, setUi, actions } = useNotesModalLogic(noteModal, setNoteModal);
 
@@ -120,6 +151,67 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
             </View>
 
           <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 16 }}>
+              {/* ── Section Direction (mode chantier, admin) ── */}
+              {noteModal?.mode === 'chantier' && isAdmin && !ui.showEditor && (
+                <View style={{ marginBottom: 14 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, marginBottom: 8 }}>
+                    <Text style={styles.sectionLabel}>{t.ui.sectionDirection} ({notesDirection.length})</Text>
+                    <Pressable onPress={() => setSaisieDirection(v => !v)} hitSlop={8}>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{saisieDirection ? t.common.cancel : `+ ${t.ui.noteDirection}`}</Text>
+                    </Pressable>
+                  </View>
+                  {saisieDirection && (
+                    <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 8, gap: 8 }}>
+                      <TextInput
+                        style={{ minHeight: 64, fontSize: 15, color: '#2B1D14', textAlignVertical: 'top' }}
+                        placeholder={t.ui.noteDirectionAide}
+                        placeholderTextColor="#9A8C80"
+                        value={texteDirection}
+                        onChangeText={setTexteDirection}
+                        multiline
+                        autoFocus
+                      />
+                      <Pressable
+                        style={{ alignSelf: 'flex-end', backgroundColor: '#5C1F2E', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, opacity: texteDirection.trim() ? 1 : 0.4 }}
+                        disabled={!texteDirection.trim()}
+                        onPress={ajouterNoteDirection}
+                      >
+                        <Text style={{ color: '#fff', fontSize: 14, fontWeight: '600' }}>{t.common.save}</Text>
+                      </Pressable>
+                    </View>
+                  )}
+                  {notesDirection.length === 0 && !saisieDirection && (
+                    <Text style={{ fontSize: 13, color: '#6E5F54', paddingHorizontal: 4 }}>{t.ui.aucuneNoteDirection}</Text>
+                  )}
+                  {notesDirection.map(n => (
+                    <View key={n.id} style={[styles.noteCard, { borderLeftWidth: 0 }]}>
+                      <View style={styles.noteCardHeader}>
+                        <Text style={styles.noteAuthor}>{t.ui.sectionDirection}</Text>
+                        <Text style={styles.noteDate}>{new Date(n.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: '2-digit' })}</Text>
+                      </View>
+                      <Text style={styles.noteCardText}>{n.texte}</Text>
+                      {n.transmise && (
+                        <Text style={{ fontSize: 12, color: '#2E7D32', marginTop: 4 }}>
+                          → {t.ui.transmiseLe} {formatDateFR(n.transmise.date)} ({n.transmise.employeIds.length})
+                        </Text>
+                      )}
+                      <View style={{ flexDirection: 'row', gap: 14, marginTop: 8 }}>
+                        <Pressable onPress={() => { setNoteDirectionEnCours(n.id); setConsigneAEnvoyer({ chantierId: n.chantierId, texte: n.texte, photos: n.photos }); }}>
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{t.ui.envoyerAuxEmployes} →</Text>
+                        </Pressable>
+                        <Pressable onPress={() => updateNoteChantier({ ...n, archivedBy: [...(n.archivedBy || []), 'admin'] })}>
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: '#6E5F54' }}>{t.common.archive}</Text>
+                        </Pressable>
+                        <Pressable onPress={() => deleteNoteChantier(n.id)}>
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: '#E74C3C' }}>{t.common.delete}</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  ))}
+                  <Text style={[styles.sectionLabel, { paddingHorizontal: 4, marginTop: 14 }]}>{t.ui.sectionEmployes} ({noteModal.allNotes.length})</Text>
+                </View>
+              )}
+
               {/* Liste des notes existantes */}
               {noteModal && noteModal.allNotes.length > 0 && !ui.showEditor && (
                 <View style={styles.notesList}>
@@ -591,6 +683,15 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
         </View>
       </View>
       </KeyboardAvoidingView>
+      <EnvoiConsigneSheet
+        consigne={consigneAEnvoyer}
+        onClose={() => setConsigneAEnvoyer(null)}
+        onEnvoye={(employeIds, date) => {
+          const n = noteDirectionEnCours ? (data.notesChantier || []).find(x => x.id === noteDirectionEnCours) : undefined;
+          if (n) updateNoteChantier({ ...n, transmise: { date, employeIds, le: new Date().toISOString() } });
+          setNoteDirectionEnCours(null);
+        }}
+      />
     </Modal>
   );
 }
@@ -603,6 +704,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
 // dans une passe de cleanup global.
 
 const styles = StyleSheet.create({
+  sectionLabel: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
   // — Modal layout shared —
   modalHandle: {
     width: 40,

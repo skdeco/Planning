@@ -1252,6 +1252,18 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    envoyerAuxEmployes: "Enviar aos funcionários",
+    pourQuelJour: "Para que dia",
+    pourQui: "Para quem",
+    autreDate: "Outra data",
+    surCeChantier: "nesta obra",
+    sectionDirection: "Direção",
+    sectionEmployes: "Funcionários",
+    noteDirection: "Nota da direção",
+    noteDirectionAide: "Lembretes, encomendas a fazer… visíveis apenas por si. Um link permite enviá-las aos funcionários.",
+    aucuneNoteDirection: "Nenhuma nota da direção.",
+    transmiseLe: "Enviada para",
+    aucunEmploye: "Nenhum funcionário.",
     appeler: "Ligar",
     positionArrivee: "Local de entrada",
     positionDepart: "Local de saída",
