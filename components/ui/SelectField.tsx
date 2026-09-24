@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, Modal, Pressable, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, Modal, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Keyboard, Platform, useWindowDimensions } from 'react-native';
 import { ChevronDown, Check, Search } from 'lucide-react-native';
 import { useLanguage } from '@/app/context/LanguageContext';
 
@@ -31,6 +31,9 @@ export function SelectField({ value, options, onSelect, placeholder, searchable 
   const [q, setQ] = useState('');
 
   const selected = options.find(o => o.value === value) || null;
+  // La feuille s'accroche en haut de l'écran : le clavier ne recouvre jamais la liste.
+  const { height: winH } = useWindowDimensions();
+  const listMaxHeight = Math.max(180, Math.min(360, winH * 0.42));
   const filtered = useMemo(() => {
     const term = q.trim().toLowerCase();
     return term ? options.filter(o => o.label.toLowerCase().includes(term)) : options;
@@ -50,7 +53,8 @@ export function SelectField({ value, options, onSelect, placeholder, searchable 
       </Pressable>
 
       <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
-        <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        <Pressable style={styles.overlay} onPress={() => { Keyboard.dismiss(); setOpen(false); }}>
           <Pressable style={styles.sheet} onPress={() => {}}>
             {title ? <Text style={styles.title}>{title}</Text> : null}
             {searchable && (
@@ -62,17 +66,20 @@ export function SelectField({ value, options, onSelect, placeholder, searchable 
                   placeholderTextColor="#B0A99F"
                   value={q}
                   onChangeText={setQ}
-                  autoFocus
+                  // Clavier ouvert d'office seulement quand la liste est longue :
+                  // sinon il cache les choix (contacts d'un chantier, par ex.).
+                  autoFocus={options.length > 8}
+                  returnKeyType="search"
                 />
               </View>
             )}
-            <ScrollView style={{ maxHeight: 360 }} keyboardShouldPersistTaps="handled">
+            <ScrollView style={{ maxHeight: listMaxHeight }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag">
               {filtered.length === 0 ? (
                 <Text style={styles.empty}>{t.ui.aucunResultat}</Text>
               ) : filtered.map(o => {
                 const active = o.value === value;
                 return (
-                  <Pressable key={o.value} onPress={() => { onSelect(o.value); setOpen(false); }} style={[styles.option, active && styles.optionActive]}>
+                  <Pressable key={o.value} onPress={() => { Keyboard.dismiss(); onSelect(o.value); setOpen(false); }} style={[styles.option, active && styles.optionActive]}>
                     {o.color && <View style={[styles.dot, { backgroundColor: o.color }]} />}
                     <Text style={[styles.optionText, active && styles.optionTextActive]} numberOfLines={1}>{o.label}</Text>
                     {active && <Check size={16} color="#5C1F2E" strokeWidth={2.4} />}
@@ -82,6 +89,7 @@ export function SelectField({ value, options, onSelect, placeholder, searchable 
             </ScrollView>
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );
@@ -98,7 +106,7 @@ const styles = StyleSheet.create({
   valueCompact: { fontSize: 13.5 },
   placeholder: { color: '#B0A99F', fontWeight: '400' },
   dot: { width: 10, height: 10, borderRadius: 5 },
-  overlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'center', padding: 24 },
+  overlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-start', paddingHorizontal: 24, paddingTop: 72, paddingBottom: 24 },
   sheet: { backgroundColor: '#fff', borderRadius: 28, padding: 14, maxWidth: 480, width: '100%', alignSelf: 'center' },
   title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 20, lineHeight: 26, color: '#2B1D14', marginBottom: 10, paddingHorizontal: 4 },
   searchWrap: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#F1E7DC', borderRadius: 999, paddingHorizontal: 14, marginBottom: 10 },
