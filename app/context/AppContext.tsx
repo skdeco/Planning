@@ -826,12 +826,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // ── Rechargement depuis Supabase (utilisé par polling, Realtime ET BroadcastChannel) ──
   // Supabase est la SOURCE DE VÉRITÉ : les données distantes remplacent les locales.
   // Seules les suppressions locales non encore propagées sont protégées.
-  const reloadFromSupabase = useCallback(async () => {
+  const reloadFromSupabase = useCallback(async (force: boolean = false) => {
     // Ne pas recharger si un changement local récent n'est pas encore sauvegardé
     // Protection étendue : debounce 1.5s + temps réseau (jusqu'à 10s avec retries)
+    // `force` (tirer pour rafraîchir) : on recharge quoi qu'il arrive — la
+    // sauvegarde est additive, rien de local n'est perdu.
     const timeSinceChange = Date.now() - lastLocalChangeRef.current;
     const timeSinceSave = Date.now() - lastSaveRef.current;
-    if (timeSinceChange < 8000 || timeSinceSave < 5000) return;
+    if (!force && (timeSinceChange < 8000 || timeSinceSave < 5000)) return;
     try {
       const supabaseData = await loadDataFromSupabase();
       if (supabaseData && Object.keys(supabaseData).length > 0) {
@@ -960,7 +962,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       reloadFromSupabase();
     });
     // Polling court en fallback (30s) pour garantir la sync si Realtime échoue
-    const poll = setInterval(reloadFromSupabase, 30000);
+    const poll = setInterval(() => { void reloadFromSupabase(); }, 30000);
     return () => { unsubscribe(); clearInterval(poll); };
   }, [loaded, reloadFromSupabase]);
 
@@ -2239,7 +2241,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addBadgeEmploye,
       notifications, markNotificationsRead,
       syncStatus,
-      refreshData: reloadFromSupabase,
+      refreshData: () => reloadFromSupabase(true),
       logout,
     }}>
       {children}
