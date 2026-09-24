@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert, Linking, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock, CircleCheck, Navigation, Check, Camera, Search, ChevronRight, ChevronDown, X, ShoppingCart, ClipboardList, Phone, MapPin } from 'lucide-react-native';
+import { Clock, CircleCheck, Navigation, Check, Camera, Search, ChevronRight, ChevronDown, X, ShoppingCart, ClipboardList, Phone, MapPin, Pencil } from 'lucide-react-native';
 import { DS, screenTitle, radius, shadows } from '@/constants/design';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
@@ -990,248 +990,6 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* Alertes système — rappels automatiques */}
-        {(() => {
-          // Chaque alerte a un id STABLE (type + entité + date) pour que "masquer"
-          // fonctionne même quand le texte change (minutes de retard qui évoluent...)
-          const alertes: { id: string; icon: string; text: string; color: string; onPress?: () => void }[] = [];
-          const todayDate = new Date();
-
-          // 1. Employés non pointés après 15min du début théorique
-          const heureActuelle = todayDate.getHours() * 60 + todayDate.getMinutes();
-          data.employes.forEach(emp => {
-            if (emp.doitPointer === false) return;
-            const dow = todayDate.getDay();
-            const horaire = emp.horaires?.[dow];
-            if (!horaire?.actif) return;
-            const [hh, mm] = horaire.debut.split(':').map(Number);
-            const debutTheo = hh * 60 + mm;
-            if (heureActuelle < debutTheo + 15) return;
-            const aPointe = data.pointages.some(p => p.employeId === emp.id && p.date === today && p.type === 'debut');
-            const minutesRetard = heureActuelle - debutTheo;
-            if (!aPointe) alertes.push({
-              id: `pointage_${emp.id}_${today}`,
-              icon: '⚠️',
-              text: `${emp.prenom} n'a pas pointé (+${minutesRetard}min)`,
-              color: '#E74C3C',
-            });
-          });
-
-          // 1b. Pointages hors zone du jour (contrôle GPS silencieux — visible admin uniquement,
-          // l'ouvrier n'est ni bloqué ni averti).
-          data.pointages
-            .filter(p => p.date === today && p.horsZone)
-            .forEach(p => {
-              const emp = data.employes.find(e => e.id === p.employeId);
-              const ch = data.chantiers.find(c => c.id === p.chantierId);
-              const label = p.type === 'debut' ? t.dash.arrivalLc : t.dash.departureLc;
-              alertes.push({
-                id: `horszone_${p.id}`,
-                icon: '📍',
-                text: `${emp?.prenom || t.home.employeeLabel} ${t.dash.clockedHis} ${label} ${t.dash.outOfZone}${p.distanceChantier ? ` (${p.distanceChantier} m)` : ''}${ch ? ` — ${ch.nom}` : ''}`,
-                color: '#E67E22',
-                onPress: () => router.push('/(tabs)/reporting' as any),
-              });
-            });
-
-          // 2. Relances paiement (reste > 0 et dernier paiement > 30j ou aucun paiement)
-          (data.marchesChantier || []).forEach(m => {
-            const totalRecu = m.paiements.reduce((s, p) => s + p.montant, 0);
-            const reste = m.montantTTC - totalRecu;
-            if (reste <= 0) return;
-            const lastPay = m.paiements.length > 0 ? new Date(m.paiements[m.paiements.length - 1].date) : null;
-            const daysSince = lastPay ? Math.floor((todayDate.getTime() - lastPay.getTime()) / 86400000) : 999;
-            if (daysSince > 30) {
-              const ch = data.chantiers.find(c => c.id === m.chantierId);
-              const resteFormatted = reste.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
-              alertes.push({
-                id: `relance_${m.id}`,
-                icon: '💸',
-                text: `Relance : ${ch?.nom || ''} — ${resteFormatted}€ restant (${daysSince === 999 ? 'aucun paiement' : `${daysSince}j sans paiement`})`,
-                color: '#E5A840',
-                // Raccourci "Encaisser" : ouvre directement le modal Marchés du chantier (au lieu de la liste).
-                onPress: () => router.push({ pathname: '/(tabs)/chantiers', params: { action: 'marches', chantierId: m.chantierId } } as any),
-              });
-            }
-          });
-
-          // 3. Documents ST expirant bientôt (dans 30j)
-          data.sousTraitants.forEach(st => {
-            (st.documents || []).forEach(doc => {
-              if (!doc.expirationDate) return;
-              const exp = new Date(doc.expirationDate);
-              const jRestants = Math.floor((exp.getTime() - todayDate.getTime()) / 86400000);
-              if (jRestants <= 30 && jRestants >= 0) {
-                alertes.push({
-                  id: `doc_${st.id}_${doc.id || doc.libelle}`,
-                  icon: '📄',
-                  text: `${st.societe || st.nom} : ${doc.libelle} expire dans ${jRestants}j`,
-                  color: '#F59E0B',
-                });
-              } else if (jRestants < 0) {
-                alertes.push({
-                  id: `doc_exp_${st.id}_${doc.id || doc.libelle}`,
-                  icon: '🚨',
-                  text: `${st.societe || st.nom} : ${doc.libelle} EXPIRÉ`,
-                  color: '#E74C3C',
-                });
-              }
-            });
-          });
-
-          // 4. Trous planning — chantier actif sans personne affectée sur les 7 prochains jours
-          (() => {
-            const joursSemaine = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
-            let trouCount = 0;
-            for (let d = 0; d < 7 && trouCount < 5; d++) {
-              const jour = new Date(todayDate);
-              jour.setDate(jour.getDate() + d);
-              const jourStr = `${jour.getFullYear()}-${String(jour.getMonth() + 1).padStart(2, '0')}-${String(jour.getDate()).padStart(2, '0')}`;
-              const dow = jour.getDay();
-              // Skip weekends (samedi=6, dimanche=0)
-              if (dow === 0 || dow === 6) continue;
-              const dayLabel = `${joursSemaine[dow]} ${String(jour.getDate()).padStart(2, '0')}/${String(jour.getMonth() + 1).padStart(2, '0')}`;
-              data.chantiers.filter(c => c.statut === 'actif').forEach(c => {
-                if (trouCount >= 5) return;
-                const hasAffectation = data.affectations.some(a => a.chantierId === c.id && a.dateDebut <= jourStr && a.dateFin >= jourStr);
-                if (!hasAffectation) {
-                  alertes.push({
-                    id: `trou_${c.id}_${jourStr}`,
-                    icon: '📅',
-                    text: `${c.nom} : personne le ${dayLabel}`,
-                    color: '#6B8EBF',
-                  });
-                  trouCount++;
-                }
-              });
-            }
-          })();
-
-          // 5. Chantiers en retard (actifs dont la date de fin est dépassée)
-          data.chantiers.forEach(c => {
-            if (c.statut !== 'actif' || !c.dateFin || c.dateFin >= today) return;
-            const jRetard = Math.floor((todayDate.getTime() - new Date(c.dateFin).getTime()) / 86400000);
-            alertes.push({
-              id: `chretard_${c.id}_${c.dateFin}`,
-              icon: '⏰',
-              text: `${c.nom} : fin dépassée de ${jRetard}j`,
-              color: '#E74C3C',
-              onPress: () => router.push('/(tabs)/chantiers' as any),
-            });
-          });
-
-          // 6. SAV ouverts non assignés
-          (data.ticketsSAV || []).forEach(t => {
-            if ((t.statut !== 'ouvert' && t.statut !== 'en_cours') || t.assigneA) return;
-            const ch = data.chantiers.find(c => c.id === t.chantierId);
-            alertes.push({
-              id: `savna_${t.id}`,
-              icon: '🔧',
-              text: `SAV non assigné : ${t.objet}${ch ? ` — ${ch.nom}` : ''}`,
-              color: '#E5A840',
-              onPress: () => router.push('/(tabs)/chantiers' as any),
-            });
-          });
-
-          // 7. Devis sous-traitant à signer (devis reçu mais pas encore signé)
-          (data.devis || []).forEach(d => {
-            if (!d.devisFichier || d.devisSigne) return;
-            const st = data.sousTraitants.find(s => s.id === d.soustraitantId);
-            const ch = data.chantiers.find(c => c.id === d.chantierId);
-            alertes.push({
-              id: `devsign_${d.id}`,
-              icon: '✍️',
-              text: `Devis à signer : ${st?.societe || st?.nom || 'ST'}${ch ? ` — ${ch.nom}` : ''} (${d.objet})`,
-              color: '#6B8EBF',
-              onPress: () => router.push('/(tabs)/financier-st' as any),
-            });
-          });
-
-          // 8. Documents société expirant (<=30j) ou expirés
-          (data.documentsSociete || []).forEach(doc => {
-            if (!doc.dateExpiration) return;
-            const jRestants = Math.floor((new Date(doc.dateExpiration).getTime() - todayDate.getTime()) / 86400000);
-            if (jRestants < 0) {
-              alertes.push({
-                id: `docsoc_exp_${doc.id}`,
-                icon: '🚨',
-                text: `Société : ${doc.nom} EXPIRÉ`,
-                color: '#E74C3C',
-                onPress: () => router.push('/(tabs)/societe' as any),
-              });
-            } else if (jRestants <= 30) {
-              alertes.push({
-                id: `docsoc_${doc.id}`,
-                icon: '📑',
-                text: `Société : ${doc.nom} expire dans ${jRestants}j`,
-                color: '#F59E0B',
-                onPress: () => router.push('/(tabs)/societe' as any),
-              });
-            }
-          });
-
-          const visibleAlertes = alertes.filter(a => !dismissedAlertes.has(a.id));
-          const hiddenCount = dismissedAlertes.size;
-          // Si toutes les alertes sont masquées, on affiche quand même un petit bouton "restaurer"
-          if (visibleAlertes.length === 0) {
-            if (hiddenCount === 0) return null;
-            return (
-              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
-                <Pressable onPress={() => setDismissedAlertes(new Set())}
-                  style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.ui.alertesMasquees} ({hiddenCount})</Text>
-                </Pressable>
-              </View>
-            );
-          }
-          return (
-            <>
-              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Pressable onPress={() => setShowAlertes(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
-                  <Text style={styles.sectionTitle}>{t.dash.alerts} ({visibleAlertes.length})</Text>
-                  <View style={{ marginTop: 12 }}>{showAlertes ? <ChevronDown size={16} color={DS.textSecondary} /> : <ChevronRight size={16} color={DS.textSecondary} />}</View>
-                </Pressable>
-                {showAlertes && (
-                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    {hiddenCount > 0 && (
-                      <Pressable onPress={() => setDismissedAlertes(new Set())}
-                        style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 11, color: '#6E5F54' }}>Afficher masquées ({hiddenCount})</Text>
-                      </Pressable>
-                    )}
-                    {visibleAlertes.length > 1 && (
-                      <Pressable onPress={() => setDismissedAlertes(new Set([...dismissedAlertes, ...visibleAlertes.map(a => a.id)]))}
-                        style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.dash.hideAll}</Text>
-                      </Pressable>
-                    )}
-                  </View>
-                )}
-              </View>
-              {showAlertes && (
-              <View style={[styles.listCard, { marginBottom: 8 }]}>
-                {visibleAlertes.slice(0, 15).map((a, idx, arr) => (
-                  <Pressable key={a.id} style={[styles.listRow, { minHeight: 56 }]} onPress={a.onPress}>
-                    <View style={[styles.listIcon, { backgroundColor: a.color + '1A' }]}>
-                      <Ico e={a.icon} size={16} color={a.color} />
-                    </View>
-                    <View style={[styles.listInner, idx < arr.length - 1 && styles.listSeparator, { paddingVertical: 10 }]}>
-                      <Text style={{ fontSize: 14, lineHeight: 19, color: DS.text, flex: 1 }} numberOfLines={2}>{a.text}</Text>
-                      <Pressable
-                        onPress={(e) => { e.stopPropagation(); setDismissedAlertes(new Set([...dismissedAlertes, a.id])); }}
-                        hitSlop={10}
-                        style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: DS.segment, alignItems: 'center', justifyContent: 'center' }}>
-                        <X size={13} color={DS.textSecondary} strokeWidth={2.4} />
-                      </Pressable>
-                    </View>
-                  </Pressable>
-                ))}
-              </View>
-              )}
-            </>
-          );
-        })()}
-
         {/* Planning direction du jour */}
         {(() => {
           const rdvJour = (data.agendaEvents || []).filter(e => e.date === today).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
@@ -1338,6 +1096,14 @@ export default function DashboardScreen() {
                             <Text style={{ flex: 1, fontSize: 14.5, fontWeight: '600', color: DS.text }} numberOfLines={1}>
                               {employe ? `${employe.prenom} ${employe.nom}` : empId}
                             </Text>
+                            <Pressable
+                              hitSlop={8}
+                              onPress={() => router.push({ pathname: '/(tabs)/reporting', params: { editEmp: empId, editDate: today } })}
+                              style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' }}
+                              accessibilityLabel={t.reporting.editPointage}
+                            >
+                              <Pencil size={14} color={DS.primary} strokeWidth={2} />
+                            </Pressable>
                             {!aPointe && !!employe?.telephone && (
                               <Pressable
                                 hitSlop={8}
@@ -1637,6 +1403,249 @@ export default function DashboardScreen() {
                     </View>
                   ))}
                 </View>
+              )}
+            </>
+          );
+        })()}
+
+        {/* Alertes système — rappels automatiques (en bas de page, demande Kev) */}
+        <View style={{ height: 12 }} />
+        {(() => {
+          // Chaque alerte a un id STABLE (type + entité + date) pour que "masquer"
+          // fonctionne même quand le texte change (minutes de retard qui évoluent...)
+          const alertes: { id: string; icon: string; text: string; color: string; onPress?: () => void }[] = [];
+          const todayDate = new Date();
+
+          // 1. Employés non pointés après 15min du début théorique
+          const heureActuelle = todayDate.getHours() * 60 + todayDate.getMinutes();
+          data.employes.forEach(emp => {
+            if (emp.doitPointer === false) return;
+            const dow = todayDate.getDay();
+            const horaire = emp.horaires?.[dow];
+            if (!horaire?.actif) return;
+            const [hh, mm] = horaire.debut.split(':').map(Number);
+            const debutTheo = hh * 60 + mm;
+            if (heureActuelle < debutTheo + 15) return;
+            const aPointe = data.pointages.some(p => p.employeId === emp.id && p.date === today && p.type === 'debut');
+            const minutesRetard = heureActuelle - debutTheo;
+            if (!aPointe) alertes.push({
+              id: `pointage_${emp.id}_${today}`,
+              icon: '⚠️',
+              text: `${emp.prenom} n'a pas pointé (+${minutesRetard}min)`,
+              color: '#E74C3C',
+            });
+          });
+
+          // 1b. Pointages hors zone du jour (contrôle GPS silencieux — visible admin uniquement,
+          // l'ouvrier n'est ni bloqué ni averti).
+          data.pointages
+            .filter(p => p.date === today && p.horsZone)
+            .forEach(p => {
+              const emp = data.employes.find(e => e.id === p.employeId);
+              const ch = data.chantiers.find(c => c.id === p.chantierId);
+              const label = p.type === 'debut' ? t.dash.arrivalLc : t.dash.departureLc;
+              alertes.push({
+                id: `horszone_${p.id}`,
+                icon: '📍',
+                text: `${emp?.prenom || t.home.employeeLabel} ${t.dash.clockedHis} ${label} ${t.dash.outOfZone}${p.distanceChantier ? ` (${p.distanceChantier} m)` : ''}${ch ? ` — ${ch.nom}` : ''}`,
+                color: '#E67E22',
+                onPress: () => router.push('/(tabs)/reporting' as any),
+              });
+            });
+
+          // 2. Relances paiement (reste > 0 et dernier paiement > 30j ou aucun paiement)
+          (data.marchesChantier || []).forEach(m => {
+            const totalRecu = m.paiements.reduce((s, p) => s + p.montant, 0);
+            const reste = m.montantTTC - totalRecu;
+            if (reste <= 0) return;
+            const lastPay = m.paiements.length > 0 ? new Date(m.paiements[m.paiements.length - 1].date) : null;
+            const daysSince = lastPay ? Math.floor((todayDate.getTime() - lastPay.getTime()) / 86400000) : 999;
+            if (daysSince > 30) {
+              const ch = data.chantiers.find(c => c.id === m.chantierId);
+              const resteFormatted = reste.toLocaleString('fr-FR', { maximumFractionDigits: 0 });
+              alertes.push({
+                id: `relance_${m.id}`,
+                icon: '💸',
+                text: `Relance : ${ch?.nom || ''} — ${resteFormatted}€ restant (${daysSince === 999 ? 'aucun paiement' : `${daysSince}j sans paiement`})`,
+                color: '#E5A840',
+                // Raccourci "Encaisser" : ouvre directement le modal Marchés du chantier (au lieu de la liste).
+                onPress: () => router.push({ pathname: '/(tabs)/chantiers', params: { action: 'marches', chantierId: m.chantierId } } as any),
+              });
+            }
+          });
+
+          // 3. Documents ST expirant bientôt (dans 30j)
+          data.sousTraitants.forEach(st => {
+            (st.documents || []).forEach(doc => {
+              if (!doc.expirationDate) return;
+              const exp = new Date(doc.expirationDate);
+              const jRestants = Math.floor((exp.getTime() - todayDate.getTime()) / 86400000);
+              if (jRestants <= 30 && jRestants >= 0) {
+                alertes.push({
+                  id: `doc_${st.id}_${doc.id || doc.libelle}`,
+                  icon: '📄',
+                  text: `${st.societe || st.nom} : ${doc.libelle} expire dans ${jRestants}j`,
+                  color: '#F59E0B',
+                });
+              } else if (jRestants < 0) {
+                alertes.push({
+                  id: `doc_exp_${st.id}_${doc.id || doc.libelle}`,
+                  icon: '🚨',
+                  text: `${st.societe || st.nom} : ${doc.libelle} EXPIRÉ`,
+                  color: '#E74C3C',
+                });
+              }
+            });
+          });
+
+          // 4. Trous planning — chantier actif sans personne affectée sur les 7 prochains jours
+          (() => {
+            const joursSemaine = ['dim.', 'lun.', 'mar.', 'mer.', 'jeu.', 'ven.', 'sam.'];
+            let trouCount = 0;
+            for (let d = 0; d < 7 && trouCount < 5; d++) {
+              const jour = new Date(todayDate);
+              jour.setDate(jour.getDate() + d);
+              const jourStr = `${jour.getFullYear()}-${String(jour.getMonth() + 1).padStart(2, '0')}-${String(jour.getDate()).padStart(2, '0')}`;
+              const dow = jour.getDay();
+              // Skip weekends (samedi=6, dimanche=0)
+              if (dow === 0 || dow === 6) continue;
+              const dayLabel = `${joursSemaine[dow]} ${String(jour.getDate()).padStart(2, '0')}/${String(jour.getMonth() + 1).padStart(2, '0')}`;
+              data.chantiers.filter(c => c.statut === 'actif').forEach(c => {
+                if (trouCount >= 5) return;
+                const hasAffectation = data.affectations.some(a => a.chantierId === c.id && a.dateDebut <= jourStr && a.dateFin >= jourStr);
+                if (!hasAffectation) {
+                  alertes.push({
+                    id: `trou_${c.id}_${jourStr}`,
+                    icon: '📅',
+                    text: `${c.nom} : personne le ${dayLabel}`,
+                    color: '#6B8EBF',
+                  });
+                  trouCount++;
+                }
+              });
+            }
+          })();
+
+          // 5. Chantiers en retard (actifs dont la date de fin est dépassée)
+          data.chantiers.forEach(c => {
+            if (c.statut !== 'actif' || !c.dateFin || c.dateFin >= today) return;
+            const jRetard = Math.floor((todayDate.getTime() - new Date(c.dateFin).getTime()) / 86400000);
+            alertes.push({
+              id: `chretard_${c.id}_${c.dateFin}`,
+              icon: '⏰',
+              text: `${c.nom} : fin dépassée de ${jRetard}j`,
+              color: '#E74C3C',
+              onPress: () => router.push('/(tabs)/chantiers' as any),
+            });
+          });
+
+          // 6. SAV ouverts non assignés
+          (data.ticketsSAV || []).forEach(t => {
+            if ((t.statut !== 'ouvert' && t.statut !== 'en_cours') || t.assigneA) return;
+            const ch = data.chantiers.find(c => c.id === t.chantierId);
+            alertes.push({
+              id: `savna_${t.id}`,
+              icon: '🔧',
+              text: `SAV non assigné : ${t.objet}${ch ? ` — ${ch.nom}` : ''}`,
+              color: '#E5A840',
+              onPress: () => router.push('/(tabs)/chantiers' as any),
+            });
+          });
+
+          // 7. Devis sous-traitant à signer (devis reçu mais pas encore signé)
+          (data.devis || []).forEach(d => {
+            if (!d.devisFichier || d.devisSigne) return;
+            const st = data.sousTraitants.find(s => s.id === d.soustraitantId);
+            const ch = data.chantiers.find(c => c.id === d.chantierId);
+            alertes.push({
+              id: `devsign_${d.id}`,
+              icon: '✍️',
+              text: `Devis à signer : ${st?.societe || st?.nom || 'ST'}${ch ? ` — ${ch.nom}` : ''} (${d.objet})`,
+              color: '#6B8EBF',
+              onPress: () => router.push('/(tabs)/financier-st' as any),
+            });
+          });
+
+          // 8. Documents société expirant (<=30j) ou expirés
+          (data.documentsSociete || []).forEach(doc => {
+            if (!doc.dateExpiration) return;
+            const jRestants = Math.floor((new Date(doc.dateExpiration).getTime() - todayDate.getTime()) / 86400000);
+            if (jRestants < 0) {
+              alertes.push({
+                id: `docsoc_exp_${doc.id}`,
+                icon: '🚨',
+                text: `Société : ${doc.nom} EXPIRÉ`,
+                color: '#E74C3C',
+                onPress: () => router.push('/(tabs)/societe' as any),
+              });
+            } else if (jRestants <= 30) {
+              alertes.push({
+                id: `docsoc_${doc.id}`,
+                icon: '📑',
+                text: `Société : ${doc.nom} expire dans ${jRestants}j`,
+                color: '#F59E0B',
+                onPress: () => router.push('/(tabs)/societe' as any),
+              });
+            }
+          });
+
+          const visibleAlertes = alertes.filter(a => !dismissedAlertes.has(a.id));
+          const hiddenCount = dismissedAlertes.size;
+          // Si toutes les alertes sont masquées, on affiche quand même un petit bouton "restaurer"
+          if (visibleAlertes.length === 0) {
+            if (hiddenCount === 0) return null;
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                <Pressable onPress={() => setDismissedAlertes(new Set())}
+                  style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                  <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.ui.alertesMasquees} ({hiddenCount})</Text>
+                </Pressable>
+              </View>
+            );
+          }
+          return (
+            <>
+              <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Pressable onPress={() => setShowAlertes(v => !v)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+                  <Text style={styles.sectionTitle}>{t.dash.alerts} ({visibleAlertes.length})</Text>
+                  <View style={{ marginTop: 12 }}>{showAlertes ? <ChevronDown size={16} color={DS.textSecondary} /> : <ChevronRight size={16} color={DS.textSecondary} />}</View>
+                </Pressable>
+                {showAlertes && (
+                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                    {hiddenCount > 0 && (
+                      <Pressable onPress={() => setDismissedAlertes(new Set())}
+                        style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 11, color: '#6E5F54' }}>Afficher masquées ({hiddenCount})</Text>
+                      </Pressable>
+                    )}
+                    {visibleAlertes.length > 1 && (
+                      <Pressable onPress={() => setDismissedAlertes(new Set([...dismissedAlertes, ...visibleAlertes.map(a => a.id)]))}
+                        style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
+                        <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.dash.hideAll}</Text>
+                      </Pressable>
+                    )}
+                  </View>
+                )}
+              </View>
+              {showAlertes && (
+              <View style={[styles.listCard, { marginBottom: 8 }]}>
+                {visibleAlertes.slice(0, 15).map((a, idx, arr) => (
+                  <Pressable key={a.id} style={[styles.listRow, { minHeight: 56 }]} onPress={a.onPress}>
+                    <View style={[styles.listIcon, { backgroundColor: a.color + '1A' }]}>
+                      <Ico e={a.icon} size={16} color={a.color} />
+                    </View>
+                    <View style={[styles.listInner, idx < arr.length - 1 && styles.listSeparator, { paddingVertical: 10 }]}>
+                      <Text style={{ fontSize: 14, lineHeight: 19, color: DS.text, flex: 1 }} numberOfLines={2}>{a.text}</Text>
+                      <Pressable
+                        onPress={(e) => { e.stopPropagation(); setDismissedAlertes(new Set([...dismissedAlertes, a.id])); }}
+                        hitSlop={10}
+                        style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: DS.segment, alignItems: 'center', justifyContent: 'center' }}>
+                        <X size={13} color={DS.textSecondary} strokeWidth={2.4} />
+                      </Pressable>
+                    </View>
+                  </Pressable>
+                ))}
+              </View>
               )}
             </>
           );

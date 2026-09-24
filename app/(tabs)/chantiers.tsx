@@ -251,9 +251,8 @@ export default function ChantiersScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   // Filtre par statut de la liste chantiers (défaut : opérationnels = liste épurée).
   const [filterStatut, setFilterStatut] = useState<'en_cours' | 'a_letude' | 'termine' | 'archive' | 'tous'>('en_cours');
-  const [filterNature, setFilterNature] = useState<'toutes' | 'global' | 'menuiserie'>('toutes');
   // Segment principal : chantiers classiques / dépannages (éphémères) / lieux fixes (atelier…)
-  const [filterCategorie, setFilterCategorie] = useState<CategorieChantier>('chantier');
+  const [filterCategorie, setFilterCategorie] = useState<CategorieChantier | 'menuiserie'>('chantier');
   const [bilanChantierId, setBilanChantierId] = useState<string | null>(null);
   // Protection contre la perte de données si refresh pendant édition
   useUnsavedChanges(showForm && form.nom.trim().length > 0);
@@ -701,8 +700,12 @@ export default function ChantiersScreen() {
   const openNew = () => {
     setEditId(null);
     // Nouveau depuis le segment Dépannages / Lieux fixes → catégorie préremplie
-    const categorie: CategorieChantier = filterCategorie;
-    setForm({ ...DEFAULT_FORM, categorie, ...(categorie === 'lieuFixe' ? { dateDebut: todayYMD(), dateFin: '2099-12-31' } : {}) });
+    const categorie: CategorieChantier = filterCategorie === 'menuiserie' ? 'chantier' : filterCategorie;
+    setForm({
+      ...DEFAULT_FORM, categorie,
+      nature: filterCategorie === 'menuiserie' ? 'menuiserie' : 'global',
+      ...(categorie === 'lieuFixe' ? { dateDebut: todayYMD(), dateFin: '2099-12-31' } : {}),
+    });
     setShowForm(true);
   };
 
@@ -1267,7 +1270,13 @@ export default function ChantiersScreen() {
       }
     }
     // Catégorie (chantier / dépannage / lieu fixe) — les lieux fixes ignorent le statut.
-    if (isAdmin) list = list.filter(c => (c.categorie || 'chantier') === filterCategorie);
+    if (isAdmin) {
+      list = filterCategorie === 'menuiserie'
+        ? list.filter(c => (c.categorie || 'chantier') === 'chantier' && c.nature === 'menuiserie')
+        : filterCategorie === 'chantier'
+          ? list.filter(c => (c.categorie || 'chantier') === 'chantier' && (c.nature || 'global') === 'global')
+          : list.filter(c => (c.categorie || 'chantier') === filterCategorie);
+    }
     // Filtre par statut — défaut "En cours" (opérationnels) pour garder la liste principale épurée.
     if (filterStatut !== 'tous' && filterCategorie !== 'lieuFixe') {
       const groupesStatut: Record<string, StatutChantier[]> = {
@@ -1279,12 +1288,8 @@ export default function ChantiersScreen() {
       const allowed = groupesStatut[filterStatut] || [];
       list = list.filter(c => allowed.includes(c.statut));
     }
-    // Filtre par nature (global / menuiserie)
-    if (filterNature !== 'toutes') {
-      list = list.filter(c => (c.nature || 'global') === filterNature);
-    }
     return trierChantiers(list, data.chantierOrderPlanning, data.chantierTri);
-  }, [data.chantiers, data.chantierOrderPlanning, data.chantierTri, searchQuery, filterContactType, filterContactId, filterStatut, filterNature, filterCategorie, isAdmin, isApporteurUser, currentUser?.apporteurId]);
+  }, [data.chantiers, data.chantierOrderPlanning, data.chantierTri, searchQuery, filterContactType, filterContactId, filterStatut, filterCategorie, isAdmin, isApporteurUser, currentUser?.apporteurId]);
 
   // Dépannages : se rangent tout seuls une fois la date de fin passée.
   useEffect(() => {
@@ -1590,16 +1595,16 @@ export default function ChantiersScreen() {
       {isAdmin && (
         <View style={{ paddingHorizontal: 16, marginBottom: 6, marginTop: 4, gap: 8 }}>
           <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
-            {([['chantier', t.nav.chantiers], ['depannage', t.ui.catDepannages], ['lieuFixe', t.ui.catLieuxFixes]] as const).map(([val, lib]) => {
+            {([['chantier', t.nav.chantiers], ['menuiserie', t.ui.natureMenuiserie], ['depannage', t.ui.catDepannages], ['lieuFixe', t.ui.catLieuxFixes]] as const).map(([val, lib]) => {
               const actif = filterCategorie === val;
               return (
                 <Pressable
                   key={val}
-                  style={[{ flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
+                  style={[{ flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 2 },
                     actif && { backgroundColor: '#5C1F2E' }]}
                   onPress={() => setFilterCategorie(val)}
                 >
-                  <Text style={{ fontSize: 13.5, fontWeight: '600', color: actif ? '#FFFFFF' : '#2B1D14' }}>{lib}</Text>
+                  <Text style={{ fontSize: 12.5, fontWeight: '600', color: actif ? '#FFFFFF' : '#2B1D14' }} numberOfLines={1}>{lib}</Text>
                 </Pressable>
               );
             })}
@@ -1636,23 +1641,6 @@ export default function ChantiersScreen() {
                 onSelect={v => { setFilterContactType(v as typeof filterContactType); setFilterContactId('all'); }}
               />
             </View>
-          </View>
-          )}
-          {filterCategorie === 'chantier' && (
-          <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
-            {([['toutes', t.common.all], ['global', t.ui.chantiersGlobaux], ['menuiserie', t.ui.chantiersMenuiserie]] as const).map(([val, lib]) => {
-              const actif = filterNature === val;
-              return (
-                <Pressable
-                  key={val}
-                  style={[{ flex: 1, height: 34, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-                    actif && { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 }]}
-                  onPress={() => setFilterNature(val)}
-                >
-                  <Text style={{ fontSize: 13, fontWeight: actif ? '600' : '500', color: actif ? '#5C1F2E' : '#2B1D14' }}>{lib}</Text>
-                </Pressable>
-              );
-            })}
           </View>
           )}
           {filterContactType !== 'all' && (() => {

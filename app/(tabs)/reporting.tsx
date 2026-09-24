@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback } from 'react';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Image,
   TextInput, Modal, Platform, Alert, Linking, RefreshControl,
@@ -14,7 +14,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { METIER_COLORS, type Acompte } from '@/app/types';
 import { DatePicker } from '@/components/DatePicker';
 import { calcSalaireMensuel } from '@/lib/paie/calcSalaireMensuel';
-import { FileSpreadsheet, FileText, CalendarDays, HardHat } from 'lucide-react-native';
+import { FileSpreadsheet, FileText, CalendarDays, HardHat, Pencil } from 'lucide-react-native';
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
 
@@ -164,6 +164,18 @@ export default function ReportingScreen() {
     setEditIsAbsent(!debut && !fin);
     setEditPointageModal(true);
   }, [data.pointages]);
+
+  // Ouverture depuis l'accueil (dépliant des pointés) : ?editEmp=…&editDate=…
+  const params = useLocalSearchParams<{ editEmp?: string; editDate?: string }>();
+  useEffect(() => {
+    const e = typeof params.editEmp === 'string' ? params.editEmp : '';
+    const d = typeof params.editDate === 'string' ? params.editDate : '';
+    if (e && d && isAdmin) {
+      setSelectedDate(d);
+      openEditPointage(e, d);
+      router.setParams({ editEmp: '', editDate: '' });
+    }
+  }, [params.editEmp, params.editDate]);
 
   const handleSaveEditPointage = useCallback(() => {
     if (!editEmpId) return;
@@ -660,7 +672,39 @@ export default function ReportingScreen() {
                       {horairesJour?.actif && (
                         <Text style={styles.horairesTheo}>{horairesJour.debut}–{horairesJour.fin}</Text>
                       )}
+                      {(() => {
+                        // Chantier(s) du jour : d'après les pointages, sinon d'après le planning
+                        const ptsJour = data.pointages.filter(p => p.employeId === emp.id && p.date === selectedDate);
+                        let ids = Array.from(new Set(ptsJour.map(p => p.chantierId).filter(Boolean) as string[]));
+                        if (ids.length === 0) {
+                          ids = Array.from(new Set(data.affectations
+                            .filter(a => a.employeId === emp.id && a.dateDebut <= selectedDate && a.dateFin >= selectedDate)
+                            .map(a => a.chantierId)));
+                        }
+                        const noms = ids.map(id => data.chantiers.find(c => c.id === id)).filter(Boolean) as { id: string; nom: string; couleur: string }[];
+                        if (noms.length === 0) return null;
+                        return (
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                            {noms.map(c => (
+                              <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FAF5EF', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
+                                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.couleur || '#5C1F2E' }} />
+                                <Text style={{ fontSize: 12, fontWeight: '600', color: '#5C1F2E' }}>{c.nom}</Text>
+                              </View>
+                            ))}
+                          </View>
+                        );
+                      })()}
                     </View>
+                    {isAdmin && (
+                      <Pressable
+                        hitSlop={8}
+                        onPress={() => openEditPointage(emp.id, selectedDate)}
+                        style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2E4E1', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
+                        accessibilityLabel={t.reporting.editPointage}
+                      >
+                        <Pencil size={14} color="#5C1F2E" />
+                      </Pressable>
+                    )}
                     {dureeMin && dureeMin > 0 ? (
                       <View style={styles.dureeBadge}>
                         <Text style={styles.dureeBadgeText}>{formatDuree(dureeMin)}</Text>
