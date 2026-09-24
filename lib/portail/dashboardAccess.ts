@@ -52,9 +52,9 @@ const ACCESS: Record<PortailRole, Partial<Record<TileKey, TileMode>>> = {
   // Commercial : suit ses chantiers menuiserie de bout en bout et saisit ses marchés.
   // Les coûts internes (achats, rentabilité, sous-traitants) lui restent masqués.
   commercial: {
-    marches: 'act', finances: 'act', messagerie: 'act', suivis: 'act',
+    marches: 'act', finances: 'act', messagerie: 'act', suivis: 'act', pv: 'act',
     fiche: 'read', photos: 'read', phases: 'read', plans: 'read', metres: 'read',
-    pv: 'read', livraison: 'read', annuaire: 'read', drive: 'read', journal: 'read',
+    livraison: 'read', annuaire: 'read', drive: 'read', journal: 'read',
     notes: 'read',
   },
 };

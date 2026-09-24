@@ -103,6 +103,9 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const isExterne = currentUser?.role === 'apporteur';
   const externAp = isExterne ? (data.apporteurs || []).find(a => a.id === currentUser?.apporteurId) : undefined;
   const isClient = externAp?.type === 'client';
+  // Commercial : peut établir et gérer le PV de réception comme l'entreprise.
+  const isCommercial = externAp?.type === 'commercial';
+  const peutGererPV = isAdmin || isCommercial;
   // Le client ne voit JAMAIS les commissions. Les autres externes oui.
   const peutVoirCommissions = isAdmin || (isExterne && !isClient);
   // Le client ne voit le planning que si l'admin l'a activé pour ce chantier
@@ -2278,14 +2281,14 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             {chantier.pvReception?.pieces ? (
               <PVReceptionChantierV2
                 chantier={chantier}
-                isAdmin={isAdmin}
+                isAdmin={peutGererPV}
                 isClient={isClient}
               />
             ) : (
               <PVReceptionChantier
                 chantier={chantier}
-                isAdmin={isAdmin}
-                externAp={isExterne && externAp ? { type: externAp.type, prenom: externAp.prenom, nom: externAp.nom } : undefined}
+                isAdmin={peutGererPV}
+                externAp={isExterne && externAp && !isCommercial ? { type: externAp.type, prenom: externAp.prenom, nom: externAp.nom } : undefined}
               />
             )}
             </>)}
