@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import {
   Plus, Calendar, ChevronLeft, Trash2, CheckSquare, Square, X,
-  Users, Paperclip, FileText, Image as ImageIcon, Clock, FileDown,
+  Users, Paperclip, FileText, Image as ImageIcon, Clock, FileDown, Send,
 } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import { genererCRPdf } from '@/lib/pv/genererCRPdf';
@@ -20,6 +20,8 @@ import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { DateInput } from '@/components/ui/DateInput';
+import { SelectField } from '@/components/ui/SelectField';
+import { EnvoiConsigneSheet, type ConsigneAEnvoyer } from '@/components/ui/EnvoiConsigneSheet';
 
 export interface SuiviCRPanelProps {
   visible: boolean;
@@ -172,10 +174,13 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
   };
 
   const handleOpenCR = (cr: SuiviCR) => { setEditingCR(cr); setMode('editCR'); };
-  const handleSaveCR = (cr: SuiviCR) => {
+  const persistCR = (cr: SuiviCR) => {
     const existing = allCRs.find(c => c.id === cr.id);
     if (existing) updateSuiviCR({ ...cr, updatedAt: new Date().toISOString() });
     else addSuiviCR(cr);
+  };
+  const handleSaveCR = (cr: SuiviCR) => {
+    persistCR(cr);
     setMode('list'); setEditingCR(null);
   };
   const handleDeleteCR = (cr: SuiviCR) => {
@@ -344,6 +349,7 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
           readOnly={readOnly}
           chantierId={chantierId}
           onSave={handleSaveCR}
+          onPersist={persistCR}
           onDelete={isAdmin && !readOnly ? handleDeleteCR : undefined}
           onCancel={() => { setMode('list'); setEditingCR(null); }}
         />
@@ -386,11 +392,13 @@ interface CRFormProps {
   readOnly?: boolean;
   chantierId: string;
   onSave: (cr: SuiviCR) => void;
+  /** Enregistre sans quitter le formulaire (avant d'envoyer une consigne). */
+  onPersist?: (cr: SuiviCR) => void;
   onDelete?: (cr: SuiviCR) => void;
   onCancel: () => void;
 }
 
-function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel: _onCancel }: CRFormProps) {
+function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onPersist, onDelete, onCancel: _onCancel }: CRFormProps) {
   const { data } = useApp();
   const [draft, setDraft] = useState<SuiviCR>(cr);
   const chantier = data.chantiers.find(c => c.id === chantierId);
@@ -458,6 +466,46 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
     }));
   };
 
+  // ── Nouvelle entrée (structure simplifiée) : lot (liste déroulante) + pièce
+  //    facultative + texte → une case à cocher dans le lot choisi. ──
+  const [entreeLotIdx, setEntreeLotIdx] = useState<string>('');
+  const [entreePiece, setEntreePiece] = useState('');
+  const [entreeTexte, setEntreeTexte] = useState('');
+  const lotOptions = draft.sections.map((sec, i) => ({ value: String(i), label: sec.titre }));
+  const ajouterEntree = () => {
+    const idx = parseInt(entreeLotIdx, 10);
+    if (isNaN(idx) || !draft.sections[idx]) return;
+    const texte = entreeTexte.trim();
+    if (!texte) return;
+    const piece = entreePiece.trim();
+    const task: CRTaskItem = { id: genId('task'), texte, fait: false };
+    setDraft(prev => ({
+      ...prev,
+      sections: prev.sections.map((sec, i) => {
+        if (i !== idx) return sec;
+        const subs = [...(sec.subSections || [])];
+        const j = subs.findIndex(sub => (sub.titre || '').trim().toLowerCase() === piece.toLowerCase());
+        if (j >= 0) subs[j] = { ...subs[j], items: [...(subs[j].items || []), { kind: 'task', task }] };
+        else subs.push({ id: genId('sub'), titre: piece, items: [{ kind: 'task', task }] });
+        return { ...sec, subSections: subs };
+      }),
+    }));
+    setEntreeTexte('');
+  };
+
+  // ── Transfert d'une ligne du CR vers la note du jour des employés ──
+  const [consigneAEnvoyer, setConsigneAEnvoyer] = useState<ConsigneAEnvoyer | null>(null);
+  const envoyerConsigne = (task: CRTaskItem, piece?: string) => {
+    onPersist?.(draft); // la ligne doit exister en base pour que le cochage se synchronise
+    const photos = legacyMerge(task.photos, task.photoUri, task.photoNom).map(p => p.uri);
+    setConsigneAEnvoyer({
+      chantierId,
+      texte: piece ? `${piece} — ${task.texte}` : task.texte,
+      photos,
+      origineCR: { suiviId: draft.id, itemId: task.id },
+    });
+  };
+
   const handleFinaliser = () => onSave({ ...draft, statut: 'finalise' });
   const handleSaveBrouillon = () => onSave({ ...draft, statut: 'brouillon' });
 
@@ -516,20 +564,61 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
       {/* Sections par lot.
           Côté lecture seule (client) : on masque les sections vides
           (aucune sous-section ET aucun commentaire). */}
-      <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Sections par lot</Text>
+      <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Points du compte-rendu</Text>
+
+      {/* Nouvelle entrée : lot → pièce (facultatif) → texte */}
+      {!ro && (
+        <View style={styles.newEntryCard}>
+          {lotOptions.length === 0 ? (
+            <Text style={styles.empty}>Aucun lot disponible. Ajoute des lots dans Marchés.</Text>
+          ) : (
+            <>
+              <SelectField
+                value={entreeLotIdx || null}
+                options={lotOptions}
+                onSelect={setEntreeLotIdx}
+                placeholder="Lot concerné…"
+                searchable={lotOptions.length > 6}
+                title="Lot"
+              />
+              <TextInput
+                style={styles.newEntryInput}
+                value={entreePiece}
+                onChangeText={setEntreePiece}
+                placeholder="Pièce (facultatif) — ex : Cuisine"
+                placeholderTextColor={DS.textSecondary}
+              />
+              <TextInput
+                style={[styles.newEntryInput, { minHeight: 60, textAlignVertical: 'top' }]}
+                value={entreeTexte}
+                onChangeText={setEntreeTexte}
+                placeholder="Point à noter…"
+                placeholderTextColor={DS.textSecondary}
+                multiline
+              />
+              <Pressable
+                onPress={ajouterEntree}
+                style={[styles.newEntryBtn, (!entreeTexte.trim() || !entreeLotIdx) && { opacity: 0.45 }]}
+                disabled={!entreeTexte.trim() || !entreeLotIdx}
+              >
+                <Plus size={14} color={DS.cremeFond} strokeWidth={2.5} />
+                <Text style={styles.newEntryBtnText}>Ajouter au compte-rendu</Text>
+              </Pressable>
+              <Text style={styles.newEntryHint}>Photo ou plan : sur la ligne, une fois ajoutée. L'icône ➤ envoie le point aux employés.</Text>
+            </>
+          )}
+        </View>
+      )}
+
       {(() => {
-        const sectionsToShow = fullRO
-          ? draft.sections.filter(s =>
-              (s.subSections || []).some(sub => (sub.items || []).length > 0)
-              || !!(s.commentaire?.trim())
-            )
-          : draft.sections;
+        const sectionsToShow = draft.sections.filter(s =>
+          (s.subSections || []).some(sub => (sub.items || []).length > 0)
+          || !!(s.commentaire?.trim())
+        );
         if (sectionsToShow.length === 0) {
           return (
             <Text style={styles.empty}>
-              {fullRO
-                ? 'Aucun contenu pour ce CR.'
-                : 'Aucun lot disponible. Ajoute des lots dans Marchés pour générer les sections.'}
+              {fullRO ? 'Aucun contenu pour ce CR.' : "Aucun point pour l'instant."}
             </Text>
           );
         }
@@ -546,6 +635,8 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
               onAddSubSection={titre => addSubSection(idx, titre)}
               onUpdateSubSection={(subIdx, patch) => updateSubSection(idx, subIdx, patch)}
               onRemoveSubSection={subIdx => removeSubSection(idx, subIdx)}
+              onAjouterIci={() => setEntreeLotIdx(String(idx))}
+              onEnvoyerConsigne={envoyerConsigne}
             />
           );
         });
@@ -574,6 +665,7 @@ function CRForm({ cr, isAdmin, readOnly, chantierId, onSave, onDelete, onCancel:
           )}
         </View>
       )}
+      <EnvoiConsigneSheet consigne={consigneAEnvoyer} onClose={() => setConsigneAEnvoyer(null)} />
     </ScrollView>
   );
 }
@@ -641,11 +733,11 @@ interface CRSectionBoxProps {
   onAddSubSection: (titre: string) => void;
   onUpdateSubSection: (subIdx: number, patch: Partial<CRSubSection>) => void;
   onRemoveSubSection: (subIdx: number) => void;
+  onAjouterIci?: () => void;
+  onEnvoyerConsigne?: (task: CRTaskItem, piece?: string) => void;
 }
 
-function CRSectionBox({ section, ro, allowToggle, chantierId, onChangeCommentaire, onAddSubSection, onUpdateSubSection, onRemoveSubSection }: CRSectionBoxProps) {
-  const [newSubTitre, setNewSubTitre] = useState('');
-  const submitNewSub = () => { onAddSubSection(newSubTitre); setNewSubTitre(''); };
+function CRSectionBox({ section, ro, allowToggle, chantierId, onChangeCommentaire, onAddSubSection: _onAddSubSection, onUpdateSubSection, onRemoveSubSection, onAjouterIci, onEnvoyerConsigne }: CRSectionBoxProps) {
 
   const totalTasks = (section.subSections || []).reduce((s, sub) => s + (sub.items || []).filter(i => i.kind === 'task').length, 0);
   const doneTasks = (section.subSections || []).reduce((s, sub) => s + (sub.items || []).filter(i => i.kind === 'task' && i.task.fait).length, 0);
@@ -667,27 +759,15 @@ function CRSectionBox({ section, ro, allowToggle, chantierId, onChangeCommentair
           chantierId={chantierId}
           onUpdate={patch => onUpdateSubSection(subIdx, patch)}
           onRemove={() => onRemoveSubSection(subIdx)}
+          onEnvoyerConsigne={onEnvoyerConsigne}
         />
       ))}
 
-      {/* Ajouter une sous-section */}
-      {!ro && (
-        <View style={styles.newSubRow}>
-          <TextInput
-            style={styles.newSubInput}
-            value={newSubTitre}
-            onChangeText={setNewSubTitre}
-            placeholder="+ Titre (ex: Cuisine, Chambre 1)"
-            placeholderTextColor={DS.textSecondary}
-            onSubmitEditing={submitNewSub}
-            returnKeyType="done"
-          />
-          {newSubTitre.trim().length > 0 && (
-            <Pressable onPress={submitNewSub} style={styles.newTaskBtn}>
-              <Plus size={14} color={DS.cremeFond} strokeWidth={2.5} />
-            </Pressable>
-          )}
-        </View>
+      {/* Sélectionne ce lot dans le formulaire « nouvelle entrée » */}
+      {!ro && onAjouterIci && (
+        <Pressable onPress={onAjouterIci} style={{ alignSelf: 'flex-start', paddingVertical: 6 }}>
+          <Text style={{ fontSize: 12.5, fontWeight: '600', color: DS.bordeaux }}>+ Ajouter un point dans ce lot</Text>
+        </Pressable>
       )}
 
       {/* Commentaire de section (global) */}
@@ -715,21 +795,13 @@ interface CRSubSectionBoxProps {
   chantierId: string;
   onUpdate: (patch: Partial<CRSubSection>) => void;
   onRemove: () => void;
+  onEnvoyerConsigne?: (task: CRTaskItem, piece?: string) => void;
 }
 
-function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove }: CRSubSectionBoxProps) {
+function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove, onEnvoyerConsigne }: CRSubSectionBoxProps) {
   const [editingTitre, setEditingTitre] = useState(false);
   const [titreDraft, setTitreDraft] = useState(sub.titre);
 
-  // On choisit le type EN PREMIER : un item vide est ajouté, éditable directement.
-  const addTask = () => {
-    const task: CRTaskItem = { id: genId('task'), texte: '', fait: false };
-    onUpdate({ items: [...(sub.items || []), { kind: 'task', task }] });
-  };
-  const addTexte = () => {
-    const texte: CRTexteItem = { id: genId('txt'), texte: '' };
-    onUpdate({ items: [...(sub.items || []), { kind: 'texte', texte }] });
-  };
   const updateItem = (idx: number, patch: CRItem) => {
     onUpdate({ items: (sub.items || []).map((it, i) => i === idx ? patch : it) });
   };
@@ -770,8 +842,10 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove 
     }
   };
 
+  const sansPiece = !(sub.titre || '').trim() || sub.titre === 'Sans titre';
   return (
-    <View style={styles.subSectionCard}>
+    <View style={[styles.subSectionCard, sansPiece && { backgroundColor: 'transparent', borderWidth: 0, paddingHorizontal: 0, paddingVertical: 2 }]}>
+      {!sansPiece && (
       <View style={styles.subSectionHeader}>
         {editingTitre && !ro ? (
           <TextInput
@@ -792,6 +866,7 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove 
           </Pressable>
         )}
       </View>
+      )}
 
       {/* Items */}
       {(sub.items || []).map((it, idx) => (
@@ -804,22 +879,9 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove 
           onRemove={() => removeItem(idx)}
           onAttachPhoto={() => handleAttach(idx, 'photo')}
           onAttachPdf={() => handleAttach(idx, 'pdf')}
+          onEnvoyerConsigne={onEnvoyerConsigne && it.kind === 'task' ? () => onEnvoyerConsigne(it.task, sansPiece ? undefined : sub.titre) : undefined}
         />
       ))}
-
-      {/* Ajouter item : on choisit le type, l'item vide apparaît et se remplit directement */}
-      {!ro && (
-        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-          <Pressable onPress={addTask} style={styles.addItemBtn}>
-            <CheckSquare size={12} color={DS.cremeFond} strokeWidth={2.5} />
-            <Text style={styles.addItemBtnText}>Case à cocher</Text>
-          </Pressable>
-          <Pressable onPress={addTexte} style={[styles.addItemBtn, { backgroundColor: DS.marron }]}>
-            <FileText size={12} color={DS.cremeFond} strokeWidth={2.5} />
-            <Text style={styles.addItemBtnText}>Texte libre</Text>
-          </Pressable>
-        </View>
-      )}
     </View>
   );
 }
@@ -834,9 +896,10 @@ interface CRItemRowProps {
   onRemove: () => void;
   onAttachPhoto: () => void;
   onAttachPdf: () => void;
+  onEnvoyerConsigne?: () => void;
 }
 
-function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, onAttachPdf }: CRItemRowProps) {
+function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, onAttachPdf, onEnvoyerConsigne }: CRItemRowProps) {
   if (item.kind === 'task') {
     const t = item.task;
     const toggle = () => onChange({ kind: 'task', task: { ...t, fait: !t.fait, faitAt: !t.fait ? new Date().toISOString() : undefined } });
@@ -894,6 +957,11 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
         </View>
         {!ro && (
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 2 }}>
+            {onEnvoyerConsigne && !!t.texte.trim() && (
+              <Pressable onPress={onEnvoyerConsigne} style={styles.iconBtn} hitSlop={4}>
+                <Send size={12} color={DS.bordeaux} strokeWidth={2.2} />
+              </Pressable>
+            )}
             <Pressable onPress={onAttachPhoto} style={styles.iconBtn}>
               <ImageIcon size={12} color={DS.textSecondary} strokeWidth={2.2} />
             </Pressable>
@@ -1084,6 +1152,11 @@ function RDVForm({ rdv, isAdmin, readOnly, onSave, onDelete }: RDVFormProps) {
 // ─── Styles ───────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
+  newEntryCard: { backgroundColor: '#FFFFFF', borderRadius: 16, padding: 12, gap: 8, borderWidth: 1, borderColor: DS.border, marginBottom: 12 },
+  newEntryInput: { backgroundColor: DS.cremeFond, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, color: DS.text, borderWidth: 1, borderColor: DS.border },
+  newEntryBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: DS.bordeaux, borderRadius: 999, paddingVertical: 11 },
+  newEntryBtnText: { color: DS.cremeFond, fontSize: 14, fontWeight: '600' },
+  newEntryHint: { fontSize: 11.5, color: DS.textSecondary, textAlign: 'center' },
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: { flex: 1, backgroundColor: DS.cremeFond, borderTopLeftRadius: 28, borderTopRightRadius: 28, overflow: 'hidden' },
   header: { flexDirection: 'row', alignItems: 'center', padding: 14, paddingTop: 18, borderBottomWidth: 1, borderBottomColor: DS.border, gap: 6 },
