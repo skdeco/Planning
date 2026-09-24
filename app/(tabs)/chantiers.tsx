@@ -1719,6 +1719,7 @@ export default function ChantiersScreen() {
                       sav: savCount,
                       livraisons: livraisonsCount,
                       messages: countUnreadChantierMessages([ch], 'admin'),
+                      materiel: (data.listesMateriaux || []).filter(l => l.chantierId === ch.id).reduce((acc, l) => acc + l.items.filter(i => !i.achete).length, 0),
                     }}
                     handlers={{
                       onPressFiche:       () => goPanel(ch, () => openFicheUnifiee(ch)),
@@ -1743,6 +1744,7 @@ export default function ChantiersScreen() {
                       onPressPV:          () => goPanel(ch, () => setShowPVChantier(ch.id)),
                       onPressRentabilite: () => goPanel(ch, () => setBilanChantierId(ch.id)),
                       onPressLivraison:   () => goPanel(ch, () => setLivraisonsChantierId(ch.id)),
+                      onPressMateriel:    () => { setActionChantier(null); setTimeout(() => router.push({ pathname: '/(tabs)/materiel', params: { chantierId: ch.id } }), 120); },
                       onPressMessagerie:  () => goPanel(ch, () => setMessagerieChantierId(ch.id)),
                       onPressPortailClient: () => goPanel(ch, () => setPortailClientId(ch.id)),
                       onPressEdit:        isAdmin

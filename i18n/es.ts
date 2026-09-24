@@ -1263,6 +1263,7 @@ export default {
     noteDirectionAide: "Recordatorios, pedidos por hacer… visibles solo para usted. Un enlace permite enviarlos a los empleados.",
     aucuneNoteDirection: "Ninguna nota de dirección.",
     transmiseLe: "Enviada para el",
+    notesEquipeJour: "Notas del día del equipo",
     aucunEmploye: "Ningún empleado.",
     appeler: "Llamar",
     positionArrivee: "Ubicación de entrada",

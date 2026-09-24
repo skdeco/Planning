@@ -58,6 +58,7 @@ export interface ChantierDetailDashboardCounts {
   sav: number;
   livraisons: number;
   messages?: number;
+  materiel?: number;
 }
 
 export interface ChantierDetailDashboardHandlers {
@@ -82,6 +83,7 @@ export interface ChantierDetailDashboardHandlers {
   onPressPV: () => void;
   onPressRentabilite: () => void;
   onPressLivraison: () => void;
+  onPressMateriel?: () => void;
   onPressMessagerie: () => void;
   /** Drive documentaire du chantier (devis, références, factures). */
   onPressDrive: () => void;
@@ -157,6 +159,7 @@ export function ChantierDetailDashboard({
         { icon: LayoutGrid,    label: t.common.plans,           key: 'plans',     onPress: handlers.onPressPlans,     badge: counts.plans },
         { icon: CalendarRange, label: t.ui.phases,          key: 'phases',    onPress: handlers.onPressPhases },
         { icon: Truck,         label: t.ui.livraisons,      key: 'livraison', onPress: handlers.onPressLivraison, badge: counts.livraisons },
+        { icon: Wrench,        label: t.gestion.materielAchats, key: 'materiel', onPress: handlers.onPressMateriel ?? noop, badge: counts.materiel, adminOnly: true },
       ],
     },
     {

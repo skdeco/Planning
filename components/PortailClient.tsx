@@ -32,6 +32,7 @@ import { PhasePanel } from '@/components/architecte/PhasePanel';
 import { ConsultationPanel } from '@/components/architecte/ConsultationPanel';
 import { DemarchePanel } from '@/components/architecte/DemarchePanel';
 import { JournalPanel } from '@/components/architecte/JournalPanel';
+import { NotesJourPanel } from '@/components/architecte/NotesJourPanel';
 import { AnnuairePanel } from '@/components/architecte/AnnuairePanel';
 import { ChantierDetailDashboard, type ChantierDetailDashboardHandlers } from '@/components/ui/ChantierDetailDashboard';
 import { tileAccess, type TileKey } from '@/lib/portail/dashboardAccess';
@@ -1318,7 +1319,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   // ── Grille de tuiles du portail (même format que l'admin, filtré par rôle) ──
   // Tuiles ouvrant un panneau plein écran dédié (mode « agir » ou panneau lecture).
-  const PANEL_TILES: TileKey[] = ['prescriptions', 'honoraires', 'budget', 'metres', 'phases', 'suivis', 'consultation', 'administratif', 'journal', 'annuaire'];
+  const PANEL_TILES: TileKey[] = ['prescriptions', 'honoraires', 'budget', 'metres', 'phases', 'suivis', 'consultation', 'administratif', 'journal', 'annuaire', 'notes'];
   // Tuiles réutilisant le contenu d'un onglet existant (lecture correcte par rôle).
   const ONGLET_OF: Partial<Record<TileKey, OngletPortail>> = {
     finances: 'chiffres', pv: 'finChantier', livraison: 'finChantier',
@@ -1342,11 +1343,12 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   const photosCount = (data.photosChantier || []).filter(p => p.chantierId === chantierId).length;
   const plansCount = (chantier?.fiche?.plans || []).filter(p => !p.archivedAt).length;
-  const portalCounts = { notes: 0, plans: plansCount, photos: photosCount, achats: 0, marches: 0, notesPlanning: 0, sav: 0, livraisons: 0, messages: 0 };
+  const notesJourCount = data.affectations.filter(a => a.chantierId === chantierId).reduce((acc, a) => acc + (a.notes || []).filter(n => !!n.texte?.trim() || !!(n.tasks && n.tasks.length > 0)).length, 0);
+  const portalCounts = { notes: notesJourCount, plans: plansCount, photos: photosCount, achats: 0, marches: 0, notesPlanning: 0, sav: 0, livraisons: 0, messages: 0 };
   const portalHandlers: ChantierDetailDashboardHandlers = {
     onPressFiche: () => openTile('fiche'),
     onPressPlans: () => openTile('plans'),
-    onPressNotes: () => {},
+    onPressNotes: () => openTile('notes'),
     onPressSuivis: () => openTile('suivis'),
     onPressPrescriptions: () => openTile('prescriptions'),
     onPressBudget: () => openTile('budget'),
@@ -2869,6 +2871,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <ConsultationPanel visible={portalPanel === 'consultation'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <DemarchePanel visible={portalPanel === 'administratif'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <JournalPanel visible={portalPanel === 'journal'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
+      <NotesJourPanel visible={portalPanel === 'notes'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <AnnuairePanel visible={portalPanel === 'annuaire'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <GaleriePhotos visible={galerieOpen} onClose={() => setGalerieOpen(false)} chantierId={chantierId} titre={`Photos — ${chantier?.nom || ''}`} />
       <DriveChantier visible={driveOpen} onClose={() => setDriveOpen(false)} chantierId={chantierId} readonly={!isAdmin} />

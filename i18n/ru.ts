@@ -1263,6 +1263,7 @@ export default {
     noteDirectionAide: "Напоминания, заказы… видны только вам. Ссылка позволяет отправить их сотрудникам.",
     aucuneNoteDirection: "Нет заметок руководства.",
     transmiseLe: "Отправлена на",
+    notesEquipeJour: "Заметки дня команды",
     aucunEmploye: "Нет сотрудников.",
     appeler: "Позвонить",
     positionArrivee: "Место прихода",

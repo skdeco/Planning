@@ -700,6 +700,9 @@ export default function ReportingScreen() {
                             <Text style={styles.gpsBtnText}>{t.reporting.seePosition}</Text>
                           </Pressable>
                         ) : null}
+                        {debut.adresse && !/^-?\d+\.\d+/.test(debut.adresse) ? (
+                          <Text style={styles.gpsAdresse} numberOfLines={2}>{debut.adresse}</Text>
+                        ) : null}
                       </View>
                     ) : (
                       <View style={styles.pointageCell}>
@@ -726,6 +729,9 @@ export default function ReportingScreen() {
                           >
                             <Text style={styles.gpsBtnText}>{t.reporting.seePosition}</Text>
                           </Pressable>
+                        ) : null}
+                        {fin.adresse && !/^-?\d+\.\d+/.test(fin.adresse) ? (
+                          <Text style={styles.gpsAdresse} numberOfLines={2}>{fin.adresse}</Text>
                         ) : null}
                       </View>
                     ) : (
@@ -1050,9 +1056,12 @@ export default function ReportingScreen() {
                                 onPress={() => {
                                   ouvrirPosition(debut.latitude, debut.longitude);
                                 }}
-                                style={{ marginTop: 2 }}
+                                style={{ marginTop: 2, alignItems: 'center' }}
                               >
                                 <Ico e="📍" size={16} />
+                                {debut.adresse && !/^-?\d+\.\d+/.test(debut.adresse) ? (
+                                  <Text style={styles.gpsAdresseMini} numberOfLines={1}>{debut.adresse.split(',')[0]}</Text>
+                                ) : null}
                               </Pressable>
                             )}
                           </>
@@ -1076,9 +1085,12 @@ export default function ReportingScreen() {
                                 onPress={() => {
                                   ouvrirPosition(fin.latitude, fin.longitude);
                                 }}
-                                style={{ marginTop: 2 }}
+                                style={{ marginTop: 2, alignItems: 'center' }}
                               >
                                 <Ico e="📍" size={16} />
+                                {fin.adresse && !/^-?\d+\.\d+/.test(fin.adresse) ? (
+                                  <Text style={styles.gpsAdresseMini} numberOfLines={1}>{fin.adresse.split(',')[0]}</Text>
+                                ) : null}
                               </Pressable>
                             )}
                           </>
@@ -1373,6 +1385,8 @@ export default function ReportingScreen() {
 }
 
 const styles = StyleSheet.create({
+  gpsAdresse: { fontSize: 11, color: '#6E5F54', marginTop: 4, textAlign: 'center' },
+  gpsAdresseMini: { fontSize: 9, color: '#6E5F54', marginTop: 1, maxWidth: 70 },
   filterChip: { paddingHorizontal: 12, height: 34, justifyContent: 'center', borderRadius: 999, backgroundColor: 'transparent' },
   filterChipActive: { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
   filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14', maxWidth: 120 },

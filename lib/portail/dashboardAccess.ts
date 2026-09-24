@@ -21,7 +21,7 @@ export type TileKey =
   | 'notes' | 'photos' | 'suivis' | 'phases' | 'journal' | 'yAller'
   | 'marches' | 'achats' | 'rentabilite' | 'sousTraitants' | 'consultation'
   | 'drive' | 'fiche' | 'plans' | 'pv' | 'administratif' | 'livraison'
-  | 'sav' | 'annuaire' | 'messagerie';
+  | 'sav' | 'annuaire' | 'messagerie' | 'materiel';
 
 type PortailRole = 'architecte' | 'client' | 'apporteur' | 'contractant' | 'commercial';
 
@@ -55,6 +55,7 @@ const ACCESS: Record<PortailRole, Partial<Record<TileKey, TileMode>>> = {
     marches: 'act', finances: 'act', messagerie: 'act', suivis: 'act',
     fiche: 'read', photos: 'read', phases: 'read', plans: 'read', metres: 'read',
     pv: 'read', livraison: 'read', annuaire: 'read', drive: 'read', journal: 'read',
+    notes: 'read',
   },
 };
 

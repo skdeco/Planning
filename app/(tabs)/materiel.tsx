@@ -20,7 +20,7 @@ import type { ListeMateriau, MateriauItem } from '@/app/types';
 import { CatalogueArticles } from '@/components/CatalogueArticles';
 import { FournisseursManager } from '@/components/fournisseurs/FournisseursManager';
 import { SelectField } from '@/components/ui/SelectField';
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { apiCall } from '@/lib/_core/api';
 import { Ico } from '@/components/ui/Ico';
 import { Pencil } from 'lucide-react-native';
@@ -168,6 +168,17 @@ export default function MaterielScreen() {
     isAcheteur && !isEmploye ? 'acheteur' : 'mes_listes'
   );
   const [searchQuery, setSearchQuery] = useState('');
+  // Ouverture depuis la fiche chantier (admin) : filtre sur ce seul chantier.
+  const params = useLocalSearchParams<{ chantierId?: string }>();
+  const [filterChantier, setFilterChantier] = useState<string>('');
+  useEffect(() => {
+    const id = typeof params.chantierId === 'string' ? params.chantierId : '';
+    if (id) {
+      setFilterChantier(id);
+      if (isAcheteur) setViewMode('acheteur');
+      router.setParams({ chantierId: '' });
+    }
+  }, [params.chantierId]);
   const [showCatalogue, setShowCatalogue] = useState(false);
 
   // ── État d'ouverture des sections archivées (par listeId) ──
@@ -233,7 +244,7 @@ export default function MaterielScreen() {
   const [newFournisseurName, setNewFournisseurName] = useState('');
 
   // ── Chantiers visibles selon le rôle ──
-  const chantiersVisibles = isAdmin
+  const chantiersVisiblesTous = isAdmin
     ? data.chantiers.filter(c => c.statut !== 'termine')
     : data.chantiers.filter(c =>
         c.statut !== 'termine' &&
@@ -241,6 +252,7 @@ export default function MaterielScreen() {
           a.chantierId === c.id && a.employeId === currentUser?.employeId
         )
       );
+  const chantiersVisibles = filterChantier ? chantiersVisiblesTous.filter(c => c.id === filterChantier) : chantiersVisiblesTous;
 
   // ── Helper recherche matériel ──
   const matchSearch = useCallback((liste: ListeMateriau) => {
@@ -263,9 +275,9 @@ export default function MaterielScreen() {
   // L'acheteur (admin OU employé acheteur) doit voir TOUS les chantiers actifs
   // pour acheter — pas seulement ceux où il est affecté (sinon liste vide alors
   // que le compteur affiche des articles). L'onglet est déjà réservé aux acheteurs.
-  const chantiersAcheteur = isAcheteur
+  const chantiersAcheteur = (isAcheteur
     ? data.chantiers.filter(c => c.statut !== 'termine')
-    : chantiersVisibles;
+    : chantiersVisibles).filter(c => !filterChantier || c.id === filterChantier);
   const listesParChantier = chantiersAcheteur.map(c => ({
     chantier: c,
     listes: toutesListes.filter(l => l.chantierId === c.id),
@@ -1009,6 +1021,21 @@ export default function MaterielScreen() {
           </Pressable>
         </View>
       )}
+
+      {/* Filtre chantier (ouverture depuis la fiche chantier) */}
+      {filterChantier ? (
+        <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+          <Pressable
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: '#5C1F2E', borderRadius: 999, alignSelf: 'flex-start' }}
+            onPress={() => setFilterChantier('')}
+          >
+            <Text style={{ fontSize: 13, fontWeight: '600', color: '#FFFFFF' }}>
+              {data.chantiers.find(c => c.id === filterChantier)?.nom || ''}
+            </Text>
+            <Text style={{ fontSize: 14, color: '#FFFFFF' }}>&#10005;</Text>
+          </Pressable>
+        </View>
+      ) : null}
 
       {/* Barre de recherche */}
       <View style={styles.searchBar}>

@@ -236,6 +236,23 @@ export default function DashboardScreen() {
   const notesJourArchivees = useMemo(() => myNotesJour.filter(n => n.archivee), [myNotesJour]);
   const [notesArchiveesOuvertes, setNotesArchiveesOuvertes] = useState(false);
 
+  // RH (employé avec accès RH) : voit les notes du jour de toute l'équipe, en lecture.
+  const estRH = !isAdmin && !!myId && data.employes.find(e => e.id === myId)?.isRH === true;
+  const [notesEquipeOuvertes, setNotesEquipeOuvertes] = useState(false);
+  const notesEquipeJour = useMemo(() => {
+    if (!estRH) return [];
+    return data.affectations
+      .filter(a => a.employeId !== myId && a.dateDebut <= today && a.dateFin >= today)
+      .flatMap(a => (a.notes || [])
+        .filter(n => (n.date === today || !n.date) && (!!n.texte?.trim() || !!(n.tasks && n.tasks.length > 0)))
+        .map(n => ({
+          ...n,
+          rangee: !!n.archiveeAt || (!!(n.tasks && n.tasks.length > 0) && (n.tasks || []).every(t => t.fait)),
+          chantierNom: data.chantiers.find(c => c.id === a.chantierId)?.nom || '',
+          employeNom: data.employes.find(e => e.id === a.employeId)?.prenom || a.employeId,
+        })));
+  }, [estRH, data.affectations, data.chantiers, data.employes, myId, today]);
+
   /** Range (ou sort) une consigne des archives, sans jamais la supprimer. */
   const basculerArchiveNote = (noteJour: { affectationId: string; noteId: string }, archiver: boolean) => {
     const aff = data.affectations.find(a => a.id === noteJour.affectationId);
@@ -557,6 +574,37 @@ export default function DashboardScreen() {
                 </View>
               )}
             </>
+          )}
+
+          {/* RH : notes du jour de toute l'équipe (lecture) */}
+          {estRH && notesEquipeJour.length > 0 && (
+            <View style={{ marginTop: 4 }}>
+              <Pressable
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 14, backgroundColor: DS.segment, borderRadius: 999 }}
+                onPress={() => setNotesEquipeOuvertes(v => !v)}
+              >
+                <Text style={{ fontSize: 13.5, fontWeight: '500', color: DS.text }}>
+                  {t.ui.notesEquipeJour} ({notesEquipeJour.length})
+                </Text>
+                {notesEquipeOuvertes
+                  ? <ChevronDown size={16} color={DS.textSecondary} />
+                  : <ChevronRight size={16} color={DS.textSecondary} />}
+              </Pressable>
+              {notesEquipeOuvertes && notesEquipeJour.map(n => (
+                <View key={`eq_${n.id}`} style={[styles.statCard, { marginTop: 8 }]}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2, flexWrap: 'wrap' }}>
+                    <Text style={{ fontSize: 12.5, fontWeight: '700', color: DS.primary }}>{n.chantierNom}</Text>
+                    <Text style={{ fontSize: 12, color: DS.textSecondary }}>→ {n.employeNom}</Text>
+                  </View>
+                  {n.texte ? <Text style={{ fontSize: 13, color: DS.text }} numberOfLines={3}>{n.texte}</Text> : null}
+                  {n.tasks && n.tasks.length > 0 && (
+                    <Text style={{ fontSize: 12.5, color: n.rangee ? '#2E7D32' : DS.textSecondary, marginTop: 3 }}>
+                      {n.tasks.filter((t: any) => t.fait).length}/{n.tasks.length} {t.ui.taches}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </View>
           )}
 
           {/* SAV assignés */}

@@ -1273,6 +1273,7 @@ export default {
     noteDirectionAide: "Reminders, orders to place… visible only to you. A link lets you send them to employees.",
     aucuneNoteDirection: "No management note.",
     transmiseLe: "Sent for",
+    notesEquipeJour: "Team's notes of the day",
     aucunEmploye: "No employee.",
     appeler: "Call",
     positionArrivee: "Arrival location",

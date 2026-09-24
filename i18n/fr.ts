@@ -1302,6 +1302,7 @@ export default {
     noteDirectionAide: "Rappels, commandes à passer… visibles uniquement par vous. Un lien permet de les envoyer aux employés.",
     aucuneNoteDirection: "Aucune note de direction.",
     transmiseLe: "Transmise pour le",
+    notesEquipeJour: "Notes du jour de l'équipe",
     aucunEmploye: "Aucun employé.",
     appeler: "Appeler",
     positionArrivee: "Position arrivée",

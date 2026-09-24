@@ -1263,6 +1263,7 @@ export default {
     noteDirectionAide: "تذكيرات، طلبات للتنفيذ… مرئية لك فقط. يتيح لك الرابط إرسالها إلى الموظفين.",
     aucuneNoteDirection: "لا توجد ملاحظة إدارة.",
     transmiseLe: "أُرسلت ليوم",
+    notesEquipeJour: "ملاحظات اليوم للفريق",
     aucunEmploye: "لا يوجد موظفون.",
     appeler: "اتصال",
     positionArrivee: "موقع الحضور",
