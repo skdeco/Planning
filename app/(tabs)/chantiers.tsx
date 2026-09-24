@@ -1310,9 +1310,8 @@ export default function ChantiersScreen() {
     // Contacts liés (4 types)
     const archContact    = getApporteurById(item.architecteId);
     const apContact      = getApporteurById(item.apporteurId);
-    const contractContact = getApporteurById(item.contractantId);
     const clientContact  = getApporteurById(item.clientApporteurId);
-    const hasAnyContact = !!(archContact || apContact || contractContact || clientContact);
+    const hasAnyContact = !!(archContact || apContact || clientContact);
 
     return (
       <FadeInView delay={Math.min(index * 45, 360)}>
@@ -1374,14 +1373,6 @@ export default function ChantiersScreen() {
                 <Ico e={APPORTEUR_TYPE_LABELS.apporteur.emoji} size={12} color="#6E5F54" />
                 <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.apporteur.couleur, fontWeight: '700' }} numberOfLines={1}>
                   {apContact.prenom} {apContact.nom}
-                </Text>
-              </View>
-            )}
-            {contractContact && (
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, backgroundColor: APPORTEUR_TYPE_LABELS.contractant.couleur + '22', borderRadius: 10, paddingHorizontal: 7, paddingVertical: 3 }}>
-                <Ico e={APPORTEUR_TYPE_LABELS.contractant.emoji} size={12} color="#6E5F54" />
-                <Text style={{ fontSize: 10, color: APPORTEUR_TYPE_LABELS.contractant.couleur, fontWeight: '700' }} numberOfLines={1}>
-                  {contractContact.prenom} {contractContact.nom}
                 </Text>
               </View>
             )}
@@ -2050,7 +2041,8 @@ export default function ChantiersScreen() {
               <View style={{ marginTop: 8, padding: 12, backgroundColor: '#FAF5EF', borderRadius: 12, borderWidth: 1, borderColor: '#EDE2D6' }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', marginBottom: 10 }}>Contacts</Text>
 
-                {(['architecte', 'apporteur', 'contractant', 'client'] as const).map((ty) => {
+                {/* Rubrique « contractant » retirée (inutile) — le champ reste en base pour les anciens chantiers. */}
+                {(['architecte', 'apporteur', 'client'] as const).map((ty) => {
                   const meta = APPORTEUR_TYPE_LABELS[ty];
                   const field: keyof ChantierForm =
                     ty === 'architecte'  ? 'architecteId' :
