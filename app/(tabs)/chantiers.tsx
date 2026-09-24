@@ -836,7 +836,7 @@ export default function ChantiersScreen() {
         afficherPlanningAuClient: form.afficherPlanningAuClient,
         nature: form.nature,
         categorie: form.categorie,
-        commerciauxIds: form.nature === 'menuiserie' ? form.commerciauxIds : [],
+        commerciauxIds: form.commerciauxIds,
         fiche: existing?.fiche,
         // Legacy client text conservé si existant
         client: existing?.client,
@@ -865,7 +865,7 @@ export default function ChantiersScreen() {
         afficherPlanningAuClient: form.afficherPlanningAuClient,
         nature: form.nature,
         categorie: form.categorie,
-        commerciauxIds: form.nature === 'menuiserie' ? form.commerciauxIds : [],
+        commerciauxIds: form.commerciauxIds,
         architecteId: form.architecteId || undefined,
         apporteurId: form.apporteurId || undefined,
         contractantId: form.contractantId || undefined,
@@ -2107,8 +2107,8 @@ export default function ChantiersScreen() {
                   );
                 })}
 
-                {/* Commerciaux : uniquement sur les chantiers menuiserie, plusieurs possibles */}
-                {form.nature === 'menuiserie' && (() => {
+                {/* Commerciaux : sur tout type de chantier (travaux, menuiserie, dépannage), plusieurs possibles */}
+                {form.categorie !== 'lieuFixe' && (() => {
                   const commerciaux = apporteursAll.filter(a => a.type === 'commercial');
                   const meta = APPORTEUR_TYPE_LABELS.commercial;
                   return (
