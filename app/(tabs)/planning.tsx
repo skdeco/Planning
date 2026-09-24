@@ -17,6 +17,7 @@ import { useRefresh } from '@/hooks/useRefresh';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
 import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
 import { PlanningDirection } from '@/components/PlanningDirection';
+import { setPlanningFiltre } from '@/lib/planningFiltre';
 import { AlertesChantiersRetard } from '@/components/planning/AlertesChantiersRetard';
 import {
   AdminPlanningModeSwitcher,
@@ -199,8 +200,15 @@ export default function PlanningScreen() {
   const NAME_COL = Math.max(50, Math.floor(windowWidth * 0.15)); // 15% de l'écran, min 50px
   const dayCol = Math.floor((windowWidth - NAME_COL) / 7);
   const needsHorizontalScroll = false; // Plus jamais de scroll horizontal
-  // Mode planning : Équipe (grille) ou Direction (agenda)
-  const [planningMode, setPlanningMode] = useState<PlanningMode>('equipe');
+  // Plannings : Travaux / Menuiserie / Dépannages (grille équipe filtrée) ou Direction (agenda)
+  const [planningMode, setPlanningModeState] = useState<PlanningMode>('travaux');
+  const setPlanningMode = (m: PlanningMode) => {
+    setPlanningModeState(m);
+    if (m !== 'direction') setPlanningFiltre(m);
+  };
+  const isRH = currentUser?.role === 'employe' && data.employes.find(e => e.id === currentUser?.employeId)?.isRH === true;
+  const peutBasculer = currentUser?.role === 'admin' || isRH;
+  const modeEquipe = planningMode !== 'direction';
   // Weekend (samedi/dimanche) : afficher par défaut la semaine suivante
   const [weekOffset, setWeekOffset] = useState(() => {
     const dow = new Date().getDay(); // 0=dim, 6=sam
@@ -835,7 +843,7 @@ export default function PlanningScreen() {
       </View>
 
           {/* Toggle vue semaine / mois / gantt — masqué en planning direction */}
-          {planningMode === 'equipe' && (
+          {modeEquipe && (
               <View style={[styles.viewToggle, { marginHorizontal: 16, marginBottom: 10 }]}>
                 <Pressable style={[styles.viewToggleBtn, viewMode === 'jour' && styles.viewToggleBtnActive]} onPress={() => setViewMode('jour')}>
                   <Text style={[styles.viewToggleBtnText, viewMode === 'jour' && styles.viewToggleBtnTextActive]}>{t.ui.vueJour}</Text>
@@ -855,16 +863,16 @@ export default function PlanningScreen() {
           )}
 
       {/* Sélecteur Planning Équipe / Direction (admin) */}
-      {isAdmin && <AdminPlanningModeSwitcher value={planningMode} onChange={setPlanningMode} />}
+      {peutBasculer && <AdminPlanningModeSwitcher value={planningMode} onChange={setPlanningMode} />}
 
       {/* ═══ ALERTES RETARD CHANTIERS — bannière pliable (admin) ═══ */}
       {isAdmin && <AlertesChantiersRetard chantiers={data.chantiers} />}
 
       {/* ═══ PLANNING DIRECTION ═══ */}
-      {planningMode === 'direction' && isAdmin && <PlanningDirection />}
+      {planningMode === 'direction' && peutBasculer && <PlanningDirection />}
 
       {/* ═══ PLANNING ÉQUIPE (existant) ═══ */}
-      {(planningMode === 'equipe' || !isAdmin) && (
+      {(modeEquipe || !peutBasculer) && (
       <>
       <View style={styles.weekInfo}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>

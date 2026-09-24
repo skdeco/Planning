@@ -3,6 +3,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { trierChantiers } from '@/lib/chantierOrder';
 import { estLieAuContact } from '@/lib/portail/chantiersDuContact';
+import { usePlanningFiltre, chantierDansPlanning } from '@/lib/planningFiltre';
 import type {
   Chantier,
   Employe,
@@ -116,6 +117,10 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
   const MOIS = t.common.monthsShort;
   const isAdmin = currentUser?.role === 'admin';
   const isST    = currentUser?.role === 'soustraitant';
+  // RH : voit tout le planning comme l'admin (lecture) et peut basculer entre les plannings.
+  const isRH = !isAdmin && currentUser?.role === 'employe'
+    && data.employes.find(e => e.id === currentUser?.employeId)?.isRH === true;
+  const planningFiltre = usePlanningFiltre();
 
   // Calcul des 7 jours de la semaine
   const days = useMemo(() => {
@@ -140,8 +145,8 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
   const visibleChantiers = useMemo(() => {
     const sortByOrdre = (arr: typeof data.chantiers) =>
       trierChantiers(arr, data.chantierOrderPlanning, data.chantierTri);
-    if (isAdmin) {
-      return sortByOrdre(data.chantiers.filter(c => c.visibleSurPlanning));
+    if (isAdmin || isRH) {
+      return sortByOrdre(data.chantiers.filter(c => c.visibleSurPlanning && chantierDansPlanning(c, planningFiltre)));
     }
     if (isST) {
       // Sous-traitant : chantiers où il a au moins une affectation
@@ -165,7 +170,7 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
         a.employeId === currentUser?.employeId
       )
     ));
-  }, [data, isAdmin, isST, currentUser]);
+  }, [data, isAdmin, isRH, isST, currentUser, planningFiltre]);
 
   // Employés affectés à un chantier pour un jour donné (excluant les affectations ST)
   const getEmployesForCell = useCallback((chantierId: string, day: Date): Employe[] => {
