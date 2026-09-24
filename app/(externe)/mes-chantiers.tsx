@@ -19,6 +19,7 @@ export default function MesChantiersExterne() {
   const [openChantier, setOpenChantier] = useState<string | null>(null);
   const [showCreer, setShowCreer] = useState(false);
   const isArchitecte = apporteur?.type === 'architecte';
+  const isCommercial = apporteur?.type === 'commercial';
 
   const mesChantiers = useMemo(() => {
     if (!apporteurId) return [];
@@ -123,11 +124,38 @@ export default function MesChantiersExterne() {
           <Text style={styles.creerBtnText}>＋ Créer un chantier</Text>
         </Pressable>
       )}
-      <Text style={styles.sectionTitle}>Chantiers en cours ({actifs.length})</Text>
-      {actifs.length === 0 ? (
-        <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
+      {isCommercial ? (
+        // Commercial : chantiers en cours répartis par type (Menuiserie / Travaux / Dépannages)
+        (() => {
+          const groupes: { titre: string; liste: typeof actifs }[] = [
+            { titre: 'Menuiserie', liste: actifs.filter(c => ((c as any).categorie || 'chantier') === 'chantier' && (c as any).nature === 'menuiserie') },
+            { titre: 'Travaux', liste: actifs.filter(c => ((c as any).categorie || 'chantier') === 'chantier' && ((c as any).nature || 'global') === 'global') },
+            { titre: 'Dépannages', liste: actifs.filter(c => (c as any).categorie === 'depannage') },
+          ];
+          if (actifs.length === 0) {
+            return (
+              <>
+                <Text style={styles.sectionTitle}>Chantiers en cours (0)</Text>
+                <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
+              </>
+            );
+          }
+          return groupes.filter(g => g.liste.length > 0).map(g => (
+            <View key={g.titre} style={{ marginBottom: 8 }}>
+              <Text style={styles.sectionTitle}>{g.titre} ({g.liste.length})</Text>
+              {g.liste.map(renderCard)}
+            </View>
+          ));
+        })()
       ) : (
-        actifs.map(renderCard)
+        <>
+          <Text style={styles.sectionTitle}>Chantiers en cours ({actifs.length})</Text>
+          {actifs.length === 0 ? (
+            <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
+          ) : (
+            actifs.map(renderCard)
+          )}
+        </>
       )}
 
       {clos.length > 0 && (
@@ -145,7 +173,7 @@ export default function MesChantiersExterne() {
         <View style={styles.infoBox}>
           <Text style={styles.infoLabel}>Connecté en tant que</Text>
           <Text style={styles.infoValue}>
-            {apporteur.prenom} {apporteur.nom} · {apporteur.type === 'client' ? 'Client' : apporteur.type === 'architecte' ? 'Architecte' : apporteur.type === 'contractant' ? 'Contractant' : 'Apporteur d\'affaires'}
+            {apporteur.prenom} {apporteur.nom} · {apporteur.type === 'client' ? 'Client' : apporteur.type === 'architecte' ? 'Architecte' : apporteur.type === 'commercial' ? 'Commercial' : 'Apporteur d\'affaires'}
           </Text>
         </View>
       )}
