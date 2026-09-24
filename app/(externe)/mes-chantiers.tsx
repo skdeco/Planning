@@ -1,5 +1,6 @@
 import React, { useMemo, useState } from 'react';
-import { View, Text, ScrollView, Pressable, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, Pressable, StyleSheet, TextInput } from 'react-native';
+import { SelectField } from '@/components/ui/SelectField';
 import { useApp } from '@/app/context/AppContext';
 import { chantiersDuContact } from '@/lib/portail/chantiersDuContact';
 import { PortailClient } from '@/components/PortailClient';
@@ -20,6 +21,10 @@ export default function MesChantiersExterne() {
   const [showCreer, setShowCreer] = useState(false);
   const isArchitecte = apporteur?.type === 'architecte';
   const isCommercial = apporteur?.type === 'commercial';
+  // Espace commercial : deux sections (Menuiserie / Travaux) + filtres comme l'admin.
+  const [sectionCom, setSectionCom] = useState<'menuiserie' | 'travaux'>('menuiserie');
+  const [filtreStatutCom, setFiltreStatutCom] = useState<'en_cours' | 'termine' | 'tous'>('en_cours');
+  const [rechercheCom, setRechercheCom] = useState('');
 
   const mesChantiers = useMemo(() => {
     if (!apporteurId) return [];
@@ -125,27 +130,74 @@ export default function MesChantiersExterne() {
         </Pressable>
       )}
       {isCommercial ? (
-        // Commercial : chantiers en cours répartis par type (Menuiserie / Travaux / Dépannages)
         (() => {
-          const groupes: { titre: string; liste: typeof actifs }[] = [
-            { titre: 'Menuiserie', liste: actifs.filter(c => ((c as any).categorie || 'chantier') === 'chantier' && (c as any).nature === 'menuiserie') },
-            { titre: 'Travaux', liste: actifs.filter(c => ((c as any).categorie || 'chantier') === 'chantier' && ((c as any).nature || 'global') === 'global') },
-            { titre: 'Dépannages', liste: actifs.filter(c => (c as any).categorie === 'depannage') },
-          ];
-          if (actifs.length === 0) {
-            return (
-              <>
-                <Text style={styles.sectionTitle}>Chantiers en cours (0)</Text>
-                <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
-              </>
-            );
-          }
-          return groupes.filter(g => g.liste.length > 0).map(g => (
-            <View key={g.titre} style={{ marginBottom: 8 }}>
-              <Text style={styles.sectionTitle}>{g.titre} ({g.liste.length})</Text>
-              {g.liste.map(renderCard)}
-            </View>
-          ));
+          const estMenuiserie = (c: any) => (c.categorie || 'chantier') === 'chantier' && c.nature === 'menuiserie';
+          const estTravaux = (c: any) => !estMenuiserie(c) && c.categorie !== 'lieuFixe';
+          const dansSection = (c: any) => sectionCom === 'menuiserie' ? estMenuiserie(c) : estTravaux(c);
+          const nbMenuiserie = mesChantiers.filter(estMenuiserie).length;
+          const nbTravaux = mesChantiers.filter(estTravaux).length;
+          const q = rechercheCom.trim().toLowerCase();
+          const liste = mesChantiers
+            .filter(dansSection)
+            .filter(c => {
+              const clos = (c as any).statutChantier === 'cloture' || (c as any).statut === 'termine' || (c as any).statut === 'archive';
+              if (filtreStatutCom === 'en_cours') return !clos;
+              if (filtreStatutCom === 'termine') return clos;
+              return true;
+            })
+            .filter(c => !q || c.nom.toLowerCase().includes(q) || (c.adresse || '').toLowerCase().includes(q) || ((c as any).ville || '').toLowerCase().includes(q));
+          return (
+            <>
+              {/* Deux sections en haut */}
+              <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC', marginBottom: 10 }}>
+                {([['menuiserie', 'Menuiserie', nbMenuiserie], ['travaux', 'Travaux', nbTravaux]] as const).map(([val, lib, nb]) => {
+                  const actif = sectionCom === val;
+                  return (
+                    <Pressable
+                      key={val}
+                      style={[{ flex: 1, height: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }, actif && { backgroundColor: '#5C1F2E' }]}
+                      onPress={() => setSectionCom(val)}
+                    >
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: actif ? '#FFFFFF' : '#2B1D14' }}>{lib} ({nb})</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+              {/* Filtres : recherche + statut */}
+              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'center' }}>
+                <View style={{ flex: 1.3, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 999, borderWidth: 1, borderColor: '#EDE2D6', paddingHorizontal: 14 }}>
+                  <TextInput
+                    style={{ flex: 1, paddingVertical: 9, fontSize: 14, color: '#2B1D14' }}
+                    placeholder="Rechercher…"
+                    placeholderTextColor="#B0A99F"
+                    value={rechercheCom}
+                    onChangeText={setRechercheCom}
+                  />
+                  {rechercheCom.length > 0 && (
+                    <Pressable onPress={() => setRechercheCom('')} hitSlop={8}><Text style={{ color: '#9A8C80', fontSize: 15 }}>✕</Text></Pressable>
+                  )}
+                </View>
+                <View style={{ flex: 1 }}>
+                  <SelectField
+                    compact
+                    value={filtreStatutCom}
+                    title="Statut"
+                    options={[
+                      { value: 'en_cours', label: 'En cours' },
+                      { value: 'termine', label: 'Terminés' },
+                      { value: 'tous', label: 'Tous' },
+                    ]}
+                    onSelect={v => setFiltreStatutCom(v as typeof filtreStatutCom)}
+                  />
+                </View>
+              </View>
+              {liste.length === 0 ? (
+                <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier." />
+              ) : (
+                liste.map(renderCard)
+              )}
+            </>
+          );
         })()
       ) : (
         <>
@@ -158,7 +210,7 @@ export default function MesChantiersExterne() {
         </>
       )}
 
-      {clos.length > 0 && (
+      {!isCommercial && clos.length > 0 && (
         <>
           <Pressable onPress={() => setShowClos(s => !s)} style={styles.toggleClos}>
             <Text style={styles.toggleClosText}>
