@@ -550,6 +550,10 @@ export interface Note {
   tasks?: TaskItem[];  // liste de tâches avec cases à cocher
   visiblePar?: 'tous' | 'employes' | 'soustraitants' | string[]; // visibilité : 'tous', 'employes', 'soustraitants', ou liste d'IDs spécifiques
   savTicketId?: string; // lié à un ticket SAV
+  /** Archivée par l'employé (ou automatiquement quand tout est coché) : la note
+   *  quitte les consignes du jour mais reste consultable dans les archives. */
+  archiveeAt?: string;  // ISO datetime
+  archiveePar?: string; // nom de la personne qui a archivé
   createdAt: string;   // ISO datetime
   updatedAt: string;   // ISO datetime
 }

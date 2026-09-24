@@ -18,6 +18,7 @@ import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { MarchesChantier } from '@/components/MarchesChantier';
 import { DriveChantier } from '@/components/DriveChantier';
 import { SelectField } from '@/components/ui/SelectField';
+import { ItineraireSheet } from '@/components/ui/ItineraireSheet';
 import { LivraisonsRdvChantier } from '@/components/LivraisonsRdvChantier';
 import { PortailClient } from '@/components/PortailClient';
 import { SuiviCRPanel } from '@/components/SuiviCRPanel';
@@ -87,48 +88,7 @@ function genId(): string {
   return `c_${Date.now()}_${Math.random().toString(36).slice(2)}`;
 }
 
-// ── "Y aller" : choix Waze / Google Maps / Apple Plans ─────────────────────
-const _openWithWaze = (encoded: string) => {
-  Linking.openURL(`waze://?q=${encoded}&navigate=yes`).catch(() => {
-    Linking.openURL(`https://waze.com/ul?q=${encoded}&navigate=yes`);
-  });
-};
-const _openWithGoogleMaps = (encoded: string) => {
-  if (Platform.OS === 'ios') {
-    Linking.openURL(`comgooglemaps://?daddr=${encoded}&directionsmode=driving`).catch(() => {
-      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`);
-    });
-  } else {
-    Linking.openURL(`google.navigation:q=${encoded}`).catch(() => {
-      Linking.openURL(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`);
-    });
-  }
-};
-const _openWithApplePlans = (encoded: string) => {
-  Linking.openURL(`maps://?daddr=${encoded}`);
-};
-
-const openDirectionsHelper = (adresse: string) => {
-  if (!adresse) return;
-  const encoded = encodeURIComponent(adresse);
-  if (Platform.OS === 'web') {
-    if (typeof window !== 'undefined') {
-      const choix = window.confirm('Ouvrir avec Google Maps ?\n(OK = Google Maps, Annuler = Waze)');
-      if (choix) window.open(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`, '_blank');
-      else window.open(`https://waze.com/ul?q=${encoded}&navigate=yes`, '_blank');
-    }
-    return;
-  }
-  const buttons: any[] = [
-    { text: 'Waze', onPress: () => _openWithWaze(encoded) },
-    { text: 'Google Maps', onPress: () => _openWithGoogleMaps(encoded) },
-  ];
-  if (Platform.OS === 'ios') {
-    buttons.push({ text: 'Apple Plans', onPress: () => _openWithApplePlans(encoded) });
-  }
-  buttons.push({ text: 'Annuler', style: 'cancel' });
-  Alert.alert('Avec quoi ouvrir ?', adresse, buttons, { cancelable: true });
-};
+// « Y aller » : la fenêtre de choix est le composant ItineraireSheet.
 
 const FICHE_VIDE: FicheChantier = {
   codeAcces: '',
@@ -610,6 +570,7 @@ export default function ChantiersScreen() {
   // openNotes() — dead code à nettoyer en F1d.
   const [showNotes, setShowNotes] = useState(false);
   const [showOrdreChantiers, setShowOrdreChantiers] = useState(false);
+  const [itineraireAdresse, setItineraireAdresse] = useState<string | null>(null);
   const [notesChantierId, setNotesChantierId] = useState<string | null>(null);
   const [newNoteTexte, setNewNoteTexte] = useState('');
   const [noteDestinataires, setNoteDestinataires] = useState<'tous' | string[]>('tous');
@@ -1775,7 +1736,7 @@ export default function ChantiersScreen() {
                       onPressJournal:     () => goPanel(ch, () => setJournalChantierId(ch.id)),
                       onPressSousTraitants:() => goPanel(ch, () => setSousTraitantsChantierId(ch.id)),
                       onPressPhotos:      () => goPanel(ch, () => setShowGalerie(ch.id)),
-                      onPressYAller:      () => { setActionChantier(null); setTimeout(() => openDirectionsHelper(ch.adresse), 100); },
+                      onPressYAller:      () => { setActionChantier(null); setTimeout(() => setItineraireAdresse(ch.adresse), 100); },
                       onPressMarches:     () => goPanel(ch, () => setMarchesChantierId(ch.id)),
                       onPressSAV:         () => goPanel(ch, () => setSavChantierId(ch.id)),
                       onPressAchats:      () => goPanel(ch, () => setAchatsChantierId(ch.id)),
@@ -2316,7 +2277,7 @@ export default function ChantiersScreen() {
                     onChangeVille={v => {
                       if (chantierForFiche) updateChantier({ ...chantierForFiche, ville: v });
                     }}
-                    onPressYAller={() => openDirectionsHelper(form.adresse)}
+                    onPressYAller={() => setItineraireAdresse(form.adresse)}
                     onOpenPhotoCle={uri => openDocPreview(uri)}
                     onRemovePhotoCle={() => {
                       const doDelete = () => setFiche(f => ({ ...f, photoEmplacementCle: '' }));
@@ -4032,6 +3993,7 @@ export default function ChantiersScreen() {
         </Pressable>
       </Modal>
       <OrdreChantiersModal visible={showOrdreChantiers} onClose={() => setShowOrdreChantiers(false)} />
+      <ItineraireSheet adresse={itineraireAdresse} onClose={() => setItineraireAdresse(null)} />
     </ScreenContainer>
   );
 }

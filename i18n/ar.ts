@@ -1252,6 +1252,19 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    appeler: "اتصال",
+    positionArrivee: "موقع الحضور",
+    positionDepart: "موقع الانصراف",
+    notesDuJour: "ملاحظات اليوم",
+    taches: "مهام",
+    consignesDuJour: "تعليمات اليوم",
+    consignesRangees: "التعليمات المؤرشفة",
+    rangerConsigne: "أرشفة هذه التعليمة",
+    sortirDesArchives: "إعادتها إلى اليوم",
+    toutesConsignesFaites: "تم كل شيء لليوم.",
+    parAuteur: "بواسطة",
+    yAllerTitre: "فتح المسار",
+    itineraireTransports: "وسائل النقل العام",
     notifNouveauMarche: "عقد جديد في موقعك",
     natureChantier: "نوع الموقع",
     natureGlobal: "جميع الأعمال",

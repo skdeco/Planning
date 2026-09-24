@@ -1262,6 +1262,19 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    appeler: "Call",
+    positionArrivee: "Arrival location",
+    positionDepart: "Departure location",
+    notesDuJour: "Today's notes",
+    taches: "tasks",
+    consignesDuJour: "Today's instructions",
+    consignesRangees: "Filed instructions",
+    rangerConsigne: "File this instruction",
+    sortirDesArchives: "Put back in today",
+    toutesConsignesFaites: "Everything is done for today.",
+    parAuteur: "by",
+    yAllerTitre: "Open directions",
+    itineraireTransports: "Public transport",
     notifNouveauMarche: "New contract on your project",
     natureChantier: "Project scope",
     natureGlobal: "Full works",

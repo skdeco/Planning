@@ -1,10 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Pressable, RefreshControl, Modal, Platform, Alert, Linking, TextInput, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Clock, CircleCheck, Navigation, Check, Camera, Search, ChevronRight, ChevronDown, X, ShoppingCart, ClipboardList } from 'lucide-react-native';
+import { Clock, CircleCheck, Navigation, Check, Camera, Search, ChevronRight, ChevronDown, X, ShoppingCart, ClipboardList, Phone, MapPin } from 'lucide-react-native';
 import { DS, screenTitle, radius, shadows } from '@/constants/design';
 import { GaleriePhotos } from '@/components/GaleriePhotos';
 import { ScreenContainer } from '@/components/screen-container';
+import { ItineraireSheet } from '@/components/ui/ItineraireSheet';
+import { ouvrirPosition } from '@/lib/ouvrirCarte';
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { ImportExcel } from '@/components/ImportExcel';
 import { GlobalSearch } from '@/components/GlobalSearch';
@@ -196,9 +198,15 @@ export default function DashboardScreen() {
     return result;
   }, [data.affectations, myId, today]);
 
+  type NoteJour = {
+    texte: string; chantierNom: string; chantierId: string; auteurNom: string;
+    savTicketId?: string; photos?: string[]; tasks?: any[];
+    affectationId: string; noteId: string; archivee: boolean; note: any;
+  };
+
   const myNotesJour = useMemo(() => {
-    if (!myId) return [] as { texte: string; chantierNom: string; auteurNom: string; savTicketId?: string; photos?: string[]; tasks?: any[]; affectationId: string; noteId: string }[];
-    const result: { texte: string; chantierNom: string; auteurNom: string; savTicketId?: string; photos?: string[]; tasks?: any[]; affectationId: string; noteId: string }[] = [];
+    if (!myId) return [] as NoteJour[];
+    const result: NoteJour[] = [];
     data.affectations
       .filter(a => a.employeId === myId && a.dateDebut <= today && a.dateFin >= today)
       .forEach(a => {
@@ -207,17 +215,44 @@ export default function DashboardScreen() {
           if (!(n.date === today || !n.date)) return false;
           const hasTexte = !!n.texte?.trim();
           const hasTasks = !!(n.tasks && n.tasks.length > 0);
-          if (!hasTexte && !hasTasks) return false;
-          // V10 — masquer la note si TOUTES les tâches sont cochées (la note "disparaît"
-          // du planning du jour de l'employé une fois entièrement traitée)
-          if (hasTasks && (n.tasks || []).every(t => t.fait)) return false;
-          return true;
+          return hasTexte || hasTasks;
         }).forEach(n => {
-          result.push({ texte: n.texte, chantierNom: ch?.nom || '', auteurNom: n.auteurNom, savTicketId: n.savTicketId, photos: n.photos, tasks: n.tasks, affectationId: a.id, noteId: n.id });
+          const tachesToutesFaites = !!(n.tasks && n.tasks.length > 0) && (n.tasks || []).every(t => t.fait);
+          result.push({
+            texte: n.texte, chantierNom: ch?.nom || '', auteurNom: n.auteurNom,
+            savTicketId: n.savTicketId, photos: n.photos, tasks: n.tasks,
+            affectationId: a.id, noteId: n.id,
+            chantierId: a.chantierId,
+            // Archivée = rangée à la main, ou toutes les tâches cochées.
+            archivee: !!n.archiveeAt || tachesToutesFaites,
+            note: n,
+          });
         });
       });
     return result;
   }, [data.affectations, data.chantiers, myId, today]);
+
+  const notesJourActives = useMemo(() => myNotesJour.filter(n => !n.archivee), [myNotesJour]);
+  const notesJourArchivees = useMemo(() => myNotesJour.filter(n => n.archivee), [myNotesJour]);
+  const [notesArchiveesOuvertes, setNotesArchiveesOuvertes] = useState(false);
+
+  /** Range (ou sort) une consigne des archives, sans jamais la supprimer. */
+  const basculerArchiveNote = (noteJour: { affectationId: string; noteId: string }, archiver: boolean) => {
+    const aff = data.affectations.find(a => a.id === noteJour.affectationId);
+    const existante = aff?.notes.find(n => n.id === noteJour.noteId);
+    if (!aff || !existante) return;
+    upsertNote({
+      chantierId: aff.chantierId,
+      employeId: aff.employeId,
+      date: existante.date || today,
+      note: {
+        ...existante,
+        archiveeAt: archiver ? new Date().toISOString() : undefined,
+        archiveePar: archiver ? (currentUser?.nom || undefined) : undefined,
+        updatedAt: new Date().toISOString(),
+      },
+    });
+  };
 
   const myPointagesDuJour = useMemo(() => {
     if (!myId) return { debut: null as string | null, fin: null as string | null };
@@ -237,6 +272,8 @@ export default function DashboardScreen() {
   // Dashboard admin : reporting financier détaillé replié par défaut (allègement du scroll).
   const [showFinancesDetail, setShowFinancesDetail] = useState(false);
   const [showOutils, setShowOutils] = useState(false);
+  const [notesRangeesOuvertes, setNotesRangeesOuvertes] = useState(false);
+  const [chantierPointageOuvert, setChantierPointageOuvert] = useState<string | null>(null);
   // Recherche globale (modal dédié GlobalSearch)
   const [searchOpen, setSearchOpen] = useState(false);
   // Pense-bête
@@ -253,19 +290,8 @@ export default function DashboardScreen() {
   const [resumePhoto, setResumePhoto] = useState<string | null>(null);
   const [resumeEnvoye, setResumeEnvoye] = useState(false);
 
-  // Itinéraire vers chantier (Waze prioritaire)
-  const openDirections = (adresse: string) => {
-    if (!adresse) return;
-    const encoded = encodeURIComponent(adresse);
-    if (Platform.OS === 'web') {
-      window.open(`https://www.google.com/maps/dir/?api=1&destination=${encoded}`, '_blank');
-    } else {
-      Linking.canOpenURL('waze://').then(canOpen => {
-        if (canOpen) Linking.openURL(`waze://?q=${encoded}&navigate=yes`);
-        else Linking.openURL(Platform.OS === 'ios' ? `maps:?daddr=${encoded}` : `google.navigation:q=${encoded}`);
-      });
-    }
-  };
+  // Itinéraire : la fenêtre de choix (Waze, Plans, transports) est ItineraireSheet.
+  const [itineraireAdresse, setItineraireAdresse] = useState<string | null>(null);
 
   if (isHydrated && !currentUser) return null;
   if (isHydrated && isST) return null;
@@ -344,8 +370,13 @@ export default function DashboardScreen() {
           {/* Notes du jour */}
           {myNotesJour.length > 0 && (
             <>
-              <Text style={styles.sectionTitle}>Consignes du jour ({myNotesJour.length})</Text>
-              {myNotesJour.map((note, i) => {
+              <Text style={styles.sectionTitle}>{t.ui.consignesDuJour} ({notesJourActives.length})</Text>
+              {notesJourActives.length === 0 && (
+                <Text style={{ fontSize: 13.5, color: DS.textSecondary, paddingHorizontal: 6, marginBottom: 6 }}>
+                  {t.ui.toutesConsignesFaites}
+                </Text>
+              )}
+              {notesJourActives.map((note, i) => {
                 const empName = emp?.prenom || '';
                 return (
                 <View key={i} style={[styles.statCard, {}]}>
@@ -464,11 +495,67 @@ export default function DashboardScreen() {
                       }
                     }}>
                     <Ico e="📷" size={14} />
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#5C1F2E' }}>{t.home.addPhoto}</Text>
+                    <Text style={{ fontSize: 12.5, fontWeight: '600', color: '#5C1F2E' }}>{t.home.addPhoto}</Text>
+                  </Pressable>
+
+                  {/* Ranger la consigne : elle part aux archives, jamais à la poubelle */}
+                  <Pressable
+                    style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 6 }}
+                    onPress={() => basculerArchiveNote(note, true)}
+                  >
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: DS.textSecondary }}>{t.ui.rangerConsigne}</Text>
                   </Pressable>
                 </View>
                 );
               })}
+
+              {/* Consignes rangées — dépliant, pour retrouver une note et y ajouter une photo oubliée */}
+              {notesJourArchivees.length > 0 && (
+                <View style={{ marginTop: 4 }}>
+                  <Pressable
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 14, backgroundColor: DS.segment, borderRadius: 999 }}
+                    onPress={() => setNotesArchiveesOuvertes(v => !v)}
+                  >
+                    <Text style={{ fontSize: 13.5, fontWeight: '500', color: DS.text }}>
+                      {t.ui.consignesRangees} ({notesJourArchivees.length})
+                    </Text>
+                    {notesArchiveesOuvertes
+                      ? <ChevronDown size={16} color={DS.textSecondary} />
+                      : <ChevronRight size={16} color={DS.textSecondary} />}
+                  </Pressable>
+
+                  {notesArchiveesOuvertes && notesJourArchivees.map((note, i) => (
+                    <View key={`arch_${i}`} style={[styles.statCard, { marginTop: 8, opacity: 0.85 }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
+                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: '#5C1F2E' }}>{note.chantierNom}</Text>
+                        <Text style={{ fontSize: 12, color: '#9A8C80' }}>{t.ui.parAuteur} {note.auteurNom}</Text>
+                      </View>
+                      {note.texte ? <Text style={{ fontSize: 13.5, color: DS.text, lineHeight: 19 }}>{note.texte}</Text> : null}
+                      {note.tasks && note.tasks.length > 0 && (
+                        <View style={{ marginTop: 6, gap: 3 }}>
+                          {note.tasks.map((task: any) => (
+                            <View key={task.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Check size={14} color={task.fait ? '#2E7D32' : '#B5A99E'} strokeWidth={2.4} />
+                              <Text style={{ flex: 1, fontSize: 13, color: DS.textSecondary, textDecorationLine: task.fait ? 'line-through' : 'none' }}>
+                                {task.texte}
+                              </Text>
+                              {task.photos && task.photos.length > 0 && (
+                                <Text style={{ fontSize: 12, color: '#2E7D32' }}>{task.photos.length} 📷</Text>
+                              )}
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                      <Pressable
+                        style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 6 }}
+                        onPress={() => basculerArchiveNote(note, false)}
+                      >
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: DS.primary }}>{t.ui.sortirDesArchives}</Text>
+                      </Pressable>
+                    </View>
+                  ))}
+                </View>
+              )}
             </>
           )}
 
@@ -612,7 +699,7 @@ export default function DashboardScreen() {
                 {c.adresse && (
                   <Pressable
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#5C1F2E', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}
-                    onPress={() => openDirections(c.adresse || '')}
+                    onPress={() => setItineraireAdresse(c.adresse || '')}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                       <Navigation size={11} color="#fff" strokeWidth={2.2} />
@@ -798,7 +885,8 @@ export default function DashboardScreen() {
             AsyncStorage.setItem(onboardingKey, 'true');
           }}
         />
-      </ScreenContainer>
+        <ItineraireSheet adresse={itineraireAdresse} onClose={() => setItineraireAdresse(null)} />
+    </ScreenContainer>
     );
   }
 
@@ -1155,16 +1243,124 @@ export default function DashboardScreen() {
               data.affectations.some(a => a.chantierId === c.id && a.employeId === p.employeId && a.dateDebut <= today && a.dateFin >= today)
             ).length;
             const color = nbPointes >= nbAffectes ? DS.success : nbPointes > 0 ? DS.warning : DS.error;
+            const ouvert = chantierPointageOuvert === c.id;
+
+            // Détail par personne : heure d'arrivée, de départ, écart et position
+            const detail = Array.from(new Set(
+              data.affectations
+                .filter(a => a.chantierId === c.id && a.dateDebut <= today && a.dateFin >= today && !a.soustraitantId)
+                .map(a => a.employeId)
+            )).map(empId => {
+              const employe = data.employes.find(e => e.id === empId);
+              const pts = data.pointages.filter(p => p.employeId === empId && p.date === today);
+              const debut = pts.find(p => p.type === 'debut');
+              const fin = [...pts].reverse().find(p => p.type === 'fin');
+              // Écart avec l'horaire théorique du jour, s'il est renseigné
+              let ecartMin: number | null = null;
+              const horaire = employe?.horaires?.[new Date(today + 'T12:00:00').getDay()];
+              if (debut && horaire?.actif && horaire.debut) {
+                const [hp, mp] = horaire.debut.split(':').map(Number);
+                const [hr, mr] = debut.heure.split(':').map(Number);
+                ecartMin = (hr * 60 + mr) - (hp * 60 + mp);
+              }
+              return { empId, employe, debut, fin, ecartMin };
+            }).sort((x, y) => (x.employe?.prenom || '').localeCompare(y.employe?.prenom || '', 'fr'));
+
             return (
-              <Pressable key={c.id} style={styles.listRow} onPress={() => router.push('/(tabs)/planning' as any)}>
-                <View style={[styles.listIcon, { backgroundColor: 'transparent' }]}>
-                  <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.couleur || DS.primary }} />
-                </View>
-                <View style={[styles.listInner, styles.listSeparator]}>
-                  <Text style={styles.listTitle} numberOfLines={1}>{c.nom}</Text>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color }}>{nbPointes}/{nbAffectes} {t.dash.clocked}</Text>
-                </View>
-              </Pressable>
+              <View key={c.id}>
+                <Pressable style={styles.listRow} onPress={() => setChantierPointageOuvert(ouvert ? null : c.id)}>
+                  <View style={[styles.listIcon, { backgroundColor: 'transparent' }]}>
+                    <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: c.couleur || DS.primary }} />
+                  </View>
+                  <View style={[styles.listInner, styles.listSeparator]}>
+                    <Text style={styles.listTitle} numberOfLines={1}>{c.nom}</Text>
+                    <Text style={{ fontSize: 14, fontWeight: '600', color }}>{nbPointes}/{nbAffectes} {t.dash.clocked}</Text>
+                    {ouvert ? <ChevronDown size={16} color={DS.textSecondary} /> : <ChevronRight size={16} color={DS.textSecondary} />}
+                  </View>
+                </Pressable>
+
+                {ouvert && (
+                  <View style={{ paddingLeft: 42, paddingRight: 14, paddingBottom: 10, gap: 8 }}>
+                    {detail.map(({ empId, employe, debut, fin, ecartMin }) => {
+                      const aPointe = !!debut;
+                      return (
+                        <View key={empId} style={{ backgroundColor: DS.surfaceAlt, borderRadius: 14, padding: 12, gap: 6 }}>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: aPointe ? DS.success : DS.error }} />
+                            <Text style={{ flex: 1, fontSize: 14.5, fontWeight: '600', color: DS.text }} numberOfLines={1}>
+                              {employe ? `${employe.prenom} ${employe.nom}` : empId}
+                            </Text>
+                            {!aPointe && !!employe?.telephone && (
+                              <Pressable
+                                hitSlop={8}
+                                onPress={() => Linking.openURL(`tel:${employe.telephone}`)}
+                                style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' }}
+                                accessibilityLabel={`${t.ui.appeler} ${employe.prenom}`}
+                              >
+                                <Phone size={15} color={DS.primary} strokeWidth={2} />
+                              </Pressable>
+                            )}
+                          </View>
+
+                          <View style={{ flexDirection: 'row', gap: 16 }}>
+                            <View>
+                              <Text style={{ fontSize: 12, color: DS.textSecondary }}>{t.pointage.arrival}</Text>
+                              <Text style={{ fontSize: 15, fontWeight: '600', color: aPointe ? DS.text : DS.textMuted }}>
+                                {debut ? debut.heure : '—'}
+                              </Text>
+                            </View>
+                            <View>
+                              <Text style={{ fontSize: 12, color: DS.textSecondary }}>{t.pointage.departure}</Text>
+                              <Text style={{ fontSize: 15, fontWeight: '600', color: fin ? DS.text : DS.textMuted }}>
+                                {fin ? fin.heure : '—'}
+                              </Text>
+                            </View>
+                            {ecartMin !== null && ecartMin > 5 && (
+                              <View>
+                                <Text style={{ fontSize: 12, color: DS.textSecondary }}>{t.pointage.late}</Text>
+                                <Text style={{ fontSize: 15, fontWeight: '600', color: ecartMin > 15 ? DS.error : DS.warning }}>
+                                  +{ecartMin} min
+                                </Text>
+                              </View>
+                            )}
+                          </View>
+
+                          {(debut?.latitude != null || fin?.latitude != null) && (
+                            <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                              {debut?.latitude != null && (
+                                <Pressable
+                                  onPress={() => ouvrirPosition(debut.latitude, debut.longitude)}
+                                  style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: DS.surface, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}
+                                >
+                                  <MapPin size={13} color={DS.primary} strokeWidth={2} />
+                                  <Text style={{ fontSize: 12.5, color: DS.primary, fontWeight: '600' }}>
+                                    {t.ui.positionArrivee}
+                                  </Text>
+                                </Pressable>
+                              )}
+                              {fin?.latitude != null && (
+                                <Pressable
+                                  onPress={() => ouvrirPosition(fin.latitude, fin.longitude)}
+                                  style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: DS.surface, borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}
+                                >
+                                  <MapPin size={13} color={DS.primary} strokeWidth={2} />
+                                  <Text style={{ fontSize: 12.5, color: DS.primary, fontWeight: '600' }}>
+                                    {t.ui.positionDepart}
+                                  </Text>
+                                </Pressable>
+                              )}
+                            </View>
+                          )}
+
+                          {!!debut?.adresse && (
+                            <Text style={{ fontSize: 12.5, color: DS.textSecondary }} numberOfLines={1}>{debut.adresse}</Text>
+                          )}
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
             );
           })}
           <Pressable style={styles.listRow} onPress={() => router.push('/(tabs)/reporting' as any)}>
@@ -1316,21 +1512,34 @@ export default function DashboardScreen() {
 
         {/* Toutes les notes du jour */}
         {(() => {
-          const allNotesJour = data.affectations.filter(a => a.dateDebut <= today && a.dateFin >= today)
+          const toutes = data.affectations.filter(a => a.dateDebut <= today && a.dateFin >= today)
             .flatMap(a => (a.notes || []).filter(n => {
               if (!(n.date === today || !n.date)) return false;
               const hasTexte = !!n.texte?.trim();
               const hasTasks = !!(n.tasks && n.tasks.length > 0);
-              if (!hasTexte && !hasTasks) return false;
-              // V10 — idem myNotesJour : masquer les notes entièrement cochées
-              if (hasTasks && (n.tasks || []).every(t => t.fait)) return false;
-              return true;
+              return hasTexte || hasTasks;
             })
-              .map(n => ({ ...n, chantierNom: data.chantiers.find(c => c.id === a.chantierId)?.nom || '', employeNom: data.employes.find(e => e.id === a.employeId)?.prenom || a.employeId })));
-          if (allNotesJour.length === 0) return null;
+              .map(n => {
+                const tachesToutesFaites = !!(n.tasks && n.tasks.length > 0) && (n.tasks || []).every(t => t.fait);
+                return {
+                  ...n,
+                  rangee: !!n.archiveeAt || tachesToutesFaites,
+                  chantierNom: data.chantiers.find(c => c.id === a.chantierId)?.nom || '',
+                  employeNom: data.employes.find(e => e.id === a.employeId)?.prenom || a.employeId,
+                };
+              }));
+          // En cours d'abord ; les consignes traitées restent consultables plus bas.
+          const allNotesJour = toutes.filter(n => !n.rangee);
+          const notesRangees = toutes.filter(n => n.rangee);
+          if (toutes.length === 0) return null;
           return (
             <>
-              <Text style={styles.sectionTitle}>Notes du jour ({allNotesJour.length})</Text>
+              <Text style={styles.sectionTitle}>{t.ui.notesDuJour} ({allNotesJour.length})</Text>
+              {allNotesJour.length === 0 && (
+                <Text style={{ fontSize: 13.5, color: DS.textSecondary, paddingHorizontal: 6, marginBottom: 6 }}>
+                  {t.ui.toutesConsignesFaites}
+                </Text>
+              )}
               {allNotesJour.map(n => (
                 <View key={n.id} style={[styles.statCard, {}]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
@@ -1340,11 +1549,47 @@ export default function DashboardScreen() {
                   </View>
                   {n.texte ? <Text style={{ fontSize: 12, color: '#2B1D14' }} numberOfLines={2}>{n.texte}</Text> : null}
                   {n.tasks && n.tasks.length > 0 && (
-                    <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>{n.tasks.filter((t: any) => t.fait).length}/{n.tasks.length} tâches
+                    <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 3 }}>
+                      {n.tasks.filter((t: any) => t.fait).length}/{n.tasks.length} {t.ui.taches}
                     </Text>
                   )}
                 </View>
               ))}
+
+              {/* Consignes traitées — repliées, pour vérifier les photos après coup */}
+              {notesRangees.length > 0 && (
+                <View style={{ marginTop: 4 }}>
+                  <Pressable
+                    style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10, paddingHorizontal: 14, backgroundColor: DS.segment, borderRadius: 999 }}
+                    onPress={() => setNotesRangeesOuvertes(v => !v)}
+                  >
+                    <Text style={{ fontSize: 13.5, fontWeight: '500', color: DS.text }}>
+                      {t.ui.consignesRangees} ({notesRangees.length})
+                    </Text>
+                    {notesRangeesOuvertes
+                      ? <ChevronDown size={16} color={DS.textSecondary} />
+                      : <ChevronRight size={16} color={DS.textSecondary} />}
+                  </Pressable>
+                  {notesRangeesOuvertes && notesRangees.map(n => (
+                    <View key={`r_${n.id}`} style={[styles.statCard, { marginTop: 8, opacity: 0.85 }]}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: '#5C1F2E' }}>{n.chantierNom}</Text>
+                        <Text style={{ fontSize: 12, color: '#6E5F54' }}>→ {n.employeNom}</Text>
+                      </View>
+                      {n.texte ? <Text style={{ fontSize: 13, color: DS.text }} numberOfLines={2}>{n.texte}</Text> : null}
+                      {n.tasks && n.tasks.length > 0 && (
+                        <Text style={{ fontSize: 12.5, color: '#2E7D32', marginTop: 3 }}>
+                          {n.tasks.filter((t: any) => t.fait).length}/{n.tasks.length} {t.ui.taches}
+                          {(() => {
+                            const nbPhotos = (n.tasks || []).reduce((acc: number, tk: any) => acc + (tk.photos?.length || 0), 0);
+                            return nbPhotos > 0 ? ` · ${nbPhotos} 📷` : '';
+                          })()}
+                        </Text>
+                      )}
+                    </View>
+                  ))}
+                </View>
+              )}
             </>
           );
         })()}
@@ -1440,6 +1685,7 @@ export default function DashboardScreen() {
           AsyncStorage.setItem(onboardingKey, 'true');
         }}
       />
+      <ItineraireSheet adresse={itineraireAdresse} onClose={() => setItineraireAdresse(null)} />
     </ScreenContainer>
   );
 }

@@ -1291,6 +1291,19 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    appeler: "Appeler",
+    positionArrivee: "Position arrivée",
+    positionDepart: "Position départ",
+    notesDuJour: "Notes du jour",
+    taches: "tâches",
+    consignesDuJour: "Consignes du jour",
+    consignesRangees: "Consignes rangées",
+    rangerConsigne: "Ranger cette consigne",
+    sortirDesArchives: "Remettre dans le jour",
+    toutesConsignesFaites: "Tout est fait pour aujourd'hui.",
+    parAuteur: "par",
+    yAllerTitre: "Ouvrir l'itinéraire",
+    itineraireTransports: "Transports en commun",
     notifNouveauMarche: "Nouveau marché sur votre chantier",
     natureChantier: "Nature du chantier",
     natureGlobal: "Global",

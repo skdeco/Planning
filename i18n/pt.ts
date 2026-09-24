@@ -1252,6 +1252,19 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    appeler: "Ligar",
+    positionArrivee: "Local de entrada",
+    positionDepart: "Local de saída",
+    notesDuJour: "Notas do dia",
+    taches: "tarefas",
+    consignesDuJour: "Instruções do dia",
+    consignesRangees: "Instruções arquivadas",
+    rangerConsigne: "Arquivar esta instrução",
+    sortirDesArchives: "Repor no dia",
+    toutesConsignesFaites: "Está tudo feito por hoje.",
+    parAuteur: "por",
+    yAllerTitre: "Abrir o itinerário",
+    itineraireTransports: "Transportes públicos",
     notifNouveauMarche: "Novo contrato na sua obra",
     natureChantier: "Âmbito da obra",
     natureGlobal: "Obra completa",

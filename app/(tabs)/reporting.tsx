@@ -8,6 +8,7 @@ import { useRefresh } from '@/hooks/useRefresh';
 import { ScreenContainer } from '@/components/screen-container';
 import { BackToPlus } from '@/components/ui/BackToPlus';
 import { SelectField } from '@/components/ui/SelectField';
+import { ouvrirPosition } from '@/lib/ouvrirCarte';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { METIER_COLORS, type Acompte } from '@/app/types';
@@ -692,8 +693,7 @@ export default function ReportingScreen() {
                         {debut.latitude && debut.longitude ? (
                           <Pressable
                             onPress={() => {
-                              const url = `https://www.google.com/maps?q=${debut.latitude},${debut.longitude}`;
-                              if (Platform.OS === 'web') window.open(url, '_blank');
+                              ouvrirPosition(debut.latitude, debut.longitude);
                             }}
                             style={styles.gpsBtn}
                           >
@@ -720,8 +720,7 @@ export default function ReportingScreen() {
                         {fin.latitude && fin.longitude ? (
                           <Pressable
                             onPress={() => {
-                              const url = `https://www.google.com/maps?q=${fin.latitude},${fin.longitude}`;
-                              if (Platform.OS === 'web') window.open(url, '_blank');
+                              ouvrirPosition(fin.latitude, fin.longitude);
                             }}
                             style={styles.gpsBtn}
                           >
@@ -1049,8 +1048,7 @@ export default function ReportingScreen() {
                             {debut.latitude && debut.longitude && (
                               <Pressable
                                 onPress={() => {
-                                  const url = `https://www.google.com/maps?q=${debut.latitude},${debut.longitude}`;
-                                  if (Platform.OS === 'web') window.open(url, '_blank');
+                                  ouvrirPosition(debut.latitude, debut.longitude);
                                 }}
                                 style={{ marginTop: 2 }}
                               >
@@ -1076,8 +1074,7 @@ export default function ReportingScreen() {
                             {fin.latitude && fin.longitude && (
                               <Pressable
                                 onPress={() => {
-                                  const url = `https://www.google.com/maps?q=${fin.latitude},${fin.longitude}`;
-                                  if (Platform.OS === 'web') window.open(url, '_blank');
+                                  ouvrirPosition(fin.latitude, fin.longitude);
                                 }}
                                 style={{ marginTop: 2 }}
                               >

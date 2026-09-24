@@ -1252,6 +1252,19 @@ export default {
 
   // Libellés d'interface communs (refonte sept. 2026)
   ui: {
+    appeler: "Позвонить",
+    positionArrivee: "Место прихода",
+    positionDepart: "Место ухода",
+    notesDuJour: "Заметки дня",
+    taches: "задач",
+    consignesDuJour: "Задания на день",
+    consignesRangees: "Убранные задания",
+    rangerConsigne: "Убрать это задание",
+    sortirDesArchives: "Вернуть в день",
+    toutesConsignesFaites: "На сегодня всё сделано.",
+    parAuteur: "от",
+    yAllerTitre: "Открыть маршрут",
+    itineraireTransports: "Общественный транспорт",
     notifNouveauMarche: "Новый договор по вашему объекту",
     natureChantier: "Тип объекта",
     natureGlobal: "Полный цикл",
