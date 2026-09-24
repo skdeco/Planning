@@ -1264,6 +1264,8 @@ export default {
     aucuneNoteDirection: "Nenhuma nota da direção.",
     transmiseLe: "Enviada para",
     notesEquipeJour: "Notas do dia da equipa",
+    photosJourneeAide: "Adicione as fotos do seu dia. Serão guardadas na galeria da obra.",
+    tachesDuJourAvantDepart: "Tarefas do dia nesta obra",
     aucunEmploye: "Nenhum funcionário.",
     appeler: "Ligar",
     positionArrivee: "Local de entrada",

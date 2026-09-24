@@ -1274,6 +1274,8 @@ export default {
     aucuneNoteDirection: "No management note.",
     transmiseLe: "Sent for",
     notesEquipeJour: "Team's notes of the day",
+    photosJourneeAide: "Add photos of your day. They will be saved in the site gallery.",
+    tachesDuJourAvantDepart: "Today's tasks on this site",
     aucunEmploye: "No employee.",
     appeler: "Call",
     positionArrivee: "Arrival location",

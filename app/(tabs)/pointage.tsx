@@ -324,7 +324,7 @@ function ChantierCard({ chantier, debutPointage, finPointage, onPointage, loadin
 // ─── Écran principal ─────────────────────────────────────────────────────────
 
 export default function PointageScreen() {
-  const { data, currentUser, isHydrated, addPointage, addPhotosChantier } = useApp();
+  const { data, currentUser, isHydrated, addPointage, addPhotosChantier, toggleTask } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
@@ -912,9 +912,30 @@ export default function PointageScreen() {
               </Pressable>
             </View>
 
-            <Text style={styles.modalSubtitle}>
-              Ajoutez les photos de votre journée. Elles seront enregistrées dans la galerie du chantier.
-            </Text>
+            <Text style={styles.modalSubtitle}>{t.ui.photosJourneeAide}</Text>
+
+            {/* Tâches du jour sur ce chantier — à cocher avant de partir (jamais bloquant) */}
+            {(() => {
+              const taches = data.affectations
+                .filter(a => a.employeId === employeId && a.chantierId === photosChantierId && a.dateDebut <= todayStr && a.dateFin >= todayStr)
+                .flatMap(a => (a.notes || [])
+                  .filter(n => (n.date === todayStr || !n.date) && !n.archiveeAt)
+                  .flatMap(n => (n.tasks || []).map(tk => ({ tk, affectationId: a.id, noteId: n.id }))));
+              if (taches.length === 0) return null;
+              return (
+                <View style={{ marginBottom: 12, backgroundColor: '#FAF5EF', borderRadius: 12, padding: 10, gap: 6 }}>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.4 }}>
+                    {t.ui.tachesDuJourAvantDepart} ({taches.filter(x => x.tk.fait).length}/{taches.length})
+                  </Text>
+                  {taches.map(({ tk, affectationId, noteId }) => (
+                    <Pressable key={tk.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} onPress={() => toggleTask(affectationId, noteId, tk.id, currentUser?.nom || '')}>
+                      <Text style={{ fontSize: 18, color: tk.fait ? '#2E7D32' : '#9A8C80' }}>{tk.fait ? '☑' : '☐'}</Text>
+                      <Text style={{ flex: 1, fontSize: 13.5, color: tk.fait ? '#9A8C80' : '#2B1D14', textDecorationLine: tk.fait ? 'line-through' : 'none' }}>{tk.texte}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+              );
+            })()}
 
             {uniqueChantiers.length > 1 && (
               <View style={styles.chantierSelectSection}>

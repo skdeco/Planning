@@ -1264,6 +1264,8 @@ export default {
     aucuneNoteDirection: "Нет заметок руководства.",
     transmiseLe: "Отправлена на",
     notesEquipeJour: "Заметки дня команды",
+    photosJourneeAide: "Добавьте фото вашего дня. Они будут сохранены в галерее объекта.",
+    tachesDuJourAvantDepart: "Задачи на сегодня на этом объекте",
     aucunEmploye: "Нет сотрудников.",
     appeler: "Позвонить",
     positionArrivee: "Место прихода",

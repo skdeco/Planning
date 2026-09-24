@@ -1303,6 +1303,8 @@ export default {
     aucuneNoteDirection: "Aucune note de direction.",
     transmiseLe: "Transmise pour le",
     notesEquipeJour: "Notes du jour de l'équipe",
+    photosJourneeAide: "Ajoutez les photos de votre journée. Elles seront enregistrées dans la galerie du chantier.",
+    tachesDuJourAvantDepart: "Tâches du jour sur ce chantier",
     aucunEmploye: "Aucun employé.",
     appeler: "Appeler",
     positionArrivee: "Position arrivée",

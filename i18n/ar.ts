@@ -1264,6 +1264,8 @@ export default {
     aucuneNoteDirection: "لا توجد ملاحظة إدارة.",
     transmiseLe: "أُرسلت ليوم",
     notesEquipeJour: "ملاحظات اليوم للفريق",
+    photosJourneeAide: "أضف صور يومك. سيتم حفظها في معرض الورشة.",
+    tachesDuJourAvantDepart: "مهام اليوم في هذه الورشة",
     aucunEmploye: "لا يوجد موظفون.",
     appeler: "اتصال",
     positionArrivee: "موقع الحضور",
