@@ -2047,7 +2047,6 @@ export default function ChantiersScreen() {
                   const field: keyof ChantierForm =
                     ty === 'architecte'  ? 'architecteId' :
                     ty === 'apporteur'   ? 'apporteurId' :
-                    ty === 'contractant' ? 'contractantId' :
                                             'clientApporteurId';
                   const selectedId = form[field] as string;
                   const listOfThisType = apporteursAll.filter(a => a.type === ty);
