@@ -1586,7 +1586,7 @@ export default function ChantiersScreen() {
       {isAdmin && (
         <View style={{ paddingHorizontal: 16, marginBottom: 6, marginTop: 4, gap: 8 }}>
           <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
-            {([['chantier', t.nav.chantiers], ['menuiserie', t.ui.natureMenuiserie], ['depannage', t.ui.catDepannages], ['lieuFixe', t.ui.catLieuxFixes]] as const).map(([val, lib]) => {
+            {([['chantier', t.nav.chantiers], ['depannage', t.ui.catDepannages], ['lieuFixe', t.ui.catLieuxFixes]] as const).map(([val, lib]) => {
               const actif = filterCategorie === val;
               return (
                 <Pressable
@@ -1997,30 +1997,7 @@ export default function ChantiersScreen() {
               </FormField>
               )}
 
-              {form.categorie === 'chantier' && (
-              <FormField label={t.ui.natureChantier}>
-                <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC' }}>
-                  {(['global', 'menuiserie'] as const).map(n => {
-                    const actif = form.nature === n;
-                    return (
-                      <Pressable
-                        key={n}
-                        style={[{ flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center' },
-                          actif && { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 }]}
-                        onPress={() => setForm(f => ({ ...f, nature: n }))}
-                      >
-                        <Text style={{ fontSize: 13.5, fontWeight: actif ? '600' : '500', color: actif ? '#5C1F2E' : '#2B1D14' }}>
-                          {n === 'global' ? t.ui.natureGlobal : t.ui.natureMenuiserie}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
-                <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 6 }}>
-                  {form.nature === 'menuiserie' ? t.ui.natureMenuiserieAide : t.ui.natureGlobalAide}
-                </Text>
-              </FormField>
-              )}
+              {/* Nature « menuiserie » retirée : les chantiers menuiserie vivent dans l'espace Menuiserie. */}
 
               <FormField label={t.common.color}>
                 <View style={styles.colorRow}>

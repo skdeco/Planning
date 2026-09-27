@@ -15,6 +15,7 @@ import { ETAPES_MN } from '@/lib/menuiserie/etapes';
 import { ROLE_COMPTE_MN_LABELS } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Pastille, Section, COULEUR_USINE, FOND_USINE } from '@/components/menuiserie/ui';
 import { CaParUsine } from '@/components/menuiserie/CaParUsine';
+import { TransfertTravaux } from '@/components/menuiserie/TransfertTravaux';
 import { AccueilRole } from '@/components/menuiserie/AccueilRole';
 import { useSyncRdvMenuiserie } from '@/hooks/useSyncRdvMenuiserie';
 import { listerRdvMn } from '@/lib/menuiserie/api2';
@@ -117,6 +118,8 @@ function AccueilAdmin() {
                 {ordreDuJour.map(o => <Text key={o.id} style={{ fontSize: 15, fontWeight: '600', color: DS.text }}>• {o.texte}</Text>)}
               </Carte>
             )}
+
+            <TransfertTravaux onFini={charger} />
 
             <CaParUsine montants={d.montants} chantiers={d.chantiers} usines={d.usines} />
 
