@@ -183,3 +183,22 @@ export async function activerCompteMn(id: string, actif: boolean): Promise<void>
 async function journaliser(moi: CompteMn, chantierId: string | null, action: string, detail?: string) {
   await mn().from('mn_journal').insert({ chantier_id: chantierId, action, detail: detail || null, par_nom: moi.nom, par_compte: moi.id });
 }
+
+// ── Gestion des comptes par un administrateur ─────────────────────────────
+export async function modifierCompteMn(p: {
+  id: string; nom: string; role: CompteMn['role']; usineId: string | null;
+  identifiant: string; email: string; telephone: string;
+}): Promise<void> {
+  verifier(await mn().rpc('mn_admin_modifier_compte', {
+    p_id: p.id, p_nom: p.nom, p_role: p.role, p_usine_id: p.usineId,
+    p_identifiant: p.identifiant, p_email: p.email, p_telephone: p.telephone,
+  }));
+}
+
+export async function changerMotDePasseCompteMn(id: string, motDePasse: string): Promise<void> {
+  verifier(await mn().rpc('mn_admin_mot_de_passe', { p_id: id, p_mdp: motDePasse }));
+}
+
+export async function supprimerCompteMn(id: string): Promise<void> {
+  verifier(await mn().rpc('mn_admin_supprimer_compte', { p_id: id }));
+}
