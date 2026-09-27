@@ -10,6 +10,7 @@ import { DS } from '@/constants/design';
 import { droitsEspaces } from '@/lib/espaces';
 import { PlanningDirection } from '@/components/PlanningDirection';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export default function DirectionScreen() {
   const { data, currentUser } = useApp();
   if (!currentUser) return <Redirect href={'/login' as any} />;
@@ -20,7 +21,7 @@ export default function DirectionScreen() {
   return (
       <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}>
-          <Text style={{ fontSize: 20, fontWeight: '800', color: DS.text, flex: 1 }}>Planning direction</Text>
+          <Text style={{ fontSize: 20, fontWeight: '800', color: DS.text, flex: 1 }}>{tm("Planning direction")}</Text>
         </View>
         <View style={{ flex: 1 }}>
           <PlanningDirection />

@@ -8,6 +8,8 @@ import { DS, radius } from '@/constants/design';
 import type { AccesCompte, RoleMenuiserie } from '@/app/types';
 import { ROLE_MENUISERIE_LABELS } from '@/app/types';
 
+import { useLanguage } from '@/app/context/LanguageContext';
+import { tm } from '@/lib/menuiserie/i18n';
 interface Props {
   value: AccesCompte | undefined;
   onChange: (next: AccesCompte) => void;
@@ -40,6 +42,7 @@ function Ligne({ titre, sousTitre, valeur, onValeur, disabled }: {
 }
 
 export function AccesEspacesEditor({ value, onChange, roleTravauxLabel, directionToujours }: Props) {
+  useLanguage(); // re-rendu au changement de langue
   const acces = value || {};
   const travaux = acces.travaux !== false;
   const menuiserie = acces.menuiserie;
@@ -47,20 +50,18 @@ export function AccesEspacesEditor({ value, onChange, roleTravauxLabel, directio
 
   return (
     <View style={{ marginTop: 18, padding: 12, backgroundColor: DS.background, borderRadius: radius.md, borderWidth: 1, borderColor: DS.border }}>
-      <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary, marginBottom: 4 }}>
-        Accès aux espaces
-      </Text>
+      <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary, marginBottom: 4 }}>{tm("Accès aux espaces")}</Text>
 
       <Ligne
-        titre="Travaux"
-        sousTitre={travaux ? `Rôle : ${roleTravauxLabel}` : 'Pas d’accès à l’espace Travaux'}
+        titre={tm("Travaux")}
+        sousTitre={travaux ? tm("Rôle : {0}", roleTravauxLabel) : tm("Pas d’accès à l’espace Travaux")}
         valeur={travaux}
         onValeur={v => set({ travaux: v })}
       />
 
       <Ligne
-        titre="Menuiserie"
-        sousTitre={menuiserie ? `Rôle : ${ROLE_MENUISERIE_LABELS[menuiserie]}` : 'Pas d’accès à l’espace Menuiserie'}
+        titre={tm("Menuiserie")}
+        sousTitre={menuiserie ? tm("Rôle : {0}", ROLE_MENUISERIE_LABELS[menuiserie]) : tm("Pas d’accès à l’espace Menuiserie")}
         valeur={!!menuiserie}
         onValeur={v => set({ menuiserie: v ? (menuiserie || 'admin') : undefined })}
       />
@@ -89,23 +90,19 @@ export function AccesEspacesEditor({ value, onChange, roleTravauxLabel, directio
         </View>
       )}
       {!!menuiserie && menuiserie !== 'admin' && (
-        <Text style={{ fontSize: 12, color: DS.textSecondary, marginBottom: 6 }}>
-          Les espaces Usine, Client, Architecte, Apporteur et Poseur arrivent aux prochaines étapes.
-        </Text>
+        <Text style={{ fontSize: 12, color: DS.textSecondary, marginBottom: 6 }}>{tm("Les espaces Usine, Client, Architecte, Apporteur et Poseur arrivent aux prochaines étapes.")}</Text>
       )}
 
       <Ligne
-        titre="Planning direction"
-        sousTitre={directionToujours ? 'Toujours accessible pour un administrateur' : 'Voit le planning direction et peut inviter à des RDV'}
+        titre={tm("Planning direction")}
+        sousTitre={directionToujours ? tm("Toujours accessible pour un administrateur") : tm("Voit le planning direction et peut inviter à des RDV")}
         valeur={directionToujours ? true : !!acces.planningDirection}
         onValeur={v => set({ planningDirection: v })}
         disabled={directionToujours}
       />
 
       {!travaux && !menuiserie && (
-        <Text style={{ fontSize: 12, color: DS.error, marginTop: 4 }}>
-          Aucun espace coché : le compte ouvrira l’espace Travaux par défaut.
-        </Text>
+        <Text style={{ fontSize: 12, color: DS.error, marginTop: 4 }}>{tm("Aucun espace coché : le compte ouvrira l’espace Travaux par défaut.")}</Text>
       )}
     </View>
   );

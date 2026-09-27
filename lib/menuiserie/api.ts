@@ -10,6 +10,7 @@ import type {
   StatutEtapeMn, UsineMn,
 } from './types';
 
+import { tm } from '@/lib/menuiserie/i18n';
 const BUCKET = 'menuiserie';
 
 function verifier<T>(res: { data: T | null; error: { message: string } | null }): T {
@@ -121,7 +122,7 @@ function extension(nom: string, mime?: string | null): string {
 export async function envoyerFichierMn(chemin: string, uri: string, mime: string): Promise<void> {
   const { data: sess } = await mn().auth.getSession();
   const jeton = sess.session?.access_token;
-  if (!jeton) throw new Error('Session expirée : reconnecte-toi.');
+  if (!jeton) throw new Error(tm("Session expirée : reconnecte-toi."));
   const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${chemin}`;
   const headers = { Authorization: `Bearer ${jeton}`, apikey: SUPABASE_ANON_KEY, 'Content-Type': mime };
   let ok = false;
@@ -135,7 +136,7 @@ export async function envoyerFichierMn(chemin: string, uri: string, mime: string
     const r = await fetch(url, { method: 'POST', headers, body: blob });
     ok = r.ok;
   }
-  if (!ok) throw new Error('Envoi du fichier refusé par le serveur.');
+  if (!ok) throw new Error(tm("Envoi du fichier refusé par le serveur."));
 }
 
 export function cheminFichierMn(prefixe: string, nom: string, mime?: string | null): string {

@@ -9,6 +9,7 @@ import { DS, radius } from '@/constants/design';
 import type { ChantierMn, IntervenantMn, RoleIntervenantMn, StatutChantierMn, UsineMn } from '@/lib/menuiserie/types';
 import { ROLE_INTERVENANT_MN_LABELS, STATUT_CHANTIER_MN_LABELS } from '@/lib/menuiserie/types';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export interface FiltresMn {
   statut: StatutChantierMn | 'tous';
   usineId: string | null;
@@ -26,7 +27,7 @@ export function filtrerChantiers(chantiers: ChantierMn[], intervenants: Interven
 
 const ROLES_QUI: RoleIntervenantMn[] = ['architecte', 'client', 'apporteur', 'responsable'];
 const ETATS: (StatutChantierMn | 'tous')[] = ['en_cours', 'cloture', 'sav', 'archive', 'tous'];
-const libEtat = (s: StatutChantierMn | 'tous') => (s === 'tous' ? 'Tous (hors archivés)' : STATUT_CHANTIER_MN_LABELS[s]);
+const libEtat = (s: StatutChantierMn | 'tous') => (s === 'tous' ? tm("Tous (hors archivés)") : STATUT_CHANTIER_MN_LABELS[s]);
 
 function Deroulant({ label, actif, onPress }: { label: string; actif: boolean; onPress: () => void }) {
   return (
@@ -53,7 +54,7 @@ export function FiltresChantiers({ valeur, onChange, usines, intervenants }: {
 }) {
   const [ouvert, setOuvert] = useState<'etat' | 'qui' | null>(null);
   const sections = useMemo(() => [
-    { titre: 'Usine', role: null as RoleIntervenantMn | null, items: usines.map(u => ({ cle: u.id, label: u.nom })) },
+    { titre: tm("Usine"), role: null as RoleIntervenantMn | null, items: usines.map(u => ({ cle: u.id, label: u.nom })) },
     ...ROLES_QUI.map(r => ({
       titre: ROLE_INTERVENANT_MN_LABELS[r], role: r as RoleIntervenantMn | null,
       items: Array.from(new Set(intervenants.filter(i => i.role === r).map(i => i.nom))).sort().map(n => ({ cle: n, label: n })),
@@ -61,13 +62,13 @@ export function FiltresChantiers({ valeur, onChange, usines, intervenants }: {
   ], [usines, intervenants]);
 
   const usineNom = usines.find(u => u.id === valeur.usineId)?.nom;
-  const labelQui = usineNom ? `Usine : ${usineNom}`
-    : valeur.intervenant ? `${ROLE_INTERVENANT_MN_LABELS[valeur.intervenant.role]} : ${valeur.intervenant.nom}` : 'Qui ?';
+  const labelQui = usineNom ? tm("Usine : {0}", usineNom)
+    : valeur.intervenant ? `${ROLE_INTERVENANT_MN_LABELS[valeur.intervenant.role]} : ${valeur.intervenant.nom}` : tm("Qui ?");
   const fermer = () => setOuvert(null);
 
   return (
     <View style={{ flexDirection: 'row', gap: 8 }}>
-      <Deroulant label={`État : ${libEtat(valeur.statut)}`} actif={valeur.statut !== 'en_cours'} onPress={() => setOuvert('etat')} />
+      <Deroulant label={tm("État : {0}", libEtat(valeur.statut))} actif={valeur.statut !== 'en_cours'} onPress={() => setOuvert('etat')} />
       <Deroulant label={labelQui} actif={!!usineNom || !!valeur.intervenant} onPress={() => setOuvert('qui')} />
 
       <Modal visible={!!ouvert} transparent animationType="fade" onRequestClose={fermer}>
@@ -75,18 +76,18 @@ export function FiltresChantiers({ valeur, onChange, usines, intervenants }: {
           <Pressable onPress={() => {}} style={{ backgroundColor: DS.surface, borderRadius: radius.xxl, padding: 12, maxHeight: 520 }}>
             {ouvert === 'etat' ? (
               <>
-                <Text style={{ fontSize: 17, fontWeight: '800', color: DS.text, padding: 8 }}>État</Text>
+                <Text style={{ fontSize: 17, fontWeight: '800', color: DS.text, padding: 8 }}>{tm("État")}</Text>
                 {ETATS.map(s => <Ligne key={s} label={libEtat(s)} actif={valeur.statut === s} onPress={() => { onChange({ ...valeur, statut: s }); fermer(); }} />)}
               </>
             ) : (
               <>
-                <Text style={{ fontSize: 17, fontWeight: '800', color: DS.text, padding: 8 }}>Qui ?</Text>
+                <Text style={{ fontSize: 17, fontWeight: '800', color: DS.text, padding: 8 }}>{tm("Qui ?")}</Text>
                 <ScrollView>
-                  <Ligne label="Tout le monde" actif={!usineNom && !valeur.intervenant} onPress={() => { onChange({ ...valeur, usineId: null, intervenant: null }); fermer(); }} />
+                  <Ligne label={tm("Tout le monde")} actif={!usineNom && !valeur.intervenant} onPress={() => { onChange({ ...valeur, usineId: null, intervenant: null }); fermer(); }} />
                   {sections.map(sec => (
                     <View key={sec.titre} style={{ marginTop: 8 }}>
                       <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary, paddingHorizontal: 12, paddingVertical: 4 }}>{sec.titre}</Text>
-                      {sec.items.length === 0 && <Text style={{ fontSize: 13, color: DS.textMuted, paddingHorizontal: 12, paddingVertical: 4 }}>Aucun</Text>}
+                      {sec.items.length === 0 && <Text style={{ fontSize: 13, color: DS.textMuted, paddingHorizontal: 12, paddingVertical: 4 }}>{tm("Aucun")}</Text>}
                       {sec.items.map(it => {
                         const actif = sec.role ? valeur.intervenant?.role === sec.role && valeur.intervenant.nom === it.cle : valeur.usineId === it.cle;
                         return (

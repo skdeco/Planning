@@ -17,6 +17,7 @@ import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import { Bouton, Carte, Champ, EnTete, Puce, Section } from '@/components/menuiserie/ui';
 import { ouvrirDocumentMn } from '@/components/menuiserie/DocumentsEtape';
 
+import { tm } from '@/lib/menuiserie/i18n';
 const CATS = Object.keys(CATEGORIE_CATALOGUE_LABELS) as CategorieCatalogueMn[];
 type FormArticle = { id?: string; categorie: CategorieCatalogueMn; marque: string; reference: string; reference_interne: string; designation: string; quantite: string; notes: string };
 
@@ -47,7 +48,7 @@ export default function CatalogueMn() {
   }, [articles, cat, recherche]);
 
   const enregistrerArticle = async () => {
-    if (!fa?.designation.trim()) { setMessage('La désignation est obligatoire.'); return; }
+    if (!fa?.designation.trim()) { setMessage(tm("La désignation est obligatoire.")); return; }
     const n = (s: string) => s.trim() || null;
     try {
       await enregistrerArticleMn({
@@ -70,18 +71,18 @@ export default function CatalogueMn() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
-        <EnTete titre="Catalogue & fournisseurs" retour={moi.role !== 'admin' ? () => router.back() : undefined} />
+        <EnTete titre={tm("Catalogue & fournisseurs")} retour={moi.role !== 'admin' ? () => router.back() : undefined} />
         <View style={{ flexDirection: 'row', gap: 6 }}>
-          <Puce label="Catalogue matériaux" actif={onglet === 'catalogue'} onPress={() => setOnglet('catalogue')} />
-          <Puce label="Fournisseurs" actif={onglet === 'fournisseurs'} onPress={() => setOnglet('fournisseurs')} />
+          <Puce label={tm("Catalogue matériaux")} actif={onglet === 'catalogue'} onPress={() => setOnglet('catalogue')} />
+          <Puce label={tm("Fournisseurs")} actif={onglet === 'fournisseurs'} onPress={() => setOnglet('fournisseurs')} />
         </View>
         {!!message && <Text style={{ color: DS.error, fontWeight: '600' }}>{message}</Text>}
 
         {onglet === 'catalogue' ? (
           <>
-            <Champ label="Rechercher (désignation, marque, référence, réf. interne)" value={recherche} onChangeText={setRecherche} />
+            <Champ label={tm("Rechercher (désignation, marque, référence, réf. interne)")} value={recherche} onChangeText={setRecherche} />
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              <Puce label="Tout" actif={cat === 'tous'} onPress={() => setCat('tous')} />
+              <Puce label={tm("Tout")} actif={cat === 'tous'} onPress={() => setCat('tous')} />
               {CATS.map(c => <Puce key={c} label={CATEGORIE_CATALOGUE_LABELS[c]} actif={cat === c} onPress={() => setCat(c)} />)}
             </View>
             {peutModifier && (fa ? (
@@ -89,28 +90,28 @@ export default function CatalogueMn() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {CATS.map(c => <Puce key={c} label={CATEGORIE_CATALOGUE_LABELS[c]} actif={fa.categorie === c} onPress={() => setFa(x => x && { ...x, categorie: c })} />)}
                 </View>
-                <Champ label="Désignation *" value={fa.designation} onChangeText={v => setFa(x => x && { ...x, designation: v })} />
+                <Champ label={tm("Désignation *")} value={fa.designation} onChangeText={v => setFa(x => x && { ...x, designation: v })} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Champ label="Marque (Egger, Finsa…)" value={fa.marque} onChangeText={v => setFa(x => x && { ...x, marque: v })} />
-                  <Champ label="Référence fournisseur" value={fa.reference} onChangeText={v => setFa(x => x && { ...x, reference: v })} />
+                  <Champ label={tm("Marque (Egger, Finsa…)")} value={fa.marque} onChangeText={v => setFa(x => x && { ...x, marque: v })} />
+                  <Champ label={tm("Référence fournisseur")} value={fa.reference} onChangeText={v => setFa(x => x && { ...x, reference: v })} />
                 </View>
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Champ label="Référence interne" value={fa.reference_interne} onChangeText={v => setFa(x => x && { ...x, reference_interne: v })} />
-                  <Champ label="Quantité en stock" value={fa.quantite} onChangeText={v => setFa(x => x && { ...x, quantite: v })} />
+                  <Champ label={tm("Référence interne")} value={fa.reference_interne} onChangeText={v => setFa(x => x && { ...x, reference_interne: v })} />
+                  <Champ label={tm("Quantité en stock")} value={fa.quantite} onChangeText={v => setFa(x => x && { ...x, quantite: v })} />
                 </View>
-                <Champ label="Notes" value={fa.notes} onChangeText={v => setFa(x => x && { ...x, notes: v })} />
-                <Bouton label={photo ? `Photo : ${photo.nom}` : '+ Photo'} variante="contour" onPress={async () => {
+                <Champ label={tm("Notes")} value={fa.notes} onChangeText={v => setFa(x => x && { ...x, notes: v })} />
+                <Bouton label={photo ? tm("Photo : {0}", photo.nom) : tm("+ Photo")} variante="contour" onPress={async () => {
                   const r = await pickNativeFile({ acceptCamera: true, acceptPdf: false, compressImages: true, multiple: false });
                   if (r.length) setPhoto({ uri: r[0].uri, mime: r[0].mimeType, nom: r[0].filename || 'photo.jpg' });
                 }} />
-                <Bouton label="Enregistrer" onPress={enregistrerArticle} />
-                {fa.id && <Bouton label="Supprimer l'article" variante="discret" onPress={async () => { await supprimerArticleMn(fa.id as string); setFa(null); charger(); }} />}
-                <Bouton label="Annuler" variante="discret" onPress={() => { setFa(null); setPhoto(null); }} />
+                <Bouton label={tm("Enregistrer")} onPress={enregistrerArticle} />
+                {fa.id && <Bouton label={tm("Supprimer l'article")} variante="discret" onPress={async () => { await supprimerArticleMn(fa.id as string); setFa(null); charger(); }} />}
+                <Bouton label={tm("Annuler")} variante="discret" onPress={() => { setFa(null); setPhoto(null); }} />
               </Carte>
             ) : (
-              <Bouton label="+ Nouvelle référence" onPress={() => setFa({ categorie: cat === 'tous' ? 'panneaux' : cat, marque: '', reference: '', reference_interne: '', designation: '', quantite: '', notes: '' })} />
+              <Bouton label={tm("+ Nouvelle référence")} onPress={() => setFa({ categorie: cat === 'tous' ? 'panneaux' : cat, marque: '', reference: '', reference_interne: '', designation: '', quantite: '', notes: '' })} />
             ))}
-            <Section>{liste.length} référence{liste.length > 1 ? 's' : ''}</Section>
+            <Section>{liste.length}{' '}{tm("référence")}{liste.length > 1 ? 's' : ''}</Section>
             {liste.map(a => (
               <Pressable key={a.id} disabled={!peutModifier} accessibilityRole="button"
                 onPress={() => setFa({ id: a.id, categorie: a.categorie, marque: a.marque || '', reference: a.reference || '', reference_interne: a.reference_interne || '', designation: a.designation, quantite: a.quantite || '', notes: a.notes || '' })}>
@@ -121,7 +122,7 @@ export default function CatalogueMn() {
                   </Text>
                   {!!a.photo_chemin && (
                     <Pressable onPress={() => ouvrirDocumentMn({ chemin: a.photo_chemin as string })} accessibilityRole="link" style={{ alignSelf: 'flex-start', backgroundColor: DS.background, borderRadius: radius.sm, paddingHorizontal: 8, paddingVertical: 4 }}>
-                      <Text style={{ fontWeight: '700', color: DS.primary }}>Voir la photo</Text>
+                      <Text style={{ fontWeight: '700', color: DS.primary }}>{tm("Voir la photo")}</Text>
                     </Pressable>
                   )}
                 </Carte>
@@ -132,17 +133,17 @@ export default function CatalogueMn() {
           <>
             {peutModifier && (ff ? (
               <Carte>
-                <Champ label="Nom *" value={ff.nom} onChangeText={v => setFf(x => x && { ...x, nom: v })} />
-                <Champ label="Catégorie (panneaux, quincaillerie…)" value={ff.categorie} onChangeText={v => setFf(x => x && { ...x, categorie: v })} />
-                <Champ label="Contact" value={ff.contact} onChangeText={v => setFf(x => x && { ...x, contact: v })} />
+                <Champ label={tm("Nom *")} value={ff.nom} onChangeText={v => setFf(x => x && { ...x, nom: v })} />
+                <Champ label={tm("Catégorie (panneaux, quincaillerie…)")} value={ff.categorie} onChangeText={v => setFf(x => x && { ...x, categorie: v })} />
+                <Champ label={tm("Contact")} value={ff.contact} onChangeText={v => setFf(x => x && { ...x, contact: v })} />
                 <View style={{ flexDirection: 'row', gap: 8 }}>
-                  <Champ label="Téléphone" value={ff.telephone} onChangeText={v => setFf(x => x && { ...x, telephone: v })} />
-                  <Champ label="E-mail" value={ff.email} onChangeText={v => setFf(x => x && { ...x, email: v })} autoCapitalize="none" />
+                  <Champ label={tm("Téléphone")} value={ff.telephone} onChangeText={v => setFf(x => x && { ...x, telephone: v })} />
+                  <Champ label={tm("E-mail")} value={ff.email} onChangeText={v => setFf(x => x && { ...x, email: v })} autoCapitalize="none" />
                 </View>
-                <Bouton label="Enregistrer" onPress={enregistrerFournisseur} />
-                <Bouton label="Annuler" variante="discret" onPress={() => setFf(null)} />
+                <Bouton label={tm("Enregistrer")} onPress={enregistrerFournisseur} />
+                <Bouton label={tm("Annuler")} variante="discret" onPress={() => setFf(null)} />
               </Carte>
-            ) : <Bouton label="+ Nouveau fournisseur" onPress={() => setFf({ nom: '', categorie: '', contact: '', telephone: '', email: '' })} />)}
+            ) : <Bouton label={tm("+ Nouveau fournisseur")} onPress={() => setFf({ nom: '', categorie: '', contact: '', telephone: '', email: '' })} />)}
             {fournisseurs.map(f => (
               <Pressable key={f.id} disabled={!peutModifier} accessibilityRole="button"
                 onPress={() => setFf({ id: f.id, nom: f.nom, categorie: f.categorie || '', contact: f.contact || '', telephone: f.telephone || '', email: f.email || '' })}>

@@ -5,6 +5,7 @@ import { DS } from '@/constants/design';
 import type { ChantierMn, MontantMn, UsineMn } from '@/lib/menuiserie/types';
 import { Carte, Puce, euros } from './ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export function CaParUsine({ montants, chantiers, usines }: { montants: MontantMn[]; chantiers: ChantierMn[]; usines: UsineMn[] }) {
   const [annee, setAnnee] = useState<'annee' | 'tout'>('annee');
   const lignes = useMemo(() => {
@@ -27,14 +28,14 @@ export function CaParUsine({ montants, chantiers, usines }: { montants: MontantM
   return (
     <Carte>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary }}>CA par usine (achat HT)</Text>
+        <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary }}>{tm("CA par usine (achat HT)")}</Text>
         <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{euros(total)}</Text>
       </View>
       <View style={{ flexDirection: 'row', gap: 6 }}>
         <Puce label={String(new Date().getFullYear())} actif={annee === 'annee'} onPress={() => setAnnee('annee')} />
-        <Puce label="Depuis le début" actif={annee === 'tout'} onPress={() => setAnnee('tout')} />
+        <Puce label={tm("Depuis le début")} actif={annee === 'tout'} onPress={() => setAnnee('tout')} />
       </View>
-      {lignes.length === 0 && <Text style={{ fontSize: 14, color: DS.textSecondary }}>Aucun devis usine saisi pour l'instant.</Text>}
+      {lignes.length === 0 && <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Aucun devis usine saisi pour l'instant.")}</Text>}
       {lignes.map(l => (
         <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           <Text style={{ width: 90, fontSize: 13, fontWeight: '700', color: DS.text }} numberOfLines={1}>{l.nom}</Text>

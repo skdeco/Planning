@@ -10,6 +10,7 @@ import { creerChantierMn, listerUsinesMn } from '@/lib/menuiserie/api';
 import type { UsineMn } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Champ, EnTete, Puce, Section } from '@/components/menuiserie/ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 const VIDE = {
   nom: '', rue: '', code_postal: '', ville: '', code_acces: '', etage: '', cle: '',
   client_nom: '', client_societe: '', client_rue: '', client_code_postal: '', client_ville: '', client_tel: '', client_email: '',
@@ -28,11 +29,11 @@ export default function NouveauChantierMn() {
   useEffect(() => { listerUsinesMn().then(setUsines).catch(() => {}); }, []);
 
   const champ = (cle: keyof typeof VIDE, label: string, extra?: object) => (
-    <Champ label={label} value={f[cle]} onChangeText={v => setF(p => ({ ...p, [cle]: v }))} {...extra} />
+    <Champ label={tm(label)} value={f[cle]} onChangeText={v => setF(p => ({ ...p, [cle]: v }))} {...extra} />
   );
 
   const creer = async () => {
-    if (!f.nom.trim()) { setErreur('Le nom du chantier est obligatoire.'); return; }
+    if (!f.nom.trim()) { setErreur(tm("Le nom du chantier est obligatoire.")); return; }
     setCharge(true); setErreur('');
     try {
       const n = (s: string) => s.trim() || null;
@@ -58,36 +59,36 @@ export default function NouveauChantierMn() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
-        <EnTete titre="Nouveau chantier" retour={() => router.back()} />
+        <EnTete titre={tm("Nouveau chantier")} retour={() => router.back()} />
 
-        <Section>Chantier</Section>
+        <Section>{tm("Chantier")}</Section>
         <Carte>
           {champ('nom', 'Nom du chantier *')}
           {champ('rue', 'Rue')}
           <View style={{ flexDirection: 'row', gap: 8 }}>{champ('code_postal', 'Code postal', { keyboardType: 'number-pad' })}{champ('ville', 'Ville')}</View>
           <View style={{ flexDirection: 'row', gap: 8 }}>{champ('code_acces', 'Code')}{champ('etage', 'Étage')}</View>
           {champ('cle', 'Clé (où la trouver)')}
-          <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>Date de livraison prévue</Text>
-          <DateInput value={livraison} onChangeDate={setLivraison} accessibilityLabel="Date de livraison prévue"
+          <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>{tm("Date de livraison prévue")}</Text>
+          <DateInput value={livraison} onChangeDate={setLivraison} accessibilityLabel={tm("Date de livraison prévue")}
             style={{ borderWidth: 1, borderColor: DS.border, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: DS.text, backgroundColor: DS.background }} />
-          <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>Usine de production</Text>
+          <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>{tm("Usine de production")}</Text>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            <Puce label="À définir" actif={!usineId} onPress={() => setUsineId(null)} />
+            <Puce label={tm("À définir")} actif={!usineId} onPress={() => setUsineId(null)} />
             {usines.map(u => <Puce key={u.id} label={u.nom} actif={usineId === u.id} onPress={() => setUsineId(u.id)} />)}
           </View>
-          {usines.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>Aucune usine : ajoute-les depuis l'accueil → Usines.</Text>}
+          {usines.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Aucune usine : ajoute-les depuis l'accueil → Usines.")}</Text>}
         </Carte>
 
-        <Section>Client</Section>
+        <Section>{tm("Client")}</Section>
         <Carte>
           <View style={{ flexDirection: 'row', gap: 8 }}>{champ('client_nom', 'Nom Prénom')}{champ('client_societe', 'Société')}</View>
           {champ('client_rue', 'Rue')}
           <View style={{ flexDirection: 'row', gap: 8 }}>{champ('client_code_postal', 'Code postal', { keyboardType: 'number-pad' })}{champ('client_ville', 'Ville')}</View>
           <View style={{ flexDirection: 'row', gap: 8 }}>{champ('client_tel', 'Téléphone', { keyboardType: 'phone-pad' })}{champ('client_email', 'E-mail', { autoCapitalize: 'none', keyboardType: 'email-address' })}</View>
-          <Text style={{ fontSize: 12, color: DS.textSecondary }}>L'accès client (identifiant / mot de passe) arrive à l'étape 2c.</Text>
+          <Text style={{ fontSize: 12, color: DS.textSecondary }}>{tm("L'accès client (identifiant / mot de passe) arrive à l'étape 2c.")}</Text>
         </Carte>
 
-        <Section>Intervenants</Section>
+        <Section>{tm("Intervenants")}</Section>
         <Carte>
           {champ('architecte', 'Architecte')}
           {champ('apporteur', "Apporteur d'affaires")}
@@ -95,7 +96,7 @@ export default function NouveauChantierMn() {
         </Carte>
 
         {!!erreur && <Text style={{ color: DS.error, fontWeight: '700' }}>{erreur}</Text>}
-        <Bouton label="Créer le chantier" onPress={creer} charge={charge} />
+        <Bouton label={tm("Créer le chantier")} onPress={creer} charge={charge} />
       </ScrollView>
     </ScreenContainer>
   );

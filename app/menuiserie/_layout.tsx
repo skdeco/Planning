@@ -7,15 +7,18 @@ import { droitsEspaces } from '@/lib/espaces';
 import { SessionMnProvider, useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { ConnexionMn } from '@/components/menuiserie/ConnexionMn';
 import { DS } from '@/constants/design';
+import { useLanguage } from '@/app/context/LanguageContext';
 
 /** Espace Menuiserie : rôle Menuiserie dans l'app + connexion sécurisée. */
 export default function MenuiserieLayout() {
   const { data, currentUser } = useApp();
+  const { language } = useLanguage();
   if (!currentUser) return <Redirect href={'/login' as any} />;
   if (!droitsEspaces(currentUser, data).menuiserie) return <Redirect href={'/' as any} />;
   return (
     <SessionMnProvider>
-      <Contenu />
+      {/* key = langue : l'espace se redessine entièrement dans la nouvelle langue */}
+      <Contenu key={language} />
     </SessionMnProvider>
   );
 }

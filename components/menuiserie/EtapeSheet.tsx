@@ -16,9 +16,10 @@ import { DocumentsEtape } from './DocumentsEtape';
 import { MontantsEtape } from './MontantsEtape';
 import { BadgeRempliPar } from './BadgeRempliPar';
 
-const STATUTS: { cle: StatutEtapeMn; label: string }[] = [
+import { tm, traduit } from '@/lib/menuiserie/i18n';
+const STATUTS: { cle: StatutEtapeMn; label: string }[] = traduit([
   { cle: 'a_faire', label: 'À faire' }, { cle: 'en_cours', label: 'En cours' }, { cle: 'fait', label: 'Fait' },
-];
+]);
 
 export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, montants, onClose, onChange, poseur, chantier, dateReception }: {
   moi: CompteMn; chantierId: string; usineId: string | null; def: DefEtape | null; etape: EtapeMn | undefined;
@@ -66,7 +67,7 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingBottom: 8, gap: 8 }}>
           <Text style={{ fontSize: 20, fontWeight: '800', color: DS.text, flex: 1 }}>{def.titre}</Text>
           <Pressable onPress={onClose} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: DS.primary }}>Fermer</Text>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: DS.primary }}>{tm("Fermer")}</Text>
           </Pressable>
         </View>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48 + insets.bottom, gap: 10 }} keyboardShouldPersistTaps="handled">
@@ -76,10 +77,10 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
           {!!def.aide && <Text style={{ fontSize: 13, color: DS.textSecondary, lineHeight: 18 }}>{def.aide}</Text>}
 
           {def.aVenir ? (
-            <Text style={{ fontSize: 15, color: DS.text, fontWeight: '600' }}>Cette étape arrive dans une prochaine mise à jour.</Text>
+            <Text style={{ fontSize: 15, color: DS.text, fontWeight: '600' }}>{tm("Cette étape arrive dans une prochaine mise à jour.")}</Text>
           ) : (
             <>
-              <Section>Avancement</Section>
+              <Section>{tm("Avancement")}</Section>
               <View style={{ flexDirection: 'row', backgroundColor: DS.segment, borderRadius: radius.md, padding: 3 }}>
                 {STATUTS.map(s => (
                   <Pressable key={s.cle} disabled={!modifiable} onPress={() => changerStatut(s.cle)} accessibilityRole="button" accessibilityState={{ selected: statut === s.cle }}
@@ -89,12 +90,12 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
                 ))}
               </View>
               {!!etape?.updated_by_nom && (
-                <Text style={{ fontSize: 12, color: DS.textSecondary }}>Modifié par {etape.updated_by_nom} · {formatDateHeureFR(etape.updated_at)}</Text>
+                <Text style={{ fontSize: 12, color: DS.textSecondary }}>{tm("Modifié par")}{' '}{etape.updated_by_nom} · {formatDateHeureFR(etape.updated_at)}</Text>
               )}
 
               {!!def.champs?.length && (
                 <>
-                  <Section>Informations</Section>
+                  <Section>{tm("Informations")}</Section>
                   {def.champs.map(c => c.type === 'date' ? (
                     <View key={c.cle} style={{ gap: 4 }}>
                       <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>{c.label}</Text>
@@ -104,27 +105,27 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
                   ) : (
                     <Champ key={c.cle} label={c.label} value={infos[c.cle] || ''} editable={modifiable} onChangeText={v => setInfos(p => ({ ...p, [c.cle]: v }))} multiline={c.cle === 'liste'} style={{ backgroundColor: DS.surface }} />
                   ))}
-                  {modifiable && <Bouton label="Enregistrer les informations" onPress={enregistrerInfos} charge={charge} />}
+                  {modifiable && <Bouton label={tm("Enregistrer les informations")} onPress={enregistrerInfos} charge={charge} />}
                 </>
               )}
 
               {def.cle === 'verification' && (
                 <>
-                  <Section>Meubles</Section>
+                  <Section>{tm("Meubles")}</Section>
                   <VerificationMeubles moi={moi} chantierId={chantierId} modifiable={modifiable} />
                 </>
               )}
               {def.cle === 'pv' && (
                 <>
-                  <Section>Réserves</Section>
+                  <Section>{tm("Réserves")}</Section>
                   <ReservesPanel moi={moi} chantierId={chantierId} chantier={chantier} onDocument={onChange} />
                 </>
               )}
 
-              <Section>Documents et photos</Section>
+              <Section>{tm("Documents et photos")}</Section>
               <DocumentsEtape moi={moi} chantierId={chantierId} def={def} documents={documents} onChange={onChange} lectureSeule={!modifiable} />
 
-              {voitMontants && (typesMontants.length > 0 || montants.length > 0) && <Section>Montants</Section>}
+              {voitMontants && (typesMontants.length > 0 || montants.length > 0) && <Section>{tm("Montants")}</Section>}
               {voitMontants && (
                 <MontantsEtape moi={moi} chantierId={chantierId} usineId={usineId} etape={def.cle} types={typesMontants}
                   montants={montants} onChange={onChange} compteCible={def.cle === 'pose' ? poseur : null} lectureSeule={!typesMontants.length} />

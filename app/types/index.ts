@@ -3,6 +3,7 @@ import type {
   PieceChantier, Prescription, DevisHonoraires,
   PhaseChantier, JalonChantier, DemarcheAdministrative, ConsultationLot,
 } from './architecte';
+import { traduit } from '@/lib/menuiserie/i18n';
 
 export type {
   PVReception, PVItem, PVPaiement, PVMailEnvoi,
@@ -182,7 +183,7 @@ export type EspaceId = 'travaux' | 'menuiserie';
 /** Rôle d'un compte dans l'espace Menuiserie. */
 export type RoleMenuiserie = 'admin' | 'usine' | 'employe_usine' | 'client' | 'architecte' | 'apporteur' | 'poseur';
 
-export const ROLE_MENUISERIE_LABELS: Record<RoleMenuiserie, string> = {
+export const ROLE_MENUISERIE_LABELS: Record<RoleMenuiserie, string> = traduit({
   admin: 'Administrateur',
   usine: 'Usine',
   employe_usine: "Employé d'usine",
@@ -190,7 +191,7 @@ export const ROLE_MENUISERIE_LABELS: Record<RoleMenuiserie, string> = {
   architecte: 'Architecte',
   apporteur: "Apporteur d'affaires",
   poseur: 'Poseur',
-};
+});
 
 /**
  * Accès d'un compte aux espaces. Posé sur Employe, Apporteur ou SousTraitant.

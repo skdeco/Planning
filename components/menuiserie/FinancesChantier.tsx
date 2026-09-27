@@ -11,6 +11,7 @@ import type { CompteMn, IntervenantMn, MontantMn } from '@/lib/menuiserie/types'
 import { MontantsEtape } from './MontantsEtape';
 import { Carte, Puce, Section, euros } from './ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export function FinancesChantier({ moi, chantierId, intervenants, montants, onChange }: {
   moi: CompteMn; chantierId: string; intervenants: IntervenantMn[]; montants: MontantMn[]; onChange: () => void;
 }) {
@@ -27,26 +28,25 @@ export function FinancesChantier({ moi, chantierId, intervenants, montants, onCh
 
   return (
     <>
-      <Section>Prix</Section>
+      <Section>{tm("Prix")}</Section>
       <Carte>
         <MontantsEtape moi={moi} chantierId={chantierId} usineId={null} etape={null} types={['vente_client']} montants={prix} onChange={onChange} />
-        {prix.length > 1 && <Text style={{ fontSize: 14, fontWeight: '800', color: DS.text }}>Total : {euros(total)} HT</Text>}
+        {prix.length > 1 && <Text style={{ fontSize: 14, fontWeight: '800', color: DS.text }}>{tm("Total :")}{' '}{euros(total)}{' '}{tm("HT")}</Text>}
       </Carte>
 
-      <Section>Règlements</Section>
+      <Section>{tm("Règlements")}</Section>
       <Carte>
         <MontantsEtape moi={moi} chantierId={chantierId} usineId={null} etape={null} types={['reglement_client']} montants={reglements} onChange={onChange} />
         {total > 0 && (
-          <Text style={{ fontSize: 14, color: DS.text }}>
-            Réglé : <Text style={{ fontWeight: '800' }}>{euros(regle)}</Text> · reste : <Text style={{ fontWeight: '800' }}>{euros(Math.max(0, total - regle))}</Text>
+          <Text style={{ fontSize: 14, color: DS.text }}>{tm("Réglé :")}{' '}<Text style={{ fontWeight: '800' }}>{euros(regle)}</Text>{' '}{tm("· reste :")}{' '}<Text style={{ fontWeight: '800' }}>{euros(Math.max(0, total - regle))}</Text>
           </Text>
         )}
       </Carte>
 
-      <Section>Commission</Section>
+      <Section>{tm("Commission")}</Section>
       <Carte>
         {beneficiaires.length === 0 ? (
-          <Text style={{ fontSize: 13, color: DS.textSecondary }}>Pas de commission : ajoute un architecte ou un apporteur dans les intervenants si besoin.</Text>
+          <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Pas de commission : ajoute un architecte ou un apporteur dans les intervenants si besoin.")}</Text>
         ) : (
           <View style={{ gap: 8 }}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
@@ -56,7 +56,7 @@ export function FinancesChantier({ moi, chantierId, intervenants, montants, onCh
               montants={commissions} onChange={onChange}
               compteCible={benef?.compte_id ? { id: benef.compte_id, nom: benef.nom } : null}
               libelleDefaut={benef && !benef.compte_id ? benef.nom : undefined} />
-            {benef && !benef.compte_id && <Text style={{ fontSize: 12, color: DS.textSecondary }}>{benef.nom} n'a pas d'accès à l'app : la commission reste visible par l'admin seul.</Text>}
+            {benef && !benef.compte_id && <Text style={{ fontSize: 12, color: DS.textSecondary }}>{benef.nom}{' '}{tm("n'a pas d'accès à l'app : la commission reste visible par l'admin seul.")}</Text>}
           </View>
         )}
       </Carte>

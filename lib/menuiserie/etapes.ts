@@ -3,6 +3,7 @@
  * Sert à l'affichage de la fiche chantier et, plus tard, aux droits par rôle.
  */
 import type { GroupeMn, TypeMontantMn } from './types';
+import { traduit } from '@/lib/menuiserie/i18n';
 
 export type RempliPar = 'admin' | 'usine' | 'tous';
 
@@ -34,7 +35,7 @@ export function visibiliteDocs(def: DefEtape): GroupeMn[] {
 }
 
 /** Les 13 critères de vérification d'un meuble */
-export const CRITERES_VERIF: { cle: string; label: string; aide?: string }[] = [
+export const CRITERES_VERIF: { cle: string; label: string; aide?: string }[] = traduit([
   { cle: 'dimensions', label: 'Dimensions' },
   { cle: 'fixation', label: 'Système de fixation' },
   { cle: 'led', label: 'LED' },
@@ -48,9 +49,9 @@ export const CRITERES_VERIF: { cle: string; label: string; aide?: string }[] = [
   { cle: 'charnieres', label: 'Charnières', aide: 'frigo · grand angle · quantités' },
   { cle: 'tringles', label: 'Tringles' },
   { cle: 'tiroirs', label: 'Tiroirs' },
-];
+]);
 
-export const ETAPES_MN: DefEtape[] = [
+export const ETAPES_MN: DefEtape[] = traduit([
   { cle: 'plan_devis', titre: 'Plan pour devis', rempliPar: 'admin', visibleUsine: true, montants: [] },
   { cle: 'devis', titre: 'Devis', rempliPar: 'usine', visibleUsine: true, montants: ['achat_usine', 'vente_client'],
     aide: "Le devis de l'usine (achat) et ton prix de vente client. Le prix de vente n'est jamais visible par l'usine." },
@@ -86,7 +87,7 @@ export const ETAPES_MN: DefEtape[] = [
   { cle: 'pv', titre: 'PV de réception & réserves', rempliPar: 'admin', visibleUsine: false, montants: ['reserve', 'monte_charge', 'demenageur'],
     aide: "Le PV se crée ici. Les réserves transmises à l'usine ne portent ni prix ni nom de client : seulement le nom du chantier." },
   { cle: 'sav', titre: 'SAV', rempliPar: 'admin', visibleUsine: false, montants: [], aVenir: true },
-];
+]);
 
 export function defEtape(cle: string): DefEtape | undefined {
   return ETAPES_MN.find(e => e.cle === cle);

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { type Language, type TranslationKeys, LANGUAGES, getTranslations } from '@/i18n';
+import { definirLangueMn } from '@/lib/menuiserie/i18n';
 
 const LANG_KEY = 'sk_deco_language_v2';
 const LANG_SELECTED_KEY = 'sk_deco_language_selected_v2';
@@ -59,6 +60,7 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const t = getTranslations(language);
+  definirLangueMn(language);
 
   return (
     <LanguageContext.Provider value={{

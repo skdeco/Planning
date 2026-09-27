@@ -15,12 +15,13 @@ import { envoyerMessageMn, listerMessagesMn, listerRdvMn, proposerRdvMn, repondr
 import type { MessageMn, RdvMn } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Champ, EnTete, Pastille, Section } from '@/components/menuiserie/ui';
 
-const STATUT_RDV: Record<RdvMn['statut'], { label: string; fond: string; texte: string }> = {
+import { tm, traduit } from '@/lib/menuiserie/i18n';
+const STATUT_RDV: Record<RdvMn['statut'], { label: string; fond: string; texte: string }> = traduit({
   validation_admins: { label: "En validation par l'équipe SK DECO", fond: '#F6EEDB', texte: '#5A3E08' },
   chez_client: { label: 'En attente du client', fond: '#DCE6F0', texte: '#1F4E79' },
   confirme: { label: 'Confirmé', fond: '#E7F0EA', texte: '#1F4D36' },
   refuse: { label: 'Refusé', fond: '#F6DCDA', texte: '#7A1F18' },
-};
+});
 
 export default function MessagerieMn() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -46,7 +47,7 @@ export default function MessagerieMn() {
     try { await envoyerMessageMn(moi, String(id), texte); setTexte(''); charger(); } catch (e) { setErreur((e as Error).message); }
   };
   const proposer = async () => {
-    if (!form?.titre.trim() || !form.date || !/^\d{2}:\d{2}$/.test(form.debut)) { setErreur('Titre, date et heure (HH:MM) obligatoires.'); return; }
+    if (!form?.titre.trim() || !form.date || !/^\d{2}:\d{2}$/.test(form.debut)) { setErreur(tm("Titre, date et heure (HH:MM) obligatoires.")); return; }
     try { await proposerRdvMn({ chantierId: String(id), titre: form.titre.trim(), date: form.date, debut: form.debut, fin: form.fin }); setForm(null); charger(); }
     catch (e) { setErreur((e as Error).message); }
   };
@@ -59,22 +60,22 @@ export default function MessagerieMn() {
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 10 }} keyboardShouldPersistTaps="handled">
-          <EnTete titre="Messagerie & RDV" retour={() => router.back()} />
+          <EnTete titre={tm("Messagerie & RDV")} retour={() => router.back()} />
 
-          <Section>Rendez-vous</Section>
-          {rdvs.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>Aucun RDV proposé.</Text>}
+          <Section>{tm("Rendez-vous")}</Section>
+          {rdvs.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Aucun RDV proposé.")}</Text>}
           {rdvs.map(r => {
             const st = STATUT_RDV[r.statut];
             return (
               <Carte key={r.id}>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{r.titre}</Text>
                 <Text style={{ fontSize: 14, color: DS.text }}>{formatDateFR(r.date_rdv)} · {r.heure_debut}{r.heure_fin ? `–${r.heure_fin}` : ''}</Text>
-                <Text style={{ fontSize: 12, color: DS.textSecondary }}>Proposé par {r.propose_par_nom}</Text>
+                <Text style={{ fontSize: 12, color: DS.textSecondary }}>{tm("Proposé par")}{' '}{r.propose_par_nom}</Text>
                 <Pastille label={st.label} fond={st.fond} texte={st.texte} />
                 {doitRepondre(r) && (
                   <View style={{ flexDirection: 'row', gap: 8 }}>
-                    <View style={{ flex: 1 }}><Bouton label="Accepter" onPress={() => repondre(r, true)} /></View>
-                    <View style={{ flex: 1 }}><Bouton label="Refuser" variante="contour" onPress={() => repondre(r, false)} /></View>
+                    <View style={{ flex: 1 }}><Bouton label={tm("Accepter")} onPress={() => repondre(r, true)} /></View>
+                    <View style={{ flex: 1 }}><Bouton label={tm("Refuser")} variante="contour" onPress={() => repondre(r, false)} /></View>
                   </View>
                 )}
               </Carte>
@@ -82,26 +83,26 @@ export default function MessagerieMn() {
           })}
           {form ? (
             <Carte>
-              <Champ label="Objet du RDV" value={form.titre} onChangeText={v => setForm(f => f && { ...f, titre: v })} />
-              <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>Date</Text>
-              <DateInput value={form.date} onChangeDate={d => setForm(f => f && { ...f, date: d })} accessibilityLabel="Date du RDV"
+              <Champ label={tm("Objet du RDV")} value={form.titre} onChangeText={v => setForm(f => f && { ...f, titre: v })} />
+              <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>{tm("Date")}</Text>
+              <DateInput value={form.date} onChangeDate={d => setForm(f => f && { ...f, date: d })} accessibilityLabel={tm("Date du RDV")}
                 style={{ borderWidth: 1, borderColor: DS.border, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: DS.text, backgroundColor: DS.background }} />
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <Champ label="Début (HH:MM)" value={form.debut} onChangeText={v => setForm(f => f && { ...f, debut: v })} />
-                <Champ label="Fin (HH:MM)" value={form.fin} onChangeText={v => setForm(f => f && { ...f, fin: v })} />
+                <Champ label={tm("Début (HH:MM)")} value={form.debut} onChangeText={v => setForm(f => f && { ...f, debut: v })} />
+                <Champ label={tm("Fin (HH:MM)")} value={form.fin} onChangeText={v => setForm(f => f && { ...f, fin: v })} />
               </View>
               <Text style={{ fontSize: 12, color: DS.textSecondary }}>
-                {admin ? "Les autres administrateurs doivent d'abord accepter ; ensuite le client reçoit la proposition." : "L'équipe SK DECO doit accepter la proposition."}
+                {admin ? tm("Les autres administrateurs doivent d'abord accepter ; ensuite le client reçoit la proposition.") : tm("L'équipe SK DECO doit accepter la proposition.")}
               </Text>
-              <Bouton label="Proposer le RDV" onPress={proposer} />
-              <Bouton label="Annuler" variante="discret" onPress={() => setForm(null)} />
+              <Bouton label={tm("Proposer le RDV")} onPress={proposer} />
+              <Bouton label={tm("Annuler")} variante="discret" onPress={() => setForm(null)} />
             </Carte>
           ) : (
-            <Bouton label="+ Proposer un RDV" variante="contour" onPress={() => setForm({ titre: '', date: '', debut: '10:00', fin: '11:00' })} />
+            <Bouton label={tm("+ Proposer un RDV")} variante="contour" onPress={() => setForm({ titre: '', date: '', debut: '10:00', fin: '11:00' })} />
           )}
 
-          <Section>Messages</Section>
-          {messages.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>Aucun message.</Text>}
+          <Section>{tm("Messages")}</Section>
+          {messages.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Aucun message.")}</Text>}
           {messages.map(m => {
             const mien = m.auteur_compte === moi.id;
             return (
@@ -114,9 +115,9 @@ export default function MessagerieMn() {
           {!!erreur && <Text style={{ color: DS.error, fontWeight: '600' }}>{erreur}</Text>}
         </ScrollView>
         <View style={{ flexDirection: 'row', gap: 8, padding: 12, borderTopWidth: 1, borderTopColor: DS.border, backgroundColor: DS.surface, alignItems: 'flex-end' }}>
-          <Champ label="Message" value={texte} onChangeText={setTexte} multiline />
+          <Champ label={tm("Message")} value={texte} onChangeText={setTexte} multiline />
           <Pressable onPress={envoyer} accessibilityRole="button" style={{ minHeight: 44, paddingHorizontal: 14, borderRadius: radius.md, backgroundColor: DS.primary, justifyContent: 'center' }}>
-            <Text style={{ color: DS.textInverse, fontWeight: '800' }}>Envoyer</Text>
+            <Text style={{ color: DS.textInverse, fontWeight: '800' }}>{tm("Envoyer")}</Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>

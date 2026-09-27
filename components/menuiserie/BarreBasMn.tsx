@@ -7,14 +7,15 @@ import { View, Text, Pressable } from 'react-native';
 import { usePathname, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { DS, radius } from '@/constants/design';
+import { traduit } from '@/lib/menuiserie/i18n';
 
-const ONGLETS = [
+const ONGLETS = traduit([
   { label: 'Accueil', route: '/menuiserie' },
   { label: 'Planning', route: '/menuiserie/planning' },
   { label: 'Catalogue', route: '/menuiserie/catalogue' },
   { label: 'Usines', route: '/menuiserie/usines' },
   { label: 'Comptes', route: '/menuiserie/comptes' },
-];
+]);
 
 export function BarreBasMn() {
   const insets = useSafeAreaInsets();

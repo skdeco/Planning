@@ -12,6 +12,8 @@ import { useApp } from '@/app/context/AppContext';
 import { DS, radius } from '@/constants/design';
 import { droitsEspaces, routeEspace } from '@/lib/espaces';
 import { useInvitationsRdv } from '@/hooks/useInvitationsRdv';
+import { useLanguage } from '@/app/context/LanguageContext';
+import { traduit } from '@/lib/menuiserie/i18n';
 
 export type OngletEspace = 'travaux' | 'menuiserie' | 'planning';
 
@@ -28,9 +30,10 @@ function useOnglets(): OngletEspace[] {
   return o;
 }
 
-const LIBELLE: Record<OngletEspace, string> = { travaux: 'Travaux', menuiserie: 'Menuiserie', planning: 'Planning' };
+const LIBELLE: Record<OngletEspace, string> = traduit({ travaux: 'Travaux', menuiserie: 'Menuiserie', planning: 'Planning' });
 
 export function BarreEspaces({ actif }: { actif: OngletEspace }) {
+  useLanguage(); // re-rendu au changement de langue
   const { currentUser, setCurrentUser } = useApp();
   const router = useRouter();
   const { total } = useInvitationsRdv();

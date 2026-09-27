@@ -9,7 +9,8 @@ import { DS, radius } from '@/constants/design';
 import { listerPointagesMn, monUsineMn, pointerMn } from '@/lib/menuiserie/api2';
 import type { CompteMn, PointageMn, UsineMn } from '@/lib/menuiserie/types';
 
-const heure = (iso: string) => new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+import { tm, localeMn } from '@/lib/menuiserie/i18n';
+const heure = (iso: string) => new Date(iso).toLocaleTimeString(localeMn(), { hour: '2-digit', minute: '2-digit' });
 
 export function PointageCarte({ moi, chantierId }: { moi: CompteMn; chantierId?: string | null }) {
   const [usine, setUsine] = useState<UsineMn | null>(null);
@@ -38,7 +39,7 @@ export function PointageCarte({ moi, chantierId }: { moi: CompteMn; chantierId?:
     } catch { /* position indisponible : pointage quand même, signalé */ }
     try {
       const r = await pointerMn(moi, { type: prochain, position, usine: moi.role === 'employe_usine' ? usine : null, chantierId });
-      setMessage(`${prochain === 'arrivee' ? 'Arrivée' : 'Départ'} enregistré${r.distance != null ? ` (${r.distance} m de l'usine)` : ''}${r.horsZone ? ' — hors zone, signalé' : ''}.`);
+      setMessage(tm("{0} enregistré{1}{2}.", prochain === 'arrivee' ? tm('Arrivée') : tm('Départ'), r.distance != null ? tm(" ({0} m de l'usine)", r.distance) : '', r.horsZone ? tm(' — hors zone, signalé') : ''));
       await charger();
     } catch (e) { setMessage((e as Error).message); } finally { setCharge(false); }
   };
@@ -46,16 +47,16 @@ export function PointageCarte({ moi, chantierId }: { moi: CompteMn; chantierId?:
   return (
     <View style={{ backgroundColor: DS.primary, borderRadius: radius.xl, padding: 16, gap: 10 }}>
       <Text style={{ fontSize: 13, fontWeight: '700', color: '#F1DCE1' }}>
-        {moi.role === 'employe_usine' ? (usine?.latitude != null ? `Pointage à l'usine ${usine.nom}` : "Position de l'usine pas encore définie") : 'Pointage'}
+        {moi.role === 'employe_usine' ? (usine?.latitude != null ? tm("Pointage à l'usine {0}", usine.nom) : tm("Position de l'usine pas encore définie")) : tm("Pointage")}
       </Text>
       <Pressable onPress={pointer} disabled={charge} accessibilityRole="button"
         style={{ minHeight: 54, borderRadius: radius.lg, backgroundColor: DS.surface, alignItems: 'center', justifyContent: 'center' }}>
         {charge ? <ActivityIndicator color={DS.primary} />
-          : <Text style={{ fontSize: 17, fontWeight: '800', color: DS.primary }}>{prochain === 'arrivee' ? 'Pointer mon arrivée' : 'Pointer mon départ'}</Text>}
+          : <Text style={{ fontSize: 17, fontWeight: '800', color: DS.primary }}>{prochain === 'arrivee' ? tm("Pointer mon arrivée") : tm("Pointer mon départ")}</Text>}
       </Pressable>
       {jour.slice().reverse().map(p => (
         <Text key={p.id} style={{ fontSize: 13, color: DS.textInverse }}>
-          {p.type === 'arrivee' ? 'Arrivée' : 'Départ'} {heure(p.horodatage)}{p.hors_zone ? ' · hors zone' : ''}
+          {p.type === 'arrivee' ? tm("Arrivée") : tm("Départ")} {heure(p.horodatage)}{p.hors_zone ? tm(" · hors zone") : ''}
         </Text>
       ))}
       {!!message && <Text style={{ fontSize: 13, fontWeight: '700', color: DS.textInverse }}>{message}</Text>}

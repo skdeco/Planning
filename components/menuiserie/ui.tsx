@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Pressable, TextInput, type TextInputProps, ActivityIndicator } from 'react-native';
 import { DS, radius, shadows } from '@/constants/design';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export function Carte({ children, style }: { children: React.ReactNode; style?: object }) {
   return <View style={[{ backgroundColor: DS.surface, borderRadius: radius.xl, padding: 16, gap: 8, ...shadows.md }, style]}>{children}</View>;
 }
@@ -75,8 +76,8 @@ export function EnTete({ titre, retour, droite }: { titre: string; retour?: () =
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8 }}>
       {retour && (
-        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel="Retour" style={{ minHeight: 44, justifyContent: 'center', paddingRight: 6 }}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: DS.primary }}>‹ Retour</Text>
+        <Pressable onPress={retour} accessibilityRole="button" accessibilityLabel={tm("Retour")} style={{ minHeight: 44, justifyContent: 'center', paddingRight: 6 }}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: DS.primary }}>{tm("‹ Retour")}</Text>
         </Pressable>
       )}
       <Text style={{ fontSize: 20, fontWeight: '800', color: DS.text, flex: 1 }} numberOfLines={1}>{titre}</Text>

@@ -18,6 +18,8 @@ import { ROLE_COMPTE_MN_LABELS, STATUT_CHANTIER_MN_LABELS } from '@/lib/menuiser
 import { Bouton, Carte, Section } from './ui';
 import { PointageCarte } from './PointageCarte';
 
+import { LanguageFlag } from '@/components/LanguageFlag';
+import { tm } from '@/lib/menuiserie/i18n';
 export function AccueilRole() {
   const router = useRouter();
   const { currentUser, logout } = useApp();
@@ -57,8 +59,9 @@ export function AccueilRole() {
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={async () => { setRafraichit(true); await charger(); setRafraichit(false); }} tintColor={DS.primary} />}
       >
         <View style={{ marginTop: 8, gap: 8 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: DS.textSecondary }}>SK DECO · {ROLE_COMPTE_MN_LABELS[role].toUpperCase()}</Text>
-          <Text style={screenTitle}>Bonjour {compte.nom.split(' ')[0]}</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: DS.textSecondary }}>{tm("SK DECO ·")}{' '}{ROLE_COMPTE_MN_LABELS[role].toUpperCase()}</Text>
+          <View style={{ position: 'absolute', right: 0, top: 0 }}><LanguageFlag /></View>
+          <Text style={screenTitle}>{tm("Bonjour")}{' '}{compte.nom.split(' ')[0]}</Text>
         </View>
         {!!erreur && <Text style={{ color: DS.error, fontWeight: '700' }}>{erreur}</Text>}
 
@@ -66,15 +69,15 @@ export function AccueilRole() {
 
         {role === 'poseur' && poses.length > 0 && (
           <>
-            <Section>Mes poses</Section>
+            <Section>{tm("Mes poses")}</Section>
             {poses.map(p => {
               const ch = chantiers.find(c => c.id === p.chantier_id);
               return (
                 <Pressable key={p.chantier_id} onPress={() => router.push(`/menuiserie/chantier/${p.chantier_id}` as any)} accessibilityRole="button">
                   <Carte>
-                    <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{ch?.nom || 'Chantier'}</Text>
+                    <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{ch?.nom || tm("Chantier")}</Text>
                     <Text style={{ fontSize: 14, color: DS.text }}>
-                      {p.infos.date_debut ? `Du ${formatDateFR(p.infos.date_debut)}` : 'Dates à définir'}{p.infos.date_fin ? ` au ${formatDateFR(p.infos.date_fin)}` : ''}
+                      {p.infos.date_debut ? tm("Du {0}", formatDateFR(p.infos.date_debut)) : tm("Dates à définir")}{p.infos.date_fin ? ` ${tm('au')} ${formatDateFR(p.infos.date_fin)}` : ''}
                     </Text>
                   </Carte>
                 </Pressable>
@@ -83,14 +86,14 @@ export function AccueilRole() {
           </>
         )}
 
-        <Section>{role === 'client' ? 'Mon projet' : 'Chantiers'} ({enCours.length})</Section>
-        {enCours.length === 0 && <Text style={{ fontSize: 14, color: DS.textSecondary }}>Aucun chantier pour le moment.</Text>}
+        <Section>{role === 'client' ? tm("Mon projet") : tm("Chantiers")} ({enCours.length})</Section>
+        {enCours.length === 0 && <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Aucun chantier pour le moment.")}</Text>}
         {enCours.map(c => (
           <Pressable key={c.id} onPress={() => router.push(`/menuiserie/chantier/${c.id}` as any)} accessibilityRole="button">
             <Carte>
               <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{c.nom.toUpperCase()}{c.ville ? ` · ${c.ville}` : ''}</Text>
               <Text style={{ fontSize: 13, color: DS.textSecondary }}>
-                {STATUT_CHANTIER_MN_LABELS[c.statut]}{c.date_livraison_prevue ? ` · livraison prévue ${formatDateFR(c.date_livraison_prevue)}` : ''}
+                {STATUT_CHANTIER_MN_LABELS[c.statut]}{c.date_livraison_prevue ? tm(" · livraison prévue {0}", formatDateFR(c.date_livraison_prevue)) : ''}
               </Text>
             </Carte>
           </Pressable>
@@ -98,20 +101,20 @@ export function AccueilRole() {
 
         {role === 'usine' && (
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}><Bouton label="Employés" variante="contour" onPress={() => router.push('/menuiserie/employes' as any)} /></View>
-            <View style={{ flex: 1 }}><Bouton label="Catalogue" variante="contour" onPress={() => router.push('/menuiserie/catalogue' as any)} /></View>
+            <View style={{ flex: 1 }}><Bouton label={tm("Employés")} variante="contour" onPress={() => router.push('/menuiserie/employes' as any)} /></View>
+            <View style={{ flex: 1 }}><Bouton label={tm("Catalogue")} variante="contour" onPress={() => router.push('/menuiserie/catalogue' as any)} /></View>
           </View>
         )}
         {role === 'employe_usine' && (
           <View style={{ flexDirection: 'row', gap: 8 }}>
-            <View style={{ flex: 1 }}><Bouton label="Congés & documents" variante="contour" onPress={() => router.push('/menuiserie/rh' as any)} /></View>
-            <View style={{ flex: 1 }}><Bouton label="Catalogue" variante="contour" onPress={() => router.push('/menuiserie/catalogue' as any)} /></View>
+            <View style={{ flex: 1 }}><Bouton label={tm("Congés & documents")} variante="contour" onPress={() => router.push('/menuiserie/rh' as any)} /></View>
+            <View style={{ flex: 1 }}><Bouton label={tm("Catalogue")} variante="contour" onPress={() => router.push('/menuiserie/catalogue' as any)} /></View>
           </View>
         )}
-        {role === 'poseur' && <Bouton label="Historique de mes pointages" variante="contour" onPress={() => router.push('/menuiserie/rh' as any)} />}
+        {role === 'poseur' && <Bouton label={tm("Historique de mes pointages")} variante="contour" onPress={() => router.push('/menuiserie/rh' as any)} />}
 
-        <Bouton label="Mon compte (identifiant, mot de passe)" variante="contour" onPress={() => router.push('/menuiserie/moncompte' as any)} />
-        <Bouton label="Se déconnecter" variante="discret" onPress={seDeconnecter} />
+        <Bouton label={tm("Mon compte (identifiant, mot de passe)")} variante="contour" onPress={() => router.push('/menuiserie/moncompte' as any)} />
+        <Bouton label={tm("Se déconnecter")} variante="discret" onPress={seDeconnecter} />
       </ScrollView>
     </ScreenContainer>
   );

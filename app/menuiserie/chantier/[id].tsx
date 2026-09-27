@@ -21,6 +21,7 @@ import { AdresseChantier } from '@/components/menuiserie/AdresseChantier';
 import { ChoixUsine } from '@/components/menuiserie/ChoixUsine';
 import { Bouton } from '@/components/menuiserie/ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 const PASTILLE_STATUT = { a_faire: { fond: '#EAE2D8', texte: DS.textSecondary, signe: '' }, en_cours: { fond: DS.warning, texte: DS.sombre, signe: '…' }, fait: { fond: '#2F6B4F', texte: '#FFFFFF', signe: '✓' } };
 
 function Ligne({ label, valeur }: { label: string; valeur?: string | null }) {
@@ -55,7 +56,7 @@ function ChantierAdmin() {
   if (!d) {
     return (
       <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
-        <View style={{ padding: 16 }}><EnTete titre="Chantier" retour={() => router.back()} /></View>
+        <View style={{ padding: 16 }}><EnTete titre={tm("Chantier")} retour={() => router.back()} /></View>
         {erreur ? <Text style={{ color: DS.error, padding: 16 }}>{erreur}</Text> : <ActivityIndicator color={DS.primary} style={{ marginTop: 40 }} />}
       </ScreenContainer>
     );
@@ -66,14 +67,14 @@ function ChantierAdmin() {
 
   const changerStatut = async (s: StatutChantierMn) => { await majChantierMn(moi, c.id, { statut: s }, `Statut : ${STATUT_CHANTIER_MN_LABELS[s]}`); charger(); };
   const supprimer = () => {
-    const titre = `Supprimer « ${c.nom} » ?`;
-    const texte = "Le chantier, ses étapes, documents, photos, montants et réserves seront effacés définitivement. Pour simplement le ranger, choisis plutôt « Archivé ».";
+    const titre = tm("Supprimer « {0} » ?", c.nom);
+    const texte = tm("Le chantier, ses étapes, documents, photos, montants et réserves seront effacés définitivement. Pour simplement le ranger, choisis plutôt « Archivé ».");
     const go = async () => {
       try { await supprimerChantierMn(c.id); router.replace('/menuiserie' as any); }
       catch (e) { setErreur((e as Error).message); }
     };
     if (Platform.OS === 'web') { if (window.confirm(`${titre}\n\n${texte}`)) go(); return; }
-    Alert.alert(titre, texte, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer définitivement', style: 'destructive', onPress: go }]);
+    Alert.alert(titre, texte, [{ text: tm("Annuler"), style: 'cancel' }, { text: tm("Supprimer définitivement"), style: 'destructive', onPress: go }]);
   };
 
   return (
@@ -91,7 +92,7 @@ function ChantierAdmin() {
             return (
               <Pressable key={o} onPress={() => setOnglet(o)} accessibilityRole="tab" accessibilityState={{ selected: on }}
                 style={{ flex: 1, minHeight: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? DS.surface : 'transparent' }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: on ? DS.primary : DS.textSecondary }}>{o === 'general' ? 'Général' : 'Déroulement'}</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: on ? DS.primary : DS.textSecondary }}>{o === 'general' ? tm("Général") : tm("Déroulement")}</Text>
               </Pressable>
             );
           })}
@@ -103,34 +104,34 @@ function ChantierAdmin() {
               {(['en_cours', 'cloture', 'sav', 'archive'] as const).map(s => <Puce key={s} label={STATUT_CHANTIER_MN_LABELS[s]} actif={c.statut === s} onPress={() => changerStatut(s)} />)}
             </View>
 
-            <Section>Usine de production</Section>
+            <Section>{tm("Usine de production")}</Section>
             <Carte><ChoixUsine moi={moi} chantier={c} usines={usines} onChange={charger} /></Carte>
 
-            <Section>Adresse du chantier</Section>
+            <Section>{tm("Adresse du chantier")}</Section>
             <Carte><AdresseChantier moi={moi} chantier={c} onChange={charger} /></Carte>
 
-            <Section>Intervenants</Section>
+            <Section>{tm("Intervenants")}</Section>
             <Carte>
               <IntervenantsPanel moi={moi} chantierId={c.id} intervenants={d.intervenants} onChange={charger} />
               {(c.client_tel || c.client_email || adresseClient) && (
                 <View style={{ borderTopWidth: 1, borderTopColor: DS.border, paddingTop: 8, marginTop: 4, gap: 4 }}>
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: DS.textSecondary }}>COORDONNÉES DU CLIENT</Text>
-                  <Ligne label="Client" valeur={[c.client_nom, c.client_societe].filter(Boolean).join(' · ')} />
-                  <Ligne label="Adresse" valeur={adresseClient} />
-                  <Ligne label="Téléphone" valeur={c.client_tel} />
-                  <Ligne label="E-mail" valeur={c.client_email} />
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: DS.textSecondary }}>{tm("COORDONNÉES DU CLIENT")}</Text>
+                  <Ligne label={tm("Client")} valeur={[c.client_nom, c.client_societe].filter(Boolean).join(' · ')} />
+                  <Ligne label={tm("Adresse")} valeur={adresseClient} />
+                  <Ligne label={tm("Téléphone")} valeur={c.client_tel} />
+                  <Ligne label={tm("E-mail")} valeur={c.client_email} />
                 </View>
               )}
             </Carte>
 
             <FinancesChantier moi={moi} chantierId={c.id} intervenants={d.intervenants} montants={d.montants} onChange={charger} />
 
-            <Bouton label="Messagerie & RDV avec le client" variante="contour" onPress={() => router.push(`/menuiserie/messagerie/${c.id}` as any)} />
+            <Bouton label={tm("Messagerie & RDV avec le client")} variante="contour" onPress={() => router.push(`/menuiserie/messagerie/${c.id}` as any)} />
             {c.statut !== 'archive' && (
-              <Bouton label="Archiver ce chantier" variante="contour" onPress={() => changerStatut('archive')} />
+              <Bouton label={tm("Archiver ce chantier")} variante="contour" onPress={() => changerStatut('archive')} />
             )}
             <Pressable onPress={supprimer} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 15, fontWeight: '800', color: DS.error }}>Supprimer définitivement ce chantier</Text>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: DS.error }}>{tm("Supprimer définitivement ce chantier")}</Text>
             </Pressable>
           </>
         ) : (
@@ -140,7 +141,7 @@ function ChantierAdmin() {
               const st = PASTILLE_STATUT[e?.statut || 'a_faire'];
               const nbDocs = d.documents.filter(x => x.etape === def.cle).length;
               return (
-                <Pressable key={def.cle} onPress={() => setOuverte(def)} accessibilityRole="button" accessibilityLabel={`Étape ${idx + 1} : ${def.titre}`}>
+                <Pressable key={def.cle} onPress={() => setOuverte(def)} accessibilityRole="button" accessibilityLabel={tm("Étape {0} : {1}", idx + 1, def.titre)}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: DS.surface, borderRadius: 14, borderWidth: 1, borderColor: e?.statut === 'en_cours' ? DS.warning : DS.border, padding: 10, opacity: def.aVenir ? 0.6 : 1 }}>
                     <View style={{ width: 26, height: 26, borderRadius: 13, backgroundColor: st.fond, alignItems: 'center', justifyContent: 'center' }}>
                       <Text style={{ fontSize: 11, fontWeight: '800', color: st.texte }}>{st.signe || idx + 1}</Text>
@@ -148,7 +149,7 @@ function ChantierAdmin() {
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontSize: 15, fontWeight: '700', color: DS.text }}>{idx + 1}. {def.titre}</Text>
                       <Text style={{ fontSize: 12, color: DS.textSecondary }}>
-                        {def.aVenir ? 'Bientôt disponible' : `${nbDocs} document${nbDocs > 1 ? 's' : ''}${e?.updated_by_nom ? ` · ${e.updated_by_nom}` : ''}`}
+                        {def.aVenir ? tm("Bientôt disponible") : `${nbDocs} document${nbDocs > 1 ? 's' : ''}${e?.updated_by_nom ? ` · ${e.updated_by_nom}` : ''}`}
                       </Text>
                     </View>
                     <BadgeRempliPar def={def} />
@@ -161,7 +162,7 @@ function ChantierAdmin() {
 
             {d.journal.length > 0 && (
               <>
-                <Section>Historique</Section>
+                <Section>{tm("Historique")}</Section>
                 <Carte>
                   {d.journal.slice(0, 12).map(j => (
                     <Text key={j.id} style={{ fontSize: 13, color: DS.text }}>

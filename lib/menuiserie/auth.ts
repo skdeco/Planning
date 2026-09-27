@@ -5,6 +5,7 @@ import { mn, mnClientJetable, emailTechnique } from './client';
 import { viderCacheMn } from './cache';
 import type { CompteMn, RoleCompteMn } from './types';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export async function connexionMn(emailOuIdentifiant: string, motDePasse: string): Promise<{ ok: true } | { ok: false; erreur: string }> {
   const saisie = emailOuIdentifiant.trim();
   if (!saisie || !motDePasse) return { ok: false, erreur: 'Renseigne ton e-mail (ou identifiant) et ton mot de passe.' };
@@ -100,7 +101,7 @@ export async function creerCompteAdminAutoMn(p: { nom: string; identifiant: stri
 
 /** Le compte connecté change son mot de passe. */
 export async function changerMonMotDePasseMn(motDePasse: string): Promise<void> {
-  if (motDePasse.length < 8) throw new Error('Mot de passe : 8 caractères minimum.');
+  if (motDePasse.length < 8) throw new Error(tm("Mot de passe : 8 caractères minimum."));
   const { error } = await mn().auth.updateUser({ password: motDePasse });
   if (error) throw new Error(traduireErreurAuth(error.message));
 }

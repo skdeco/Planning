@@ -25,6 +25,8 @@ import { listerRdvMn } from '@/lib/menuiserie/api2';
 import type { RdvMn } from '@/lib/menuiserie/types';
 import { FiltresChantiers, FILTRES_MN_DEFAUT, filtrerChantiers, type FiltresMn } from '@/components/menuiserie/FiltresChantiers';
 
+import { LanguageFlag } from '@/components/LanguageFlag';
+import { tm, localeMn } from '@/lib/menuiserie/i18n';
 const VIDE: DonneesAccueilMn = { chantiers: [], usines: [], intervenants: [], montants: [], etapes: [] };
 
 export default function MenuiserieAccueil() {
@@ -61,11 +63,11 @@ function AccueilAdmin() {
     const limite = dans14.toISOString().slice(0, 10);
     const items: { id: string; texte: string }[] = [];
     d.chantiers.filter(c => c.statut !== 'cloture' && c.statut !== 'archive' && c.date_livraison_prevue && c.date_livraison_prevue <= limite)
-      .forEach(c => items.push({ id: `l-${c.id}`, texte: `Livraison ${c.nom} le ${formatDateFR(c.date_livraison_prevue)}` }));
+      .forEach(c => items.push({ id: `l-${c.id}`, texte: tm("Livraison {0} le {1}", c.nom, formatDateFR(c.date_livraison_prevue)) }));
     d.etapes.filter(e => e.statut === 'en_cours').slice(0, 5).forEach(e => {
       const c = d.chantiers.find(x => x.id === e.chantier_id);
       const def = ETAPES_MN.find(x => x.cle === e.etape);
-      if (c && def) items.push({ id: `e-${c.id}-${e.etape}`, texte: `${c.nom} · ${def.titre} en cours` });
+      if (c && def) items.push({ id: `e-${c.id}-${e.etape}`, texte: tm("{0} · {1} en cours", c.nom, def.titre) });
     });
     return items;
   }, [d]);
@@ -74,7 +76,7 @@ function AccueilAdmin() {
     const etapes = d.etapes.filter(e => e.chantier_id === chantierId);
     const enCours = ETAPES_MN.find(def => etapes.some(e => e.etape === def.cle && e.statut === 'en_cours'));
     const faites = etapes.filter(e => e.statut === 'fait').length;
-    return `${enCours ? enCours.titre : faites ? 'Dernière étape faite' : 'Pas commencé'} · ${faites}/${ETAPES_MN.length}`;
+    return `${enCours ? enCours.titre : faites ? tm('Dernière étape faite') : tm('Pas commencé')} · ${faites}/${ETAPES_MN.length}`;
   };
 
   return (
@@ -83,18 +85,19 @@ function AccueilAdmin() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 12 }}
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={async () => { setRafraichit(true); await charger(); setRafraichit(false); }} tintColor={DS.primary} />}
       >
-        <View style={{ marginTop: 2 }}>
+        <View style={{ marginTop: 2, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
           <Text style={{ fontSize: 14, color: DS.textSecondary, textTransform: 'capitalize' }}>
-            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {new Date().toLocaleDateString(localeMn(), { weekday: 'long', day: 'numeric', month: 'long' })}
           </Text>
+          <LanguageFlag />
         </View>
 
         <View style={{ marginHorizontal: -12 }}><InvitationsRdv /></View>
 
         {!estAdmin ? (
           <Carte>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>Votre espace arrive bientôt</Text>
-            <Text style={{ fontSize: 14, color: DS.textSecondary }}>Vous serez prévenu dès son ouverture.</Text>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{tm("Votre espace arrive bientôt")}</Text>
+            <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Vous serez prévenu dès son ouverture.")}</Text>
           </Carte>
         ) : (
           <>
@@ -105,9 +108,9 @@ function AccueilAdmin() {
               return (
                 <Pressable key={r.id} onPress={() => router.push(`/menuiserie/messagerie/${r.chantier_id}` as any)} accessibilityRole="button">
                   <Carte style={{ borderWidth: 2, borderColor: DS.warning }}>
-                    <Section>RDV à valider{ch ? ` · ${ch.nom}` : ''}</Section>
+                    <Section>{tm("RDV à valider")}{ch ? ` · ${ch.nom}` : ''}</Section>
                     <Text style={{ fontSize: 15, fontWeight: '700', color: DS.text }}>{r.titre} · {formatDateFR(r.date_rdv)} {r.heure_debut}</Text>
-                    <Text style={{ fontSize: 13, color: DS.textSecondary }}>Proposé par {r.propose_par_nom} — touche pour répondre</Text>
+                    <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Proposé par")}{' '}{r.propose_par_nom}{' '}{tm("— touche pour répondre")}</Text>
                   </Carte>
                 </Pressable>
               );
@@ -115,7 +118,7 @@ function AccueilAdmin() {
 
             {ordreDuJour.length > 0 && (
               <Carte>
-                <Section>Ordre du jour</Section>
+                <Section>{tm("Ordre du jour")}</Section>
                 {ordreDuJour.map(o => <Text key={o.id} style={{ fontSize: 15, fontWeight: '600', color: DS.text }}>• {o.texte}</Text>)}
               </Carte>
             )}
@@ -125,14 +128,14 @@ function AccueilAdmin() {
             <CaParUsine montants={d.montants} chantiers={d.chantiers} usines={d.usines} />
 
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4 }}>
-              <Section>Chantiers ({liste.length})</Section>
+              <Section>{tm("Chantiers (")}{liste.length})</Section>
               <Pressable onPress={() => router.push('/menuiserie/nouveau' as any)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: DS.primary }}>+ Nouveau</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: DS.primary }}>{tm("+ Nouveau")}</Text>
               </Pressable>
             </View>
             <FiltresChantiers valeur={filtres} onChange={setFiltres} usines={d.usines} intervenants={d.intervenants} />
 
-            {liste.length === 0 && <Text style={{ fontSize: 14, color: DS.textSecondary }}>Aucun chantier pour ces filtres.</Text>}
+            {liste.length === 0 && <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Aucun chantier pour ces filtres.")}</Text>}
             {liste.map(c => {
               const usine = d.usines.find(u => u.id === c.usine_id);
               return (
@@ -151,7 +154,7 @@ function AccueilAdmin() {
           </>
         )}
 
-        {!estAdmin && <Bouton label="Se déconnecter de la Menuiserie" variante="discret" onPress={deconnecter} />}
+        {!estAdmin && <Bouton label={tm("Se déconnecter de la Menuiserie")} variante="discret" onPress={deconnecter} />}
       </ScrollView>
     </ScreenContainer>
   );

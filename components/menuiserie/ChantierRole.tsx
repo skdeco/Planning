@@ -22,6 +22,7 @@ import { ReservesPanel } from './ReservesPanel';
 import { EspaceClient } from './EspaceClient';
 import { SignalerPoseur } from './SignalerPoseur';
 
+import { tm } from '@/lib/menuiserie/i18n';
 function Ligne({ label, valeur }: { label: string; valeur?: string | null }) {
   if (!valeur) return null;
   return (
@@ -50,7 +51,7 @@ export function ChantierRole() {
   if (!d) {
     return (
       <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
-        <View style={{ padding: 16 }}><EnTete titre="Chantier" retour={() => router.back()} /></View>
+        <View style={{ padding: 16 }}><EnTete titre={tm("Chantier")} retour={() => router.back()} /></View>
         {erreur ? <Text style={{ color: DS.error, padding: 16 }}>{erreur}</Text> : <ActivityIndicator color={DS.primary} style={{ marginTop: 40 }} />}
       </ScreenContainer>
     );
@@ -66,16 +67,16 @@ export function ChantierRole() {
       >
         <EnTete titre={c.nom.toUpperCase()} retour={() => router.back()} />
         <Carte>
-          <Ligne label="Statut" valeur={STATUT_CHANTIER_MN_LABELS[c.statut]} />
-          <Ligne label="Adresse" valeur={[c.rue, c.code_postal, c.ville].filter(Boolean).join(' ')} />
+          <Ligne label={tm("Statut")} valeur={STATUT_CHANTIER_MN_LABELS[c.statut]} />
+          <Ligne label={tm("Adresse")} valeur={[c.rue, c.code_postal, c.ville].filter(Boolean).join(' ')} />
           {groupe !== 'client' && groupe !== 'apporteur' && (
             <>
-              <Ligne label="Code" valeur={c.code_acces} />
-              <Ligne label="Étage" valeur={c.etage} />
-              <Ligne label="Clé" valeur={c.cle} />
+              <Ligne label={tm("Code")} valeur={c.code_acces} />
+              <Ligne label={tm("Étage")} valeur={c.etage} />
+              <Ligne label={tm("Clé")} valeur={c.cle} />
             </>
           )}
-          <Ligne label="Livraison prévue" valeur={formatDateFR(c.date_livraison_prevue)} />
+          <Ligne label={tm("Livraison prévue")} valeur={formatDateFR(c.date_livraison_prevue)} />
         </Carte>
 
         {(groupe === 'client' || groupe === 'apporteur') && (
@@ -84,7 +85,7 @@ export function ChantierRole() {
 
         {groupe === 'poseur' && <SignalerPoseur moi={moi} chantierId={c.id} />}
 
-        {etapes.length > 0 && <Section>Processus</Section>}
+        {etapes.length > 0 && <Section>{tm("Processus")}</Section>}
         {etapes.map(def => {
           const e = d.etapes.find(x => x.etape === def.cle);
           const nbDocs = d.documents.filter(x => x.etape === def.cle).length;
@@ -97,7 +98,7 @@ export function ChantierRole() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 15, fontWeight: '700', color: DS.text }}>{def.titre}</Text>
-                  <Text style={{ fontSize: 12, color: DS.textSecondary }}>{nbDocs} document{nbDocs > 1 ? 's' : ''}{e?.updated_by_nom ? ` · ${e.updated_by_nom}` : ''}</Text>
+                  <Text style={{ fontSize: 12, color: DS.textSecondary }}>{nbDocs}{' '}{tm("document")}{nbDocs > 1 ? 's' : ''}{e?.updated_by_nom ? ` · ${e.updated_by_nom}` : ''}</Text>
                 </View>
                 <BadgeRempliPar def={def} />
               </View>
@@ -107,7 +108,7 @@ export function ChantierRole() {
 
         {groupe === 'usine' && d.reserves.length > 0 && (
           <>
-            <Section>Éléments à reprendre ou terminer</Section>
+            <Section>{tm("Éléments à reprendre ou terminer")}</Section>
             <Carte><ReservesPanel moi={moi} chantierId={c.id} /></Carte>
           </>
         )}

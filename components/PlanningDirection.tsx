@@ -12,9 +12,11 @@ import { Ico } from '@/components/ui/Ico';
 import { cleUtilisateur, nomParticipant, participantsDirection } from '@/lib/espaces';
 import { InvitationsRdv } from '@/components/espaces/InvitationsRdv';
 
+import { useLanguage } from '@/app/context/LanguageContext';
+import { tm, traduit, localeMn } from '@/lib/menuiserie/i18n';
 const COULEURS = ['#2C2C2C', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
-const JOURS_COURT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
-const MOIS = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
+const JOURS_COURT = traduit(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']);
+const MOIS = traduit(['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']);
 const HEURES_OPTIONS = Array.from({ length: 29 }, (_, i) => {
   const h = Math.floor(i / 2) + 6;
   const m = i % 2 === 0 ? '00' : '30';
@@ -32,6 +34,7 @@ const HEADER_HEIGHT = 36;
 const TIME_COL = 38;
 
 export function PlanningDirection() {
+  useLanguage(); // re-rendu au changement de langue
   const { data, currentUser, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent } = useApp();
   const moi = cleUtilisateur(currentUser);
   const estAdmin = currentUser?.role === 'admin';
@@ -210,21 +213,21 @@ export function PlanningDirection() {
       {/* Toggle semaine/jour + navigation */}
       <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', gap: 4 }}>
         <Pressable style={{ backgroundColor: directionVue === 'semaine' ? '#5C1F2E' : '#F1E7DC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('semaine')}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'semaine' ? '#fff' : '#6E5F54' }}>7j</Text>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'semaine' ? '#fff' : '#6E5F54' }}>{tm("7j")}</Text>
         </Pressable>
         <Pressable style={{ backgroundColor: directionVue === 'jour' ? '#5C1F2E' : '#F1E7DC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('jour')}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'jour' ? '#fff' : '#6E5F54' }}>Jour</Text>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'jour' ? '#fff' : '#6E5F54' }}>{tm("Jour")}</Text>
         </Pressable>
         <Pressable onPress={() => directionVue === 'semaine' ? setWeekOffset(w => w - 1) : setDayOffset(d => d - 1)} style={{ padding: 4 }}><Text style={{ fontSize: 16 }}>‹</Text></Pressable>
         <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#2B1D14', textAlign: 'center' }}>
-          {directionVue === 'semaine' ? weekLabel : (() => { const d = new Date(); d.setDate(d.getDate() + dayOffset); return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' }); })()}
+          {directionVue === 'semaine' ? weekLabel : (() => { const d = new Date(); d.setDate(d.getDate() + dayOffset); return d.toLocaleDateString(localeMn(), { weekday: 'long', day: 'numeric', month: 'long' }); })()}
         </Text>
         <Pressable onPress={() => directionVue === 'semaine' ? setWeekOffset(w => w + 1) : setDayOffset(d => d + 1)} style={{ padding: 4 }}><Text style={{ fontSize: 16 }}>›</Text></Pressable>
         <Pressable onPress={() => { setWeekOffset(0); setDayOffset(0); }} style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 }}>
-          <Text style={{ fontSize: 10, fontWeight: '600', color: '#5C1F2E' }}>Auj.</Text>
+          <Text style={{ fontSize: 10, fontWeight: '600', color: '#5C1F2E' }}>{tm("Auj.")}</Text>
         </Pressable>
         <Pressable style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8 }} onPress={() => openNew()}>
-          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ RDV</Text>
+          <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{tm("+ RDV")}</Text>
         </Pressable>
       </View>
 
@@ -238,9 +241,9 @@ export function PlanningDirection() {
             {evtsJour.length === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                 <Ico e="📭" size={28} />
-                <Text style={{ fontSize: 14, color: '#6E5F54' }}>Aucun rendez-vous</Text>
+                <Text style={{ fontSize: 14, color: '#6E5F54' }}>{tm("Aucun rendez-vous")}</Text>
                 <Pressable style={{ marginTop: 12, backgroundColor: '#5C1F2E', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }} onPress={() => openNew(dateStr)}>
-                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>+ Ajouter un RDV</Text>
+                  <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{tm("+ Ajouter un RDV")}</Text>
                 </Pressable>
               </View>
             ) : (
@@ -251,13 +254,13 @@ export function PlanningDirection() {
                     onPress={() => openEdit(evt)}
                     onLongPress={() => {
                       if (Platform.OS === 'web') {
-                        const nd = parseDateFR(window.prompt('Déplacer à quelle date ? (JJ/MM/AAAA)', formatDateFR(evt.date)));
+                        const nd = parseDateFR(window.prompt(tm("Déplacer à quelle date ? (JJ/MM/AAAA)"), formatDateFR(evt.date)));
                         if (nd && nd !== evt.date) updateAgendaEvent({ ...evt, date: nd });
                       } else {
                         const jours: string[] = [];
                         for (let i = -3; i <= 7; i++) { const dt = new Date(); dt.setDate(dt.getDate() + i); jours.push(toYMD(dt)); }
-                        Alert.alert(`Déplacer "${evt.titre}"`, 'Nouvelle date :', [{ text: 'Annuler', style: 'cancel' }, ...jours.filter(j => j !== evt.date).slice(0, 7).map(j => ({
-                          text: new Date(j + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: 'numeric', month: 'short' }),
+                        Alert.alert(tm("Déplacer \"{0}\"", evt.titre), tm("Nouvelle date :"), [{ text: tm("Annuler"), style: 'cancel' }, ...jours.filter(j => j !== evt.date).slice(0, 7).map(j => ({
+                          text: new Date(j + 'T12:00:00').toLocaleDateString(localeMn(), { weekday: 'short', day: 'numeric', month: 'short' }),
                           onPress: () => updateAgendaEvent({ ...evt, date: j }),
                         }))]);
                       }
@@ -282,7 +285,7 @@ export function PlanningDirection() {
                         )}
                       </View>
                       {(estAdmin || evt.createdBy === moi) && (
-                        <Pressable onPress={() => deleteAgendaEvent(evt.id)} style={{ padding: 6 }} accessibilityLabel="Supprimer le RDV">
+                        <Pressable onPress={() => deleteAgendaEvent(evt.id)} style={{ padding: 6 }} accessibilityLabel={tm("Supprimer le RDV")}>
                           <Ico e="🗑" size={16} color="#E74C3C" />
                         </Pressable>
                       )}
@@ -365,22 +368,22 @@ export function PlanningDirection() {
           <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '92%' }} onPress={e => e.stopPropagation()}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{editId ? 'Modifier' : 'Nouveau RDV'}</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{editId ? tm("Modifier") : tm("Nouveau RDV")}</Text>
                 {editId && (
                   <Pressable onPress={() => { deleteAgendaEvent(editId); setShowForm(false); }} style={{ padding: 6 }}>
-                    <Text style={{ color: '#E74C3C', fontWeight: '600' }}>Supprimer</Text>
+                    <Text style={{ color: '#E74C3C', fontWeight: '600' }}>{tm("Supprimer")}</Text>
                   </Pressable>
                 )}
               </View>
 
-              <Text style={labelStyle}>Titre *</Text>
-              <TextInput style={inputStyle} value={form.titre} onChangeText={v => setForm(f => ({ ...f, titre: v }))} placeholder="Réunion, visite..." />
+              <Text style={labelStyle}>{tm("Titre *")}</Text>
+              <TextInput style={inputStyle} value={form.titre} onChangeText={v => setForm(f => ({ ...f, titre: v }))} placeholder={tm("Réunion, visite...")} />
 
-              <Text style={labelStyle}>Description</Text>
+              <Text style={labelStyle}>{tm("Description")}</Text>
               <TextInput style={[inputStyle, { minHeight: 50 }]} value={form.description} onChangeText={v => setForm(f => ({ ...f, description: v }))} multiline />
 
               {/* Date — grille inline */}
-              <Text style={labelStyle}>Date : {form.date.split('-').reverse().join('/')}</Text>
+              <Text style={labelStyle}>{tm("Date :")}{' '}{form.date.split('-').reverse().join('/')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }} keyboardShouldPersistTaps="handled">
                 {dateOptions.map(opt => (
                   <Pressable key={opt.value} style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, backgroundColor: form.date === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.date === opt.value ? '#5C1F2E' : '#EDE2D6', minWidth: 60, alignItems: 'center' }}
@@ -392,7 +395,7 @@ export function PlanningDirection() {
               </ScrollView>
 
               {/* Heures — grille inline */}
-              <Text style={labelStyle}>Début : {form.heureDebut}</Text>
+              <Text style={labelStyle}>{tm("Début :")}{' '}{form.heureDebut}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
                 {heureOptions.map(opt => (
                   <Pressable key={`d_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureDebut === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.heureDebut === opt.value ? '#5C1F2E' : '#EDE2D6' }}
@@ -401,7 +404,7 @@ export function PlanningDirection() {
                   </Pressable>
                 ))}
               </View>
-              <Text style={labelStyle}>Fin : {form.heureFin || '—'}</Text>
+              <Text style={labelStyle}>{tm("Fin :")}{' '}{form.heureFin || '—'}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
                 {heureOptions.map(opt => (
                   <Pressable key={`f_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureFin === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.heureFin === opt.value ? '#5C1F2E' : '#EDE2D6' }}
@@ -411,14 +414,14 @@ export function PlanningDirection() {
                 ))}
               </View>
 
-              <Text style={labelStyle}>Lieu</Text>
-              <TextInput style={inputStyle} value={form.lieu} onChangeText={v => setForm(f => ({ ...f, lieu: v }))} placeholder="Adresse..." />
+              <Text style={labelStyle}>{tm("Lieu")}</Text>
+              <TextInput style={inputStyle} value={form.lieu} onChangeText={v => setForm(f => ({ ...f, lieu: v }))} placeholder={tm("Adresse...")} />
 
               {/* Chantier */}
-              <Text style={labelStyle}>Chantier associé</Text>
+              <Text style={labelStyle}>{tm("Chantier associé")}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
                 <Pressable style={chipStyle(!form.chantierId)} onPress={() => setForm(f => ({ ...f, chantierId: '' }))}>
-                  <Text style={chipTextStyle(!form.chantierId)}>Aucun</Text>
+                  <Text style={chipTextStyle(!form.chantierId)}>{tm("Aucun")}</Text>
                 </Pressable>
                 {data.chantiers.filter(c => c.statut === 'actif').map(c => (
                   <Pressable key={c.id} style={chipStyle(form.chantierId === c.id, c.couleur)} onPress={() => setForm(f => ({ ...f, chantierId: f.chantierId === c.id ? '' : c.id }))}>
@@ -428,9 +431,9 @@ export function PlanningDirection() {
               </ScrollView>
 
               {/* Récurrence */}
-              <Text style={labelStyle}>Récurrence</Text>
+              <Text style={labelStyle}>{tm("Récurrence")}</Text>
               <View style={{ flexDirection: 'row', gap: 4, marginBottom: 8 }}>
-                {[{ l: 'Aucune', v: 'aucune' }, { l: 'Quotidien', v: 'quotidien' }, { l: 'Hebdo', v: 'hebdomadaire' }, { l: 'Mensuel', v: 'mensuel' }].map(r => (
+                {[{ l: tm("Aucune"), v: 'aucune' }, { l: tm("Quotidien"), v: 'quotidien' }, { l: tm("Hebdo"), v: 'hebdomadaire' }, { l: tm("Mensuel"), v: 'mensuel' }].map(r => (
                   <Pressable key={r.v} style={chipStyle(form.recurrence === r.v)} onPress={() => setForm(f => ({ ...f, recurrence: r.v }))}>
                     <Text style={chipTextStyle(form.recurrence === r.v)}>{r.l}</Text>
                   </Pressable>
@@ -438,17 +441,17 @@ export function PlanningDirection() {
               </View>
               {form.recurrence !== 'aucune' && (
                 <>
-                  <Text style={labelStyle}>Fin de récurrence</Text>
+                  <Text style={labelStyle}>{tm("Fin de récurrence")}</Text>
                   <Pressable style={inputStyle} onPress={() => {/* TODO: date picker */}}>
                     <Text style={{ fontSize: 14, color: form.recurrenceFinDate ? '#2B1D14' : '#9A8C80' }}>
-                      {form.recurrenceFinDate ? form.recurrenceFinDate.split('-').reverse().join('/') : 'Sélectionner...'}
+                      {form.recurrenceFinDate ? form.recurrenceFinDate.split('-').reverse().join('/') : tm("Sélectionner...")}
                     </Text>
                   </Pressable>
                 </>
               )}
 
               {/* Couleur */}
-              <Text style={labelStyle}>Couleur</Text>
+              <Text style={labelStyle}>{tm("Couleur")}</Text>
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
                 {COULEURS.map(c => (
                   <Pressable key={c} onPress={() => setForm(f => ({ ...f, couleur: c }))}
@@ -457,7 +460,7 @@ export function PlanningDirection() {
               </View>
 
               {/* Invités */}
-              <Text style={labelStyle}>Invités (participants)</Text>
+              <Text style={labelStyle}>{tm("Invités (participants)")}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
                 {invitables.map(p => (
                   <Pressable key={p.cle} style={chipStyle(form.invites.includes(p.cle))}
@@ -468,7 +471,7 @@ export function PlanningDirection() {
               </View>
 
               {/* Visibilité */}
-              <Text style={labelStyle}>Visible par (sans être invité)</Text>
+              <Text style={labelStyle}>{tm("Visible par (sans être invité)")}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
                 {data.employes.filter(e => !form.invites.includes(e.id)).map(emp => (
                   <Pressable key={emp.id} style={chipStyle(form.visiblePar.includes(emp.id))}
@@ -480,7 +483,7 @@ export function PlanningDirection() {
 
               <Pressable style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: form.titre.trim() ? 1 : 0.5 }}
                 onPress={handleSave} disabled={!form.titre.trim()}>
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? 'Modifier' : 'Créer le rendez-vous'}</Text>
+                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? tm("Modifier") : tm("Créer le rendez-vous")}</Text>
               </Pressable>
             </ScrollView>
           </Pressable>

@@ -9,6 +9,7 @@ import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import type { UsineMn } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Champ, EnTete } from '@/components/menuiserie/ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 const VIDE = { nom: '', contact_nom: '', contact_tel: '', contact_email: '', adresse: '' };
 
 export default function UsinesMn() {
@@ -22,7 +23,7 @@ export default function UsinesMn() {
   useEffect(charger, [charger]);
 
   const enregistrer = async () => {
-    if (!edition?.nom.trim()) { setErreur('Le nom est obligatoire.'); return; }
+    if (!edition?.nom.trim()) { setErreur(tm("Le nom est obligatoire.")); return; }
     setCharge(true); setErreur('');
     try {
       const n = (s: string) => s.trim() || null;
@@ -32,13 +33,13 @@ export default function UsinesMn() {
   };
 
   const champ = (cle: keyof typeof VIDE, label: string) => (
-    <Champ label={label} value={edition?.[cle] || ''} onChangeText={v => setEdition(p => (p ? { ...p, [cle]: v } : p))} />
+    <Champ label={tm(label)} value={edition?.[cle] || ''} onChangeText={v => setEdition(p => (p ? { ...p, [cle]: v } : p))} />
   );
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
-        <EnTete titre="Usines" />
+        <EnTete titre={tm("Usines")} />
         {edition ? (
           <Carte>
             {champ('nom', "Nom de l'usine *")}
@@ -46,17 +47,17 @@ export default function UsinesMn() {
             <View style={{ flexDirection: 'row', gap: 8 }}>{champ('contact_tel', 'Téléphone')}{champ('contact_email', 'E-mail')}</View>
             {champ('adresse', 'Adresse')}
             {!!erreur && <Text style={{ color: DS.error, fontWeight: '600' }}>{erreur}</Text>}
-            <Bouton label="Enregistrer" onPress={enregistrer} charge={charge} />
-            <Bouton label="Annuler" variante="discret" onPress={() => setEdition(null)} />
+            <Bouton label={tm("Enregistrer")} onPress={enregistrer} charge={charge} />
+            <Bouton label={tm("Annuler")} variante="discret" onPress={() => setEdition(null)} />
           </Carte>
         ) : (
-          <Bouton label="+ Nouvelle usine" onPress={() => setEdition({ ...VIDE })} />
+          <Bouton label={tm("+ Nouvelle usine")} onPress={() => setEdition({ ...VIDE })} />
         )}
         {usines.map(u => (
           <Pressable key={u.id} accessibilityRole="button" onPress={() => setEdition({ id: u.id, nom: u.nom, contact_nom: u.contact_nom || '', contact_tel: u.contact_tel || '', contact_email: u.contact_email || '', adresse: u.adresse || '' })}>
             <Carte>
               <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{u.nom}</Text>
-              <Text style={{ fontSize: 13, color: DS.textSecondary }}>{[u.contact_nom, u.contact_tel, u.contact_email].filter(Boolean).join(' · ') || 'Pas de contact renseigné'}</Text>
+              <Text style={{ fontSize: 13, color: DS.textSecondary }}>{[u.contact_nom, u.contact_tel, u.contact_email].filter(Boolean).join(' · ') || tm("Pas de contact renseigné")}</Text>
             </Carte>
           </Pressable>
         ))}

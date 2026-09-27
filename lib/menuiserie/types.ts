@@ -1,3 +1,4 @@
+import { traduit } from '@/lib/menuiserie/i18n';
 /** Modèle de données de l'espace Menuiserie (tables Supabase mn_*). */
 
 export type RoleCompteMn = 'admin' | 'usine' | 'employe_usine' | 'client' | 'architecte' | 'apporteur' | 'poseur';
@@ -130,7 +131,7 @@ export interface JournalMn {
   created_at: string;
 }
 
-export const ROLE_COMPTE_MN_LABELS: Record<RoleCompteMn, string> = {
+export const ROLE_COMPTE_MN_LABELS: Record<RoleCompteMn, string> = traduit({
   admin: 'Administrateur',
   usine: 'Usine',
   employe_usine: "Employé d'usine",
@@ -138,24 +139,24 @@ export const ROLE_COMPTE_MN_LABELS: Record<RoleCompteMn, string> = {
   architecte: 'Architecte',
   apporteur: "Apporteur d'affaires",
   poseur: 'Poseur',
-};
+});
 
-export const STATUT_CHANTIER_MN_LABELS: Record<StatutChantierMn, string> = {
+export const STATUT_CHANTIER_MN_LABELS: Record<StatutChantierMn, string> = traduit({
   en_cours: 'En cours',
   cloture: 'Clôturé',
   sav: 'SAV',
   archive: 'Archivé',
-};
+});
 
-export const ROLE_INTERVENANT_MN_LABELS: Record<RoleIntervenantMn, string> = {
+export const ROLE_INTERVENANT_MN_LABELS: Record<RoleIntervenantMn, string> = traduit({
   client: 'Client',
   architecte: 'Architecte',
   apporteur: 'Apporteur',
   responsable: 'Responsable',
   poseur: 'Poseur',
-};
+});
 
-export const TYPE_MONTANT_MN_LABELS: Record<TypeMontantMn, string> = {
+export const TYPE_MONTANT_MN_LABELS: Record<TypeMontantMn, string> = traduit({
   achat_usine: 'Achat usine (devis)',
   materiaux: 'Matériaux',
   emballage: 'Emballage',
@@ -169,7 +170,7 @@ export const TYPE_MONTANT_MN_LABELS: Record<TypeMontantMn, string> = {
   commission: 'Commission prévue',
   reglement_commission: 'Commission réglée',
   autre: 'Autre',
-};
+});
 
 export interface VerificationMn {
   id: string;
@@ -282,7 +283,7 @@ export interface FournisseurMn {
 
 export type CategorieCatalogueMn = 'panneaux' | 'tissus' | 'quincaillerie_dressing' | 'quincaillerie_cuisine' | 'eclairage' | 'stock' | 'autre';
 
-export const CATEGORIE_CATALOGUE_LABELS: Record<CategorieCatalogueMn, string> = {
+export const CATEGORIE_CATALOGUE_LABELS: Record<CategorieCatalogueMn, string> = traduit({
   panneaux: 'Panneaux (Egger, Finsa, Decospan…)',
   tissus: 'Tissus',
   quincaillerie_dressing: 'Quincaillerie dressing',
@@ -290,7 +291,7 @@ export const CATEGORIE_CATALOGUE_LABELS: Record<CategorieCatalogueMn, string> = 
   eclairage: 'Éclairage',
   stock: 'Stock usine',
   autre: 'Autre',
-};
+});
 
 export interface ArticleCatalogueMn {
   id: string;
@@ -306,7 +307,7 @@ export interface ArticleCatalogueMn {
 }
 
 /** Rubriques de l'espace client (un document admin peut être « partagé » dans l'une d'elles). */
-export const CATEGORIES_CLIENT: { cle: string; label: string }[] = [
+export const CATEGORIES_CLIENT: { cle: string; label: string }[] = traduit([
   { cle: 'plan_base', label: 'Plan de base' },
   { cle: 'devis', label: 'Devis' },
   { cle: 'devis_signe', label: 'Devis signé' },
@@ -317,4 +318,4 @@ export const CATEGORIES_CLIENT: { cle: string; label: string }[] = [
   { cle: 'photos', label: 'Photos' },
   { cle: 'pv', label: 'PV de réception' },
   { cle: 'sav', label: 'SAV' },
-];
+]);

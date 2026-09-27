@@ -12,6 +12,7 @@ import { CATEGORIES_CLIENT, TYPE_MONTANT_MN_LABELS } from '@/lib/menuiserie/type
 import { ouvrirDocumentMn } from './DocumentsEtape';
 import { Bouton, Carte, Section, euros } from './ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export function EspaceClient({ moi, chantier, documents, montants, onMessagerie }: {
   moi: CompteMn; chantier: ChantierMn; documents: DocumentMn[]; montants: MontantMn[]; onMessagerie: () => void;
 }) {
@@ -24,14 +25,14 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
     <View style={{ gap: 10 }}>
       {moi.role !== 'apporteur' && (
         <>
-          <Section>Mon projet</Section>
+          <Section>{tm("Mon projet")}</Section>
           <Carte style={{ gap: 0, padding: 0 }}>
             {CATEGORIES_CLIENT.map((cat, i) => {
               const docs = documents.filter(d => d.categorie_client === cat.cle);
               return (
                 <View key={cat.cle} style={{ padding: 12, borderTopWidth: i ? 1 : 0, borderTopColor: DS.border, gap: 4 }}>
                   <Text style={{ fontSize: 15, fontWeight: '800', color: DS.text }}>{cat.label}</Text>
-                  {docs.length === 0 && <Text style={{ fontSize: 13, color: DS.textMuted }}>Pas encore disponible</Text>}
+                  {docs.length === 0 && <Text style={{ fontSize: 13, color: DS.textMuted }}>{tm("Pas encore disponible")}</Text>}
                   {docs.map(d => (
                     <Pressable key={d.id} onPress={() => ouvrirDocumentMn(d)} accessibilityRole="link" style={{ minHeight: 32, justifyContent: 'center' }}>
                       <Text style={{ fontSize: 14, fontWeight: '700', color: DS.primary }} numberOfLines={1}>{d.nom}</Text>
@@ -42,26 +43,26 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
             })}
           </Carte>
 
-          <Section>Règlements</Section>
+          <Section>{tm("Règlements")}</Section>
           <Carte>
-            {totalDevis > 0 && <Text style={{ fontSize: 14, color: DS.text }}>Montant du projet : <Text style={{ fontWeight: '800' }}>{euros(totalDevis)} HT</Text></Text>}
+            {totalDevis > 0 && <Text style={{ fontSize: 14, color: DS.text }}>{tm("Montant du projet :")}{' '}<Text style={{ fontWeight: '800' }}>{euros(totalDevis)}{' '}{tm("HT")}</Text></Text>}
             {reglements.filter(m => m.type === 'reglement_client').map(m => (
               <View key={m.id} style={{ flexDirection: 'row', justifyContent: 'space-between', backgroundColor: DS.background, borderRadius: radius.sm, padding: 10 }}>
-                <Text style={{ fontSize: 14, color: DS.text }}>{m.libelle || 'Règlement'} · {formatDateFR(m.date_montant)}</Text>
+                <Text style={{ fontSize: 14, color: DS.text }}>{m.libelle || tm("Règlement")} · {formatDateFR(m.date_montant)}</Text>
                 <Text style={{ fontSize: 14, fontWeight: '800', color: DS.text }}>{euros(Number(m.montant_ht))}</Text>
               </View>
             ))}
-            <Text style={{ fontSize: 14, color: DS.text }}>Total réglé : <Text style={{ fontWeight: '800' }}>{euros(totalRegle)}</Text></Text>
+            <Text style={{ fontSize: 14, color: DS.text }}>{tm("Total réglé :")}{' '}<Text style={{ fontWeight: '800' }}>{euros(totalRegle)}</Text></Text>
           </Carte>
-          <Bouton label="Messagerie · proposer un RDV" variante="contour" onPress={onMessagerie} />
+          <Bouton label={tm("Messagerie · proposer un RDV")} variante="contour" onPress={onMessagerie} />
         </>
       )}
 
       {(moi.role === 'architecte' || moi.role === 'apporteur') && (
         <>
-          <Section>Ma commission</Section>
+          <Section>{tm("Ma commission")}</Section>
           <Carte style={{ backgroundColor: DS.sombre }}>
-            {commissions.length === 0 && <Text style={{ fontSize: 14, color: '#D8D2CC' }}>Aucune commission renseignée.</Text>}
+            {commissions.length === 0 && <Text style={{ fontSize: 14, color: '#D8D2CC' }}>{tm("Aucune commission renseignée.")}</Text>}
             {commissions.map(m => (
               <View key={m.id} style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                 <Text style={{ fontSize: 14, color: '#D8D2CC' }}>{m.libelle || TYPE_MONTANT_MN_LABELS[m.type]}</Text>

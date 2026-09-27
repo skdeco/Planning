@@ -15,6 +15,7 @@ import { CATEGORIES_CLIENT, groupeMn } from '@/lib/menuiserie/types';
 import { visibiliteDocs, type DefEtape } from '@/lib/menuiserie/etapes';
 import { Bouton, Champ, Puce } from './ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export async function ouvrirDocumentMn(d: { chemin: string }): Promise<boolean> {
   const url = await lienDocumentMn(d);
   if (!url) return false;
@@ -35,7 +36,7 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
   const peutSupprimer = (d: DocumentMn) => admin || (d.depose_par === moi.id && !def.suppressionAdminSeul);
 
   const ajouter = async () => {
-    if (def.parPiece && !piece.trim()) { setErreur("Indique d'abord le nom de la pièce."); return; }
+    if (def.parPiece && !piece.trim()) { setErreur(tm("Indique d'abord le nom de la pièce.")); return; }
     setErreur('');
     const fichiers = await pickNativeFile({ acceptCamera: true, compressImages: true, multiple: true });
     if (!fichiers.length) return;
@@ -57,12 +58,12 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
     }
   };
 
-  const ouvrir = async (d: DocumentMn) => { if (!(await ouvrirDocumentMn(d))) setErreur("Impossible d'ouvrir ce document."); };
+  const ouvrir = async (d: DocumentMn) => { if (!(await ouvrirDocumentMn(d))) setErreur(tm("Impossible d'ouvrir ce document.")); };
 
   const supprimer = (d: DocumentMn) => {
     const go = async () => { await supprimerDocumentMn(moi, d); onChange(); };
-    if (Platform.OS === 'web') { if (window.confirm(`Supprimer « ${d.nom} » ?`)) go(); return; }
-    Alert.alert('Supprimer ce document ?', d.nom, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer', style: 'destructive', onPress: go }]);
+    if (Platform.OS === 'web') { if (window.confirm(tm("Supprimer « {0} » ?", d.nom))) go(); return; }
+    Alert.alert(tm("Supprimer ce document ?"), d.nom, [{ text: tm("Annuler"), style: 'cancel' }, { text: tm("Supprimer"), style: 'destructive', onPress: go }]);
   };
 
   const partager = async (categorie: string | null) => {
@@ -72,14 +73,14 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
   };
 
   const groupes = def.parPiece
-    ? [...pieces.map(p => ({ titre: p, docs: documents.filter(d => d.piece === p) })), { titre: 'Sans pièce', docs: documents.filter(d => !d.piece) }].filter(g => g.docs.length)
+    ? [...pieces.map(p => ({ titre: p, docs: documents.filter(d => d.piece === p) })), { titre: tm("Sans pièce"), docs: documents.filter(d => !d.piece) }].filter(g => g.docs.length)
     : [{ titre: '', docs: documents }];
 
   return (
     <View style={{ gap: 8 }}>
       {def.parPiece && !lectureSeule && (
         <View style={{ gap: 6 }}>
-          <Champ label="Nom de la pièce" value={piece} onChangeText={setPiece} placeholder="Ex. Chambre 2, Cuisine…" />
+          <Champ label={tm("Nom de la pièce")} value={piece} onChangeText={setPiece} placeholder={tm("Ex. Chambre 2, Cuisine…")} />
           {pieces.length > 0 && (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {pieces.map(p => <Puce key={p} label={p} actif={piece === p} onPress={() => setPiece(p)} />)}
@@ -87,9 +88,9 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
           )}
         </View>
       )}
-      {!lectureSeule && <Bouton label="+ Ajouter photos / documents" variante="contour" onPress={ajouter} charge={envoi} />}
+      {!lectureSeule && <Bouton label={tm("+ Ajouter photos / documents")} variante="contour" onPress={ajouter} charge={envoi} />}
       {!!erreur && <Text style={{ color: DS.error, fontWeight: '600', fontSize: 13 }}>{erreur}</Text>}
-      {documents.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>Aucun document pour cette étape.</Text>}
+      {documents.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Aucun document pour cette étape.")}</Text>}
       {groupes.map(g => (
         <View key={g.titre || 'tous'} style={{ gap: 6 }}>
           {!!g.titre && <Text style={{ fontSize: 13, fontWeight: '800', color: DS.text, marginTop: 4 }}>{g.titre}</Text>}
@@ -99,17 +100,17 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
                 <Text style={{ fontSize: 14, fontWeight: '700', color: DS.primary }} numberOfLines={1}>{d.nom}</Text>
                 <Text style={{ fontSize: 12, color: DS.textSecondary }}>
                   {d.depose_par_nom || '—'} · {formatDateHeureFR(d.created_at)}
-                  {admin && d.categorie_client ? ` · client : ${CATEGORIES_CLIENT.find(c => c.cle === d.categorie_client)?.label}` : ''}
+                  {admin && d.categorie_client ? tm(" · client : {0}", CATEGORIES_CLIENT.find(c => c.cle === d.categorie_client)?.label) : ''}
                 </Text>
               </Pressable>
               {admin && (
-                <Pressable onPress={() => setAPartager(d)} accessibilityRole="button" accessibilityLabel={`Partager ${d.nom} au client`} style={{ padding: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: DS.primary }}>{d.categorie_client ? 'Client ✓' : 'Client'}</Text>
+                <Pressable onPress={() => setAPartager(d)} accessibilityRole="button" accessibilityLabel={tm("Partager {0} au client", d.nom)} style={{ padding: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: DS.primary }}>{d.categorie_client ? tm("Client ✓") : tm("Client")}</Text>
                 </Pressable>
               )}
               {peutSupprimer(d) && !lectureSeule && (
-                <Pressable onPress={() => supprimer(d)} accessibilityRole="button" accessibilityLabel={`Supprimer ${d.nom}`} style={{ padding: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: DS.error }}>Suppr.</Text>
+                <Pressable onPress={() => supprimer(d)} accessibilityRole="button" accessibilityLabel={tm("Supprimer {0}", d.nom)} style={{ padding: 8 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: DS.error }}>{tm("Suppr.")}</Text>
                 </Pressable>
               )}
             </View>
@@ -120,12 +121,12 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
       <Modal visible={!!aPartager} transparent animationType="fade" onRequestClose={() => setAPartager(null)}>
         <Pressable onPress={() => setAPartager(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 }}>
           <View style={{ backgroundColor: DS.surface, borderRadius: radius.xxl, padding: 16, gap: 8 }}>
-            <Text style={{ fontSize: 17, fontWeight: '800', color: DS.text }}>Partager dans l'espace client</Text>
-            <Text style={{ fontSize: 13, color: DS.textSecondary }}>Le client et son architecte verront ce document dans la rubrique choisie.</Text>
+            <Text style={{ fontSize: 17, fontWeight: '800', color: DS.text }}>{tm("Partager dans l'espace client")}</Text>
+            <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Le client et son architecte verront ce document dans la rubrique choisie.")}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
               {CATEGORIES_CLIENT.map(c => <Puce key={c.cle} label={c.label} actif={aPartager?.categorie_client === c.cle} onPress={() => partager(c.cle)} />)}
             </View>
-            {!!aPartager?.categorie_client && <Bouton label="Ne plus partager" variante="discret" onPress={() => partager(null)} />}
+            {!!aPartager?.categorie_client && <Bouton label={tm("Ne plus partager")} variante="discret" onPress={() => partager(null)} />}
           </View>
         </Pressable>
       </Modal>

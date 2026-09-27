@@ -10,6 +10,7 @@ import { useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { chantiersMenuiserieTravaux, dejaImportes, transfererChantier, type RapportTransfert } from '@/lib/menuiserie/transfert';
 import { Bouton, Carte, Section } from './ui';
 
+import { tm } from '@/lib/menuiserie/i18n';
 export function TransfertTravaux({ onFini }: { onFini: () => void }) {
   const { data, deleteChantier } = useApp();
   const { compte } = useSessionMn();
@@ -34,32 +35,32 @@ export function TransfertTravaux({ onFini }: { onFini: () => void }) {
       }
       setRapports([...res]);
     }
-    setEtat('Transfert terminé.');
+    setEtat(tm('Transfert terminé.'));
     setEnCours(false);
     onFini();
   };
 
   const confirmer = () => {
-    const texte = `${aTransferer.length} chantier(s) menuiserie vont être recopiés ici (infos, client, intervenants, montants, plans, photos, documents) puis retirés de l'espace Travaux.`;
+    const texte = tm("{0} chantier(s) menuiserie vont être recopiés ici (infos, client, intervenants, montants, plans, photos, documents) puis retirés de l'espace Travaux.", aTransferer.length);
     if (Platform.OS === 'web') { if (window.confirm(texte)) lancer(); return; }
-    Alert.alert('Transférer les chantiers menuiserie ?', texte, [{ text: 'Annuler', style: 'cancel' }, { text: 'Transférer', onPress: lancer }]);
+    Alert.alert(tm("Transférer les chantiers menuiserie ?"), texte, [{ text: tm("Annuler"), style: 'cancel' }, { text: tm("Transférer"), onPress: lancer }]);
   };
 
   return (
     <Carte style={{ borderWidth: 2, borderColor: DS.warning }}>
-      <Section>Chantiers menuiserie dans Travaux</Section>
+      <Section>{tm("Chantiers menuiserie dans Travaux")}</Section>
       {aTransferer.length > 0 && (
         <>
           <Text style={{ fontSize: 14, color: DS.text }}>
-            {aTransferer.length} chantier(s) à transférer : {aTransferer.map(c => c.nom).join(', ')}
+            {aTransferer.length}{' '}{tm("chantier(s) à transférer :")}{' '}{aTransferer.map(c => c.nom).join(', ')}
           </Text>
-          <Bouton label="Transférer dans l'espace Menuiserie" onPress={confirmer} charge={enCours} />
+          <Bouton label={tm("Transférer dans l'espace Menuiserie")} onPress={confirmer} charge={enCours} />
         </>
       )}
       {!!etat && <Text style={{ fontSize: 13, fontWeight: '700', color: DS.primary }}>{etat}</Text>}
       {rapports.map(r => (
         <Text key={r.chantier} style={{ fontSize: 13, color: r.erreur ? DS.error : DS.text }}>
-          {r.chantier} : {r.erreur ? `échec (${r.erreur}) — resté dans Travaux` : `${r.documents} document(s) copiés${r.ignores ? `, ${r.ignores} non récupérable(s)` : ''}`}
+          {r.chantier} : {r.erreur ? tm("échec ({0}) — resté dans Travaux", r.erreur) : tm("{0} document(s) copiés{1}", r.documents, r.ignores ? `, ${r.ignores} non récupérable(s)` : '')}
         </Text>
       ))}
     </Carte>
