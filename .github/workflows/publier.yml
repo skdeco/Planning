@@ -22,14 +22,13 @@ jobs:
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - uses: expo/expo-github-action@v8
-        with:
-          eas-version: latest
-          token: ${{ secrets.EXPO_TOKEN }}
-      - run: eas update --channel preview --message "${{ github.event.head_commit.message || 'Publication manuelle' }}" --non-interactive
+      - name: Publier la mise à jour iPhone
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx --yes eas-cli@latest update --channel preview --message "${{ github.event.head_commit.message || 'Publication manuelle' }}" --non-interactive
 
   web:
     name: Version web (Vercel)
