@@ -27,6 +27,7 @@ import { DashboardKPI } from '@/components/DashboardKPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
+import { EspaceBar } from '@/components/espaces/EspaceBar';
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -328,6 +329,7 @@ export default function DashboardScreen() {
               {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
             <Text style={screenTitle}>{t.home.hello} {emp?.prenom || ''}</Text>
+            <View style={{ marginTop: 10 }}><EspaceBar espaceCourant="travaux" /></View>
           </View>
 
           {/* Pointage du jour : arrivée + départ du chantier (l'écran Horaires complet est dans Plus).
@@ -950,6 +952,7 @@ export default function DashboardScreen() {
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
             <Text style={screenTitle}>{t.home.hello}</Text>
+            <View style={{ marginTop: 10 }}><EspaceBar espaceCourant="travaux" /></View>
           </View>
         </FadeInView>
 

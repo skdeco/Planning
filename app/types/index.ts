@@ -176,6 +176,34 @@ export const HORAIRES_DEFAUT: HorairesHebdo = {
   6: { actif: false, debut: '08:00', fin: '12:00' }, // Samedi
 };
 
+/** Espaces de l'application : Travaux (historique) et Menuiserie. */
+export type EspaceId = 'travaux' | 'menuiserie';
+
+/** Rôle d'un compte dans l'espace Menuiserie. */
+export type RoleMenuiserie = 'admin' | 'usine' | 'client' | 'architecte' | 'apporteur' | 'poseur';
+
+export const ROLE_MENUISERIE_LABELS: Record<RoleMenuiserie, string> = {
+  admin: 'Administrateur',
+  usine: 'Usine',
+  client: 'Client',
+  architecte: 'Architecte',
+  apporteur: "Apporteur d'affaires",
+  poseur: 'Poseur',
+};
+
+/**
+ * Accès d'un compte aux espaces. Posé sur Employe, Apporteur ou SousTraitant.
+ *  - travaux : absent/true = accès à l'espace Travaux avec le rôle historique du compte ;
+ *              false = compte créé uniquement pour la Menuiserie.
+ *  - menuiserie : rôle dans l'espace Menuiserie (absent = pas d'accès).
+ *  - planningDirection : accès au Planning direction (les admins l'ont toujours).
+ */
+export interface AccesCompte {
+  travaux?: boolean;
+  menuiserie?: RoleMenuiserie;
+  planningDirection?: boolean;
+}
+
 export interface Employe {
   /** Langue choisie par l'employé dans l'app — sert à lui envoyer les notifications dans sa langue. */
   langue?: 'fr' | 'en' | 'es' | 'pt' | 'ru' | 'ar';
@@ -203,6 +231,8 @@ export interface Employe {
   penseBetes?: { id: string; chantierId?: string; texte: string; createdAt: string }[]; // notes par chantier
   pushToken?: string;        // Expo Push Token pour notifications push
   retardAfficheEmploye?: boolean; // true = l'employé voit ses propres retards dans le reporting
+  /** Accès aux espaces Travaux / Menuiserie / Planning direction */
+  acces?: AccesCompte;
 }
 
 /** Fiche chantier : carte d'identité du chantier visible par tous les employés affectés */
@@ -684,6 +714,8 @@ export interface SousTraitant {
   documents: DocumentST[];  // documents légaux
   couleur: string;          // couleur dans le planning
   pushToken?: string;       // Expo Push Token pour notifications push
+  /** Accès aux espaces Travaux / Menuiserie / Planning direction */
+  acces?: AccesCompte;
 }
 
 /** Un architecte, apporteur d'affaires, contractant ou client associé aux chantiers */
@@ -718,6 +750,8 @@ export interface Apporteur {
     voirFinChantier?: boolean;
     voirMessages?: boolean;
   };
+  /** Accès aux espaces Travaux / Menuiserie / Planning direction */
+  acces?: AccesCompte;
   createdAt: string;
   updatedAt: string;
 }
@@ -1422,6 +1456,26 @@ export interface AgendaEvent {
   refuses: string[];       // IDs qui ont refusé
   recurrence?: 'aucune' | 'quotidien' | 'hebdomadaire' | 'mensuel';
   recurrenceFinDate?: string; // YYYY-MM-DD fin de récurrence
+  /** Autres créneaux proposés par un invité à la place du créneau initial */
+  contrePropositions?: ContrePropositionRdv[];
+  createdAt: string;
+}
+
+/** Créneau proposé en réponse à une invitation */
+export interface CreneauPropose {
+  date: string;            // YYYY-MM-DD
+  heureDebut: string;      // HH:MM
+  heureFin?: string;       // HH:MM
+}
+
+/** Contre-proposition d'un invité : 1 ou 2 créneaux, le créateur en choisit un */
+export interface ContrePropositionRdv {
+  id: string;
+  par: string;             // clé utilisateur de l'invité
+  parNom: string;
+  creneaux: CreneauPropose[];
+  message?: string;
+  statut: 'en_attente' | 'choisie' | 'refusee';
   createdAt: string;
 }
 
@@ -1556,6 +1610,8 @@ export interface CurrentUser {
   soustraitantId?: string;  // défini si role === 'soustraitant'
   apporteurId?: string;     // défini si role === 'apporteur'
   nom?: string;
+  /** Espace choisi pour la session (compte ayant accès aux deux espaces) */
+  espace?: EspaceId;
 }
 
 /** Couleurs disponibles pour les sous-traitants dans le planning */

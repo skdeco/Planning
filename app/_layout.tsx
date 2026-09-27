@@ -121,6 +121,9 @@ export default function RootLayout() {
               <Stack.Screen name="language-select" />
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="(externe)" />
+              <Stack.Screen name="espace" />
+              <Stack.Screen name="direction" />
+              <Stack.Screen name="menuiserie" />
               <Stack.Screen name="oauth/callback" />
               <Stack.Screen name="inbox" />
             </Stack>

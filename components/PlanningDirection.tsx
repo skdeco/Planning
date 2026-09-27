@@ -9,6 +9,8 @@ import { useRefresh } from '@/hooks/useRefresh';
 import type { AgendaEvent } from '@/app/types';
 import { formatDateFR, parseDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
+import { cleUtilisateur, nomParticipant, participantsDirection } from '@/lib/espaces';
+import { InvitationsRdv } from '@/components/espaces/InvitationsRdv';
 
 const COULEURS = ['#2C2C2C', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
 const JOURS_COURT = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
@@ -30,7 +32,17 @@ const HEADER_HEIGHT = 36;
 const TIME_COL = 38;
 
 export function PlanningDirection() {
-  const { data, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent } = useApp();
+  const { data, currentUser, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent } = useApp();
+  const moi = cleUtilisateur(currentUser);
+  const estAdmin = currentUser?.role === 'admin';
+  // Invitables : employés + contacts / sous-traitants ayant le Planning direction (hors soi-même)
+  const invitables = useMemo(() => {
+    const liste = data.employes.map(e => ({ cle: e.id, nom: `${e.prenom} ${e.nom.charAt(0)}.` }));
+    participantsDirection(data).forEach(p => {
+      if (!liste.some(l => l.cle === p.cle)) liste.push({ cle: p.cle, nom: p.nom });
+    });
+    return liste.filter(l => l.cle !== moi);
+  }, [data, moi]);
   const { refreshing, onRefresh } = useRefresh();
   const { width: screenW } = useWindowDimensions();
 
@@ -118,6 +130,7 @@ export function PlanningDirection() {
   // Sauvegarder RDV
   const handleSave = () => {
     if (!form.titre.trim()) return;
+    const existant = editId ? (data.agendaEvents || []).find(e => e.id === editId) : undefined;
     const event: AgendaEvent = {
       id: editId || genId(),
       titre: form.titre.trim(),
@@ -128,9 +141,13 @@ export function PlanningDirection() {
       lieu: form.lieu.trim() || undefined,
       couleur: form.couleur,
       chantierId: form.chantierId || undefined,
-      createdBy: 'admin', createdByNom: 'Admin',
+      createdBy: existant?.createdBy || moi,
+      createdByNom: existant?.createdByNom || currentUser?.nom || nomParticipant(moi, data),
       invites: form.invites, visiblePar: form.visiblePar,
-      acceptes: [], refuses: [],
+      // Le créateur est d'office présent ; on garde les réponses déjà données
+      acceptes: Array.from(new Set([...(existant?.acceptes || []), existant?.createdBy || moi])),
+      refuses: existant?.refuses || [],
+      contrePropositions: existant?.contrePropositions,
       recurrence: (form.recurrence as any) || undefined,
       recurrenceFinDate: form.recurrenceFinDate || undefined,
       createdAt: editId ? (data.agendaEvents || []).find(e => e.id === editId)?.createdAt || new Date().toISOString() : new Date().toISOString(),
@@ -188,6 +205,8 @@ export function PlanningDirection() {
 
   return (
     <>
+      {/* Invitations reçues et contre-propositions à traiter */}
+      <InvitationsRdv />
       {/* Toggle semaine/jour + navigation */}
       <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', gap: 4 }}>
         <Pressable style={{ backgroundColor: directionVue === 'semaine' ? '#5C1F2E' : '#F1E7DC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('semaine')}>
@@ -256,15 +275,17 @@ export function PlanningDirection() {
                         {evt.invites.length > 0 && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {evt.invites.map(id => {
-                              const emp = data.employes.find(e => e.id === id);
-                              return emp ? <View key={id} style={{ backgroundColor: '#F2E4E1', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}><Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{emp.prenom}</Text></View> : null;
+                              const etat = (evt.acceptes || []).includes(id) ? ' ✓' : (evt.refuses || []).includes(id) ? ' ✗' : ' …';
+                              return <View key={id} style={{ backgroundColor: '#F2E4E1', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}><Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{nomParticipant(id, data).split(' ')[0]}{etat}</Text></View>;
                             })}
                           </View>
                         )}
                       </View>
-                      <Pressable onPress={() => deleteAgendaEvent(evt.id)} style={{ padding: 6 }}>
-                        <Ico e="🗑" size={16} color="#E74C3C" />
-                      </Pressable>
+                      {(estAdmin || evt.createdBy === moi) && (
+                        <Pressable onPress={() => deleteAgendaEvent(evt.id)} style={{ padding: 6 }} accessibilityLabel="Supprimer le RDV">
+                          <Ico e="🗑" size={16} color="#E74C3C" />
+                        </Pressable>
+                      )}
                     </View>
                   </Pressable>
                 );
@@ -438,10 +459,10 @@ export function PlanningDirection() {
               {/* Invités */}
               <Text style={labelStyle}>Invités (participants)</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-                {data.employes.map(emp => (
-                  <Pressable key={emp.id} style={chipStyle(form.invites.includes(emp.id))}
-                    onPress={() => setForm(f => ({ ...f, invites: f.invites.includes(emp.id) ? f.invites.filter(i => i !== emp.id) : [...f.invites, emp.id] }))}>
-                    <Text style={chipTextStyle(form.invites.includes(emp.id))}>{emp.prenom} {emp.nom.charAt(0)}.</Text>
+                {invitables.map(p => (
+                  <Pressable key={p.cle} style={chipStyle(form.invites.includes(p.cle))}
+                    onPress={() => setForm(f => ({ ...f, invites: f.invites.includes(p.cle) ? f.invites.filter(i => i !== p.cle) : [...f.invites, p.cle] }))}>
+                    <Text style={chipTextStyle(form.invites.includes(p.cle))}>{p.nom}</Text>
                   </Pressable>
                 ))}
               </View>

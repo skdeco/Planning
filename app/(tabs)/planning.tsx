@@ -17,6 +17,7 @@ import { useRefresh } from '@/hooks/useRefresh';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
 import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
 import { PlanningDirection } from '@/components/PlanningDirection';
+import { droitsEspaces } from '@/lib/espaces';
 import { setPlanningFiltre } from '@/lib/planningFiltre';
 import { AlertesChantiersRetard } from '@/components/planning/AlertesChantiersRetard';
 import {
@@ -207,7 +208,7 @@ export default function PlanningScreen() {
     if (m !== 'direction') setPlanningFiltre(m);
   };
   const isRH = currentUser?.role === 'employe' && data.employes.find(e => e.id === currentUser?.employeId)?.isRH === true;
-  const peutBasculer = currentUser?.role === 'admin' || isRH;
+  const peutBasculer = currentUser?.role === 'admin' || isRH || droitsEspaces(currentUser, data).planningDirection;
   const modeEquipe = planningMode !== 'direction';
   // Weekend (samedi/dimanche) : afficher par défaut la semaine suivante
   const [weekOffset, setWeekOffset] = useState(() => {

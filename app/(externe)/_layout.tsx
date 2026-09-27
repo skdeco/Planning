@@ -3,6 +3,7 @@ import { Platform, View, Text, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/app/context/AppContext';
 import { Ico } from '@/components/ui/Ico';
+import { EspaceBar } from '@/components/espaces/EspaceBar';
 
 export default function ExterneLayout() {
   const insets = useSafeAreaInsets();
@@ -22,6 +23,7 @@ export default function ExterneLayout() {
         <View>
           <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>SK DECO</Text>
           <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginTop: 2 }}>{currentUser.nom || 'Mon espace'}</Text>
+          <View style={{ marginTop: 8 }}><EspaceBar espaceCourant="travaux" sombre /></View>
         </View>
         <Pressable
           onPress={() => setCurrentUser(null)}

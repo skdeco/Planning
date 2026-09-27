@@ -9,6 +9,8 @@ import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { verifierMotDePasse, preparerChangementMotDePasse } from '@/lib/externAuth';
 import { Ico } from '@/components/ui/Ico';
+import type { CurrentUser } from '@/app/types';
+import { droitsEspaces } from '@/lib/espaces';
 
 export default function LoginScreen() {
   const { data, setCurrentUser, updateApporteur } = useApp();
@@ -19,6 +21,18 @@ export default function LoginScreen() {
   const [motDePasse, setMotDePasse] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+
+  /**
+   * Ouvre la session puis choisit l'écran d'arrivée :
+   *  - accès à l'espace Menuiserie (seul ou avec Travaux) → routage central ('/') :
+   *    écran de choix si 2 espaces, sinon l'espace unique ;
+   *  - sinon : écran historique du rôle.
+   */
+  const connecter = (user: CurrentUser, ecranTravaux: string) => {
+    setCurrentUser(user);
+    const droits = droitsEspaces(user, data);
+    router.replace((droits.espaces.includes('menuiserie') ? '/' : ecranTravaux) as any);
+  };
 
   const handleLogin = async () => {
     setError('');
@@ -32,12 +46,11 @@ export default function LoginScreen() {
       const adminEmploye = data.adminEmployeId
         ? data.employes.find(e => e.id === data.adminEmployeId)
         : undefined;
-      setCurrentUser({
+      connecter({
         role: 'admin',
         employeId: adminEmploye?.id,
         nom: adminEmploye ? `${adminEmploye.prenom} ${adminEmploye.nom}` : undefined,
-      });
-      router.replace('/(tabs)' as any);
+      }, '/(tabs)');
       return;
     }
 
@@ -47,12 +60,11 @@ export default function LoginScreen() {
     );
 
     if (employe) {
-      setCurrentUser({
+      connecter({
         role: employe.role,
         employeId: employe.id,
         nom: `${employe.prenom} ${employe.nom}`,
-      });
-      router.replace('/(tabs)' as any);
+      }, '/(tabs)');
       return;
     }
 
@@ -62,12 +74,11 @@ export default function LoginScreen() {
     );
 
     if (st) {
-      setCurrentUser({
+      connecter({
         role: 'soustraitant',
         soustraitantId: st.id,
         nom: `${st.prenom} ${st.nom}`,
-      });
-      router.replace('/(tabs)' as any);
+      }, '/(tabs)');
       return;
     }
 
@@ -85,12 +96,11 @@ export default function LoginScreen() {
       } else {
         updateApporteur({ ...apporteur, derniereConnexion: new Date().toISOString(), updatedAt: new Date().toISOString() });
       }
-      setCurrentUser({
+      connecter({
         role: 'apporteur',
         apporteurId: apporteur.id,
         nom: `${apporteur.prenom} ${apporteur.nom}`,
-      });
-      router.replace('/(externe)/mes-chantiers' as any);
+      }, '/(externe)/mes-chantiers');
       return;
     }
 

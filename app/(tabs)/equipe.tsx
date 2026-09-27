@@ -12,6 +12,8 @@ import { toast } from 'sonner-native';
 import { ScreenContainer } from '@/components/screen-container';
 import { BackToPlus } from '@/components/ui/BackToPlus';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
+import { AccesEspacesEditor } from '@/components/espaces/AccesEspacesEditor';
+import type { AccesCompte } from '@/app/types';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { useUnsavedChanges } from '@/hooks/useUnsavedChanges';
@@ -122,6 +124,7 @@ interface EmployeForm {
   telephone: string;
   email: string;
   photoProfil: string;
+  acces?: AccesCompte;
 }
 
 const DEFAULT_FORM: EmployeForm = {
@@ -144,6 +147,7 @@ const DEFAULT_FORM: EmployeForm = {
   telephone: '',
   email: '',
   photoProfil: '',
+  acces: undefined,
 };
 
 export default function EquipeScreen() {
@@ -332,6 +336,7 @@ export default function EquipeScreen() {
       telephone: emp.telephone || '',
       email: emp.email || '',
       photoProfil: emp.photoProfil || '',
+      acces: emp.acces,
     });
     setShowHoraires(false);
     setShowMdp(false);
@@ -380,6 +385,7 @@ export default function EquipeScreen() {
       telephone: form.telephone.trim() || undefined,
       email: form.email.trim() || undefined,
       photoProfil: form.photoProfil || undefined,
+      acces: form.acces,
     };
     if (editId) {
       updateEmploye(employe);
@@ -897,6 +903,7 @@ export default function EquipeScreen() {
       siret: a.siret || '', notes: a.notes || '',
       // Le champ motDePasseVisible (côté admin) est la source de vérité affichable
       identifiant: a.identifiant || '', motDePasse: a.motDePasseVisible || a.motDePasse || '', accesApp: a.accesApp || false,
+      acces: a.acces,
     });
     setShowApporteurMdp(false);
     setShowApporteurForm(true);
@@ -1503,6 +1510,15 @@ export default function EquipeScreen() {
                 )}
               </View>
 
+              {/* Accès aux espaces (seulement si le contact a un accès à l'app) */}
+              {apporteurForm.accesApp && (
+                <AccesEspacesEditor
+                  value={apporteurForm.acces}
+                  onChange={acces => setApporteurForm(f => ({ ...f, acces }))}
+                  roleTravauxLabel={APPORTEUR_TYPE_LABELS[apporteurForm.type]?.label || 'Contact'}
+                />
+              )}
+
               {/* ═══ Chantiers liés ═══ (visible seulement en édition) */}
               {editApporteurId && (() => {
                 const linkedChantiers = data.chantiers.filter(c =>
@@ -1774,6 +1790,14 @@ export default function EquipeScreen() {
                 </View>
                 <Switch value={form.isCommercial} onValueChange={v => confirmAccreditation('isCommercial', v, 'Commercial')} trackColor={{ false: '#EDE2D6', true: '#F39C12' }} thumbColor="#fff" />
               </View>
+
+              {/* Accès aux espaces Travaux / Menuiserie / Planning direction */}
+              <AccesEspacesEditor
+                value={form.acces}
+                onChange={acces => setForm(f => ({ ...f, acces }))}
+                roleTravauxLabel={form.role === 'admin' ? t.equipe.administrator : t.equipe.employeeRole}
+                directionToujours={form.role === 'admin'}
+              />
 
               {/* Horaires théoriques */}
               <Pressable style={styles.horairesToggle} onPress={() => setShowHoraires(v => !v)}>
