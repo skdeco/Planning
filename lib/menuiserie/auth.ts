@@ -97,3 +97,16 @@ export async function creerCompteAdminAutoMn(p: { nom: string; identifiant: stri
   const { error: e3 } = await mn().rpc('mn_creer_premier_admin', { p_nom: p.nom, p_identifiant: p.identifiant, p_app_ref: null });
   return !e3;
 }
+
+/** Le compte connecté change son mot de passe. */
+export async function changerMonMotDePasseMn(motDePasse: string): Promise<void> {
+  if (motDePasse.length < 8) throw new Error('Mot de passe : 8 caractères minimum.');
+  const { error } = await mn().auth.updateUser({ password: motDePasse });
+  if (error) throw new Error(traduireErreurAuth(error.message));
+}
+
+/** Le compte connecté change son identifiant et / ou son e-mail de connexion. */
+export async function changerMesIdentifiantsMn(identifiant: string, email: string): Promise<void> {
+  const { error } = await mn().rpc('mn_mes_identifiants', { p_identifiant: identifiant, p_email: email });
+  if (error) throw new Error(error.message);
+}

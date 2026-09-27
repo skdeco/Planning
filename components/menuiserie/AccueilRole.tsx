@@ -110,6 +110,7 @@ export function AccueilRole() {
         )}
         {role === 'poseur' && <Bouton label="Historique de mes pointages" variante="contour" onPress={() => router.push('/menuiserie/rh' as any)} />}
 
+        <Bouton label="Mon compte (identifiant, mot de passe)" variante="contour" onPress={() => router.push('/menuiserie/moncompte' as any)} />
         <Bouton label="Se déconnecter" variante="discret" onPress={seDeconnecter} />
       </ScrollView>
     </ScreenContainer>
