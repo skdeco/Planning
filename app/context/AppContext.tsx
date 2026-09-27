@@ -2174,7 +2174,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
-  const logout = () => setCurrentUserPersisted(null);
+  const logout = () => {
+    setCurrentUserPersisted(null);
+    // Ferme aussi la session sécurisée Menuiserie (le prochain utilisateur de l'appareil ne l'hérite pas)
+    import('@/lib/menuiserie/auth').then(m => m.deconnexionMn()).catch(() => {});
+  };
 
   return (
     <AppContext.Provider value={{

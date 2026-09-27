@@ -76,7 +76,7 @@ export function ConnexionMn() {
         <Text style={{ fontSize: 14, color: DS.textSecondary, lineHeight: 20 }}>
           {mode === 'premier'
             ? "C'est le tout premier compte de l'espace Menuiserie. Il pourra ensuite créer les autres (Anthony, usines, clients…)."
-            : "L'espace Menuiserie est protégé : chacun ne reçoit que ce qui le concerne. Connecte-toi avec ton e-mail ou ton identifiant."}
+            : "L'espace Menuiserie est protégé : chacun ne reçoit que ce qui le concerne. Connecte-toi une seule fois sur cet appareil : ensuite tu bascules sans rien ressaisir."}
         </Text>
 
         <Carte>

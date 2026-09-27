@@ -3,15 +3,24 @@ import { Platform, View, Text, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/app/context/AppContext';
 import { Ico } from '@/components/ui/Ico';
-import { EspaceBar } from '@/components/espaces/EspaceBar';
+import { AvecBarreEspaces } from '@/components/espaces/BarreEspaces';
 
 export default function ExterneLayout() {
+  const { currentUser } = useApp();
+  if (!currentUser) return <Redirect href={'/login' as any} />;
+  if (currentUser.role !== 'apporteur') return <Redirect href={'/(tabs)' as any} />;
+  return (
+    <AvecBarreEspaces actif="travaux">
+      <ExterneContenu />
+    </AvecBarreEspaces>
+  );
+}
+
+function ExterneContenu() {
   const insets = useSafeAreaInsets();
   const { currentUser, setCurrentUser } = useApp();
   const bottomPadding = Platform.OS === 'web' ? 12 : Math.max(insets.bottom, 8);
-
-  if (!currentUser) return <Redirect href={'/login' as any} />;
-  if (currentUser.role !== 'apporteur') return <Redirect href={'/(tabs)' as any} />;
+  if (!currentUser) return null;
 
   return (
     <View style={{ flex: 1, backgroundColor: '#FAF5EF' }}>
@@ -23,7 +32,6 @@ export default function ExterneLayout() {
         <View>
           <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>SK DECO</Text>
           <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700', marginTop: 2 }}>{currentUser.nom || 'Mon espace'}</Text>
-          <View style={{ marginTop: 8 }}><EspaceBar espaceCourant="travaux" sombre /></View>
         </View>
         <Pressable
           onPress={() => setCurrentUser(null)}

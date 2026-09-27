@@ -9,7 +9,6 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { DS, screenTitle } from '@/constants/design';
 import { formatDateFR } from '@/lib/date/format';
-import { EspaceBar } from '@/components/espaces/EspaceBar';
 import { useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { mesChantiersMn } from '@/lib/menuiserie/api2';
 import { mn } from '@/lib/menuiserie/client';
@@ -58,7 +57,6 @@ export function AccueilRole() {
         <View style={{ marginTop: 8, gap: 8 }}>
           <Text style={{ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: DS.textSecondary }}>SK DECO · {ROLE_COMPTE_MN_LABELS[role].toUpperCase()}</Text>
           <Text style={screenTitle}>Bonjour {compte.nom.split(' ')[0]}</Text>
-          {currentUser?.role !== 'menuiserie' && <EspaceBar espaceCourant="menuiserie" />}
         </View>
         {!!erreur && <Text style={{ color: DS.error, fontWeight: '700' }}>{erreur}</Text>}
 

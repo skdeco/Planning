@@ -29,12 +29,14 @@ export default function LoginScreen() {
    *    écran de choix si 2 espaces, sinon l'espace unique ;
    *  - sinon : écran historique du rôle.
    */
-  const connecter = (user: CurrentUser, ecranTravaux: string) => {
-    setCurrentUser(user);
+  const connecter = (user: CurrentUser, ecranTravaux: string, id?: string, pwd?: string) => {
     const droits = droitsEspaces(user, data);
-    if (droits.espaces.length > 1) router.replace('/espace' as any);
-    else if (droits.espaces[0] === 'menuiserie') router.replace(routeEspace('menuiserie', user) as any);
-    else router.replace(ecranTravaux as any);
+    const espace = droits.espaces[0];
+    setCurrentUser({ ...user, espace });
+    // Accès Menuiserie : connexion sécurisée silencieuse avec les mêmes identifiants,
+    // pour ne pas avoir à se reconnecter en passant sur l'onglet Menuiserie.
+    if (droits.menuiserie && id && pwd) connexionMn(id, pwd).catch(() => {});
+    router.replace((espace === 'travaux' ? ecranTravaux : routeEspace(espace, user)) as any);
   };
 
   const handleLogin = async () => {
@@ -53,7 +55,7 @@ export default function LoginScreen() {
         role: 'admin',
         employeId: adminEmploye?.id,
         nom: adminEmploye ? `${adminEmploye.prenom} ${adminEmploye.nom}` : undefined,
-      }, '/(tabs)');
+      }, '/(tabs)', id, pwd);
       return;
     }
 
@@ -67,7 +69,7 @@ export default function LoginScreen() {
         role: employe.role,
         employeId: employe.id,
         nom: `${employe.prenom} ${employe.nom}`,
-      }, '/(tabs)');
+      }, '/(tabs)', id, pwd);
       return;
     }
 
@@ -81,7 +83,7 @@ export default function LoginScreen() {
         role: 'soustraitant',
         soustraitantId: st.id,
         nom: `${st.prenom} ${st.nom}`,
-      }, '/(tabs)');
+      }, '/(tabs)', id, pwd);
       return;
     }
 
@@ -103,7 +105,7 @@ export default function LoginScreen() {
         role: 'apporteur',
         apporteurId: apporteur.id,
         nom: `${apporteur.prenom} ${apporteur.nom}`,
-      }, '/(externe)/mes-chantiers');
+      }, '/(externe)/mes-chantiers', id, pwd);
       return;
     }
 

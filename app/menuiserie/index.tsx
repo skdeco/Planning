@@ -8,7 +8,6 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { DS, screenTitle } from '@/constants/design';
 import { formatDateFR } from '@/lib/date/format';
-import { EspaceBar } from '@/components/espaces/EspaceBar';
 import { InvitationsRdv } from '@/components/espaces/InvitationsRdv';
 import { useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { chargerAccueilMn, type DonneesAccueilMn } from '@/lib/menuiserie/api';
@@ -87,7 +86,6 @@ function AccueilAdmin() {
             SK DECO · {compte ? `${compte.nom} · ${ROLE_COMPTE_MN_LABELS[compte.role]}` : ''}
           </Text>
           <Text style={screenTitle}>Menuiserie</Text>
-          <EspaceBar espaceCourant="menuiserie" />
         </View>
 
         <View style={{ marginHorizontal: -12 }}><InvitationsRdv /></View>

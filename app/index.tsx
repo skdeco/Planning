@@ -23,7 +23,7 @@ export default function RootIndex() {
   const { espaces } = droitsEspaces(currentUser, data);
   let espace = currentUser.espace;
   if (!espace || !espaces.includes(espace)) {
-    if (espaces.length > 1) return <Redirect href={'/espace' as any} />;
+    // Plusieurs espaces : on arrive sur Travaux, la barre du haut permet de basculer
     espace = espaces[0];
   }
   if (espace === 'menuiserie') {

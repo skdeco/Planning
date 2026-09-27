@@ -13,6 +13,7 @@ import { SyncIndicator } from "@/components/SyncIndicator";
 import { NotificationListener } from "@/components/NotificationListener";
 import { useNotifications } from "@/hooks/useNotifications";
 import { DS, shadows } from "@/constants/design";
+import { AvecBarreEspaces } from "@/components/espaces/BarreEspaces";
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -87,6 +88,7 @@ export default function TabLayout() {
   const badgePlus = nbDemandesEnAttente;
 
   return (
+    <AvecBarreEspaces actif="travaux">
     <View style={{ flex: 1, backgroundColor: DS.background }}>
     <NotificationListener />
     <Tabs
@@ -285,5 +287,6 @@ export default function TabLayout() {
     </Tabs>
     <SyncIndicator />
     </View>
+    </AvecBarreEspaces>
   );
 }
