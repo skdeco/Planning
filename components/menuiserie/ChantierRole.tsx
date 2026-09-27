@@ -12,6 +12,7 @@ import { DS } from '@/constants/design';
 import { formatDateFR } from '@/lib/date/format';
 import { useCompteMn } from '@/lib/menuiserie/SessionMn';
 import { chantierPourRoleMn, type ChantierRoleMn } from '@/lib/menuiserie/api2';
+import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import { ETAPES_MN, etapeVisible, type DefEtape } from '@/lib/menuiserie/etapes';
 import { groupeMn, STATUT_CHANTIER_MN_LABELS } from '@/lib/menuiserie/types';
 import { Carte, EnTete, Section } from './ui';
@@ -36,13 +37,13 @@ export function ChantierRole() {
   const router = useRouter();
   const moi = useCompteMn();
   const groupe = groupeMn(moi.role);
-  const [d, setD] = useState<ChantierRoleMn | null>(null);
+  const [d, setD] = useState<ChantierRoleMn | null>(() => lireCacheMn<ChantierRoleMn>(`role:chantier:${id}`) ?? null);
   const [erreur, setErreur] = useState('');
   const [ouverte, setOuverte] = useState<DefEtape | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
 
   const charger = useCallback(async () => {
-    try { setD(await chantierPourRoleMn(moi, String(id))); setErreur(''); } catch (e) { setErreur((e as Error).message); }
+    try { const v = await chantierPourRoleMn(moi, String(id)); ecrireCacheMn(`role:chantier:${id}`, v); setD(v); setErreur(''); } catch (e) { setErreur((e as Error).message); }
   }, [id, moi]);
   useEffect(() => { charger(); }, [charger]);
 

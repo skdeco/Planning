@@ -12,6 +12,7 @@ import { formatDateFR } from '@/lib/date/format';
 import { chargerAccueilMn, type DonneesAccueilMn } from '@/lib/menuiserie/api';
 import { listerRdvMn } from '@/lib/menuiserie/api2';
 import type { RdvMn } from '@/lib/menuiserie/types';
+import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import { Carte, EnTete, Puce, Section } from '@/components/menuiserie/ui';
 
 function semaineIso(d: Date): number {
@@ -29,11 +30,13 @@ const NB = 10;
 
 export default function PlanningMn() {
   const router = useRouter();
-  const [d, setD] = useState<DonneesAccueilMn | null>(null);
-  const [rdvs, setRdvs] = useState<RdvMn[]>([]);
+  const [d, setD] = useState<DonneesAccueilMn | null>(() => lireCacheMn<{ accueil: DonneesAccueilMn }>('accueil')?.accueil ?? null);
+  const [rdvs, setRdvs] = useState<RdvMn[]>(() => lireCacheMn<{ rdvs: RdvMn[] }>('accueil')?.rdvs ?? []);
   const [vue, setVue] = useState<'phases' | 'rdv'>('phases');
   const [decalage, setDecalage] = useState(0);
-  useEffect(() => { chargerAccueilMn().then(setD).catch(() => {}); listerRdvMn().then(setRdvs).catch(() => {}); }, []);
+  useEffect(() => {
+    Promise.all([chargerAccueilMn(), listerRdvMn()]).then(([accueil, r]) => { ecrireCacheMn('accueil', { accueil, rdvs: r }); setD(accueil); setRdvs(r); }).catch(() => {});
+  }, []);
 
   const semaines = useMemo(() => {
     const base = semaineIso(new Date()) + decalage;

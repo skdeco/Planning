@@ -2,6 +2,7 @@
  * Connexion à l'espace Menuiserie : e-mail OU identifiant + mot de passe.
  */
 import { mn, mnClientJetable, emailTechnique } from './client';
+import { viderCacheMn } from './cache';
 import type { CompteMn, RoleCompteMn } from './types';
 
 export async function connexionMn(emailOuIdentifiant: string, motDePasse: string): Promise<{ ok: true } | { ok: false; erreur: string }> {
@@ -19,6 +20,7 @@ export async function connexionMn(emailOuIdentifiant: string, motDePasse: string
 }
 
 export async function deconnexionMn(): Promise<void> {
+  viderCacheMn();
   await mn().auth.signOut();
 }
 

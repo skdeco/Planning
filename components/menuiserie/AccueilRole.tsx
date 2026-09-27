@@ -12,6 +12,7 @@ import { formatDateFR } from '@/lib/date/format';
 import { useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { mesChantiersMn } from '@/lib/menuiserie/api2';
 import { mn } from '@/lib/menuiserie/client';
+import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import type { ChantierMn, EtapeMn } from '@/lib/menuiserie/types';
 import { ROLE_COMPTE_MN_LABELS, STATUT_CHANTIER_MN_LABELS } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Section } from './ui';
@@ -21,18 +22,19 @@ export function AccueilRole() {
   const router = useRouter();
   const { currentUser, logout } = useApp();
   const { compte, deconnecter } = useSessionMn();
-  const [chantiers, setChantiers] = useState<ChantierMn[]>([]);
-  const [poses, setPoses] = useState<EtapeMn[]>([]);
+  const [chantiers, setChantiers] = useState<ChantierMn[]>(() => lireCacheMn<ChantierMn[]>('role:chantiers') || []);
+  const [poses, setPoses] = useState<EtapeMn[]>(() => lireCacheMn<EtapeMn[]>('role:poses') || []);
   const [erreur, setErreur] = useState('');
   const [rafraichit, setRafraichit] = useState(false);
 
   const charger = useCallback(async () => {
     if (!compte) return;
     try {
-      setChantiers(await mesChantiersMn(compte));
+      const ch = await mesChantiersMn(compte);
+      ecrireCacheMn('role:chantiers', ch); setChantiers(ch);
       if (compte.role === 'poseur') {
         const { data } = await mn().from('mn_etapes').select('*').eq('etape', 'pose');
-        setPoses((data as EtapeMn[]) || []);
+        ecrireCacheMn('role:poses', (data as EtapeMn[]) || []); setPoses((data as EtapeMn[]) || []);
       }
       setErreur('');
     } catch (e) { setErreur((e as Error).message); }

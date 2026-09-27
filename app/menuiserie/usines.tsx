@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { DS } from '@/constants/design';
 import { enregistrerUsineMn, listerUsinesMn } from '@/lib/menuiserie/api';
+import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import type { UsineMn } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Champ, EnTete } from '@/components/menuiserie/ui';
 
@@ -12,12 +13,12 @@ const VIDE = { nom: '', contact_nom: '', contact_tel: '', contact_email: '', adr
 
 export default function UsinesMn() {
   const router = useRouter();
-  const [usines, setUsines] = useState<UsineMn[]>([]);
+  const [usines, setUsines] = useState<UsineMn[]>(() => lireCacheMn<UsineMn[]>('usines') || []);
   const [edition, setEdition] = useState<{ id?: string } & typeof VIDE | null>(null);
   const [erreur, setErreur] = useState('');
   const [charge, setCharge] = useState(false);
 
-  const charger = useCallback(() => { listerUsinesMn().then(setUsines).catch(e => setErreur(e.message)); }, []);
+  const charger = useCallback(() => { listerUsinesMn().then(u => { ecrireCacheMn('usines', u); setUsines(u); }).catch(e => setErreur(e.message)); }, []);
   useEffect(charger, [charger]);
 
   const enregistrer = async () => {

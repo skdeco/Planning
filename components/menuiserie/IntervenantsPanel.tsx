@@ -6,6 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, Pressable, Modal, ScrollView } from 'react-native';
 import { DS, radius } from '@/constants/design';
 import { listerComptesMn } from '@/lib/menuiserie/api';
+import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import { ajouterIntervenantMn, lierCompteIntervenantMn, retirerIntervenantMn } from '@/lib/menuiserie/api2';
 import type { CompteMn, IntervenantMn, RoleCompteMn, RoleIntervenantMn } from '@/lib/menuiserie/types';
 import { ROLE_INTERVENANT_MN_LABELS } from '@/lib/menuiserie/types';
@@ -19,12 +20,12 @@ const COMPTE_POUR: Record<RoleIntervenantMn, RoleCompteMn> = {
 export function IntervenantsPanel({ moi, chantierId, intervenants, onChange }: {
   moi: CompteMn; chantierId: string; intervenants: IntervenantMn[]; onChange: () => void;
 }) {
-  const [comptes, setComptes] = useState<CompteMn[]>([]);
+  const [comptes, setComptes] = useState<CompteMn[]>(() => lireCacheMn<CompteMn[]>('comptes') || []);
   const [role, setRole] = useState<RoleIntervenantMn>('poseur');
   const [nom, setNom] = useState('');
   const [aLier, setALier] = useState<IntervenantMn | null>(null);
   const [erreur, setErreur] = useState('');
-  useEffect(() => { listerComptesMn().then(setComptes).catch(() => {}); }, []);
+  useEffect(() => { listerComptesMn().then(c => { ecrireCacheMn('comptes', c); setComptes(c); }).catch(() => {}); }, []);
 
   const agir = async (f: () => Promise<void>) => { try { setErreur(''); await f(); onChange(); } catch (e) { setErreur((e as Error).message); } };
   const candidats = aLier ? comptes.filter(c => c.actif && c.role === COMPTE_POUR[aLier.role]) : [];

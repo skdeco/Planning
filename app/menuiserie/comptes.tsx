@@ -14,6 +14,7 @@ import {
   activerCompteMn, changerMotDePasseCompteMn, listerComptesMn, listerUsinesMn, modifierCompteMn, supprimerCompteMn,
 } from '@/lib/menuiserie/api';
 import type { CompteMn, RoleCompteMn, UsineMn } from '@/lib/menuiserie/types';
+import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import { ROLE_COMPTE_MN_LABELS } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Champ, EnTete, Puce, Section } from '@/components/menuiserie/ui';
 import { useCompteMn } from '@/lib/menuiserie/SessionMn';
@@ -31,8 +32,8 @@ function confirmer(titre: string, texte: string, ok: () => void) {
 export default function ComptesMn() {
   const router = useRouter();
   const moi = useCompteMn();
-  const [comptes, setComptes] = useState<CompteMn[]>([]);
-  const [usines, setUsines] = useState<UsineMn[]>([]);
+  const [comptes, setComptes] = useState<CompteMn[]>(() => lireCacheMn<CompteMn[]>('comptes') || []);
+  const [usines, setUsines] = useState<UsineMn[]>(() => lireCacheMn<UsineMn[]>('usines') || []);
   const [f, setF] = useState<typeof VIDE | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [role, setRole] = useState<RoleCompteMn>('admin');
@@ -41,8 +42,8 @@ export default function ComptesMn() {
   const [charge, setCharge] = useState(false);
 
   const charger = useCallback(() => {
-    listerComptesMn().then(setComptes).catch(e => setMessage(e.message));
-    listerUsinesMn().then(setUsines).catch(() => {});
+    listerComptesMn().then(c => { ecrireCacheMn('comptes', c); setComptes(c); }).catch(e => setMessage(e.message));
+    listerUsinesMn().then(u => { ecrireCacheMn('usines', u); setUsines(u); }).catch(() => {});
   }, []);
   useEffect(charger, [charger]);
 

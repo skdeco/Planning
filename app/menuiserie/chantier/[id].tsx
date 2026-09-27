@@ -6,6 +6,7 @@ import { ScreenContainer } from '@/components/screen-container';
 import { DS } from '@/constants/design';
 import { formatDateFR, formatDateHeureFR } from '@/lib/date/format';
 import { useCompteMn } from '@/lib/menuiserie/SessionMn';
+import { useDonneesMn } from '@/lib/menuiserie/cache';
 import { chargerChantierMn, listerUsinesMn, majChantierMn, supprimerChantierMn, type DonneesChantierMn } from '@/lib/menuiserie/api';
 import { ETAPES_MN, type DefEtape } from '@/lib/menuiserie/etapes';
 import { STATUT_CHANTIER_MN_LABELS, type StatutChantierMn, type UsineMn } from '@/lib/menuiserie/types';
@@ -40,16 +41,13 @@ function ChantierAdmin() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const moi = useCompteMn();
-  const [d, setD] = useState<DonneesChantierMn | null>(null);
-  const [usines, setUsines] = useState<UsineMn[]>([]);
-  const [erreur, setErreur] = useState('');
+  const { donnees: d, erreur: erreurCharge, recharger: charger } = useDonneesMn(`chantier:${id}`, () => chargerChantierMn(String(id)));
+  const { donnees: usinesCache } = useDonneesMn('usines', listerUsinesMn);
+  const usines: UsineMn[] = usinesCache || [];
+  const [erreurAction, setErreur] = useState('');
+  const erreur = erreurAction || erreurCharge;
   const [ouverte, setOuverte] = useState<DefEtape | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
-
-  const charger = useCallback(async () => {
-    try { setD(await chargerChantierMn(String(id))); setErreur(''); } catch (e) { setErreur((e as Error).message); }
-  }, [id]);
-  useEffect(() => { charger(); listerUsinesMn().then(setUsines).catch(() => {}); }, [charger]);
 
   if (!d) {
     return (

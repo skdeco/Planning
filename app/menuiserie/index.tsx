@@ -17,6 +17,9 @@ import { Bouton, Carte, Pastille, Section, COULEUR_USINE, FOND_USINE } from '@/c
 import { CaParUsine } from '@/components/menuiserie/CaParUsine';
 import { TransfertTravaux } from '@/components/menuiserie/TransfertTravaux';
 import { AccueilRole } from '@/components/menuiserie/AccueilRole';
+import { useDonneesMn, prechargerMn } from '@/lib/menuiserie/cache';
+import { chargerChantierMn, listerComptesMn, listerUsinesMn } from '@/lib/menuiserie/api';
+import { listerCatalogueMn, listerFournisseursMn } from '@/lib/menuiserie/api2';
 import { useSyncRdvMenuiserie } from '@/hooks/useSyncRdvMenuiserie';
 import { listerRdvMn } from '@/lib/menuiserie/api2';
 import type { RdvMn } from '@/lib/menuiserie/types';
@@ -34,24 +37,22 @@ function AccueilAdmin() {
   const router = useRouter();
   const { compte, deconnecter } = useSessionMn();
   const synchroniserRdv = useSyncRdvMenuiserie();
-  const [rdvAValider, setRdvAValider] = useState<RdvMn[]>([]);
-  const [d, setD] = useState<DonneesAccueilMn>(VIDE);
-  const [erreur, setErreur] = useState('');
   const [rafraichit, setRafraichit] = useState(false);
   const [filtres, setFiltres] = useState<FiltresMn>(FILTRES_MN_DEFAUT);
   const estAdmin = compte?.role === 'admin';
 
-  const charger = useCallback(async () => {
-    if (!estAdmin) return;
-    try {
-      const donnees = await chargerAccueilMn();
-      setD(donnees); setErreur('');
-      synchroniserRdv(donnees.chantiers);
-      const rdvs = await listerRdvMn();
-      setRdvAValider(rdvs.filter(r => r.statut === 'validation_admins' && compte && r.accords[compte.id] === undefined));
-    } catch (e) { setErreur((e as Error).message); }
-  }, [estAdmin, synchroniserRdv, compte]);
-  useFocusEffect(useCallback(() => { charger(); }, [charger]));
+  // Affichage immédiat depuis le cache, rafraîchi en fond (tables + RDV en parallèle)
+  const { donnees, erreur, recharger: charger } = useDonneesMn(estAdmin ? 'accueil' : null, async () => {
+    const [accueil, rdvs] = await Promise.all([chargerAccueilMn(), listerRdvMn()]);
+    synchroniserRdv(accueil.chantiers);
+    // Précharge les onglets du bas pour qu'ils s'ouvrent instantanément
+    prechargerMn('usines', listerUsinesMn);
+    prechargerMn('comptes', listerComptesMn);
+    prechargerMn('catalogue', async () => { const [a, f] = await Promise.all([listerCatalogueMn(), listerFournisseursMn()]); return { a, f }; });
+    return { accueil, rdvs };
+  });
+  const d = donnees?.accueil ?? VIDE;
+  const rdvAValider: RdvMn[] = (donnees?.rdvs || []).filter(r => r.statut === 'validation_admins' && !!compte && r.accords[compte.id] === undefined);
 
   const liste = useMemo(() => filtrerChantiers(d.chantiers, d.intervenants, filtres), [d, filtres]);
 
@@ -135,7 +136,7 @@ function AccueilAdmin() {
             {liste.map(c => {
               const usine = d.usines.find(u => u.id === c.usine_id);
               return (
-                <Pressable key={c.id} onPress={() => router.push(`/menuiserie/chantier/${c.id}` as any)} accessibilityRole="button">
+                <Pressable key={c.id} onPressIn={() => prechargerMn(`chantier:${c.id}`, () => chargerChantierMn(c.id))} onPress={() => router.push(`/menuiserie/chantier/${c.id}` as any)} accessibilityRole="button">
                   <Carte style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     <View style={{ flex: 1, gap: 3 }}>
                       <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{c.nom}{c.ville ? ` · ${c.ville}` : ''}</Text>

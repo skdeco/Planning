@@ -13,6 +13,7 @@ import { useCompteMn } from '@/lib/menuiserie/SessionMn';
 import { enregistrerArticleMn, enregistrerFournisseurMn, listerCatalogueMn, listerFournisseursMn, supprimerArticleMn } from '@/lib/menuiserie/api2';
 import type { ArticleCatalogueMn, CategorieCatalogueMn, FournisseurMn } from '@/lib/menuiserie/types';
 import { CATEGORIE_CATALOGUE_LABELS } from '@/lib/menuiserie/types';
+import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import { Bouton, Carte, Champ, EnTete, Puce, Section } from '@/components/menuiserie/ui';
 import { ouvrirDocumentMn } from '@/components/menuiserie/DocumentsEtape';
 
@@ -26,15 +27,15 @@ export default function CatalogueMn() {
   const [onglet, setOnglet] = useState<'catalogue' | 'fournisseurs'>('catalogue');
   const [cat, setCat] = useState<CategorieCatalogueMn | 'tous'>('tous');
   const [recherche, setRecherche] = useState('');
-  const [articles, setArticles] = useState<ArticleCatalogueMn[]>([]);
-  const [fournisseurs, setFournisseurs] = useState<FournisseurMn[]>([]);
+  const [articles, setArticles] = useState<ArticleCatalogueMn[]>(() => lireCacheMn<{ a: ArticleCatalogueMn[] }>('catalogue')?.a ?? []);
+  const [fournisseurs, setFournisseurs] = useState<FournisseurMn[]>(() => lireCacheMn<{ f: FournisseurMn[] }>('catalogue')?.f ?? []);
   const [fa, setFa] = useState<FormArticle | null>(null);
   const [photo, setPhoto] = useState<{ uri: string; nom: string; mime: string } | null>(null);
   const [ff, setFf] = useState<{ id?: string; nom: string; categorie: string; contact: string; telephone: string; email: string } | null>(null);
   const [message, setMessage] = useState('');
 
   const charger = useCallback(async () => {
-    try { const [a, f] = await Promise.all([listerCatalogueMn(), listerFournisseursMn()]); setArticles(a); setFournisseurs(f); }
+    try { const [a, f] = await Promise.all([listerCatalogueMn(), listerFournisseursMn()]); ecrireCacheMn('catalogue', { a, f }); setArticles(a); setFournisseurs(f); }
     catch (e) { setMessage((e as Error).message); }
   }, []);
   useEffect(() => { charger(); }, [charger]);
