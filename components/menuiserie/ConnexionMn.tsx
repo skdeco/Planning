@@ -9,7 +9,7 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { DS, screenTitle } from '@/constants/design';
 import { droitsEspaces, cleUtilisateur } from '@/lib/espaces';
-import { connexionMn, creerPremierAdminMn, existeAdminMn, motDePasseOublieMn } from '@/lib/menuiserie/auth';
+import { connexionMn, creerPremierAdminMn, deconnexionMn, existeAdminMn, motDePasseOublieMn } from '@/lib/menuiserie/auth';
 import { useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { Bouton, Carte, Champ } from './ui';
 
@@ -32,10 +32,20 @@ export function ConnexionMn() {
 
   const seConnecter = async () => {
     setCharge(true); setMessage('');
-    const r = await connexionMn(saisie, mdp);
-    setCharge(false);
-    if (!r.ok) { setMessage(r.erreur); return; }
-    await recharger();
+    try {
+      const r = await connexionMn(saisie, mdp);
+      if (!r.ok) { setMessage(r.erreur); return; }
+      const c = await recharger();
+      if (!c) {
+        setMessage("Connexion acceptée, mais aucun compte Menuiserie actif n'est associé à cet e-mail / identifiant. "
+          + (existeAdmin ? "Demande à un administrateur de créer ton compte (Menuiserie → Comptes)." : "Crée d'abord le compte administrateur avec le bouton ci-dessous."));
+        await deconnexionMn();
+      }
+    } catch (e) {
+      setMessage(`Erreur : ${(e as Error).message}`);
+    } finally {
+      setCharge(false);
+    }
   };
 
   const oublie = async () => {
@@ -47,10 +57,15 @@ export function ConnexionMn() {
   const creerPremier = async () => {
     if (!nom.trim() || !email.includes('@') || mdp.length < 8) { setMessage('Nom, e-mail valide et mot de passe de 8 caractères minimum.'); return; }
     setCharge(true); setMessage('');
-    const r = await creerPremierAdminMn({ nom: nom.trim(), email, motDePasse: mdp, identifiant, appRef: cleUtilisateur(currentUser) });
-    setCharge(false);
-    if (!r.ok) { setMessage(r.erreur); return; }
-    await recharger();
+    try {
+      const r = await creerPremierAdminMn({ nom: nom.trim(), email, motDePasse: mdp, identifiant, appRef: cleUtilisateur(currentUser) });
+      if (!r.ok) { setMessage(r.erreur); return; }
+      if (!(await recharger())) setMessage("Compte créé, mais la fiche administrateur n'a pas pu être lue. Vérifie que les fichiers SQL ont bien été exécutés.");
+    } catch (e) {
+      setMessage(`Erreur : ${(e as Error).message}`);
+    } finally {
+      setCharge(false);
+    }
   };
 
   return (

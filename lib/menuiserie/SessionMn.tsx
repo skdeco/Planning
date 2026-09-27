@@ -10,12 +10,12 @@ import type { CompteMn } from './types';
 interface SessionMnValue {
   compte: CompteMn | null;
   chargement: boolean;
-  recharger: () => Promise<void>;
+  recharger: () => Promise<CompteMn | null>;
   deconnecter: () => Promise<void>;
 }
 
 const Ctx = createContext<SessionMnValue>({
-  compte: null, chargement: true, recharger: async () => {}, deconnecter: async () => {},
+  compte: null, chargement: true, recharger: async () => null, deconnecter: async () => {},
 });
 
 export function SessionMnProvider({ children }: { children: React.ReactNode }) {
@@ -23,14 +23,21 @@ export function SessionMnProvider({ children }: { children: React.ReactNode }) {
   const [chargement, setChargement] = useState(true);
 
   const recharger = useCallback(async () => {
-    const { data } = await mn().auth.getSession();
-    setCompte(data.session ? await monCompteMn() : null);
+    let c: CompteMn | null = null;
+    try {
+      const { data } = await mn().auth.getSession();
+      c = data.session ? await monCompteMn() : null;
+    } catch { c = null; }
+    setCompte(c);
     setChargement(false);
+    return c;
   }, []);
 
   useEffect(() => {
     recharger();
-    const { data: sub } = mn().auth.onAuthStateChange(() => { recharger(); });
+    // IMPORTANT : ne jamais appeler Supabase directement dans ce rappel (verrou interne :
+    // la connexion resterait bloquée). On diffère d'un tour de boucle.
+    const { data: sub } = mn().auth.onAuthStateChange(() => { setTimeout(() => { recharger(); }, 0); });
     return () => sub.subscription.unsubscribe();
   }, [recharger]);
 
