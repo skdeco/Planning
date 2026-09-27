@@ -575,6 +575,16 @@ const d: Record<string, string> = {
   "‹ Retour": "‹ رجوع",
   "‹ Revenir au choix d'espace": "‹ العودة لاختيار القسم",
   "‹ Semaines": "‹ الأسابيع",
+  "Architectes": "المهندسون المعماريون",
+  "Clients": "العملاء",
+  "Apporteurs": "الوسطاء",
+  "Poseurs": "المركّبون",
+  "Administration": "الإدارة",
+  "+ Employé": "+ موظف",
+  "Pas de compte usine · créer": "لا يوجد حساب للمصنع · إنشاء",
+  "(aucun employé)": "(لا يوجد موظفون)",
+  "Sans usine": "بدون مصنع",
+  "Aucun compte.": "لا توجد حسابات.",
 };
 
 export default d;

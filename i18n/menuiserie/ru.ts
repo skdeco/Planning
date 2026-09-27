@@ -575,6 +575,16 @@ const d: Record<string, string> = {
   "‹ Retour": "‹ Назад",
   "‹ Revenir au choix d'espace": "‹ Назад к выбору раздела",
   "‹ Semaines": "‹ Недели",
+  "Architectes": "Архитекторы",
+  "Clients": "Клиенты",
+  "Apporteurs": "Агенты",
+  "Poseurs": "Монтажники",
+  "Administration": "Администрирование",
+  "+ Employé": "+ Сотрудник",
+  "Pas de compte usine · créer": "Нет аккаунта фабрики · создать",
+  "(aucun employé)": "(нет сотрудников)",
+  "Sans usine": "Без фабрики",
+  "Aucun compte.": "Нет аккаунтов.",
 };
 
 export default d;

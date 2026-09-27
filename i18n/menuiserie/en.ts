@@ -553,6 +553,16 @@ const d: Record<string, string> = {
   "‹ Retour": "‹ Back",
   "‹ Revenir au choix d'espace": "‹ Back to space selection",
   "‹ Semaines": "‹ Weeks",
+  "Architectes": "Architects",
+  "Clients": "Clients",
+  "Apporteurs": "Referrers",
+  "Poseurs": "Installers",
+  "Administration": "Administration",
+  "+ Employé": "+ Employee",
+  "Pas de compte usine · créer": "No factory account · create",
+  "(aucun employé)": "(no employees)",
+  "Sans usine": "No factory",
+  "Aucun compte.": "No accounts.",
 };
 
 export default d;

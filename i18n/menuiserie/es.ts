@@ -568,6 +568,16 @@ const d: Record<string, string> = {
   "‹ Retour": "‹ Volver",
   "‹ Revenir au choix d'espace": "‹ Volver a la elección de espacio",
   "‹ Semaines": "‹ Semanas",
+  "Architectes": "Arquitectos",
+  "Clients": "Clientes",
+  "Apporteurs": "Intermediarios",
+  "Poseurs": "Instaladores",
+  "Administration": "Administración",
+  "+ Employé": "+ Empleado",
+  "Pas de compte usine · créer": "Sin cuenta de fábrica · crear",
+  "(aucun employé)": "(ningún empleado)",
+  "Sans usine": "Sin fábrica",
+  "Aucun compte.": "Ninguna cuenta.",
 };
 
 export default d;

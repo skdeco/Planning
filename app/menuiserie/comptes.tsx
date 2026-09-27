@@ -3,8 +3,8 @@
  * (nom, rôle, usine, e-mail / identifiant de connexion), nouveau mot de passe,
  * désactivation et suppression définitive.
  */
-import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, ScrollView, Switch, Pressable, Alert, Platform } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { View, Text, ScrollView, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { DS } from '@/constants/design';
@@ -16,7 +16,9 @@ import {
 import type { CompteMn, RoleCompteMn, UsineMn } from '@/lib/menuiserie/types';
 import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
 import { ROLE_COMPTE_MN_LABELS } from '@/lib/menuiserie/types';
-import { Bouton, Carte, Champ, EnTete, Puce, Section } from '@/components/menuiserie/ui';
+import { Bouton, Carte, Champ, EnTete, Puce } from '@/components/menuiserie/ui';
+import { ListeComptes, ROLE_DU_FILTRE, type FiltreComptes } from '@/components/menuiserie/ListeComptes';
+import { chargerAccueilMn, type DonneesAccueilMn } from '@/lib/menuiserie/api';
 import { useCompteMn } from '@/lib/menuiserie/SessionMn';
 
 import { tm } from '@/lib/menuiserie/i18n';
@@ -41,6 +43,20 @@ export default function ComptesMn() {
   const [usineId, setUsineId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [charge, setCharge] = useState(false);
+  const [filtre, setFiltre] = useState<FiltreComptes>('tous');
+  const scrollRef = useRef<ScrollView>(null);
+  // Chantiers rattachés à chaque compte (via les intervenants) : repris du cache de l'accueil
+  const [accueil, setAccueil] = useState<DonneesAccueilMn | undefined>(() => lireCacheMn<{ accueil: DonneesAccueilMn }>('accueil')?.accueil);
+  useEffect(() => { if (!accueil) chargerAccueilMn().then(setAccueil).catch(() => {}); }, [accueil]);
+  const chantiersParCompte = useMemo(() => {
+    const m = new Map<string, string[]>();
+    for (const it of accueil?.intervenants || []) {
+      if (!it.compte_id) continue;
+      const nom = accueil?.chantiers.find(c => c.id === it.chantier_id)?.nom;
+      if (nom && !(m.get(it.compte_id) || []).includes(nom)) m.set(it.compte_id, [...(m.get(it.compte_id) || []), nom]);
+    }
+    return m;
+  }, [accueil]);
 
   const charger = useCallback(() => {
     listerComptesMn().then(c => { ecrireCacheMn('comptes', c); setComptes(c); }).catch(e => setMessage(e.message));
@@ -48,11 +64,15 @@ export default function ComptesMn() {
   }, []);
   useEffect(charger, [charger]);
 
-  const ouvrirNouveau = () => { setEditId(null); setF({ ...VIDE, motDePasse: generatePassword(10) }); setRole('admin'); setUsineId(null); setMessage(''); };
+  const ouvrirNouveau = (r: RoleCompteMn = ROLE_DU_FILTRE[filtre], usine: string | null = null) => {
+    setEditId(null); setF({ ...VIDE, motDePasse: generatePassword(10) }); setRole(r); setUsineId(usine); setMessage('');
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
   const ouvrirEdition = (c: CompteMn) => {
     setEditId(c.id);
     setF({ nom: c.nom, email: c.email || '', identifiant: c.identifiant || '', telephone: c.telephone || '', motDePasse: '' });
     setRole(c.role); setUsineId(c.usine_id); setMessage('');
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
   const fermer = () => { setF(null); setEditId(null); };
 
@@ -101,7 +121,7 @@ export default function ComptesMn() {
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
-      <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
+      <ScrollView ref={scrollRef} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
         <EnTete titre={tm("Comptes Menuiserie")} />
         <Text style={{ fontSize: 13, color: DS.textSecondary, lineHeight: 18 }}>{tm("Ces comptes ne donnent accès qu'à l'espace Menuiserie. L'accès Travaux se règle dans Équipe (fiche de la personne).")}</Text>
 
@@ -137,26 +157,18 @@ export default function ComptesMn() {
             <Bouton label={tm("Annuler")} variante="discret" onPress={fermer} />
           </Carte>
         ) : (
-          <Bouton label={tm("+ Nouveau compte")} onPress={ouvrirNouveau} />
+          <Bouton label={tm("+ Nouveau compte")} onPress={() => ouvrirNouveau()} />
         )}
         {!!message && <Carte><Text style={{ fontSize: 14, fontWeight: '600', color: DS.primary }} selectable>{message}</Text></Carte>}
 
-        <Section>{tm("Comptes (")}{comptes.length}{tm(") · touche un compte pour le modifier")}</Section>
-        {comptes.map(c => (
-          <Pressable key={c.id} onPress={() => ouvrirEdition(c)} accessibilityRole="button" accessibilityLabel={tm("Modifier le compte de {0}", c.nom)}>
-            <Carte style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: DS.text }}>{c.nom}{c.id === moi.id ? tm(" (moi)") : ''}</Text>
-                <Text style={{ fontSize: 13, color: DS.textSecondary }}>
-                  {libelleRole(c.role)}{c.usine_id ? ` · ${usines.find(u => u.id === c.usine_id)?.nom || ''}` : ''} · {c.email || c.identifiant}
-                </Text>
-                {!c.actif && <Text style={{ fontSize: 12, fontWeight: '700', color: DS.error }}>{tm("Désactivé")}</Text>}
-              </View>
-              <Switch value={c.actif} disabled={c.id === moi.id} onValueChange={async v => { await activerCompteMn(c.id, v); charger(); }}
-                trackColor={{ false: DS.border, true: DS.primary }} thumbColor={DS.surface} accessibilityLabel={tm("Compte {0} actif", c.nom)} />
-            </Carte>
-          </Pressable>
-        ))}
+        <ListeComptes
+          comptes={comptes} usines={usines} moiId={moi.id} filtre={filtre} onFiltre={setFiltre}
+          chantiersDe={id => chantiersParCompte.get(id) || []}
+          onModifier={ouvrirEdition}
+          onActiver={async (c, v) => { await activerCompteMn(c.id, v); charger(); }}
+          onNouvelEmploye={u => ouvrirNouveau('employe_usine', u)}
+          onNouvelleUsineCompte={u => ouvrirNouveau('usine', u)}
+        />
       </ScrollView>
     </ScreenContainer>
   );
