@@ -15,7 +15,6 @@ import { ETAPES_MN } from '@/lib/menuiserie/etapes';
 import { ROLE_COMPTE_MN_LABELS } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Pastille, Section, COULEUR_USINE, FOND_USINE } from '@/components/menuiserie/ui';
 import { CaParUsine } from '@/components/menuiserie/CaParUsine';
-import { BarreBasMn } from '@/components/menuiserie/BarreBasMn';
 import { AccueilRole } from '@/components/menuiserie/AccueilRole';
 import { useSyncRdvMenuiserie } from '@/hooks/useSyncRdvMenuiserie';
 import { listerRdvMn } from '@/lib/menuiserie/api2';
@@ -150,14 +149,6 @@ function AccueilAdmin() {
 
         {!estAdmin && <Bouton label="Se déconnecter de la Menuiserie" variante="discret" onPress={deconnecter} />}
       </ScrollView>
-      {estAdmin && (
-        <BarreBasMn onglets={[
-          { label: 'Planning', onPress: () => router.push('/menuiserie/planning' as any) },
-          { label: 'Catalogue', onPress: () => router.push('/menuiserie/catalogue' as any) },
-          { label: 'Usines', onPress: () => router.push('/menuiserie/usines' as any) },
-          { label: 'Comptes', onPress: () => router.push('/menuiserie/comptes' as any) },
-        ]} />
-      )}
     </ScreenContainer>
   );
 }

@@ -69,7 +69,7 @@ export default function CatalogueMn() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
-        <EnTete titre="Catalogue & fournisseurs" retour={() => router.back()} />
+        <EnTete titre="Catalogue & fournisseurs" retour={moi.role !== 'admin' ? () => router.back() : undefined} />
         <View style={{ flexDirection: 'row', gap: 6 }}>
           <Puce label="Catalogue matériaux" actif={onglet === 'catalogue'} onPress={() => setOnglet('catalogue')} />
           <Puce label="Fournisseurs" actif={onglet === 'fournisseurs'} onPress={() => setOnglet('fournisseurs')} />

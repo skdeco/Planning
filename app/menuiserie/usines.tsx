@@ -37,7 +37,7 @@ export default function UsinesMn() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
-        <EnTete titre="Usines" retour={() => router.back()} />
+        <EnTete titre="Usines" />
         {edition ? (
           <Carte>
             {champ('nom', "Nom de l'usine *")}

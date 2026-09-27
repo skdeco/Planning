@@ -92,7 +92,7 @@ export default function ComptesMn() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
-        <EnTete titre="Comptes Menuiserie" retour={() => router.back()} />
+        <EnTete titre="Comptes Menuiserie" />
         <Text style={{ fontSize: 13, color: DS.textSecondary, lineHeight: 18 }}>
           Ces comptes ne donnent accès qu'à l'espace Menuiserie. L'accès Travaux se règle dans Équipe (fiche de la personne).
         </Text>

@@ -57,7 +57,7 @@ export default function PlanningMn() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 48, gap: 10 }}>
-        <EnTete titre="Planning Menuiserie" retour={() => router.back()} />
+        <EnTete titre="Planning Menuiserie" />
         <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
           <Puce label="Phases chantiers" actif={vue === 'phases'} onPress={() => setVue('phases')} />
           <Puce label="RDV" actif={vue === 'rdv'} onPress={() => setVue('rdv')} />
