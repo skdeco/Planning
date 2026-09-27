@@ -3,8 +3,8 @@ import { createClient } from '@supabase/supabase-js';
 import { Platform } from 'react-native';
 
 //// ─── Supabase client ────────────────────────────────────────────────
-const SUPABASE_URL = 'https://wgbzslmwhyuoxqhishzk.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnYnpzbG13aHl1b3hxaGlzaHprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDQzODQsImV4cCI6MjA5MDEyMDM4NH0.qJ6JX5Ps58rbURffJR-kP7ZP9W5YEW7qQmMfykaZpKs';
+export const SUPABASE_URL = 'https://wgbzslmwhyuoxqhishzk.supabase.co';
+export const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndnYnpzbG13aHl1b3hxaGlzaHprIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NDQzODQsImV4cCI6MjA5MDEyMDM4NH0.qJ6JX5Ps58rbURffJR-kP7ZP9W5YEW7qQmMfykaZpKs';
 // NOTE: La clé service_role a été retirée du code client pour des raisons de sécurité.
 // Les uploads Storage utilisent désormais le client anon avec des policies RLS sur le bucket.
 /** Nom du bucket Supabase Storage pour les photos et documents */
