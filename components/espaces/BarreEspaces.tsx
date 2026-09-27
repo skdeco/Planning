@@ -98,7 +98,8 @@ const SANS_BARRE = ['/login', '/language-select', '/espace', '/oauth'];
 export function BarreEspacesRacine({ children }: { children: React.ReactNode }) {
   const { currentUser } = useApp();
   const chemin = usePathname();
-  if (!currentUser || chemin === '/' || SANS_BARRE.some(p => chemin.startsWith(p))) return <>{children}</>;
+  // NB : « / » est aussi l'adresse de l'accueil Travaux → la barre doit y rester
+  if (!currentUser || SANS_BARRE.some(p => chemin.startsWith(p))) return <>{children}</>;
   const actif: OngletEspace = chemin.startsWith('/menuiserie') ? 'menuiserie' : chemin.startsWith('/direction') ? 'planning' : 'travaux';
   return <AvecBarreEspaces actif={actif}>{children}</AvecBarreEspaces>;
 }
