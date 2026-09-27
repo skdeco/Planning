@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
 import { DS, radius } from '@/constants/design';
 import type { EspaceId } from '@/app/types';
-import { droitsEspaces } from '@/lib/espaces';
+import { droitsEspaces, routeEspace } from '@/lib/espaces';
 import { useInvitationsRdv } from '@/hooks/useInvitationsRdv';
 
 const LIBELLE: Record<EspaceId, string> = { travaux: 'Travaux', menuiserie: 'Menuiserie' };
@@ -26,7 +26,7 @@ export function EspaceBar({ espaceCourant, sombre }: { espaceCourant: EspaceId; 
   const basculer = () => {
     if (!autre) return;
     setCurrentUser({ ...currentUser, espace: autre });
-    router.replace('/' as any);
+    router.replace(routeEspace(autre, currentUser) as any);
   };
 
   const fondChip = sombre ? 'rgba(255,255,255,0.14)' : DS.surface;

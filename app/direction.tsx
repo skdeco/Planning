@@ -8,7 +8,7 @@ import { Redirect, useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { useApp } from '@/app/context/AppContext';
 import { DS } from '@/constants/design';
-import { droitsEspaces } from '@/lib/espaces';
+import { droitsEspaces, routeEspace } from '@/lib/espaces';
 import { PlanningDirection } from '@/components/PlanningDirection';
 
 export default function DirectionScreen() {
@@ -17,7 +17,12 @@ export default function DirectionScreen() {
   if (!currentUser) return <Redirect href={'/login' as any} />;
   if (!droitsEspaces(currentUser, data).planningDirection) return <Redirect href={'/' as any} />;
 
-  const retour = () => (router.canGoBack() ? router.back() : router.replace('/' as any));
+  const retour = () => {
+    if (router.canGoBack()) { router.back(); return; }
+    const espaces = droitsEspaces(currentUser, data).espaces;
+    const espace = currentUser.espace && espaces.includes(currentUser.espace) ? currentUser.espace : espaces[0];
+    router.replace((espaces.length > 1 && !currentUser.espace ? '/espace' : routeEspace(espace, currentUser)) as any);
+  };
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>

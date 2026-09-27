@@ -10,7 +10,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { verifierMotDePasse, preparerChangementMotDePasse } from '@/lib/externAuth';
 import { Ico } from '@/components/ui/Ico';
 import type { CurrentUser } from '@/app/types';
-import { droitsEspaces } from '@/lib/espaces';
+import { droitsEspaces, routeEspace } from '@/lib/espaces';
 
 export default function LoginScreen() {
   const { data, setCurrentUser, updateApporteur } = useApp();
@@ -31,7 +31,9 @@ export default function LoginScreen() {
   const connecter = (user: CurrentUser, ecranTravaux: string) => {
     setCurrentUser(user);
     const droits = droitsEspaces(user, data);
-    router.replace((droits.espaces.includes('menuiserie') ? '/' : ecranTravaux) as any);
+    if (droits.espaces.length > 1) router.replace('/espace' as any);
+    else if (droits.espaces[0] === 'menuiserie') router.replace(routeEspace('menuiserie', user) as any);
+    else router.replace(ecranTravaux as any);
   };
 
   const handleLogin = async () => {

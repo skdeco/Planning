@@ -10,7 +10,7 @@ import { useApp } from '@/app/context/AppContext';
 import { DS, radius, screenTitle, shadows } from '@/constants/design';
 import type { EspaceId } from '@/app/types';
 import { ROLE_MENUISERIE_LABELS, APPORTEUR_TYPE_LABELS } from '@/app/types';
-import { droitsEspaces } from '@/lib/espaces';
+import { droitsEspaces, routeEspace } from '@/lib/espaces';
 import { useInvitationsRdv } from '@/hooks/useInvitationsRdv';
 
 export default function ChoixEspaceScreen() {
@@ -30,7 +30,7 @@ export default function ChoixEspaceScreen() {
 
   const entrer = (espace: EspaceId) => {
     setCurrentUser({ ...currentUser, espace });
-    router.replace('/' as any);
+    router.replace(routeEspace(espace, currentUser) as any);
   };
 
   const Carte = ({ espace, titre, role, plein }: { espace: EspaceId; titre: string; role: string; plein?: boolean }) => (

@@ -104,3 +104,14 @@ export function nomParticipant(cle: string, data: AppData): string {
   const e = data.employes.find(x => x.id === cle);
   return e ? `${e.prenom} ${e.nom}`.trim() : 'Employé';
 }
+
+/**
+ * Écran d'arrivée d'un espace. Chemins explicites : « / » est ambigu depuis
+ * l'intérieur de (tabs) (il y désigne l'onglet Accueil, pas le routage central).
+ */
+export function routeEspace(espace: EspaceId, cu: CurrentUser): string {
+  if (espace === 'menuiserie') return '/menuiserie';
+  if (cu.role === 'apporteur') return '/(externe)/mes-chantiers';
+  if (cu.role === 'soustraitant') return '/(tabs)/planning';
+  return '/(tabs)';
+}

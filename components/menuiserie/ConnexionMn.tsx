@@ -90,7 +90,7 @@ export function ConnexionMn() {
         {mode === 'premier' && <Bouton label="Retour à la connexion" variante="discret" onPress={() => setMode('connexion')} />}
 
         <View style={{ height: 8 }} />
-        <Bouton label="‹ Revenir au choix d'espace" variante="discret" onPress={() => router.replace('/' as any)} />
+        <Bouton label="‹ Revenir au choix d'espace" variante="discret" onPress={() => router.replace('/espace' as any)} />
       </ScrollView>
     </ScreenContainer>
   );
