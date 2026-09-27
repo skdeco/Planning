@@ -15,6 +15,7 @@ import { ETAPES_MN } from '@/lib/menuiserie/etapes';
 import { ROLE_COMPTE_MN_LABELS } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Pastille, Section, COULEUR_USINE, FOND_USINE } from '@/components/menuiserie/ui';
 import { CaParUsine } from '@/components/menuiserie/CaParUsine';
+import { BarreBasMn } from '@/components/menuiserie/BarreBasMn';
 import { AccueilRole } from '@/components/menuiserie/AccueilRole';
 import { useSyncRdvMenuiserie } from '@/hooks/useSyncRdvMenuiserie';
 import { listerRdvMn } from '@/lib/menuiserie/api2';
@@ -78,14 +79,13 @@ function AccueilAdmin() {
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
       <ScrollView
-        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 12 }}
+        contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 12 }}
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={async () => { setRafraichit(true); await charger(); setRafraichit(false); }} tintColor={DS.primary} />}
       >
-        <View style={{ marginTop: 8, gap: 10 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: DS.textSecondary }}>
-            SK DECO · {compte ? `${compte.nom} · ${ROLE_COMPTE_MN_LABELS[compte.role]}` : ''}
+        <View style={{ marginTop: 2 }}>
+          <Text style={{ fontSize: 14, color: DS.textSecondary, textTransform: 'capitalize' }}>
+            {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
           </Text>
-          <Text style={screenTitle}>Menuiserie</Text>
         </View>
 
         <View style={{ marginHorizontal: -12 }}><InvitationsRdv /></View>
@@ -145,19 +145,19 @@ function AccueilAdmin() {
               );
             })}
 
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <View style={{ flex: 1 }}><Bouton label="Planning" variante="contour" onPress={() => router.push('/menuiserie/planning' as any)} /></View>
-              <View style={{ flex: 1 }}><Bouton label="Catalogue" variante="contour" onPress={() => router.push('/menuiserie/catalogue' as any)} /></View>
-            </View>
-            <View style={{ flexDirection: 'row', gap: 8 }}>
-              <View style={{ flex: 1 }}><Bouton label="Usines" variante="contour" onPress={() => router.push('/menuiserie/usines' as any)} /></View>
-              <View style={{ flex: 1 }}><Bouton label="Comptes" variante="contour" onPress={() => router.push('/menuiserie/comptes' as any)} /></View>
-            </View>
           </>
         )}
 
-        <Bouton label="Se déconnecter de la Menuiserie" variante="discret" onPress={deconnecter} />
+        {!estAdmin && <Bouton label="Se déconnecter de la Menuiserie" variante="discret" onPress={deconnecter} />}
       </ScrollView>
+      {estAdmin && (
+        <BarreBasMn onglets={[
+          { label: 'Planning', onPress: () => router.push('/menuiserie/planning' as any) },
+          { label: 'Catalogue', onPress: () => router.push('/menuiserie/catalogue' as any) },
+          { label: 'Usines', onPress: () => router.push('/menuiserie/usines' as any) },
+          { label: 'Comptes', onPress: () => router.push('/menuiserie/comptes' as any) },
+        ]} />
+      )}
     </ScreenContainer>
   );
 }

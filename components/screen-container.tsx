@@ -1,5 +1,7 @@
 import { View, KeyboardAvoidingView, Platform, type ViewProps } from "react-native";
 import { SafeAreaView, type Edge } from "react-native-safe-area-context";
+import { useContext } from "react";
+import { SousBarreEspaces } from "@/components/espaces/BarreEspaces";
 
 import { cn } from "@/lib/utils";
 
@@ -47,6 +49,9 @@ export function ScreenContainer({
   style,
   ...props
 }: ScreenContainerProps) {
+  // Sous la barre Travaux | Menuiserie | Planning : la marge du haut est déjà prise par la barre
+  const sousBarre = useContext(SousBarreEspaces);
+  const bords = sousBarre ? edges.filter(e => e !== 'top') : edges;
   return (
     <View
       className={cn(
@@ -57,7 +62,7 @@ export function ScreenContainer({
       {...props}
     >
       <SafeAreaView
-        edges={edges}
+        edges={bords}
         className={cn("flex-1", safeAreaClassName)}
         style={style}
       >

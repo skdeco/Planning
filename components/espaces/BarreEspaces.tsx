@@ -15,6 +15,9 @@ import { useInvitationsRdv } from '@/hooks/useInvitationsRdv';
 
 export type OngletEspace = 'travaux' | 'menuiserie' | 'planning';
 
+/** true = l'écran est affiché sous la barre d'espaces (la marge du haut est déjà prise). */
+export const SousBarreEspaces = React.createContext(false);
+
 function useOnglets(): OngletEspace[] {
   const { data, currentUser } = useApp();
   const d = droitsEspaces(currentUser, data);
@@ -76,9 +79,11 @@ export function AvecBarreEspaces({ actif, children }: { actif: OngletEspace; chi
       <View style={{ paddingTop: insets.top, backgroundColor: DS.background }}>
         <BarreEspaces actif={actif} />
       </View>
-      <SafeAreaInsetsContext.Provider value={{ ...insets, top: 0 }}>
-        <View style={{ flex: 1 }}>{children}</View>
-      </SafeAreaInsetsContext.Provider>
+      <SousBarreEspaces.Provider value={true}>
+        <SafeAreaInsetsContext.Provider value={{ ...insets, top: 0 }}>
+          <View style={{ flex: 1 }}>{children}</View>
+        </SafeAreaInsetsContext.Provider>
+      </SousBarreEspaces.Provider>
     </View>
   );
 }

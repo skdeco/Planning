@@ -945,20 +945,11 @@ export default function DashboardScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {/* En-tête : date + salutation (langue et déconnexion sont dans l'écran Plus) */}
         <FadeInView duration={400}>
-          <View style={{ marginTop: 8, marginBottom: 14 }}>
+          <View style={{ marginTop: 2, marginBottom: 6 }}>
             <Text style={{ fontSize: 14, color: DS.textSecondary, textTransform: 'capitalize' }}>
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
-            <Text style={screenTitle}>{t.home.hello}</Text>
           </View>
-        </FadeInView>
-
-        {/* Recherche globale — ouvre le modal dédié (filtres par type) */}
-        <FadeInView delay={80}>
-          <Pressable onPress={() => setSearchOpen(true)} accessibilityRole="search" style={styles.searchPill}>
-            <Search size={19} color={DS.textSecondary} strokeWidth={1.9} />
-            <Text style={{ flex: 1, fontSize: 16, color: DS.textSecondary }}>{t.dash.searchEverywhere}</Text>
-          </Pressable>
         </FadeInView>
 
         {/* À traiter — ce qui attend une action de l'admin */}
