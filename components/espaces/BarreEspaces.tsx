@@ -39,9 +39,10 @@ export function BarreEspaces({ actif }: { actif: OngletEspace }) {
 
   const aller = (o: OngletEspace) => {
     if (o === actif) return;
-    if (o === 'planning') { router.replace('/direction' as any); return; }
+    if (o === 'planning') { router.navigate('/direction' as any); return; }
     setCurrentUser({ ...currentUser, espace: o });
-    router.replace(routeEspace(o, currentUser) as any);
+    // navigate (et non replace) : l'espace déjà ouvert est réaffiché tel quel, sans rechargement
+    router.navigate(routeEspace(o, currentUser) as any);
   };
 
   return (
@@ -98,8 +99,14 @@ const SANS_BARRE = ['/login', '/language-select', '/espace', '/oauth'];
 export function BarreEspacesRacine({ children }: { children: React.ReactNode }) {
   const { currentUser } = useApp();
   const chemin = usePathname();
+  // Les espaces restent montés en mémoire : on les reconstruit seulement quand la
+  // personne connectée change (déconnexion / autre compte), jamais en changeant d'espace.
+  const cleSession = currentUser
+    ? `${currentUser.role}:${currentUser.employeId || currentUser.apporteurId || currentUser.soustraitantId || currentUser.nom || ''}`
+    : 'aucun';
+  const contenu = <React.Fragment key={cleSession}>{children}</React.Fragment>;
   // NB : « / » est aussi l'adresse de l'accueil Travaux → la barre doit y rester
-  if (!currentUser || SANS_BARRE.some(p => chemin.startsWith(p))) return <>{children}</>;
+  if (!currentUser || SANS_BARRE.some(p => chemin.startsWith(p))) return contenu;
   const actif: OngletEspace = chemin.startsWith('/menuiserie') ? 'menuiserie' : chemin.startsWith('/direction') ? 'planning' : 'travaux';
-  return <AvecBarreEspaces actif={actif}>{children}</AvecBarreEspaces>;
+  return <AvecBarreEspaces actif={actif}>{contenu}</AvecBarreEspaces>;
 }

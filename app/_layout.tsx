@@ -1,7 +1,7 @@
 import { BarreEspacesRacine } from '@/components/espaces/BarreEspaces';
 import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Stack } from "expo-router";
+import { Tabs } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { useCallback, useEffect, useMemo, useState, type ReactElement, type ReactNode } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -117,19 +117,28 @@ export default function RootLayout() {
             <AlertHost />
             <Toaster position="top-center" richColors offset={60} />
             <BarreEspacesRacine>
-            <Stack screenOptions={{ headerShown: false }}>
-              <Stack.Screen name="index" />
-              <Stack.Screen name="login" />
-              <Stack.Screen name="language-select" />
-              {/* Changement d'espace instantané : pas d'animation d'écran entre Travaux / Menuiserie / Planning */}
-              <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
-              <Stack.Screen name="(externe)" options={{ animation: 'none' }} />
-              <Stack.Screen name="espace" />
-              <Stack.Screen name="direction" options={{ animation: 'none' }} />
-              <Stack.Screen name="menuiserie" options={{ animation: 'none' }} />
-              <Stack.Screen name="oauth/callback" />
-              <Stack.Screen name="inbox" />
-            </Stack>
+            {/*
+              Navigation racine en « onglets invisibles » : Travaux, Menuiserie et Planning restent
+              montés en mémoire une fois ouverts. Passer de l'un à l'autre est donc instantané
+              (rien n'est reconstruit) ; les espaces cachés sont gelés pour ne rien ralentir.
+              La barre visible est BarreEspacesRacine, au-dessus.
+            */}
+            <Tabs
+              tabBar={() => null}
+              backBehavior="history"
+              screenOptions={{ headerShown: false, freezeOnBlur: true, animation: 'none' }}
+            >
+              <Tabs.Screen name="index" />
+              <Tabs.Screen name="login" options={{ freezeOnBlur: false }} />
+              <Tabs.Screen name="language-select" />
+              <Tabs.Screen name="(tabs)" />
+              <Tabs.Screen name="(externe)" />
+              <Tabs.Screen name="espace" />
+              <Tabs.Screen name="direction" />
+              <Tabs.Screen name="menuiserie" />
+              <Tabs.Screen name="oauth/callback" />
+              <Tabs.Screen name="inbox" />
+            </Tabs>
             </BarreEspacesRacine>
           </View>
           <StatusBar style="auto" />
