@@ -1,3 +1,4 @@
+import { BarreEspacesRacine } from '@/components/espaces/BarreEspaces';
 import "@/global.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Stack } from "expo-router";
@@ -115,18 +116,21 @@ export default function RootLayout() {
             <InboxBanner />
             <AlertHost />
             <Toaster position="top-center" richColors offset={60} />
+            <BarreEspacesRacine>
             <Stack screenOptions={{ headerShown: false }}>
               <Stack.Screen name="index" />
               <Stack.Screen name="login" />
               <Stack.Screen name="language-select" />
-              <Stack.Screen name="(tabs)" />
-              <Stack.Screen name="(externe)" />
+              {/* Changement d'espace instantané : pas d'animation d'écran entre Travaux / Menuiserie / Planning */}
+              <Stack.Screen name="(tabs)" options={{ animation: 'none' }} />
+              <Stack.Screen name="(externe)" options={{ animation: 'none' }} />
               <Stack.Screen name="espace" />
-              <Stack.Screen name="direction" />
-              <Stack.Screen name="menuiserie" />
+              <Stack.Screen name="direction" options={{ animation: 'none' }} />
+              <Stack.Screen name="menuiserie" options={{ animation: 'none' }} />
               <Stack.Screen name="oauth/callback" />
               <Stack.Screen name="inbox" />
             </Stack>
+            </BarreEspacesRacine>
           </View>
           <StatusBar style="auto" />
         </QueryClientProvider>

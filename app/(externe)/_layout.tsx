@@ -3,17 +3,12 @@ import { Platform, View, Text, Pressable } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/app/context/AppContext';
 import { Ico } from '@/components/ui/Ico';
-import { AvecBarreEspaces } from '@/components/espaces/BarreEspaces';
 
 export default function ExterneLayout() {
   const { currentUser } = useApp();
   if (!currentUser) return <Redirect href={'/login' as any} />;
   if (currentUser.role !== 'apporteur') return <Redirect href={'/(tabs)' as any} />;
-  return (
-    <AvecBarreEspaces actif="travaux">
-      <ExterneContenu />
-    </AvecBarreEspaces>
-  );
+  return <ExterneContenu />;
 }
 
 function ExterneContenu() {

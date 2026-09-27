@@ -6,7 +6,7 @@
  */
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
+import { usePathname, useRouter } from 'expo-router';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/app/context/AppContext';
 import { DS, radius } from '@/constants/design';
@@ -86,4 +86,19 @@ export function AvecBarreEspaces({ actif, children }: { actif: OngletEspace; chi
       </SousBarreEspaces.Provider>
     </View>
   );
+}
+
+/** Écrans sans barre (connexion, choix de langue…) */
+const SANS_BARRE = ['/login', '/language-select', '/espace', '/oauth'];
+
+/**
+ * Barre posée une seule fois à la racine de l'app : elle reste fixe pendant qu'on
+ * change d'espace, seul le contenu en dessous change (comme un simple changement de page).
+ */
+export function BarreEspacesRacine({ children }: { children: React.ReactNode }) {
+  const { currentUser } = useApp();
+  const chemin = usePathname();
+  if (!currentUser || chemin === '/' || SANS_BARRE.some(p => chemin.startsWith(p))) return <>{children}</>;
+  const actif: OngletEspace = chemin.startsWith('/menuiserie') ? 'menuiserie' : chemin.startsWith('/direction') ? 'planning' : 'travaux';
+  return <AvecBarreEspaces actif={actif}>{children}</AvecBarreEspaces>;
 }

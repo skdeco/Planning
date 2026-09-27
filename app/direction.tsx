@@ -9,7 +9,6 @@ import { useApp } from '@/app/context/AppContext';
 import { DS } from '@/constants/design';
 import { droitsEspaces } from '@/lib/espaces';
 import { PlanningDirection } from '@/components/PlanningDirection';
-import { AvecBarreEspaces } from '@/components/espaces/BarreEspaces';
 
 export default function DirectionScreen() {
   const { data, currentUser } = useApp();
@@ -19,7 +18,6 @@ export default function DirectionScreen() {
   // Le Planning direction a toujours la barre (au moins un espace + le planning) : pas de bouton Retour.
 
   return (
-    <AvecBarreEspaces actif="planning">
       <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}>
           <Text style={{ fontSize: 20, fontWeight: '800', color: DS.text, flex: 1 }}>Planning direction</Text>
@@ -28,6 +26,5 @@ export default function DirectionScreen() {
           <PlanningDirection />
         </View>
       </ScreenContainer>
-    </AvecBarreEspaces>
   );
 }

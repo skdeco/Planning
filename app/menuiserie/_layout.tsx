@@ -7,7 +7,6 @@ import { droitsEspaces } from '@/lib/espaces';
 import { SessionMnProvider, useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { ConnexionMn } from '@/components/menuiserie/ConnexionMn';
 import { DS } from '@/constants/design';
-import { AvecBarreEspaces } from '@/components/espaces/BarreEspaces';
 
 /** Espace Menuiserie : rôle Menuiserie dans l'app + connexion sécurisée. */
 export default function MenuiserieLayout() {
@@ -16,9 +15,7 @@ export default function MenuiserieLayout() {
   if (!droitsEspaces(currentUser, data).menuiserie) return <Redirect href={'/' as any} />;
   return (
     <SessionMnProvider>
-      <AvecBarreEspaces actif="menuiserie">
-        <Contenu />
-      </AvecBarreEspaces>
+      <Contenu />
     </SessionMnProvider>
   );
 }
