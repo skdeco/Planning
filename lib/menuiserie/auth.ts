@@ -84,3 +84,14 @@ function traduireErreurAuth(msg: string): string {
   if (m.includes('invalid')) return 'Adresse e-mail invalide.';
   return msg || 'Erreur inconnue.';
 }
+
+/** Premier administrateur créé automatiquement avec les identifiants de l'app (identifiant seul). */
+export async function creerCompteAdminAutoMn(p: { nom: string; identifiant: string; motDePasse: string }): Promise<boolean> {
+  const email = emailTechnique(p.identifiant);
+  const { error: e1 } = await mn().auth.signUp({ email, password: p.motDePasse });
+  if (e1) return false;
+  const { error: e2 } = await mn().auth.signInWithPassword({ email, password: p.motDePasse });
+  if (e2) return false;
+  const { error: e3 } = await mn().rpc('mn_creer_premier_admin', { p_nom: p.nom, p_identifiant: p.identifiant, p_app_ref: null });
+  return !e3;
+}

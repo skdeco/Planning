@@ -12,6 +12,7 @@ import { Ico } from '@/components/ui/Ico';
 import type { CurrentUser } from '@/app/types';
 import { droitsEspaces, routeEspace } from '@/lib/espaces';
 import { connexionMn, monCompteMn } from '@/lib/menuiserie/auth';
+import { ouvrirMenuiserieAvecApp } from '@/lib/menuiserie/liaison';
 
 export default function LoginScreen() {
   const { data, setCurrentUser, updateApporteur } = useApp();
@@ -35,7 +36,7 @@ export default function LoginScreen() {
     setCurrentUser({ ...user, espace });
     // Accès Menuiserie : connexion sécurisée silencieuse avec les mêmes identifiants,
     // pour ne pas avoir à se reconnecter en passant sur l'onglet Menuiserie.
-    if (droits.menuiserie && id && pwd) connexionMn(id, pwd).catch(() => {});
+    if (droits.menuiserie && id && pwd) ouvrirMenuiserieAvecApp(id, pwd, user.nom || '', droits.menuiserie === 'admin').catch(() => {});
     router.replace((espace === 'travaux' ? ecranTravaux : routeEspace(espace, user)) as any);
   };
 

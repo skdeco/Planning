@@ -2178,6 +2178,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setCurrentUserPersisted(null);
     // Ferme aussi la session sécurisée Menuiserie (le prochain utilisateur de l'appareil ne l'hérite pas)
     import('@/lib/menuiserie/auth').then(m => m.deconnexionMn()).catch(() => {});
+    import('@/lib/menuiserie/liaison').then(m => m.oublierIdentifiantsApp()).catch(() => {});
   };
 
   return (

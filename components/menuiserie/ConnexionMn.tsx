@@ -11,6 +11,7 @@ import { DS, screenTitle } from '@/constants/design';
 import { droitsEspaces, cleUtilisateur } from '@/lib/espaces';
 import { connexionMn, creerPremierAdminMn, deconnexionMn, existeAdminMn, motDePasseOublieMn } from '@/lib/menuiserie/auth';
 import { useSessionMn } from '@/lib/menuiserie/SessionMn';
+import { alignerSurApp } from '@/lib/menuiserie/liaison';
 import { Bouton, Carte, Champ } from './ui';
 
 export function ConnexionMn() {
@@ -36,6 +37,10 @@ export function ConnexionMn() {
       const r = await connexionMn(saisie, mdp);
       if (!r.ok) { setMessage(r.erreur); return; }
       const c = await recharger();
+      if (c) {
+        const info = await alignerSurApp(c);
+        if (info) setMessage(info);
+      }
       if (!c) {
         setMessage("Connexion acceptée, mais aucun compte Menuiserie actif n'est associé à cet e-mail / identifiant. "
           + (existeAdmin ? "Demande à un administrateur de créer ton compte (Menuiserie → Comptes)." : "Crée d'abord le compte administrateur avec le bouton ci-dessous."));
