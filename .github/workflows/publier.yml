@@ -1,0 +1,42 @@
+# Publication automatique à chaque envoi sur la branche main :
+#  - mise à jour de l'app iPhone (EAS Update, canal « preview »)
+#  - mise en ligne de la version web (Vercel, production)
+# Peut aussi être lancée à la main depuis l'onglet « Actions » de GitHub (appli iPhone comprise).
+name: Publier
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: publier
+  cancel-in-progress: true
+
+jobs:
+  iphone:
+    name: App iPhone (EAS Update)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+      - run: eas update --channel preview --message "${{ github.event.head_commit.message || 'Publication manuelle' }}" --non-interactive
+
+  web:
+    name: Version web (Vercel)
+    runs-on: ubuntu-latest
+    env:
+      VERCEL_ORG_ID: team_rbg6eMZZSImIMuYlQvTl81Ta
+      VERCEL_PROJECT_ID: prj_PTHLQeceRz34m2Yd5PGXAo2XEtGY
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx vercel@latest deploy --prod --yes --archive=tgz --token=${{ secrets.VERCEL_TOKEN }}
