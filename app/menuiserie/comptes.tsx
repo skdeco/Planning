@@ -11,7 +11,7 @@ import { DS } from '@/constants/design';
 import { generatePassword } from '@/lib/externAuth';
 import { creerCompteMn } from '@/lib/menuiserie/auth';
 import {
-  activerCompteMn, changerMotDePasseCompteMn, listerComptesMn, listerUsinesMn, modifierCompteMn, supprimerCompteMn,
+  enregistrerUsineMn, activerCompteMn, changerMotDePasseCompteMn, listerComptesMn, listerUsinesMn, modifierCompteMn, supprimerCompteMn,
 } from '@/lib/menuiserie/api';
 import type { CompteMn, RoleCompteMn, UsineMn } from '@/lib/menuiserie/types';
 import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
@@ -57,15 +57,23 @@ export default function ComptesMn() {
 
   const enregistrer = async () => {
     if (!f?.nom.trim()) { setMessage('Le nom est obligatoire.'); return; }
-    if ((role === 'usine' || role === 'employe_usine') && !usineId) { setMessage("Choisis l'usine de rattachement."); return; }
+    if (role === 'employe_usine' && !usineId) { setMessage("Choisis l'usine de l'employé."); return; }
     setCharge(true); setMessage('');
     try {
+      // Compte usine sans usine choisie : l'usine est créée automatiquement avec ce nom
+      let usineCible = usineId;
+      if (role === 'usine' && !usineCible) {
+        await enregistrerUsineMn({ nom: f.nom.trim() });
+        const liste = await listerUsinesMn();
+        ecrireCacheMn('usines', liste); setUsines(liste);
+        usineCible = liste.find(u => u.nom === f.nom.trim())?.id || null;
+      }
       if (editId) {
-        await modifierCompteMn({ id: editId, nom: f.nom, role, usineId, identifiant: f.identifiant, email: f.email, telephone: f.telephone });
+        await modifierCompteMn({ id: editId, nom: f.nom, role, usineId: usineCible, identifiant: f.identifiant, email: f.email, telephone: f.telephone });
         if (f.motDePasse) await changerMotDePasseCompteMn(editId, f.motDePasse);
         setMessage(`Compte de ${f.nom.trim()} mis à jour.${f.motDePasse ? ` Nouveau mot de passe : ${f.motDePasse}` : ''}`);
       } else {
-        const r = await creerCompteMn({ nom: f.nom, role, motDePasse: f.motDePasse, email: f.email, identifiant: f.identifiant, telephone: f.telephone, usineId });
+        const r = await creerCompteMn({ nom: f.nom, role, motDePasse: f.motDePasse, email: f.email, identifiant: f.identifiant, telephone: f.telephone, usineId: usineCible });
         if (!r.ok) { setMessage(r.erreur); return; }
         setMessage(`Compte créé. Communique à ${f.nom.trim()} : ${f.email.trim() || f.identifiant.trim()} / ${f.motDePasse}`);
       }
@@ -108,7 +116,9 @@ export default function ComptesMn() {
             </View>
             {(role === 'usine' || role === 'employe_usine') && (
               <>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>Usine</Text>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>
+                  {role === 'usine' ? "Usine (laisse vide pour créer l'usine automatiquement avec ce nom)" : 'Usine'}
+                </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                   {usines.map(u => <Puce key={u.id} label={u.nom} actif={usineId === u.id} onPress={() => setUsineId(u.id)} />)}
                 </View>

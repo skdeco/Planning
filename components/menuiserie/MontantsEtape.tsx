@@ -33,12 +33,14 @@ const TEXTE_VIS: Record<VisibiliteMontantMn, string> = {
   personnel: 'Ce montant sera visible uniquement par la personne concernée (jamais par le client).',
 };
 
-export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants, onChange, compteCible, lectureSeule }: {
+export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants, onChange, compteCible, lectureSeule, libelleDefaut }: {
   moi: CompteMn; chantierId: string; usineId: string | null; etape: string | null; types: TypeMontantMn[];
   montants: MontantMn[]; onChange: () => void;
   /** Compte visé par les montants « poseur » / « personnel » (poseur, architecte, apporteur) */
   compteCible?: { id: string; nom: string } | null;
   lectureSeule?: boolean;
+  /** Libellé ajouté automatiquement (ex. nom du bénéficiaire sans compte) */
+  libelleDefaut?: string;
 }) {
   const [type, setType] = useState<TypeMontantMn>(types[0]);
   const [valeur, setValeur] = useState('');
@@ -57,7 +59,7 @@ export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants
     setCharge(true); setErreur('');
     try {
       await ajouterMontantMn(moi, {
-        chantier_id: chantierId, etape, type, libelle: libelle.trim() || null, montant_ht: n, visibilite: vis,
+        chantier_id: chantierId, etape, type, libelle: [libelle.trim(), libelleDefaut].filter(Boolean).join(' · ') || null, montant_ht: n, visibilite: vis,
         usine_id: vis === 'usine' ? usineId : null,
         compte_id: vis === 'poseur' || vis === 'personnel' ? compteCible?.id || null : null,
         date_montant: new Date().toISOString().slice(0, 10),
