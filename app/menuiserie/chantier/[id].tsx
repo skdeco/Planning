@@ -1,12 +1,12 @@
 /** Fiche d'un chantier Menuiserie : infos, client, intervenants, les 15 étapes, historique. */
 import React, { useCallback, useEffect, useState } from 'react';
-import { View, Text, Pressable, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, ScrollView, RefreshControl, ActivityIndicator, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
 import { DS } from '@/constants/design';
 import { formatDateFR, formatDateHeureFR } from '@/lib/date/format';
 import { useCompteMn } from '@/lib/menuiserie/SessionMn';
-import { chargerChantierMn, listerUsinesMn, majChantierMn, type DonneesChantierMn } from '@/lib/menuiserie/api';
+import { chargerChantierMn, listerUsinesMn, majChantierMn, supprimerChantierMn, type DonneesChantierMn } from '@/lib/menuiserie/api';
 import { ETAPES_MN, type DefEtape } from '@/lib/menuiserie/etapes';
 import { STATUT_CHANTIER_MN_LABELS, type StatutChantierMn, type UsineMn } from '@/lib/menuiserie/types';
 import { Carte, EnTete, Puce, Section } from '@/components/menuiserie/ui';
@@ -66,6 +66,16 @@ function ChantierAdmin() {
   const adresseClient = [c.client_rue, [c.client_code_postal, c.client_ville].filter(Boolean).join(' ')].filter(Boolean).join(', ');
 
   const changerStatut = async (s: StatutChantierMn) => { await majChantierMn(moi, c.id, { statut: s }, `Statut : ${STATUT_CHANTIER_MN_LABELS[s]}`); charger(); };
+  const supprimer = () => {
+    const titre = `Supprimer « ${c.nom} » ?`;
+    const texte = "Le chantier, ses étapes, documents, photos, montants et réserves seront effacés définitivement. Pour simplement le ranger, choisis plutôt « Archivé ».";
+    const go = async () => {
+      try { await supprimerChantierMn(c.id); router.replace('/menuiserie' as any); }
+      catch (e) { setErreur((e as Error).message); }
+    };
+    if (Platform.OS === 'web') { if (window.confirm(`${titre}\n\n${texte}`)) go(); return; }
+    Alert.alert(titre, texte, [{ text: 'Annuler', style: 'cancel' }, { text: 'Supprimer définitivement', style: 'destructive', onPress: go }]);
+  };
   const changerUsine = async (u: UsineMn | null) => { await majChantierMn(moi, c.id, { usine_id: u?.id || null }, `Usine : ${u?.nom || 'à définir'}`); charger(); };
 
   return (
@@ -77,7 +87,7 @@ function ChantierAdmin() {
         <EnTete titre={c.nom} retour={() => router.back()} />
 
         <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
-          {(['en_cours', 'cloture', 'sav'] as const).map(s => <Puce key={s} label={STATUT_CHANTIER_MN_LABELS[s]} actif={c.statut === s} onPress={() => changerStatut(s)} />)}
+          {(['en_cours', 'cloture', 'sav', 'archive'] as const).map(s => <Puce key={s} label={STATUT_CHANTIER_MN_LABELS[s]} actif={c.statut === s} onPress={() => changerStatut(s)} />)}
         </View>
 
         <Carte>
@@ -147,6 +157,13 @@ function ChantierAdmin() {
             </Carte>
           </>
         )}
+        {c.statut !== 'archive' && (
+          <Bouton label="Archiver ce chantier" variante="contour" onPress={() => changerStatut('archive')} />
+        )}
+        <Pressable onPress={supprimer} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: DS.error }}>Supprimer définitivement ce chantier</Text>
+        </Pressable>
+        {!!erreur && <Text style={{ color: DS.error, fontWeight: '600' }}>{erreur}</Text>}
       </ScrollView>
 
       {ouverte && (

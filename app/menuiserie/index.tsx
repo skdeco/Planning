@@ -59,7 +59,7 @@ function AccueilAdmin() {
     const dans14 = new Date(); dans14.setDate(dans14.getDate() + 14);
     const limite = dans14.toISOString().slice(0, 10);
     const items: { id: string; texte: string }[] = [];
-    d.chantiers.filter(c => c.statut !== 'cloture' && c.date_livraison_prevue && c.date_livraison_prevue <= limite)
+    d.chantiers.filter(c => c.statut !== 'cloture' && c.statut !== 'archive' && c.date_livraison_prevue && c.date_livraison_prevue <= limite)
       .forEach(c => items.push({ id: `l-${c.id}`, texte: `Livraison ${c.nom} le ${formatDateFR(c.date_livraison_prevue)}` }));
     d.etapes.filter(e => e.statut === 'en_cours').slice(0, 5).forEach(e => {
       const c = d.chantiers.find(x => x.id === e.chantier_id);

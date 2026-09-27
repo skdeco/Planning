@@ -1,7 +1,7 @@
 /** Modèle de données de l'espace Menuiserie (tables Supabase mn_*). */
 
 export type RoleCompteMn = 'admin' | 'usine' | 'employe_usine' | 'client' | 'architecte' | 'apporteur' | 'poseur';
-export type StatutChantierMn = 'en_cours' | 'cloture' | 'sav';
+export type StatutChantierMn = 'en_cours' | 'cloture' | 'sav' | 'archive';
 export type StatutEtapeMn = 'a_faire' | 'en_cours' | 'fait';
 export type RoleIntervenantMn = 'client' | 'architecte' | 'apporteur' | 'responsable' | 'poseur';
 export type TypeMontantMn =
@@ -144,6 +144,7 @@ export const STATUT_CHANTIER_MN_LABELS: Record<StatutChantierMn, string> = {
   en_cours: 'En cours',
   cloture: 'Clôturé',
   sav: 'SAV',
+  archive: 'Archivé',
 };
 
 export const ROLE_INTERVENANT_MN_LABELS: Record<RoleIntervenantMn, string> = {

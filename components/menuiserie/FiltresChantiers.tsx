@@ -19,14 +19,14 @@ export const FILTRES_MN_DEFAUT: FiltresMn = { statut: 'en_cours', usineId: null,
 
 export function filtrerChantiers(chantiers: ChantierMn[], intervenants: IntervenantMn[], f: FiltresMn): ChantierMn[] {
   return chantiers.filter(c =>
-    (f.statut === 'tous' || c.statut === f.statut)
+    (f.statut === 'tous' ? c.statut !== 'archive' : c.statut === f.statut)
     && (!f.usineId || c.usine_id === f.usineId)
     && (!f.intervenant || intervenants.some(i => i.chantier_id === c.id && i.role === f.intervenant!.role && i.nom === f.intervenant!.nom)));
 }
 
 const ROLES_QUI: RoleIntervenantMn[] = ['architecte', 'client', 'apporteur', 'responsable'];
-const ETATS: (StatutChantierMn | 'tous')[] = ['en_cours', 'cloture', 'sav', 'tous'];
-const libEtat = (s: StatutChantierMn | 'tous') => (s === 'tous' ? 'Tous' : STATUT_CHANTIER_MN_LABELS[s]);
+const ETATS: (StatutChantierMn | 'tous')[] = ['en_cours', 'cloture', 'sav', 'archive', 'tous'];
+const libEtat = (s: StatutChantierMn | 'tous') => (s === 'tous' ? 'Tous (hors archivés)' : STATUT_CHANTIER_MN_LABELS[s]);
 
 function Deroulant({ label, actif, onPress }: { label: string; actif: boolean; onPress: () => void }) {
   return (

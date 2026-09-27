@@ -42,7 +42,7 @@ export default function PlanningMn() {
 
   const lignes = useMemo(() => {
     if (!d) return [];
-    return d.chantiers.filter(c => c.statut !== 'cloture').map(c => {
+    return d.chantiers.filter(c => c.statut !== 'cloture' && c.statut !== 'archive').map(c => {
       const et = (cle: string) => d.etapes.find(e => e.chantier_id === c.id && e.etape === cle)?.infos || {};
       const prod = et('production'), liv = et('livraison'), pose = et('pose');
       const phases = [

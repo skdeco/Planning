@@ -218,3 +218,13 @@ export async function changerMotDePasseCompteMn(id: string, motDePasse: string):
 export async function supprimerCompteMn(id: string): Promise<void> {
   verifier(await mn().rpc('mn_admin_supprimer_compte', { p_id: id }));
 }
+
+/** Suppression définitive d'un chantier : fichiers du stockage privé, puis toutes ses données. */
+export async function supprimerChantierMn(id: string): Promise<void> {
+  const { data } = await mn().from('mn_documents').select('chemin').eq('chantier_id', id);
+  const chemins = ((data as { chemin: string }[]) || []).map(d => d.chemin);
+  for (let i = 0; i < chemins.length; i += 100) {
+    await mn().storage.from(BUCKET).remove(chemins.slice(i, i + 100));
+  }
+  verifier(await mn().from('mn_chantiers').delete().eq('id', id));
+}

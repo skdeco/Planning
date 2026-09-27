@@ -46,7 +46,7 @@ export function AccueilRole() {
     if (currentUser?.role === 'menuiserie') logout();
     else router.replace('/espace' as any);
   };
-  const enCours = chantiers.filter(c => c.statut !== 'cloture');
+  const enCours = chantiers.filter(c => c.statut !== 'cloture' && c.statut !== 'archive');
 
   return (
     <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
