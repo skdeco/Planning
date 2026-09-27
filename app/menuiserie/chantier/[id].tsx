@@ -8,10 +8,15 @@ import { formatDateFR, formatDateHeureFR } from '@/lib/date/format';
 import { useCompteMn } from '@/lib/menuiserie/SessionMn';
 import { chargerChantierMn, listerUsinesMn, majChantierMn, type DonneesChantierMn } from '@/lib/menuiserie/api';
 import { ETAPES_MN, type DefEtape } from '@/lib/menuiserie/etapes';
-import { ROLE_INTERVENANT_MN_LABELS, STATUT_CHANTIER_MN_LABELS, type StatutChantierMn, type UsineMn } from '@/lib/menuiserie/types';
+import { STATUT_CHANTIER_MN_LABELS, type StatutChantierMn, type UsineMn } from '@/lib/menuiserie/types';
 import { Carte, EnTete, Puce, Section } from '@/components/menuiserie/ui';
 import { EtapeSheet } from '@/components/menuiserie/EtapeSheet';
 import { BadgeRempliPar } from '@/components/menuiserie/BadgeRempliPar';
+import { IntervenantsPanel } from '@/components/menuiserie/IntervenantsPanel';
+import { FinancesChantier } from '@/components/menuiserie/FinancesChantier';
+import { ChantierRole } from '@/components/menuiserie/ChantierRole';
+import { SignalementsListe } from '@/components/menuiserie/SignalementsListe';
+import { Bouton } from '@/components/menuiserie/ui';
 
 const PASTILLE_STATUT = { a_faire: { fond: '#EAE2D8', texte: DS.textSecondary, signe: '' }, en_cours: { fond: DS.warning, texte: DS.sombre, signe: '…' }, fait: { fond: '#2F6B4F', texte: '#FFFFFF', signe: '✓' } };
 
@@ -26,6 +31,12 @@ function Ligne({ label, valeur }: { label: string; valeur?: string | null }) {
 }
 
 export default function ChantierMnScreen() {
+  const moi = useCompteMn();
+  if (moi.role !== 'admin') return <ChantierRole />;
+  return <ChantierAdmin />;
+}
+
+function ChantierAdmin() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const moi = useCompteMn();
@@ -88,8 +99,18 @@ export default function ChantierMnScreen() {
           <Ligne label="Adresse client" valeur={adresseClient} />
           <Ligne label="Téléphone" valeur={c.client_tel} />
           <Ligne label="E-mail" valeur={c.client_email} />
-          {d.intervenants.filter(i => i.role !== 'client').map(i => <Ligne key={i.id} label={ROLE_INTERVENANT_MN_LABELS[i.role]} valeur={i.nom} />)}
         </Carte>
+        <Section>Intervenants & accès</Section>
+        <Carte>
+          <IntervenantsPanel moi={moi} chantierId={c.id} intervenants={d.intervenants} onChange={charger} />
+        </Carte>
+
+        <Carte>
+          <FinancesChantier moi={moi} chantierId={c.id} intervenants={d.intervenants} montants={d.montants} onChange={charger} />
+        </Carte>
+
+        <Bouton label="Messagerie & RDV avec le client" variante="contour" onPress={() => router.push(`/menuiserie/messagerie/${c.id}` as any)} />
+        <SignalementsListe chantierId={c.id} />
 
         <Section>Processus</Section>
         {ETAPES_MN.map((def, idx) => {
@@ -134,7 +155,9 @@ export default function ChantierMnScreen() {
           etape={d.etapes.find(x => x.etape === ouverte.cle)}
           documents={d.documents.filter(x => x.etape === ouverte.cle)}
           montants={d.montants.filter(x => x.etape === ouverte.cle)}
-          onClose={() => setOuverte(null)} onChange={charger}
+          onClose={() => setOuverte(null)} onChange={charger} chantier={c}
+          dateReception={d.etapes.find(x => x.etape === 'livraison')?.infos?.date_reception || null}
+          poseur={(() => { const p = d.intervenants.find(i => i.role === 'poseur' && i.compte_id); return p && p.compte_id ? { id: p.compte_id, nom: p.nom } : null; })()}
         />
       )}
     </ScreenContainer>

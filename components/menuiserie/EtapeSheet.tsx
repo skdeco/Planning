@@ -6,8 +6,11 @@ import { DS, radius } from '@/constants/design';
 import { DateInput } from '@/components/ui/DateInput';
 import { formatDateHeureFR } from '@/lib/date/format';
 import { majEtapeMn } from '@/lib/menuiserie/api';
-import type { DefEtape } from '@/lib/menuiserie/etapes';
-import type { CompteMn, DocumentMn, EtapeMn, MontantMn, StatutEtapeMn } from '@/lib/menuiserie/types';
+import { etapeModifiable, TYPES_MONTANT_USINE, type DefEtape } from '@/lib/menuiserie/etapes';
+import type { ChantierMn, CompteMn, DocumentMn, EtapeMn, MontantMn, StatutEtapeMn } from '@/lib/menuiserie/types';
+import { groupeMn } from '@/lib/menuiserie/types';
+import { VerificationMeubles } from './VerificationMeubles';
+import { ReservesPanel } from './ReservesPanel';
 import { Bouton, Champ, Section } from './ui';
 import { DocumentsEtape } from './DocumentsEtape';
 import { MontantsEtape } from './MontantsEtape';
@@ -17,14 +20,29 @@ const STATUTS: { cle: StatutEtapeMn; label: string }[] = [
   { cle: 'a_faire', label: 'À faire' }, { cle: 'en_cours', label: 'En cours' }, { cle: 'fait', label: 'Fait' },
 ];
 
-export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, montants, onClose, onChange }: {
+export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, montants, onClose, onChange, poseur, chantier, dateReception }: {
   moi: CompteMn; chantierId: string; usineId: string | null; def: DefEtape | null; etape: EtapeMn | undefined;
   documents: DocumentMn[]; montants: MontantMn[]; onClose: () => void; onChange: () => void;
+  /** Compte du poseur rattaché (prix de pose visible par lui) */
+  poseur?: { id: string; nom: string } | null;
+  chantier?: ChantierMn;
+  /** Date de réception de la livraison : sert à proposer le début de pose */
+  dateReception?: string | null;
 }) {
   const insets = useSafeAreaInsets();
   const [infos, setInfos] = useState<Record<string, string>>({});
   const [charge, setCharge] = useState(false);
-  useEffect(() => { setInfos(etape?.infos || {}); }, [etape, def?.cle]);
+  useEffect(() => {
+    const base = { ...(etape?.infos || {}) };
+    // Pose : dès que la réception de la livraison est datée, on propose le jour ouvré suivant
+    if (def?.cle === 'pose' && !base.date_debut && dateReception) {
+      const d = new Date(`${dateReception}T12:00:00`);
+      do { d.setDate(d.getDate() + 1); } while (d.getDay() === 0 || d.getDay() === 6);
+      base.date_debut = d.toISOString().slice(0, 10);
+    }
+    if (def?.cle === 'pose' && !base.poseur && poseur) base.poseur = poseur.nom;
+    setInfos(base);
+  }, [etape, def?.cle, dateReception, poseur]);
   if (!def) return null;
 
   const changerStatut = async (s: StatutEtapeMn) => {
@@ -37,6 +55,10 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
     setCharge(false); onChange();
   };
   const statut = etape?.statut || 'a_faire';
+  const groupe = groupeMn(moi.role);
+  const modifiable = etapeModifiable(groupe, def.cle);
+  const typesMontants = moi.role === 'admin' ? def.montants : moi.role === 'usine' ? def.montants.filter(t => TYPES_MONTANT_USINE.includes(t)) : [];
+  const voitMontants = moi.role !== 'employe_usine';
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose} presentationStyle="pageSheet">
@@ -60,7 +82,7 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
               <Section>Avancement</Section>
               <View style={{ flexDirection: 'row', backgroundColor: DS.segment, borderRadius: radius.md, padding: 3 }}>
                 {STATUTS.map(s => (
-                  <Pressable key={s.cle} onPress={() => changerStatut(s.cle)} accessibilityRole="button" accessibilityState={{ selected: statut === s.cle }}
+                  <Pressable key={s.cle} disabled={!modifiable} onPress={() => changerStatut(s.cle)} accessibilityRole="button" accessibilityState={{ selected: statut === s.cle }}
                     style={{ flex: 1, minHeight: 40, borderRadius: radius.sm, alignItems: 'center', justifyContent: 'center', backgroundColor: statut === s.cle ? DS.surface : 'transparent' }}>
                     <Text style={{ fontSize: 14, fontWeight: '800', color: statut === s.cle ? DS.primary : DS.textSecondary }}>{s.label}</Text>
                   </Pressable>
@@ -80,17 +102,33 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
                         style={{ borderWidth: 1, borderColor: DS.border, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: DS.text, backgroundColor: DS.surface }} />
                     </View>
                   ) : (
-                    <Champ key={c.cle} label={c.label} value={infos[c.cle] || ''} onChangeText={v => setInfos(p => ({ ...p, [c.cle]: v }))} multiline={c.cle === 'liste'} style={{ backgroundColor: DS.surface }} />
+                    <Champ key={c.cle} label={c.label} value={infos[c.cle] || ''} editable={modifiable} onChangeText={v => setInfos(p => ({ ...p, [c.cle]: v }))} multiline={c.cle === 'liste'} style={{ backgroundColor: DS.surface }} />
                   ))}
-                  <Bouton label="Enregistrer les informations" onPress={enregistrerInfos} charge={charge} />
+                  {modifiable && <Bouton label="Enregistrer les informations" onPress={enregistrerInfos} charge={charge} />}
+                </>
+              )}
+
+              {def.cle === 'verification' && (
+                <>
+                  <Section>Meubles</Section>
+                  <VerificationMeubles moi={moi} chantierId={chantierId} modifiable={modifiable} />
+                </>
+              )}
+              {def.cle === 'pv' && (
+                <>
+                  <Section>Réserves</Section>
+                  <ReservesPanel moi={moi} chantierId={chantierId} chantier={chantier} onDocument={onChange} />
                 </>
               )}
 
               <Section>Documents et photos</Section>
-              <DocumentsEtape moi={moi} chantierId={chantierId} def={def} documents={documents} onChange={onChange} />
+              <DocumentsEtape moi={moi} chantierId={chantierId} def={def} documents={documents} onChange={onChange} lectureSeule={!modifiable} />
 
-              {def.montants.length > 0 && <Section>Montants</Section>}
-              <MontantsEtape moi={moi} chantierId={chantierId} usineId={usineId} def={def} montants={montants} onChange={onChange} />
+              {voitMontants && (typesMontants.length > 0 || montants.length > 0) && <Section>Montants</Section>}
+              {voitMontants && (
+                <MontantsEtape moi={moi} chantierId={chantierId} usineId={usineId} etape={def.cle} types={typesMontants}
+                  montants={montants} onChange={onChange} compteCible={def.cle === 'pose' ? poseur : null} lectureSeule={!typesMontants.length} />
+              )}
             </>
           )}
         </ScrollView>

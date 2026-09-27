@@ -40,6 +40,9 @@ function estAdminPrincipal(cu: CurrentUser, data: AppData): boolean {
 
 export function droitsEspaces(cu: CurrentUser | null, data: AppData): DroitsEspaces {
   if (!cu) return { travaux: false, planningDirection: false, espaces: [] };
+  if (cu.role === 'menuiserie') {
+    return { travaux: false, menuiserie: cu.roleMenuiserie || 'client', planningDirection: false, espaces: ['menuiserie'] };
+  }
   if (estAdminPrincipal(cu, data)) {
     return { travaux: true, menuiserie: 'admin', planningDirection: true, espaces: ['travaux', 'menuiserie'] };
   }

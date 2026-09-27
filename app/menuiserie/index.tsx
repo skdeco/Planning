@@ -16,13 +16,25 @@ import { ETAPES_MN } from '@/lib/menuiserie/etapes';
 import { ROLE_COMPTE_MN_LABELS } from '@/lib/menuiserie/types';
 import { Bouton, Carte, Pastille, Section, COULEUR_USINE, FOND_USINE } from '@/components/menuiserie/ui';
 import { CaParUsine } from '@/components/menuiserie/CaParUsine';
+import { AccueilRole } from '@/components/menuiserie/AccueilRole';
+import { useSyncRdvMenuiserie } from '@/hooks/useSyncRdvMenuiserie';
+import { listerRdvMn } from '@/lib/menuiserie/api2';
+import type { RdvMn } from '@/lib/menuiserie/types';
 import { FiltresChantiers, FILTRES_MN_DEFAUT, filtrerChantiers, type FiltresMn } from '@/components/menuiserie/FiltresChantiers';
 
 const VIDE: DonneesAccueilMn = { chantiers: [], usines: [], intervenants: [], montants: [], etapes: [] };
 
 export default function MenuiserieAccueil() {
+  const { compte } = useSessionMn();
+  if (compte && compte.role !== 'admin') return <AccueilRole />;
+  return <AccueilAdmin />;
+}
+
+function AccueilAdmin() {
   const router = useRouter();
   const { compte, deconnecter } = useSessionMn();
+  const synchroniserRdv = useSyncRdvMenuiserie();
+  const [rdvAValider, setRdvAValider] = useState<RdvMn[]>([]);
   const [d, setD] = useState<DonneesAccueilMn>(VIDE);
   const [erreur, setErreur] = useState('');
   const [rafraichit, setRafraichit] = useState(false);
@@ -31,8 +43,14 @@ export default function MenuiserieAccueil() {
 
   const charger = useCallback(async () => {
     if (!estAdmin) return;
-    try { setD(await chargerAccueilMn()); setErreur(''); } catch (e) { setErreur((e as Error).message); }
-  }, [estAdmin]);
+    try {
+      const donnees = await chargerAccueilMn();
+      setD(donnees); setErreur('');
+      synchroniserRdv(donnees.chantiers);
+      const rdvs = await listerRdvMn();
+      setRdvAValider(rdvs.filter(r => r.statut === 'validation_admins' && compte && r.accords[compte.id] === undefined));
+    } catch (e) { setErreur((e as Error).message); }
+  }, [estAdmin, synchroniserRdv, compte]);
   useFocusEffect(useCallback(() => { charger(); }, [charger]));
 
   const liste = useMemo(() => filtrerChantiers(d.chantiers, d.intervenants, filtres), [d, filtres]);
@@ -83,6 +101,19 @@ export default function MenuiserieAccueil() {
           <>
             {!!erreur && <Carte><Text style={{ color: DS.error, fontWeight: '700' }}>{erreur}</Text></Carte>}
 
+            {rdvAValider.map(r => {
+              const ch = d.chantiers.find(c => c.id === r.chantier_id);
+              return (
+                <Pressable key={r.id} onPress={() => router.push(`/menuiserie/messagerie/${r.chantier_id}` as any)} accessibilityRole="button">
+                  <Carte style={{ borderWidth: 2, borderColor: DS.warning }}>
+                    <Section>RDV à valider{ch ? ` · ${ch.nom}` : ''}</Section>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: DS.text }}>{r.titre} · {formatDateFR(r.date_rdv)} {r.heure_debut}</Text>
+                    <Text style={{ fontSize: 13, color: DS.textSecondary }}>Proposé par {r.propose_par_nom} — touche pour répondre</Text>
+                  </Carte>
+                </Pressable>
+              );
+            })}
+
             {ordreDuJour.length > 0 && (
               <Carte>
                 <Section>Ordre du jour</Section>
@@ -117,6 +148,10 @@ export default function MenuiserieAccueil() {
             })}
 
             <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
+              <View style={{ flex: 1 }}><Bouton label="Planning" variante="contour" onPress={() => router.push('/menuiserie/planning' as any)} /></View>
+              <View style={{ flex: 1 }}><Bouton label="Catalogue" variante="contour" onPress={() => router.push('/menuiserie/catalogue' as any)} /></View>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
               <View style={{ flex: 1 }}><Bouton label="Usines" variante="contour" onPress={() => router.push('/menuiserie/usines' as any)} /></View>
               <View style={{ flex: 1 }}><Bouton label="Comptes" variante="contour" onPress={() => router.push('/menuiserie/comptes' as any)} /></View>
             </View>

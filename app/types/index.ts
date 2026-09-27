@@ -180,11 +180,12 @@ export const HORAIRES_DEFAUT: HorairesHebdo = {
 export type EspaceId = 'travaux' | 'menuiserie';
 
 /** Rôle d'un compte dans l'espace Menuiserie. */
-export type RoleMenuiserie = 'admin' | 'usine' | 'client' | 'architecte' | 'apporteur' | 'poseur';
+export type RoleMenuiserie = 'admin' | 'usine' | 'employe_usine' | 'client' | 'architecte' | 'apporteur' | 'poseur';
 
 export const ROLE_MENUISERIE_LABELS: Record<RoleMenuiserie, string> = {
   admin: 'Administrateur',
   usine: 'Usine',
+  employe_usine: "Employé d'usine",
   client: 'Client',
   architecte: 'Architecte',
   apporteur: "Apporteur d'affaires",
@@ -1602,7 +1603,8 @@ export interface NotificationPrefs {
 /** Clés des types de notifications (pour itérer dans l'UI de réglages) */
 export type NotificationPrefKey = keyof NotificationPrefs;
 
-export type UserRole = 'admin' | 'employe' | 'soustraitant' | 'apporteur';
+/** 'menuiserie' = compte créé uniquement dans l'espace Menuiserie (connexion sécurisée) */
+export type UserRole = 'admin' | 'employe' | 'soustraitant' | 'apporteur' | 'menuiserie';
 
 export interface CurrentUser {
   role: UserRole;
@@ -1612,6 +1614,8 @@ export interface CurrentUser {
   nom?: string;
   /** Espace choisi pour la session (compte ayant accès aux deux espaces) */
   espace?: EspaceId;
+  /** Rôle Menuiserie d'un compte « menuiserie » (connexion sécurisée) */
+  roleMenuiserie?: RoleMenuiserie;
 }
 
 /** Couleurs disponibles pour les sous-traitants dans le planning */

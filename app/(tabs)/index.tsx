@@ -929,7 +929,7 @@ export default function DashboardScreen() {
         <GaleriePhotos visible={galerieVisible} onClose={() => setGalerieVisible(false)} chantierId={galerieChantierId} />
         <Onboarding
           visible={showOnboarding}
-          role={(currentUser?.role === 'apporteur' ? 'employe' : currentUser?.role) || 'employe'}
+          role={(currentUser?.role === 'apporteur' || currentUser?.role === 'menuiserie' ? 'employe' : currentUser?.role) || 'employe'}
           onComplete={() => {
             setShowOnboarding(false);
             AsyncStorage.setItem(onboardingKey, 'true');
@@ -1739,7 +1739,7 @@ export default function DashboardScreen() {
       <GlobalSearch visible={searchOpen} onClose={() => setSearchOpen(false)} />
       <Onboarding
         visible={showOnboarding}
-        role={(currentUser?.role === 'apporteur' ? 'employe' : currentUser?.role) || 'employe'}
+        role={(currentUser?.role === 'apporteur' || currentUser?.role === 'menuiserie' ? 'employe' : currentUser?.role) || 'employe'}
         onComplete={() => {
           setShowOnboarding(false);
           AsyncStorage.setItem(onboardingKey, 'true');

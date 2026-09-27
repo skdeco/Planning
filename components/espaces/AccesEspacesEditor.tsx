@@ -17,7 +17,7 @@ interface Props {
   directionToujours?: boolean;
 }
 
-const ROLES: RoleMenuiserie[] = ['admin', 'usine', 'client', 'architecte', 'apporteur', 'poseur'];
+const ROLES: RoleMenuiserie[] = ['admin', 'usine', 'employe_usine', 'client', 'architecte', 'apporteur', 'poseur'];
 
 function Ligne({ titre, sousTitre, valeur, onValeur, disabled }: {
   titre: string; sousTitre?: string; valeur: boolean; onValeur: (v: boolean) => void; disabled?: boolean;

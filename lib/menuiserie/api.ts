@@ -117,40 +117,56 @@ function extension(nom: string, mime?: string | null): string {
   return 'jpg';
 }
 
-/** Envoie un fichier (photo / PDF) dans le bucket privé puis l'enregistre. */
-export async function deposerDocumentMn(
-  moi: CompteMn, p: { chantierId: string; etape: string; uri: string; nom: string; mime?: string | null; piece?: string | null },
-): Promise<void> {
+/** Envoie un fichier dans le bucket privé « menuiserie » au chemin donné. */
+export async function envoyerFichierMn(chemin: string, uri: string, mime: string): Promise<void> {
   const { data: sess } = await mn().auth.getSession();
   const jeton = sess.session?.access_token;
   if (!jeton) throw new Error('Session expirée : reconnecte-toi.');
-  const mime = p.mime || (extension(p.nom) === 'pdf' ? 'application/pdf' : 'image/jpeg');
-  const chemin = `${p.chantierId}/${p.etape}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${extension(p.nom, mime)}`;
   const url = `${SUPABASE_URL}/storage/v1/object/${BUCKET}/${chemin}`;
   const headers = { Authorization: `Bearer ${jeton}`, apikey: SUPABASE_ANON_KEY, 'Content-Type': mime };
-
   let ok = false;
   if (Platform.OS !== 'web') {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const FileSystem = require('expo-file-system/legacy');
-    const r = await FileSystem.uploadAsync(url, p.uri, { httpMethod: 'POST', uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT, headers });
+    const r = await FileSystem.uploadAsync(url, uri, { httpMethod: 'POST', uploadType: FileSystem.FileSystemUploadType.BINARY_CONTENT, headers });
     ok = r.status >= 200 && r.status < 300;
   } else {
-    const blob = await (await fetch(p.uri)).blob();
+    const blob = await (await fetch(uri)).blob();
     const r = await fetch(url, { method: 'POST', headers, body: blob });
     ok = r.ok;
   }
-  if (!ok) throw new Error("Envoi du fichier refusé par le serveur.");
+  if (!ok) throw new Error('Envoi du fichier refusé par le serveur.');
+}
 
+export function cheminFichierMn(prefixe: string, nom: string, mime?: string | null): string {
+  return `${prefixe}/${Date.now()}_${Math.random().toString(36).slice(2, 7)}.${extension(nom, mime)}`;
+}
+
+/** Envoie un fichier (photo / PDF) dans le bucket privé puis l'enregistre. */
+export async function deposerDocumentMn(
+  moi: CompteMn,
+  p: { chantierId: string; etape: string; uri: string; nom: string; mime?: string | null; piece?: string | null; visibilite: string[]; categorieClient?: string | null },
+): Promise<void> {
+  const mime = p.mime || (extension(p.nom) === 'pdf' ? 'application/pdf' : 'image/jpeg');
+  const chemin = cheminFichierMn(`${p.chantierId}/${p.etape}`, p.nom, mime);
+  await envoyerFichierMn(chemin, p.uri, mime);
   verifier(await mn().from('mn_documents').insert({
     chantier_id: p.chantierId, etape: p.etape, piece: p.piece || null, nom: p.nom, chemin, mime,
-    depose_par: moi.id, depose_par_nom: moi.nom,
+    depose_par: moi.id, depose_par_nom: moi.nom, visibilite: p.visibilite, categorie_client: p.categorieClient || null,
   }));
   await journaliser(moi, p.chantierId, 'Document déposé', `${p.etape}${p.piece ? ` · ${p.piece}` : ''} : ${p.nom}`);
 }
 
+/** Partage (ou retire) un document dans une rubrique de l'espace client. */
+export async function partagerClientMn(moi: CompteMn, doc: DocumentMn, categorie: string | null): Promise<void> {
+  const vis = doc.visibilite.filter(v => v !== 'client');
+  if (categorie) vis.push('client');
+  verifier(await mn().from('mn_documents').update({ visibilite: vis, categorie_client: categorie }).eq('id', doc.id));
+  await journaliser(moi, doc.chantier_id, categorie ? 'Document partagé au client' : 'Partage client retiré', doc.nom);
+}
+
 /** Lien temporaire (1 h) pour ouvrir un document privé. */
-export async function lienDocumentMn(doc: DocumentMn): Promise<string | null> {
+export async function lienDocumentMn(doc: { chemin: string }): Promise<string | null> {
   const { data } = await mn().storage.from(BUCKET).createSignedUrl(doc.chemin, 3600);
   return data?.signedUrl ?? null;
 }
@@ -180,7 +196,7 @@ export async function activerCompteMn(id: string, actif: boolean): Promise<void>
 }
 
 // ── Journal ────────────────────────────────────────────────────────────────
-async function journaliser(moi: CompteMn, chantierId: string | null, action: string, detail?: string) {
+export async function journaliser(moi: CompteMn, chantierId: string | null, action: string, detail?: string) {
   await mn().from('mn_journal').insert({ chantier_id: chantierId, action, detail: detail || null, par_nom: moi.nom, par_compte: moi.id });
 }
 

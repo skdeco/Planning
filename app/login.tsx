@@ -11,6 +11,7 @@ import { verifierMotDePasse, preparerChangementMotDePasse } from '@/lib/externAu
 import { Ico } from '@/components/ui/Ico';
 import type { CurrentUser } from '@/app/types';
 import { droitsEspaces, routeEspace } from '@/lib/espaces';
+import { connexionMn, monCompteMn } from '@/lib/menuiserie/auth';
 
 export default function LoginScreen() {
   const { data, setCurrentUser, updateApporteur } = useApp();
@@ -104,6 +105,18 @@ export default function LoginScreen() {
         nom: `${apporteur.prenom} ${apporteur.nom}`,
       }, '/(externe)/mes-chantiers');
       return;
+    }
+
+    // Compte créé uniquement dans l'espace Menuiserie (usine, client, architecte, poseur…) :
+    // connexion sécurisée par e-mail ou identifiant.
+    const mnRes = await connexionMn(identifiant, pwd);
+    if (mnRes.ok) {
+      const compteMn = await monCompteMn();
+      if (compteMn) {
+        setCurrentUser({ role: 'menuiserie', nom: compteMn.nom, espace: 'menuiserie', roleMenuiserie: compteMn.role });
+        router.replace('/menuiserie' as any);
+        return;
+      }
     }
 
     setError(t.auth.loginError);
