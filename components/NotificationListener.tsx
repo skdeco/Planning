@@ -9,6 +9,8 @@ import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { getStaffNotifTokens, isNotifEnabled } from '@/lib/notif/getStaffNotifTokens';
 import { scheduleRdvReminders } from '@/lib/notif/scheduleRdvReminders';
 import { scheduleRappelsPointage } from '@/lib/notif/scheduleRappelsPointage';
+import { scheduleAgendaReminders } from '@/lib/notif/scheduleAgendaReminders';
+import { cleUtilisateur } from '@/lib/espaces';
 import { scheduleStDocReminders } from '@/lib/notif/scheduleStDocReminders';
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 
@@ -624,6 +626,13 @@ export function NotificationListener() {
     // évite de reprogrammer à chaque mutation de chantier.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.rdvChantiers, data.notificationPrefs, isAdmin, isST, myId, myNotifKey]);
+
+  // ── Rappel 1 h avant les RDV du Planning direction (organisateur ou invité) ──
+  const cleMoi = cleUtilisateur(currentUser);
+  useEffect(() => {
+    scheduleAgendaReminders(data.agendaEvents || [], data.chantiers, cleMoi).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.agendaEvents, cleMoi]);
 
   // ── Rappels de pointage (arrivée / départ à H+15 min de l'horaire théorique) ──
   const monEmploye = !isAdmin && currentUser?.employeId ? data.employes.find(e => e.id === currentUser.employeId) : undefined;

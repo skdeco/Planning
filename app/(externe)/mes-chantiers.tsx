@@ -11,6 +11,7 @@ import { FadeInView } from '@/components/ui/animated';
 import { hapticSelection } from '@/lib/haptics';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Building2 } from 'lucide-react-native';
+import { RdvDuJour } from '@/components/espaces/RdvDuJour';
 
 export default function MesChantiersExterne() {
   const { data, currentUser } = useApp();
@@ -111,6 +112,7 @@ export default function MesChantiersExterne() {
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+      <RdvDuJour marge={0} />
       {recapApporteur && recapApporteur.totalCom > 0 && (
         <View style={styles.recapBox}>
           <View style={styles.recapItem}>

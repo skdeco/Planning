@@ -27,6 +27,7 @@ import { DashboardKPI } from '@/components/DashboardKPI';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
+import { RdvDuJour } from '@/components/espaces/RdvDuJour';
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -273,10 +274,13 @@ export default function DashboardScreen() {
 
   const myPointagesDuJour = useMemo(() => {
     if (!myId) return { debut: null as string | null, fin: null as string | null };
-    const pts = data.pointages.filter(p => p.employeId === myId && p.date === today);
+    // Plusieurs arrivées / départs possibles dans la journée : on montre la dernière paire
+    const pts = data.pointages.filter(p => p.employeId === myId && p.date === today).sort((x, y) => x.heure.localeCompare(y.heure));
+    const derniereArrivee = [...pts].reverse().find(p => p.type === 'debut');
+    const dernierDepart = [...pts].reverse().find(p => p.type === 'fin');
     return {
-      debut: pts.find(p => p.type === 'debut')?.heure || null,
-      fin: pts.find(p => p.type === 'fin')?.heure || null,
+      debut: derniereArrivee?.heure || null,
+      fin: dernierDepart && (!derniereArrivee || dernierDepart.heure >= derniereArrivee.heure) ? dernierDepart.heure : null,
     };
   }, [data.pointages, myId, today]);
 
@@ -329,6 +333,9 @@ export default function DashboardScreen() {
             </Text>
             <Text style={screenTitle}>{t.home.hello} {emp?.prenom || ''}</Text>
           </View>
+
+          {/* RDV du jour (Planning direction) */}
+          <RdvDuJour marge={0} />
 
           {/* Pointage du jour : arrivée + départ du chantier (l'écran Horaires complet est dans Plus).
               Masqué pour un employé dispensé de pointage (doitPointer === false). */}
@@ -951,6 +958,9 @@ export default function DashboardScreen() {
             </Text>
           </View>
         </FadeInView>
+
+        {/* RDV du jour (Planning direction) */}
+        <RdvDuJour marge={0} />
 
         {/* À traiter — ce qui attend une action de l'admin */}
         {(stats.demandesRH > 0 || stats.materielNonAchete > 0) && (

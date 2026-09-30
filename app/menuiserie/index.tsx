@@ -27,6 +27,7 @@ import { FiltresChantiers, FILTRES_MN_DEFAUT, filtrerChantiers, type FiltresMn }
 
 import { LanguageFlag } from '@/components/LanguageFlag';
 import { tm, localeMn } from '@/lib/menuiserie/i18n';
+import { RdvDuJour } from '@/components/espaces/RdvDuJour';
 const VIDE: DonneesAccueilMn = { chantiers: [], usines: [], intervenants: [], montants: [], etapes: [] };
 
 export default function MenuiserieAccueil() {
@@ -93,6 +94,7 @@ function AccueilAdmin() {
         </View>
 
         <View style={{ marginHorizontal: -12 }}><InvitationsRdv /></View>
+        <RdvDuJour marge={0} />
 
         {!estAdmin ? (
           <Carte>
