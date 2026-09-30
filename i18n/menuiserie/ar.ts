@@ -636,6 +636,11 @@ const d: Record<string, string> = {
   "Heures en plus / en moins": "ساعات زائدة / ناقصة",
   "(info, hors paie)": "(للعلم، خارج الراتب)",
   "Présent (même sans pointage)": "حاضر (حتى بدون تسجيل)",
+  "Abs.": "غائب",
+  "Prés. ✓": "حاضر ✓",
+  "Acompte": "سلفة",
+  "{0} pointages": "{0} تسجيلات",
+  "Bilan": "الحصيلة",
 };
 
 export default d;

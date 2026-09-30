@@ -628,6 +628,11 @@ const d: Record<string, string> = {
   "Heures en plus / en moins": "Horas de más / de menos",
   "(info, hors paie)": "(info, fuera de la nómina)",
   "Présent (même sans pointage)": "Presente (aun sin fichaje)",
+  "Abs.": "Aus.",
+  "Prés. ✓": "Pres. ✓",
+  "Acompte": "Anticipo",
+  "{0} pointages": "{0} fichajes",
+  "Bilan": "Balance",
 };
 
 export default d;

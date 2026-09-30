@@ -633,6 +633,11 @@ const d: Record<string, string> = {
   "Heures en plus / en moins": "Horas a mais / a menos",
   "(info, hors paie)": "(info, fora do salário)",
   "Présent (même sans pointage)": "Presente (mesmo sem registo)",
+  "Abs.": "Aus.",
+  "Prés. ✓": "Pres. ✓",
+  "Acompte": "Adiantamento",
+  "{0} pointages": "{0} registos",
+  "Bilan": "Saldo",
 };
 
 export default d;

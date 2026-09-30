@@ -636,6 +636,11 @@ const d: Record<string, string> = {
   "Heures en plus / en moins": "Часы сверх / недоработка",
   "(info, hors paie)": "(справочно, не в зарплате)",
   "Présent (même sans pointage)": "Присутствовал (даже без отметки)",
+  "Abs.": "Отс.",
+  "Prés. ✓": "Прис. ✓",
+  "Acompte": "Аванс",
+  "{0} pointages": "{0} отметок",
+  "Bilan": "Итог",
 };
 
 export default d;

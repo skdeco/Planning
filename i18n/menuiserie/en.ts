@@ -613,6 +613,10 @@ const d: Record<string, string> = {
   "Heures en plus / en moins": "Hours over / under",
   "(info, hors paie)": "(info, not in pay)",
   "Présent (même sans pointage)": "Present (even without clock-in)",
+  "Prés. ✓": "Pres. ✓",
+  "Acompte": "Advance",
+  "{0} pointages": "{0} clock-ins",
+  "Bilan": "Balance",
 };
 
 export default d;

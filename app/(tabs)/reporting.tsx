@@ -21,6 +21,7 @@ import { EditionPointagesJour } from '@/components/pointage/EditionPointagesJour
 import { ecartJourMinutes, formatEcartHeures, couleurEcart } from '@/lib/pointage/bilan';
 import { pointagesDuJour } from '@/lib/pointage/historique';
 import { tm } from '@/lib/menuiserie/i18n';
+import { LigneReportingJour } from '@/components/pointage/LigneReportingJour';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -660,181 +661,32 @@ export default function ReportingScreen() {
           </View>
 
           {/* Pointages du jour */}
-          {pointagesJour.map(({ emp, debut, fin }) => {
-              const mc = METIER_COLORS[emp.metier];
-              const dureeMin = debut && fin ? calcDureeMin(debut.heure, fin.heure) : null;
-              const jourSemaine = new Date(selectedDate + 'T12:00:00').getDay();
-              const horairesJour = emp.horaires?.[jourSemaine];
-              const ecartD = debut && horairesJour?.actif ? ecartMinutes(debut.heure, horairesJour.debut, 'debut') : null;
-              const ecartF = fin && horairesJour?.actif ? ecartMinutes(fin.heure, horairesJour.fin, 'fin') : null;
-              const acomptesEmpJour = acomptesJour.filter(a => a.employeId === emp.id);
-              const hasPointage = debut || fin;
-              const isForcedPresent = (data.presencesForcees || []).some(pf => pf.employeId === emp.id && pf.date === selectedDate);
-              const isAbsent = !hasPointage && !isForcedPresent && horairesJour?.actif;
-
-              return (
-                <View key={emp.id} style={[styles.empCard, isAbsent && styles.empCardAbsent]}>
-                  <View style={styles.empCardHeader}>
-                    <View style={[styles.empAvatar, { backgroundColor: mc.color, opacity: (hasPointage || isForcedPresent) ? 1 : 0.5 }]}>
-                      <Text style={[styles.empAvatarText, { color: mc.textColor }]}>
-                        {emp.prenom?.[0] || '?'}
-                      </Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.empName}>{emp.prenom} {emp.nom}</Text>
-                      <Text style={[styles.empMetier, { color: mc.color }]}>{metierLabel(emp.metier)}</Text>
-                      {horairesJour?.actif && (
-                        <Text style={styles.horairesTheo}>{horairesJour.debut}–{horairesJour.fin}</Text>
-                      )}
-                      {(() => {
-                        // Chantier(s) du jour : d'après les pointages, sinon d'après le planning
-                        const ptsJour = data.pointages.filter(p => p.employeId === emp.id && p.date === selectedDate);
-                        let ids = Array.from(new Set(ptsJour.map(p => p.chantierId).filter(Boolean) as string[]));
-                        if (ids.length === 0) {
-                          ids = Array.from(new Set(data.affectations
-                            .filter(a => a.employeId === emp.id && a.dateDebut <= selectedDate && a.dateFin >= selectedDate)
-                            .map(a => a.chantierId)));
-                        }
-                        const noms = ids.map(id => data.chantiers.find(c => c.id === id)).filter(Boolean) as { id: string; nom: string; couleur: string }[];
-                        if (noms.length === 0) return null;
-                        return (
-                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
-                            {noms.map(c => (
-                              <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#FAF5EF', borderRadius: 999, paddingHorizontal: 9, paddingVertical: 3 }}>
-                                <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: c.couleur || '#5C1F2E' }} />
-                                <Text style={{ fontSize: 12, fontWeight: '600', color: '#5C1F2E' }}>{c.nom}</Text>
-                              </View>
-                            ))}
-                          </View>
-                        );
-                      })()}
-                    </View>
-                    {isAdmin && (
-                      <Pressable
-                        hitSlop={8}
-                        onPress={() => openEditPointage(emp.id, selectedDate)}
-                        style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F2E4E1', alignItems: 'center', justifyContent: 'center', marginRight: 6 }}
-                        accessibilityLabel={t.reporting.editPointage}
-                      >
-                        <Pencil size={14} color="#5C1F2E" />
-                      </Pressable>
-                    )}
-                    {dureeMin && dureeMin > 0 ? (
-                      <View style={styles.dureeBadge}>
-                        <Text style={styles.dureeBadgeText}>{formatDuree(dureeMin)}</Text>
-                      </View>
-                    ) : isForcedPresent ? (
-                      <Pressable onPress={() => isAdmin ? togglePresenceForcee(emp.id, selectedDate) : undefined}>
-                        <View style={[styles.dureeBadge, { backgroundColor: '#F0FFF4', borderColor: '#C6F6D5' }]}>
-                          <Text style={[styles.dureeBadgeText, { color: '#2E7D32' }]}>{t.reporting.present} ✓</Text>
-                        </View>
-                      </Pressable>
-                    ) : isAbsent ? (
-                      <Pressable onPress={() => isAdmin ? togglePresenceForcee(emp.id, selectedDate, currentUser?.nom || 'Admin') : undefined}>
-                        <View style={[styles.dureeBadge, styles.dureeBadgeAbsent]}>
-                          <Text style={[styles.dureeBadgeText, { color: '#E74C3C' }]}>{t.reporting.absent}</Text>
-                        </View>
-                      </Pressable>
-                    ) : null}
-                  </View>
-
-                  <View style={styles.pointageRow}>
-                    {debut ? (
-                      <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>{t.reporting.arrival}</Text>
-                        <Text style={styles.pointageHeure}>{debut.heure}</Text>
-                        {ecartD !== null && (
-                          <Text style={[styles.ecartText, { color: getPonctualiteColor(ecartD) }]}>
-                            {formatEcart(ecartD, 'debut')}
-                          </Text>
-                        )}
-                        {debut.latitude && debut.longitude ? (
-                          <Pressable
-                            onPress={() => {
-                              ouvrirPosition(debut.latitude, debut.longitude);
-                            }}
-                            style={styles.gpsBtn}
-                          >
-                            <Text style={styles.gpsBtnText}>{t.reporting.seePosition}</Text>
-                          </Pressable>
-                        ) : null}
-                        {debut.adresse && !/^-?\d+\.\d+/.test(debut.adresse) ? (
-                          <Text style={styles.gpsAdresse} numberOfLines={2}>{debut.adresse}</Text>
-                        ) : null}
-                      </View>
-                    ) : (
-                      <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>{t.reporting.arrival}</Text>
-                        <Text style={styles.pointageAbsent}>—</Text>
-                      </View>
-                    )}
-                    <View style={styles.pointageSep} />
-                    {fin ? (
-                      <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>{t.reporting.departure}</Text>
-                        <Text style={styles.pointageHeure}>{fin.heure}</Text>
-                        {ecartF !== null && voitBilan && (
-                          <Text style={[styles.ecartText, { color: ecartF < 0 ? '#2E7D32' : getPonctualiteColor(ecartF) }]}>
-                            {formatEcart(ecartF, 'fin')}
-                          </Text>
-                        )}
-                        {fin.latitude && fin.longitude ? (
-                          <Pressable
-                            onPress={() => {
-                              ouvrirPosition(fin.latitude, fin.longitude);
-                            }}
-                            style={styles.gpsBtn}
-                          >
-                            <Text style={styles.gpsBtnText}>{t.reporting.seePosition}</Text>
-                          </Pressable>
-                        ) : null}
-                        {fin.adresse && !/^-?\d+\.\d+/.test(fin.adresse) ? (
-                          <Text style={styles.gpsAdresse} numberOfLines={2}>{fin.adresse}</Text>
-                        ) : null}
-                      </View>
-                    ) : (
-                      <View style={styles.pointageCell}>
-                        <Text style={styles.pointageLabel}>{t.reporting.departure}</Text>
-                        <Text style={styles.pointageAbsent}>—</Text>
-                      </View>
-                    )}
-                  </View>
-
-                  {/* Bilan de la journée : temps en plus / en moins (admin / RH uniquement) */}
-                  {(() => {
-                    const ecartJour = ecartJourMinutes(emp, pointagesDuJour(data.pointages, emp.id, selectedDate), selectedDate, isForcedPresent);
-                    if (!voitBilan || ecartJour === null) return null;
-                    return (
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginTop: 8 }}>
-                        <Text style={{ fontSize: 13, color: '#6E5F54', fontWeight: '600' }}>{tm('Bilan de la journée')}</Text>
-                        <Text style={{ fontSize: 15, fontWeight: '800', color: couleurEcart(ecartJour) }}>{ecartJour === 0 ? tm('Journée pile') : formatEcartHeures(ecartJour)}</Text>
-                      </View>
-                    );
-                  })()}
-
-                  {/* Acomptes du jour pour cet employé */}
-                  {acomptesEmpJour.length > 0 && (
-                    <View style={styles.acomptesSection}>
-                      {acomptesEmpJour.map(ac => (
-                        <View key={ac.id} style={styles.acompteRow}>
-                          <Ico e="💶" size={16} />
-                          <Text style={styles.acompteMontant}>{ac.montant} €</Text>
-                          {ac.commentaire ? <Text style={styles.acompteComment}>{ac.commentaire}</Text> : null}
-                          <Pressable onPress={() => handleDeleteAcompte(ac)} style={styles.acompteDelete}>
-                            <Text style={styles.acompteDeleteText}>✕</Text>
-                          </Pressable>
-                        </View>
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Bouton ajouter acompte */}
-                  <Pressable style={styles.addAcompteBtn} onPress={() => openAcompteModal(emp.id)}>
-                    <Text style={styles.addAcompteBtnText}>+ {t.reporting.deposit}</Text>
-                  </Pressable>
-                </View>
-              );
-            })}
+          {pointagesJour.map(({ emp }) => {
+            const mc = METIER_COLORS[emp.metier];
+            const ptsJour = pointagesDuJour(data.pointages, emp.id, selectedDate);
+            // Chantier(s) du jour : d'après les pointages, sinon d'après le planning
+            let ids = Array.from(new Set(ptsJour.map(p => p.chantierId).filter(Boolean) as string[]));
+            if (ids.length === 0) {
+              ids = Array.from(new Set(data.affectations
+                .filter(a => a.employeId === emp.id && a.dateDebut <= selectedDate && a.dateFin >= selectedDate)
+                .map(a => a.chantierId)));
+            }
+            const chs = ids.map(id => data.chantiers.find(c => c.id === id)).filter(Boolean) as { id: string; nom: string; couleur?: string }[];
+            const isForcedPresent = (data.presencesForcees || []).some(pf => pf.employeId === emp.id && pf.date === selectedDate);
+            return (
+              <LigneReportingJour
+                key={emp.id}
+                emp={emp} date={selectedDate} pointages={ptsJour} chantiers={chs}
+                metier={{ label: metierLabel(emp.metier), couleur: mc?.color || '#5C1F2E' }}
+                presenceForcee={isForcedPresent} voitBilan={voitBilan} peutModifier={isAdmin}
+                acomptes={acomptesJour.filter(a => a.employeId === emp.id)}
+                onModifier={() => openEditPointage(emp.id, selectedDate)}
+                onAcompte={() => openAcompteModal(emp.id)}
+                onSupprimerAcompte={handleDeleteAcompte}
+                onBasculerPresence={() => togglePresenceForcee(emp.id, selectedDate, currentUser?.nom || 'Admin')}
+              />
+            );
+          })}
 
           {/* Résumé acomptes du jour */}
           {acomptesJour.length > 0 && (
