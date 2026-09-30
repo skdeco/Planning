@@ -213,6 +213,7 @@ interface AppContextType {
   updateAdminIdentifiant: (id: string) => void;
   updateAdminEmployeId: (employeId: string | undefined) => void;
   updateMagasinPrefere: (magasin: string | undefined) => void;
+  updateRayonPointage: (m: number) => void;
   // Métiers personnalisés
   addMetierPerso: (m: import('@/app/types').MetierPerso) => void;
   deleteMetierPerso: (id: string) => void;
@@ -1850,6 +1851,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateMagasinPrefere = (magasin: string | undefined) =>
     setData(p => ({ ...p, magasinPrefere: magasin }));
+  const updateRayonPointage = (m: number) =>
+    setData(p => ({ ...p, rayonPointageM: m }));
 
   // Métiers personnalisés
   const addMetierPerso = (m: import('@/app/types').MetierPerso) =>
@@ -2219,7 +2222,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPlanChantier, deletePlanChantier, archivePlanChantier, unarchivePlanChantier,
       upsertPVReception,
       deletePVReception,
-      updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere,
+      updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateRayonPointage,
       addMetierPerso, deleteMetierPerso, updateBudgetChantier,
       addFournisseur, deleteFournisseur,
       addFournisseurFiche, updateFournisseurFiche, deleteFournisseurFiche,

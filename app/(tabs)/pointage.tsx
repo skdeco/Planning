@@ -16,7 +16,9 @@ import { Image } from 'react-native';
 import Svg, { Path, Circle, Polyline, Line } from 'react-native-svg';
 import { InboxPickerButton } from '@/components/share/InboxPickerButton';
 import { getInboxItemPath, type InboxItem } from '@/lib/share/inboxStore';
-import * as Location from 'expo-location';
+import { getCurrentPosition, haversineDistance, geocodeAddress } from '@/lib/pointage/geo';
+import { PointageLibre } from '@/components/pointage/PointageLibre';
+import { ReglageRayon } from '@/components/pointage/ReglageRayon';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { Ico } from '@/components/ui/Ico';
 
@@ -47,59 +49,6 @@ function formatDateLongue(
 ): string {
   const d = new Date(dateStr + 'T12:00:00');
   return `${jours[d.getDay()]} ${d.getDate()} ${moisCourts[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-/** Distance en mètres entre deux coordonnées GPS (formule Haversine) */
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371000;
-  const toRad = (v: number) => (v * Math.PI) / 180;
-  const dLat = toRad(lat2 - lat1);
-  const dLon = toRad(lon2 - lon1);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
-  const aClamped = Math.max(0, Math.min(1, a));
-  return R * 2 * Math.atan2(Math.sqrt(aClamped), Math.sqrt(1 - aClamped));
-}
-
-/** Géocode une adresse via Nominatim (OSM) — retourne lat/lng ou null */
-async function geocodeAddress(adresse: string): Promise<{ lat: number; lng: number } | null> {
-  try {
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adresse)}&limit=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'fr', 'User-Agent': 'SKDeco-Planning/1.0' } });
-    const data = await res.json();
-    if (data && data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
-  } catch {
-    // ignore network errors
-  }
-  return null;
-}
-
-/** Obtient la position GPS courante — natif (iOS/Android) via expo-location, web via l'API navigateur. */
-async function getCurrentPosition(
-  messageGeoIndispo: string,
-  messageGeoRefusee: string,
-): Promise<{ latitude: number; longitude: number }> {
-  if (Platform.OS === 'web') {
-    return new Promise((resolve, reject) => {
-      if (!navigator?.geolocation) {
-        reject(new Error(messageGeoIndispo));
-        return;
-      }
-      navigator.geolocation.getCurrentPosition(
-        pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
-        err => reject(new Error(err.message)),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
-      );
-    });
-  }
-  // Natif : expo-location (navigator.geolocation n'existe pas en React Native).
-  const { status } = await Location.requestForegroundPermissionsAsync();
-  if (status !== 'granted') {
-    throw new Error(messageGeoRefusee);
-  }
-  const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-  return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
 }
 
 /** Ouvre le sélecteur de fichier image/PDF natif web */
@@ -607,6 +556,7 @@ export default function PointageScreen() {
         <View style={styles.adminMsg}>
           <Text style={styles.adminMsgText}>{t.pointage.adminMessage}</Text>
         </View>
+        <ReglageRayon />
       </ScreenContainer>
     );
   }
@@ -651,27 +601,8 @@ export default function PointageScreen() {
           </Text>
         </View>
 
-        {/* Chantiers du jour */}
-        {uniqueChantiers.length > 0 ? (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>{t.pointage.myChantiersToday}</Text>
-            {uniqueChantiers.map(chantier => (
-              <ChantierCard
-                key={chantier.id}
-                chantier={chantier}
-                debutPointage={getPointage(chantier.id, 'debut')}
-                finPointage={getPointage(chantier.id, 'fin')}
-                onPointage={handlePointage}
-                loading={loadingChantierId === chantier.id}
-              />
-            ))}
-          </View>
-        ) : (
-          <View style={styles.noChantierBox}>
-            <IconCalendar size={32} color="#9A8C80" />
-            <Text style={styles.noChantierText}>{t.pointage.noChantierToday}</Text>
-          </View>
-        )}
+        {/* Pointage libre : le chantier est déduit de la position */}
+        <PointageLibre onDepart={id => { if (id) { setPhotosChantierId(id); setPhotosEnAttente([]); setShowPhotosModal(true); } }} />
 
         {/* Historique */}
         {hist.length > 0 && (

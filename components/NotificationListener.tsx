@@ -8,6 +8,7 @@ import { todayYMD } from '@/lib/date/today';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { getStaffNotifTokens, isNotifEnabled } from '@/lib/notif/getStaffNotifTokens';
 import { scheduleRdvReminders } from '@/lib/notif/scheduleRdvReminders';
+import { scheduleRappelsPointage } from '@/lib/notif/scheduleRappelsPointage';
 import { scheduleStDocReminders } from '@/lib/notif/scheduleStDocReminders';
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 
@@ -623,6 +624,14 @@ export function NotificationListener() {
     // évite de reprogrammer à chaque mutation de chantier.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.rdvChantiers, data.notificationPrefs, isAdmin, isST, myId, myNotifKey]);
+
+  // ── Rappels de pointage (arrivée / départ à H+15 min de l'horaire théorique) ──
+  const monEmploye = !isAdmin && currentUser?.employeId ? data.employes.find(e => e.id === currentUser.employeId) : undefined;
+  useEffect(() => {
+    if (isAdmin || isST || !monEmploye) return;
+    scheduleRappelsPointage(monEmploye, data.pointages, data.demandesConge || [], isNotifEnabled(data.notificationPrefs, monEmploye.id, 'pointageRetard')).catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.pointages, data.demandesConge, monEmploye?.horaires, monEmploye?.doitPointer, data.notificationPrefs, isAdmin, isST]);
 
   // ── Rappels semestriels de vérification des documents sous-traitants ──
   // Admin uniquement. Un rappel par ST, décalé d'1 semaine, tous les 6 mois.

@@ -798,6 +798,19 @@ export interface Pointage {
   note?: string;           // note libre sur ce pointage
   horsZone?: boolean;      // pointage hors du rayon chantier (contrôle silencieux, visible admin uniquement)
   distanceChantier?: number; // distance au chantier en mètres, si hors zone
+  /** Chantier choisi / corrigé à la main (et non déduit de la position) */
+  chantierManuel?: boolean;
+  /** Journal des modifications (employé, admin, RH) : qui, quand, ancienne valeur */
+  historique?: ModifPointage[];
+}
+
+export interface ModifPointage {
+  le: string;               // ISO datetime
+  parId: string;            // employeId ou 'admin'
+  parNom: string;
+  champ: 'heure' | 'chantier' | 'type' | 'creation' | 'suppression';
+  ancien: string;           // valeur lisible (heure ou nom de chantier)
+  nouveau: string;
 }
 
 /** Retard planifié à l'avance par un employé */
@@ -1550,6 +1563,8 @@ export interface AppData {
   adminPassword?: string;
   adminPasswordUpdatedAt?: string; // ISO datetime de la dernière modification du mot de passe
   adminEmployeId?: string;         // ID de l'employé lié au compte admin (visible par les autres)
+  /** Rayon (m) au-delà duquel un pointage est « hors zone » (défaut 300) */
+  rayonPointageM?: number;
   magasinPrefere?: string;         // Magasin préféré pour vérifier la dispo (ex: "Leroy Merlin Ivry-sur-Seine")
   metiersPerso?: MetierPerso[];    // Métiers personnalisés ajoutés par l'admin
   budgetsChantier?: Record<string, number>; // Budget prévisionnel par chantierId

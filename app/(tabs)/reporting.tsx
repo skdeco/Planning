@@ -17,6 +17,7 @@ import { calcSalaireMensuel } from '@/lib/paie/calcSalaireMensuel';
 import { FileSpreadsheet, FileText, CalendarDays, HardHat, Pencil } from 'lucide-react-native';
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
+import { EditionPointagesJour } from '@/components/pointage/EditionPointagesJour';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -1285,84 +1286,8 @@ export default function ReportingScreen() {
         </ScrollView>
       )}
 
-      {/* ── Modal Saisie Manuelle Pointage ── */}
-      <Modal
-        visible={editPointageModal}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setEditPointageModal(false)}
-      >
-        <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setEditPointageModal(false)} />
-          <Pressable style={styles.modalSheet} onPress={e => e.stopPropagation()}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>{t.reporting.editTimesheet}</Text>
-            {editEmpId && (
-              <Text style={styles.modalSubtitle}>
-                {data.employes.find(e => e.id === editEmpId)?.prenom}{' '}
-                {data.employes.find(e => e.id === editEmpId)?.nom} — {formatDateFr(editDate)}
-              </Text>
-            )}
-            <Pressable
-              style={[styles.editAbsentBtn, editIsAbsent && styles.editAbsentBtnActive]}
-              onPress={() => setEditIsAbsent(v => !v)}
-            >
-              <Text style={[styles.editAbsentBtnText, editIsAbsent && { color: '#fff' }]}>
-                {editIsAbsent ? `✓ ${t.reporting.markedAbsent}` : t.reporting.markAbsent}
-              </Text>
-            </Pressable>
-            {!editIsAbsent && (
-              <>
-                <Text style={styles.modalFieldLabel}>{t.reporting.arrivalTime}</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={editArrivee}
-                  onChangeText={setEditArrivee}
-                  placeholder="Ex: 08:00"
-                  placeholderTextColor="#9A8C80"
-                  keyboardType="numbers-and-punctuation"
-                />
-                <Text style={styles.modalFieldLabel}>{t.reporting.departureTime}</Text>
-                <TextInput
-                  style={styles.modalInput}
-                  value={editDepart}
-                  onChangeText={setEditDepart}
-                  placeholder="Ex: 17:00"
-                  placeholderTextColor="#9A8C80"
-                  keyboardType="numbers-and-punctuation"
-                />
-              </>
-            )}
-            {/* Bouton supprimer pointage existant */}
-            {(isAdmin || (currentUser as any)?.isRH) && editEmpId && (() => {
-              const existingPts = data.pointages.filter(p => p.employeId === editEmpId && p.date === editDate);
-              if (existingPts.length === 0) return null;
-              return (
-                <Pressable
-                  style={{ backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#FECACA', borderRadius: 10, paddingVertical: 10, alignItems: 'center', marginTop: 8 }}
-                  onPress={() => {
-                    const doDelete = () => {
-                      existingPts.forEach(p => deletePointage(p.id));
-                      setEditPointageModal(false);
-                    };
-                    if (Platform.OS === 'web') { if (window.confirm(t.reporting.deletePointageWebMsg)) doDelete(); }
-                    else Alert.alert(t.reporting.deletePointageTitle, t.reporting.deletePointageMsg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.common.delete, style: 'destructive', onPress: doDelete }]);
-                  }}
-                >
-                  <Text style={{ color: '#DC2626', fontWeight: '700', fontSize: 13 }}>{t.reporting.deletePointageTitle}</Text>
-                </Pressable>
-              );
-            })()}
-            <View style={styles.modalActions}>
-              <Pressable style={styles.modalCancelBtn} onPress={() => setEditPointageModal(false)}>
-                <Text style={styles.modalCancelBtnText}>{t.common.cancel}</Text>
-              </Pressable>
-              <Pressable style={styles.modalSaveBtn} onPress={handleSaveEditPointage}>
-                <Text style={styles.modalSaveBtnText}>{t.common.save}</Text>
-              </Pressable>
-            </View>
-          </Pressable>
-        </View>
-      </Modal>
+      {/* ── Modification des pointages du jour (admin / RH), avec historique ── */}
+      <EditionPointagesJour visible={editPointageModal} employeId={editEmpId} date={editDate} onFermer={() => setEditPointageModal(false)} />
 
       {/* ── Modal Acompte ── */}
       <Modal
