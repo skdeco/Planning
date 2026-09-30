@@ -991,36 +991,6 @@ export default function DashboardScreen() {
           </>
         )}
 
-        {/* Planning direction du jour */}
-        {(() => {
-          const rdvJour = (data.agendaEvents || []).filter(e => e.date === today).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
-          if (rdvJour.length === 0) return null;
-          return (
-            <>
-              <Text style={styles.sectionTitle}>Agenda du jour ({rdvJour.length})</Text>
-              {rdvJour.map(evt => {
-                const ch = evt.chantierId ? data.chantiers.find(c => c.id === evt.chantierId) : null;
-                return (
-                  <Pressable key={evt.id} style={[styles.statCard, { flexDirection: 'row', alignItems: 'center', gap: 10 }]}
-                    onPress={() => router.push('/(tabs)/planning' as any)}>
-                    <View style={{ backgroundColor: (evt.couleur || '#5C1F2E') + '15', width: 44, height: 44, borderRadius: 10, alignItems: 'center', justifyContent: 'center' }}>
-                      <Text style={{ fontSize: 12, fontWeight: '800', color: evt.couleur || '#5C1F2E' }}>{evt.heureDebut}</Text>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14' }}>{evt.titre}</Text>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
-                        {evt.heureFin ? <Text style={{ fontSize: 11, color: '#6E5F54' }}>{evt.heureDebut} → {evt.heureFin}</Text> : null}
-                        {evt.lieu ? <Text style={{ fontSize: 11, color: '#6E5F54' }}>· {evt.lieu}</Text> : null}
-                        {ch ? <Text style={{ fontSize: 11, color: ch.couleur, fontWeight: '600' }}>· {ch.nom}</Text> : null}
-                      </View>
-                    </View>
-                  </Pressable>
-                );
-              })}
-            </>
-          );
-        })()}
-
         {/* Aujourd'hui — synthèse + pointage par chantier */}
         <Text style={styles.sectionTitle}>Aujourd'hui</Text>
         <View style={styles.listCard}>

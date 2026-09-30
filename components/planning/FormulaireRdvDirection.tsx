@@ -25,7 +25,7 @@ const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}
 /** Sélecteur d'heure : heures de 6 h à 23 h, minutes par tranches de 15 */
 const HEURES_H = Array.from({ length: 18 }, (_, i) => i + 6);
 const MINUTES_Q = [0, 15, 30, 45];
-const LIGNE = 48;
+const LIGNE = 38;
 const dateCourte = (ymd: string) => new Date(ymd + 'T12:00:00').toLocaleDateString(localeMn(), { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 
 interface Props {
@@ -209,7 +209,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
       <Modal visible={!!liste} transparent animationType="fade" onRequestClose={() => setListe(null)}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
           <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setListe(null)} />
-          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 8, width: '100%', maxWidth: 360, maxHeight: '75%' }}>
+          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 8, width: '100%', maxWidth: estHeure ? 240 : 360, maxHeight: '75%' }}>
             {!!liste && <Text style={{ fontSize: 14, fontWeight: '800', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{titreListe[liste]}{estHeure ? ` · ${heureEditee}` : ''}</Text>}
             {avecRecherche && (
               <TextInput value={recherche} onChangeText={setRecherche} placeholder={liste === 'chantier' ? tm('Rechercher un chantier') : tm('Rechercher')}
@@ -217,27 +217,28 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
                 style={[inputStyle, { marginHorizontal: 4, marginBottom: 6, fontSize: 15 }]} />
             )}
             {estHeure ? (
-              <View style={{ flexDirection: 'row', gap: 8, height: LIGNE * 5 }}>
+              <View style={{ flexDirection: 'row', gap: 2, height: LIGNE * 5, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F1E7DC' }}>
                 {/* Heures */}
                 <ScrollView style={{ flex: 1 }} contentOffset={{ x: 0, y: Math.max(0, (HEURES_H.indexOf(hSel) - 2) * LIGNE) }} showsVerticalScrollIndicator={false}>
                   {HEURES_H.map(h => {
                     const actif = h === hSel;
                     return (
                       <Pressable key={h} onPress={() => changerHeure(h, mSel)} accessibilityRole="button" accessibilityState={{ selected: actif }}
-                        style={{ height: LIGNE, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#5C1F2E' : undefined }}>
-                        <Text style={{ fontSize: 20, fontWeight: actif ? '800' : '500', color: actif ? '#fff' : '#2B1D14' }}>{String(h).padStart(2, '0')} h</Text>
+                        style={{ height: LIGNE, marginHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#F2E4E1' : undefined }}>
+                        <Text style={{ fontSize: 16, fontWeight: actif ? '800' : '400', color: actif ? '#5C1F2E' : '#6E5F54' }}>{String(h).padStart(2, '0')}</Text>
                       </Pressable>
                     );
                   })}
                 </ScrollView>
+                <Text style={{ alignSelf: 'center', fontSize: 18, fontWeight: '700', color: '#5C1F2E' }}>:</Text>
                 {/* Minutes (tranches de 15) */}
                 <View style={{ flex: 1, justifyContent: 'center' }}>
                   {MINUTES_Q.map(m => {
                     const actif = m === mSel;
                     return (
                       <Pressable key={m} onPress={() => changerHeure(hSel, m)} accessibilityRole="button" accessibilityState={{ selected: actif }}
-                        style={{ height: LIGNE, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#5C1F2E' : undefined }}>
-                        <Text style={{ fontSize: 20, fontWeight: actif ? '800' : '500', color: actif ? '#fff' : '#2B1D14' }}>{String(m).padStart(2, '0')}</Text>
+                        style={{ height: LIGNE, marginHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#F2E4E1' : undefined }}>
+                        <Text style={{ fontSize: 16, fontWeight: actif ? '800' : '400', color: actif ? '#5C1F2E' : '#6E5F54' }}>{String(m).padStart(2, '0')}</Text>
                       </Pressable>
                     );
                   })}
@@ -265,7 +266,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
             </ScrollView>
             )}
             {(multiple || estHeure) && (
-              <Pressable onPress={() => setListe(null)} accessibilityRole="button" style={{ marginTop: 6, minHeight: 46, borderRadius: 12, backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => setListe(null)} accessibilityRole="button" style={{ marginTop: 8, minHeight: 40, borderRadius: 10, backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>OK</Text>
               </Pressable>
             )}

@@ -45,7 +45,8 @@ export function LigneReportingJour(p: Props) {
   const heure = (pt: Pointage | undefined, fleche: string) => (
     <Pressable disabled={!pt?.latitude} onPress={() => pt && ouvrirPosition(pt.latitude, pt.longitude)} hitSlop={6}>
       <Text style={{ fontSize: 15, fontWeight: '800', color: pt ? DS.text : DS.textMuted }}>
-        {fleche} {pt ? pt.heure : '—'}{pt?.latitude ? ' 📍' : ''}{pt?.horsZone ? ' ⚠︎' : ''}
+        {fleche} {pt ? pt.heure : '—'}{pt?.latitude ? ' 📍' : ''}
+        {pt?.horsZone ? <Text style={{ fontSize: 11, fontWeight: '700', color: '#B45309' }}>{'  '}{tm('hors zone')}{pt.distanceChantier ? ` ${pt.distanceChantier > 999 ? `${(pt.distanceChantier / 1000).toFixed(1)} km` : `${pt.distanceChantier} m`}` : ''}</Text> : null}
       </Text>
     </Pressable>
   );

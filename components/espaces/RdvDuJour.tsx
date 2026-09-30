@@ -38,10 +38,13 @@ export function RdvDuJour({ marge = 16 }: { marge?: number }) {
         return (
           <View key={evt.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 32 }}>
             <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: passe ? DS.border : evt.couleur }} />
-            <Text style={[{ width: 48, fontSize: 14, fontWeight: '800', color: DS.text }, barre]}>{evt.heureDebut}</Text>
+            <View style={{ width: 52 }}>
+              <Text style={[{ fontSize: 14, fontWeight: '800', color: DS.text }, barre]}>{evt.heureDebut}</Text>
+              {!!evt.heureFin && <Text style={[{ fontSize: 11, color: DS.textSecondary }, barre]}>{evt.heureFin}</Text>}
+            </View>
             <View style={{ flex: 1 }}>
               <Text style={[{ fontSize: 14, fontWeight: '700', color: DS.text }, barre]} numberOfLines={1}>{evt.titre}</Text>
-              {!!ch && <Text style={[{ fontSize: 12, color: DS.textSecondary }, barre]} numberOfLines={1}>{ch.nom}</Text>}
+              {!!(ch || evt.lieu) && <Text style={[{ fontSize: 12, color: DS.textSecondary }, barre]} numberOfLines={1}>{[ch?.nom, evt.lieu].filter(Boolean).join(' · ')}</Text>}
             </View>
           </View>
         );
