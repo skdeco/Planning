@@ -19,7 +19,8 @@ const leFR = (iso: string) => { const d = new Date(iso); return `${dateFR(iso.sl
 interface Props { visible: boolean; employeId: string | null; date: string; onFermer: () => void }
 
 export function EditionPointagesJour({ visible, employeId, date, onFermer }: Props) {
-  const { data, currentUser, addPointage, updatePointage, deletePointage } = useApp();
+  const { data, currentUser, addPointage, updatePointage, deletePointage, togglePresenceForcee } = useApp();
+  const presenceForcee = !!employeId && (data.presencesForcees || []).some(pf => pf.employeId === employeId && pf.date === date);
   const existants = employeId ? pointagesDuJour(data.pointages, employeId, date) : [];
   const [lignes, setLignes] = useState<Ligne[]>([]);
   const [choixPour, setChoixPour] = useState<string | null>(null);
@@ -115,6 +116,16 @@ export function EditionPointagesJour({ visible, employeId, date, onFermer }: Pro
             <Pressable onPress={ajouter} accessibilityRole="button" style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center', borderRadius: radius.md, borderWidth: 1, borderStyle: 'dashed', borderColor: DS.primary }}>
               <Text style={{ fontSize: 15, fontWeight: '800', color: DS.primary }}>{tm('+ Ajouter un pointage')}</Text>
             </Pressable>
+            {/* Présence sans pointage : l'admin peut marquer présent, puis saisir les heures ci-dessus */}
+            {!!employeId && (
+              <Pressable onPress={() => togglePresenceForcee(employeId, date, auteurCourant(currentUser, data.employes).nom)} accessibilityRole="button"
+                style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, borderRadius: radius.md, backgroundColor: presenceForcee ? '#F0FFF4' : DS.surface, borderWidth: 1, borderColor: presenceForcee ? '#C6F6D5' : DS.border }}>
+                <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#2E7D32', backgroundColor: presenceForcee ? '#2E7D32' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                  {presenceForcee && <Text style={{ color: '#fff', fontWeight: '900', fontSize: 13 }}>✓</Text>}
+                </View>
+                <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: DS.text }}>{tm('Présent (même sans pointage)')}</Text>
+              </Pressable>
+            )}
             {lignes.some(l => !l.supprime) && (
               <Pressable onPress={toutSupprimer} accessibilityRole="button" style={{ minHeight: 40, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: 14, fontWeight: '700', color: DS.error }}>{tm('Marquer absent (supprimer tous les pointages)')}</Text>

@@ -618,6 +618,16 @@ const d: Record<string, string> = {
   "Rechercher": "Buscar",
   "Cacher les chantiers masqués": "Ocultar las obras ocultas",
   "Chantiers masqués ({0})": "Obras ocultas ({0})",
+  "À l'heure": "A la hora",
+  "{0} de retard": "{0} de retraso",
+  "{0} d'avance": "{0} de adelanto",
+  "+{0} en plus": "+{0} de más",
+  "−{0} (parti plus tôt)": "−{0} (salió antes)",
+  "Bilan de la journée": "Balance del día",
+  "Journée pile": "Día exacto",
+  "Heures en plus / en moins": "Horas de más / de menos",
+  "(info, hors paie)": "(info, fuera de la nómina)",
+  "Présent (même sans pointage)": "Presente (aun sin fichaje)",
 };
 
 export default d;

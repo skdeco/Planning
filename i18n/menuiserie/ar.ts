@@ -626,6 +626,16 @@ const d: Record<string, string> = {
   "Rechercher": "بحث",
   "Cacher les chantiers masqués": "إخفاء المشاريع المخفية",
   "Chantiers masqués ({0})": "المشاريع المخفية ({0})",
+  "À l'heure": "في الموعد",
+  "{0} de retard": "تأخير {0}",
+  "{0} d'avance": "مبكراً {0}",
+  "+{0} en plus": "+{0} إضافية",
+  "−{0} (parti plus tôt)": "−{0} (غادر مبكراً)",
+  "Bilan de la journée": "حصيلة اليوم",
+  "Journée pile": "يوم مضبوط",
+  "Heures en plus / en moins": "ساعات زائدة / ناقصة",
+  "(info, hors paie)": "(للعلم، خارج الراتب)",
+  "Présent (même sans pointage)": "حاضر (حتى بدون تسجيل)",
 };
 
 export default d;

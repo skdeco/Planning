@@ -623,6 +623,16 @@ const d: Record<string, string> = {
   "Rechercher": "Pesquisar",
   "Cacher les chantiers masqués": "Esconder as obras ocultas",
   "Chantiers masqués ({0})": "Obras ocultas ({0})",
+  "À l'heure": "À hora",
+  "{0} de retard": "{0} de atraso",
+  "{0} d'avance": "{0} de avanço",
+  "+{0} en plus": "+{0} a mais",
+  "−{0} (parti plus tôt)": "−{0} (saiu mais cedo)",
+  "Bilan de la journée": "Saldo do dia",
+  "Journée pile": "Dia exato",
+  "Heures en plus / en moins": "Horas a mais / a menos",
+  "(info, hors paie)": "(info, fora do salário)",
+  "Présent (même sans pointage)": "Presente (mesmo sem registo)",
 };
 
 export default d;

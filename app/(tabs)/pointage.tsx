@@ -762,22 +762,8 @@ export default function PointageScreen() {
                     <Text style={{ fontSize: 22, fontWeight: '800', color: '#5C1F2E' }}>{totalH}h{String(totalM).padStart(2, '0')}</Text>
                     <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{t.pointage.hoursWorked}</Text>
                   </View>
-                  <View style={{ width: 1, backgroundColor: '#EDE2D6' }} />
-                  <View style={{ alignItems: 'center', flex: 1 }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: heuresSup > 0 ? '#2E7D32' : '#6E5F54' }}>
-                      {supH}h{String(supM).padStart(2, '0')}
-                    </Text>
-                    <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{t.pointage.overtimeHours}</Text>
-                  </View>
                 </View>
 
-                {heuresTheoriques > 0 && (
-                  <View style={{ backgroundColor: '#F1E7DC', borderRadius: 8, padding: 8, marginTop: 4 }}>
-                    <Text style={{ fontSize: 12.5, color: '#6E5F54', textAlign: 'center' }}>
-                      Prévu : {theoriqueH}h{String(theoriqueM).padStart(2, '0')} • Fait : {totalH}h{String(totalM).padStart(2, '0')} • {heuresSup > 0 ? `+${supH}h${String(supM).padStart(2, '0')} sup` : 'Dans les temps'}
-                    </Text>
-                  </View>
-                )}
 
                 {/* Bouton export PDF */}
                 {Platform.OS === 'web' && (
@@ -818,7 +804,7 @@ export default function PointageScreen() {
                         </table>
                         <div class="summary">
                           <p><span>${joursComplets}</span> ${t.pointage.daysClocked} • <span>${totalH}h${String(totalM).padStart(2, '0')}</span> ${t.pointage.hoursWorked}</p>
-                          ${heuresTheoriques > 0 ? `<p>${t.ui.heuresTheoriques} : <span>${theoriqueH}h${String(theoriqueM).padStart(2, '0')}</span> • ${t.pointage.overtimeHours} : <span>${supH}h${String(supM).padStart(2, '0')}</span></p>` : ''}
+                          
                         </div>
                         <script>window.onload = function() { window.print(); }</script>
                         </body></html>

@@ -626,6 +626,16 @@ const d: Record<string, string> = {
   "Rechercher": "Поиск",
   "Cacher les chantiers masqués": "Скрыть скрытые объекты",
   "Chantiers masqués ({0})": "Скрытые объекты ({0})",
+  "À l'heure": "Вовремя",
+  "{0} de retard": "опоздание {0}",
+  "{0} d'avance": "раньше на {0}",
+  "+{0} en plus": "+{0} сверх",
+  "−{0} (parti plus tôt)": "−{0} (ушёл раньше)",
+  "Bilan de la journée": "Итог дня",
+  "Journée pile": "Ровно по графику",
+  "Heures en plus / en moins": "Часы сверх / недоработка",
+  "(info, hors paie)": "(справочно, не в зарплате)",
+  "Présent (même sans pointage)": "Присутствовал (даже без отметки)",
 };
 
 export default d;

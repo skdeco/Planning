@@ -18,6 +18,9 @@ import { FileSpreadsheet, FileText, CalendarDays, HardHat, Pencil } from 'lucide
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
 import { EditionPointagesJour } from '@/components/pointage/EditionPointagesJour';
+import { ecartJourMinutes, formatEcartHeures, couleurEcart } from '@/lib/pointage/bilan';
+import { pointagesDuJour } from '@/lib/pointage/historique';
+import { tm } from '@/lib/menuiserie/i18n';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -71,8 +74,11 @@ function getPonctualiteColor(ecart: number): string {
 
 /** Retourne le label d'écart */
 function formatEcart(ecart: number, type: 'debut' | 'fin'): string {
-  if (ecart <= 0) return type === 'debut' ? 'A l\'heure' : 'A l\'heure';
-  return `+${ecart} min`;
+  const duree = (m: number) => (m >= 60 ? formatEcartHeures(m).replace(/^[+−]/, '') : `${m} min`);
+  if (ecart === 0) return tm("À l'heure");
+  if (type === 'debut') return ecart > 0 ? tm('{0} de retard', duree(ecart)) : tm("{0} d'avance", duree(-ecart));
+  // Départ : après l'heure prévue = temps en plus ; avant = temps en moins
+  return ecart < 0 ? tm('+{0} en plus', duree(-ecart)) : tm('−{0} (parti plus tôt)', duree(ecart));
 }
 
 /** Calcule les jours fériés français pour une année donnée */
@@ -132,6 +138,8 @@ export default function ReportingScreen() {
   const monthLabel = (m: number, y: number) => new Date(y, m, 1).toLocaleDateString(dateLocale, { month: 'long', year: 'numeric' });
   const { refreshing, onRefresh } = useRefresh();
   const isAdmin = currentUser?.role === 'admin';
+  // Bilan heures en plus / en moins : admin et RH uniquement, jamais l'employé
+  const voitBilan = isAdmin || data.employes.find(e => e.id === currentUser?.employeId)?.isRH === true;
   const router = useRouter();
 
   useEffect(() => {
@@ -300,6 +308,7 @@ export default function ReportingScreen() {
 
     let totalMinutes = 0;
     let totalRetardMinutes = 0;
+    let totalBilanMinutes = 0; // heures en plus (+) ou en moins (−), à titre d'information
     let joursAbsents = 0;      // jours théoriques sans pointage
     let joursFeriesComptes = 0; // fériés tombant un jour ouvrable théorique
     let joursFeriesTravailles = 0; // fériés effectivement travaillés (ne doivent PAS être déduits)
@@ -345,7 +354,11 @@ export default function ReportingScreen() {
         ecartFin = ecartMinutes(fin.heure, horairesJour.fin, 'fin');
       }
 
-      return { dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, isForcedPresent, joursFeriesTravaille: isFerie && (!!debut || !!fin) };
+      // Bilan du jour (info, hors paie) : temps travaillé − journée théorique
+      const bilanJour = ecartJourMinutes(empSelectionne, pointagesDuJour(data.pointages, empSelectionne.id, dateStr), dateStr, isForcedPresent);
+      if (bilanJour !== null) totalBilanMinutes += bilanJour;
+
+      return { dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, bilanJour, isFerie, isForcedPresent, joursFeriesTravaille: isFerie && (!!debut || !!fin) };
     });
 
     // Calcul du salaire selon le mode.
@@ -376,11 +389,11 @@ export default function ReportingScreen() {
     return {
       lignes, totalMinutes, totalAcomptes, salaireBase, salaireAvantAcompte, resteAPayer,
       acomptesMois, joursOuvrablesMois, joursFeriesComptes, joursAbsents,
-      totalRetardMinutes, joursOuvrablesTravailles, joursFeriesTravailles,
+      totalRetardMinutes, totalBilanMinutes, joursOuvrablesTravailles, joursFeriesTravailles,
       modeSalaire: empSelectionne.modeSalaire ?? 'mensuel',
       tarifJournalier: empSelectionne.tarifJournalier ?? null,
     };
-  }, [empSelectionne, pointagesParEmpDate, joursDuMois, acomptesDuMois, selectedYear, selectedMonth, data.presencesForcees]);
+  }, [empSelectionne, pointagesParEmpDate, joursDuMois, acomptesDuMois, selectedYear, selectedMonth, data.presencesForcees, data.pointages]);
 
   // ── Actions acompte ────────────────────────────────────────────────────────
 
@@ -760,8 +773,8 @@ export default function ReportingScreen() {
                       <View style={styles.pointageCell}>
                         <Text style={styles.pointageLabel}>{t.reporting.departure}</Text>
                         <Text style={styles.pointageHeure}>{fin.heure}</Text>
-                        {ecartF !== null && (
-                          <Text style={[styles.ecartText, { color: getPonctualiteColor(ecartF) }]}>
+                        {ecartF !== null && voitBilan && (
+                          <Text style={[styles.ecartText, { color: ecartF < 0 ? '#2E7D32' : getPonctualiteColor(ecartF) }]}>
                             {formatEcart(ecartF, 'fin')}
                           </Text>
                         )}
@@ -786,6 +799,18 @@ export default function ReportingScreen() {
                       </View>
                     )}
                   </View>
+
+                  {/* Bilan de la journée : temps en plus / en moins (admin / RH uniquement) */}
+                  {(() => {
+                    const ecartJour = ecartJourMinutes(emp, pointagesDuJour(data.pointages, emp.id, selectedDate), selectedDate, isForcedPresent);
+                    if (!voitBilan || ecartJour === null) return null;
+                    return (
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 10, paddingHorizontal: 12, paddingVertical: 8, marginTop: 8 }}>
+                        <Text style={{ fontSize: 13, color: '#6E5F54', fontWeight: '600' }}>{tm('Bilan de la journée')}</Text>
+                        <Text style={{ fontSize: 15, fontWeight: '800', color: couleurEcart(ecartJour) }}>{ecartJour === 0 ? tm('Journée pile') : formatEcartHeures(ecartJour)}</Text>
+                      </View>
+                    );
+                  })()}
 
                   {/* Acomptes du jour pour cet employé */}
                   {acomptesEmpJour.length > 0 && (
@@ -872,6 +897,14 @@ export default function ReportingScreen() {
                   <Text style={styles.resumeMensuelLabel}>{t.reporting.totalHours}</Text>
                   <Text style={styles.resumeMensuelValue}>{formatDuree(rapportEmploye.totalMinutes)}</Text>
                 </View>
+
+                {/* Heures en plus / en moins sur le mois (info, n'entre pas dans la paie) */}
+                {voitBilan && <View style={[styles.resumeMensuelRow, { backgroundColor: '#FAF5EF', borderRadius: 6, paddingHorizontal: 8 }]}>
+                  <Text style={styles.resumeMensuelLabel}>{tm('Heures en plus / en moins')}</Text>
+                  <Text style={[styles.resumeMensuelValue, { color: couleurEcart(rapportEmploye.totalBilanMinutes), fontWeight: '800' }]}>
+                    {formatEcartHeures(rapportEmploye.totalBilanMinutes)} <Text style={{ fontSize: 11, fontWeight: '500', color: '#6E5F54' }}>{tm('(info, hors paie)')}</Text>
+                  </Text>
+                </View>}
 
                 {/* Retards (admin/RH toujours, employé si retardAfficheEmploye) */}
                 {rapportEmploye.totalRetardMinutes > 0 && (isAdmin || (currentUser as any)?.isRH || empSelectionne.retardAfficheEmploye) && (
@@ -1038,7 +1071,7 @@ export default function ReportingScreen() {
                   <Text style={[styles.tableauCell, styles.tableauCellHeure, styles.tableauHeaderText]}>{t.reporting.departure}</Text>
                   {isAdmin && <Text style={[styles.tableauCell, styles.tableauCellDuree, styles.tableauHeaderText]}>{t.reporting.pointedBy}</Text>}
                 </View>
-                {rapportEmploye.lignes.map(({ dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, isFerie, isForcedPresent, joursFeriesTravaille }) => {
+                {rapportEmploye.lignes.map(({ dateStr, debut, fin, dureeMin, travailleTheo, horairesJour, ecartDebut, ecartFin, bilanJour, isFerie, isForcedPresent, joursFeriesTravaille }) => {
                   const isWeekend = [0, 6].includes(new Date(dateStr + 'T12:00:00').getDay());
                   const hasAnomalie = (ecartDebut !== null && ecartDebut > 15) || (ecartFin !== null && ecartFin > 15);
                   const hasPointage = debut || fin;
@@ -1048,12 +1081,8 @@ export default function ReportingScreen() {
                     <Pressable
                       key={dateStr}
                       onPress={() => {
-                        if (hasPointage && isAdmin && empSelectionne) {
-                          openEditPointage(empSelectionne.id, dateStr);
-                        } else if (!hasPointage && isAdmin && empSelectionne) {
-                          // Toggle présence forcée (absent, weekend, ou déjà forcé)
-                          togglePresenceForcee(empSelectionne.id, dateStr, currentUser?.nom || 'Admin');
-                        }
+                        // Toujours la fiche du jour : heures, chantier, présence sans pointage
+                        if (isAdmin && empSelectionne) openEditPointage(empSelectionne.id, dateStr);
                       }}
                       style={[
                         styles.tableauRow,
@@ -1120,9 +1149,10 @@ export default function ReportingScreen() {
                         {fin ? (
                           <>
                             <Text style={styles.tableauHeureText}>{fin.heure}</Text>
-                            {ecartFin !== null && ecartFin !== 0 && (
-                              <Text style={[styles.tableauEcartText, { color: getPonctualiteColor(ecartFin) }]}>
-                                {ecartFin > 0 ? `+${ecartFin}min` : `${ecartFin}min`}
+                            {/* Bilan du jour : temps en plus / en moins */}
+                            {voitBilan && bilanJour !== null && bilanJour !== 0 && (
+                              <Text style={[styles.tableauEcartText, { color: couleurEcart(bilanJour) }]}>
+                                {formatEcartHeures(bilanJour)}
                               </Text>
                             )}
                             {fin.latitude && fin.longitude && (

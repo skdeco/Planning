@@ -603,6 +603,16 @@ const d: Record<string, string> = {
   "Rechercher": "Search",
   "Cacher les chantiers masqués": "Hide hidden projects",
   "Chantiers masqués ({0})": "Hidden projects ({0})",
+  "À l'heure": "On time",
+  "{0} de retard": "{0} late",
+  "{0} d'avance": "{0} early",
+  "+{0} en plus": "+{0} extra",
+  "−{0} (parti plus tôt)": "−{0} (left early)",
+  "Bilan de la journée": "Day balance",
+  "Journée pile": "Exact day",
+  "Heures en plus / en moins": "Hours over / under",
+  "(info, hors paie)": "(info, not in pay)",
+  "Présent (même sans pointage)": "Present (even without clock-in)",
 };
 
 export default d;
