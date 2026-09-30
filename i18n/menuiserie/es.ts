@@ -615,6 +615,7 @@ const d: Record<string, string> = {
   "Terminés": "Terminadas",
   "Masqués": "Ocultas",
   "Personne": "Nadie",
+  "Rechercher": "Buscar",
 };
 
 export default d;

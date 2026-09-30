@@ -600,6 +600,7 @@ const d: Record<string, string> = {
   "Terminés": "Finished",
   "Masqués": "Hidden",
   "Personne": "Nobody",
+  "Rechercher": "Search",
 };
 
 export default d;

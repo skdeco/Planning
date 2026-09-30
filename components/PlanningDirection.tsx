@@ -305,9 +305,9 @@ export function PlanningDirection() {
                 <Pressable key={dayIdx} style={{ width: dayColWidth, position: 'relative', backgroundColor: isToday ? '#FAFBFF' : undefined }}
                   accessibilityLabel={tm('Nouveau RDV')}
                   onPress={e => {
-                    // Heure calculée depuis la position du tap, arrondie à la demi-heure la plus proche
+                    // Heure calculée depuis la position du tap, arrondie au quart d'heure le plus proche
                     const y = e.nativeEvent.locationY || 0;
-                    const m = Math.round(((startHour * 60) + y * (60 / HOUR_HEIGHT)) / 30) * 30;
+                    const m = Math.round(((startHour * 60) + y * (60 / HOUR_HEIGHT)) / 15) * 15;
                     const bornee = Math.max(startHour * 60, Math.min(m, 23 * 60));
                     openNew(dateStr, `${String(Math.floor(bornee / 60)).padStart(2, '0')}:${String(bornee % 60).padStart(2, '0')}`);
                   }}>

@@ -22,8 +22,10 @@ export interface FormRdv {
 const toYMD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const minutes = (h: string) => { const [a, b] = h.split(':').map(Number); return (a || 0) * 60 + (b || 0); };
 const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`;
-/** Heures de 06:00 à 22:00, toutes les 30 min */
-const HEURES = Array.from({ length: 33 }, (_, i) => hhmm(360 + i * 30));
+/** Sélecteur d'heure : heures de 6 h à 23 h, minutes par tranches de 15 */
+const HEURES_H = Array.from({ length: 18 }, (_, i) => i + 6);
+const MINUTES_Q = [0, 15, 30, 45];
+const LIGNE = 48;
 const dateCourte = (ymd: string) => new Date(ymd + 'T12:00:00').toLocaleDateString(localeMn(), { weekday: 'short', day: '2-digit', month: '2-digit', year: 'numeric' });
 
 interface Props {
@@ -44,6 +46,8 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
   const { data } = useApp();
   const [plus, setPlus] = useState(false);
   const [liste, setListe] = useState<Liste>(null);
+  const [recherche, setRecherche] = useState('');
+  const ouvrir = (l: Liste) => { setRecherche(''); setListe(l); };
 
   const dates = useMemo(() => {
     const out: string[] = [];
@@ -62,20 +66,35 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
   const visibleOptions: Option[] = data.employes.filter(e => !form.invites.includes(e.id)).map(e => ({ v: e.id, l: `${e.prenom} ${e.nom.charAt(0)}.` }));
 
   const multiple = liste === 'invites' || liste === 'visible';
+  const estHeure = liste === 'debut' || liste === 'fin';
   const options: Option[] =
     liste === 'date' || liste === 'finRecurrence' ? dates.map(v => ({ v, l: dateCourte(v) }))
-      : liste === 'fin' ? HEURES.filter(h => minutes(h) > minutes(form.heureDebut)).map(v => ({ v, l: `${v}  (${((minutes(v) - minutes(form.heureDebut)) / 60).toString().replace('.', ',')} h)` }))
-        : liste === 'debut' ? HEURES.map(v => ({ v, l: v }))
-          : liste === 'chantier' ? chantiers
+      : liste === 'chantier' ? chantiers
             : liste === 'recurrence' ? recurrences
               : liste === 'invites' ? invitesOptions
                 : liste === 'visible' ? visibleOptions : [];
 
+  // Saisie qui restreint la liste (chantiers, personnes)
+  const avecRecherche = liste === 'chantier' || liste === 'invites' || liste === 'visible';
+  const q = recherche.trim().toLowerCase();
+  const optionsFiltrees = avecRecherche && q ? options.filter(o => o.v !== '' && o.l.toLowerCase().includes(q)) : options;
+
+  // Heure en cours d'édition (début ou fin) : heures à gauche, minutes à droite
+  const heureEditee = liste === 'debut' ? form.heureDebut : liste === 'fin' ? (form.heureFin || form.heureDebut) : '';
+  const [hSel, mSel] = heureEditee ? heureEditee.split(':').map(Number) : [9, 0];
+  const changerHeure = (h: number, m: number) => {
+    const v = hhmm(h * 60 + m);
+    if (liste === 'debut') setForm(f => {
+      const duree = f.heureFin ? Math.max(15, minutes(f.heureFin) - minutes(f.heureDebut)) : 60;
+      return { ...f, heureDebut: v, heureFin: hhmm(Math.min(minutes(v) + duree, 23 * 60 + 45)) };
+    });
+    // La fin reste toujours après le début (au moins 15 min)
+    if (liste === 'fin') setForm(f => ({ ...f, heureFin: minutes(v) > minutes(f.heureDebut) ? v : hhmm(Math.min(minutes(f.heureDebut) + 15, 23 * 60 + 45)) }));
+  };
+
   const estChoisi = (v: string): boolean => {
     switch (liste) {
       case 'date': return v === form.date;
-      case 'debut': return v === form.heureDebut;
-      case 'fin': return v === form.heureFin;
       case 'finRecurrence': return v === form.recurrenceFinDate;
       case 'chantier': return v === form.chantierId;
       case 'recurrence': return v === form.recurrence;
@@ -90,12 +109,6 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
     switch (liste) {
       case 'date': setForm(f => ({ ...f, date: v })); break;
       case 'finRecurrence': setForm(f => ({ ...f, recurrenceFinDate: v })); break;
-      // Changer le début décale la fin en gardant la durée
-      case 'debut': setForm(f => {
-        const duree = f.heureFin ? Math.max(30, minutes(f.heureFin) - minutes(f.heureDebut)) : 60;
-        return { ...f, heureDebut: v, heureFin: hhmm(Math.min(minutes(v) + duree, 23 * 60 + 30)) };
-      }); break;
-      case 'fin': setForm(f => ({ ...f, heureFin: v })); break;
       case 'chantier': setForm(f => ({ ...f, chantierId: v })); break;
       case 'recurrence': setForm(f => ({ ...f, recurrence: v })); break;
       case 'invites': setForm(f => ({ ...f, invites: bascule(f.invites), visiblePar: f.visiblePar.filter(x => x !== v) })); return;
@@ -111,7 +124,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
   };
 
   const deroulant = (label: string, valeur: string, l: Liste, flex?: number) => (
-    <Pressable onPress={() => setListe(l)} accessibilityRole="button" accessibilityLabel={label} style={{ flex, gap: 2 }}>
+    <Pressable onPress={() => ouvrir(l)} accessibilityRole="button" accessibilityLabel={label} style={{ flex, gap: 2 }}>
       <Text style={labelStyle}>{label}</Text>
       <View style={[inputStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46 }]}>
         <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#2B1D14' }} numberOfLines={1}>{valeur}</Text>
@@ -190,9 +203,42 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
           <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setListe(null)} />
           <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 8, width: '100%', maxWidth: 360, maxHeight: '75%' }}>
-            {!!liste && <Text style={{ fontSize: 14, fontWeight: '800', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{titreListe[liste]}</Text>}
-            <ScrollView>
-              {options.map(o => {
+            {!!liste && <Text style={{ fontSize: 14, fontWeight: '800', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{titreListe[liste]}{estHeure ? ` · ${heureEditee}` : ''}</Text>}
+            {avecRecherche && (
+              <TextInput value={recherche} onChangeText={setRecherche} placeholder={liste === 'chantier' ? tm('Rechercher un chantier') : tm('Rechercher')}
+                placeholderTextColor="#9A8C80" autoCorrect={false} clearButtonMode="while-editing"
+                style={[inputStyle, { marginHorizontal: 4, marginBottom: 6, fontSize: 15 }]} />
+            )}
+            {estHeure ? (
+              <View style={{ flexDirection: 'row', gap: 8, height: LIGNE * 5 }}>
+                {/* Heures */}
+                <ScrollView style={{ flex: 1 }} contentOffset={{ x: 0, y: Math.max(0, (HEURES_H.indexOf(hSel) - 2) * LIGNE) }} showsVerticalScrollIndicator={false}>
+                  {HEURES_H.map(h => {
+                    const actif = h === hSel;
+                    return (
+                      <Pressable key={h} onPress={() => changerHeure(h, mSel)} accessibilityRole="button" accessibilityState={{ selected: actif }}
+                        style={{ height: LIGNE, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#5C1F2E' : undefined }}>
+                        <Text style={{ fontSize: 20, fontWeight: actif ? '800' : '500', color: actif ? '#fff' : '#2B1D14' }}>{String(h).padStart(2, '0')} h</Text>
+                      </Pressable>
+                    );
+                  })}
+                </ScrollView>
+                {/* Minutes (tranches de 15) */}
+                <View style={{ flex: 1, justifyContent: 'center' }}>
+                  {MINUTES_Q.map(m => {
+                    const actif = m === mSel;
+                    return (
+                      <Pressable key={m} onPress={() => changerHeure(hSel, m)} accessibilityRole="button" accessibilityState={{ selected: actif }}
+                        style={{ height: LIGNE, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#5C1F2E' : undefined }}>
+                        <Text style={{ fontSize: 20, fontWeight: actif ? '800' : '500', color: actif ? '#fff' : '#2B1D14' }}>{String(m).padStart(2, '0')}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </View>
+              </View>
+            ) : (
+            <ScrollView keyboardShouldPersistTaps="handled">
+              {optionsFiltrees.map(o => {
                 const actif = estChoisi(o.v);
                 return (
                   <Pressable key={o.v || '_'} onPress={() => choisir(o.v)} accessibilityRole={multiple ? 'checkbox' : 'button'} accessibilityState={multiple ? { checked: actif } : { selected: actif }}
@@ -208,9 +254,10 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
                   </Pressable>
                 );
               })}
-              {options.length === 0 && <Text style={{ padding: 12, color: '#6E5F54' }}>{tm('Aucun')}</Text>}
+              {optionsFiltrees.length === 0 && <Text style={{ padding: 12, color: '#6E5F54' }}>{tm('Aucun')}</Text>}
             </ScrollView>
-            {multiple && (
+            )}
+            {(multiple || estHeure) && (
               <Pressable onPress={() => setListe(null)} accessibilityRole="button" style={{ marginTop: 6, minHeight: 46, borderRadius: 12, backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>OK</Text>
               </Pressable>

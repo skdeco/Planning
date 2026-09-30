@@ -623,6 +623,7 @@ const d: Record<string, string> = {
   "Terminés": "المنتهية",
   "Masqués": "المخفية",
   "Personne": "لا أحد",
+  "Rechercher": "بحث",
 };
 
 export default d;
