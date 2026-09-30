@@ -147,11 +147,18 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40, gap: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{editId ? tm('Modifier') : tm('Nouveau RDV')}</Text>
-              {editId && (
-                <Pressable onPress={onDelete} style={{ padding: 6 }} accessibilityRole="button">
-                  <Text style={{ color: '#E74C3C', fontWeight: '600' }}>{tm('Supprimer')}</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                {editId && (
+                  <Pressable onPress={onDelete} style={{ padding: 6 }} accessibilityRole="button">
+                    <Text style={{ color: '#E74C3C', fontWeight: '600' }}>{tm('Supprimer')}</Text>
+                  </Pressable>
+                )}
+                {/* Croix de fermeture */}
+                <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={tm('Fermer')}
+                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#2B1D14' }}>✕</Text>
                 </Pressable>
-              )}
+              </View>
             </View>
 
             <Text style={labelStyle}>{tm('Titre *')}</Text>
