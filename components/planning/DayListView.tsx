@@ -16,6 +16,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { getMetierColors } from '@/app/types';
 import { usePlanningWeekData } from '@/hooks/usePlanningWeekData';
 import { DS, radius, shadows, font } from '@/constants/design';
+import { BadgeSav } from './OeilChantier';
 
 export interface DayListViewProps {
   weekOffset: number;
@@ -117,6 +118,7 @@ export function DayListView({
           <Pressable style={styles.cardHead} onPress={tap(() => onOpenChantierActions(ch.id))} accessibilityRole="button">
             <View style={[styles.colorDot, { backgroundColor: ch.couleur || DS.primary }]} />
             <Text style={styles.cardTitle} numberOfLines={1}>{ch.nom}</Text>
+            {ch.statut === 'sav' && <BadgeSav />}
             {cellHasNotes(ch.id, dateStr) && <StickyNote size={16} color={DS.primary} strokeWidth={1.9} />}
             <ChevronRight size={16} color={DS.textSecondary} />
           </Pressable>

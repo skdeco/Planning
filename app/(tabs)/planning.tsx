@@ -19,6 +19,7 @@ import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
 import { PlanningDirection } from '@/components/PlanningDirection';
 import { droitsEspaces } from '@/lib/espaces';
 import { setPlanningFiltre } from '@/lib/planningFiltre';
+import { FiltreStatutPlanning } from '@/components/planning/FiltreStatutPlanning';
 import { AlertesChantiersRetard } from '@/components/planning/AlertesChantiersRetard';
 import {
   AdminPlanningModeSwitcher,
@@ -875,6 +876,7 @@ export default function PlanningScreen() {
       {/* ═══ PLANNING ÉQUIPE (existant) ═══ */}
       {(modeEquipe || !peutBasculer) && (
       <>
+      {(isAdmin || isRH) && viewMode !== 'gantt' && <FiltreStatutPlanning />}
       <View style={styles.weekInfo}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
           <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)} accessibilityLabel={t.ui.precedent}>

@@ -15,6 +15,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { getEmployeColor, METIER_COLORS } from '@/app/types';
 import { WeekGridCell, type CellModalOpeners } from './WeekGridCell';
+import { OeilChantier, BadgeSav } from './OeilChantier';
 
 // ─── Helpers de date locaux ───────────────────────────────────────────────────
 
@@ -107,6 +108,8 @@ export function WeekGridView({
   const { t } = useLanguage();
   const JOURS = t.planning.weekDaysShort;
   const isAdmin = currentUser?.role === 'admin';
+  // Admin et RH : bouton œil pour masquer / réafficher un chantier du planning
+  const peutMasquer = isAdmin || (currentUser?.role === 'employe' && data.employes.find(e => e.id === currentUser?.employeId)?.isRH === true);
   const {
     days,
     visibleChantiers,
@@ -177,6 +180,7 @@ export function WeekGridView({
             <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
             <View style={{ flex: 1 }}>
               <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
+              {chantier.statut === 'sav' && <BadgeSav />}
               {chantier.categorie === 'depannage' && (
                 <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#B9770E', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catDepannage}</Text>
               )}
@@ -184,6 +188,7 @@ export function WeekGridView({
                 <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#34506B', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catLieuFixe}</Text>
               )}
             </View>
+            {peutMasquer && <OeilChantier chantierId={chantier.id} taille={14} />}
           </Pressable>
 
           {/* Cellules des jours */}

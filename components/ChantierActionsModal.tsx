@@ -4,7 +4,9 @@ import {
   Platform, Linking, Alert,
 } from 'react-native';
 import { useApp } from '@/app/context/AppContext';
-import { IdCard, StickyNote, Ruler, Camera, Navigation, Package, Wrench, ShoppingCart, Briefcase, Coins, UserRound, BarChart3, Trash2, X } from 'lucide-react-native';
+import { IdCard, StickyNote, Ruler, Camera, Navigation, Package, Wrench, ShoppingCart, Briefcase, Coins, UserRound, BarChart3, Trash2, X, Eye, EyeOff } from 'lucide-react-native';
+import { basculerAffichage, estAffiche } from '@/lib/planningAffichage';
+import { tm } from '@/lib/menuiserie/i18n';
 
 export interface ChantierActionsModalProps {
   visible: boolean;
@@ -90,7 +92,7 @@ export function ChantierActionsModal(props: ChantierActionsModalProps) {
     onOpenFinances, onOpenPortailClient, onOpenBudget, onOpenAchats, onOpenMarches, onDelete,
   } = props;
 
-  const { data } = useApp();
+  const { data, updateChantier } = useApp();
   const chantier = chantierId ? data.chantiers.find(c => c.id === chantierId) : null;
 
   if (!chantier) return null;
@@ -135,6 +137,9 @@ export function ChantierActionsModal(props: ChantierActionsModalProps) {
     { icon: Coins, label: 'Finances',       onPress: () => run(onOpenFinances) },
     { icon: UserRound, label: 'Portail client', onPress: () => run(onOpenPortailClient) },
     { icon: BarChart3, label: 'Budget',         onPress: () => run(onOpenBudget) },
+    estAffiche(chantier)
+      ? { icon: EyeOff, label: tm('Masquer du planning'), onPress: () => { updateChantier(basculerAffichage(chantier)); onClose(); } }
+      : { icon: Eye, label: tm('Afficher sur le planning'), onPress: () => { updateChantier(basculerAffichage(chantier)); onClose(); } },
     { icon: Trash2, label: 'Supprimer',      onPress: handleDelete, danger: true },
   ];
 

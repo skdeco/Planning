@@ -325,6 +325,8 @@ export interface Chantier {
   /** Commerciaux (Apporteur type 'commercial') autorisés à suivre ce chantier. */
   commerciauxIds?: string[];
   visibleSurPlanning: boolean;
+  /** Chantier terminé réaffiché à la main dans le planning (masqué par défaut) */
+  afficheSiTermine?: boolean;
   employeIds: string[];
   couleur: string;
   latitude?: number;        // coordonnées GPS du chantier
