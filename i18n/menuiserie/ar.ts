@@ -622,6 +622,7 @@ const d: Record<string, string> = {
   "Actifs": "النشطة",
   "Terminés": "المنتهية",
   "Masqués": "المخفية",
+  "Personne": "لا أحد",
 };
 
 export default d;

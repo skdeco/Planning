@@ -599,6 +599,7 @@ const d: Record<string, string> = {
   "Actifs": "Active",
   "Terminés": "Finished",
   "Masqués": "Hidden",
+  "Personne": "Nobody",
 };
 
 export default d;

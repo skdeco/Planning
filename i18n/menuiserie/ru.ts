@@ -622,6 +622,7 @@ const d: Record<string, string> = {
   "Actifs": "Активные",
   "Terminés": "Завершённые",
   "Masqués": "Скрытые",
+  "Personne": "Никто",
 };
 
 export default d;

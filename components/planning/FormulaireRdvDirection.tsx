@@ -1,7 +1,9 @@
 /**
  * Formulaire RDV du Planning direction, version simplifiée :
- * Titre · Date / Début / Fin sur une ligne (sélecteurs compacts) · Chantier · Couleur.
- * Description, lieu, récurrence, invités et visibilité sont sous « Plus d'options ».
+ * Titre · Date / Début / Fin · Chantier · Couleur, puis « Plus d'options »
+ * (description, lieu, récurrence, invités, visibilité).
+ * Tous les choix se font par listes déroulantes (simple ou multiple), pas par grilles de pastilles.
+ * La feuille est une View (et non un Pressable) pour que le défilement au doigt marche partout.
  */
 import React, { useMemo, useState } from 'react';
 import { View, Text, ScrollView, Pressable, Modal, TextInput } from 'react-native';
@@ -35,12 +37,13 @@ interface Props {
   onClose: () => void;
 }
 
-type Selecteur = 'date' | 'debut' | 'fin' | 'finRecurrence' | null;
+type Liste = 'date' | 'debut' | 'fin' | 'finRecurrence' | 'chantier' | 'recurrence' | 'invites' | 'visible' | null;
+type Option = { v: string; l: string; couleur?: string };
 
 export function FormulaireRdvDirection({ visible, editId, form, setForm, invitables, onSave, onDelete, onClose }: Props) {
   const { data } = useApp();
   const [plus, setPlus] = useState(false);
-  const [selecteur, setSelecteur] = useState<Selecteur>(null);
+  const [liste, setListe] = useState<Liste>(null);
 
   const dates = useMemo(() => {
     const out: string[] = [];
@@ -50,38 +53,84 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
     return out;
   }, [form.date]);
 
-  const options = selecteur === 'date' || selecteur === 'finRecurrence'
-    ? dates.map(v => ({ v, l: dateCourte(v) }))
-    : selecteur === 'fin'
-      ? HEURES.filter(h => minutes(h) > minutes(form.heureDebut)).map(v => ({ v, l: `${v}  (${((minutes(v) - minutes(form.heureDebut)) / 60).toString().replace('.', ',')} h)` }))
-      : HEURES.map(v => ({ v, l: v }));
+  const chantiers: Option[] = [{ v: '', l: tm('Aucun') }, ...data.chantiers
+    .filter(c => c.statut === 'actif' || c.statut === 'sav' || c.id === form.chantierId)
+    .sort((a, b) => a.nom.localeCompare(b.nom))
+    .map(c => ({ v: c.id, l: c.nom, couleur: c.couleur }))];
+  const recurrences: Option[] = [{ v: 'aucune', l: tm('Aucune') }, { v: 'quotidien', l: tm('Quotidien') }, { v: 'hebdomadaire', l: tm('Hebdo') }, { v: 'mensuel', l: tm('Mensuel') }];
+  const invitesOptions: Option[] = invitables.map(p => ({ v: p.cle, l: p.nom }));
+  const visibleOptions: Option[] = data.employes.filter(e => !form.invites.includes(e.id)).map(e => ({ v: e.id, l: `${e.prenom} ${e.nom.charAt(0)}.` }));
 
-  const choisir = (v: string) => {
-    if (selecteur === 'date') setForm(f => ({ ...f, date: v }));
-    if (selecteur === 'finRecurrence') setForm(f => ({ ...f, recurrenceFinDate: v }));
-    // Changer le début décale la fin en gardant la durée
-    if (selecteur === 'debut') setForm(f => {
-      const duree = f.heureFin ? Math.max(30, minutes(f.heureFin) - minutes(f.heureDebut)) : 60;
-      return { ...f, heureDebut: v, heureFin: hhmm(Math.min(minutes(v) + duree, 23 * 60 + 30)) };
-    });
-    if (selecteur === 'fin') setForm(f => ({ ...f, heureFin: v }));
-    setSelecteur(null);
+  const multiple = liste === 'invites' || liste === 'visible';
+  const options: Option[] =
+    liste === 'date' || liste === 'finRecurrence' ? dates.map(v => ({ v, l: dateCourte(v) }))
+      : liste === 'fin' ? HEURES.filter(h => minutes(h) > minutes(form.heureDebut)).map(v => ({ v, l: `${v}  (${((minutes(v) - minutes(form.heureDebut)) / 60).toString().replace('.', ',')} h)` }))
+        : liste === 'debut' ? HEURES.map(v => ({ v, l: v }))
+          : liste === 'chantier' ? chantiers
+            : liste === 'recurrence' ? recurrences
+              : liste === 'invites' ? invitesOptions
+                : liste === 'visible' ? visibleOptions : [];
+
+  const estChoisi = (v: string): boolean => {
+    switch (liste) {
+      case 'date': return v === form.date;
+      case 'debut': return v === form.heureDebut;
+      case 'fin': return v === form.heureFin;
+      case 'finRecurrence': return v === form.recurrenceFinDate;
+      case 'chantier': return v === form.chantierId;
+      case 'recurrence': return v === form.recurrence;
+      case 'invites': return form.invites.includes(v);
+      case 'visible': return form.visiblePar.includes(v);
+      default: return false;
+    }
   };
 
-  const champCompact = (label: string, valeur: string, s: Selecteur, flex = 1) => (
-    <Pressable onPress={() => setSelecteur(s)} accessibilityRole="button" accessibilityLabel={label} style={{ flex, gap: 2 }}>
+  const choisir = (v: string) => {
+    const bascule = (arr: string[]) => (arr.includes(v) ? arr.filter(x => x !== v) : [...arr, v]);
+    switch (liste) {
+      case 'date': setForm(f => ({ ...f, date: v })); break;
+      case 'finRecurrence': setForm(f => ({ ...f, recurrenceFinDate: v })); break;
+      // Changer le début décale la fin en gardant la durée
+      case 'debut': setForm(f => {
+        const duree = f.heureFin ? Math.max(30, minutes(f.heureFin) - minutes(f.heureDebut)) : 60;
+        return { ...f, heureDebut: v, heureFin: hhmm(Math.min(minutes(v) + duree, 23 * 60 + 30)) };
+      }); break;
+      case 'fin': setForm(f => ({ ...f, heureFin: v })); break;
+      case 'chantier': setForm(f => ({ ...f, chantierId: v })); break;
+      case 'recurrence': setForm(f => ({ ...f, recurrence: v })); break;
+      case 'invites': setForm(f => ({ ...f, invites: bascule(f.invites), visiblePar: f.visiblePar.filter(x => x !== v) })); return;
+      case 'visible': setForm(f => ({ ...f, visiblePar: bascule(f.visiblePar) })); return;
+    }
+    setListe(null);
+  };
+
+  const noms = (ids: string[], opts: Option[]) => {
+    if (!ids.length) return tm('Personne');
+    const n = ids.map(id => opts.find(o => o.v === id)?.l || invitables.find(p => p.cle === id)?.nom || '').filter(Boolean);
+    return n.length <= 2 ? n.join(', ') : `${n.slice(0, 2).join(', ')} +${n.length - 2}`;
+  };
+
+  const deroulant = (label: string, valeur: string, l: Liste, flex?: number) => (
+    <Pressable onPress={() => setListe(l)} accessibilityRole="button" accessibilityLabel={label} style={{ flex, gap: 2 }}>
       <Text style={labelStyle}>{label}</Text>
-      <View style={[inputStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 44 }]}>
-        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14' }} numberOfLines={1}>{valeur}</Text>
+      <View style={[inputStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46 }]}>
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#2B1D14' }} numberOfLines={1}>{valeur}</Text>
         <Text style={{ fontSize: 12, color: '#6E5F54' }}>▾</Text>
       </View>
     </Pressable>
   );
 
+  const titreListe: Record<Exclude<Liste, null>, string> = {
+    date: tm('Date'), debut: tm('Début'), fin: tm('Fin'), finRecurrence: tm('Fin de récurrence'), chantier: tm('Chantier associé'),
+    recurrence: tm('Récurrence'), invites: tm('Invités (participants)'), visible: tm('Visible par (sans être invité)'),
+  };
+
   return (
     <ModalKeyboard visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }} onPress={onClose}>
-        <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '92%' }} onPress={e => e.stopPropagation()}>
+      <View style={{ flex: 1, justifyContent: 'flex-end' }}>
+        {/* Fond : un tap ferme ; la feuille est une View pour ne pas gêner le défilement */}
+        <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.45)' }} onPress={onClose} accessibilityLabel={tm('Fermer')} />
+        <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 20, maxHeight: '92%' }}>
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40, gap: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
               <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{editId ? tm('Modifier') : tm('Nouveau RDV')}</Text>
@@ -95,29 +144,18 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
             <Text style={labelStyle}>{tm('Titre *')}</Text>
             <TextInput style={inputStyle} value={form.titre} onChangeText={v => setForm(f => ({ ...f, titre: v }))} placeholder={tm('Réunion, visite...')} autoFocus={!editId} />
 
-            {champCompact(tm('Date'), dateCourte(form.date), 'date')}
+            {deroulant(tm('Date'), dateCourte(form.date), 'date')}
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              {champCompact(tm('Début'), form.heureDebut, 'debut')}
-              {champCompact(tm('Fin'), form.heureFin || '—', 'fin')}
+              {deroulant(tm('Début'), form.heureDebut, 'debut', 1)}
+              {deroulant(tm('Fin'), form.heureFin || '—', 'fin', 1)}
             </View>
-
-            <Text style={labelStyle}>{tm('Chantier associé')}</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-              <Pressable style={chipStyle(!form.chantierId)} onPress={() => setForm(f => ({ ...f, chantierId: '' }))}>
-                <Text style={chipTextStyle(!form.chantierId)}>{tm('Aucun')}</Text>
-              </Pressable>
-              {data.chantiers.filter(c => c.statut === 'actif' || c.statut === 'sav' || c.id === form.chantierId).map(c => (
-                <Pressable key={c.id} style={chipStyle(form.chantierId === c.id, c.couleur)} onPress={() => setForm(f => ({ ...f, chantierId: f.chantierId === c.id ? '' : c.id }))}>
-                  <Text style={chipTextStyle(form.chantierId === c.id)}>{c.nom}</Text>
-                </Pressable>
-              ))}
-            </ScrollView>
+            {deroulant(tm('Chantier associé'), chantiers.find(c => c.v === form.chantierId)?.l || tm('Aucun'), 'chantier')}
 
             <Text style={labelStyle}>{tm('Couleur')}</Text>
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 4 }}>
               {COULEURS_RDV.map(c => (
                 <Pressable key={c} onPress={() => setForm(f => ({ ...f, couleur: c }))} accessibilityRole="button" accessibilityState={{ selected: form.couleur === c }}
-                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c, borderWidth: form.couleur === c ? 3 : 0, borderColor: '#2B1D14' }} />
+                  style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c, borderWidth: form.couleur === c ? 3 : 0, borderColor: '#2B1D14' }} />
               ))}
             </View>
 
@@ -132,33 +170,10 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
                 <TextInput style={[inputStyle, { minHeight: 50 }]} value={form.description} onChangeText={v => setForm(f => ({ ...f, description: v }))} multiline />
                 <Text style={labelStyle}>{tm('Lieu')}</Text>
                 <TextInput style={inputStyle} value={form.lieu} onChangeText={v => setForm(f => ({ ...f, lieu: v }))} placeholder={tm('Adresse...')} />
-                <Text style={labelStyle}>{tm('Récurrence')}</Text>
-                <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
-                  {[{ l: tm('Aucune'), v: 'aucune' }, { l: tm('Quotidien'), v: 'quotidien' }, { l: tm('Hebdo'), v: 'hebdomadaire' }, { l: tm('Mensuel'), v: 'mensuel' }].map(r => (
-                    <Pressable key={r.v} style={chipStyle(form.recurrence === r.v)} onPress={() => setForm(f => ({ ...f, recurrence: r.v }))}>
-                      <Text style={chipTextStyle(form.recurrence === r.v)}>{r.l}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-                {form.recurrence !== 'aucune' && champCompact(tm('Fin de récurrence'), form.recurrenceFinDate ? dateCourte(form.recurrenceFinDate) : tm('Sélectionner...'), 'finRecurrence')}
-                <Text style={labelStyle}>{tm('Invités (participants)')}</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                  {invitables.map(p => (
-                    <Pressable key={p.cle} style={chipStyle(form.invites.includes(p.cle))}
-                      onPress={() => setForm(f => ({ ...f, invites: f.invites.includes(p.cle) ? f.invites.filter(i => i !== p.cle) : [...f.invites, p.cle] }))}>
-                      <Text style={chipTextStyle(form.invites.includes(p.cle))}>{p.nom}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-                <Text style={labelStyle}>{tm('Visible par (sans être invité)')}</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
-                  {data.employes.filter(e => !form.invites.includes(e.id)).map(emp => (
-                    <Pressable key={emp.id} style={chipStyle(form.visiblePar.includes(emp.id))}
-                      onPress={() => setForm(f => ({ ...f, visiblePar: f.visiblePar.includes(emp.id) ? f.visiblePar.filter(i => i !== emp.id) : [...f.visiblePar, emp.id] }))}>
-                      <Text style={chipTextStyle(form.visiblePar.includes(emp.id))}>{emp.prenom} {emp.nom.charAt(0)}.</Text>
-                    </Pressable>
-                  ))}
-                </View>
+                {deroulant(tm('Récurrence'), recurrences.find(r => r.v === form.recurrence)?.l || tm('Aucune'), 'recurrence')}
+                {form.recurrence !== 'aucune' && deroulant(tm('Fin de récurrence'), form.recurrenceFinDate ? dateCourte(form.recurrenceFinDate) : tm('Sélectionner...'), 'finRecurrence')}
+                {deroulant(tm('Invités (participants)'), noms(form.invites, invitesOptions), 'invites')}
+                {deroulant(tm('Visible par (sans être invité)'), noms(form.visiblePar, visibleOptions), 'visible')}
               </>
             )}
 
@@ -167,27 +182,41 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? tm('Enregistrer') : tm('Créer le rendez-vous')}</Text>
             </Pressable>
           </ScrollView>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
 
-      {/* Liste déroulante compacte (date ou heure) */}
-      <Modal visible={!!selecteur} transparent animationType="fade" onRequestClose={() => setSelecteur(null)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 }} onPress={() => setSelecteur(null)}>
-          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 8, width: '100%', maxWidth: 320, maxHeight: 420 }}>
+      {/* Liste déroulante (choix simple : se ferme ; choix multiple : cases à cocher + OK) */}
+      <Modal visible={!!liste} transparent animationType="fade" onRequestClose={() => setListe(null)}>
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+          <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setListe(null)} />
+          <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 8, width: '100%', maxWidth: 360, maxHeight: '75%' }}>
+            {!!liste && <Text style={{ fontSize: 14, fontWeight: '800', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{titreListe[liste]}</Text>}
             <ScrollView>
               {options.map(o => {
-                const actif = (selecteur === 'date' && o.v === form.date) || (selecteur === 'debut' && o.v === form.heureDebut)
-                  || (selecteur === 'fin' && o.v === form.heureFin) || (selecteur === 'finRecurrence' && o.v === form.recurrenceFinDate);
+                const actif = estChoisi(o.v);
                 return (
-                  <Pressable key={o.v} onPress={() => choisir(o.v)} accessibilityRole="button"
-                    style={{ paddingHorizontal: 14, minHeight: 44, justifyContent: 'center', borderRadius: 10, backgroundColor: actif ? '#F2E4E1' : undefined }}>
-                    <Text style={{ fontSize: 15, color: '#2B1D14', fontWeight: actif ? '800' : '500' }}>{o.l}</Text>
+                  <Pressable key={o.v || '_'} onPress={() => choisir(o.v)} accessibilityRole={multiple ? 'checkbox' : 'button'} accessibilityState={multiple ? { checked: actif } : { selected: actif }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, minHeight: 46, borderRadius: 10, backgroundColor: actif ? '#F2E4E1' : undefined }}>
+                    {multiple && (
+                      <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#5C1F2E', backgroundColor: actif ? '#5C1F2E' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                        {actif && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>✓</Text>}
+                      </View>
+                    )}
+                    {!!o.couleur && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: o.couleur }} />}
+                    <Text style={{ flex: 1, fontSize: 15, color: '#2B1D14', fontWeight: actif ? '800' : '500' }}>{o.l}</Text>
+                    {!multiple && actif && <Text style={{ color: '#5C1F2E', fontWeight: '900' }}>✓</Text>}
                   </Pressable>
                 );
               })}
+              {options.length === 0 && <Text style={{ padding: 12, color: '#6E5F54' }}>{tm('Aucun')}</Text>}
             </ScrollView>
+            {multiple && (
+              <Pressable onPress={() => setListe(null)} accessibilityRole="button" style={{ marginTop: 6, minHeight: 46, borderRadius: 12, backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>OK</Text>
+              </Pressable>
+            )}
           </View>
-        </Pressable>
+        </View>
       </Modal>
     </ModalKeyboard>
   );
@@ -195,9 +224,3 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
 
 const labelStyle = { fontSize: 12, fontWeight: '600' as const, color: '#6E5F54', marginBottom: 2, marginTop: 8 };
 const inputStyle = { backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6' };
-const chipStyle = (active: boolean, color?: string) => ({
-  paddingHorizontal: 10, paddingVertical: 7, borderRadius: 14,
-  backgroundColor: active ? (color || '#5C1F2E') : '#F1E7DC',
-  borderWidth: 1, borderColor: active ? (color || '#5C1F2E') : '#EDE2D6',
-});
-const chipTextStyle = (active: boolean) => ({ fontSize: 12, fontWeight: '600' as const, color: active ? '#fff' : '#6E5F54' });
