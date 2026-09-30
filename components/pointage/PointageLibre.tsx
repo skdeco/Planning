@@ -30,6 +30,8 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
   const dernier = [...duJour].sort((a, b) => a.timestamp.localeCompare(b.timestamp)).pop();
   const prochain: 'debut' | 'fin' = dernier?.type === 'debut' ? 'fin' : 'debut';
   const rayon = data.rayonPointageM || RAYON_POINTAGE_DEFAUT;
+  // Affectations du jour (le planning reste utilisable) : proposées en premier dans la liste
+  const affectesDuJour = data.affectations.filter(a => a.employeId === employeId && a.dateDebut <= aujourdhui && a.dateFin >= aujourdhui).map(a => a.chantierId);
 
   const [charge, setCharge] = useState(false);
   const [choix, setChoix] = useState<{ id: string; proches: ChantierProche[]; message?: string; apresDepart?: boolean } | null>(null);
@@ -53,7 +55,8 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
         lat = pos.latitude; lng = pos.longitude;
         proches = await chantiersParDistance(data.chantiers, lat, lng, rayon);
       } catch { /* sans position : le chantier sera choisi à la main */ }
-      const plus = proches[0];
+      // Dans le rayon, un chantier où l'employé est affecté aujourd'hui passe avant le plus proche
+      const plus = proches.find(p => p.distance <= rayon && affectesDuJour.includes(p.chantier.id)) || proches[0];
       const dansZone = !!plus && plus.distance <= rayon;
       const ts = new Date();
       const p: Pointage = {
@@ -143,6 +146,7 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
         message={choix?.message}
         chantiers={data.chantiers}
         proches={choix?.proches || []}
+        prioritaires={affectesDuJour}
         selectionId={enCours?.chantierId}
         onChoisir={choisir}
         onFermer={() => { if (choix?.apresDepart) onDepart?.(enCours?.chantierId); setChoix(null); }}

@@ -6,9 +6,10 @@ import type { Chantier } from '@/app/types';
  *  - œil par chantier (choix mémorisé dans le chantier) ;
  *  - Terminé : masqué par défaut, réaffichable à la main ;
  *  - SAV : affiché avec une couleur dédiée et un badge « SAV » ;
- *  - filtre rapide Actifs / SAV / Terminés / Masqués.
+ *  - seuls les chantiers affichés apparaissent ; un lien discret permet de montrer
+ *    aussi les masqués (terminés compris) pour les réactiver avec l'œil.
  */
-export type FiltreStatutPlanning = 'actifs' | 'sav' | 'termines' | 'masques';
+export type FiltreStatutPlanning = 'actifs' | 'avecMasques';
 
 /** Couleur dédiée aux chantiers en SAV */
 export const COULEUR_SAV = '#C2410C';
@@ -39,10 +40,7 @@ export function basculerAffichage(c: Chantier): Chantier {
 
 export function dansFiltreStatut(c: Chantier, f: FiltreStatutPlanning): boolean {
   if (c.statut === 'archive') return false;
-  if (f === 'actifs') return estAffiche(c);
-  if (f === 'sav') return c.statut === 'sav';
-  if (f === 'termines') return c.statut === 'termine';
-  return !estAffiche(c) && c.statut !== 'termine';
+  return f === 'avecMasques' ? true : estAffiche(c);
 }
 
 /** Couleur SAV appliquée aux blocs du planning. */

@@ -16,24 +16,28 @@ interface Props {
   chantiers: Chantier[];
   proches: ChantierProche[];
   selectionId?: string;
+  /** Chantiers où l'employé est affecté aujourd'hui : proposés en premier */
+  prioritaires?: string[];
   onChoisir: (chantierId: string) => void;
   onFermer: () => void;
 }
 
-export function ChoixChantierModal({ visible, titre, message, chantiers, proches, selectionId, onChoisir, onFermer }: Props) {
+export function ChoixChantierModal({ visible, titre, message, chantiers, proches, selectionId, prioritaires = [], onChoisir, onFermer }: Props) {
   const [recherche, setRecherche] = useState('');
   const liste = useMemo(() => {
     const dist = new Map(proches.map(p => [p.chantier.id, p.distance]));
     const tous = chantiersPointables(chantiers);
+    const prio = tous.filter(c => prioritaires.includes(c.id));
     const tries = [
-      ...proches.map(p => p.chantier).filter(c => tous.some(x => x.id === c.id)),
-      ...tous.filter(c => !dist.has(c.id)).sort((a, b) => a.nom.localeCompare(b.nom)),
+      ...prio,
+      ...proches.map(p => p.chantier).filter(c => tous.some(x => x.id === c.id) && !prioritaires.includes(c.id)),
+      ...tous.filter(c => !dist.has(c.id) && !prioritaires.includes(c.id)).sort((a, b) => a.nom.localeCompare(b.nom)),
     ];
     const q = recherche.trim().toLowerCase();
     return tries
       .filter(c => !q || `${c.nom} ${c.ville || ''} ${c.adresse || ''}`.toLowerCase().includes(q))
       .map(c => ({ c, d: dist.get(c.id) }));
-  }, [chantiers, proches, recherche]);
+  }, [chantiers, proches, recherche, prioritaires]);
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onFermer}>
@@ -60,6 +64,7 @@ export function ChoixChantierModal({ visible, titre, message, chantiers, proches
                     <Text style={{ fontSize: 15, fontWeight: '700', color: DS.text }} numberOfLines={1}>{c.nom}</Text>
                     {!!(c.ville || c.adresse) && <Text style={{ fontSize: 12, color: DS.textSecondary }} numberOfLines={1}>{c.ville || c.adresse}</Text>}
                   </View>
+                  {prioritaires.includes(c.id) && <Text style={{ fontSize: 10, fontWeight: '800', color: DS.primary }}>{tm('Planning')}</Text>}
                   {d != null && <Text style={{ fontSize: 12, fontWeight: '700', color: DS.textSecondary }}>{formatDistance(d)}</Text>}
                   {c.statut === 'sav' && <Text style={{ fontSize: 10, fontWeight: '800', color: '#fff', backgroundColor: '#C2410C', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6, overflow: 'hidden' }}>SAV</Text>}
                 </Pressable>

@@ -621,6 +621,8 @@ const d: Record<string, string> = {
   "Masqués": "Ocultas",
   "Personne": "Ninguém",
   "Rechercher": "Pesquisar",
+  "Cacher les chantiers masqués": "Esconder as obras ocultas",
+  "Chantiers masqués ({0})": "Obras ocultas ({0})",
 };
 
 export default d;

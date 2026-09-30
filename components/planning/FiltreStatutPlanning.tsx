@@ -1,33 +1,31 @@
-/** Filtre rapide du planning équipe (admin / RH) : Actifs · SAV · Terminés · Masqués. */
+/**
+ * Lien discret sous l'en-tête du planning (admin / RH) : montrer ou cacher les
+ * chantiers masqués (terminés compris), pour pouvoir les réactiver avec l'œil.
+ * Rien n'est affiché s'il n'y a aucun chantier masqué.
+ */
 import React from 'react';
-import { ScrollView, Pressable, Text } from 'react-native';
+import { Pressable, Text } from 'react-native';
+import { EyeOff } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
-import { DS, radius } from '@/constants/design';
-import { dansFiltreStatut, setFiltreStatutPlanning, useFiltreStatutPlanning, COULEUR_SAV, type FiltreStatutPlanning as Filtre } from '@/lib/planningAffichage';
+import { DS } from '@/constants/design';
+import { estAffiche, setFiltreStatutPlanning, useFiltreStatutPlanning } from '@/lib/planningAffichage';
 import { chantierDansPlanning, usePlanningFiltre } from '@/lib/planningFiltre';
 import { tm } from '@/lib/menuiserie/i18n';
 
-const FILTRES: { cle: Filtre; label: string }[] = [
-  { cle: 'actifs', label: 'Actifs' }, { cle: 'sav', label: 'SAV' }, { cle: 'termines', label: 'Terminés' }, { cle: 'masques', label: 'Masqués' },
-];
-
 export function FiltreStatutPlanning() {
   const { data } = useApp();
-  const actif = useFiltreStatutPlanning();
+  const filtre = useFiltreStatutPlanning();
   const planning = usePlanningFiltre();
-  const nb = (f: Filtre) => data.chantiers.filter(c => dansFiltreStatut(c, f) && chantierDansPlanning(c, planning)).length;
+  const nbMasques = data.chantiers.filter(c => c.statut !== 'archive' && !estAffiche(c) && chantierDansPlanning(c, planning)).length;
+  if (nbMasques === 0 && filtre === 'actifs') return null;
+  const ouvert = filtre === 'avecMasques';
   return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6, paddingHorizontal: 12, paddingVertical: 6 }}>
-      {FILTRES.map(f => {
-        const on = f.cle === actif;
-        const couleur = f.cle === 'sav' ? COULEUR_SAV : DS.primary;
-        return (
-          <Pressable key={f.cle} onPress={() => setFiltreStatutPlanning(f.cle)} accessibilityRole="button" accessibilityState={{ selected: on }}
-            style={{ minHeight: 32, paddingHorizontal: 12, borderRadius: radius.full, justifyContent: 'center', backgroundColor: on ? couleur : DS.surface, borderWidth: 1, borderColor: on ? couleur : DS.border }}>
-            <Text style={{ fontSize: 13, fontWeight: '700', color: on ? DS.textInverse : DS.text }}>{tm(f.label)} ({nb(f.cle)})</Text>
-          </Pressable>
-        );
-      })}
-    </ScrollView>
+    <Pressable onPress={() => setFiltreStatutPlanning(ouvert ? 'actifs' : 'avecMasques')} accessibilityRole="button" hitSlop={6}
+      style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginVertical: 4, minHeight: 32 }}>
+      <EyeOff size={14} color={DS.textSecondary} strokeWidth={1.9} />
+      <Text style={{ fontSize: 13, fontWeight: '600', color: DS.textSecondary }}>
+        {ouvert ? tm('Cacher les chantiers masqués') : tm('Chantiers masqués ({0})', nbMasques)}
+      </Text>
+    </Pressable>
   );
 }
