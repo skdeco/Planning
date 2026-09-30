@@ -638,6 +638,7 @@ const d: Record<string, string> = {
   "Acompte": "Adiantamento",
   "{0} pointages": "{0} registos",
   "Bilan": "Saldo",
+  "Y aller": "Ir lá",
 };
 
 export default d;

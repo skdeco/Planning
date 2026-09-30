@@ -3,7 +3,9 @@
  * Un RDV passé (heure de fin dépassée) est barré. Rien n'est affiché s'il n'y a aucun RDV.
  */
 import React, { useEffect, useState } from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View, Text, Pressable, Alert, Platform } from 'react-native';
+import { Navigation } from 'lucide-react-native';
+import { ouvrirPlans, ouvrirWaze } from '@/lib/ouvrirCarte';
 import { useRouter } from 'expo-router';
 import { useApp } from '@/app/context/AppContext';
 import { DS, radius } from '@/constants/design';
@@ -11,6 +13,16 @@ import { cleUtilisateur } from '@/lib/espaces';
 import { aujourdhuiYMD, mesRdv } from '@/lib/agenda';
 import { tm } from '@/lib/menuiserie/i18n';
 import { useLanguage } from '@/app/context/LanguageContext';
+
+/** Choix de l'application GPS (Waze ou Plans) pour aller à l'adresse du RDV. */
+function yAller(adresse: string) {
+  if (Platform.OS === 'web') { ouvrirPlans(adresse); return; }
+  Alert.alert(tm('Y aller'), adresse, [
+    { text: 'Waze', onPress: () => ouvrirWaze(adresse) },
+    { text: Platform.OS === 'ios' ? 'Plans' : 'Google Maps', onPress: () => ouvrirPlans(adresse) },
+    { text: tm('Annuler'), style: 'cancel' },
+  ]);
+}
 
 const minutes = (h: string) => { const [a, b] = h.split(':').map(Number); return (a || 0) * 60 + (b || 0); };
 
@@ -35,6 +47,8 @@ export function RdvDuJour({ marge = 16 }: { marge?: number }) {
         const passe = minNow >= fin;
         const ch = evt.chantierId ? data.chantiers.find(c => c.id === evt.chantierId) : undefined;
         const barre = passe ? { textDecorationLine: 'line-through' as const, color: DS.textMuted } : null;
+        // Adresse : lieu du RDV, sinon adresse du chantier associé
+        const adresse = evt.lieu?.trim() || (ch ? [ch.rue, ch.codePostal, ch.ville].filter(Boolean).join(', ') || ch.adresse || '' : '');
         return (
           <View key={evt.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 32 }}>
             <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: passe ? DS.border : evt.couleur }} />
@@ -46,6 +60,12 @@ export function RdvDuJour({ marge = 16 }: { marge?: number }) {
               <Text style={[{ fontSize: 14, fontWeight: '700', color: DS.text }, barre]} numberOfLines={1}>{evt.titre}</Text>
               {!!(ch || evt.lieu) && <Text style={[{ fontSize: 12, color: DS.textSecondary }, barre]} numberOfLines={1}>{[ch?.nom, evt.lieu].filter(Boolean).join(' · ')}</Text>}
             </View>
+            {!!adresse && (
+              <Pressable onPress={() => yAller(adresse)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tm('Y aller')}
+                style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: DS.primarySoft, alignItems: 'center', justifyContent: 'center' }}>
+                <Navigation size={16} color={DS.primary} strokeWidth={2} />
+              </Pressable>
+            )}
           </View>
         );
       })}
