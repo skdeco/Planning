@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
 import {
   View, Text, ScrollView, Pressable, Modal, TextInput, Platform,
   Alert, RefreshControl, useWindowDimensions,
 } from 'react-native';
-import { ModalKeyboard } from '@/components/ModalKeyboard';
+import { FormulaireRdvDirection, COULEURS_RDV as COULEURS, type FormRdv } from '@/components/planning/FormulaireRdvDirection';
 import { useApp } from '@/app/context/AppContext';
 import { useRefresh } from '@/hooks/useRefresh';
 import type { AgendaEvent } from '@/app/types';
@@ -14,17 +14,17 @@ import { InvitationsRdv } from '@/components/espaces/InvitationsRdv';
 
 import { useLanguage } from '@/app/context/LanguageContext';
 import { tm, traduit, localeMn } from '@/lib/menuiserie/i18n';
-const COULEURS = ['#2C2C2C', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
 const JOURS_COURT = traduit(['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim']);
 const MOIS = traduit(['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre']);
-const HEURES_OPTIONS = Array.from({ length: 29 }, (_, i) => {
-  const h = Math.floor(i / 2) + 6;
-  const m = i % 2 === 0 ? '00' : '30';
-  return `${String(h).padStart(2, '0')}:${m}`;
-}); // 06:00 à 20:00
-
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Fin par défaut : début + 1 h */
+function finParDefaut(debut: string): string {
+  const [h, m] = debut.split(':').map(Number);
+  const t = Math.min((h || 0) * 60 + (m || 0) + 60, 23 * 60 + 30);
+  return `${String(Math.floor(t / 60)).padStart(2, '0')}:${String(t % 60).padStart(2, '0')}`;
 }
 
 function genId() { return `evt_${Date.now()}_${Math.random().toString(36).slice(2)}`; }
@@ -58,14 +58,14 @@ export function PlanningDirection() {
   const [dayOffset, setDayOffset] = useState(0);
   const [showForm, setShowForm] = useState(false);
   const [editId, setEditId] = useState<string | null>(null);
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<FormRdv>({
     titre: '', description: '', date: toYMD(new Date()), heureDebut: '09:00', heureFin: '10:00',
-    lieu: '', couleur: COULEURS[0], invites: [] as string[], visiblePar: [] as string[],
-    chantierId: '', recurrence: 'aucune' as string, recurrenceFinDate: '',
+    lieu: '', couleur: COULEURS[0], invites: [], visiblePar: [],
+    chantierId: '', recurrence: 'aucune', recurrenceFinDate: '',
   });
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [showHeureDebutPicker, setShowHeureDebutPicker] = useState(false);
-  const [showHeureFinPicker, setShowHeureFinPicker] = useState(false);
+  // Largeur réelle disponible (5 jours ouvrés visibles, samedi/dimanche par glissement)
+  const [largeur, setLargeur] = useState(0);
+  const enteteRef = useRef<ScrollView>(null);
 
   // Semaine courante
   const today = new Date();
@@ -128,7 +128,7 @@ export function PlanningDirection() {
   }, [weekEvents]);
 
   const totalHours = endHour - startHour;
-  const dayColWidth = Math.floor((screenW - TIME_COL) / 7);
+  const dayColWidth = Math.floor(((largeur || screenW) - TIME_COL) / 5);
 
   // Sauvegarder RDV
   const handleSave = () => {
@@ -162,7 +162,7 @@ export function PlanningDirection() {
 
   const openNew = (date?: string, heure?: string) => {
     setEditId(null);
-    setForm({ titre: '', description: '', date: date || toYMD(days[0]), heureDebut: heure || '09:00', heureFin: heure ? `${String(parseInt(heure) + 1).padStart(2, '0')}:00` : '10:00', lieu: '', couleur: COULEURS[0], invites: [], visiblePar: [], chantierId: '', recurrence: 'aucune', recurrenceFinDate: '' });
+    setForm({ titre: '', description: '', date: date || toYMD(days[0]), heureDebut: heure || '09:00', heureFin: heure ? finParDefaut(heure) : '10:00', lieu: '', couleur: COULEURS[0], invites: [], visiblePar: [], chantierId: '', recurrence: 'aucune', recurrenceFinDate: '' });
     setShowForm(true);
   };
 
@@ -171,40 +171,6 @@ export function PlanningDirection() {
     setForm({ titre: evt.titre, description: evt.description || '', date: evt.date, heureDebut: evt.heureDebut, heureFin: evt.heureFin || '', lieu: evt.lieu || '', couleur: evt.couleur, invites: evt.invites || [], visiblePar: evt.visiblePar || [], chantierId: evt.chantierId || '', recurrence: evt.recurrence || 'aucune', recurrenceFinDate: evt.recurrenceFinDate || '' });
     setShowForm(true);
   };
-
-  // Sélecteur déroulant
-  const PickerModal = ({ visible, onClose, options, onSelect, title }: { visible: boolean; onClose: () => void; options: { label: string; value: string }[]; onSelect: (v: string) => void; title: string }) => (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center', padding: 24 }} onPress={onClose}>
-        <View style={{ backgroundColor: '#fff', borderRadius: 24, padding: 8, width: '100%', maxWidth: 320, maxHeight: 400 }}>
-          <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{title}</Text>
-          <ScrollView>
-            {options.map(opt => (
-              <Pressable key={opt.value} style={{ paddingHorizontal: 14, paddingVertical: 10, borderRadius: 6 }}
-                onPress={() => { onSelect(opt.value); onClose(); }}>
-                <Text style={{ fontSize: 15, color: '#2B1D14' }}>{opt.label}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
-        </View>
-      </Pressable>
-    </Modal>
-  );
-
-  // Générer les dates du mois pour le sélecteur
-  const dateOptions = useMemo(() => {
-    const opts: { label: string; value: string }[] = [];
-    const d = new Date();
-    for (let i = 0; i < 60; i++) {
-      const ymd = toYMD(d);
-      const jour = ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'][d.getDay()];
-      opts.push({ label: `${jour} ${d.getDate()} ${MOIS[d.getMonth()]} ${d.getFullYear()}`, value: ymd });
-      d.setDate(d.getDate() + 1);
-    }
-    return opts;
-  }, []);
-
-  const heureOptions = HEURES_OPTIONS.map(h => ({ label: h, value: h }));
 
   return (
     <>
@@ -298,27 +264,28 @@ export function PlanningDirection() {
         );
       })()}
 
-      {/* ── VUE SEMAINE ── */}
-      {directionVue === 'semaine' && <>
-      {/* Header jours — FIXE (ne défile pas) */}
+      {/* ── VUE SEMAINE : lundi → vendredi à l'écran, samedi et dimanche par glissement ── */}
+      {directionVue === 'semaine' && <View style={{ flex: 1 }} onLayout={e => setLargeur(e.nativeEvent.layout.width)}>
+      {/* En-tête des jours, synchronisé avec le défilement horizontal de la grille */}
       <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', backgroundColor: '#FAF5EF' }}>
-        <View style={{ width: TIME_COL, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center' }} />
-        {days.map((day, i) => {
-          const isToday = toYMD(day) === toYMD(new Date());
-          return (
-            <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#F2E4E1' : undefined }}>
-              <Text style={{ fontSize: 9, fontWeight: '500', color: isToday ? '#5C1F2E' : '#6E5F54' }}>{JOURS_COURT[i]}</Text>
-              <Text style={{ fontSize: 13, fontWeight: isToday ? '800' : '600', color: isToday ? '#5C1F2E' : '#2B1D14' }}>{day.getDate()}</Text>
-            </View>
-          );
-        })}
+        <View style={{ width: TIME_COL, height: HEADER_HEIGHT }} />
+        <ScrollView ref={enteteRef} horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false}>
+          {days.map((day, i) => {
+            const isToday = toYMD(day) === toYMD(new Date());
+            return (
+              <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#F2E4E1' : undefined }}>
+                <Text style={{ fontSize: 10, fontWeight: '500', color: isToday ? '#5C1F2E' : '#6E5F54' }}>{JOURS_COURT[i]}</Text>
+                <Text style={{ fontSize: 13, fontWeight: isToday ? '800' : '600', color: isToday ? '#5C1F2E' : '#2B1D14' }}>{day.getDate()}</Text>
+              </View>
+            );
+          })}
+        </ScrollView>
       </View>
 
-      {/* Grille horaire — défile verticalement */}
+      {/* Grille horaire — défile verticalement ; les jours défilent horizontalement */}
       <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />}>
-        {/* Lignes horaires */}
         <View style={{ flexDirection: 'row' }}>
-          {/* Colonne heures */}
+          {/* Colonne heures (fixe) */}
           <View style={{ width: TIME_COL }}>
             {Array.from({ length: totalHours }, (_, i) => (
               <View key={i} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 2, paddingRight: 4, alignItems: 'flex-end', borderTopWidth: 0.5, borderTopColor: '#EDE2D6' }}>
@@ -327,178 +294,56 @@ export function PlanningDirection() {
             ))}
           </View>
 
-          {/* Colonnes jours avec RDV */}
-          {days.map((day, dayIdx) => {
-            const dateStr = toYMD(day);
-            const dayEvents = weekEvents.filter(e => e.date === dateStr);
-            const isToday = dateStr === toYMD(new Date());
-            return (
-              <Pressable key={dayIdx} style={{ width: dayColWidth, position: 'relative', backgroundColor: isToday ? '#FAFBFF' : undefined }}
-                onPress={() => openNew(dateStr, '09:00')}>
-                {/* Lignes horizontales */}
-                {Array.from({ length: totalHours }, (_, i) => (
-                  <View key={i} style={{ height: HOUR_HEIGHT, borderTopWidth: 0.5, borderTopColor: '#EDE2D6', borderRightWidth: 0.5, borderRightColor: '#EDE2D6' }} />
-                ))}
-                {/* Events positionnés */}
-                {dayEvents.map(evt => {
-                  const [h1, m1] = evt.heureDebut.split(':').map(Number);
-                  const [h2, m2] = evt.heureFin ? evt.heureFin.split(':').map(Number) : [h1 + 1, 0];
-                  const top = ((h1 - startHour) * 60 + m1) * (HOUR_HEIGHT / 60);
-                  const height = Math.max(((h2 - h1) * 60 + (m2 - m1)) * (HOUR_HEIGHT / 60), 20);
-                  const ch = evt.chantierId ? data.chantiers.find(c => c.id === evt.chantierId) : null;
-                  return (
-                    <Pressable key={evt.id}
-                      style={{ position: 'absolute', top, left: 1, right: 1, height, backgroundColor: evt.couleur, borderRadius: 4, padding: 2, overflow: 'hidden' }}
-                      onPress={(e) => { e.stopPropagation(); openEdit(evt); }}>
-                      <Text style={{ fontSize: 9, fontWeight: '700', color: '#fff' }} numberOfLines={2}>{evt.titre}</Text>
-                    </Pressable>
-                  );
-                })}
-              </Pressable>
-            );
-          })}
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} scrollEventThrottle={16}
+            snapToOffsets={[0, dayColWidth * 2]} decelerationRate="fast"
+            onScroll={e => enteteRef.current?.scrollTo({ x: e.nativeEvent.contentOffset.x, animated: false })}>
+            {days.map((day, dayIdx) => {
+              const dateStr = toYMD(day);
+              const dayEvents = weekEvents.filter(e => e.date === dateStr);
+              const isToday = dateStr === toYMD(new Date());
+              return (
+                <Pressable key={dayIdx} style={{ width: dayColWidth, position: 'relative', backgroundColor: isToday ? '#FAFBFF' : undefined }}
+                  accessibilityLabel={tm('Nouveau RDV')}
+                  onPress={e => {
+                    // Heure calculée depuis la position du tap, arrondie à la demi-heure la plus proche
+                    const y = e.nativeEvent.locationY || 0;
+                    const m = Math.round(((startHour * 60) + y * (60 / HOUR_HEIGHT)) / 30) * 30;
+                    const bornee = Math.max(startHour * 60, Math.min(m, 23 * 60));
+                    openNew(dateStr, `${String(Math.floor(bornee / 60)).padStart(2, '0')}:${String(bornee % 60).padStart(2, '0')}`);
+                  }}>
+                  {/* Lignes horizontales (ne captent pas le tap : la position est mesurée sur la colonne) */}
+                  <View pointerEvents="none">
+                    {Array.from({ length: totalHours }, (_, i) => (
+                      <View key={i} style={{ height: HOUR_HEIGHT, borderTopWidth: 0.5, borderTopColor: '#EDE2D6', borderRightWidth: 0.5, borderRightColor: '#EDE2D6' }} />
+                    ))}
+                  </View>
+                  {dayEvents.map(evt => {
+                    const [h1, m1] = evt.heureDebut.split(':').map(Number);
+                    const [h2, m2] = evt.heureFin ? evt.heureFin.split(':').map(Number) : [h1 + 1, 0];
+                    const top = ((h1 - startHour) * 60 + m1) * (HOUR_HEIGHT / 60);
+                    const height = Math.max(((h2 - h1) * 60 + (m2 - m1)) * (HOUR_HEIGHT / 60), 20);
+                    return (
+                      <Pressable key={evt.id}
+                        style={{ position: 'absolute', top, left: 1, right: 1, height, backgroundColor: evt.couleur, borderRadius: 4, padding: 3, overflow: 'hidden' }}
+                        onPress={(e) => { e.stopPropagation(); openEdit(evt); }}>
+                        <Text style={{ fontSize: 10, fontWeight: '700', color: '#fff' }} numberOfLines={3}>{evt.heureDebut} {evt.titre}</Text>
+                      </Pressable>
+                    );
+                  })}
+                </Pressable>
+              );
+            })}
+          </ScrollView>
         </View>
       </ScrollView>
+      </View>}
 
-      </>}
-
-      {/* Modal formulaire RDV */}
-      <ModalKeyboard visible={showForm} transparent animationType="slide" onRequestClose={() => setShowForm(false)}>
-        <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }} onPress={() => setShowForm(false)}>
-          <Pressable style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '92%' }} onPress={e => e.stopPropagation()}>
-            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{editId ? tm("Modifier") : tm("Nouveau RDV")}</Text>
-                {editId && (
-                  <Pressable onPress={() => { deleteAgendaEvent(editId); setShowForm(false); }} style={{ padding: 6 }}>
-                    <Text style={{ color: '#E74C3C', fontWeight: '600' }}>{tm("Supprimer")}</Text>
-                  </Pressable>
-                )}
-              </View>
-
-              <Text style={labelStyle}>{tm("Titre *")}</Text>
-              <TextInput style={inputStyle} value={form.titre} onChangeText={v => setForm(f => ({ ...f, titre: v }))} placeholder={tm("Réunion, visite...")} />
-
-              <Text style={labelStyle}>{tm("Description")}</Text>
-              <TextInput style={[inputStyle, { minHeight: 50 }]} value={form.description} onChangeText={v => setForm(f => ({ ...f, description: v }))} multiline />
-
-              {/* Date — grille inline */}
-              <Text style={labelStyle}>{tm("Date :")}{' '}{form.date.split('-').reverse().join('/')}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }} keyboardShouldPersistTaps="handled">
-                {dateOptions.map(opt => (
-                  <Pressable key={opt.value} style={{ paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, backgroundColor: form.date === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.date === opt.value ? '#5C1F2E' : '#EDE2D6', minWidth: 60, alignItems: 'center' }}
-                    onPress={() => setForm(f => ({ ...f, date: opt.value }))}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: form.date === opt.value ? '#fff' : '#2B1D14' }}>{opt.label.split(' ')[0]}</Text>
-                    <Text style={{ fontSize: 9, color: form.date === opt.value ? 'rgba(255,255,255,0.7)' : '#6E5F54' }}>{opt.label.split(' ').slice(1).join(' ')}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-
-              {/* Heures — grille inline */}
-              <Text style={labelStyle}>{tm("Début :")}{' '}{form.heureDebut}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-                {heureOptions.map(opt => (
-                  <Pressable key={`d_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureDebut === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.heureDebut === opt.value ? '#5C1F2E' : '#EDE2D6' }}
-                    onPress={() => setForm(f => ({ ...f, heureDebut: opt.value }))}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: form.heureDebut === opt.value ? '#fff' : '#6E5F54' }}>{opt.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              <Text style={labelStyle}>{tm("Fin :")}{' '}{form.heureFin || '—'}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-                {heureOptions.map(opt => (
-                  <Pressable key={`f_${opt.value}`} style={{ paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8, backgroundColor: form.heureFin === opt.value ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: form.heureFin === opt.value ? '#5C1F2E' : '#EDE2D6' }}
-                    onPress={() => setForm(f => ({ ...f, heureFin: opt.value }))}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: form.heureFin === opt.value ? '#fff' : '#6E5F54' }}>{opt.label}</Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              <Text style={labelStyle}>{tm("Lieu")}</Text>
-              <TextInput style={inputStyle} value={form.lieu} onChangeText={v => setForm(f => ({ ...f, lieu: v }))} placeholder={tm("Adresse...")} />
-
-              {/* Chantier */}
-              <Text style={labelStyle}>{tm("Chantier associé")}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 4 }}>
-                <Pressable style={chipStyle(!form.chantierId)} onPress={() => setForm(f => ({ ...f, chantierId: '' }))}>
-                  <Text style={chipTextStyle(!form.chantierId)}>{tm("Aucun")}</Text>
-                </Pressable>
-                {data.chantiers.filter(c => c.statut === 'actif').map(c => (
-                  <Pressable key={c.id} style={chipStyle(form.chantierId === c.id, c.couleur)} onPress={() => setForm(f => ({ ...f, chantierId: f.chantierId === c.id ? '' : c.id }))}>
-                    <Text style={chipTextStyle(form.chantierId === c.id)}>{c.nom}</Text>
-                  </Pressable>
-                ))}
-              </ScrollView>
-
-              {/* Récurrence */}
-              <Text style={labelStyle}>{tm("Récurrence")}</Text>
-              <View style={{ flexDirection: 'row', gap: 4, marginBottom: 8 }}>
-                {[{ l: tm("Aucune"), v: 'aucune' }, { l: tm("Quotidien"), v: 'quotidien' }, { l: tm("Hebdo"), v: 'hebdomadaire' }, { l: tm("Mensuel"), v: 'mensuel' }].map(r => (
-                  <Pressable key={r.v} style={chipStyle(form.recurrence === r.v)} onPress={() => setForm(f => ({ ...f, recurrence: r.v }))}>
-                    <Text style={chipTextStyle(form.recurrence === r.v)}>{r.l}</Text>
-                  </Pressable>
-                ))}
-              </View>
-              {form.recurrence !== 'aucune' && (
-                <>
-                  <Text style={labelStyle}>{tm("Fin de récurrence")}</Text>
-                  <Pressable style={inputStyle} onPress={() => {/* TODO: date picker */}}>
-                    <Text style={{ fontSize: 14, color: form.recurrenceFinDate ? '#2B1D14' : '#9A8C80' }}>
-                      {form.recurrenceFinDate ? form.recurrenceFinDate.split('-').reverse().join('/') : tm("Sélectionner...")}
-                    </Text>
-                  </Pressable>
-                </>
-              )}
-
-              {/* Couleur */}
-              <Text style={labelStyle}>{tm("Couleur")}</Text>
-              <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
-                {COULEURS.map(c => (
-                  <Pressable key={c} onPress={() => setForm(f => ({ ...f, couleur: c }))}
-                    style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c, borderWidth: form.couleur === c ? 3 : 0, borderColor: '#2B1D14' }} />
-                ))}
-              </View>
-
-              {/* Invités */}
-              <Text style={labelStyle}>{tm("Invités (participants)")}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 8 }}>
-                {invitables.map(p => (
-                  <Pressable key={p.cle} style={chipStyle(form.invites.includes(p.cle))}
-                    onPress={() => setForm(f => ({ ...f, invites: f.invites.includes(p.cle) ? f.invites.filter(i => i !== p.cle) : [...f.invites, p.cle] }))}>
-                    <Text style={chipTextStyle(form.invites.includes(p.cle))}>{p.nom}</Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              {/* Visibilité */}
-              <Text style={labelStyle}>{tm("Visible par (sans être invité)")}</Text>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
-                {data.employes.filter(e => !form.invites.includes(e.id)).map(emp => (
-                  <Pressable key={emp.id} style={chipStyle(form.visiblePar.includes(emp.id))}
-                    onPress={() => setForm(f => ({ ...f, visiblePar: f.visiblePar.includes(emp.id) ? f.visiblePar.filter(i => i !== emp.id) : [...f.visiblePar, emp.id] }))}>
-                    <Text style={chipTextStyle(form.visiblePar.includes(emp.id))}>{emp.prenom} {emp.nom.charAt(0)}.</Text>
-                  </Pressable>
-                ))}
-              </View>
-
-              <Pressable style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: form.titre.trim() ? 1 : 0.5 }}
-                onPress={handleSave} disabled={!form.titre.trim()}>
-                <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? tm("Modifier") : tm("Créer le rendez-vous")}</Text>
-              </Pressable>
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </ModalKeyboard>
+      <FormulaireRdvDirection
+        visible={showForm} editId={editId} form={form} setForm={setForm} invitables={invitables}
+        onSave={handleSave} onDelete={() => { if (editId) deleteAgendaEvent(editId); setShowForm(false); }} onClose={() => setShowForm(false)}
+      />
 
     </>
   );
 }
 
-const labelStyle = { fontSize: 12, fontWeight: '600' as const, color: '#6E5F54', marginBottom: 4, marginTop: 8 };
-const inputStyle = { backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 4 };
-const chipStyle = (active: boolean, color?: string) => ({
-  paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14,
-  backgroundColor: active ? (color || '#5C1F2E') : '#F1E7DC',
-  borderWidth: 1, borderColor: active ? (color || '#5C1F2E') : '#EDE2D6',
-});
-const chipTextStyle = (active: boolean) => ({ fontSize: 12, fontWeight: '600' as const, color: active ? '#fff' : '#6E5F54' });
