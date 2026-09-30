@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'expo-router';
-import { Copy, Camera, FileText, Download, Settings, ChevronLeft, ChevronRight, ArrowUpDown } from 'lucide-react-native';
+import { Copy, Camera, FileText, Download, Settings, ChevronLeft, ChevronRight, ArrowUpDown, MoreHorizontal } from 'lucide-react-native';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
@@ -19,10 +19,10 @@ import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
 import { PlanningDirection } from '@/components/PlanningDirection';
 import { droitsEspaces } from '@/lib/espaces';
 import { setPlanningFiltre } from '@/lib/planningFiltre';
-import { FiltreStatutPlanning } from '@/components/planning/FiltreStatutPlanning';
-import { AlertesChantiersRetard } from '@/components/planning/AlertesChantiersRetard';
+import { AlertesChantiersRetard, BadgeAlertesChantiers } from '@/components/planning/AlertesChantiersRetard';
+import { tm } from '@/lib/menuiserie/i18n';
 import {
-  AdminPlanningModeSwitcher,
+  ChoixPlanningCompact,
   type PlanningMode,
 } from '@/components/planning/AdminPlanningModeSwitcher';
 import { ModalRetardPlanifie } from '@/components/planning/ModalRetardPlanifie';
@@ -200,7 +200,8 @@ export default function PlanningScreen() {
   const { width: windowWidth } = useWindowDimensions();
   // Calcul dynamique : la grille tient TOUJOURS dans l'écran
   const NAME_COL = Math.max(50, Math.floor(windowWidth * 0.15)); // 15% de l'écran, min 50px
-  const dayCol = Math.floor((windowWidth - NAME_COL) / 7);
+  // 5 jours ouvrés visibles ; samedi et dimanche en glissant
+  const dayCol = Math.floor((windowWidth - NAME_COL) / 5);
   const needsHorizontalScroll = false; // Plus jamais de scroll horizontal
   // Plannings : Travaux / Menuiserie / Dépannages (grille équipe filtrée) ou Direction (agenda)
   const [planningMode, setPlanningModeState] = useState<PlanningMode>('travaux');
@@ -222,6 +223,8 @@ export default function PlanningScreen() {
   const [selectedDay, setSelectedDay] = useState<string>(() => todayYMD());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showOrdreChantiers, setShowOrdreChantiers] = useState(false);
+  const [showMenuActions, setShowMenuActions] = useState(false);
+  const [showAlertes, setShowAlertes] = useState(false);
   // Modal admin : ajout/suppression d'employés dans une cellule
   const [modal, setModal] = useState<{ chantierId: string; date: string } | null>(null);
   // Modal notes : visible par admin et employés
@@ -741,33 +744,8 @@ export default function PlanningScreen() {
     setNoteModal({ chantierId, date: dateStr, targetEmployeId: stPseudoId, allNotes, editingNote: null });
   };
 
-  return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
-      {/* En-tête */}
-      <View style={styles.header}>
-        <Text style={screenTitle}>{t.planning.title}</Text>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 1, marginLeft: 12 }} contentContainerStyle={styles.navRow}>
-          {/* Bouton retard planifié (employé non-admin) */}
-          {!isAdmin && !isST && currentUser?.employeId && (() => {
-            const nbRetards = (data.retardsPlanifies || []).filter(r => r.employeId === currentUser.employeId && !r.lu).length;
-            return (
-              <Pressable
-                style={[styles.saisieBtn, { position: 'relative' }]}
-                onPress={() => setShowRetardModal(true)}
-              >
-                <Ico e="⏰" size={16} />
-                {nbRetards > 0 && (
-                  <View style={[styles.materielBadgeCount, { position: 'absolute', top: -4, right: -4, width: 16, height: 16 }]}>
-                    <Text style={[styles.materielBadgeCountText, { fontSize: 9 }]}>{nbRetards}</Text>
-                  </View>
-                )}
-              </Pressable>
-            );
-          })()}
-          {/* Bouton saisie manuelle pointage déplacé vers l'accueil */}
-          {/* Bouton dupliquer semaine — admin uniquement */}
-          {isAdmin && viewMode === 'semaine' && (
-            <Pressable style={styles.galerieBtn} onPress={() => {
+  /** Duplique les affectations de la semaine précédente sur la semaine affichée. */
+  const dupliquerSemaine = () => {
               const prevWeekDays = days.map(d => {
                 const prev = new Date(d);
                 prev.setDate(prev.getDate() - 7);
@@ -811,38 +789,71 @@ export default function PlanningScreen() {
               };
               if (Platform.OS === 'web') { if (window.confirm(msg)) doDuplicate(); }
               else Alert.alert(t.planningAdmin.duplicate, msg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.planningAdmin.duplicate, onPress: doDuplicate }]);
-            }} accessibilityLabel="Dupliquer semaine">
-              <Copy size={17} color="#5C1F2E" strokeWidth={2} />
-            </Pressable>
-          )}
-          {/* Bouton galerie photos — visible pour tous */}
-          <Pressable style={styles.galerieBtn} onPress={() => { setGalerieChantierId(undefined); setShowGalerieGlobale(true); }}>
-            <Camera size={17} color="#5C1F2E" strokeWidth={2} />
+  };
+
+  // Menu ⋯ : actions secondaires du planning
+  const actionsMenu = [
+    ...(isAdmin && viewMode === 'semaine' ? [{ label: tm('Dupliquer la semaine précédente'), icon: Copy, onPress: dupliquerSemaine }] : []),
+    { label: tm('Photos des chantiers'), icon: Camera, onPress: () => { setGalerieChantierId(undefined); setShowGalerieGlobale(true); } },
+    ...(isAdmin ? [
+      { label: tm('Exporter le planning (PDF)'), icon: FileText, onPress: handleExportPDF },
+      { label: tm('Sauvegarder les données'), icon: Download, onPress: handleExportData },
+      { label: tm('Ordre des chantiers'), icon: ArrowUpDown, onPress: () => setShowOrdreChantiers(true) },
+      { label: tm('Réglages du planning'), icon: Settings, onPress: openAdminSettings },
+    ] : []),
+  ];
+
+  return (
+    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+      {/* En-tête */}
+      <View style={styles.header}>
+        <Text style={screenTitle}>{t.planning.title}</Text>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 1, marginLeft: 12 }} contentContainerStyle={styles.navRow}>
+          {/* Bouton retard planifié (employé non-admin) */}
+          {!isAdmin && !isST && currentUser?.employeId && (() => {
+            const nbRetards = (data.retardsPlanifies || []).filter(r => r.employeId === currentUser.employeId && !r.lu).length;
+            return (
+              <Pressable
+                style={[styles.saisieBtn, { position: 'relative' }]}
+                onPress={() => setShowRetardModal(true)}
+              >
+                <Ico e="⏰" size={16} />
+                {nbRetards > 0 && (
+                  <View style={[styles.materielBadgeCount, { position: 'absolute', top: -4, right: -4, width: 16, height: 16 }]}>
+                    <Text style={[styles.materielBadgeCountText, { fontSize: 9 }]}>{nbRetards}</Text>
+                  </View>
+                )}
+              </Pressable>
+            );
+          })()}
+          {/* Bouton saisie manuelle pointage déplacé vers l'accueil */}
+          {/* Bouton dupliquer semaine — admin uniquement */}
+          {/* Alertes chantiers (retard / fin proche) : petite pastille */}
+          {isAdmin && <BadgeAlertesChantiers chantiers={data.chantiers} onPress={() => setShowAlertes(v => !v)} />}
+          {/* Toutes les actions secondaires dans un seul menu */}
+          <Pressable style={styles.galerieBtn} onPress={() => setShowMenuActions(true)} accessibilityLabel={tm('Plus d’actions')}>
+            <MoreHorizontal size={18} color="#5C1F2E" strokeWidth={2.2} />
           </Pressable>
-          {/* Bouton PDF planning — admin uniquement */}
-          {isAdmin && (
-            <Pressable style={styles.galerieBtn} onPress={handleExportPDF} accessibilityLabel="Exporter planning PDF">
-              <FileText size={17} color="#5C1F2E" strokeWidth={2} />
-            </Pressable>
-          )}
-          {/* Bouton export/sauvegarde — admin uniquement */}
-          {isAdmin && (
-            <Pressable style={styles.galerieBtn} onPress={handleExportData} accessibilityLabel="Exporter les données">
-              <Download size={17} color="#5C1F2E" strokeWidth={2} />
-            </Pressable>
-          )}
-          {isAdmin && (
-            <Pressable style={styles.galerieBtn} onPress={() => setShowOrdreChantiers(true)} accessibilityLabel={t.ui.ordreChantiers}>
-              <ArrowUpDown size={17} color="#5C1F2E" strokeWidth={2} />
-            </Pressable>
-          )}
-          {isAdmin && (
-            <Pressable style={styles.galerieBtn} onPress={openAdminSettings} accessibilityLabel="Réglages du planning">
-              <Settings size={17} color="#5C1F2E" strokeWidth={2} />
-            </Pressable>
-          )}
         </ScrollView>
       </View>
+
+          {/* Menu ⋯ : actions secondaires */}
+          <Modal visible={showMenuActions} transparent animationType="fade" onRequestClose={() => setShowMenuActions(false)}>
+            <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 110, paddingHorizontal: 16 }} onPress={() => setShowMenuActions(false)}>
+              <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 6, minWidth: 260, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, elevation: 6 }}>
+                {actionsMenu.map(a => {
+                  const Icone = a.icon;
+                  return (
+                    <Pressable key={a.label} onPress={() => { setShowMenuActions(false); setTimeout(a.onPress, 150); }} accessibilityRole="button"
+                      style={{ minHeight: 46, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, borderRadius: 10 }}>
+                      <Icone size={18} color="#5C1F2E" strokeWidth={2} />
+                      <Text style={{ fontSize: 15, color: '#2B1D14', fontWeight: '600' }}>{a.label}</Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </Pressable>
+          </Modal>
 
           {/* Toggle vue semaine / mois / gantt — masqué en planning direction */}
           {modeEquipe && (
@@ -865,20 +876,24 @@ export default function PlanningScreen() {
           )}
 
       {/* Sélecteur Planning Équipe / Direction (admin) */}
-      {peutBasculer && <AdminPlanningModeSwitcher value={planningMode} onChange={setPlanningMode} />}
 
       {/* ═══ ALERTES RETARD CHANTIERS — bannière pliable (admin) ═══ */}
-      {isAdmin && <AlertesChantiersRetard chantiers={data.chantiers} />}
+      {isAdmin && showAlertes && <AlertesChantiersRetard chantiers={data.chantiers} ouvertParDefaut />}
 
       {/* ═══ PLANNING DIRECTION ═══ */}
+      {planningMode === 'direction' && peutBasculer && (
+        <View style={{ paddingHorizontal: 16, paddingBottom: 6, flexDirection: 'row' }}>
+          <ChoixPlanningCompact value={planningMode} onChange={setPlanningMode} avecDirection />
+        </View>
+      )}
       {planningMode === 'direction' && peutBasculer && <PlanningDirection />}
 
       {/* ═══ PLANNING ÉQUIPE (existant) ═══ */}
       {(modeEquipe || !peutBasculer) && (
       <>
-      {(isAdmin || isRH) && viewMode !== 'gantt' && <FiltreStatutPlanning />}
       <View style={styles.weekInfo}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+          {peutBasculer && <ChoixPlanningCompact value={planningMode} onChange={setPlanningMode} avecDirection={!droitsEspaces(currentUser, data).planningDirection} />}
           <Pressable style={styles.weekNavBtn} hitSlop={6} onPress={() => (viewMode === 'semaine' || viewMode === 'jour') ? setWeekOffset(w => w - 1) : setMonthOffset(m => m - 1)} accessibilityLabel={t.ui.precedent}>
             <ChevronLeft size={18} color="#5C1F2E" strokeWidth={2.2} />
           </Pressable>
@@ -893,7 +908,6 @@ export default function PlanningScreen() {
           </Pressable>
         </View>
         <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-          <Text style={styles.chantierCount}>{visibleChantiers.length} {t.nav.chantiers}</Text>
           {isAdmin && viewMode === 'semaine' && (() => {
             const todayStr = toYMD(new Date());
             // Employés en congé cette semaine

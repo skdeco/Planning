@@ -614,6 +614,14 @@ export interface Affectation {
   dateFin: string;   // YYYY-MM-DD
   lieu?: LieuTravail;         // 'chantier' (défaut) ou 'atelier'
   notes: Note[];     // tableau de notes (multi-auteurs, multi-notes)
+  /** Précisions facultatives par jour (clé YYYY-MM-DD) : horaire et description de la tâche */
+  details?: Record<string, DetailAffectationJour>;
+}
+
+export interface DetailAffectationJour {
+  debut?: string;        // HH:MM
+  fin?: string;          // HH:MM
+  description?: string;
 }
 
 /** Un acompte versé à un employé */

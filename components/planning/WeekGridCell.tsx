@@ -89,6 +89,8 @@ export interface WeekGridCellProps {
   getOrdreChantiers: (employeId: string, dateStr: string) => string[];
   /** Callbacks groupés pour ouvrir les 6 modaux depuis la cellule. */
   openers: CellModalOpeners;
+  /** Appui sur la pastille d'un employé : fiche du jour (horaire, description, actions). */
+  onFiche?: (chantierId: string, dateStr: string, empId: string) => void;
 }
 
 // ─── Composant ────────────────────────────────────────────────────────────────
@@ -126,6 +128,7 @@ export function WeekGridCell({
   getOrdreNum,
   getOrdreChantiers,
   openers,
+  onFiche,
 }: WeekGridCellProps): React.ReactElement {
   const { data, currentUser } = useApp();
   const { toggleLieuTravail, removeEmployeFromCell, removeSTFromCell } = useCellAffectationManager();
@@ -161,7 +164,7 @@ export function WeekGridCell({
           <View key={emp.id} style={styles.badgeWrapper}>
             <Pressable
               style={[styles.empBadge, { backgroundColor: empColor }, isAtelier && { borderWidth: 2, borderColor: '#F59E0B', borderStyle: 'dashed' }]}
-              onPress={() => openers.empNote(chantier.id, dateStr, emp.id)}
+              onPress={() => (onFiche ? onFiche(chantier.id, dateStr, emp.id) : openers.empNote(chantier.id, dateStr, emp.id))}
               onLongPress={isAdmin ? () => {
                 if (Platform.OS === 'web') {
                   const choice = window.prompt(`${emp.prenom} — Choisir :\n1 = Déplacer\n2 = ${isAtelier ? 'Remettre sur chantier' : 'Mettre en atelier '}`);
@@ -187,6 +190,13 @@ export function WeekGridCell({
               <Text style={[styles.empBadgeText, { color: '#fff' }]} numberOfLines={1}>
                 {isAtelier ? '🏭' : ''}{emp.prenom.slice(0, 3) + '.'}
               </Text>
+              {/* Horaire précisé pour ce jour (facultatif) */}
+              {(() => {
+                const d = empAff?.details?.[dateStr];
+                if (!d?.debut && !d?.fin) return d?.description ? <Text style={{ fontSize: 9, color: 'rgba(255,255,255,0.9)' }}>•••</Text> : null;
+                const court = (h?: string) => (h ? h.replace(':00', 'h').replace(':', 'h') : '');
+                return <Text style={{ fontSize: 9, fontWeight: '700', color: 'rgba(255,255,255,0.95)' }} numberOfLines={1}>{court(d.debut)}{d.fin ? `–${court(d.fin)}` : ''}</Text>;
+              })()}
               {empHasNotes && <View style={styles.noteDot} />}
               {ordreNum > 0 && (
                 <View style={styles.ordreBadge}>
@@ -194,40 +204,6 @@ export function WeekGridCell({
                 </View>
               )}
             </Pressable>
-            {isAdmin && (
-              <Pressable
-                style={styles.removeBadgeBtn}
-                onPress={() => {
-                  const hasPointage = data.pointages.some(p => p.employeId === emp.id && p.date === dateStr);
-                  const aff = data.affectations.find(a => a.chantierId === chantier.id && a.employeId === emp.id && a.dateDebut <= dateStr && a.dateFin >= dateStr);
-                  const hasNotesEmp = aff && (aff.notes || []).some(n => (n.date === dateStr || !n.date) && (n.texte?.trim() || (n.tasks && n.tasks.length > 0)));
-
-                  const doRemove = (deletePointages?: boolean) => {
-                    removeEmployeFromCell(chantier.id, emp.id, dateStr, { deletePointages });
-                  };
-
-                  if (hasNotesEmp || hasPointage) {
-                    const messages: string[] = [];
-                    if (hasNotesEmp) messages.push('des notes/tâches');
-                    if (hasPointage) messages.push('un pointage');
-                    Alert.alert(
-                      `Retirer ${emp.prenom}`,
-                      `${emp.prenom} a ${messages.join(' et ')} ce jour. Que faire ?`,
-                      [
-                        { text: 'Annuler', style: 'cancel' },
-                        { text: '↔ Déplacer', onPress: () => openers.move(emp.id, chantier.id, dateStr) },
-                        { text: 'Retirer du planning', onPress: () => doRemove(false) },
-                        ...(hasPointage ? [{ text: 'Retirer + suppr. pointage', style: 'destructive' as const, onPress: () => doRemove(true) }] : []),
-                      ]
-                    );
-                  } else {
-                    removeEmployeFromCell(chantier.id, emp.id, dateStr);
-                  }
-                }}
-              >
-                <Text style={styles.removeBadgeBtnText}>✕</Text>
-              </Pressable>
-            )}
           </View>
         );
       })}
@@ -245,20 +221,17 @@ export function WeekGridCell({
             <Pressable
               style={[styles.stBadge, { backgroundColor: st.couleur }]}
               onPress={() => openers.stNote(chantier.id, dateStr, st.id)}
+              onLongPress={isAdmin ? () => {
+                const nom = st.prenom || st.nom;
+                if (Platform.OS === 'web') { if (window.confirm(`Retirer ${nom} de ce jour ?`)) removeSTFromCell(chantier.id, st.id, dateStr); return; }
+                Alert.alert(nom, 'Retirer de ce jour ?', [{ text: 'Annuler', style: 'cancel' }, { text: 'Retirer', style: 'destructive', onPress: () => removeSTFromCell(chantier.id, st.id, dateStr) }]);
+              } : undefined}
             >
               <Text style={styles.stBadgeText} numberOfLines={1}>
                 {(st.prenom || st.nom).slice(0, 3) + '.'}
               </Text>
               {stHasNotes && <View style={styles.noteDot} />}
             </Pressable>
-            {isAdmin && (
-              <Pressable
-                style={styles.removeBadgeBtn}
-                onPress={() => removeSTFromCell(chantier.id, st.id, dateStr)}
-              >
-                <Text style={styles.removeBadgeBtnText}>✕</Text>
-              </Pressable>
-            )}
           </View>
         );
       })}

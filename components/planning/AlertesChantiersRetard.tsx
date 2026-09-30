@@ -71,6 +71,30 @@ export interface AlerteChantier {
 export interface AlertesChantiersRetardProps {
   /** Liste des chantiers à analyser. */
   chantiers: AlerteChantier[];
+  /** Déplié d'emblée (quand on l'ouvre depuis la pastille de l'en-tête). */
+  ouvertParDefaut?: boolean;
+}
+
+/** Nombre d'alertes (chantiers en retard + fin dans 7 jours) et nombre en retard. */
+export function compterAlertesChantiers(chantiers: AlerteChantier[]): { total: number; retard: number } {
+  const today = toYMDLocal(new Date());
+  const actifs = chantiers.filter(isActifAvecDateValide);
+  const retard = actifs.filter(c => c.dateFin < today).length;
+  const proches = actifs.filter(c => c.dateFin >= today && daysBetween(today, c.dateFin) <= PROCHE_FIN_SEUIL_JOURS).length;
+  return { total: retard + proches, retard };
+}
+
+/** Petite pastille « ⚠ N » pour l'en-tête du planning. */
+export function BadgeAlertesChantiers({ chantiers, onPress }: { chantiers: AlerteChantier[]; onPress: () => void }): React.ReactElement | null {
+  const { total, retard } = compterAlertesChantiers(chantiers);
+  if (total === 0) return null;
+  return (
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel={`${total} alertes chantiers`} hitSlop={6}
+      style={{ height: 34, minWidth: 34, paddingHorizontal: 10, borderRadius: 17, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: retard ? DS.errorSoft : DS.warningSoft }}>
+      <Text style={{ fontSize: 13 }}>⚠</Text>
+      <Text style={{ fontSize: 13, fontWeight: '800', color: retard ? ALERTE_TEXT_ERROR : ALERTE_TEXT_WARNING }}>{total}</Text>
+    </Pressable>
+  );
 }
 
 // ─── Constantes internes ──────────────────────────────────────────────────────
@@ -130,10 +154,11 @@ const ALERTE_GAP = 6;
  */
 export function AlertesChantiersRetard({
   chantiers,
+  ouvertParDefaut,
 }: AlertesChantiersRetardProps): React.ReactElement | null {
   const { t, language } = useLanguage();
   const dateLocale = ({ fr: 'fr-FR', en: 'en-GB', es: 'es-ES', pt: 'pt-PT', ru: 'ru-RU', ar: 'ar-EG' } as const)[language] || 'fr-FR';
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(!!ouvertParDefaut);
 
   const today = toYMDLocal(new Date());
 

@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -15,7 +15,9 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { getEmployeColor, METIER_COLORS } from '@/app/types';
 import { WeekGridCell, type CellModalOpeners } from './WeekGridCell';
-import { OeilChantier, BadgeSav } from './OeilChantier';
+import { BadgeSav } from './OeilChantier';
+import { ChantiersMasques } from './ChantiersMasques';
+import { FicheAffectationJour, type CibleAffectation } from './FicheAffectationJour';
 
 // ─── Helpers de date locaux ───────────────────────────────────────────────────
 
@@ -121,6 +123,11 @@ export function WeekGridView({
     getOrdreChantiers,
   } = usePlanningWeekData(weekOffset);
   const { refreshing, onRefresh } = useRefresh();
+  // Hauteurs mesurées : la colonne des noms (fixe) s'aligne sur les lignes de la grille (défilante)
+  const [hauteurs, setHauteurs] = useState<Record<string, number>>({});
+  const [hauteursNoms, setHauteursNoms] = useState<Record<string, number>>({});
+  const [hauteurEntete, setHauteurEntete] = useState(0);
+  const [fiche, setFiche] = useState<CibleAffectation | null>(null);
 
   // Groupe les 6 modal openers en un seul objet stable (référence préservée
   // tant que les callbacks parent ne changent pas) pour passage à WeekGridCell.
@@ -141,81 +148,93 @@ export function WeekGridView({
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />
       }
     >
-      {/* En-tête des jours */}
-      <View style={styles.gridRow}>
-        <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL }]} />
-        {days.map((day, i) => {
-          const today = isToday(day);
-          return (
-            <View
-              key={i}
-              style={[
-                styles.dayHeaderCell,
-                { width: dayCol },
-                today && styles.dayHeaderCellToday,
-              ]}
-            >
-              <Text style={[styles.dayName, today && styles.dayNameToday]}>
-                {JOURS[i]}
-              </Text>
-              <Text style={[styles.dayNum, today && styles.dayNumToday]}>
-                {day.getDate()}
-              </Text>
-            </View>
-          );
-        })}
-      </View>
-
-      {/* Lignes des chantiers */}
-      {visibleChantiers.map(chantier => (
-        <View key={chantier.id} style={styles.chantierRow}>
-          {/* Colonne nom — clic = ouvrir le menu d'actions chantier
-              Appui long (admin) = menu de réorganisation */}
-          <Pressable
-            style={[styles.nameCell, { width: NAME_COL }]}
-            onPress={() => onOpenChantierActions(chantier.id)}
-            onLongPress={isAdmin ? () => onLongPressChantier(chantier.id) : undefined}
-            delayLongPress={400}
-          >
-            <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
-              {chantier.statut === 'sav' && <BadgeSav />}
-              {chantier.categorie === 'depannage' && (
-                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#B9770E', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catDepannage}</Text>
-              )}
-              {chantier.categorie === 'lieuFixe' && (
-                <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#34506B', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catLieuFixe}</Text>
-              )}
-            </View>
-            {peutMasquer && <OeilChantier chantierId={chantier.id} taille={14} />}
-          </Pressable>
-
-          {/* Cellules des jours */}
-          {days.map((day, i) => {
-            const employes      = getEmployesForCell(chantier.id, day);
-            const soustraitants = getSTForCell(chantier.id, day);
-            const interventions = getInterventionsForCell(chantier.id, day);
-            const dateStr       = toYMD(day);
-            const hasNotes      = cellHasNotes(chantier.id, dateStr);
+      {/* Grille : noms des chantiers fixes à gauche ; lundi → vendredi à l'écran,
+          samedi et dimanche en glissant vers la gauche (comme le Planning direction) */}
+      <View style={{ flexDirection: 'row' }}>
+        {/* Colonne des noms */}
+        <View style={{ width: NAME_COL }}>
+          <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL, minHeight: 0, height: hauteurEntete || undefined, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }]} />
+          {visibleChantiers.map(chantier => {
+            const h = Math.max(hauteurs[chantier.id] || 0, hauteursNoms[chantier.id] || 0);
             return (
-              <WeekGridCell
-                key={i}
-                chantier={chantier}
-                day={day}
-                dayCol={dayCol}
-                employes={employes}
-                soustraitants={soustraitants}
-                interventions={interventions}
-                hasNotes={hasNotes}
-                getOrdreNum={getOrdreNum}
-                getOrdreChantiers={getOrdreChantiers}
-                openers={cellOpeners}
-              />
+              <Pressable
+                key={chantier.id}
+                style={[styles.nameCell, { width: NAME_COL, height: h || undefined, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }]}
+                onPress={() => onOpenChantierActions(chantier.id)}
+                onLongPress={isAdmin ? () => onLongPressChantier(chantier.id) : undefined}
+                delayLongPress={400}
+              >
+                <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
+                <View onLayout={e => { const v = Math.ceil(e.nativeEvent.layout.height + 8); setHauteursNoms(p => (p[chantier.id] === v ? p : { ...p, [chantier.id]: v })); }}>
+                  <Text style={styles.chantierName} numberOfLines={2}>{chantier.nom}</Text>
+                  {chantier.statut === 'sav' && <BadgeSav />}
+                  {chantier.categorie === 'depannage' && (
+                    <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#B9770E', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catDepannage}</Text>
+                  )}
+                  {chantier.categorie === 'lieuFixe' && (
+                    <Text style={{ fontSize: 9.5, fontWeight: '700', color: '#34506B', textTransform: 'uppercase', letterSpacing: 0.3 }}>{t.ui.catLieuFixe}</Text>
+                  )}
+                </View>
+              </Pressable>
             );
           })}
         </View>
-      ))}
+
+        {/* Jours (défilement horizontal) */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToOffsets={[0, dayCol * 2]} decelerationRate="fast">
+          <View>
+            <View style={styles.gridRow} onLayout={e => setHauteurEntete(Math.ceil(e.nativeEvent.layout.height))}>
+              {days.map((day, i) => {
+                const today = isToday(day);
+                return (
+                  <View key={i} style={[styles.dayHeaderCell, { width: dayCol }, today && styles.dayHeaderCellToday]}>
+                    <Text style={[styles.dayName, today && styles.dayNameToday]}>{JOURS[i]}</Text>
+                    <Text style={[styles.dayNum, today && styles.dayNumToday]}>{day.getDate()}</Text>
+                  </View>
+                );
+              })}
+            </View>
+            {visibleChantiers.map(chantier => (
+              <View key={chantier.id} style={[styles.chantierRow, { minHeight: Math.max(70, hauteursNoms[chantier.id] || 0) }]}
+                onLayout={e => { const v = Math.ceil(e.nativeEvent.layout.height); setHauteurs(p => (p[chantier.id] === v ? p : { ...p, [chantier.id]: v })); }}>
+                {days.map((day, i) => {
+                  const dateStr = toYMD(day);
+                  return (
+                    <WeekGridCell
+                      key={i}
+                      chantier={chantier}
+                      day={day}
+                      dayCol={dayCol}
+                      employes={getEmployesForCell(chantier.id, day)}
+                      soustraitants={getSTForCell(chantier.id, day)}
+                      interventions={getInterventionsForCell(chantier.id, day)}
+                      hasNotes={cellHasNotes(chantier.id, dateStr)}
+                      getOrdreNum={getOrdreNum}
+                      getOrdreChantiers={getOrdreChantiers}
+                      openers={cellOpeners}
+                      onFiche={(chantierId, d, empId) => setFiche({ chantierId, employeId: empId, date: d })}
+                    />
+                  );
+                })}
+              </View>
+            ))}
+          </View>
+        </ScrollView>
+      </View>
+
+      {/* Chantiers masqués : réaffichables en un tap */}
+      {peutMasquer && <ChantiersMasques />}
+
+      <FicheAffectationJour
+        cible={fiche}
+        onFermer={() => setFiche(null)}
+        onNotes={c => cellOpeners.empNote(c.chantierId, c.date, c.employeId)}
+        onDeplacer={c => {
+          const ids = getOrdreChantiers(c.employeId, c.date);
+          if (ids.length >= 2) cellOpeners.ordre(c.employeId, c.date, ids);
+          else cellOpeners.move(c.employeId, c.chantierId, c.date);
+        }}
+      />
 
       {visibleChantiers.length === 0 && (
         <EmptyState size="md" title="Aucun chantier sur cette semaine" />
