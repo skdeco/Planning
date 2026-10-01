@@ -13,6 +13,7 @@ import { SyncIndicator } from "@/components/SyncIndicator";
 import { NotificationListener } from "@/components/NotificationListener";
 import { useNotifications } from "@/hooks/useNotifications";
 import { DS, shadows } from "@/constants/design";
+import { tm } from '@/lib/menuiserie/i18n';
 
 export default function TabLayout() {
   const insets = useSafeAreaInsets();
@@ -191,6 +192,18 @@ export default function TabLayout() {
       />
 
       {/* ═══ ONGLET 7 : Messages — visible pour admin/employé/ST (pas les apporteurs) ═══ */}
+      {/* Photos : onglet direct pour les employés (envoi + photos de leurs chantiers) */}
+      <Tabs.Screen
+        name="photos"
+        options={{
+          title: tm('Photos'),
+          href: isEmploye ? undefined : null,
+          tabBarIcon: ({ color }) => (
+            <IconSymbol size={23} name="camera.fill" color={color} />
+          ),
+        }}
+      />
+
       <Tabs.Screen
         name="messagerie"
         options={{

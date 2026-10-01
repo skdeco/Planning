@@ -672,6 +672,10 @@ const d: Record<string, string> = {
   "Voir ({0})": "Ver ({0})",
   "{0} photo(s) envoyée(s) — {1}": "{0} foto(s) enviada(s) — {1}",
   "{0} photo(s) n'ont pas pu être envoyées": "{0} foto(s) não puderam ser enviadas",
+  "Ajouter sur le chantier": "Adicionar à obra",
+  "Appareil photo ou photothèque · {0}": "Câmara ou fototeca · {0}",
+  "{0} photo(s)": "{0} foto(s)",
+  "Pas encore de photo": "Ainda sem fotos",
 };
 
 export default d;
