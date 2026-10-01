@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, Modal } from 'react-native';
 import { DS, font, radius, space } from '@/constants/design';
 import { useApp } from '@/app/context/AppContext';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * Sélecteur de fournisseur pour la saisie d'un achat : choisit une fiche
@@ -57,7 +58,7 @@ export function FournisseurPicker({ value, onChange, placeholder = 'Choisir un f
         </Pressable>
       ) : null}
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
+      <ModalKeyboard visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setOpen(false)} />
           <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, maxHeight: '75%' }}>
@@ -93,7 +94,7 @@ export function FournisseurPicker({ value, onChange, placeholder = 'Choisir un f
             </Pressable>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </>
   );
 }

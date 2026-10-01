@@ -8,6 +8,7 @@ import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DateInput } from '@/components/ui/DateInput';
 import { formatDateFR } from '@/lib/date/format';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * DemarchePanel — démarches & échéances administratives (PC, DOC, DAACT,
@@ -87,7 +88,7 @@ export function DemarchePanel({ visible, onClose, chantierId }: DemarchePanelPro
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Administratif" sub={chantierNom} onClose={onClose} />
 
@@ -168,7 +169,7 @@ export function DemarchePanel({ visible, onClose, chantierId }: DemarchePanelPro
           </View>
         )}
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

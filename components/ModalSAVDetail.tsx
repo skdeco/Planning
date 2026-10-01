@@ -595,11 +595,11 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
       </View>
 
       {/* Viewer plein écran (images uniquement) */}
-      <Modal visible={!!viewerUri} transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
+      <ModalKeyboard visible={!!viewerUri} transparent animationType="fade" onRequestClose={() => setViewerUri(null)}>
         <Pressable onPress={() => setViewerUri(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', alignItems: 'center', justifyContent: 'center' }}>
           {viewerUri && <Image source={{ uri: viewerUri }} style={{ width: '100%', height: '90%' }} resizeMode="contain" />}
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
     </ModalKeyboard>
   );
 }

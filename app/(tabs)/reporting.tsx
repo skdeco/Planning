@@ -22,6 +22,7 @@ import { ecartJourMinutes, formatEcartHeures, couleurEcart } from '@/lib/pointag
 import { pointagesDuJour } from '@/lib/pointage/historique';
 import { tm } from '@/lib/menuiserie/i18n';
 import { LigneReportingJour } from '@/components/pointage/LigneReportingJour';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const LOGO = require('@/assets/images/sk_deco_logo.png') as number;
@@ -1172,7 +1173,7 @@ export default function ReportingScreen() {
       <EditionPointagesJour visible={editPointageModal} employeId={editEmpId} date={editDate} onFermer={() => setEditPointageModal(false)} />
 
       {/* ── Modal Acompte ── */}
-      <Modal
+      <ModalKeyboard
         visible={showAcompteModal}
         animationType="slide"
         transparent
@@ -1230,7 +1231,7 @@ export default function ReportingScreen() {
             </View>
           </Pressable>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </ScreenContainer>
   );
 }

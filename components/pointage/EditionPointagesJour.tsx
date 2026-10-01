@@ -10,6 +10,7 @@ import { DS, radius } from '@/constants/design';
 import { auteurCourant, modifierPointage, nomChantier, pointagesDuJour } from '@/lib/pointage/historique';
 import { ChoixChantierModal } from './ChoixChantierModal';
 import { tm } from '@/lib/menuiserie/i18n';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 type Ligne = { id: string; type: 'debut' | 'fin'; heure: string; chantierId?: string; nouveau?: boolean; supprime?: boolean };
 const HEURE = /^([01]\d|2[0-3]):[0-5]\d$/;
@@ -72,7 +73,7 @@ export function EditionPointagesJour({ visible, employeId, date, onFermer }: Pro
   const ligneChoix = lignes.find(l => l.id === choixPour);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onFermer}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onFermer}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
         <Pressable style={{ flex: 0.08 }} onPress={onFermer} />
         <View style={{ flex: 1, backgroundColor: DS.background, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 16, gap: 10 }}>
@@ -149,6 +150,6 @@ export function EditionPointagesJour({ visible, employeId, date, onFermer }: Pro
         onChoisir={id => { if (choixPour) maj(choixPour, { chantierId: id }); setChoixPour(null); }}
         onFermer={() => setChoixPour(null)}
       />
-    </Modal>
+    </ModalKeyboard>
   );
 }

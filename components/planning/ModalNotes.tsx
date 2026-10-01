@@ -28,6 +28,7 @@ import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { EnvoiConsigneSheet, type ConsigneAEnvoyer } from '@/components/ui/EnvoiConsigneSheet';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 // ─── Helpers internes ─────────────────────────────────────────────────────────
 
@@ -104,7 +105,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
   const { draft, setDraft, ui, setUi, actions } = useNotesModalLogic(noteModal, setNoteModal);
 
   return (
-    <Modal
+    <ModalKeyboard
       visible={noteModal !== null}
       animationType="slide"
       transparent
@@ -692,7 +693,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
           setNoteDirectionEnCours(null);
         }}
       />
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

@@ -11,6 +11,7 @@ import { DS, radius, space, font } from '@/constants/design';
 import { FilterChip } from '@/components/ui/FilterChip';
 import { StatusPill, type StatusType } from '@/components/ui/StatusPill';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * HonorairesPanel — devis d'honoraires de l'architecte (flux PRIVÉ archi ↔ client).
@@ -313,9 +314,9 @@ export function HonorairesPanel({ visible, onClose, chantierId, auteurId = 'admi
 
   if (embedded) return body;
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       {body}
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

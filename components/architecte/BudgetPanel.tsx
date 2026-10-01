@@ -7,6 +7,7 @@ import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * BudgetPanel — budget consolidé des prescriptions d'un chantier.
@@ -91,7 +92,7 @@ export function BudgetPanel({ visible, onClose, chantierId }: BudgetPanelProps) 
   const pctEnveloppe = enveloppe && enveloppe > 0 ? (total / enveloppe) * 100 : null;
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Budget" sub={chantierNom} onClose={onClose} />
 
@@ -182,7 +183,7 @@ export function BudgetPanel({ visible, onClose, chantierId }: BudgetPanelProps) 
           )}
         </ScrollView>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

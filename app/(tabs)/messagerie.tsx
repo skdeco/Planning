@@ -1195,7 +1195,7 @@ export default function MessagerieScreen() {
 
       {/* Menu contextuel message */}
       {contextMsg && (
-        <Modal visible transparent animationType="fade" onRequestClose={() => setContextMsg(null)}>
+        <ModalKeyboard visible transparent animationType="fade" onRequestClose={() => setContextMsg(null)}>
           <Pressable style={styles.contextOverlay} onPress={() => setContextMsg(null)}>
             <View style={styles.contextMenu}>
               <Text style={styles.contextTitle} numberOfLines={1}>
@@ -1226,7 +1226,7 @@ export default function MessagerieScreen() {
               </Pressable>
             </View>
           </Pressable>
-        </Modal>
+        </ModalKeyboard>
       )}
     </ScreenContainer>
   );

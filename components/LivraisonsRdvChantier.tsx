@@ -15,6 +15,7 @@ import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getStaffNotifTokens } from '@/lib/notif/getStaffNotifTokens';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 interface Props {
   chantierId: string;
@@ -634,7 +635,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
       )}
 
       {/* Modal livraison */}
-      <Modal visible={showLivForm} animationType="fade" transparent onRequestClose={() => setShowLivForm(false)}>
+      <ModalKeyboard visible={showLivForm} animationType="fade" transparent onRequestClose={() => setShowLivForm(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={styles.modal}>
@@ -709,10 +710,10 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
             </View>
           </ScrollView>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* Modal RDV */}
-      <Modal visible={showRdvForm} animationType="fade" transparent onRequestClose={() => setShowRdvForm(false)}>
+      <ModalKeyboard visible={showRdvForm} animationType="fade" transparent onRequestClose={() => setShowRdvForm(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={styles.modal}>
@@ -817,7 +818,7 @@ export function LivraisonsRdvChantier({ chantierId, isAdmin, externRole, created
             </View>
           </ScrollView>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </View>
   );
 }

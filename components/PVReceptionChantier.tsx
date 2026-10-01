@@ -12,6 +12,7 @@ import { DatePickerField } from '@/components/ui/DatePickerField';
 import { SignaturePad } from '@/components/SignaturePad';
 import { todayYMD } from '@/lib/date/today';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -148,7 +149,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
       </View>
 
       {/* Modal édition */}
-      <Modal visible={show} animationType="slide" transparent onRequestClose={() => setShow(false)}>
+      <ModalKeyboard visible={show} animationType="slide" transparent onRequestClose={() => setShow(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', flex: 1 }}>
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -206,10 +207,10 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* Pad de signature */}
-      <Modal visible={signaturePadVisible} animationType="fade" transparent onRequestClose={() => setSignaturePadVisible(false)}>
+      <ModalKeyboard visible={signaturePadVisible} animationType="fade" transparent onRequestClose={() => setSignaturePadVisible(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 16 }}>
             <Text style={{ fontSize: 15, fontWeight: '800', marginBottom: 10, color: '#5C1F2E' }}>Signature client — PV de réception</Text>
@@ -219,7 +220,7 @@ export function PVReceptionChantier({ chantier, isAdmin, externAp }: Props) {
             />
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </View>
   );
 }

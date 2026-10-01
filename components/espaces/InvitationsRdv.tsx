@@ -14,6 +14,7 @@ import { DateInput } from '@/components/ui/DateInput';
 
 import { useLanguage } from '@/app/context/LanguageContext';
 import { tm } from '@/lib/menuiserie/i18n';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 const HEURE_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 function libelleCreneau(c: { date: string; heureDebut: string; heureFin?: string }) {
@@ -99,7 +100,7 @@ export function InvitationsRdv() {
         </View>
       )))}
 
-      <Modal visible={!!cible} transparent animationType="fade" onRequestClose={() => setCible(null)}>
+      <ModalKeyboard visible={!!cible} transparent animationType="fade" onRequestClose={() => setCible(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: DS.surface, borderRadius: radius.xxl, padding: 18, gap: 10 }}>
             <Text style={{ fontSize: 19, fontWeight: '800', color: DS.text }}>{tm("Proposer d'autres dates")}</Text>
@@ -122,7 +123,7 @@ export function InvitationsRdv() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </View>
   );
 }

@@ -5,6 +5,7 @@ import type { LotAvancement, SnapshotAvancement } from '@/app/types';
 import { DS } from '@/constants/design';
 import { ProgressBar } from './ProgressBar';
 import { calculerSnapshot, creerSnapshot } from '@/lib/snapshotsHelpers';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * AvancementLotsPanel — Gestion des lots / corps de métier (palette V10).
@@ -329,7 +330,7 @@ export function AvancementLotsPanel({
       )}
 
       {/* Modal d'édition lot (l'import est rendu dans le parent via ImportLotsDevisOverlay) */}
-      <Modal visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
+      <ModalKeyboard visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
         <Pressable style={styles.modalOverlay} onPress={() => setShowForm(false)}>
           <Pressable style={styles.modalSheet} onPress={() => { /* swallow */ }}>
             <Text style={styles.modalTitle}>
@@ -388,7 +389,7 @@ export function AvancementLotsPanel({
             </View>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
     </View>
   );
 }

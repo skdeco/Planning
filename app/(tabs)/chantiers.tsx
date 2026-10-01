@@ -1432,7 +1432,7 @@ export default function ChantiersScreen() {
     );
   };
 
-  // Pattern close + timeout 150ms : iOS bloque 2 <Modal> frères ouverts.
+  // Pattern close + timeout 150ms : iOS bloque 2 <ModalKeyboard> frères ouverts.
   // On ferme la liste avant d'ouvrir le modal cible. Cohérent règle #13
   // (DETTE-MODAL-CLOSE-PATTERN).
   const openSavDetailFromListe = (ticketId: string) => {
@@ -1695,7 +1695,7 @@ export default function ChantiersScreen() {
       )}
 
       {/* ── Modal menu actions chantier ── */}
-      <Modal visible={actionChantier !== null} transparent animationType="slide" onRequestClose={() => setActionChantier(null)}>
+      <ModalKeyboard visible={actionChantier !== null} transparent animationType="slide" onRequestClose={() => setActionChantier(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           {/* Fermeture uniquement en tapant en dehors de la feuille (zone sombre), pas sur un vide de la grille */}
           <Pressable style={StyleSheet.absoluteFill} onPress={() => setActionChantier(null)} />
@@ -1821,10 +1821,10 @@ export default function ChantiersScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal PV de réception V2 (admin) ── */}
-      <Modal
+      <ModalKeyboard
         visible={showPVChantier !== null}
         animationType="slide"
         transparent
@@ -1847,7 +1847,7 @@ export default function ChantiersScreen() {
             })()}
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal formulaire chantier (admin) ── */}
       <ModalKeyboard visible={showForm} animationType="slide" transparent onRequestClose={() => setShowForm(false)}>
@@ -3762,7 +3762,7 @@ export default function ChantiersScreen() {
       <ModalNotes noteModal={noteModalChantier} setNoteModal={setNoteModalChantier} />
 
       {/* V10 — Modal Livraisons admin (wrapper de LivraisonsRdvChantier) */}
-      <Modal
+      <ModalKeyboard
         visible={livraisonsChantierId !== null}
         animationType="slide"
         transparent
@@ -3799,10 +3799,10 @@ export default function ChantiersScreen() {
             })()}
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* V10 — Modal Messagerie admin (ChatChantier réutilisé) */}
-      <Modal
+      <ModalKeyboard
         visible={messagerieChantierId !== null}
         animationType="slide"
         transparent
@@ -3834,7 +3834,7 @@ export default function ChantiersScreen() {
             })()}
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {marchesChantierId && (
         <MarchesChantier visible={!!marchesChantierId} onClose={() => backToDash(() => setMarchesChantierId(null))} chantierId={marchesChantierId} />
@@ -3899,7 +3899,7 @@ export default function ChantiersScreen() {
       />
 
       {/* ── Modal SAV (refacto C3b : utilise ModalSAVDetail + ModalNouveauTicketSAV) ── */}
-      <Modal visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => backToDash(() => setSavChantierId(null))}>
+      <ModalKeyboard visible={savChantierId !== null} animationType="slide" transparent onRequestClose={() => backToDash(() => setSavChantierId(null))}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' }}>
           <Pressable style={{ flex: 1 }} onPress={() => backToDash(() => setSavChantierId(null))} />
           <View style={savListeStyles.container}>
@@ -4006,7 +4006,7 @@ export default function ChantiersScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ModalSAVDetail mode admin (depuis Tab Chantiers) */}
       {savDetailId && (
@@ -4034,14 +4034,14 @@ export default function ChantiersScreen() {
       )}
 
       {/* Viewer photo plein écran (cachette clé, etc.) */}
-      <Modal visible={viewPhotoUri !== null} transparent animationType="fade" onRequestClose={() => setViewPhotoUri(null)}>
+      <ModalKeyboard visible={viewPhotoUri !== null} transparent animationType="fade" onRequestClose={() => setViewPhotoUri(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.95)', justifyContent: 'center', alignItems: 'center' }} onPress={() => setViewPhotoUri(null)}>
           {viewPhotoUri && <Image source={{ uri: viewPhotoUri }} style={{ width: '100%', height: '80%' }} resizeMode="contain" />}
           <Pressable style={{ position: 'absolute', top: 50, right: 20, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.2)', alignItems: 'center', justifyContent: 'center' }} onPress={() => setViewPhotoUri(null)}>
             <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>✕</Text>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
       <OrdreChantiersModal visible={showOrdreChantiers} onClose={() => setShowOrdreChantiers(false)} />
       <ItineraireSheet adresse={itineraireAdresse} onClose={() => setItineraireAdresse(null)} />
     </ScreenContainer>

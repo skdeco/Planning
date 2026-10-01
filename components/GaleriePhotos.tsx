@@ -11,6 +11,7 @@ import { NativeFilePickerButton } from '@/components/share/NativeFilePickerButto
 import type { PickedFile } from '@/lib/share/pickNativeFile';
 import type { PhotoChantier } from '@/app/types';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 type TriMode = 'chantier' | 'employe' | 'semaine';
 
@@ -178,7 +179,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
   };
 
   return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose} onDismiss={() => { setSelectedPhoto(null); clearSelection(); }}>
+    <ModalKeyboard visible={visible} transparent animationType="slide" onRequestClose={onClose} onDismiss={() => { setSelectedPhoto(null); clearSelection(); }}>
       <View style={styles.overlay}>
         <Pressable style={{ flex: 1 }} onPress={onClose} />
         <View style={[styles.sheet, { maxHeight: '95%' }]}>
@@ -355,7 +356,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
         const goPrev = () => { if (hasPrev) setSelectedPhoto(allPhotos[idx - 1]); };
         const goNext = () => { if (hasNext) setSelectedPhoto(allPhotos[idx + 1]); };
         return (
-        <Modal visible transparent animationType="fade" onRequestClose={() => setSelectedPhoto(null)}>
+        <ModalKeyboard visible transparent animationType="fade" onRequestClose={() => setSelectedPhoto(null)}>
           <View style={styles.viewer}>
             {selectedPhoto.uri ? (
               <Image source={{ uri: selectedPhoto.uri }} style={styles.viewerImg} resizeMode="contain" />
@@ -422,10 +423,10 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
               <Text style={{ color: '#fff', fontSize: 18, fontWeight: '700' }}>✕</Text>
             </Pressable>
           </View>
-        </Modal>
+        </ModalKeyboard>
         );
       })()}
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

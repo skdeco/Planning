@@ -20,6 +20,7 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import type { InboxItem } from '@/lib/share/inboxStore';
 import type { PickedFile } from '@/lib/share/pickNativeFile';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -279,7 +280,7 @@ export function ModalPlansChantier({
   ];
 
   return (
-    <Modal
+    <ModalKeyboard
       visible={visible}
       animationType="slide"
       transparent
@@ -467,7 +468,7 @@ export function ModalPlansChantier({
           </ScrollView>
         </View>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

@@ -30,6 +30,7 @@ import { Ico } from '@/components/ui/Ico';
 import { RdvDuJour } from '@/components/espaces/RdvDuJour';
 import { AlertePointagesSansChantier } from '@/components/pointage/AlertePointagesSansChantier';
 import { PhotosRapides } from '@/components/photos/PhotosRapides';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -1657,7 +1658,7 @@ export default function DashboardScreen() {
         )}
 
         {/* Modal historique complet */}
-        <Modal visible={showHistorique} transparent animationType="slide" onRequestClose={() => setShowHistorique(false)}>
+        <ModalKeyboard visible={showHistorique} transparent animationType="slide" onRequestClose={() => setShowHistorique(false)}>
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
             <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%', padding: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
@@ -1710,7 +1711,7 @@ export default function DashboardScreen() {
               </ScrollView>
             </View>
           </View>
-        </Modal>
+        </ModalKeyboard>
       </ScrollView>
       <ImportExcel visible={showImport} onClose={() => setShowImport(false)} />
       <GlobalSearch visible={searchOpen} onClose={() => setSearchOpen(false)} />

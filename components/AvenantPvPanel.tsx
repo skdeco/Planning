@@ -7,6 +7,7 @@ import { useApp } from '@/app/context/AppContext';
 import { genererAvenantPdf } from '@/lib/pv/genererAvenantPdf';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * AvenantPvPanel — avenants / annexes complémentaires au PV de réception.
@@ -129,7 +130,7 @@ export function AvenantPvPanel({ visible, onClose, chantierId, embedded = false 
   }
 
   return (
-    <Modal visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <View style={styles.header}>
           <View style={{ flex: 1 }}>
@@ -179,7 +180,7 @@ export function AvenantPvPanel({ visible, onClose, chantierId, embedded = false 
           </View>
         )}
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

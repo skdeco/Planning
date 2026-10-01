@@ -206,7 +206,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
       </View>
 
       {/* Liste déroulante (choix simple : se ferme ; choix multiple : cases à cocher + OK) */}
-      <Modal visible={!!liste} transparent animationType="fade" onRequestClose={() => setListe(null)}>
+      <ModalKeyboard visible={!!liste} transparent animationType="fade" onRequestClose={() => setListe(null)}>
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
           <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setListe(null)} />
           <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 8, width: '100%', maxWidth: estHeure ? 240 : 360, maxHeight: '75%' }}>
@@ -272,7 +272,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
             )}
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </ModalKeyboard>
   );
 }

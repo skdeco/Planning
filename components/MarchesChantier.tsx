@@ -1507,7 +1507,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
         </View>
       </ModalKeyboard>
       {/* ── Sélecteur multi-options (fonctionne sur iOS, Android et web) ── */}
-      <Modal visible={chooser !== null} transparent animationType="fade" onRequestClose={() => setChooser(null)}>
+      <ModalKeyboard visible={chooser !== null} transparent animationType="fade" onRequestClose={() => setChooser(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 }} onPress={() => setChooser(null)}>
           <Pressable style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, gap: 8, maxWidth: 440, width: '100%', alignSelf: 'center' }} onPress={() => {}}>
             <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{chooser?.title}</Text>
@@ -1527,7 +1527,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
             </Pressable>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
     </ModalKeyboard>
   );
 }

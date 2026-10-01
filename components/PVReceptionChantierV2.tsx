@@ -22,6 +22,7 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { SignaturePad } from '@/components/SignaturePad';
 import { AvenantPvPanel } from '@/components/AvenantPvPanel';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 const DEFAULT_PAIEMENT = 'chèque ou virement instantané, avant de quitter le chantier';
 
@@ -951,7 +952,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
       </ScrollView>
 
       {/* Modal SignaturePad (entreprise OU client) */}
-      <Modal
+      <ModalKeyboard
         visible={showSignaturePad !== null}
         animationType="fade"
         transparent
@@ -976,11 +977,11 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
             />
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* Modal aperçu signature (data URI inline) */}
       {previewSignatureUri && (
-        <Modal
+        <ModalKeyboard
           visible
           animationType="fade"
           transparent
@@ -1002,11 +1003,11 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
               resizeMode="contain"
             />
           </View>
-        </Modal>
+        </ModalKeyboard>
       )}
 
       {/* Sheet sélection pièces */}
-      <Modal
+      <ModalKeyboard
         visible={showPickerSheet}
         animationType="slide"
         transparent
@@ -1089,7 +1090,7 @@ export function PVReceptionChantierV2({ chantier, isAdmin, isClient, onClose }: 
             </View>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* Modal édition réserve */}
       {editingReserve && (
@@ -1194,7 +1195,7 @@ function ReserveEditorModal({
   };
 
   return (
-    <Modal visible animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.editorOverlay}>
         <Pressable style={{ flex: 1 }} onPress={onClose} />
         <View style={styles.editorSheet}>
@@ -1318,7 +1319,7 @@ function ReserveEditorModal({
           </View>
         </View>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

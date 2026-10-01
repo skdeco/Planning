@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { View, Text, StyleSheet, Modal, Pressable, ScrollView, TextInput, KeyboardAvoidingView, Keyboard, Platform, useWindowDimensions } from 'react-native';
 import { ChevronDown, Check, Search } from 'lucide-react-native';
 import { useLanguage } from '@/app/context/LanguageContext';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * SelectField — liste déroulante réutilisable (remplace les rangées de chips).
@@ -52,7 +53,7 @@ export function SelectField({ value, options, onSelect, placeholder, searchable 
         <ChevronDown size={16} color="#6E5F54" strokeWidth={2} />
       </Pressable>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <ModalKeyboard visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <Pressable style={styles.overlay} onPress={() => { Keyboard.dismiss(); setOpen(false); }}>
           <Pressable style={styles.sheet} onPress={() => {}}>
@@ -90,7 +91,7 @@ export function SelectField({ value, options, onSelect, placeholder, searchable 
           </Pressable>
         </Pressable>
         </KeyboardAvoidingView>
-      </Modal>
+      </ModalKeyboard>
     </>
   );
 }

@@ -1843,7 +1843,7 @@ export default function EquipeScreen() {
       </ModalKeyboard>
 
       {/* ── Modal Documents RH Employé ── */}
-      <Modal visible={showDocsModal} animationType="slide" transparent onRequestClose={() => setShowDocsModal(false)}>
+      <ModalKeyboard visible={showDocsModal} animationType="slide" transparent onRequestClose={() => setShowDocsModal(false)}>
         <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setShowDocsModal(false)} />
           <Pressable style={[styles.modalSheet, { maxHeight: '90%' }]} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
@@ -1916,7 +1916,7 @@ export default function EquipeScreen() {
             </ScrollView>
           </Pressable>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Sous-traitant ── */}
       <ModalKeyboard visible={showSTForm} animationType="slide" transparent onRequestClose={() => setShowSTForm(false)}>
@@ -2311,7 +2311,7 @@ export default function EquipeScreen() {
       </ModalKeyboard>
 
       {/* ── Modal historique chantiers par employé ── */}
-      <Modal visible={historiqueEmployeId !== null} transparent animationType="fade" onRequestClose={() => setHistoriqueEmployeId(null)}>
+      <ModalKeyboard visible={historiqueEmployeId !== null} transparent animationType="fade" onRequestClose={() => setHistoriqueEmployeId(null)}>
         <View style={styles.modalOverlay}><Pressable style={{ flex: 0.05 }} onPress={() => setHistoriqueEmployeId(null)} />
           <Pressable style={[styles.modalSheet, { maxHeight: '80%' }]} onPress={e => e.stopPropagation()}>
             <View style={styles.modalHandle} />
@@ -2413,10 +2413,10 @@ export default function EquipeScreen() {
             })()}
           </Pressable>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Nouveau Métier ── */}
-      <Modal visible={showNewMetier} transparent animationType="fade" onRequestClose={() => setShowNewMetier(false)}>
+      <ModalKeyboard visible={showNewMetier} transparent animationType="fade" onRequestClose={() => setShowNewMetier(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, width: '100%', maxWidth: 400 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#2B1D14', marginBottom: 16 }}>{t.equipe.newMetier}</Text>
@@ -2450,10 +2450,10 @@ export default function EquipeScreen() {
             </View>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Disponibilité ── */}
-      <Modal visible={showDispo} transparent animationType="slide" onRequestClose={() => setShowDispo(false)}>
+      <ModalKeyboard visible={showDispo} transparent animationType="slide" onRequestClose={() => setShowDispo(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '80%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -2546,7 +2546,7 @@ export default function EquipeScreen() {
             </ScrollView>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </ScreenContainer>
   );
 }

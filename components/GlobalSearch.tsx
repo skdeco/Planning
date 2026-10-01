@@ -17,6 +17,7 @@ import {
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, space, font } from '@/constants/design';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 type FilterType = 'chantier' | 'employe' | 'st' | 'article' | 'sav' | 'devis' | 'docSociete' | 'apporteur';
 
@@ -133,7 +134,7 @@ export function GlobalSearch({ visible, onClose }: Props) {
   const close = () => { setQuery(''); setActive(new Set()); onClose(); };
 
   return (
-    <Modal visible={visible} animationType="slide" onRequestClose={close} presentationStyle="fullScreen">
+    <ModalKeyboard visible={visible} animationType="slide" onRequestClose={close} presentationStyle="fullScreen">
       <View style={styles.container}>
         {/* Barre de recherche */}
         <View style={styles.searchRow}>
@@ -204,7 +205,7 @@ export function GlobalSearch({ visible, onClose }: Props) {
           <View style={{ height: 40 }} />
         </ScrollView>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

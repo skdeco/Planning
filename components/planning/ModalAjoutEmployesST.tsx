@@ -17,6 +17,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { METIER_COLORS, INTERVENTION_COLORS, type Affectation } from '@/app/types';
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 // ─── Helpers de date locaux ───────────────────────────────────────────────────
 //
@@ -266,7 +267,7 @@ export function ModalAjoutEmployesST({
   // ─── JSX ───────────────────────────────────────────────────────────────────
 
   return (
-    <Modal
+    <ModalKeyboard
       visible={modal !== null}
       animationType="slide"
       transparent
@@ -536,7 +537,7 @@ export function ModalAjoutEmployesST({
           </Pressable>
         </KeyboardAvoidingView>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

@@ -10,6 +10,7 @@ import { DocInboxButton } from '@/components/share/DocInboxButton';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DateInput } from '@/components/ui/DateInput';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * SousTraitantsChantier — sous-traitants affiliés à un chantier : devis + acomptes
@@ -113,7 +114,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
   ]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Sous-traitants" sub={chantierNom} onClose={onClose} />
 
@@ -218,7 +219,7 @@ export function SousTraitantsChantier({ visible, onClose, chantierId }: SousTrai
           </View>
         )}
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

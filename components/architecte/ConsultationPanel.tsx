@@ -6,6 +6,7 @@ import { useApp } from '@/app/context/AppContext';
 import { PanelHeader } from '@/components/ui/PanelHeader';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * ConsultationPanel — consultation des entreprises par lot (DCE).
@@ -81,7 +82,7 @@ export function ConsultationPanel({ visible, onClose, chantierId }: Consultation
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Consultation" sub={chantierNom ? `${chantierNom} · DCE` : undefined} onClose={onClose} />
 
@@ -167,7 +168,7 @@ export function ConsultationPanel({ visible, onClose, chantierId }: Consultation
           </View>
         )}
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

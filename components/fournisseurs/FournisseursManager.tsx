@@ -7,6 +7,7 @@ import { useApp } from '@/app/context/AppContext';
 import { fournisseurSlug } from '@/app/context/AppContext';
 import type { Fournisseur } from '@/app/types';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * Carnet d'adresses fournisseurs : liste des fiches + formulaire détaillé
@@ -142,7 +143,7 @@ export function FournisseursManager({ onClose, title = 'Fournisseurs' }: Props) 
       ) : null}
 
       {/* Formulaire fiche (ajout / édition) */}
-      <Modal visible={form !== null} transparent animationType="slide" onRequestClose={() => setForm(null)}>
+      <ModalKeyboard visible={form !== null} transparent animationType="slide" onRequestClose={() => setForm(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' }}>
           <Pressable style={{ flex: 1 }} onPress={() => setForm(null)} />
           <View style={{ backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: space.lg, maxHeight: '90%' }}>
@@ -190,7 +191,7 @@ export function FournisseursManager({ onClose, title = 'Fournisseurs' }: Props) 
             </View>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </View>
   );
 }

@@ -8,6 +8,7 @@ import { DS, radius } from '@/constants/design';
 import type { Chantier } from '@/app/types';
 import { chantiersPointables, formatDistance, type ChantierProche } from '@/lib/pointage/geo';
 import { tm } from '@/lib/menuiserie/i18n';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 interface Props {
   visible: boolean;
@@ -40,7 +41,7 @@ export function ChoixChantierModal({ visible, titre, message, chantiers, proches
   }, [chantiers, proches, recherche, prioritaires]);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onFermer}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onFermer}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.35)', justifyContent: 'flex-end' }}>
         <Pressable style={{ flex: 1 }} onPress={onFermer} accessibilityLabel={tm('Fermer')} />
         <View style={{ backgroundColor: DS.background, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 16, paddingBottom: 32, maxHeight: '80%', gap: 10 }}>
@@ -77,6 +78,6 @@ export function ChoixChantierModal({ visible, titre, message, chantiers, proches
           </Pressable>
         </View>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }

@@ -68,7 +68,8 @@ export function ScreenContainer({
       >
         <KeyboardAvoidingView
           style={{ flex: 1 }}
-          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          // Android bord à bord : sans « height », le clavier recouvre les champs de saisie
+          behavior={Platform.OS === 'ios' ? 'padding' : Platform.OS === 'android' ? 'height' : undefined}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
           <View className={cn("flex-1", className)}>{children}</View>

@@ -9,6 +9,7 @@ import { DS, radius, space, font } from '@/constants/design';
 import { ProgressBar } from '@/components/ui/ProgressBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { DateInput } from '@/components/ui/DateInput';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * PhasePanel — planning de phases (DET) : jalons clés + phases/lots avec
@@ -171,7 +172,7 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Planning" sub={chantierNom} onClose={onClose} />
 
@@ -274,7 +275,7 @@ export function PhasePanel({ visible, onClose, chantierId }: PhasePanelProps) {
           </View>
         )}
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

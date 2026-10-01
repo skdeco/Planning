@@ -15,6 +15,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { DatePickerField } from '@/components/ui/DatePickerField';
 import { todayYMD } from '@/lib/date/today';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 function daysBetween(a: string, b: string): number {
@@ -333,7 +334,7 @@ export default function SocieteScreen() {
       </ScrollView>
 
       {/* Modal création / édition */}
-      <Modal visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
+      <ModalKeyboard visible={showForm} transparent animationType="fade" onRequestClose={() => setShowForm(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
@@ -419,7 +420,7 @@ export default function SocieteScreen() {
             </View>
           </ScrollView>
         </View>
-      </Modal>
+      </ModalKeyboard>
     </ScreenContainer>
   );
 }

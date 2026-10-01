@@ -5,6 +5,7 @@ import { CHANTIER_COLORS } from '@/app/types';
 import type { Apporteur, Chantier } from '@/app/types';
 import { DS } from '@/constants/design';
 import { DateInput } from '@/components/ui/DateInput';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * CreerChantierArchi — l'ARCHITECTE crée lui-même un chantier (Niveau 1, mono-tenant).
@@ -111,7 +112,7 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={close}>
       <View style={styles.overlay}>
         <View style={styles.sheet}>
           <View style={styles.header}>
@@ -193,7 +194,7 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
           )}
         </View>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

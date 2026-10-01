@@ -11,6 +11,7 @@ import { extractTextFromPdfUrl } from '@/lib/pdfExtract';
 import { extrairePiecesDuTexte } from '@/lib/plansMetresParser';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * MetresPanel — pièces du chantier + métrés (sol / HSP / murs).
@@ -124,7 +125,7 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
   };
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Métrés" sub={chantierNom} onClose={onClose} />
 
@@ -229,7 +230,7 @@ export function MetresPanel({ visible, onClose, chantierId }: MetresPanelProps) 
           </View>
         )}
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

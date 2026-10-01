@@ -22,6 +22,7 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { DateInput } from '@/components/ui/DateInput';
 import { SelectField } from '@/components/ui/SelectField';
 import { EnvoiConsigneSheet, type ConsigneAEnvoyer } from '@/components/ui/EnvoiConsigneSheet';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 export interface SuiviCRPanelProps {
   visible: boolean;
@@ -370,7 +371,7 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -380,7 +381,7 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
           <View style={styles.sheet}>{content}</View>
         </View>
       </KeyboardAvoidingView>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

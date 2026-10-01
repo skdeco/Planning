@@ -3,6 +3,7 @@ import { Ico } from '@/components/ui/Ico';
 import {
   View, Text, StyleSheet, Pressable, Modal, TextInput,
 } from 'react-native';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 const JOURS = ['Lu', 'Ma', 'Me', 'Je', 'Ve', 'Sa', 'Di'];
 const MOIS = [
@@ -112,7 +113,7 @@ export function DatePicker({ value, onChange, label, placeholder = 'JJ/MM/AAAA',
         <Ico e="📅" size={16} />
       </Pressable>
 
-      <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+      <ModalKeyboard visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
         <Pressable style={styles.overlay} onPress={() => setOpen(false)}>
           <Pressable style={styles.calSheet} onPress={e => e.stopPropagation()}>
             {/* Navigation mois */}
@@ -175,7 +176,7 @@ export function DatePicker({ value, onChange, label, placeholder = 'JJ/MM/AAAA',
             </Pressable>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
     </View>
   );
 }

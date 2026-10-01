@@ -9,6 +9,7 @@ import { useApp } from '@/app/context/AppContext';
 import { useCellAffectationManager } from '@/hooks/useCellAffectationManager';
 import { DS, radius } from '@/constants/design';
 import { tm } from '@/lib/menuiserie/i18n';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 export interface CibleAffectation { chantierId: string; employeId: string; date: string }
 
@@ -80,7 +81,7 @@ export function FicheAffectationJour({ cible, onFermer, onNotes, onDeplacer }: P
   );
 
   return (
-    <Modal visible transparent animationType="slide" onRequestClose={onFermer}>
+    <ModalKeyboard visible transparent animationType="slide" onRequestClose={onFermer}>
       <View style={{ flex: 1, justifyContent: 'flex-end' }}>
         <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.35)' }} onPress={onFermer} />
         <View style={{ backgroundColor: DS.background, borderTopLeftRadius: radius.xl, borderTopRightRadius: radius.xl, padding: 16, paddingBottom: 32, gap: 10 }}>
@@ -125,6 +126,6 @@ export function FicheAffectationJour({ cible, onFermer, onNotes, onDeplacer }: P
           )}
         </View>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }

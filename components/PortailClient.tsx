@@ -51,6 +51,7 @@ import { todayYMD, dateOffsetYMD } from '@/lib/date/today';
 import { canVoirOnglet, type OngletPortail } from '@/lib/portail/permissions';
 import { DateInput } from '@/components/ui/DateInput';
 import { Ico } from '@/components/ui/Ico';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /** Filtre mime pour InboxPickerButton : photos + PDF (réutilisé d'autres écrans). */
 const inboxMimeFilterImagePdf = (m: string): boolean =>
@@ -1276,7 +1277,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
 
   if (!chantier) {
     return (
-      <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center' }}>
             <Text style={{ fontSize: 15, color: '#6E5F54', marginBottom: 16 }}>Chantier introuvable</Text>
@@ -1285,7 +1286,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </Pressable>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
     );
   }
 
@@ -1422,7 +1423,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   }
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <View style={styles.container}>
           {/* ── Header ── */}
@@ -2416,7 +2417,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       </View>
 
       {/* ── Modal Picker Contact ── */}
-      <Modal visible={pickerType !== null} animationType="fade" transparent onRequestClose={() => setPickerType(null)}>
+      <ModalKeyboard visible={pickerType !== null} animationType="fade" transparent onRequestClose={() => setPickerType(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '80%' }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 12 }}>
@@ -2452,10 +2453,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </Pressable>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Photos Picker ── */}
-      <Modal visible={showPhotosPicker} animationType="slide" transparent onRequestClose={() => setShowPhotosPicker(false)}>
+      <ModalKeyboard visible={showPhotosPicker} animationType="slide" transparent onRequestClose={() => setShowPhotosPicker(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%', flex: 1 }}>
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
@@ -2494,10 +2495,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Form Corps de métier ── */}
-      <Modal visible={showCorpsForm} animationType="fade" transparent onRequestClose={() => setShowCorpsForm(false)}>
+      <ModalKeyboard visible={showCorpsForm} animationType="fade" transparent onRequestClose={() => setShowCorpsForm(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView
             style={{ maxHeight: '90%' }}
@@ -2662,10 +2663,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
           </View>
           </ScrollView>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal commentaire client ── */}
-      <Modal visible={!!commentaireLotId} animationType="fade" transparent onRequestClose={() => setCommentaireLotId(null)}>
+      <ModalKeyboard visible={!!commentaireLotId} animationType="fade" transparent onRequestClose={() => setCommentaireLotId(null)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
             <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 4 }}>Nouveau commentaire</Text>
@@ -2694,10 +2695,10 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Import lots depuis devis ── */}
-      <Modal visible={showImportDevis} animationType="slide" transparent onRequestClose={() => setShowImportDevis(false)}>
+      <ModalKeyboard visible={showImportDevis} animationType="slide" transparent onRequestClose={() => setShowImportDevis(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', flex: 1 }}>
             <View style={{ padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' }}>
@@ -2835,7 +2836,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
             </View>
           </View>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal SAV Détail (édition selon mode admin/lecture-commentaire) ── */}
       {savDetailId && (
@@ -2878,7 +2879,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
       <AnnuairePanel visible={portalPanel === 'annuaire'} onClose={() => setPortalPanel(null)} chantierId={chantierId} />
       <GaleriePhotos visible={galerieOpen} onClose={() => setGalerieOpen(false)} chantierId={chantierId} titre={`Photos — ${chantier?.nom || ''}`} />
       <DriveChantier visible={driveOpen} onClose={() => setDriveOpen(false)} chantierId={chantierId} readonly={!isAdmin} />
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

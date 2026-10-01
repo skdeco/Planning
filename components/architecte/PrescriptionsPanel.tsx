@@ -16,13 +16,14 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { FilterChip } from '@/components/ui/FilterChip';
 import { StatusPill, type StatusType } from '@/components/ui/StatusPill';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 /**
  * PrescriptionsPanel — prescriptions matériaux & déco d'un chantier.
  * Boucle archi → entreprise → client (statut). Palette V10 bordeaux/crème.
  *
  * Panel plein écran (pattern SuiviCRPanel). Le formulaire d'ajout est rendu
- * en overlay inline — jamais en <Modal> imbriquée (fix bug Modal-on-Modal iOS).
+ * en overlay inline — jamais en <ModalKeyboard> imbriquée (fix bug Modal-on-Modal iOS).
  */
 export interface PrescriptionsPanelProps {
   visible?: boolean;
@@ -584,9 +585,9 @@ export function PrescriptionsPanel({ visible, onClose, chantierId, auteurId = 'a
   );
   if (embedded) return body;
   return (
-    <Modal visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
       {body}
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

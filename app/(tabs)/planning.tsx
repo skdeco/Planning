@@ -838,7 +838,7 @@ export default function PlanningScreen() {
       </View>
 
           {/* Menu ⋯ : actions secondaires */}
-          <Modal visible={showMenuActions} transparent animationType="fade" onRequestClose={() => setShowMenuActions(false)}>
+          <ModalKeyboard visible={showMenuActions} transparent animationType="fade" onRequestClose={() => setShowMenuActions(false)}>
             <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 110, paddingHorizontal: 16 }} onPress={() => setShowMenuActions(false)}>
               <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 6, minWidth: 260, shadowColor: '#000', shadowOpacity: 0.12, shadowRadius: 12, elevation: 6 }}>
                 {actionsMenu.map(a => {
@@ -853,7 +853,7 @@ export default function PlanningScreen() {
                 })}
               </View>
             </Pressable>
-          </Modal>
+          </ModalKeyboard>
 
           {/* Toggle vue semaine / mois / gantt — masqué en planning direction */}
           {modeEquipe && (
@@ -941,7 +941,7 @@ export default function PlanningScreen() {
       </View>
 
       {/* Modal calendrier de navigation */}
-      <Modal visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
+      <ModalKeyboard visible={showDatePicker} transparent animationType="fade" onRequestClose={() => setShowDatePicker(false)}>
         <Pressable style={styles.datePickerOverlay} onPress={() => setShowDatePicker(false)}>
           <Pressable style={styles.datePickerSheet} onPress={() => {}}>
             <Text style={styles.datePickerTitle}>{t.common.goToWeek}</Text>
@@ -967,7 +967,7 @@ export default function PlanningScreen() {
             </Pressable>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
 
       {/* Vue mensuelle */}
       {viewMode === 'mois' && (
@@ -1088,7 +1088,7 @@ export default function PlanningScreen() {
       />
 
       {/* ── Modal Fiche Chantier (lecture seule dans le planning) ── */}
-      <Modal
+      <ModalKeyboard
         visible={ficheModal !== null}
         animationType="slide"
         transparent
@@ -1167,7 +1167,7 @@ export default function PlanningScreen() {
             </Pressable>
           </Pressable>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal ajout/suppression employés + sous-traitants (Admin) ── */}
       <ModalAjoutEmployesST
@@ -1509,7 +1509,7 @@ export default function PlanningScreen() {
         </View>
       </ModalKeyboard>
       {/* ── Modal ordre affectations multi-chantiers ── */}
-      <Modal
+      <ModalKeyboard
         visible={ordreModal !== null}
         animationType="fade"
         transparent
@@ -1585,7 +1585,7 @@ export default function PlanningScreen() {
             })()}
           </Pressable>
         </View>
-      </Modal>
+      </ModalKeyboard>
 
     </>
     )}

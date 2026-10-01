@@ -813,7 +813,7 @@ export default function RHScreen() {
       </ModalKeyboard>
 
       {/* ── Modal arrêt maladie ── */}
-      <Modal visible={showArretModal} transparent animationType="slide" onRequestClose={() => setShowArretModal(false)}>
+      <ModalKeyboard visible={showArretModal} transparent animationType="slide" onRequestClose={() => setShowArretModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowArretModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>{t.rh.declareSick}</Text>
@@ -902,7 +902,7 @@ export default function RHScreen() {
             </Pressable>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal demande d'avance ── */}
       <ModalKeyboard visible={showAvanceModal} transparent animationType="slide" onRequestClose={() => setShowAvanceModal(false)}>
@@ -943,7 +943,7 @@ export default function RHScreen() {
       </ModalKeyboard>
 
       {/* ── Modal sélection mois/année fiche de paie ── */}
-      <Modal visible={showPaieModal} transparent animationType="slide" onRequestClose={() => setShowPaieModal(false)}>
+      <ModalKeyboard visible={showPaieModal} transparent animationType="slide" onRequestClose={() => setShowPaieModal(false)}>
         <Pressable style={styles.overlay} onPress={() => setShowPaieModal(false)}>
           <Pressable style={styles.sheet} onPress={e => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>{t.rh.uploadPayslip}</Text>
@@ -993,7 +993,7 @@ export default function RHScreen() {
             )}
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal réponse RH ── */}
       <ModalKeyboard visible={showReponseModal} transparent animationType="slide" onRequestClose={() => setShowReponseModal(false)}>

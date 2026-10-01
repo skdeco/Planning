@@ -1260,7 +1260,7 @@ export default function MaterielScreen() {
       </ModalKeyboard>
 
       {/* ── Modal Picker Fournisseur (modifier fournisseur article existant) ── */}
-      <Modal visible={!!fournisseurPickerModal} transparent animationType="fade" onRequestClose={() => setFournisseurPickerModal(null)}>
+      <ModalKeyboard visible={!!fournisseurPickerModal} transparent animationType="fade" onRequestClose={() => setFournisseurPickerModal(null)}>
         <Pressable style={styles.modalOverlay} onPress={() => setFournisseurPickerModal(null)}>
           <Pressable style={[styles.modalContent, { maxHeight: '60%' }]} onPress={e => e.stopPropagation()}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
@@ -1288,7 +1288,7 @@ export default function MaterielScreen() {
             </ScrollView>
           </Pressable>
         </Pressable>
-      </Modal>
+      </ModalKeyboard>
 
       {/* ── Modal Achat Partiel ── */}
       <ModalKeyboard visible={!!partielModal} transparent animationType="fade" onRequestClose={() => { setPartielModal(null); setPartielQty(''); }}>
