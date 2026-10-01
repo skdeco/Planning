@@ -1,8 +1,9 @@
 /**
  * Pointage sans affectation : un seul bouton Arrivée / Départ.
- * La position choisit le chantier en cours le plus proche ; au-delà du rayon
- * (300 m par défaut), le pointage est « hors zone » : l'employé choisit le chantier
- * et l'administrateur est prévenu. Chaque pointage du jour peut être réaffecté en un tap.
+ * La position choisit le chantier en cours le plus proche. Au-delà du rayon
+ * (300 m par défaut), le pointage est enregistré « hors zone » SANS chantier :
+ * on ne demande rien à l'employé ; l'admin et les RH sont prévenus et le
+ * renseignent eux-mêmes (alerte sur l'accueil).
  */
 import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
@@ -41,7 +42,10 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
     const nom = emp ? `${emp.prenom} ${emp.nom}` : '';
     const lib = p.type === 'debut' ? 'arrivée' : 'départ';
     const detail = plus ? `à ${formatDistance(plus.distance)} de ${plus.chantier.nom}` : 'position inconnue';
-    sendPushNotification(getAdminPushTokens(data.employes, data.adminEmployeId), 'Pointage hors zone', `${nom} : ${lib} à ${p.heure}, ${detail}`).catch(() => {});
+    // Admin + RH : ils renseignent le chantier depuis l'accueil
+    const tokens = new Set(getAdminPushTokens(data.employes, data.adminEmployeId));
+    data.employes.filter(e => e.isRH && e.pushToken).forEach(e => tokens.add(e.pushToken!));
+    sendPushNotification([...tokens], 'Pointage sans chantier', `${nom} : ${lib} à ${p.heure}, ${detail}. Chantier à renseigner.`).catch(() => {});
   };
 
   const pointer = async () => {
@@ -71,13 +75,8 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
       if (dansZone) {
         if (prochain === 'fin') onDepart?.(p.chantierId);
       } else {
+        // Chantier non trouvé : rien n'est demandé à l'employé, SK DECO le renseignera
         signalerHorsZone(p, plus);
-        setChoix({
-          id: p.id, proches, apresDepart: prochain === 'fin',
-          message: lat == null
-            ? tm('Position indisponible : choisis le chantier sur lequel tu te trouves.')
-            : tm('Tu es à plus de {0} m d’un chantier en cours. Choisis le chantier concerné : SK DECO en est informé.', rayon),
-        });
       }
     } finally {
       setCharge(false);
@@ -128,29 +127,16 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
             return (
               <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 }}>
                 <Text style={{ width: 86, fontSize: 14, fontWeight: '700', color: DS.text }}>{p.type === 'debut' ? '↘ ' : '↗ '}{p.heure}</Text>
-                <Pressable onPress={() => ouvrirCorrection(p)} accessibilityRole="button" accessibilityLabel={tm('Changer le chantier')}
-                  style={{ flex: 1, minHeight: 36, borderRadius: radius.full, paddingHorizontal: 12, justifyContent: 'center',
-                    backgroundColor: ch ? DS.surfaceAlt : DS.warningSoft, borderWidth: 1, borderColor: ch ? (ch.couleur || DS.border) : DS.warning }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: DS.text }} numberOfLines={1}>{ch ? `${ch.nom}  ▾` : tm('Choisir le chantier  ▾')}</Text>
-                </Pressable>
-                {p.horsZone && <Text style={{ fontSize: 11, fontWeight: '700', color: DS.warning }}>{tm('hors zone')}</Text>}
+                <View style={{ flex: 1, minHeight: 32, borderRadius: radius.full, paddingHorizontal: 12, justifyContent: 'center',
+                    backgroundColor: DS.surfaceAlt, borderWidth: 1, borderColor: ch ? (ch.couleur || DS.border) : DS.border }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: ch ? DS.text : DS.textSecondary }} numberOfLines={1}>{ch ? ch.nom : tm('Chantier à préciser par SK DECO')}</Text>
+                </View>
               </View>
             );
           })}
         </View>
       )}
 
-      <ChoixChantierModal
-        visible={!!choix}
-        titre={enCours?.type === 'fin' ? tm('Chantier du départ') : tm("Chantier de l'arrivée")}
-        message={choix?.message}
-        chantiers={data.chantiers}
-        proches={choix?.proches || []}
-        prioritaires={affectesDuJour}
-        selectionId={enCours?.chantierId}
-        onChoisir={choisir}
-        onFermer={() => { if (choix?.apresDepart) onDepart?.(enCours?.chantierId); setChoix(null); }}
-      />
     </View>
   );
 }

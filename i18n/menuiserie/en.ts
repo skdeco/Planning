@@ -640,6 +640,17 @@ const d: Record<string, string> = {
   "Retirer + supprimer le pointage": "Remove + delete clock-in",
   "Pas de précision pour ce jour.": "No details for this day.",
   "Atelier": "Workshop",
+  "Chantier à préciser par SK DECO": "Project to be set by SK DECO",
+  "Pointages sans chantier ({0})": "Clock-ins without project ({0})",
+  "Position trop loin de tout chantier : touche une ligne pour indiquer le chantier.": "Position too far from any project: tap a line to set the project.",
+  "Réduire": "Show less",
+  "Voir les {0}": "See all {0}",
+  "Photos du chantier": "Project photos",
+  "Ajouter des photos": "Add photos",
+  "Envoi {0}/{1}…": "Uploading {0}/{1}…",
+  "Voir ({0})": "View ({0})",
+  "{0} photo(s) envoyée(s) — {1}": "{0} photo(s) sent — {1}",
+  "{0} photo(s) n'ont pas pu être envoyées": "{0} photo(s) could not be sent",
 };
 
 export default d;

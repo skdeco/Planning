@@ -664,6 +664,17 @@ const d: Record<string, string> = {
   "Retirer + supprimer le pointage": "Убрать + удалить отметку",
   "Pas de précision pour ce jour.": "Нет уточнений на этот день.",
   "Atelier": "Цех",
+  "Chantier à préciser par SK DECO": "Объект уточнит SK DECO",
+  "Pointages sans chantier ({0})": "Отметки без объекта ({0})",
+  "Position trop loin de tout chantier : touche une ligne pour indiquer le chantier.": "Слишком далеко от объектов: нажмите на строку, чтобы указать объект.",
+  "Réduire": "Свернуть",
+  "Voir les {0}": "Показать все {0}",
+  "Photos du chantier": "Фото объекта",
+  "Ajouter des photos": "Добавить фото",
+  "Envoi {0}/{1}…": "Отправка {0}/{1}…",
+  "Voir ({0})": "Смотреть ({0})",
+  "{0} photo(s) envoyée(s) — {1}": "Отправлено фото: {0} — {1}",
+  "{0} photo(s) n'ont pas pu être envoyées": "Не удалось отправить фото: {0}",
 };
 
 export default d;

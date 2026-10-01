@@ -92,18 +92,20 @@ async function pickFromPhotos(opts: Required<PickNativeFileOptions>): Promise<Pi
   });
   if (result.canceled) return [];
 
-  const out: PickedFile[] = [];
-  for (const asset of result.assets) {
-    let uri = asset.uri;
-    if (opts.compressImages) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { compressImage } = require('@/lib/imageUtils');
-        uri = await compressImage(uri);
-      } catch {
-        // compressImage indisponible → URI brut
-      }
+  // Compression de toutes les photos en parallèle (plus rapide qu'une par une)
+  const uris = await Promise.all(result.assets.map(async asset => {
+    if (!opts.compressImages) return asset.uri;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { compressImage } = require('@/lib/imageUtils');
+      return await compressImage(asset.uri);
+    } catch {
+      return asset.uri; // compressImage indisponible → URI brut
     }
+  }));
+  const out: PickedFile[] = [];
+  for (const [i, asset] of result.assets.entries()) {
+    const uri = uris[i];
     out.push({
       uri,
       mimeType: asset.mimeType ?? inferMimeFromUri(uri, 'image/jpeg'),
@@ -133,18 +135,20 @@ async function pickFromCamera(opts: Required<PickNativeFileOptions>): Promise<Pi
   });
   if (result.canceled) return [];
 
-  const out: PickedFile[] = [];
-  for (const asset of result.assets) {
-    let uri = asset.uri;
-    if (opts.compressImages) {
-      try {
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        const { compressImage } = require('@/lib/imageUtils');
-        uri = await compressImage(uri);
-      } catch {
-        // compressImage indisponible → URI brut
-      }
+  // Compression de toutes les photos en parallèle (plus rapide qu'une par une)
+  const uris = await Promise.all(result.assets.map(async asset => {
+    if (!opts.compressImages) return asset.uri;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { compressImage } = require('@/lib/imageUtils');
+      return await compressImage(asset.uri);
+    } catch {
+      return asset.uri; // compressImage indisponible → URI brut
     }
+  }));
+  const out: PickedFile[] = [];
+  for (const [i, asset] of result.assets.entries()) {
+    const uri = uris[i];
     out.push({
       uri,
       mimeType: asset.mimeType ?? inferMimeFromUri(uri, 'image/jpeg'),

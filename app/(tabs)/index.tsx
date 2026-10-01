@@ -28,6 +28,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { formatDateFR } from '@/lib/date/format';
 import { Ico } from '@/components/ui/Ico';
 import { RdvDuJour } from '@/components/espaces/RdvDuJour';
+import { AlertePointagesSansChantier } from '@/components/pointage/AlertePointagesSansChantier';
+import { PhotosRapides } from '@/components/photos/PhotosRapides';
 
 function toYMD(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -336,6 +338,8 @@ export default function DashboardScreen() {
 
           {/* RDV du jour (Planning direction) */}
           <RdvDuJour marge={0} />
+          {/* RH : pointages sans chantier à renseigner */}
+          {emp?.isRH && <AlertePointagesSansChantier />}
 
           {/* Pointage du jour : arrivée + départ du chantier (l'écran Horaires complet est dans Plus).
               Masqué pour un employé dispensé de pointage (doitPointer === false). */}
@@ -368,6 +372,9 @@ export default function DashboardScreen() {
             ))}
           </View>
           )}
+
+          {/* Photos du chantier du jour : accès direct */}
+          <PhotosRapides onVoir={id => { setGalerieChantierId(id); setGalerieVisible(true); }} />
 
           {/* Bouton "Je suis en retard" */}
           {!myPointagesDuJour.debut && myChantiers.length > 0 && (
@@ -961,6 +968,8 @@ export default function DashboardScreen() {
 
         {/* RDV du jour (Planning direction) */}
         <RdvDuJour marge={0} />
+        {/* Pointages sans chantier à renseigner */}
+        <AlertePointagesSansChantier />
 
         {/* À traiter — ce qui attend une action de l'admin */}
         {(stats.demandesRH > 0 || stats.materielNonAchete > 0) && (

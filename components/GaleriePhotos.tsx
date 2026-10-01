@@ -225,6 +225,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
               acceptPdf={false}
               multiple
               compressImages
+              parallele
               label={`${t.galerie.add}`}
               disabled={!chantierId && !uploadChantierId}
             />

@@ -40,6 +40,8 @@ export interface NativeFilePickerButtonProps {
   label?: string;
   buttonStyle?: ViewStyle;
   disabled?: boolean;
+  /** Envoie plusieurs fichiers en même temps (3 à la fois) au lieu d'un par un. */
+  parallele?: boolean;
 }
 
 function defaultLabel(
@@ -67,6 +69,7 @@ export function NativeFilePickerButton({
   label,
   buttonStyle,
   disabled = false,
+  parallele = false,
 }: NativeFilePickerButtonProps): React.ReactElement {
   const [busy, setBusy] = useState(false);
 
@@ -76,12 +79,21 @@ export function NativeFilePickerButton({
     try {
       const opts: PickNativeFileOptions = { acceptImages, acceptPdf, acceptCamera, multiple, compressImages };
       const files = await pickNativeFile(opts);
-      for (const file of files) {
+      const un = async (file: PickedFile) => {
         try {
           await onPick(file);
         } catch (err) {
           console.warn('NativeFilePickerButton.onPick threw', err);
         }
+      };
+      if (parallele) {
+        // 3 envois simultanés
+        const file2 = [...files];
+        await Promise.all(Array.from({ length: Math.min(3, file2.length) }, async () => {
+          while (file2.length) { const f = file2.shift(); if (f) await un(f); }
+        }));
+      } else {
+        for (const file of files) await un(file);
       }
     } finally {
       setBusy(false);

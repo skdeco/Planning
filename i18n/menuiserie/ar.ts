@@ -664,6 +664,17 @@ const d: Record<string, string> = {
   "Retirer + supprimer le pointage": "إزالة + حذف التسجيل",
   "Pas de précision pour ce jour.": "لا توجد تفاصيل لهذا اليوم.",
   "Atelier": "الورشة",
+  "Chantier à préciser par SK DECO": "سيحدد SK DECO المشروع",
+  "Pointages sans chantier ({0})": "تسجيلات بدون مشروع ({0})",
+  "Position trop loin de tout chantier : touche une ligne pour indiquer le chantier.": "الموقع بعيد عن أي مشروع: اضغط على سطر لتحديد المشروع.",
+  "Réduire": "تقليص",
+  "Voir les {0}": "عرض الكل {0}",
+  "Photos du chantier": "صور المشروع",
+  "Ajouter des photos": "إضافة صور",
+  "Envoi {0}/{1}…": "جارٍ الإرسال {0}/{1}…",
+  "Voir ({0})": "عرض ({0})",
+  "{0} photo(s) envoyée(s) — {1}": "تم إرسال {0} صورة — {1}",
+  "{0} photo(s) n'ont pas pu être envoyées": "تعذر إرسال {0} صورة",
 };
 
 export default d;

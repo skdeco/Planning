@@ -661,6 +661,17 @@ const d: Record<string, string> = {
   "Retirer + supprimer le pointage": "Retirar + eliminar o registo",
   "Pas de précision pour ce jour.": "Sem detalhes para este dia.",
   "Atelier": "Oficina",
+  "Chantier à préciser par SK DECO": "Obra a definir pela SK DECO",
+  "Pointages sans chantier ({0})": "Registos sem obra ({0})",
+  "Position trop loin de tout chantier : touche une ligne pour indiquer le chantier.": "Posição demasiado longe de qualquer obra: toca numa linha para indicar a obra.",
+  "Réduire": "Reduzir",
+  "Voir les {0}": "Ver os {0}",
+  "Photos du chantier": "Fotos da obra",
+  "Ajouter des photos": "Adicionar fotos",
+  "Envoi {0}/{1}…": "A enviar {0}/{1}…",
+  "Voir ({0})": "Ver ({0})",
+  "{0} photo(s) envoyée(s) — {1}": "{0} foto(s) enviada(s) — {1}",
+  "{0} photo(s) n'ont pas pu être envoyées": "{0} foto(s) não puderam ser enviadas",
 };
 
 export default d;

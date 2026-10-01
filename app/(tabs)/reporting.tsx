@@ -180,7 +180,7 @@ export default function ReportingScreen() {
   useEffect(() => {
     const e = typeof params.editEmp === 'string' ? params.editEmp : '';
     const d = typeof params.editDate === 'string' ? params.editDate : '';
-    if (e && d && isAdmin) {
+    if (e && d && (isAdmin || voitBilan)) {
       setSelectedDate(d);
       openEditPointage(e, d);
       router.setParams({ editEmp: '', editDate: '' });
@@ -678,7 +678,7 @@ export default function ReportingScreen() {
                 key={emp.id}
                 emp={emp} date={selectedDate} pointages={ptsJour} chantiers={chs}
                 metier={{ label: metierLabel(emp.metier), couleur: mc?.color || '#5C1F2E' }}
-                presenceForcee={isForcedPresent} voitBilan={voitBilan} peutModifier={isAdmin}
+                presenceForcee={isForcedPresent} voitBilan={voitBilan} peutModifier={isAdmin || voitBilan}
                 acomptes={acomptesJour.filter(a => a.employeId === emp.id)}
                 onModifier={() => openEditPointage(emp.id, selectedDate)}
                 onAcompte={() => openAcompteModal(emp.id)}
@@ -934,7 +934,7 @@ export default function ReportingScreen() {
                       key={dateStr}
                       onPress={() => {
                         // Toujours la fiche du jour : heures, chantier, présence sans pointage
-                        if (isAdmin && empSelectionne) openEditPointage(empSelectionne.id, dateStr);
+                        if ((isAdmin || voitBilan) && empSelectionne) openEditPointage(empSelectionne.id, dateStr);
                       }}
                       style={[
                         styles.tableauRow,
