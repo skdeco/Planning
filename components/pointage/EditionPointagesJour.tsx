@@ -9,6 +9,7 @@ import type { Pointage } from '@/app/types';
 import { DS, radius } from '@/constants/design';
 import { auteurCourant, modifierPointage, nomChantier, pointagesDuJour } from '@/lib/pointage/historique';
 import { ChoixChantierModal } from './ChoixChantierModal';
+import { affecterSiBesoin } from '@/lib/pointage/affectation';
 import { tm } from '@/lib/menuiserie/i18n';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 
@@ -20,7 +21,7 @@ const leFR = (iso: string) => { const d = new Date(iso); return `${dateFR(iso.sl
 interface Props { visible: boolean; employeId: string | null; date: string; onFermer: () => void }
 
 export function EditionPointagesJour({ visible, employeId, date, onFermer }: Props) {
-  const { data, currentUser, addPointage, updatePointage, deletePointage, togglePresenceForcee } = useApp();
+  const { data, currentUser, addPointage, updatePointage, deletePointage, togglePresenceForcee, addAffectation } = useApp();
   const presenceForcee = !!employeId && (data.presencesForcees || []).some(pf => pf.employeId === employeId && pf.date === date);
   const existants = employeId ? pointagesDuJour(data.pointages, employeId, date) : [];
   const [lignes, setLignes] = useState<Ligne[]>([]);
@@ -59,6 +60,12 @@ export function EditionPointagesJour({ visible, employeId, date, onFermer }: Pro
         const suivant = modifierPointage(orig, { heure: l.heure.trim(), type: l.type, chantierId: l.chantierId }, auteur, data.chantiers, true);
         if (suivant !== orig) updatePointage(suivant);
       }
+    }
+    // Chaque chantier renseigné place l'employé sur ce chantier dans le planning du jour
+    const affs = [...data.affectations];
+    for (const l of lignes) {
+      if (l.supprime || !l.chantierId) continue;
+      affecterSiBesoin(affs, a => { affs.push(a); addAffectation(a); }, employeId, l.chantierId, date);
     }
     onFermer();
   };

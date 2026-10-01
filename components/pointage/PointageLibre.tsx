@@ -16,14 +16,14 @@ import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { RAYON_POINTAGE_DEFAUT, chantiersParDistance, formatDistance, getCurrentPosition, type ChantierProche } from '@/lib/pointage/geo';
 import { auteurCourant, modifierPointage, pointagesDuJour } from '@/lib/pointage/historique';
-import { ChoixChantierModal } from './ChoixChantierModal';
+import { affecterSiBesoin } from '@/lib/pointage/affectation';
 import { tm } from '@/lib/menuiserie/i18n';
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const hm = (d: Date) => d.toTimeString().slice(0, 5);
 
 export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) => void }) {
-  const { data, currentUser, addPointage, updatePointage } = useApp();
+  const { data, currentUser, addPointage, updatePointage, addAffectation } = useApp();
   const { t } = useLanguage();
   const employeId = currentUser?.employeId || '';
   const aujourdhui = ymd(new Date());
@@ -71,6 +71,8 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
         ...(dansZone ? {} : { horsZone: true, ...(plus ? { distanceChantier: Math.round(plus.distance) } : {}) }),
       };
       addPointage(p);
+      // Chantier détecté : l'employé apparaît sur ce chantier dans le planning du jour
+      if (dansZone) affecterSiBesoin(data.affectations, addAffectation, employeId, p.chantierId, p.date);
       toast.success(`${prochain === 'debut' ? t.pointage.arrivalRecordedAt : t.pointage.departureRecordedAt} ${p.heure}${dansZone ? ` — ${plus!.chantier.nom}` : ''}`);
       if (dansZone) {
         if (prochain === 'fin') onDepart?.(p.chantierId);

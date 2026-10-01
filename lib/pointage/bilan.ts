@@ -7,16 +7,17 @@ import type { Employe, Pointage } from '@/app/types';
 
 const min = (h: string) => { const [a, b] = h.split(':').map(Number); return (a || 0) * 60 + (b || 0); };
 
-/** Minutes travaillées : chaque arrivée est appariée au départ suivant. */
+/**
+ * Minutes travaillées : de la première arrivée au dernier départ de la journée.
+ * Un départ suivi d'une nouvelle arrivée (changement de chantier) est un trajet :
+ * ce temps n'est PAS décompté.
+ */
 export function minutesTravailleesJour(pts: Pointage[]): number {
   const tries = [...pts].sort((a, b) => a.heure.localeCompare(b.heure));
-  let total = 0;
-  let arrivee: number | null = null;
-  for (const p of tries) {
-    if (p.type === 'debut') { if (arrivee === null) arrivee = min(p.heure); }
-    else if (arrivee !== null) { total += Math.max(0, min(p.heure) - arrivee); arrivee = null; }
-  }
-  return total;
+  const premiere = tries.find(p => p.type === 'debut');
+  const dernier = [...tries].reverse().find(p => p.type === 'fin');
+  if (!premiere || !dernier || dernier.heure <= premiere.heure) return 0;
+  return min(dernier.heure) - min(premiere.heure);
 }
 
 /** Minutes théoriques du jour selon les horaires de la fiche employé (0 si jour non travaillé). */
