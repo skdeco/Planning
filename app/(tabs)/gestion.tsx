@@ -16,6 +16,7 @@ import { LanguageFlag } from '@/components/LanguageFlag';
 import { useApp } from '@/app/context/AppContext';
 import { useLanguage } from '@/app/context/LanguageContext';
 import { DS, radius, space, font, shadows, screenTitle } from '@/constants/design';
+import { libelleVersion } from '@/hooks/useMisesAJour';
 
 interface PlusRow {
   key: string;
@@ -160,6 +161,8 @@ export default function PlusScreen() {
         <Section label={isAdmin ? t.gestion.terrainSection : undefined} rows={terrain} />
         <Section label={t.nav.gestion} rows={gestion} />
         <Section label={t.gestion.compteSection} rows={compte} />
+        {/* Version installée (pour vérifier qu'un téléphone a bien la dernière mise à jour) */}
+        <Text style={{ textAlign: 'center', fontSize: 11, color: DS.textMuted }}>Version {libelleVersion()}</Text>
       </ScrollView>
 
       <Modal visible={showFournisseurs} animationType="slide" transparent onRequestClose={() => setShowFournisseurs(false)}>

@@ -27,6 +27,7 @@ import { AlertHost } from "@/components/AlertHost";
 import { useChantiersCacheSync } from "@/hooks/useChantiersCacheSync";
 import { Toaster } from "sonner-native";
 import { useFonts } from "expo-font";
+import { useMisesAJour } from '@/hooks/useMisesAJour';
 
 const DEFAULT_WEB_INSETS: EdgeInsets = { top: 0, right: 0, bottom: 0, left: 0 };
 const DEFAULT_WEB_FRAME: Rect = { x: 0, y: 0, width: 0, height: 0 };
@@ -55,6 +56,8 @@ export default function RootLayout() {
 
   const [insets, setInsets] = useState<EdgeInsets>(initialInsets);
   const [frame, setFrame] = useState<Rect>(initialFrame);
+  // Applique les mises à jour dès qu'elles sont publiées (sans attendre un redémarrage)
+  useMisesAJour();
 
   // Initialize Manus runtime for cookie injection from parent container
   useEffect(() => {
