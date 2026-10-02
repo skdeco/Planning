@@ -1,5 +1,5 @@
 # Publication automatique à chaque envoi sur la branche main :
-#  - mise à jour de l'app iPhone (EAS Update, canal « preview »)
+#  - mise à jour de l'app iPhone (EAS Update, canaux « preview » et « production »)
 #  - mise en ligne de la version web (Vercel, production)
 # Peut aussi être lancée à la main depuis l'onglet « Actions » de GitHub (appli iPhone comprise).
 name: Publier
@@ -25,10 +25,16 @@ jobs:
           node-version: 22
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Publier la mise à jour iPhone
+      - name: Publier la mise à jour iPhone (version de test « preview »)
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
         run: npx --yes eas-cli@latest update --channel preview --message "${{ github.event.head_commit.message || 'Publication manuelle' }}" --non-interactive
+      # Les employés ont l'app de l'App Store / TestFlight (canal « production ») :
+      # sans cette étape, ils ne recevaient aucune mise à jour.
+      - name: Publier la mise à jour iPhone (App Store « production »)
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: npx --yes eas-cli@latest update --channel production --message "${{ github.event.head_commit.message || 'Publication manuelle' }}" --non-interactive
 
   web:
     name: Version web (Vercel)
