@@ -67,7 +67,8 @@ function Bouton({ action, libelle, onPress, plein, enCours }: PropsBouton) {
 
 export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) => void }) {
   const { data, currentUser, addPointage, addAffectation } = useApp();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const locale = language === 'fr' ? 'fr-FR' : language;
   const employeId = currentUser?.employeId || '';
   const aujourdhui = ymd(new Date());
   const duJour = pointagesDuJour(data.pointages, employeId, aujourdhui);
@@ -160,11 +161,18 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
 
   return (
     <View style={{ marginHorizontal: 16, marginTop: 12, gap: 10 }}>
-      {surPlace && (
-        <Text style={{ fontSize: 15, fontWeight: '600', color: DS.text }}>
-          {chantierActuel ? `${tm('Sur le chantier')} ${chantierActuel.nom} ${tm('depuis')} ${dernier.heure}` : `${tm('Arrivée pointée à')} ${dernier.heure}`}
+      <View style={{ gap: 6, marginBottom: 6 }}>
+        <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', color: DS.textSecondary }}>
+          {new Date().toLocaleDateString(locale, { weekday: 'long', day: 'numeric', month: 'long' })}
         </Text>
-      )}
+        <Text style={{ fontFamily: 'Manrope_500Medium', fontSize: 28, lineHeight: 34, letterSpacing: -0.5, color: DS.text }}>
+          {!dernier
+            ? tm('Pointez votre arrivée.')
+            : surPlace
+              ? (chantierActuel ? tm('Vous êtes sur {0} depuis {1}.', chantierActuel.nom, dernier.heure) : tm('Arrivée pointée à {0}.', dernier.heure))
+              : tm('Journée terminée à {0}.', dernier.heure)}
+        </Text>
+      </View>
       {surPlace ? (
         <>
           <Bouton action="changement" libelle={tm('Changement de chantier')} onPress={demanderChangement} plein={false} enCours={enCours} />

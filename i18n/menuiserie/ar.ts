@@ -690,6 +690,10 @@ const d: Record<string, string> = {
   "Sur place depuis": "في الموقع منذ",
   "Journée terminée": "انتهى اليوم",
   "Pas de chantier prévu.": "لا يوجد مشروع مخطط.",
+  "Pointez votre arrivée.": "سجّل وصولك.",
+  "Vous êtes sur {0} depuis {1}.": "أنت في {0} منذ {1}.",
+  "Arrivée pointée à {0}.": "تم تسجيل الوصول في {0}.",
+  "Journée terminée à {0}.": "انتهى اليوم في {0}.",
 };
 
 export default d;

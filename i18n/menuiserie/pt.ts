@@ -687,6 +687,10 @@ const d: Record<string, string> = {
   "Sur place depuis": "Na obra desde",
   "Journée terminée": "Dia terminado",
   "Pas de chantier prévu.": "Nenhuma obra prevista.",
+  "Pointez votre arrivée.": "Registe a sua chegada.",
+  "Vous êtes sur {0} depuis {1}.": "Está em {0} desde as {1}.",
+  "Arrivée pointée à {0}.": "Chegada registada às {0}.",
+  "Journée terminée à {0}.": "Dia terminado às {0}.",
 };
 
 export default d;

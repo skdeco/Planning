@@ -572,35 +572,6 @@ export default function PointageScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
 
-        {/* Carte identité du jour */}
-        <View style={styles.identiteCard}>
-          <View style={styles.identiteLeft}>
-            <View style={styles.avatarCircle}>
-              <Text style={styles.avatarInitials}>
-                {emp ? `${emp.prenom?.[0] || '?'}${emp.nom?.[0] || '?'}`.toUpperCase() : '?'}
-              </Text>
-            </View>
-          </View>
-          <View style={styles.identiteRight}>
-            <Text style={styles.identiteNom}>{empNom}</Text>
-            <View style={styles.identiteRow}>
-              <IconCalendar size={13} color="#6A6A68" />
-              <Text style={styles.identiteDate}>
-                {t.ui.joursLongs[now.getDay()]} {now.getDate()} {t.common.monthsShort[now.getMonth()]} {now.getFullYear()}
-              </Text>
-            </View>
-            <Text style={styles.identiteHeure}>{now.toTimeString().slice(0, 8)}</Text>
-          </View>
-        </View>
-
-        {/* Info géolocalisation */}
-        <View style={styles.geoInfoBanner}>
-          <IconLocation size={14} color="#141414" />
-          <Text style={styles.geoInfoText}>
-            La géolocalisation est activée uniquement lors de l'enregistrement d'une heure d'arrivée ou de départ.
-          </Text>
-        </View>
-
         {/* Pointage libre : le chantier est déduit de la position */}
         <PointageLibre onDepart={id => { if (id) { setPhotosChantierId(id); setPhotosEnAttente([]); setShowPhotosModal(true); } }} />
 

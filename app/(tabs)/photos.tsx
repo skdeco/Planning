@@ -54,21 +54,21 @@ export default function PhotosScreen() {
 
         {/* Envoi */}
         {chantiers.length > 0 ? (
-          <View style={{ backgroundColor: DS.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: DS.border, padding: 12, gap: 10 }}>
-            <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary }}>{tm('Ajouter sur le chantier')}</Text>
+          <View style={{ gap: 12 }}>
+            <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm('Ajouter sur le chantier')}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
               {chantiers.map(c => {
                 const on = c.id === cible?.id;
                 return (
                   <Pressable key={c.id} onPress={() => setChoisi(c.id)} accessibilityRole="button" accessibilityState={{ selected: on }}
-                    style={{ minHeight: 34, paddingHorizontal: 12, borderRadius: radius.full, justifyContent: 'center', backgroundColor: on ? (c.couleur || DS.primary) : DS.surfaceAlt }}>
+                    style={{ minHeight: 36, paddingHorizontal: 14, borderRadius: radius.full, justifyContent: 'center', backgroundColor: on ? DS.primary : DS.surface, borderWidth: 1, borderColor: on ? DS.primary : DS.border }}>
                     <Text style={{ fontSize: 13, fontWeight: '700', color: on ? '#fff' : DS.text }}>{duJour.has(c.id) ? '● ' : ''}{c.nom}</Text>
                   </Pressable>
                 );
               })}
             </ScrollView>
             <Pressable onPress={() => cible && ajouter(cible.id)} disabled={!!envoi} accessibilityRole="button"
-              style={{ minHeight: 56, borderRadius: radius.md, backgroundColor: DS.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: envoi ? 0.8 : 1 }}>
+              style={{ minHeight: 56, borderRadius: radius.full, backgroundColor: DS.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, opacity: envoi ? 0.8 : 1 }}>
               <Camera size={22} color="#fff" strokeWidth={2} />
               <Text style={{ fontSize: 16, fontWeight: '800', color: '#fff' }}>
                 {envoi ? tm('Envoi {0}/{1}…', envoi.fait, envoi.total) : tm('Ajouter des photos')}

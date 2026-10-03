@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { Clock, Camera, CircleCheck } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
 import { tm } from '@/lib/menuiserie/i18n';
+import { LanguageFlag } from '@/components/LanguageFlag';
 
 export const DEGRADE_GRAPHITE = ['#2F2F2F', '#5C5C5B', '#ADADAB'] as const;
 const TITRE = { fontFamily: 'Manrope_500Medium', fontSize: 28, lineHeight: 34, letterSpacing: -0.5 } as const;
@@ -40,7 +41,11 @@ export function HeroEmploye({ prenom, dateLabel, montrerPointage }: { prenom: st
   return (
     <LinearGradient colors={DEGRADE_GRAPHITE} style={{ borderRadius: 28, padding: 18, paddingTop: 22, marginBottom: 16, gap: 18 }}>
       <View style={{ gap: 2 }}>
-        <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textTransform: 'capitalize' }}>{dateLabel}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text style={{ fontSize: 13, color: 'rgba(255,255,255,0.7)', textTransform: 'capitalize' }}>{dateLabel}</Text>
+          {/* Langue de l'application */}
+          <LanguageFlag />
+        </View>
         <Text style={[TITRE, { color: '#FFFFFF' }]}>{tm('Bonjour')} {prenom}.</Text>
         <Text style={[TITRE, { color: 'rgba(255,255,255,0.6)' }]} numberOfLines={2}>
           {chantier ? `${tm("Aujourd'hui")} : ${chantier.nom}.` : tm('Pas de chantier prévu.')}

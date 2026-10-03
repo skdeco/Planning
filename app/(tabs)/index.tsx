@@ -928,10 +928,11 @@ export default function DashboardScreen() {
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {/* En-tête : date + salutation (langue et déconnexion sont dans l'écran Plus) */}
         <FadeInView duration={400}>
-          <View style={{ marginTop: 2, marginBottom: 6 }}>
+          <View style={{ marginTop: 2, marginBottom: 6, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ fontSize: 14, color: DS.textSecondary, textTransform: 'capitalize' }}>
               {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
             </Text>
+            <LanguageFlag />
           </View>
         </FadeInView>
 

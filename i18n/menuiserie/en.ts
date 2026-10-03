@@ -665,6 +665,10 @@ const d: Record<string, string> = {
   "Sur place depuis": "On site since",
   "Journée terminée": "Day finished",
   "Pas de chantier prévu.": "No site planned.",
+  "Pointez votre arrivée.": "Clock in your arrival.",
+  "Vous êtes sur {0} depuis {1}.": "You have been at {0} since {1}.",
+  "Arrivée pointée à {0}.": "Arrival clocked at {0}.",
+  "Journée terminée à {0}.": "Day finished at {0}.",
 };
 
 export default d;

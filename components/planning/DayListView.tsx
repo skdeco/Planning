@@ -43,7 +43,7 @@ export function DayListView({
   weekOffset, selectedDate, onSelectDate, isAdmin,
   onOpenChantierActions, onOpenEmpNote, onOpenSTNote, onOpenIntervention, onOpenAjoutModal,
 }: DayListViewProps) {
-  const { data } = useApp();
+  const { data, currentUser } = useApp();
   const { t } = useLanguage();
   const {
     days, visibleChantiers, getEmployesForCell, getSTForCell, getInterventionsForCell, cellHasNotes,
@@ -87,15 +87,15 @@ export function DayListView({
               accessibilityState={{ selected: on }}
               accessibilityLabel={d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
               onPress={tap(() => onSelectDate(ds))}
-              style={styles.weekDay}
+              style={[styles.weekDay, on && { backgroundColor: DS.primary, borderColor: DS.primary }]}
             >
-              <Text style={[styles.weekLetter, ds === todayStr && { color: DS.primary }]}>
+              <Text style={[styles.weekLetter, ds === todayStr && { color: DS.primary }, on && { color: 'rgba(255,255,255,0.75)' }]}>
                 {d.toLocaleDateString('fr-FR', { weekday: 'narrow' }).toUpperCase()}
               </Text>
               <View style={[styles.weekNum, on && styles.weekNumOn]}>
                 <Text style={[styles.weekNumText, on && styles.weekNumTextOn]}>{d.getDate()}</Text>
               </View>
-              <View style={[styles.weekDot, !has && { backgroundColor: 'transparent' }]} />
+              <View style={[styles.weekDot, on && { backgroundColor: '#FFFFFF' }, !has && { backgroundColor: 'transparent' }]} />
             </Pressable>
           );
         })}
@@ -124,6 +124,18 @@ export function DayListView({
             <ChevronRight size={16} color={DS.textSecondary} />
           </Pressable>
           {!!ch.adresse && <Text style={styles.cardSub} numberOfLines={1}>{ch.adresse}</Text>}
+          {/* Horaire et tâche précisés pour ce jour (les miens pour un employé) */}
+          {data.affectations
+            .filter(a => a.chantierId === ch.id && a.dateDebut <= dateStr && a.dateFin >= dateStr && (isAdmin || a.employeId === currentUser?.employeId))
+            .map(a => ({ a, d: a.details?.[dateStr] }))
+            .filter(x => x.d && (x.d.debut || x.d.fin || x.d.description))
+            .map(({ a, d }) => (
+              <View key={a.id} style={styles.detail}>
+                {isAdmin && <Text style={styles.detailQui}>{data.employes.find(e => e.id === a.employeId)?.prenom}</Text>}
+                {!!(d!.debut || d!.fin) && <Text style={styles.detailHeure}>{d!.debut || '…'} → {d!.fin || '…'}</Text>}
+                {!!d!.description && <Text style={styles.detailTexte} numberOfLines={3}>{d!.description}</Text>}
+              </View>
+            ))}
           <View style={styles.chips}>
             {employes.map(e => (
               <Pressable key={e.id} style={styles.chip} onPress={tap(() => { if (ch.id !== HORS_CHANTIER_ID) onOpenEmpNote(ch.id, dateStr, e.id); })}>
@@ -183,11 +195,11 @@ export function DayListView({
 
 const styles = StyleSheet.create({
   content: { paddingHorizontal: 16, paddingTop: 6, paddingBottom: 32, gap: 12 },
-  week: { flexDirection: 'row', backgroundColor: DS.surface, borderRadius: radius.xl, paddingTop: 10, paddingBottom: 4, paddingHorizontal: 4, ...shadows.sm },
-  weekDay: { flex: 1, alignItems: 'center', gap: 3, minHeight: 62 },
+  week: { flexDirection: 'row', gap: 4 },
+  weekDay: { flex: 1, alignItems: 'center', gap: 3, minHeight: 66, paddingVertical: 8, borderRadius: 16, backgroundColor: DS.surface, borderWidth: 1, borderColor: DS.border },
   weekLetter: { fontSize: 11, fontWeight: font.semibold, color: DS.textSecondary },
-  weekNum: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
-  weekNumOn: { backgroundColor: DS.primary },
+  weekNum: { width: 34, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  weekNumOn: {},
   weekNumText: { fontSize: 17, color: DS.text },
   weekNumTextOn: { color: DS.textInverse, fontWeight: font.semibold },
   weekDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: DS.primary },
@@ -216,4 +228,8 @@ const styles = StyleSheet.create({
   listInner: { flex: 1, alignSelf: 'stretch', flexDirection: 'row', alignItems: 'center', gap: 8, paddingRight: 14 },
   listSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: DS.border },
   listTitle: { flex: 1, fontSize: 15, color: DS.text },
+  detail: { marginLeft: 18, gap: 1 },
+  detailQui: { fontSize: 12, fontWeight: font.semibold, color: DS.textSecondary },
+  detailHeure: { fontSize: 14, fontWeight: font.bold, color: DS.text },
+  detailTexte: { fontSize: 13, color: DS.textSecondary },
 });
