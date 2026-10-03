@@ -1,9 +1,12 @@
 /**
- * Pointage sans affectation : un seul bouton Arrivée / Départ.
- * La position choisit le chantier en cours le plus proche. Au-delà du rayon
- * (300 m par défaut), le pointage est enregistré « hors zone » SANS chantier :
- * on ne demande rien à l'employé ; l'admin et les RH sont prévenus et le
- * renseignent eux-mêmes (alerte sur l'accueil).
+ * Pointage en 3 gestes : Arrivée → (Changement de chantier) → Départ.
+ * - Arrivée / changement : la position choisit le chantier en cours le plus
+ *   proche. Au-delà du rayon (300 m par défaut), le pointage est enregistré
+ *   SANS chantier : on ne demande rien à l'employé, l'admin et les RH sont
+ *   prévenus et le renseignent (alerte sur l'accueil).
+ * - Départ : reprend le chantier de l'arrivée, sans attendre le GPS.
+ * Le GPS n'est jamais bloquant (position récente ou 8 s maximum).
+ * Aucun total d'heures n'est montré à l'employé.
  */
 import React, { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
@@ -14,117 +17,140 @@ import type { Pointage } from '@/app/types';
 import { DS, radius } from '@/constants/design';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
-import { RAYON_POINTAGE_DEFAUT, chantiersParDistance, formatDistance, getCurrentPosition, type ChantierProche } from '@/lib/pointage/geo';
-import { auteurCourant, modifierPointage, pointagesDuJour } from '@/lib/pointage/historique';
+import { RAYON_POINTAGE_DEFAUT, chantiersParDistance, formatDistance, getCurrentPosition, positionImmediate, type ChantierProche } from '@/lib/pointage/geo';
+import { pointagesDuJour } from '@/lib/pointage/historique';
 import { affecterSiBesoin } from '@/lib/pointage/affectation';
 import { tm } from '@/lib/menuiserie/i18n';
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const hm = (d: Date) => d.toTimeString().slice(0, 5);
+const nouvelId = () => `pt_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+
+type Action = 'arrivee' | 'changement' | 'depart';
+
+function confirmer(titre: string, message: string, ok: () => void, cancel: string, valider: string) {
+  if (Platform.OS === 'web') { if (window.confirm(message)) ok(); return; }
+  Alert.alert(titre, message, [{ text: cancel, style: 'cancel' }, { text: valider, onPress: ok }]);
+}
 
 export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) => void }) {
-  const { data, currentUser, addPointage, updatePointage, addAffectation } = useApp();
+  const { data, currentUser, addPointage, addAffectation } = useApp();
   const { t } = useLanguage();
   const employeId = currentUser?.employeId || '';
   const aujourdhui = ymd(new Date());
   const duJour = pointagesDuJour(data.pointages, employeId, aujourdhui);
-  const dernier = [...duJour].sort((a, b) => a.timestamp.localeCompare(b.timestamp)).pop();
-  const prochain: 'debut' | 'fin' = dernier?.type === 'debut' ? 'fin' : 'debut';
+  const tries = [...duJour].sort((a, b) => a.timestamp.localeCompare(b.timestamp));
+  const dernier = tries[tries.length - 1];
+  const surPlace = dernier?.type === 'debut';
+  const chantierActuel = surPlace ? data.chantiers.find(c => c.id === dernier.chantierId) : undefined;
   const rayon = data.rayonPointageM || RAYON_POINTAGE_DEFAUT;
-  // Affectations du jour (le planning reste utilisable) : proposées en premier dans la liste
+  // Dans le rayon, un chantier du planning du jour passe avant le plus proche
   const affectesDuJour = data.affectations.filter(a => a.employeId === employeId && a.dateDebut <= aujourdhui && a.dateFin >= aujourdhui).map(a => a.chantierId);
 
-  const [charge, setCharge] = useState(false);
-  const [choix, setChoix] = useState<{ id: string; proches: ChantierProche[]; message?: string; apresDepart?: boolean } | null>(null);
+  const [enCours, setEnCours] = useState<Action | null>(null);
 
   const signalerHorsZone = (p: Pointage, plus?: ChantierProche) => {
     const emp = data.employes.find(e => e.id === employeId);
     const nom = emp ? `${emp.prenom} ${emp.nom}` : '';
-    const lib = p.type === 'debut' ? 'arrivée' : 'départ';
     const detail = plus ? `à ${formatDistance(plus.distance)} de ${plus.chantier.nom}` : 'position inconnue';
-    // Admin + RH : ils renseignent le chantier depuis l'accueil
     const tokens = new Set(getAdminPushTokens(data.employes, data.adminEmployeId));
     data.employes.filter(e => e.isRH && e.pushToken).forEach(e => tokens.add(e.pushToken!));
-    sendPushNotification([...tokens], 'Pointage sans chantier', `${nom} : ${lib} à ${p.heure}, ${detail}. Chantier à renseigner.`).catch(() => {});
+    sendPushNotification([...tokens], 'Pointage sans chantier', `${nom} : arrivée à ${p.heure}, ${detail}. Chantier à renseigner.`).catch(() => {});
   };
 
-  const pointer = async () => {
-    setCharge(true);
-    try {
-      let lat: number | null = null;
-      let lng: number | null = null;
-      let proches: ChantierProche[] = [];
-      try {
-        const pos = await getCurrentPosition(t.ui.geoIndispo, t.ui.geoRefusee);
-        lat = pos.latitude; lng = pos.longitude;
-        proches = await chantiersParDistance(data.chantiers, lat, lng, rayon);
-      } catch { /* sans position : le chantier sera choisi à la main */ }
-      // Dans le rayon, un chantier où l'employé est affecté aujourd'hui passe avant le plus proche
-      const plus = proches.find(p => p.distance <= rayon && affectesDuJour.includes(p.chantier.id)) || proches[0];
-      const dansZone = !!plus && plus.distance <= rayon;
-      const ts = new Date();
-      const p: Pointage = {
-        id: `pt_${Date.now()}_${Math.random().toString(36).slice(2)}`,
-        employeId, type: prochain, date: ymd(ts), heure: hm(ts), timestamp: ts.toISOString(),
-        latitude: lat, longitude: lng, adresse: lat != null && lng != null ? `${lat.toFixed(5)}, ${lng.toFixed(5)}` : null,
-        chantierId: dansZone ? plus!.chantier.id : undefined,
-        ...(dansZone ? {} : { horsZone: true, ...(plus ? { distanceChantier: Math.round(plus.distance) } : {}) }),
-      };
-      addPointage(p);
-      // Chantier détecté : l'employé apparaît sur ce chantier dans le planning du jour
-      if (dansZone) affecterSiBesoin(data.affectations, addAffectation, employeId, p.chantierId, p.date);
-      toast.success(`${prochain === 'debut' ? t.pointage.arrivalRecordedAt : t.pointage.departureRecordedAt} ${p.heure}${dansZone ? ` — ${plus!.chantier.nom}` : ''}`);
-      if (dansZone) {
-        if (prochain === 'fin') onDepart?.(p.chantierId);
-      } else {
-        // Chantier non trouvé : rien n'est demandé à l'employé, SK DECO le renseignera
-        signalerHorsZone(p, plus);
-      }
-    } finally {
-      setCharge(false);
-    }
-  };
-
-  const demanderPointage = () => {
-    if (prochain === 'debut') { pointer(); return; }
-    const msg = `${t.pointage.departurePromptPrefix} ${hm(new Date())} ?`;
-    if (Platform.OS === 'web') { if (window.confirm(msg)) pointer(); return; }
-    Alert.alert(t.pointage.departure, msg, [{ text: t.common.cancel, style: 'cancel' }, { text: t.common.confirm, onPress: pointer }]);
-  };
-
-  const ouvrirCorrection = async (p: Pointage) => {
+  /** Position + chantier détecté (jamais bloquant). */
+  const detecter = async () => {
+    let lat: number | null = null;
+    let lng: number | null = null;
     let proches: ChantierProche[] = [];
-    if (p.latitude != null && p.longitude != null) {
-      try { proches = await chantiersParDistance(data.chantiers, p.latitude, p.longitude, rayon, 0); } catch {}
+    try {
+      const pos = await getCurrentPosition(t.ui.geoIndispo, t.ui.geoRefusee);
+      lat = pos.latitude; lng = pos.longitude;
+      proches = await chantiersParDistance(data.chantiers, lat, lng, rayon);
+    } catch { /* sans position : SK DECO renseignera le chantier */ }
+    const plus = proches.find(p => p.distance <= rayon && affectesDuJour.includes(p.chantier.id)) || proches[0];
+    const dansZone = !!plus && plus.distance <= rayon;
+    return { lat, lng, plus, chantierId: dansZone ? plus!.chantier.id : undefined };
+  };
+
+  const creer = (type: 'debut' | 'fin', ts: Date, lat: number | null, lng: number | null, chantierId?: string, horsZone?: { distance?: number }): Pointage => ({
+    id: nouvelId(), employeId, type, date: ymd(ts), heure: hm(ts), timestamp: ts.toISOString(),
+    latitude: lat, longitude: lng, adresse: lat != null && lng != null ? `${lat.toFixed(5)}, ${lng.toFixed(5)}` : null,
+    chantierId,
+    ...(horsZone ? { horsZone: true, ...(horsZone.distance != null ? { distanceChantier: horsZone.distance } : {}) } : {}),
+  });
+
+  /** Arrivée (ou arrivée sur le nouveau chantier lors d'un changement). */
+  const arriver = async (changement: boolean) => {
+    setEnCours(changement ? 'changement' : 'arrivee');
+    try {
+      const { lat, lng, plus, chantierId } = await detecter();
+      if (changement && chantierId && chantierId === dernier?.chantierId) {
+        toast(`${tm('Vous êtes toujours sur')} ${plus!.chantier.nom}`);
+        return;
+      }
+      const ts = new Date();
+      if (changement) addPointage(creer('fin', ts, null, null, dernier?.chantierId));
+      const tsArrivee = changement ? new Date(ts.getTime() + 1000) : ts;
+      const p = creer('debut', tsArrivee, lat, lng, chantierId, chantierId ? undefined : { distance: plus ? Math.round(plus.distance) : undefined });
+      addPointage(p);
+      if (chantierId) affecterSiBesoin(data.affectations, addAffectation, employeId, chantierId, p.date);
+      else signalerHorsZone(p, plus);
+      toast.success(`${t.pointage.arrivalRecordedAt} ${p.heure}${chantierId ? ` — ${plus!.chantier.nom}` : ''}`);
+    } finally {
+      setEnCours(null);
     }
-    setChoix({ id: p.id, proches });
   };
 
-  const choisir = (chantierId: string) => {
-    if (!choix) return;
-    const p = data.pointages.find(x => x.id === choix.id);
-    if (p) updatePointage(modifierPointage(p, { chantierId }, auteurCourant(currentUser, data.employes), data.chantiers, false));
-    if (choix.apresDepart) onDepart?.(chantierId);
-    setChoix(null);
+  /** Départ : chantier de l'arrivée, position seulement si déjà connue. */
+  const partir = async () => {
+    setEnCours('depart');
+    try {
+      const pos = await positionImmediate();
+      const p = creer('fin', new Date(), pos?.latitude ?? null, pos?.longitude ?? null, dernier?.chantierId);
+      addPointage(p);
+      toast.success(`${t.pointage.departureRecordedAt} ${p.heure}`);
+      onDepart?.(p.chantierId);
+    } finally {
+      setEnCours(null);
+    }
   };
 
-  const enCours = choix ? data.pointages.find(x => x.id === choix.id) : undefined;
+  const demanderChangement = () => confirmer(tm('Changement de chantier'), tm('Vous arrivez sur un autre chantier ?'), () => arriver(true), t.common.cancel, t.common.confirm);
+  const demanderDepart = () => confirmer(t.pointage.departure, `${t.pointage.departurePromptPrefix} ${hm(new Date())} ?`, partir, t.common.cancel, t.common.confirm);
+
+  const occupe = enCours !== null;
+  const Bouton = ({ action, libelle, onPress, plein }: { action: Action; libelle: string; onPress: () => void; plein: boolean }) => (
+    <Pressable onPress={onPress} disabled={occupe} accessibilityRole="button"
+      style={{ minHeight: 58, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10,
+        backgroundColor: plein ? DS.primary : DS.surface, borderWidth: 1.5, borderColor: DS.primary, opacity: occupe && enCours !== action ? 0.5 : 1 }}>
+      {enCours === action && <ActivityIndicator color={plein ? DS.textInverse : DS.primary} />}
+      <Text style={{ fontSize: 16, fontWeight: '800', color: plein ? DS.textInverse : DS.primary }}>
+        {enCours === action && action !== 'depart' ? tm('Localisation…') : libelle}
+      </Text>
+    </Pressable>
+  );
 
   return (
     <View style={{ marginHorizontal: 16, marginTop: 12, gap: 10 }}>
-      <Pressable onPress={demanderPointage} disabled={charge} accessibilityRole="button"
-        style={{ minHeight: 64, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10,
-          backgroundColor: prochain === 'debut' ? DS.primary : DS.surface, borderWidth: 2, borderColor: DS.primary, opacity: charge ? 0.7 : 1 }}>
-        {charge && <ActivityIndicator color={prochain === 'debut' ? DS.textInverse : DS.primary} />}
-        <Text style={{ fontSize: 18, fontWeight: '800', color: prochain === 'debut' ? DS.textInverse : DS.primary }}>
-          {charge ? tm('Localisation…') : prochain === 'debut' ? tm('Pointer mon arrivée') : tm('Pointer mon départ')}
+      {surPlace && (
+        <Text style={{ fontSize: 15, fontWeight: '600', color: DS.text }}>
+          {chantierActuel ? `${tm('Sur le chantier')} ${chantierActuel.nom} ${tm('depuis')} ${dernier.heure}` : `${tm('Arrivée pointée à')} ${dernier.heure}`}
         </Text>
-      </Pressable>
+      )}
+      {surPlace ? (
+        <>
+          <Bouton action="changement" libelle={tm('Changement de chantier')} onPress={demanderChangement} plein={false} />
+          <Bouton action="depart" libelle={tm('Pointer mon départ')} onPress={demanderDepart} plein />
+        </>
+      ) : (
+        <Bouton action="arrivee" libelle={tm('Pointer mon arrivée')} onPress={() => arriver(false)} plein />
+      )}
 
-      {duJour.length > 0 && (
+      {tries.length > 0 && (
         <View style={{ backgroundColor: DS.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: DS.border, padding: 12, gap: 8 }}>
           <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary }}>{tm("Aujourd'hui")}</Text>
-          {duJour.map(p => {
+          {tries.map(p => {
             const ch = data.chantiers.find(c => c.id === p.chantierId);
             return (
               <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 }}>
@@ -138,7 +164,6 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
           })}
         </View>
       )}
-
     </View>
   );
 }

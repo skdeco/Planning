@@ -676,6 +676,12 @@ const d: Record<string, string> = {
   "Appareil photo ou photothèque · {0}": "Câmara ou fototeca · {0}",
   "{0} photo(s)": "{0} foto(s)",
   "Pas encore de photo": "Ainda sem fotos",
+  "Changement de chantier": "Mudança de obra",
+  "Vous arrivez sur un autre chantier ?": "Está a chegar a outra obra?",
+  "Vous êtes toujours sur": "Continua em",
+  "Sur le chantier": "Na obra",
+  "depuis": "desde",
+  "Arrivée pointée à": "Chegada registada às",
 };
 
 export default d;

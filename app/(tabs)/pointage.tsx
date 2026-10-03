@@ -645,26 +645,6 @@ export default function PointageScreen() {
                               {fin ? fin.heure : '—'}
                             </Text>
                           </View>
-                          {debut && fin && (
-                            <>
-                              <View style={styles.histSep} />
-                              <View style={styles.histItem}>
-                                <View style={styles.histItemIcon}>
-                                  <IconClock size={14} color="#5C1F2E" />
-                                  <Text style={[styles.histLabel, { color: '#5C1F2E' }]}>{t.pointage.totalHours}</Text>
-                                </View>
-                                <Text style={[styles.histTime, { color: '#5C1F2E' }]}>
-                                  {(() => {
-                                    const [dh, dm] = debut.heure.split(':').map(Number);
-                                    const [fh, fm] = fin.heure.split(':').map(Number);
-                                    const diff = (fh * 60 + fm) - (dh * 60 + dm);
-                                    if (diff <= 0) return '—';
-                                    return `${Math.floor(diff / 60)}h${String(diff % 60).padStart(2, '0')}`;
-                                  })()}
-                                </Text>
-                              </View>
-                            </>
-                          )}
                         </View>
                         {/* Indicateur si modifié par admin */}
                         {(debut?.saisieManuelle || fin?.saisieManuelle) && (
@@ -757,11 +737,6 @@ export default function PointageScreen() {
                     <Text style={{ fontSize: 22, fontWeight: '800', color: '#2B1D14' }}>{joursComplets}</Text>
                     <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{t.pointage.daysClocked}</Text>
                   </View>
-                  <View style={{ width: 1, backgroundColor: '#EDE2D6' }} />
-                  <View style={{ alignItems: 'center', flex: 1 }}>
-                    <Text style={{ fontSize: 22, fontWeight: '800', color: '#5C1F2E' }}>{totalH}h{String(totalM).padStart(2, '0')}</Text>
-                    <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{t.pointage.hoursWorked}</Text>
-                  </View>
                 </View>
 
 
@@ -773,14 +748,7 @@ export default function PointageScreen() {
                       // Générer HTML pour impression PDF
                       const rows = dates.map(date => {
                         const { debut, fin } = byDate[date];
-                        let duree = '—';
-                        if (debut && fin) {
-                          const [dh2, dm2] = debut.split(':').map(Number);
-                          const [fh2, fm2] = fin.split(':').map(Number);
-                          const diff2 = (fh2 * 60 + fm2) - (dh2 * 60 + dm2);
-                          if (diff2 > 0) duree = `${Math.floor(diff2 / 60)}h${String(diff2 % 60).padStart(2, '0')}`;
-                        }
-                        return `<tr><td>${formatDateLongue(date, t.ui.joursLongs, t.common.monthsShort)}</td><td>${debut || '—'}</td><td>${fin || '—'}</td><td>${duree}</td></tr>`;
+                        return `<tr><td>${formatDateLongue(date, t.ui.joursLongs, t.common.monthsShort)}</td><td>${debut || '—'}</td><td>${fin || '—'}</td></tr>`;
                       }).join('');
 
                       const html = `
@@ -799,11 +767,11 @@ export default function PointageScreen() {
                         <h1>${t.ui.feuillePointage}</h1>
                         <h2>${empNom} — ${MOIS_LONG[moisActuel]} ${annee}</h2>
                         <table>
-                          <thead><tr><th>${t.common.date}</th><th>${t.pointage.arrival}</th><th>${t.pointage.departure}</th><th>${t.pointage.duration}</th></tr></thead>
+                          <thead><tr><th>${t.common.date}</th><th>${t.pointage.arrival}</th><th>${t.pointage.departure}</th></tr></thead>
                           <tbody>${rows}</tbody>
                         </table>
                         <div class="summary">
-                          <p><span>${joursComplets}</span> ${t.pointage.daysClocked} • <span>${totalH}h${String(totalM).padStart(2, '0')}</span> ${t.pointage.hoursWorked}</p>
+                          <p><span>${joursComplets}</span> ${t.pointage.daysClocked}</p>
                           
                         </div>
                         <script>window.onload = function() { window.print(); }</script>

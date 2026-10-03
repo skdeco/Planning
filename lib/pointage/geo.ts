@@ -9,6 +9,8 @@ import type { Chantier } from '@/app/types';
 
 /** Rayon par défaut (m) au-delà duquel un pointage est « hors zone ». */
 export const RAYON_POINTAGE_DEFAUT = 300;
+/** Attente maximale d'une mesure GPS au pointage. */
+const DELAI_GPS_MS = 8000;
 /** Statuts de chantier proposés au pointage. */
 const STATUTS_POINTABLES = ['actif', 'sav'];
 
@@ -31,7 +33,10 @@ export function haversineDistance(lat1: number, lon1: number, lat2: number, lon2
 export async function geocodeAddress(adresse: string): Promise<{ lat: number; lng: number } | null> {
   try {
     const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(adresse)}&limit=1`;
-    const res = await fetch(url, { headers: { 'Accept-Language': 'fr', 'User-Agent': 'SKDeco-Planning/1.0' } });
+    const ctrl = new AbortController();
+    const minuterie = setTimeout(() => ctrl.abort(), 4000);
+    const res = await fetch(url, { signal: ctrl.signal, headers: { 'Accept-Language': 'fr', 'User-Agent': 'SKDeco-Planning/1.0' } });
+    clearTimeout(minuterie);
     const data = await res.json();
     if (data && data[0]) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
   } catch {
@@ -48,14 +53,41 @@ export async function getCurrentPosition(messageGeoIndispo: string, messageGeoRe
       navigator.geolocation.getCurrentPosition(
         pos => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }),
         err => reject(new Error(err.message)),
-        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 },
+        { enableHighAccuracy: true, timeout: DELAI_GPS_MS, maximumAge: 3 * 60 * 1000 },
       );
     });
   }
   const { status } = await Location.requestForegroundPermissionsAsync();
   if (status !== 'granted') throw new Error(messageGeoRefusee);
-  const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-  return { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+  // 1) Position récente déjà connue du téléphone : instantané
+  try {
+    const recente = await Location.getLastKnownPositionAsync({ maxAge: 3 * 60 * 1000, requiredAccuracy: 150 });
+    if (recente) return { latitude: recente.coords.latitude, longitude: recente.coords.longitude };
+  } catch { /* on tente une mesure */ }
+  // 2) Mesure fraîche, limitée à DELAI_GPS_MS (jamais bloquant)
+  const mesure = Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced })
+    .then(pos => ({ latitude: pos.coords.latitude, longitude: pos.coords.longitude }))
+    .catch(() => null);
+  const delai = new Promise<null>(r => setTimeout(() => r(null), DELAI_GPS_MS));
+  const pos = await Promise.race([mesure, delai]);
+  if (pos) return pos;
+  // 3) Dernière position connue, même ancienne
+  try {
+    const ancienne = await Location.getLastKnownPositionAsync();
+    if (ancienne) return { latitude: ancienne.coords.latitude, longitude: ancienne.coords.longitude };
+  } catch {}
+  throw new Error(messageGeoIndispo);
+}
+
+/** Position instantanée si le téléphone en connaît une (sans attendre le GPS). */
+export async function positionImmediate(): Promise<{ latitude: number; longitude: number } | null> {
+  if (Platform.OS === 'web') return null;
+  try {
+    const { status } = await Location.getForegroundPermissionsAsync();
+    if (status !== 'granted') return null;
+    const p = await Location.getLastKnownPositionAsync();
+    return p ? { latitude: p.coords.latitude, longitude: p.coords.longitude } : null;
+  } catch { return null; }
 }
 
 // ── Cache des coordonnées des chantiers (clé = id + adresse) ────────────────
@@ -77,7 +109,7 @@ const cleCache = (c: Chantier) => `${c.id}|${adresseChantier(c)}`;
 
 /** Coordonnées déjà connues (GPS saisi ou cache), sans appel réseau. */
 async function coordsConnues(c: Chantier): Promise<Coords | undefined> {
-  if (c.latitude != null && c.longitude != null) return { lat: c.latitude, lng: c.longitude };
+  if (c.latitude != null && c.longitude != null && (c.geoAdresse == null || c.geoAdresse === adresseChantier(c))) return { lat: c.latitude, lng: c.longitude };
   const k = cleCache(c);
   const cc = await lireCache();
   return k in cc ? cc[k] : undefined;
@@ -89,7 +121,7 @@ export interface ChantierProche { chantier: Chantier; distance: number }
  * Chantiers pointables triés du plus proche au plus loin.
  * Les adresses jamais géocodées le sont au besoin (au plus `maxGeocodages`, en série).
  */
-export async function chantiersParDistance(chantiers: Chantier[], lat: number, lng: number, rayon: number, maxGeocodages = 12): Promise<ChantierProche[]> {
+export async function chantiersParDistance(chantiers: Chantier[], lat: number, lng: number, rayon: number, maxGeocodages = 3): Promise<ChantierProche[]> {
   const liste = chantiersPointables(chantiers);
   const res: ChantierProche[] = [];
   const inconnus: Chantier[] = [];

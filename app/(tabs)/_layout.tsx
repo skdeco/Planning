@@ -11,6 +11,7 @@ import { useLanguage } from "@/app/context/LanguageContext";
 import { NotificationBanner } from "@/components/NotificationBanner";
 import { SyncIndicator } from "@/components/SyncIndicator";
 import { NotificationListener } from "@/components/NotificationListener";
+import { GeocodageChantiers } from "@/components/pointage/GeocodageChantiers";
 import { useNotifications } from "@/hooks/useNotifications";
 import { DS, shadows } from "@/constants/design";
 import { tm } from '@/lib/menuiserie/i18n';
@@ -90,6 +91,7 @@ export default function TabLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: DS.background }}>
     <NotificationListener />
+    {isRH && <GeocodageChantiers />}
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: DS.primary,

@@ -679,6 +679,12 @@ const d: Record<string, string> = {
   "Appareil photo ou photothèque · {0}": "Камера или галерея · {0}",
   "{0} photo(s)": "Фото: {0}",
   "Pas encore de photo": "Фото пока нет",
+  "Changement de chantier": "Смена объекта",
+  "Vous arrivez sur un autre chantier ?": "Вы прибыли на другой объект?",
+  "Vous êtes toujours sur": "Вы всё ещё на объекте",
+  "Sur le chantier": "На объекте",
+  "depuis": "с",
+  "Arrivée pointée à": "Приход отмечен в",
 };
 
 export default d;

@@ -331,6 +331,8 @@ export interface Chantier {
   couleur: string;
   latitude?: number;        // coordonnées GPS du chantier
   longitude?: number;       // coordonnées GPS du chantier
+  /** Adresse ayant servi au calcul automatique de latitude/longitude */
+  geoAdresse?: string;
   fiche?: FicheChantier;   // fiche chantier (optionnelle)
   ordre?: number;           // ordre d'affichage dans le planning (0 = premier)
   // Legacy : client en texte libre

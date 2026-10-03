@@ -654,6 +654,12 @@ const d: Record<string, string> = {
   "Ajouter sur le chantier": "Add to project",
   "Appareil photo ou photothèque · {0}": "Camera or photo library · {0}",
   "Pas encore de photo": "No photos yet",
+  "Changement de chantier": "Change of site",
+  "Vous arrivez sur un autre chantier ?": "Are you arriving at another site?",
+  "Vous êtes toujours sur": "You are still at",
+  "Sur le chantier": "At site",
+  "depuis": "since",
+  "Arrivée pointée à": "Arrival clocked at",
 };
 
 export default d;

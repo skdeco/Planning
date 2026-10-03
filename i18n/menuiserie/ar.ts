@@ -679,6 +679,12 @@ const d: Record<string, string> = {
   "Appareil photo ou photothèque · {0}": "الكاميرا أو مكتبة الصور · {0}",
   "{0} photo(s)": "{0} صورة",
   "Pas encore de photo": "لا توجد صور بعد",
+  "Changement de chantier": "تغيير المشروع",
+  "Vous arrivez sur un autre chantier ?": "هل وصلت إلى مشروع آخر؟",
+  "Vous êtes toujours sur": "ما زلت في",
+  "Sur le chantier": "في المشروع",
+  "depuis": "منذ",
+  "Arrivée pointée à": "تم تسجيل الوصول في",
 };
 
 export default d;
