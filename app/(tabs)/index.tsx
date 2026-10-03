@@ -32,6 +32,7 @@ import { AlertePointagesSansChantier } from '@/components/pointage/AlertePointag
 import { PhotosRapides } from '@/components/photos/PhotosRapides';
 import { HeroEmploye } from '@/components/espaces/HeroEmploye';
 import { PointagesDuJourAdmin } from '@/components/pointage/PointagesDuJourAdmin';
+import { AFacturerAccueil } from '@/components/chantier/AFacturerAccueil';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 function toYMD(d: Date): string {
@@ -343,6 +344,7 @@ export default function DashboardScreen() {
           {/* RH : pointages sans chantier à renseigner */}
           {emp?.isRH && <AlertePointagesSansChantier />}
           {emp?.isRH && <PointagesDuJourAdmin />}
+          <AFacturerAccueil />
 
           {/* Photos du chantier du jour : accès direct */}
           <PhotosRapides onVoir={id => { setGalerieChantierId(id); setGalerieVisible(true); }} />
@@ -944,6 +946,8 @@ export default function DashboardScreen() {
         <AlertePointagesSansChantier />
         {/* Qui a pointé, où, et sa position en un tap */}
         <PointagesDuJourAdmin />
+        {/* Dépannages : travaux et prix pas encore facturés */}
+        <AFacturerAccueil />
 
         {/* À traiter — ce qui attend une action de l'admin */}
         {(stats.demandesRH > 0 || stats.materielNonAchete > 0) && (

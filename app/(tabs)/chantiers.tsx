@@ -1,4 +1,6 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { FacturationDepannage } from '@/components/chantier/FacturationDepannage';
+import { peutVoirFacturation } from '@/lib/depannage/facturation';
 import { AccesPlan, libelleAcces } from '@/components/chantier/AccesPlan';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import {
@@ -321,6 +323,8 @@ export default function ChantiersScreen() {
   const [marchesChantierId, setMarchesChantierId] = useState<string | null>(null);
   const [driveChantierId, setDriveChantierId] = useState<string | null>(null);
   const [savChantierId, setSavChantierId] = useState<string | null>(null);
+  // Dépannage : travaux et prix à facturer
+  const [facturationChantierId, setFacturationChantierId] = useState<string | null>(null);
   const [portailClientId, setPortailClientId] = useState<string | null>(null);
   // V10 — messagerie côté admin (modal ChatChantier dédiée, distincte du portail client)
   const [messagerieChantierId, setMessagerieChantierId] = useState<string | null>(null);
@@ -1763,6 +1767,7 @@ export default function ChantiersScreen() {
                       livraisons: livraisonsCount,
                       messages: countUnreadChantierMessages([ch], 'admin'),
                       materiel: (data.listesMateriaux || []).filter(l => l.chantierId === ch.id).reduce((acc, l) => acc + l.items.filter(i => !i.achete).length, 0),
+                      aFacturer: (ch.facturationDepannage || []).filter(l => !l.facture).length,
                     }}
                     handlers={{
                       onPressFiche:       () => goPanel(ch, () => openFicheUnifiee(ch)),
@@ -1783,6 +1788,8 @@ export default function ChantiersScreen() {
                       onPressYAller:      () => { setActionChantier(null); setTimeout(() => setItineraireAdresse(ch.adresse), 100); },
                       onPressMarches:     () => goPanel(ch, () => setMarchesChantierId(ch.id)),
                       onPressSAV:         () => goPanel(ch, () => setSavChantierId(ch.id)),
+                      onPressFacturation: ch.categorie === 'depannage' && peutVoirFacturation(ch, currentUser)
+                        ? () => goPanel(ch, () => setFacturationChantierId(ch.id)) : undefined,
                       onPressAchats:      () => goPanel(ch, () => setAchatsChantierId(ch.id)),
                       onPressPV:          () => goPanel(ch, () => setShowPVChantier(ch.id)),
                       onPressRentabilite: () => goPanel(ch, () => setBilanChantierId(ch.id)),
@@ -3882,6 +3889,7 @@ export default function ChantiersScreen() {
         onClose={() => backToDash(() => setPrescriptionsChantierId(null))}
         chantierId={prescriptionsChantierId || ''}
       />
+      <FacturationDepannage chantierId={facturationChantierId} onClose={() => setFacturationChantierId(null)} />
       <BudgetPanel
         visible={budgetPanelChantierId !== null}
         onClose={() => backToDash(() => setBudgetPanelChantierId(null))}

@@ -697,6 +697,18 @@ const d: Record<string, string> = {
   "Sans position": "Sin ubicación",
   "Sans dessin": "Sin dibujo",
   "Valider": "Validar",
+  "Travaux et prix": "Trabajos y precio",
+  "Ce qui a été fait": "Lo que se hizo",
+  "Ex. remplacement du mitigeur, recherche de fuite…": "Ej. cambio de grifo, búsqueda de fuga…",
+  "Prix HT (€)": "Precio sin IVA (€)",
+  "Reste à facturer": "Pendiente de facturar",
+  "Facturé": "Facturado",
+  "Marquer facturé": "Marcar facturado",
+  "Supprimer cette ligne ?": "¿Eliminar esta línea?",
+  "Qui peut voir et compléter (en plus de vous)": "Quién puede ver y completar (además de usted)",
+  "Dépannages à facturer": "Reparaciones por facturar",
+  "ligne": "línea",
+  "lignes": "líneas",
 };
 
 export default d;

@@ -680,6 +680,18 @@ const d: Record<string, string> = {
   "Sans position": "No location",
   "Sans dessin": "No drawing",
   "Valider": "Done",
+  "Travaux et prix": "Work and price",
+  "Ce qui a été fait": "What was done",
+  "Ex. remplacement du mitigeur, recherche de fuite…": "E.g. tap replaced, leak search…",
+  "Prix HT (€)": "Price excl. VAT (€)",
+  "Reste à facturer": "Left to invoice",
+  "Facturé": "Invoiced",
+  "Marquer facturé": "Mark invoiced",
+  "Supprimer cette ligne ?": "Delete this line?",
+  "Qui peut voir et compléter (en plus de vous)": "Who can see and fill in (besides you)",
+  "Dépannages à facturer": "Repairs to invoice",
+  "ligne": "line",
+  "lignes": "lines",
 };
 
 export default d;

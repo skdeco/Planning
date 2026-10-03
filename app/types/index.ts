@@ -297,6 +297,18 @@ export interface PlanChantier {
 
 export type CategorieChantier = 'chantier' | 'depannage' | 'lieuFixe';
 
+/** Dépannage : ce qui a été fait et son prix, pour ne pas oublier de facturer. */
+export interface LigneFacturationDepannage {
+  id: string;
+  date: string;            // YYYY-MM-DD
+  travaux: string;         // ce qui a été fait
+  prix?: number;           // € HT
+  facture?: boolean;       // facture établie
+  auteurId?: string;
+  auteurNom?: string;
+  creeLe: string;
+}
+
 export interface Chantier {
   id: string;
   nom: string;
@@ -333,6 +345,10 @@ export interface Chantier {
   longitude?: number;       // coordonnées GPS du chantier
   /** Adresse ayant servi au calcul automatique de latitude/longitude */
   geoAdresse?: string;
+  /** Dépannage : travaux réalisés + prix à facturer */
+  facturationDepannage?: LigneFacturationDepannage[];
+  /** Employés (ex. RH) ayant accès aux travaux et prix à facturer (l'admin y a toujours accès) */
+  accesFacturationIds?: string[];
   fiche?: FicheChantier;   // fiche chantier (optionnelle)
   ordre?: number;           // ordre d'affichage dans le planning (0 = premier)
   // Legacy : client en texte libre

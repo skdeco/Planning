@@ -705,6 +705,18 @@ const d: Record<string, string> = {
   "Sans position": "بدون موقع",
   "Sans dessin": "بدون رسم",
   "Valider": "تأكيد",
+  "Travaux et prix": "الأعمال والسعر",
+  "Ce qui a été fait": "ما تم إنجازه",
+  "Ex. remplacement du mitigeur, recherche de fuite…": "مثال: تغيير الخلاط، البحث عن تسرب…",
+  "Prix HT (€)": "السعر بدون ضريبة (€)",
+  "Reste à facturer": "المتبقي للفوترة",
+  "Facturé": "تمت الفوترة",
+  "Marquer facturé": "تحديد كمفوتر",
+  "Supprimer cette ligne ?": "حذف هذا السطر؟",
+  "Qui peut voir et compléter (en plus de vous)": "من يمكنه الرؤية والإكمال (بالإضافة إليك)",
+  "Dépannages à facturer": "إصلاحات للفوترة",
+  "ligne": "سطر",
+  "lignes": "أسطر",
 };
 
 export default d;

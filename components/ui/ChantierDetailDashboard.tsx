@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from 'react';
+import { tm } from '@/lib/menuiserie/i18n';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import {
@@ -59,6 +60,7 @@ export interface ChantierDetailDashboardCounts {
   livraisons: number;
   messages?: number;
   materiel?: number;
+  aFacturer?: number;
 }
 
 export interface ChantierDetailDashboardHandlers {
@@ -79,6 +81,8 @@ export interface ChantierDetailDashboardHandlers {
   onPressYAller: () => void;
   onPressMarches: () => void;
   onPressSAV: () => void;
+  /** Dépannage : travaux et prix à facturer (affiché seulement si fourni) */
+  onPressFacturation?: () => void;
   onPressAchats: () => void;
   onPressPV: () => void;
   onPressRentabilite: () => void;
@@ -141,6 +145,7 @@ export function ChantierDetailDashboard({
     if (masquer && tile.key && masquer.includes(tile.key)) return 'hidden';
     if (access) return tile.key ? access(tile.key) : 'hidden';
     if (tile.portalOnly) return 'hidden';
+    if (handlers.onPressFacturation && tile.onPress === handlers.onPressFacturation) return 'act';
     return tile.adminOnly && !isAdmin ? 'hidden' : 'act';
   };
 
@@ -157,6 +162,7 @@ export function ChantierDetailDashboard({
       id: 'suivi',
       titre: t.ui.suivi,
       tiles: [
+        ...(handlers.onPressFacturation ? [{ icon: Receipt, label: tm('Travaux et prix'), onPress: handlers.onPressFacturation, badge: counts.aFacturer }] : []),
         { icon: CheckSquare,   label: t.planning.notes,           key: 'notes',     onPress: handlers.onPressNotes,     badge: counts.notes },
         { icon: ClipboardList, label: t.ui.comptesRendus,  key: 'suivis',    onPress: handlers.onPressSuivis,    badge: counts.notesPlanning },
         { icon: Camera,        label: t.ui.photos,          key: 'photos',    onPress: handlers.onPressPhotos,    badge: counts.photos },

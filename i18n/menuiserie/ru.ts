@@ -705,6 +705,18 @@ const d: Record<string, string> = {
   "Sans position": "Без местоположения",
   "Sans dessin": "Без рисунка",
   "Valider": "Готово",
+  "Travaux et prix": "Работы и цена",
+  "Ce qui a été fait": "Что сделано",
+  "Ex. remplacement du mitigeur, recherche de fuite…": "Напр. замена смесителя, поиск протечки…",
+  "Prix HT (€)": "Цена без НДС (€)",
+  "Reste à facturer": "Осталось выставить",
+  "Facturé": "Выставлено",
+  "Marquer facturé": "Отметить выставленным",
+  "Supprimer cette ligne ?": "Удалить строку?",
+  "Qui peut voir et compléter (en plus de vous)": "Кто видит и заполняет (кроме вас)",
+  "Dépannages à facturer": "Ремонты к выставлению",
+  "ligne": "строка",
+  "lignes": "строки",
 };
 
 export default d;
