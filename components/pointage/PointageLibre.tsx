@@ -8,7 +8,7 @@
  * Le GPS n'est jamais bloquant (position récente ou 8 s maximum).
  * Aucun total d'heures n'est montré à l'employé.
  */
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Alert, Platform } from 'react-native';
 import { toast } from 'sonner-native';
 import { useApp } from '@/app/context/AppContext';
@@ -33,6 +33,21 @@ function confirmer(titre: string, message: string, ok: () => void, cancel: strin
   Alert.alert(titre, message, [{ text: cancel, style: 'cancel' }, { text: valider, onPress: ok }]);
 }
 
+type PropsBouton = { action: Action; libelle: string; onPress: () => void; plein: boolean; enCours: Action | null };
+function Bouton({ action, libelle, onPress, plein, enCours }: PropsBouton) {
+  const occupe = enCours !== null;
+  return (
+    <Pressable onPress={onPress} disabled={occupe} accessibilityRole="button"
+      style={{ minHeight: 58, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10,
+        backgroundColor: plein ? DS.primary : DS.surface, borderWidth: 1.5, borderColor: DS.primary, opacity: occupe && enCours !== action ? 0.5 : 1 }}>
+      {enCours === action && <ActivityIndicator color={plein ? DS.textInverse : DS.primary} />}
+      <Text style={{ fontSize: 16, fontWeight: '800', color: plein ? DS.textInverse : DS.primary }}>
+        {enCours === action && action !== 'depart' ? tm('Localisation…') : libelle}
+      </Text>
+    </Pressable>
+  );
+}
+
 export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) => void }) {
   const { data, currentUser, addPointage, addAffectation } = useApp();
   const { t } = useLanguage();
@@ -48,6 +63,7 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
   const affectesDuJour = data.affectations.filter(a => a.employeId === employeId && a.dateDebut <= aujourdhui && a.dateFin >= aujourdhui).map(a => a.chantierId);
 
   const [enCours, setEnCours] = useState<Action | null>(null);
+  const enCoursRef = useRef(false);
 
   const signalerHorsZone = (p: Pointage, plus?: ChantierProche) => {
     const emp = data.employes.find(e => e.id === employeId);
@@ -82,6 +98,8 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
 
   /** Arrivée (ou arrivée sur le nouveau chantier lors d'un changement). */
   const arriver = async (changement: boolean) => {
+    if (enCoursRef.current) return;
+    enCoursRef.current = true;
     setEnCours(changement ? 'changement' : 'arrivee');
     try {
       const { lat, lng, plus, chantierId } = await detecter();
@@ -98,12 +116,15 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
       else signalerHorsZone(p, plus);
       toast.success(`${t.pointage.arrivalRecordedAt} ${p.heure}${chantierId ? ` — ${plus!.chantier.nom}` : ''}`);
     } finally {
+      enCoursRef.current = false;
       setEnCours(null);
     }
   };
 
   /** Départ : chantier de l'arrivée, position seulement si déjà connue. */
   const partir = async () => {
+    if (enCoursRef.current) return;
+    enCoursRef.current = true;
     setEnCours('depart');
     try {
       const pos = await positionImmediate();
@@ -112,24 +133,13 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
       toast.success(`${t.pointage.departureRecordedAt} ${p.heure}`);
       onDepart?.(p.chantierId);
     } finally {
+      enCoursRef.current = false;
       setEnCours(null);
     }
   };
 
   const demanderChangement = () => confirmer(tm('Changement de chantier'), tm('Vous arrivez sur un autre chantier ?'), () => arriver(true), t.common.cancel, t.common.confirm);
   const demanderDepart = () => confirmer(t.pointage.departure, `${t.pointage.departurePromptPrefix} ${hm(new Date())} ?`, partir, t.common.cancel, t.common.confirm);
-
-  const occupe = enCours !== null;
-  const Bouton = ({ action, libelle, onPress, plein }: { action: Action; libelle: string; onPress: () => void; plein: boolean }) => (
-    <Pressable onPress={onPress} disabled={occupe} accessibilityRole="button"
-      style={{ minHeight: 58, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 10,
-        backgroundColor: plein ? DS.primary : DS.surface, borderWidth: 1.5, borderColor: DS.primary, opacity: occupe && enCours !== action ? 0.5 : 1 }}>
-      {enCours === action && <ActivityIndicator color={plein ? DS.textInverse : DS.primary} />}
-      <Text style={{ fontSize: 16, fontWeight: '800', color: plein ? DS.textInverse : DS.primary }}>
-        {enCours === action && action !== 'depart' ? tm('Localisation…') : libelle}
-      </Text>
-    </Pressable>
-  );
 
   return (
     <View style={{ marginHorizontal: 16, marginTop: 12, gap: 10 }}>
@@ -140,11 +150,11 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
       )}
       {surPlace ? (
         <>
-          <Bouton action="changement" libelle={tm('Changement de chantier')} onPress={demanderChangement} plein={false} />
-          <Bouton action="depart" libelle={tm('Pointer mon départ')} onPress={demanderDepart} plein />
+          <Bouton action="changement" libelle={tm('Changement de chantier')} onPress={demanderChangement} plein={false} enCours={enCours} />
+          <Bouton action="depart" libelle={tm('Pointer mon départ')} onPress={demanderDepart} plein enCours={enCours} />
         </>
       ) : (
-        <Bouton action="arrivee" libelle={tm('Pointer mon arrivée')} onPress={() => arriver(false)} plein />
+        <Bouton action="arrivee" libelle={tm('Pointer mon arrivée')} onPress={() => arriver(false)} plein enCours={enCours} />
       )}
 
       {tries.length > 0 && (

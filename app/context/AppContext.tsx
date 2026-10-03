@@ -835,8 +835,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const timeSinceChange = Date.now() - lastLocalChangeRef.current;
     const timeSinceSave = Date.now() - lastSaveRef.current;
     if (!force && (timeSinceChange < 8000 || timeSinceSave < 5000)) return;
+    const debutRequete = Date.now();
     try {
       const supabaseData = await loadDataFromSupabase();
+      // Une modification locale (ex. un pointage) a eu lieu pendant le
+      // téléchargement : ces données sont déjà périmées, on ne les applique
+      // pas (sinon la modification disparaît de l'écran).
+      if (lastLocalChangeRef.current >= debutRequete || lastSaveRef.current >= debutRequete) return;
       if (supabaseData && Object.keys(supabaseData).length > 0) {
         remoteReloadCountRef.current += 1;
         setData(prev => {
@@ -1282,6 +1287,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const ch = data.chantiers.find(c => c.id === pointage.chantierId);
     const label = pointage.type === 'debut' ? 'Arrivée' : 'Départ';
     logActivity('pointage', `${label} de ${empName} à ${pointage.heure}${ch ? ` — ${ch.nom}` : ''}`, pointage.employeId);
+    lastLocalChangeRef.current = Date.now();
     setData(p => {
       const exists = p.pointages.some(x => x.id === pointage.id);
       if (exists) return { ...p, pointages: p.pointages.map(x => x.id === pointage.id ? pointage : x) };
