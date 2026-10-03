@@ -717,6 +717,15 @@ const d: Record<string, string> = {
   "Dépannages à facturer": "Ремонты к выставлению",
   "ligne": "строка",
   "lignes": "строки",
+  "Chantiers affichés": "Показанные объекты",
+  "{0} affiché(s) sur {1}": "{0} из {1}",
+  "Garder ceux de la semaine": "Только на этой неделе",
+  "Tout masquer": "Скрыть все",
+  "Rechercher un chantier…": "Поиск объекта…",
+  "Prévu cette semaine": "Запланирован на неделе",
+  "Aucun chantier trouvé.": "Объекты не найдены.",
+  "Choisir les chantiers affichés": "Выбрать показанные объекты",
+  "Choisir": "Выбрать",
 };
 
 export default d;

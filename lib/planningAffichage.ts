@@ -66,3 +66,9 @@ export function chantierHorsChantier(nom: string): Chantier {
 export function idsPointesHorsChantier(pointages: { employeId: string; date: string; type: string; chantierId?: string }[], date: string): string[] {
   return [...new Set(pointages.filter(p => p.date === date && p.type === 'debut' && !p.chantierId).map(p => p.employeId))];
 }
+
+/** Un pointage sur un chantier masqué le réaffiche automatiquement dans le planning. */
+export function reafficherSiMasque(chantiers: Chantier[], updateChantier: (c: Chantier) => void, chantierId?: string) {
+  const c = chantierId ? chantiers.find(x => x.id === chantierId) : undefined;
+  if (c && c.statut !== 'archive' && !estAffiche(c)) updateChantier(basculerAffichage(c));
+}

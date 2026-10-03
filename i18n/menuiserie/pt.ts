@@ -714,6 +714,15 @@ const d: Record<string, string> = {
   "Dépannages à facturer": "Reparações por faturar",
   "ligne": "linha",
   "lignes": "linhas",
+  "Chantiers affichés": "Obras visíveis",
+  "{0} affiché(s) sur {1}": "{0} visíveis de {1}",
+  "Garder ceux de la semaine": "Só os da semana",
+  "Tout masquer": "Ocultar tudo",
+  "Rechercher un chantier…": "Procurar uma obra…",
+  "Prévu cette semaine": "Previsto esta semana",
+  "Aucun chantier trouvé.": "Nenhuma obra encontrada.",
+  "Choisir les chantiers affichés": "Escolher obras visíveis",
+  "Choisir": "Escolher",
 };
 
 export default d;

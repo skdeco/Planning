@@ -717,6 +717,15 @@ const d: Record<string, string> = {
   "Dépannages à facturer": "إصلاحات للفوترة",
   "ligne": "سطر",
   "lignes": "أسطر",
+  "Chantiers affichés": "المشاريع المعروضة",
+  "{0} affiché(s) sur {1}": "{0} من {1}",
+  "Garder ceux de la semaine": "فقط مشاريع الأسبوع",
+  "Tout masquer": "إخفاء الكل",
+  "Rechercher un chantier…": "ابحث عن مشروع…",
+  "Prévu cette semaine": "مخطط هذا الأسبوع",
+  "Aucun chantier trouvé.": "لم يتم العثور على مشروع.",
+  "Choisir les chantiers affichés": "اختر المشاريع المعروضة",
+  "Choisir": "اختر",
 };
 
 export default d;

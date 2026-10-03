@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
+import { ChoixChantiersAffiches } from '@/components/planning/ChoixChantiersAffiches';
 import { useRouter } from 'expo-router';
-import { Copy, Camera, FileText, Download, Settings, ChevronLeft, ChevronRight, ArrowUpDown, MoreHorizontal } from 'lucide-react-native';
+import { Copy, Camera, FileText, Download, Settings, ChevronLeft, ChevronRight, ArrowUpDown, MoreHorizontal, Eye } from 'lucide-react-native';
 import {
   View, Text, StyleSheet, ScrollView, Pressable, Modal,
   FlatList, Dimensions, Platform, TextInput, KeyboardAvoidingView, useWindowDimensions,
@@ -403,6 +404,7 @@ export default function PlanningScreen() {
 
   // Retard planifié (employé)
   const [showRetardModal, setShowRetardModal] = useState(false);
+  const [showChoixChantiers, setShowChoixChantiers] = useState(false);
 
   const isAdmin = currentUser?.role === 'admin';
   const isST = currentUser?.role === 'soustraitant';
@@ -796,6 +798,7 @@ export default function PlanningScreen() {
 
   // Menu ⋯ : actions secondaires du planning
   const actionsMenu = [
+    ...(isAdmin || isRH ? [{ label: tm("Choisir les chantiers affichés"), icon: Eye, onPress: () => setShowChoixChantiers(true) }] : []),
     ...(isAdmin && viewMode === 'semaine' ? [{ label: tm('Dupliquer la semaine précédente'), icon: Copy, onPress: dupliquerSemaine }] : []),
     { label: tm('Photos des chantiers'), icon: Camera, onPress: () => { setGalerieChantierId(undefined); setShowGalerieGlobale(true); } },
     ...(isAdmin ? [
@@ -840,6 +843,7 @@ export default function PlanningScreen() {
         </ScrollView>
       </View>
 
+          <ChoixChantiersAffiches visible={showChoixChantiers} onClose={() => setShowChoixChantiers(false)} days={days} />
           {/* Menu ⋯ : actions secondaires */}
           <ModalKeyboard visible={showMenuActions} transparent animationType="fade" onRequestClose={() => setShowMenuActions(false)}>
             <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.3)', justifyContent: 'flex-start', alignItems: 'flex-end', paddingTop: 110, paddingHorizontal: 16 }} onPress={() => setShowMenuActions(false)}>

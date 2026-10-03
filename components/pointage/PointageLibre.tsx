@@ -20,6 +20,7 @@ import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { RAYON_POINTAGE_DEFAUT, chantiersParDistance, formatDistance, getCurrentPosition, positionImmediate, type ChantierProche } from '@/lib/pointage/geo';
 import { pointagesDuJour } from '@/lib/pointage/historique';
 import { affecterSiBesoin } from '@/lib/pointage/affectation';
+import { reafficherSiMasque } from '@/lib/planningAffichage';
 import { tm } from '@/lib/menuiserie/i18n';
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -66,7 +67,7 @@ function Bouton({ action, libelle, onPress, plein, enCours }: PropsBouton) {
 }
 
 export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) => void }) {
-  const { data, currentUser, addPointage, addAffectation } = useApp();
+  const { data, currentUser, addPointage, addAffectation, updateChantier } = useApp();
   const { t, language } = useLanguage();
   const locale = language === 'fr' ? 'fr-FR' : language;
   const employeId = currentUser?.employeId || '';
@@ -130,7 +131,10 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
       const tsArrivee = changement ? new Date(ts.getTime() + 1000) : ts;
       const p = creer('debut', tsArrivee, lat, lng, chantierId, chantierId ? undefined : { distance: plus ? Math.round(plus.distance) : undefined });
       addPointage(p);
-      if (chantierId) affecterSiBesoin(data.affectations, addAffectation, employeId, chantierId, p.date);
+      if (chantierId) {
+        affecterSiBesoin(data.affectations, addAffectation, employeId, chantierId, p.date);
+        reafficherSiMasque(data.chantiers, updateChantier, chantierId);
+      }
       else signalerHorsZone(p, plus);
       toast.success(`${t.pointage.arrivalRecordedAt} ${p.heure}${chantierId ? ` — ${plus!.chantier.nom}` : ''}`);
     } finally {

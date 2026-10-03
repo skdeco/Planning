@@ -230,7 +230,7 @@ export function WeekGridView({
       </View>
 
       {/* Chantiers masqués : réaffichables en un tap */}
-      {peutMasquer && <ChantiersMasques />}
+      {peutMasquer && <ChantiersMasques days={days} />}
 
       <EditionPointagesJour visible={!!edition} employeId={edition?.employeId || null} date={edition?.date || ''} onFermer={() => setEdition(null)} />
 

@@ -692,6 +692,15 @@ const d: Record<string, string> = {
   "Dépannages à facturer": "Repairs to invoice",
   "ligne": "line",
   "lignes": "lines",
+  "Chantiers affichés": "Displayed sites",
+  "{0} affiché(s) sur {1}": "{0} shown of {1}",
+  "Garder ceux de la semaine": "Keep this week's",
+  "Tout masquer": "Hide all",
+  "Rechercher un chantier…": "Search a site…",
+  "Prévu cette semaine": "Planned this week",
+  "Aucun chantier trouvé.": "No site found.",
+  "Choisir les chantiers affichés": "Choose displayed sites",
+  "Choisir": "Choose",
 };
 
 export default d;
