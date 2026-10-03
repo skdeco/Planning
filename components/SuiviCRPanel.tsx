@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import {
   Plus, Calendar, ChevronLeft, Trash2, CheckSquare, Square, X,
-  Users, Paperclip, FileText, Image as ImageIcon, Clock, FileDown, Send,
+  Users, Paperclip, FileText, Image as ImageIcon, Clock, FileDown, Send, Pencil,
 } from 'lucide-react-native';
 import * as Sharing from 'expo-sharing';
 import { genererCRPdf } from '@/lib/pv/genererCRPdf';
@@ -23,6 +23,7 @@ import { DateInput } from '@/components/ui/DateInput';
 import { SelectField } from '@/components/ui/SelectField';
 import { EnvoiConsigneSheet, type ConsigneAEnvoyer } from '@/components/ui/EnvoiConsigneSheet';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
+import { AnnotationProvider, useAnnoterPhoto } from '@/components/photos/AnnotationPhoto';
 
 export interface SuiviCRPanelProps {
   visible: boolean;
@@ -367,7 +368,7 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
   );
 
   if (inline) {
-    return <View style={{ flex: 1, backgroundColor: DS.cremeFond }}>{content}</View>;
+    return <View style={{ flex: 1, backgroundColor: DS.cremeFond }}><AnnotationProvider>{content}</AnnotationProvider></View>;
   }
 
   return (
@@ -376,10 +377,12 @@ export function SuiviCRPanel({ visible, onClose, chantierId, isAdmin, readOnly, 
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.overlay}>
-          <Pressable style={{ height: '6%' }} onPress={onClose} />
-          <View style={styles.sheet}>{content}</View>
-        </View>
+        <AnnotationProvider>
+          <View style={styles.overlay}>
+            <Pressable style={{ height: '6%' }} onPress={onClose} />
+            <View style={styles.sheet}>{content}</View>
+          </View>
+        </AnnotationProvider>
       </KeyboardAvoidingView>
     </ModalKeyboard>
   );
@@ -810,6 +813,7 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove,
     onUpdate({ items: (sub.items || []).filter((_, i) => i !== idx) });
   };
 
+  const annoter = useAnnoterPhoto();
   const handleAttach = async (idx: number, kind: 'photo' | 'pdf') => {
     const files = await pickNativeFile({
       acceptImages: kind === 'photo',
@@ -823,7 +827,9 @@ function CRSubSectionBox({ sub, ro, allowToggle, chantierId, onUpdate, onRemove,
     const uploaded: CRAttachment[] = [];
     for (const f of files) {
       const fileId = `${kind}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-      const url = await uploadFileToStorage(f.uri, folder, fileId);
+      // Photo : possibilité de dessiner dessus avant l'envoi
+      const source = kind === 'photo' ? await annoter(f.uri) : f.uri;
+      const url = await uploadFileToStorage(source, folder, fileId);
       if (url) uploaded.push({ uri: url, nom: f.filename });
     }
     if (uploaded.length === 0) return;
@@ -901,6 +907,16 @@ interface CRItemRowProps {
 }
 
 function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, onAttachPdf, onEnvoyerConsigne }: CRItemRowProps) {
+  // Dessiner sur une photo déjà jointe : la version annotée remplace l'originale
+  const annoter = useAnnoterPhoto();
+  const redessiner = async (liste: CRAttachment[], i: number, enregistrer: (l: CRAttachment[]) => void) => {
+    const source = liste[i]?.uri;
+    if (!source) return;
+    const dessinee = await annoter(source);
+    if (dessinee === source) return;
+    const url = await uploadFileToStorage(dessinee, 'cr-annotations', `annot_${Date.now()}_${Math.random().toString(36).slice(2)}`);
+    if (url) enregistrer(liste.map((p, j) => (j === i ? { ...p, uri: url } : p)));
+  };
   if (item.kind === 'task') {
     const t = item.task;
     const toggle = () => onChange({ kind: 'task', task: { ...t, fait: !t.fait, faitAt: !t.fait ? new Date().toISOString() : undefined } });
@@ -925,6 +941,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
             const pdfList = legacyMerge(t.pdfs, t.pdfUri, t.pdfNom);
             if (photoList.length === 0 && pdfList.length === 0) return null;
             const removePhotoAt = (i: number) => onChange({ kind: 'task', task: { ...t, photos: photoList.filter((_, j) => j !== i), photoUri: undefined, photoNom: undefined } });
+            const setPhotos = (l: CRAttachment[]) => onChange({ kind: 'task', task: { ...t, photos: l, photoUri: undefined, photoNom: undefined } });
             const removePdfAt = (i: number) => onChange({ kind: 'task', task: { ...t, pdfs: pdfList.filter((_, j) => j !== i), pdfUri: undefined, pdfNom: undefined } });
             return (
               <View style={styles.attachmentRow}>
@@ -933,6 +950,11 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
                     <Pressable onPress={() => openDocPreview(p.uri)}>
                       <Text style={styles.attachmentPdf}>{p.nom || 'Photo'}</Text>
                     </Pressable>
+                    {!ro && (
+                      <Pressable onPress={() => redessiner(photoList, i, liste => setPhotos(liste))} hitSlop={6} accessibilityLabel="Dessiner sur la photo">
+                        <Pencil size={11} color={DS.textSecondary} strokeWidth={2.2} />
+                      </Pressable>
+                    )}
                     {!ro && (
                       <Pressable onPress={() => removePhotoAt(i)} hitSlop={6}>
                         <X size={11} color={DS.textSecondary} strokeWidth={2.2} />
@@ -999,6 +1021,7 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
             const pdfList = legacyMerge(txt.pdfs, txt.pdfUri, txt.pdfNom);
             if (photoList.length === 0 && pdfList.length === 0) return null;
             const removePhotoAt = (i: number) => onChange({ kind: 'texte', texte: { ...txt, photos: photoList.filter((_, j) => j !== i), photoUri: undefined, photoNom: undefined } });
+            const setPhotos = (l: CRAttachment[]) => onChange({ kind: 'texte', texte: { ...txt, photos: l, photoUri: undefined, photoNom: undefined } });
             const removePdfAt = (i: number) => onChange({ kind: 'texte', texte: { ...txt, pdfs: pdfList.filter((_, j) => j !== i), pdfUri: undefined, pdfNom: undefined } });
             return (
               <View style={styles.attachmentRow}>
@@ -1007,6 +1030,11 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
                     <Pressable onPress={() => openDocPreview(p.uri)}>
                       <Text style={styles.attachmentPdf}>{p.nom || 'Photo'}</Text>
                     </Pressable>
+                    {!ro && (
+                      <Pressable onPress={() => redessiner(photoList, i, liste => setPhotos(liste))} hitSlop={6} accessibilityLabel="Dessiner sur la photo">
+                        <Pencil size={11} color={DS.textSecondary} strokeWidth={2.2} />
+                      </Pressable>
+                    )}
                     {!ro && (
                       <Pressable onPress={() => removePhotoAt(i)} hitSlop={6}>
                         <X size={11} color={DS.textSecondary} strokeWidth={2.2} />

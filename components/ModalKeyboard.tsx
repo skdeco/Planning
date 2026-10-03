@@ -5,6 +5,7 @@
  */
 import React from 'react';
 import { Modal, KeyboardAvoidingView, Platform, type ModalProps } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 export function ModalKeyboard({ children, ...props }: ModalProps) {
   // Web : pas de clavier virtuel à gérer
@@ -15,12 +16,17 @@ export function ModalKeyboard({ children, ...props }: ModalProps) {
   // toute seule, il faut pousser le contenu au-dessus du clavier)
   return (
     <Modal {...props}>
-      <KeyboardAvoidingView
-        style={{ flex: 1 }}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      >
-        {children}
-      </KeyboardAvoidingView>
+      {/* Fournisseur propre à la fenêtre : l'encoche / Dynamic Island est mesurée
+          dans la modale (sinon les en-têtes plein écran passent sous l'heure
+          et la croix de fermeture devient inaccessible). */}
+      <SafeAreaProvider>
+        <KeyboardAvoidingView
+          style={{ flex: 1 }}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        >
+          {children}
+        </KeyboardAvoidingView>
+      </SafeAreaProvider>
     </Modal>
   );
 }

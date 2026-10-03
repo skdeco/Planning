@@ -703,6 +703,8 @@ const d: Record<string, string> = {
   "Hors chantier": "خارج المشروع",
   "Position": "الموقع",
   "Sans position": "بدون موقع",
+  "Sans dessin": "بدون رسم",
+  "Valider": "تأكيد",
 };
 
 export default d;

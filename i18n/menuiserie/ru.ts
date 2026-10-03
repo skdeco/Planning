@@ -703,6 +703,8 @@ const d: Record<string, string> = {
   "Hors chantier": "Вне объекта",
   "Position": "Местоположение",
   "Sans position": "Без местоположения",
+  "Sans dessin": "Без рисунка",
+  "Valider": "Готово",
 };
 
 export default d;

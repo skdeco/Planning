@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { View, Text, ScrollView, Modal, StyleSheet } from 'react-native';
 import { CheckSquare } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
@@ -36,7 +37,7 @@ export function NotesJourPanel({ visible, onClose, chantierId }: NotesJourPanelP
   );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Notes du jour" sub={chantierNom} onClose={onClose} />
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
@@ -66,7 +67,7 @@ export function NotesJourPanel({ visible, onClose, chantierId }: NotesJourPanelP
           })}
         </ScrollView>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

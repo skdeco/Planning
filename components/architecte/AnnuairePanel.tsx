@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { View, Text, Pressable, ScrollView, Modal, Linking, StyleSheet } from 'react-native';
 import { X, Phone, Mail, Users } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
@@ -76,7 +77,7 @@ export function AnnuairePanel({ visible, onClose, chantierId }: AnnuairePanelPro
   const avStyle = (t: Contact['av']) => (t === 'moa' ? styles.avMoa : t === 'ent' ? styles.avEnt : styles.avDef);
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Annuaire" sub={chantier?.nom} onClose={onClose} />
 
@@ -103,7 +104,7 @@ export function AnnuairePanel({ visible, onClose, chantierId }: AnnuairePanelPro
           )}
         </ScrollView>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

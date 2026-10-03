@@ -700,6 +700,8 @@ const d: Record<string, string> = {
   "Hors chantier": "Fora da obra",
   "Position": "Localização",
   "Sans position": "Sem localização",
+  "Sans dessin": "Sem desenho",
+  "Valider": "Validar",
 };
 
 export default d;

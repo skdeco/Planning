@@ -678,6 +678,8 @@ const d: Record<string, string> = {
   "Hors chantier": "Off-site",
   "Position": "Location",
   "Sans position": "No location",
+  "Sans dessin": "No drawing",
+  "Valider": "Done",
 };
 
 export default d;

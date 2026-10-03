@@ -1,4 +1,5 @@
 import React, { useMemo } from 'react';
+import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { View, Text, Pressable, ScrollView, Modal, StyleSheet } from 'react-native';
 import { X, Lock } from 'lucide-react-native';
 import { useApp } from '@/app/context/AppContext';
@@ -39,7 +40,7 @@ export function JournalPanel({ visible, onClose, chantierId }: JournalPanelProps
   );
 
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+    <ModalKeyboard visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
         <PanelHeader title="Journal" sub={chantierNom} onClose={onClose} />
 
@@ -66,7 +67,7 @@ export function JournalPanel({ visible, onClose, chantierId }: JournalPanelProps
           )}
         </ScrollView>
       </View>
-    </Modal>
+    </ModalKeyboard>
   );
 }
 

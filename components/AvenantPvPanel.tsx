@@ -8,6 +8,7 @@ import { genererAvenantPdf } from '@/lib/pv/genererAvenantPdf';
 import { DS, radius, space, font } from '@/constants/design';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
+import { PanelHeader } from '@/components/ui/PanelHeader';
 
 /**
  * AvenantPvPanel — avenants / annexes complémentaires au PV de réception.
@@ -132,13 +133,7 @@ export function AvenantPvPanel({ visible, onClose, chantierId, embedded = false 
   return (
     <ModalKeyboard visible={!!visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.screen}>
-        <View style={styles.header}>
-          <View style={{ flex: 1 }}>
-            <Text style={styles.hTitle}>Avenant PV</Text>
-            {chantier?.nom ? <Text style={styles.hSub}>{chantier.nom}</Text> : null}
-          </View>
-          <Pressable hitSlop={8} onPress={onClose} style={styles.closeBtn}><X size={20} color={DS.sombre} /></Pressable>
-        </View>
+        <PanelHeader title="Avenant PV" sub={chantier?.nom} onClose={() => onClose?.()} />
 
         <ScrollView contentContainerStyle={styles.scroll} showsVerticalScrollIndicator={false}>
           {avenants.length === 0 ? (
