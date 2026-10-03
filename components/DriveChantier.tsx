@@ -111,7 +111,7 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
                         style={[styles.addBtn, uploadingCat !== null && { opacity: 0.4 }]}
                       >
                         {uploadingCat === cat.key
-                          ? <ActivityIndicator size="small" color="#5C1F2E" />
+                          ? <ActivityIndicator size="small" color="#141414" />
                           : <Text style={styles.addBtnText}>+ Ajouter</Text>}
                       </Pressable>
                     )}
@@ -157,30 +157,30 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: '#FAF5EF', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%' },
+  sheet: { backgroundColor: '#F4F4F2', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%' },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#EDE4D8',
   },
-  title: { fontSize: 18, fontWeight: '800', color: '#5C1F2E' },
-  subtitle: { fontSize: 13, color: '#6E5F54', marginTop: 2 },
-  close: { fontSize: 20, color: '#6E5F54', paddingHorizontal: 4 },
+  title: { fontSize: 18, fontWeight: '800', color: '#141414' },
+  subtitle: { fontSize: 13, color: '#6A6A68', marginTop: 2 },
+  close: { fontSize: 20, color: '#6A6A68', paddingHorizontal: 4 },
   catBlock: { backgroundColor: '#fff', borderRadius: 12, padding: 12, gap: 8 },
   catHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  catTitle: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
+  catTitle: { fontSize: 14, fontWeight: '700', color: '#141414' },
   addBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: '#F0E6DC' },
-  addBtnText: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
-  shareBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F1E7DC', marginRight: 4 },
+  addBtnText: { fontSize: 12, fontWeight: '700', color: '#141414' },
+  shareBtn: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#EBEBE8', marginRight: 4 },
   shareBtnOn: { backgroundColor: '#E7F1EA' },
-  shareTxt: { fontSize: 11, fontWeight: '700', color: '#5C1F2E' },
+  shareTxt: { fontSize: 11, fontWeight: '700', color: '#141414' },
   shareTxtOn: { color: '#2E7D5B' },
   empty: { fontSize: 12, color: '#B0A99F', fontStyle: 'italic' },
   docRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#F2ECE4',
   },
-  docNom: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
-  docMeta: { fontSize: 11, color: '#6E5F54', marginTop: 1 },
+  docNom: { fontSize: 13, fontWeight: '600', color: '#141414' },
+  docMeta: { fontSize: 11, color: '#6A6A68', marginTop: 1 },
   delBtn: { padding: 4 },
   del: { fontSize: 15 },
 });

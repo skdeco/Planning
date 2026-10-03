@@ -19,7 +19,7 @@ export default function DirectionScreen() {
   // Le Planning direction a toujours la barre (au moins un espace + le planning) : pas de bouton Retour.
 
   return (
-      <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
         <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 12, paddingVertical: 8, gap: 8 }}>
           <Text style={{ fontSize: 20, fontWeight: '800', color: DS.text, flex: 1 }}>{tm("Planning direction")}</Text>
         </View>

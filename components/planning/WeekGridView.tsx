@@ -148,7 +148,7 @@ export function WeekGridView({
       style={styles.gridScroll}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />
+        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#141414']} tintColor="#141414" />
       }
     >
       {/* Grille : noms des chantiers fixes à gauche ; lundi → vendredi à l'écran,
@@ -156,13 +156,13 @@ export function WeekGridView({
       <View style={{ flexDirection: 'row' }}>
         {/* Colonne des noms */}
         <View style={{ width: NAME_COL }}>
-          <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL, minHeight: 0, height: hauteurEntete || undefined, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }]} />
+          <View style={[styles.nameCell, styles.headerCell, { width: NAME_COL, minHeight: 0, height: hauteurEntete || undefined, borderBottomWidth: 1, borderBottomColor: '#E2E2DF' }]} />
           {visibleChantiers.map(chantier => {
             const h = Math.max(hauteurs[chantier.id] || 0, hauteursNoms[chantier.id] || 0);
             return (
               <Pressable
                 key={chantier.id}
-                style={[styles.nameCell, { width: NAME_COL, height: h || undefined, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }]}
+                style={[styles.nameCell, { width: NAME_COL, height: h || undefined, borderBottomWidth: 1, borderBottomColor: '#E2E2DF' }]}
                 onPress={chantier.id === HORS_CHANTIER_ID ? undefined : () => onOpenChantierActions(chantier.id)}
                 onLongPress={isAdmin && chantier.id !== HORS_CHANTIER_ID ? () => onLongPressChantier(chantier.id) : undefined}
                 delayLongPress={400}
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   gridRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#EDE2D6',
+    borderBottomColor: '#E2E2DF',
   },
   nameCell: {
     minHeight: 50,
@@ -332,17 +332,17 @@ const styles = StyleSheet.create({
     paddingLeft: 6,
     justifyContent: 'center',
     borderRightWidth: 1,
-    borderRightColor: '#EDE2D6',
+    borderRightColor: '#E2E2DF',
     position: 'relative',
     overflow: 'hidden',
   },
   headerCell: {
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
   },
   chantierName: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
     lineHeight: 14,
   },
   colorBar: {
@@ -355,37 +355,37 @@ const styles = StyleSheet.create({
   dayHeaderCell: {
     alignItems: 'center',
     paddingVertical: 8,
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     borderRightWidth: 0.5,
-    borderRightColor: '#EDE2D6',
+    borderRightColor: '#E2E2DF',
   },
   dayHeaderCellToday: {
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
   },
   dayName: {
     fontSize: 11,
     fontWeight: '600',
     letterSpacing: 0.3,
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   dayNameToday: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '700',
   },
   dayNum: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
     marginTop: 2,
   },
   dayNumToday: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '600',
   },
   chantierRow: {
     flexDirection: 'row',
     borderBottomWidth: 1,
-    borderBottomColor: '#EDE2D6',
+    borderBottomColor: '#E2E2DF',
     minHeight: 70,
   },
   legendSection: {
@@ -419,11 +419,11 @@ const styles = StyleSheet.create({
   legendLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
   },
   legendSub: {
     fontSize: 10,
-    color: '#6E5F54',
+    color: '#6A6A68',
     marginTop: 1,
   },
   legendDotST: {

@@ -75,7 +75,7 @@ export function ConnexionMn() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right', 'bottom']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 14 }} keyboardShouldPersistTaps="handled">
         <Text style={{ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: DS.textSecondary, marginTop: 12 }}>{tm("SK DECO · MENUISERIE")}</Text>
         <Text style={screenTitle}>{mode === 'premier' ? tm("Créer le compte administrateur") : tm("Connexion sécurisée")}</Text>

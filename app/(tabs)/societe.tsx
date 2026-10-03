@@ -76,7 +76,7 @@ export default function SocieteScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 14, color: '#6E5F54' }}>{t.common.accessReserved}</Text>
+          <Text style={{ fontSize: 14, color: '#6A6A68' }}>{t.common.accessReserved}</Text>
         </View>
       </ScreenContainer>
     );
@@ -204,7 +204,7 @@ export default function SocieteScreen() {
   return (
     <ScreenContainer>
       <BackToPlus />
-      <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#F4F4F2' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Text style={styles.title}>{t.societe.title}</Text>
         <Text style={styles.subtitle}>{t.societe.subtitle}</Text>
 
@@ -338,7 +338,7 @@ export default function SocieteScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 20 }}>
           <ScrollView style={{ maxHeight: '92%' }} contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }}>
             <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20 }}>
-              <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E', marginBottom: 12 }}>
+              <Text style={{ fontSize: 16, fontWeight: '800', color: '#141414', marginBottom: 12 }}>
                 {editId ? t.societe.editDoc : t.societe.newDoc}
               </Text>
 
@@ -404,13 +404,13 @@ export default function SocieteScreen() {
               />
 
               <View style={{ flexDirection: 'row', gap: 8, marginTop: 16 }}>
-                <Pressable onPress={() => setShowForm(false)} style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
-                  <Text style={{ color: '#5C1F2E', fontWeight: '700' }}>{t.common.cancel}</Text>
+                <Pressable onPress={() => setShowForm(false)} style={{ flex: 1, backgroundColor: '#F4F4F2', borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}>
+                  <Text style={{ color: '#141414', fontWeight: '700' }}>{t.common.cancel}</Text>
                 </Pressable>
                 <Pressable
                   onPress={save}
                   disabled={!form.nom.trim() || !form.fichierUri || uploading}
-                  style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (!form.nom.trim() || !form.fichierUri || uploading) ? 0.5 : 1 }}
+                  style={{ flex: 1, backgroundColor: '#141414', borderRadius: 10, paddingVertical: 12, alignItems: 'center', opacity: (!form.nom.trim() || !form.fichierUri || uploading) ? 0.5 : 1 }}
                 >
                   <Text style={{ color: '#FFFFFF', fontWeight: '800' }}>
                     {uploading ? t.societe.sending : editId ? t.common.save : t.common.add}
@@ -426,62 +426,62 @@ export default function SocieteScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14', marginBottom: 2 },
-  subtitle: { fontSize: 14, color: '#6E5F54', marginBottom: 12 },
+  title: { fontFamily: 'Manrope_500Medium', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#141414', marginBottom: 2 },
+  subtitle: { fontSize: 14, color: '#6A6A68', marginBottom: 12 },
   alertesBox: {
     backgroundColor: '#FEF3C7', borderRadius: 18, padding: 14,
   },
-  alertesTitle: { fontSize: 14, fontWeight: '600', color: '#2B1D14', marginBottom: 8 },
+  alertesTitle: { fontSize: 14, fontWeight: '600', color: '#141414', marginBottom: 8 },
   alerteRow: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8,
     paddingVertical: 7, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E8D9A8',
   },
-  alerteText: { fontSize: 13.5, color: '#2B1D14', flex: 1 },
-  alerteDate: { fontSize: 12.5, color: '#5C1F2E', fontWeight: '700' },
+  alerteText: { fontSize: 13.5, color: '#141414', flex: 1 },
+  alerteDate: { fontSize: 12.5, color: '#141414', fontWeight: '700' },
   catChip: {
     paddingHorizontal: 14, height: 34, justifyContent: 'center', borderRadius: 999,
-    backgroundColor: '#fff', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1,
+    backgroundColor: '#fff', shadowColor: '#141414', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1,
   },
-  catChipActive: { backgroundColor: '#5C1F2E' },
-  catChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
+  catChipActive: { backgroundColor: '#141414' },
+  catChipText: { fontSize: 13, fontWeight: '500', color: '#141414' },
   suggestionsBox: {
-    backgroundColor: '#FAF5EF', borderRadius: 16, padding: 10, marginBottom: 12,
+    backgroundColor: '#F4F4F2', borderRadius: 16, padding: 10, marginBottom: 12,
   },
-  suggestionsTitle: { fontSize: 12.5, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase' },
+  suggestionsTitle: { fontSize: 12.5, fontWeight: '700', color: '#6A6A68', textTransform: 'uppercase' },
   suggestionChip: {
     backgroundColor: '#fff', paddingHorizontal: 12, paddingVertical: 7,
-    borderRadius: 999, borderWidth: 1, borderStyle: 'dashed', borderColor: '#5C1F2E',
+    borderRadius: 999, borderWidth: 1, borderStyle: 'dashed', borderColor: '#141414',
   },
-  suggestionChipText: { fontSize: 13, color: '#5C1F2E', fontWeight: '600' },
-  empty: { fontSize: 14, color: '#6E5F54', textAlign: 'center', paddingVertical: 32 },
+  suggestionChipText: { fontSize: 13, color: '#141414', fontWeight: '600' },
+  empty: { fontSize: 14, color: '#6A6A68', textAlign: 'center', paddingVertical: 32 },
   docCard: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     backgroundColor: '#fff', borderRadius: 24, padding: 14, marginBottom: 10,
-    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2,
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2,
   },
-  docNom: { fontSize: 15.5, fontWeight: '600', color: '#2B1D14' },
-  docMeta: { fontSize: 12.5, color: '#6E5F54', marginTop: 2 },
-  docDates: { fontSize: 12.5, color: '#6E5F54', marginTop: 4 },
-  docNote: { fontSize: 12.5, color: '#5C1F2E', marginTop: 4, fontStyle: 'italic' },
+  docNom: { fontSize: 15.5, fontWeight: '600', color: '#141414' },
+  docMeta: { fontSize: 12.5, color: '#6A6A68', marginTop: 2 },
+  docDates: { fontSize: 12.5, color: '#6A6A68', marginTop: 4 },
+  docNote: { fontSize: 12.5, color: '#141414', marginTop: 4, fontStyle: 'italic' },
   docActions: { flexDirection: 'row', gap: 4 },
   docActionBtn: {
-    width: 36, height: 36, backgroundColor: '#F1E7DC', borderRadius: 14,
+    width: 36, height: 36, backgroundColor: '#EBEBE8', borderRadius: 14,
     alignItems: 'center', justifyContent: 'center',
   },
   docActionText: { fontSize: 16 },
   addBtn: {
-    backgroundColor: '#5C1F2E', borderRadius: 999, paddingVertical: 14,
+    backgroundColor: '#141414', borderRadius: 999, paddingVertical: 14,
     alignItems: 'center', marginTop: 12,
   },
   addBtnText: { color: '#FFFFFF', fontSize: 14, fontWeight: '800' },
-  label: { fontSize: 12, fontWeight: '700', color: '#5C1F2E', marginBottom: 4 },
+  label: { fontSize: 12, fontWeight: '700', color: '#141414', marginBottom: 4 },
   input: {
-    backgroundColor: '#FAF5EF', borderRadius: 16, borderWidth: 1.5, borderColor: '#EDE2D6',
-    paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#5C1F2E',
+    backgroundColor: '#F4F4F2', borderRadius: 16, borderWidth: 1.5, borderColor: '#E2E2DF',
+    paddingHorizontal: 12, paddingVertical: 12, fontSize: 14, color: '#141414',
   },
   filePickerBtn: {
-    backgroundColor: '#F1E7DC', borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed',
-    borderColor: '#5C1F2E', paddingVertical: 14, alignItems: 'center',
+    backgroundColor: '#EBEBE8', borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed',
+    borderColor: '#141414', paddingVertical: 14, alignItems: 'center',
   },
-  filePickerText: { color: '#5C1F2E', fontWeight: '700', fontSize: 13 },
+  filePickerText: { color: '#141414', fontWeight: '700', fontSize: 13 },
 });

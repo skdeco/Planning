@@ -50,7 +50,7 @@ function ChantiersCacheSyncMounter({
 
 export default function RootLayout() {
   // Police des titres (Fraunces). Non bloquant : repli sur la police système pendant le chargement.
-  useFonts({ Fraunces_600SemiBold: require("../assets/fonts/Fraunces_600SemiBold.ttf") });
+  useFonts({ Manrope_500Medium: require("../assets/fonts/Manrope_500Medium.ttf"), Manrope_700Bold: require("../assets/fonts/Manrope_700Bold.ttf") });
   const initialInsets = initialWindowMetrics?.insets ?? DEFAULT_WEB_INSETS;
   const initialFrame = initialWindowMetrics?.frame ?? DEFAULT_WEB_FRAME;
 

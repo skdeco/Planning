@@ -77,10 +77,10 @@ function genererCRHtml(chantier: Chantier, cr: SuiviCR): string {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Georgia, 'Times New Roman', serif; color: #2A2622; font-size: 12px; line-height: 1.5; }
   .content { padding: 40px 40px 56px; }
-  .brand { font-family: Arial, sans-serif; font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #5C1F2E; }
+  .brand { font-family: Arial, sans-serif; font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #141414; }
   .brandSub { font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 2px; color: #8A7B6E; text-transform: uppercase; margin-top: 2px; }
-  .rule { height: 3px; background: #5C1F2E; margin: 16px 0 20px; }
-  h1 { font-size: 18px; color: #5C1F2E; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .rule { height: 3px; background: #141414; margin: 16px 0 20px; }
+  h1 { font-size: 18px; color: #141414; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .meta { font-family: Arial, sans-serif; font-size: 11px; color: #8A7B6E; margin-bottom: 18px; }
   .infoCard { background: #FBF7F2; border: 1px solid #ECDFCD; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; }
   .infoRow { display: flex; justify-content: space-between; padding: 3px 0; }
@@ -90,20 +90,20 @@ function genererCRHtml(chantier: Chantier, cr: SuiviCR): string {
   .chips { margin-bottom: 20px; }
   .chip { display: inline-block; background: #F1E8DC; color: #7A4F2E; font-family: Arial, sans-serif; font-size: 10px; font-weight: 700; padding: 4px 10px; border-radius: 20px; margin: 0 6px 6px 0; }
   .section { margin-bottom: 18px; page-break-inside: avoid; }
-  .sectionTitle { font-family: Arial, sans-serif; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #5C1F2E; padding-bottom: 4px; border-bottom: 1px solid #ECDFCD; margin-bottom: 8px; }
+  .sectionTitle { font-family: Arial, sans-serif; font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: #141414; padding-bottom: 4px; border-bottom: 1px solid #ECDFCD; margin-bottom: 8px; }
   .comment { background: #FBF7F2; border-left: 3px solid #7A4F2E; padding: 8px 12px; font-style: italic; color: #5f574e; margin-bottom: 10px; border-radius: 0 6px 6px 0; }
   .sub { margin: 8px 0 10px; }
   .subTitle { font-family: Arial, sans-serif; font-size: 11px; font-weight: 700; color: #2A2622; margin-bottom: 5px; }
   .item { margin: 3px 0 7px; }
   .itemLine { display: flex; gap: 7px; align-items: flex-start; }
-  .box { color: #5C1F2E; font-size: 13px; line-height: 1.3; }
+  .box { color: #141414; font-size: 13px; line-height: 1.3; }
   .bullet { color: #7A4F2E; font-size: 13px; line-height: 1.2; }
   .itemText { flex: 1; }
   .itemText.done { color: #8A7B6E; }
   .atts { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 4px 21px; }
   .thumb { width: 110px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid #ECDFCD; }
   .pdfList { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-  .pdfChip { font-family: Arial, sans-serif; font-size: 10px; color: #5C1F2E; background: #F1E8DC; padding: 3px 8px; border-radius: 5px; }
+  .pdfChip { font-family: Arial, sans-serif; font-size: 10px; color: #141414; background: #F1E8DC; padding: 3px 8px; border-radius: 5px; }
   .empty { color: #B0A89E; font-style: italic; }
   .foot { margin-top: 36px; font-family: Arial, sans-serif; font-size: 9px; color: #B0A89E; text-align: center; }
 </style></head><body>

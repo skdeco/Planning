@@ -69,7 +69,7 @@ export default function CatalogueMn() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
         <EnTete titre={tm("Catalogue & fournisseurs")} retour={moi.role !== 'admin' ? () => router.back() : undefined} />
         <View style={{ flexDirection: 'row', gap: 6 }}>

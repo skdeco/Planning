@@ -30,13 +30,13 @@ export interface ChantierActionsModalProps {
 
 // ── SK DECO palette ─────────────────────────────────────────────────────────
 const COLORS = {
-  primary: '#5C1F2E',
-  accent: '#5C1F2E',
-  bg: '#F1E7DC',
-  border: '#EDE2D6',
+  primary: '#141414',
+  accent: '#141414',
+  bg: '#EBEBE8',
+  border: '#E2E2DF',
   surface: '#FFFFFF',
-  text: '#2B1D14',
-  textMuted: '#6E5F54',
+  text: '#141414',
+  textMuted: '#6A6A68',
   danger: '#D94F4F',
 };
 
@@ -162,7 +162,7 @@ export function ChantierActionsModal(props: ChantierActionsModalProps) {
               </View>
             </View>
             <Pressable onPress={onClose} style={styles.closeBtn} hitSlop={8}>
-              <X size={18} color="#6E5F54" strokeWidth={2} />
+              <X size={18} color="#6A6A68" strokeWidth={2} />
             </Pressable>
           </View>
 
@@ -180,7 +180,7 @@ export function ChantierActionsModal(props: ChantierActionsModalProps) {
                   ]}
                   onPress={b.onPress}
                 >
-                  <View style={{ marginBottom: 6 }}><Icon size={24} color={b.danger ? '#E74C3C' : '#5C1F2E'} strokeWidth={1.9} /></View>
+                  <View style={{ marginBottom: 6 }}><Icon size={24} color={b.danger ? '#E74C3C' : '#141414'} strokeWidth={1.9} /></View>
                   <Text style={[styles.btnLabel, b.danger && styles.btnLabelDanger]} numberOfLines={1}>{b.label}</Text>
                 </Pressable>
                 );

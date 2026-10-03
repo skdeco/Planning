@@ -26,8 +26,8 @@ export function EmptyState({ icon, title, description, actionLabel, onAction }: 
 const styles = StyleSheet.create({
   container: { alignItems: 'center', paddingVertical: 48, paddingHorizontal: 24 },
   icon: { fontSize: 48, marginBottom: 16 },
-  title: { fontSize: 17, fontWeight: '700', color: '#2B1D14', textAlign: 'center', marginBottom: 8 },
-  description: { fontSize: 14, color: '#6E5F54', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
-  btn: { backgroundColor: '#5C1F2E', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10 },
+  title: { fontSize: 17, fontWeight: '700', color: '#141414', textAlign: 'center', marginBottom: 8 },
+  description: { fontSize: 14, color: '#6A6A68', textAlign: 'center', lineHeight: 20, marginBottom: 20 },
+  btn: { backgroundColor: '#141414', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 10 },
   btnText: { color: '#fff', fontSize: 14, fontWeight: '700' },
 });

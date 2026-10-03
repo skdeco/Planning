@@ -89,7 +89,7 @@ export function GanttGlobal({ visible, onClose }: Props) {
             <ScrollView showsVerticalScrollIndicator={true} contentContainerStyle={{ paddingBottom: 40 }}>
               <View>
                 {/* En-tête semaines */}
-                <View style={{ flexDirection: 'row', backgroundColor: '#5C1F2E' }}>
+                <View style={{ flexDirection: 'row', backgroundColor: '#141414' }}>
                   <View style={{ width: labelColW, padding: 8, justifyContent: 'center' }}>
                     <Text style={styles.headerChantierCol}>Chantier</Text>
                   </View>
@@ -124,13 +124,13 @@ export function GanttGlobal({ visible, onClose }: Props) {
                     const isTermine = c.statut === 'termine';
                     const today = new Date();
                     const isEnCours = today >= s && today <= e && !isTermine;
-                    const color = c.couleur || (isTermine ? '#6E5F54' : '#5C1F2E');
+                    const color = c.couleur || (isTermine ? '#6A6A68' : '#141414');
 
                     return (
                       <Pressable
                         key={c.id}
                         onPress={() => { onClose(); setTimeout(() => router.push('/(tabs)/chantiers' as any), 200); }}
-                        style={[styles.ganttRow, idx % 2 === 0 && { backgroundColor: '#FAF5EF' }]}
+                        style={[styles.ganttRow, idx % 2 === 0 && { backgroundColor: '#F4F4F2' }]}
                       >
                         <View style={{ width: labelColW, padding: 8, justifyContent: 'center' }}>
                           <Text style={styles.chantierName} numberOfLines={1}>{c.nom}</Text>
@@ -145,12 +145,12 @@ export function GanttGlobal({ visible, onClose }: Props) {
                               {
                                 left,
                                 width,
-                                backgroundColor: isEnCours ? color : isTermine ? '#EDE2D6' : '#F1E7DC',
+                                backgroundColor: isEnCours ? color : isTermine ? '#E2E2DF' : '#EBEBE8',
                                 borderColor: color,
                               },
                             ]}
                           >
-                            <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#5C1F2E' }]} numberOfLines={1}>
+                            <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#141414' }]} numberOfLines={1}>
                               {isTermine ? '✓ Clôturé' : isEnCours ? 'En cours' : 'Planifié'}
                             </Text>
                           </View>
@@ -184,25 +184,25 @@ export function GanttGlobal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    padding: 14, borderBottomWidth: 1, borderBottomColor: '#EDE2D6',
+    padding: 14, borderBottomWidth: 1, borderBottomColor: '#E2E2DF',
   },
-  headerTitle: { fontSize: 15, fontWeight: '800', color: '#5C1F2E' },
-  closeBtn: { width: 32, height: 32, backgroundColor: '#F1E7DC', borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  filterBtn: { backgroundColor: '#F1E7DC', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start' },
-  filterBtnText: { fontSize: 11, fontWeight: '700', color: '#5C1F2E' },
-  info: { fontSize: 11, color: '#6E5F54', marginTop: 6 },
-  headerChantierCol: { fontSize: 11, color: '#5C1F2E', fontWeight: '800', textTransform: 'uppercase' },
+  headerTitle: { fontSize: 15, fontWeight: '800', color: '#141414' },
+  closeBtn: { width: 32, height: 32, backgroundColor: '#EBEBE8', borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  filterBtn: { backgroundColor: '#EBEBE8', borderRadius: 8, paddingVertical: 6, paddingHorizontal: 10, alignSelf: 'flex-start' },
+  filterBtnText: { fontSize: 11, fontWeight: '700', color: '#141414' },
+  info: { fontSize: 11, color: '#6A6A68', marginTop: 6 },
+  headerChantierCol: { fontSize: 11, color: '#141414', fontWeight: '800', textTransform: 'uppercase' },
   weekHeader: {
     borderRightWidth: 1, borderRightColor: 'rgba(255,255,255,0.1)',
     alignItems: 'center', justifyContent: 'center', paddingVertical: 6,
   },
-  weekHeaderText: { fontSize: 10, fontWeight: '700', color: '#5C1F2E' },
+  weekHeaderText: { fontSize: 10, fontWeight: '700', color: '#141414' },
   monthLabel: { fontSize: 9, color: '#fff', textTransform: 'uppercase', fontWeight: '800' },
   ganttRow: {
-    flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#EDE2D6',
+    flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E2DF',
   },
-  chantierName: { fontSize: 12, fontWeight: '800', color: '#5C1F2E' },
-  chantierMeta: { fontSize: 10, color: '#6E5F54', marginTop: 2 },
+  chantierName: { fontSize: 12, fontWeight: '800', color: '#141414' },
+  chantierMeta: { fontSize: 10, color: '#6A6A68', marginTop: 2 },
   ganttBar: {
     position: 'absolute', top: 8, bottom: 8,
     borderWidth: 2, borderRadius: 8,

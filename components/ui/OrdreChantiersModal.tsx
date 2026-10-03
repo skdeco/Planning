@@ -124,10 +124,10 @@ export function OrdreChantiersModal({ visible, onClose }: OrdreChantiersModalPro
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, backgroundColor: 'rgba(20,20,20,0.45)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 24, maxHeight: '90%', gap: 10 },
   head: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  title: { flex: 1, fontFamily: 'Fraunces_600SemiBold', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: DS.text },
+  title: { flex: 1, fontFamily: 'Manrope_500Medium', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: DS.text },
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' },
   intro: { fontSize: 13, color: DS.textSecondary, marginTop: -4 },
   segment: { flexDirection: 'row', gap: 2, padding: 3, borderRadius: radius.full, backgroundColor: DS.segment },

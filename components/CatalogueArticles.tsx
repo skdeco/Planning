@@ -95,22 +95,22 @@ export function CatalogueArticles({ visible, onClose }: Props) {
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '95%', flex: 1 }}>
           {/* Header */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
-            <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>Catalogue articles</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E2DF' }}>
+            <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>Catalogue articles</Text>
             <View style={{ flexDirection: 'row', gap: 8 }}>
-              <Pressable style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={openNew}>
+              <Pressable style={{ backgroundColor: '#141414', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }} onPress={openNew}>
                 <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>+ Article</Text>
               </Pressable>
-              <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
-                <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '700' }}>✕</Text>
+              <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
+                <Text style={{ fontSize: 14, color: '#6A6A68', fontWeight: '700' }}>✕</Text>
               </Pressable>
             </View>
           </View>
 
           {/* Recherche */}
-          <View style={{ flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' }}>
+          <View style={{ flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 8, gap: 6, borderBottomWidth: 1, borderBottomColor: '#EBEBE8' }}>
             <TextInput
-              style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, borderWidth: 1, borderColor: '#EDE2D6' }}
+              style={{ flex: 1, backgroundColor: '#F4F4F2', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, borderWidth: 1, borderColor: '#E2E2DF' }}
               placeholder="Rechercher un article, référence, fournisseur..."
               placeholderTextColor="#999"
               value={search}
@@ -119,7 +119,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
           </View>
 
           {/* Filtres catégories */}
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 38, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 6, gap: 4, alignItems: 'center' }}>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ maxHeight: 38, borderBottomWidth: 1, borderBottomColor: '#EBEBE8' }} contentContainerStyle={{ paddingHorizontal: 12, paddingVertical: 6, gap: 4, alignItems: 'center' }}>
             <Pressable style={[chipS, filterCat === 'all' && chipSA]} onPress={() => setFilterCat('all')}>
               <Text style={[chipT, filterCat === 'all' && chipTA]}>Tout ({(data.catalogueArticles || []).length})</Text>
             </Pressable>
@@ -138,24 +138,24 @@ export function CatalogueArticles({ visible, onClose }: Props) {
             {articles.length === 0 && (
               <View style={{ alignItems: 'center', paddingVertical: 32 }}>
                 <Ico e="📦" size={28} />
-                <Text style={{ fontSize: 15, color: '#6E5F54' }}>Aucun article dans le catalogue</Text>
-                <Text style={{ fontSize: 12, color: '#9A8C80', marginTop: 4 }}>Cliquez "+ Article" pour commencer</Text>
+                <Text style={{ fontSize: 15, color: '#6A6A68' }}>Aucun article dans le catalogue</Text>
+                <Text style={{ fontSize: 12, color: '#959593', marginTop: 4 }}>Cliquez "+ Article" pour commencer</Text>
               </View>
             )}
             {grouped.map(([cat, items]) => (
               <View key={cat}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E', marginTop: 10, marginBottom: 6 }}>{cat} ({items.length})</Text>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#141414', marginTop: 10, marginBottom: 6 }}>{cat} ({items.length})</Text>
                 {items.map(a => (
-                  <Pressable key={a.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: '#EDE2D6', flexDirection: 'row', gap: 10 }}
+                  <Pressable key={a.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 6, borderWidth: 1, borderColor: '#E2E2DF', flexDirection: 'row', gap: 10 }}
                     onPress={() => openEdit(a)}>
                     <View style={{ flex: 1 }}>
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#2B1D14' }}>{a.nom}</Text>
-                      {a.marque && <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{a.marque}</Text>}
-                      {a.reference && <Text style={{ fontSize: 11, color: '#6E5F54' }}>Réf: {a.reference}</Text>}
-                      {a.description && <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>{a.description}</Text>}
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#141414' }}>{a.nom}</Text>
+                      {a.marque && <Text style={{ fontSize: 11, color: '#141414', fontWeight: '600' }}>{a.marque}</Text>}
+                      {a.reference && <Text style={{ fontSize: 11, color: '#6A6A68' }}>Réf: {a.reference}</Text>}
+                      {a.description && <Text style={{ fontSize: 12, color: '#6A6A68', marginTop: 2 }}>{a.description}</Text>}
                       <View style={{ flexDirection: 'row', gap: 8, marginTop: 4, flexWrap: 'wrap' }}>
                         {a.prixUnitaire != null && <Text style={{ fontSize: 11, fontWeight: '700', color: '#27AE60' }}>{a.prixUnitaire} €/{a.unite || 'u'}</Text>}
-                        {a.fournisseur && <Text style={{ fontSize: 11, color: '#6E5F54' }}>{a.fournisseur}</Text>}
+                        {a.fournisseur && <Text style={{ fontSize: 11, color: '#6A6A68' }}>{a.fournisseur}</Text>}
                       </View>
                     </View>
                     <Pressable onPress={() => handleDelete(a.id, a.nom)} style={{ padding: 4 }}>
@@ -174,7 +174,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', padding: 16 }} onPress={() => setShowForm(false)}>
           <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 20, maxHeight: '85%' }} onPress={e => e.stopPropagation()}>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40 }}>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>{editId ? 'Modifier l\'article' : 'Nouvel article'}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414', marginBottom: 12 }}>{editId ? 'Modifier l\'article' : 'Nouvel article'}</Text>
 
               <Text style={lbl}>Nom *</Text>
               <TextInput style={inp} value={form.nom} onChangeText={v => setForm(f => ({ ...f, nom: v }))} placeholder="Ex: Disjoncteur 20A" />
@@ -214,7 +214,7 @@ export function CatalogueArticles({ visible, onClose }: Props) {
               <Text style={lbl}>Lien fournisseur (URL)</Text>
               <TextInput style={inp} value={form.lienFournisseur} onChangeText={v => setForm(f => ({ ...f, lienFournisseur: v }))} placeholder="https://..." autoCapitalize="none" />
 
-              <Pressable style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 16, opacity: form.nom.trim() ? 1 : 0.5 }}
+              <Pressable style={{ backgroundColor: '#141414', borderRadius: 10, paddingVertical: 14, alignItems: 'center', marginTop: 16, opacity: form.nom.trim() ? 1 : 0.5 }}
                 onPress={handleSave} disabled={!form.nom.trim()}>
                 <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? 'Modifier' : 'Ajouter au catalogue'}</Text>
               </Pressable>
@@ -226,9 +226,9 @@ export function CatalogueArticles({ visible, onClose }: Props) {
   );
 }
 
-const chipS = { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' };
-const chipSA = { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' };
-const chipT = { fontSize: 11, fontWeight: '600' as const, color: '#6E5F54' };
+const chipS = { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#E2E2DF' };
+const chipSA = { backgroundColor: '#141414', borderColor: '#141414' };
+const chipT = { fontSize: 11, fontWeight: '600' as const, color: '#6A6A68' };
 const chipTA = { color: '#fff' };
-const lbl = { fontSize: 12, fontWeight: '600' as const, color: '#6E5F54', marginBottom: 4, marginTop: 8 };
-const inp = { backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 4, color: '#2B1D14' };
+const lbl = { fontSize: 12, fontWeight: '600' as const, color: '#6A6A68', marginBottom: 4, marginTop: 8 };
+const inp = { backgroundColor: '#EBEBE8', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E2DF', marginBottom: 4, color: '#141414' };

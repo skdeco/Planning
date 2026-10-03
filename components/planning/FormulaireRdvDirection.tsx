@@ -127,8 +127,8 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
     <Pressable onPress={() => ouvrir(l)} accessibilityRole="button" accessibilityLabel={label} style={{ flex, gap: 2 }}>
       <Text style={labelStyle}>{label}</Text>
       <View style={[inputStyle, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 46 }]}>
-        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#2B1D14' }} numberOfLines={1}>{valeur}</Text>
-        <Text style={{ fontSize: 12, color: '#6E5F54' }}>▾</Text>
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: '#141414' }} numberOfLines={1}>{valeur}</Text>
+        <Text style={{ fontSize: 12, color: '#6A6A68' }}>▾</Text>
       </View>
     </Pressable>
   );
@@ -146,7 +146,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 20, paddingTop: 20, maxHeight: '92%' }}>
           <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 40, gap: 4 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{editId ? tm('Modifier') : tm('Nouveau RDV')}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>{editId ? tm('Modifier') : tm('Nouveau RDV')}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                 {editId && (
                   <Pressable onPress={onDelete} style={{ padding: 6 }} accessibilityRole="button">
@@ -155,8 +155,8 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
                 )}
                 {/* Croix de fermeture */}
                 <Pressable onPress={onClose} hitSlop={10} accessibilityRole="button" accessibilityLabel={tm('Fermer')}
-                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#2B1D14' }}>✕</Text>
+                  style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 18, fontWeight: '700', color: '#141414' }}>✕</Text>
                 </Pressable>
               </View>
             </View>
@@ -175,13 +175,13 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
             <View style={{ flexDirection: 'row', gap: 10, marginBottom: 4 }}>
               {COULEURS_RDV.map(c => (
                 <Pressable key={c} onPress={() => setForm(f => ({ ...f, couleur: c }))} accessibilityRole="button" accessibilityState={{ selected: form.couleur === c }}
-                  style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c, borderWidth: form.couleur === c ? 3 : 0, borderColor: '#2B1D14' }} />
+                  style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: c, borderWidth: form.couleur === c ? 3 : 0, borderColor: '#141414' }} />
               ))}
             </View>
 
             <Pressable onPress={() => setPlus(p => !p)} accessibilityRole="button" style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E' }}>{plus ? tm("Moins d'options") : tm("Plus d'options")}</Text>
-              <Text style={{ fontSize: 12, color: '#5C1F2E' }}>{plus ? '▴' : '▾'}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#141414' }}>{plus ? tm("Moins d'options") : tm("Plus d'options")}</Text>
+              <Text style={{ fontSize: 12, color: '#141414' }}>{plus ? '▴' : '▾'}</Text>
             </Pressable>
 
             {plus && (
@@ -197,7 +197,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
               </>
             )}
 
-            <Pressable style={{ marginTop: 12, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: form.titre.trim() ? 1 : 0.5 }}
+            <Pressable style={{ marginTop: 12, backgroundColor: '#141414', borderRadius: 10, paddingVertical: 14, alignItems: 'center', opacity: form.titre.trim() ? 1 : 0.5 }}
               onPress={onSave} disabled={!form.titre.trim()} accessibilityRole="button">
               <Text style={{ color: '#fff', fontSize: 15, fontWeight: '700' }}>{editId ? tm('Enregistrer') : tm('Créer le rendez-vous')}</Text>
             </Pressable>
@@ -210,35 +210,35 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 }}>
           <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.4)' }} onPress={() => setListe(null)} />
           <View style={{ backgroundColor: '#fff', borderRadius: 20, padding: 8, width: '100%', maxWidth: estHeure ? 240 : 360, maxHeight: '75%' }}>
-            {!!liste && <Text style={{ fontSize: 14, fontWeight: '800', color: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 8 }}>{titreListe[liste]}{estHeure ? ` · ${heureEditee}` : ''}</Text>}
+            {!!liste && <Text style={{ fontSize: 14, fontWeight: '800', color: '#141414', paddingHorizontal: 12, paddingVertical: 8 }}>{titreListe[liste]}{estHeure ? ` · ${heureEditee}` : ''}</Text>}
             {avecRecherche && (
               <TextInput value={recherche} onChangeText={setRecherche} placeholder={liste === 'chantier' ? tm('Rechercher un chantier') : tm('Rechercher')}
-                placeholderTextColor="#9A8C80" autoCorrect={false} clearButtonMode="while-editing"
+                placeholderTextColor="#959593" autoCorrect={false} clearButtonMode="while-editing"
                 style={[inputStyle, { marginHorizontal: 4, marginBottom: 6, fontSize: 15 }]} />
             )}
             {estHeure ? (
-              <View style={{ flexDirection: 'row', gap: 2, height: LIGNE * 5, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#F1E7DC' }}>
+              <View style={{ flexDirection: 'row', gap: 2, height: LIGNE * 5, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#EBEBE8' }}>
                 {/* Heures */}
                 <ScrollView style={{ flex: 1 }} contentOffset={{ x: 0, y: Math.max(0, (HEURES_H.indexOf(hSel) - 2) * LIGNE) }} showsVerticalScrollIndicator={false}>
                   {HEURES_H.map(h => {
                     const actif = h === hSel;
                     return (
                       <Pressable key={h} onPress={() => changerHeure(h, mSel)} accessibilityRole="button" accessibilityState={{ selected: actif }}
-                        style={{ height: LIGNE, marginHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#F2E4E1' : undefined }}>
-                        <Text style={{ fontSize: 16, fontWeight: actif ? '800' : '400', color: actif ? '#5C1F2E' : '#6E5F54' }}>{String(h).padStart(2, '0')}</Text>
+                        style={{ height: LIGNE, marginHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#EBEBE8' : undefined }}>
+                        <Text style={{ fontSize: 16, fontWeight: actif ? '800' : '400', color: actif ? '#141414' : '#6A6A68' }}>{String(h).padStart(2, '0')}</Text>
                       </Pressable>
                     );
                   })}
                 </ScrollView>
-                <Text style={{ alignSelf: 'center', fontSize: 18, fontWeight: '700', color: '#5C1F2E' }}>:</Text>
+                <Text style={{ alignSelf: 'center', fontSize: 18, fontWeight: '700', color: '#141414' }}>:</Text>
                 {/* Minutes (tranches de 15) */}
                 <View style={{ flex: 1, justifyContent: 'center' }}>
                   {MINUTES_Q.map(m => {
                     const actif = m === mSel;
                     return (
                       <Pressable key={m} onPress={() => changerHeure(hSel, m)} accessibilityRole="button" accessibilityState={{ selected: actif }}
-                        style={{ height: LIGNE, marginHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#F2E4E1' : undefined }}>
-                        <Text style={{ fontSize: 16, fontWeight: actif ? '800' : '400', color: actif ? '#5C1F2E' : '#6E5F54' }}>{String(m).padStart(2, '0')}</Text>
+                        style={{ height: LIGNE, marginHorizontal: 6, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: actif ? '#EBEBE8' : undefined }}>
+                        <Text style={{ fontSize: 16, fontWeight: actif ? '800' : '400', color: actif ? '#141414' : '#6A6A68' }}>{String(m).padStart(2, '0')}</Text>
                       </Pressable>
                     );
                   })}
@@ -250,23 +250,23 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
                 const actif = estChoisi(o.v);
                 return (
                   <Pressable key={o.v || '_'} onPress={() => choisir(o.v)} accessibilityRole={multiple ? 'checkbox' : 'button'} accessibilityState={multiple ? { checked: actif } : { selected: actif }}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, minHeight: 46, borderRadius: 10, backgroundColor: actif ? '#F2E4E1' : undefined }}>
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 12, minHeight: 46, borderRadius: 10, backgroundColor: actif ? '#EBEBE8' : undefined }}>
                     {multiple && (
-                      <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#5C1F2E', backgroundColor: actif ? '#5C1F2E' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                      <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: '#141414', backgroundColor: actif ? '#141414' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
                         {actif && <Text style={{ color: '#fff', fontSize: 13, fontWeight: '900' }}>✓</Text>}
                       </View>
                     )}
                     {!!o.couleur && <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: o.couleur }} />}
-                    <Text style={{ flex: 1, fontSize: 15, color: '#2B1D14', fontWeight: actif ? '800' : '500' }}>{o.l}</Text>
-                    {!multiple && actif && <Text style={{ color: '#5C1F2E', fontWeight: '900' }}>✓</Text>}
+                    <Text style={{ flex: 1, fontSize: 15, color: '#141414', fontWeight: actif ? '800' : '500' }}>{o.l}</Text>
+                    {!multiple && actif && <Text style={{ color: '#141414', fontWeight: '900' }}>✓</Text>}
                   </Pressable>
                 );
               })}
-              {optionsFiltrees.length === 0 && <Text style={{ padding: 12, color: '#6E5F54' }}>{tm('Aucun')}</Text>}
+              {optionsFiltrees.length === 0 && <Text style={{ padding: 12, color: '#6A6A68' }}>{tm('Aucun')}</Text>}
             </ScrollView>
             )}
             {(multiple || estHeure) && (
-              <Pressable onPress={() => setListe(null)} accessibilityRole="button" style={{ marginTop: 8, minHeight: 40, borderRadius: 10, backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => setListe(null)} accessibilityRole="button" style={{ marginTop: 8, minHeight: 40, borderRadius: 10, backgroundColor: '#141414', alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>OK</Text>
               </Pressable>
             )}
@@ -277,5 +277,5 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
   );
 }
 
-const labelStyle = { fontSize: 12, fontWeight: '600' as const, color: '#6E5F54', marginBottom: 2, marginTop: 8 };
-const inputStyle = { backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6' };
+const labelStyle = { fontSize: 12, fontWeight: '600' as const, color: '#6A6A68', marginBottom: 2, marginTop: 8 };
+const inputStyle = { backgroundColor: '#EBEBE8', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E2DF' };

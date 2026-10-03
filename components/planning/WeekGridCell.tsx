@@ -276,14 +276,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     gap: 2,
     borderRightWidth: 0.5,
-    borderRightColor: '#EDE2D6',
+    borderRightColor: '#E2E2DF',
     alignItems: 'stretch',
   },
   cellToday: {
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
   },
   cellOutOfRange: {
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
   },
   badgeWrapper: {
     position: 'relative',
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   addBtnText: {
     fontSize: 16,
-    color: '#B5A99E',
+    color: '#B8B8B5',
     fontWeight: '400',
   },
 });

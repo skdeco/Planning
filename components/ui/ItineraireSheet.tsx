@@ -67,10 +67,10 @@ export function ItineraireSheet({ adresse, onClose }: ItineraireSheetProps) {
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, backgroundColor: 'rgba(20,20,20,0.45)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: DS.background, borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 16, paddingTop: 18, paddingBottom: 28, gap: 14 },
   head: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  titre: { fontFamily: 'Fraunces_600SemiBold', fontSize: 22, lineHeight: 28, color: DS.text },
+  titre: { fontFamily: 'Manrope_500Medium', fontSize: 22, lineHeight: 28, color: DS.text },
   adresse: { fontSize: 13.5, color: DS.textSecondary, marginTop: 2 },
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' },
   listCard: { backgroundColor: DS.surface, borderRadius: radius.xl, ...shadows.md },

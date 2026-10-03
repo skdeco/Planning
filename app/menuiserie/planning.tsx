@@ -26,7 +26,7 @@ function semaineIso(d: Date): number {
 const semaineDe = (ymd?: string) => (ymd ? semaineIso(new Date(`${ymd}T12:00:00`)) : null);
 const semaineTexte = (s?: string) => { const m = (s || '').match(/\d{1,2}/); return m ? parseInt(m[0], 10) : null; };
 
-const COULEURS = { production: '#1F4E79', livraison: '#C9A227', pose: '#5C1F2E' } as const;
+const COULEURS = { production: '#1F4E79', livraison: '#C9A227', pose: '#141414' } as const;
 const NB = 10;
 
 export default function PlanningMn() {
@@ -59,7 +59,7 @@ export default function PlanningMn() {
   }, [d]);
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 48, gap: 10 }}>
         <EnTete titre={tm("Planning Menuiserie")} />
         <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>

@@ -18,11 +18,11 @@ function ExterneContenu() {
   if (!currentUser) return null;
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FAF5EF' }}>
+    <View style={{ flex: 1, backgroundColor: '#F4F4F2' }}>
       <View style={{
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
         paddingTop: insets.top + 8, paddingBottom: 10, paddingHorizontal: 16,
-        backgroundColor: '#5C1F2E',
+        backgroundColor: '#141414',
       }}>
         <View>
           <Text style={{ color: '#FFFFFF', fontSize: 11, fontWeight: '700', letterSpacing: 0.5 }}>SK DECO</Text>
@@ -32,7 +32,7 @@ function ExterneContenu() {
           onPress={() => setCurrentUser(null)}
           style={{ backgroundColor: '#3A3A3A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
         >
-          <Text style={{ color: '#5C1F2E', fontSize: 12, fontWeight: '700' }}>Déconnexion</Text>
+          <Text style={{ color: '#141414', fontSize: 12, fontWeight: '700' }}>Déconnexion</Text>
         </Pressable>
       </View>
       <Tabs
@@ -43,10 +43,10 @@ function ExterneContenu() {
             paddingBottom: bottomPadding,
             paddingTop: 6,
             backgroundColor: '#fff',
-            borderTopColor: '#EDE2D6',
+            borderTopColor: '#E2E2DF',
           },
-          tabBarActiveTintColor: '#5C1F2E',
-          tabBarInactiveTintColor: '#6E5F54',
+          tabBarActiveTintColor: '#141414',
+          tabBarInactiveTintColor: '#6A6A68',
           tabBarLabelStyle: { fontSize: 11, fontWeight: '700' },
         }}
       >

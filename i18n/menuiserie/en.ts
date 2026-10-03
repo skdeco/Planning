@@ -662,6 +662,9 @@ const d: Record<string, string> = {
   "Arrivée pointée à": "Arrival clocked at",
   "Pointé hors chantier": "Clocked in off-site",
   "Changement": "Change",
+  "Sur place depuis": "On site since",
+  "Journée terminée": "Day finished",
+  "Pas de chantier prévu.": "No site planned.",
 };
 
 export default d;

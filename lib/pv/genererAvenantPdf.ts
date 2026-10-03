@@ -29,16 +29,16 @@ function genererAvenantHtml(chantier: Chantier, avenant: PVAvenant): string {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Georgia, 'Times New Roman', serif; color: #2A2622; font-size: 12.5px; line-height: 1.55; }
   .content { padding: 48px 44px; }
-  .brand { font-family: Arial, sans-serif; font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #5C1F2E; }
+  .brand { font-family: Arial, sans-serif; font-size: 22px; font-weight: 800; letter-spacing: 3px; color: #141414; }
   .brandSub { font-family: Arial, sans-serif; font-size: 9px; letter-spacing: 2px; color: #8A7B6E; text-transform: uppercase; margin-top: 2px; }
-  .rule { height: 3px; background: #5C1F2E; margin: 18px 0 24px; }
-  h1 { font-size: 19px; color: #5C1F2E; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
+  .rule { height: 3px; background: #141414; margin: 18px 0 24px; }
+  h1 { font-size: 19px; color: #141414; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; }
   .meta { font-family: Arial, sans-serif; font-size: 11px; color: #8A7B6E; margin-bottom: 22px; }
   .infoCard { background: #FBF7F2; border: 1px solid #ECDFCD; border-radius: 8px; padding: 14px 16px; margin-bottom: 22px; }
   .infoRow { display: flex; justify-content: space-between; padding: 3px 0; }
   .infoLabel { font-family: Arial, sans-serif; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #8A7B6E; }
   .infoVal { font-weight: 700; color: #2A2622; }
-  .sectionTitle { font-family: Arial, sans-serif; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #5C1F2E; margin: 8px 0 8px; }
+  .sectionTitle { font-family: Arial, sans-serif; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #141414; margin: 8px 0 8px; }
   .contenu { background: #FFFFFF; border: 1px solid #ECDFCD; border-radius: 8px; padding: 16px 18px; min-height: 180px; white-space: pre-wrap; }
   .signRow { display: flex; gap: 40px; margin-top: 48px; }
   .signBox { flex: 1; }

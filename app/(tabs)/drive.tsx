@@ -62,7 +62,7 @@ export default function DriveScreen() {
     return (
       <ScreenContainer>
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
-          <Text style={{ fontSize: 14, color: '#6E5F54' }}>{t.common.accessReserved}</Text>
+          <Text style={{ fontSize: 14, color: '#6A6A68' }}>{t.common.accessReserved}</Text>
         </View>
       </ScreenContainer>
     );
@@ -71,7 +71,7 @@ export default function DriveScreen() {
   return (
     <ScreenContainer>
       <BackToPlus />
-      <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#F4F4F2' }} contentContainerStyle={{ padding: 16, paddingBottom: 120 }} showsVerticalScrollIndicator={false}>
         <Text style={styles.title}>{t.drive.title}</Text>
         <Text style={styles.subtitle}>{rows.length} {t.drive.documents} — {t.drive.allChantiers}</Text>
 
@@ -132,19 +132,19 @@ export default function DriveScreen() {
 }
 
 const styles = StyleSheet.create({
-  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
-  subtitle: { fontSize: 13, color: '#6E5F54', marginTop: 2, marginBottom: 12 },
+  title: { fontFamily: 'Manrope_500Medium', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#141414' },
+  subtitle: { fontSize: 13, color: '#6A6A68', marginTop: 2, marginBottom: 12 },
   searchWrap: { marginBottom: 8 },
-  search: { backgroundColor: '#fff', borderRadius: 23, minHeight: 46, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#2B1D14', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
-  chip: { paddingHorizontal: 14, height: 34, justifyContent: 'center', borderRadius: 999, backgroundColor: '#F1E7DC' },
-  chipActive: { backgroundColor: '#5C1F2E' },
-  chipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
+  search: { backgroundColor: '#fff', borderRadius: 23, minHeight: 46, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#141414', shadowColor: '#141414', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  chip: { paddingHorizontal: 14, height: 34, justifyContent: 'center', borderRadius: 999, backgroundColor: '#EBEBE8' },
+  chipActive: { backgroundColor: '#141414' },
+  chipText: { fontSize: 13, fontWeight: '500', color: '#141414' },
   chipTextActive: { color: '#fff' },
-  empty: { fontSize: 14, color: '#9A8C80', textAlign: 'center', paddingVertical: 24 },
-  row: { backgroundColor: '#fff', borderRadius: 24, padding: 14, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
-  docNom: { fontSize: 15.5, fontWeight: '600', color: '#2B1D14' },
+  empty: { fontSize: 14, color: '#959593', textAlign: 'center', paddingVertical: 24 },
+  row: { backgroundColor: '#fff', borderRadius: 24, padding: 14, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  docNom: { fontSize: 15.5, fontWeight: '600', color: '#141414' },
   metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 4, gap: 8 },
-  chantier: { fontSize: 13, color: '#5C1F2E', fontWeight: '600', flex: 1 },
-  cat: { fontSize: 12.5, color: '#6E5F54', backgroundColor: '#F1E7DC', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, overflow: 'hidden' },
-  date: { fontSize: 12.5, color: '#6E5F54', marginTop: 4 },
+  chantier: { fontSize: 13, color: '#141414', fontWeight: '600', flex: 1 },
+  cat: { fontSize: 12.5, color: '#6A6A68', backgroundColor: '#EBEBE8', paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999, overflow: 'hidden' },
+  date: { fontSize: 12.5, color: '#6A6A68', marginTop: 4 },
 });

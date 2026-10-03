@@ -721,7 +721,7 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Fraunces_600SemiBold',
+    fontFamily: 'Manrope_500Medium',
     color: DS.sombre,
     marginBottom: 12,
   },

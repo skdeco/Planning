@@ -143,7 +143,7 @@ export default function PlanningExterne() {
 
   if (mesChantiers.length === 0) {
     return (
-      <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 20 }}>
+      <ScrollView style={{ flex: 1, backgroundColor: '#F4F4F2' }} contentContainerStyle={{ padding: 20 }}>
         <View style={styles.emptyBox}>
           <Text style={styles.emptyText}>Aucun chantier dans votre planning.</Text>
         </View>
@@ -152,7 +152,7 @@ export default function PlanningExterne() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#FAF5EF' }}>
+    <View style={{ flex: 1, backgroundColor: '#F4F4F2' }}>
       {/* Sélecteur de chantier */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.chantierTabs} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 12 }}>
         {mesChantiers.map(c => (
@@ -213,7 +213,7 @@ export default function PlanningExterne() {
                   const width = durationDays * dayW;
                   const isEnCours = today >= s && today <= e;
                   return (
-                    <View key={l.id} style={[styles.ganttRow, idx % 2 === 0 && { backgroundColor: '#FAF5EF' }]}>
+                    <View key={l.id} style={[styles.ganttRow, idx % 2 === 0 && { backgroundColor: '#F4F4F2' }]}>
                       <View style={{ width: labelColW, paddingHorizontal: 8, justifyContent: 'center' }}>
                         <Text style={styles.lotLabel} numberOfLines={2}>{l.nom}</Text>
                         {!l.manuel && <Text style={styles.prorataTag}>prorata</Text>}
@@ -225,12 +225,12 @@ export default function PlanningExterne() {
                             {
                               left,
                               width,
-                              backgroundColor: isEnCours ? '#5C1F2E' : '#EDE2D6',
-                              borderColor: isEnCours ? '#5C1F2E' : '#5C1F2E',
+                              backgroundColor: isEnCours ? '#141414' : '#E2E2DF',
+                              borderColor: isEnCours ? '#141414' : '#141414',
                             },
                           ]}
                         >
-                          <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#5C1F2E' }]} numberOfLines={1}>
+                          <Text style={[styles.ganttBarText, { color: isEnCours ? '#fff' : '#141414' }]} numberOfLines={1}>
                             {isEnCours ? 'En cours' : l.manuel ? 'Planifié' : '~ Prévu'}
                           </Text>
                         </View>
@@ -266,7 +266,7 @@ export default function PlanningExterne() {
                 </View>
               ))}
               {joursAvecEquipe.size > 30 && (
-                <Text style={{ fontSize: 12.5, color: '#6E5F54', alignSelf: 'center' }}>+ {joursAvecEquipe.size - 30} autres</Text>
+                <Text style={{ fontSize: 12.5, color: '#6A6A68', alignSelf: 'center' }}>+ {joursAvecEquipe.size - 30} autres</Text>
               )}
             </View>
           </View>
@@ -290,24 +290,24 @@ const styles = StyleSheet.create({
   },
   chantierChip: {
     paddingHorizontal: 16, height: 36, justifyContent: 'center', borderRadius: 999,
-    backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1,
+    backgroundColor: '#FFFFFF', shadowColor: '#141414', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1,
   },
   chantierChipActive: {
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
   },
-  chantierChipText: { fontSize: 13.5, fontWeight: '500', color: '#2B1D14' },
-  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: '#2B1D14', marginBottom: 2 },
-  subtitle: { fontSize: 13.5, color: '#6E5F54', marginBottom: 16 },
+  chantierChipText: { fontSize: 13.5, fontWeight: '500', color: '#141414' },
+  title: { fontFamily: 'Manrope_500Medium', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: '#141414', marginBottom: 2 },
+  subtitle: { fontSize: 13.5, color: '#6A6A68', marginBottom: 16 },
   weekHeader: {
-    borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#fff',
+    borderWidth: 1, borderColor: '#E2E2DF', backgroundColor: '#fff',
     alignItems: 'center', justifyContent: 'center', paddingVertical: 6,
   },
-  weekHeaderText: { fontSize: 12.5, fontWeight: '600', color: '#6E5F54' },
+  weekHeaderText: { fontSize: 12.5, fontWeight: '600', color: '#6A6A68' },
   ganttRow: {
-    flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 1, borderBottomColor: '#EDE2D6',
+    flexDirection: 'row', alignItems: 'stretch', borderBottomWidth: 1, borderBottomColor: '#E2E2DF',
   },
-  lotLabel: { fontSize: 13.5, fontWeight: '600', color: '#2B1D14' },
-  prorataTag: { fontSize: 11, color: '#9A8C80' },
+  lotLabel: { fontSize: 13.5, fontWeight: '600', color: '#141414' },
+  prorataTag: { fontSize: 11, color: '#959593' },
   ganttBar: {
     position: 'absolute', top: 6, bottom: 6,
     borderWidth: 1, borderRadius: 12,
@@ -317,21 +317,21 @@ const styles = StyleSheet.create({
   ganttBarText: { fontSize: 12.5, fontWeight: '700' },
   equipeBox: {
     marginTop: 24, padding: 16, backgroundColor: '#fff', borderRadius: 24,
-    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2,
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2,
   },
-  equipeTitle: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
+  equipeTitle: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6A6A68' },
   equipeChip: {
-    backgroundColor: '#F1E7DC', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
+    backgroundColor: '#EBEBE8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999,
   },
-  equipeChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
+  equipeChipText: { fontSize: 13, fontWeight: '500', color: '#141414' },
   emptyBox: {
     padding: 32, backgroundColor: '#fff', borderRadius: 24,
     alignItems: 'center', justifyContent: 'center',
   },
-  emptyText: { fontSize: 14, color: '#6E5F54', textAlign: 'center' },
+  emptyText: { fontSize: 14, color: '#6A6A68', textAlign: 'center' },
   legendBox: {
-    marginTop: 20, padding: 14, backgroundColor: '#F1E7DC', borderRadius: 18,
+    marginTop: 20, padding: 14, backgroundColor: '#EBEBE8', borderRadius: 18,
   },
-  legendTitle: { fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 4 },
-  legendText: { fontSize: 13, color: '#6E5F54', lineHeight: 18 },
+  legendTitle: { fontSize: 13, fontWeight: '600', color: '#141414', marginBottom: 4 },
+  legendText: { fontSize: 13, color: '#6A6A68', lineHeight: 18 },
 });

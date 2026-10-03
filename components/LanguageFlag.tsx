@@ -80,11 +80,11 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   flagEmoji: {
     fontSize: 20,
@@ -111,7 +111,7 @@ const styles = StyleSheet.create({
   dropdownTitle: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
     paddingHorizontal: 12,
     paddingVertical: 8,
     textTransform: 'uppercase',
@@ -135,15 +135,15 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     fontWeight: '500',
-    color: '#2B1D14',
+    color: '#141414',
   },
   langLabelSelected: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '700',
   },
   check: {
     fontSize: 14,
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '700',
   },
 });

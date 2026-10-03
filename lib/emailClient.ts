@@ -56,7 +56,7 @@ contact@skdeco.fr`;
 <body style="font-family: -apple-system, BlinkMacSystemFont, Arial, sans-serif; color:#2C2C2C; background:#F5EDE3; padding:20px;">
 <div style="max-width:560px; margin:0 auto; background:#fff; border-radius:12px; padding:24px;">
   <h1 style="font-size:22px; color:#C9A96E; margin-bottom:4px;">SK DECO</h1>
-  <p style="color:#8C8077; font-size:12px; margin-top:0;">Travaux & Décoration</p>
+  <p style="color:#7A7A78; font-size:12px; margin-top:0;">Travaux & Décoration</p>
   <hr style="border:none; border-top:2px solid #C9A96E; margin:16px 0;">
   <p style="font-size:14px;">Bonjour ${clientPrenom},</p>
   <p style="font-size:14px;">Un nouveau <strong>point financier de situation</strong> vient d'être établi pour votre chantier :</p>
@@ -69,7 +69,7 @@ contact@skdeco.fr`;
     <p style="font-size:20px; font-weight:800; color:#8C6D2F; margin:4px 0;">${montantFmt} € TTC</p>
   </div>
   <a href="${lien}" style="display:inline-block; background:#2C2C2C; color:#C9A96E; text-decoration:none; padding:12px 24px; border-radius:10px; font-weight:800; font-size:14px;">Accéder à mon espace client</a>
-  <p style="font-size:12px; color:#8C8077; margin-top:24px;">Cordialement,<br>L'équipe SK DECO</p>
+  <p style="font-size:12px; color:#7A7A78; margin-top:24px;">Cordialement,<br>L'équipe SK DECO</p>
 </div>
 </body></html>`;
 

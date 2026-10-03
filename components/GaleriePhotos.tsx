@@ -98,7 +98,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
   }, [data.photosChantier, chantierId, filterEmployeId, allowedChantierIds, canManagePhotos]);
 
   const getChantierNom = (id: string) => data.chantiers.find(c => c.id === id)?.nom || '?';
-  const getChantierCouleur = (id: string) => data.chantiers.find(c => c.id === id)?.couleur || '#5C1F2E';
+  const getChantierCouleur = (id: string) => data.chantiers.find(c => c.id === id)?.couleur || '#141414';
   const getEmployeNom = (id: string) => {
     if (id === 'admin') return 'Admin';
     const e = data.employes.find(e => e.id === id);
@@ -205,7 +205,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
                 {data.chantiers.filter(c => c.statut === 'actif' && (!allowedChantierIds || allowedChantierIds.has(c.id))).map(c => (
                   <Pressable key={c.id}
-                    style={[styles.triBtn, uploadChantierId === c.id && { backgroundColor: c.couleur || '#5C1F2E', borderColor: c.couleur || '#5C1F2E' }]}
+                    style={[styles.triBtn, uploadChantierId === c.id && { backgroundColor: c.couleur || '#141414', borderColor: c.couleur || '#141414' }]}
                     onPress={() => setUploadChantierId(c.id)}>
                     <Text style={[styles.triBtnText, uploadChantierId === c.id && { color: '#fff' }]} numberOfLines={1}>{c.nom}</Text>
                   </Pressable>
@@ -244,7 +244,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
                   </Text>
                 </Pressable>
               ))}
-              <View style={{ width: 1, height: 20, backgroundColor: '#EDE2D6', marginHorizontal: 4 }} />
+              <View style={{ width: 1, height: 20, backgroundColor: '#E2E2DF', marginHorizontal: 4 }} />
               <Pressable style={[styles.triBtn, filterEmployeId === 'all' && styles.triBtnActive]}
                 onPress={() => setFilterEmployeId('all')}>
                 <Text style={[styles.triBtnText, filterEmployeId === 'all' && styles.triBtnTextActive]}>{t.common.all}</Text>
@@ -260,7 +260,7 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
 
           {/* Barre de sélection */}
           {isSelecting && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#5C1F2E' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 12, paddingVertical: 8, backgroundColor: '#141414' }}>
               <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{selectedIds.size} {t.galerie.selected}</Text>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <Pressable style={{ backgroundColor: 'rgba(255,255,255,0.2)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 }}
@@ -287,8 +287,8 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
           {allPhotos.length === 0 ? (
             <View style={styles.empty}>
               <Ico e="📷" size={28} />
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14', marginBottom: 8 }}>{t.galerie.noPhoto}</Text>
-              <Text style={{ fontSize: 13, color: '#6E5F54', textAlign: 'center' }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#141414', marginBottom: 8 }}>{t.galerie.noPhoto}</Text>
+              <Text style={{ fontSize: 13, color: '#6A6A68', textAlign: 'center' }}>
                 {t.galerie.noPhotoHint}
               </Text>
             </View>
@@ -307,22 +307,22 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
                           <Text style={styles.groupeBadgeText}>{groupe.photos.length}</Text>
                         </View>
                       </View>
-                      <Text style={{ color: '#6E5F54' }}>{expandedGroup === groupe.key || expandedGroup === null ? '▾' : '▸'}</Text>
+                      <Text style={{ color: '#6A6A68' }}>{expandedGroup === groupe.key || expandedGroup === null ? '▾' : '▸'}</Text>
                     </Pressable>
 
                     {isExpanded && (
                       <View style={styles.groupeGrid}>
                         {groupe.photos.map(item => (
-                          <Pressable key={item.id} style={[styles.thumb, { width: itemSize, height: itemSize }, selectedIds.has(item.id) && { borderWidth: 3, borderColor: '#5C1F2E', borderRadius: 10 }]}
+                          <Pressable key={item.id} style={[styles.thumb, { width: itemSize, height: itemSize }, selectedIds.has(item.id) && { borderWidth: 3, borderColor: '#141414', borderRadius: 10 }]}
                             onPress={() => isSelecting ? toggleSelect(item.id) : setSelectedPhoto(item)}
                             onLongPress={() => toggleSelect(item.id)}>
                             {item.uri ? (
                               <Image source={{ uri: item.uri }} style={{ width: itemSize - (selectedIds.has(item.id) ? 6 : 0), height: itemSize - (selectedIds.has(item.id) ? 6 : 0), borderRadius: 8 }} resizeMode="cover" />
                             ) : (
-                              <View style={{ width: itemSize, height: itemSize, borderRadius: 8, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Ico e="📷" size={22} /></View>
+                              <View style={{ width: itemSize, height: itemSize, borderRadius: 8, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}><Ico e="📷" size={22} /></View>
                             )}
                             {selectedIds.has(item.id) && (
-                              <View style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
+                              <View style={{ position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#141414', alignItems: 'center', justifyContent: 'center' }}>
                                 <Text style={{ color: '#fff', fontSize: 12, fontWeight: '700' }}>✓</Text>
                               </View>
                             )}
@@ -433,33 +433,33 @@ export function GaleriePhotos({ visible, onClose, titre, chantierId }: GaleriePh
 const styles = StyleSheet.create({
   overlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.45)' },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, minHeight: 300 },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' },
-  titre: { fontSize: 17, fontWeight: '700', color: '#2B1D14' },
-  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' },
-  closeTxt: { fontSize: 14, color: '#6E5F54', fontWeight: '700' },
-  downloadAllBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 16, borderBottomWidth: 1, borderBottomColor: '#EBEBE8' },
+  titre: { fontSize: 17, fontWeight: '700', color: '#141414' },
+  closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' },
+  closeTxt: { fontSize: 14, color: '#6A6A68', fontWeight: '700' },
+  downloadAllBtn: { backgroundColor: '#141414', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8 },
   downloadAllBtnText: { color: '#fff', fontSize: 12, fontWeight: '700' },
   // Upload
-  uploadBar: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#F1E7DC', backgroundColor: '#FAFBFC' },
-  legendeInput: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: '#2B1D14' },
-  uploadBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, justifyContent: 'center' },
+  uploadBar: { padding: 10, borderBottomWidth: 1, borderBottomColor: '#EBEBE8', backgroundColor: '#FAFBFC' },
+  legendeInput: { flex: 1, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E2DF', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 8, fontSize: 13, color: '#141414' },
+  uploadBtn: { backgroundColor: '#141414', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 10, justifyContent: 'center' },
   uploadBtnText: { color: '#fff', fontSize: 13, fontWeight: '700' },
   // Tri
-  triBar: { paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC', backgroundColor: '#FAFBFC' },
-  triLabel: { fontSize: 12, color: '#6E5F54', fontWeight: '600' },
-  triBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: 'transparent' },
-  triBtnActive: { backgroundColor: '#F2E4E1', borderColor: '#5C1F2E' },
-  triBtnText: { fontSize: 12, color: '#6E5F54', fontWeight: '600' },
-  triBtnTextActive: { color: '#5C1F2E' },
+  triBar: { paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#EBEBE8', backgroundColor: '#FAFBFC' },
+  triLabel: { fontSize: 12, color: '#6A6A68', fontWeight: '600' },
+  triBtn: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: 'transparent' },
+  triBtnActive: { backgroundColor: '#EBEBE8', borderColor: '#141414' },
+  triBtnText: { fontSize: 12, color: '#6A6A68', fontWeight: '600' },
+  triBtnTextActive: { color: '#141414' },
   // Groupes
-  groupeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#FAF5EF', borderBottomWidth: 1, borderBottomColor: '#EDE2D6' },
-  groupeNom: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
-  groupeBadge: { backgroundColor: '#5C1F2E', borderRadius: 10, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
+  groupeHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 10, backgroundColor: '#F4F4F2', borderBottomWidth: 1, borderBottomColor: '#E2E2DF' },
+  groupeNom: { fontSize: 14, fontWeight: '700', color: '#141414' },
+  groupeBadge: { backgroundColor: '#141414', borderRadius: 10, minWidth: 22, height: 22, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6 },
   groupeBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
   groupeGrid: { flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 4 },
   // Miniatures
   empty: { alignItems: 'center', padding: 48 },
-  thumb: { borderRadius: 8, overflow: 'hidden', backgroundColor: '#F1E7DC' },
+  thumb: { borderRadius: 8, overflow: 'hidden', backgroundColor: '#EBEBE8' },
   thumbOverlay: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.45)', paddingHorizontal: 4, paddingVertical: 2 },
   thumbInfo: { color: '#fff', fontSize: 10, fontWeight: '600', textAlign: 'center' },
   thumbLegendeTag: { position: 'absolute', top: 4, left: 4, backgroundColor: 'rgba(26,58,107,0.8)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, maxWidth: '80%' },

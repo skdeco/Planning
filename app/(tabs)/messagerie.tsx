@@ -539,7 +539,7 @@ export default function MessagerieScreen() {
     });
 
     return (
-      <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
         <View style={styles.header}>
           <Text style={[styles.headerTitle, { fontSize: 32, lineHeight: 38, letterSpacing: -0.5 }]}>{t.messagerie.title}</Text>
           {totalNonLus > 0 && (
@@ -548,7 +548,7 @@ export default function MessagerieScreen() {
             </View>
           )}
           <Pressable
-            style={{ backgroundColor: '#5C1F2E', borderRadius: 999, paddingHorizontal: 14, height: 36, justifyContent: 'center' }}
+            style={{ backgroundColor: '#141414', borderRadius: 999, paddingHorizontal: 14, height: 36, justifyContent: 'center' }}
             onPress={() => { setGroupType('equipe'); setGroupChantierId(null); setGroupMessage(''); setShowGroupModal(true); }}
           >
             <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>{t.ui.diffusion}</Text>
@@ -561,7 +561,7 @@ export default function MessagerieScreen() {
           return (
             <View style={{ flexDirection: 'row', paddingHorizontal: 16, marginBottom: 8 }}>
               <Pressable style={[styles.filtersBtn, (showListFilters || nbFiltres > 0) && styles.filtersBtnOn]} onPress={() => setShowListFilters(v => !v)}>
-                <Text style={[styles.filtersBtnText, (showListFilters || nbFiltres > 0) && { color: '#5C1F2E' }]}>{t.ui.filtres}{nbFiltres > 0 ? ` (${nbFiltres})` : ''}</Text>
+                <Text style={[styles.filtersBtnText, (showListFilters || nbFiltres > 0) && { color: '#141414' }]}>{t.ui.filtres}{nbFiltres > 0 ? ` (${nbFiltres})` : ''}</Text>
               </Pressable>
             </View>
           );
@@ -579,7 +579,7 @@ export default function MessagerieScreen() {
                 placeholder={t.ui.tous}
                 options={[
                   { value: 'all', label: t.ui.tousChantiers },
-                  ...data.chantiers.filter(c => c.statut === 'actif').map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
+                  ...data.chantiers.filter(c => c.statut === 'actif').map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#141414' })),
                 ]}
                 onSelect={v => setListFilterChantier(v)}
               />
@@ -627,7 +627,7 @@ export default function MessagerieScreen() {
           <Pressable style={{ alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 8 }} onPress={() => {
             setListFilterChantier('all'); setListFilterWho('all'); setListFilterDateFrom(''); setListFilterDateTo(''); setListFilterType('all');
           }}>
-            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{t.ui.reinitialiser}</Text>
+            <Text style={{ fontSize: 13, color: '#141414', fontWeight: '600' }}>{t.ui.reinitialiser}</Text>
           </Pressable>
         </View>
         )}
@@ -639,7 +639,7 @@ export default function MessagerieScreen() {
               <View key={chId}>
                 {chantier && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 14, marginBottom: 8, paddingHorizontal: 6 }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: chantier.couleur || '#5C1F2E' }} />
+                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: chantier.couleur || '#141414' }} />
                     <Text style={styles.groupLabel} numberOfLines={1}>{chantier.nom}</Text>
                   </View>
                 )}
@@ -653,8 +653,8 @@ export default function MessagerieScreen() {
                     style={styles.convCard}
                     onPress={() => setSelectedConvId(conv.id)}
                   >
-                    <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#F2E4E1' : '#F1E7DC' }]}>
-                      <Text style={[styles.convAvatarText, { color: conv.type === 'employe' ? '#5C1F2E' : '#6E5F54' }]}>{(conv.nom[0] || '?').toUpperCase()}</Text>
+                    <View style={[styles.convAvatar, { backgroundColor: conv.type === 'employe' ? '#EBEBE8' : '#EBEBE8' }]}>
+                      <Text style={[styles.convAvatarText, { color: conv.type === 'employe' ? '#141414' : '#6A6A68' }]}>{(conv.nom[0] || '?').toUpperCase()}</Text>
                     </View>
                     <View style={[styles.convInfo, ci < convs.length - 1 && styles.convSeparator]}>
                       <View style={styles.convRow}>
@@ -690,37 +690,37 @@ export default function MessagerieScreen() {
           <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 20 }} onPress={() => setShowGroupModal(false)}>
             <Pressable style={{ backgroundColor: '#fff', borderRadius: 16, padding: 24, width: '92%', maxWidth: 420, maxHeight: '80%' }} onPress={() => {}}>
               <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', textAlign: 'center', marginBottom: 16 }}>Message de groupe</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414', textAlign: 'center', marginBottom: 16 }}>Message de groupe</Text>
 
                 {/* Type de diffusion */}
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 8 }}>Envoyer à</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414', marginBottom: 8 }}>Envoyer à</Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
                   <Pressable
-                    style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'equipe' ? '#5C1F2E' : '#F1E7DC' }}
+                    style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'equipe' ? '#141414' : '#EBEBE8' }}
                     onPress={() => { setGroupType('equipe'); setGroupChantierId(null); }}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'equipe' ? '#fff' : '#6E5F54' }}>Toute l'équipe</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'equipe' ? '#fff' : '#6A6A68' }}>Toute l'équipe</Text>
                   </Pressable>
                   <Pressable
-                    style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'chantier' ? '#5C1F2E' : '#F1E7DC' }}
+                    style={{ flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', backgroundColor: groupType === 'chantier' ? '#141414' : '#EBEBE8' }}
                     onPress={() => setGroupType('chantier')}
                   >
-                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'chantier' ? '#fff' : '#6E5F54' }}>Par chantier</Text>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: groupType === 'chantier' ? '#fff' : '#6A6A68' }}>Par chantier</Text>
                   </Pressable>
                 </View>
 
                 {/* Sélection chantier si mode chantier */}
                 {groupType === 'chantier' && (
                   <View style={{ marginBottom: 12 }}>
-                    <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 6 }}>Choisir un chantier :</Text>
+                    <Text style={{ fontSize: 12, color: '#6A6A68', marginBottom: 6 }}>Choisir un chantier :</Text>
                     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
                       {data.chantiers.filter(c => c.statut === 'actif').map(c => (
                         <Pressable
                           key={c.id}
-                          style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: groupChantierId === c.id ? c.couleur || '#5C1F2E' : '#F1E7DC' }}
+                          style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: groupChantierId === c.id ? c.couleur || '#141414' : '#EBEBE8' }}
                           onPress={() => setGroupChantierId(c.id)}
                         >
-                          <Text style={{ fontSize: 12, fontWeight: '600', color: groupChantierId === c.id ? '#fff' : '#2B1D14' }}>{c.nom}</Text>
+                          <Text style={{ fontSize: 12, fontWeight: '600', color: groupChantierId === c.id ? '#fff' : '#141414' }}>{c.nom}</Text>
                         </Pressable>
                       ))}
                     </ScrollView>
@@ -729,7 +729,7 @@ export default function MessagerieScreen() {
                         data.affectations.some(a => a.chantierId === groupChantierId && a.employeId === e.id)
                       );
                       return empsOnChantier.length > 0 ? (
-                        <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 6 }}>
+                        <Text style={{ fontSize: 11, color: '#6A6A68', marginTop: 6 }}>
                           Destinataires : {empsOnChantier.map(e => e.prenom).join(', ')}
                         </Text>
                       ) : (
@@ -740,30 +740,30 @@ export default function MessagerieScreen() {
                 )}
 
                 {groupType === 'equipe' && (
-                  <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 12 }}>
+                  <Text style={{ fontSize: 11, color: '#6A6A68', marginBottom: 12 }}>
                     Destinataires : {data.employes.length} employé{data.employes.length > 1 ? 's' : ''} + {data.sousTraitants.length} sous-traitant{data.sousTraitants.length > 1 ? 's' : ''}
                   </Text>
                 )}
 
                 {/* Message */}
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', marginBottom: 6 }}>{t.common.message}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414', marginBottom: 6 }}>{t.common.message}</Text>
                 <TextInput
-                  style={{ backgroundColor: '#F1E7DC', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 16, minHeight: 80, textAlignVertical: 'top' }}
+                  style={{ backgroundColor: '#EBEBE8', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 11, fontSize: 15, color: '#141414', borderWidth: 1, borderColor: '#E2E2DF', marginBottom: 16, minHeight: 80, textAlignVertical: 'top' }}
                   value={groupMessage}
                   onChangeText={setGroupMessage}
                   placeholder={t.ui.votreMessage}
-                  placeholderTextColor="#6E5F54"
+                  placeholderTextColor="#6A6A68"
                   multiline
                   maxLength={2000}
                 />
 
                 {/* Actions */}
                 <View style={{ flexDirection: 'row', gap: 10 }}>
-                  <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowGroupModal(false)}>
-                    <Text style={{ fontSize: 15, color: '#6E5F54', fontWeight: '600' }}>{t.common.cancel}</Text>
+                  <Pressable style={{ flex: 1, backgroundColor: '#F4F4F2', borderRadius: 10, paddingVertical: 13, alignItems: 'center' }} onPress={() => setShowGroupModal(false)}>
+                    <Text style={{ fontSize: 15, color: '#6A6A68', fontWeight: '600' }}>{t.common.cancel}</Text>
                   </Pressable>
                   <Pressable
-                    style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: groupMessage.trim() ? 1 : 0.5 }}
+                    style={{ flex: 1, backgroundColor: '#141414', borderRadius: 10, paddingVertical: 13, alignItems: 'center', opacity: groupMessage.trim() ? 1 : 0.5 }}
                     disabled={!groupMessage.trim()}
                     onPress={() => {
                       const texte = groupMessage.trim();
@@ -823,7 +823,7 @@ export default function MessagerieScreen() {
     : t.messagerie.administration;
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       {/* Header */}
       <View style={styles.header}>
         {isAdmin && (
@@ -857,7 +857,7 @@ export default function MessagerieScreen() {
               placeholder={t.ui.tous}
               options={[
                 { value: 'all', label: t.ui.tousChantiers },
-                ...mesChantiers.map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
+                ...mesChantiers.map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#141414' })),
               ]}
               onSelect={v => setSelectedChantierId(v === 'all' ? null : v)}
             />
@@ -919,7 +919,7 @@ export default function MessagerieScreen() {
           <Pressable style={{ alignSelf: 'flex-end', paddingVertical: 4, paddingHorizontal: 10 }} onPress={() => {
             setFilterDateFrom(''); setFilterDateTo(''); setFilterExpId('all'); setFilterType('all');
           }}>
-            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{t.ui.reinitialiser}</Text>
+            <Text style={{ fontSize: 13, color: '#141414', fontWeight: '600' }}>{t.ui.reinitialiser}</Text>
           </Pressable>
         </View>
       )}
@@ -958,30 +958,30 @@ export default function MessagerieScreen() {
                       )}
                       {/* Citation (réponse à un message) */}
                       {msg.replyToNom && msg.replyToContenu && (
-                        <View style={{ backgroundColor: isMine ? 'rgba(255,255,255,0.2)' : 'rgba(26,58,107,0.08)', borderLeftWidth: 3, borderLeftColor: '#5C1F2E', borderRadius: 6, padding: 6, marginBottom: 6 }}>
-                          <Text style={{ fontSize: 11, fontWeight: '700', color: isMine ? 'rgba(255,255,255,0.8)' : '#5C1F2E' }}>{msg.replyToNom}</Text>
-                          <Text style={{ fontSize: 11, color: isMine ? 'rgba(255,255,255,0.7)' : '#6E5F54' }} numberOfLines={2}>{msg.replyToContenu}</Text>
+                        <View style={{ backgroundColor: isMine ? 'rgba(255,255,255,0.2)' : 'rgba(26,58,107,0.08)', borderLeftWidth: 3, borderLeftColor: '#141414', borderRadius: 6, padding: 6, marginBottom: 6 }}>
+                          <Text style={{ fontSize: 11, fontWeight: '700', color: isMine ? 'rgba(255,255,255,0.8)' : '#141414' }}>{msg.replyToNom}</Text>
+                          <Text style={{ fontSize: 11, color: isMine ? 'rgba(255,255,255,0.7)' : '#6A6A68' }} numberOfLines={2}>{msg.replyToContenu}</Text>
                         </View>
                       )}
                       {/* Badge groupe */}
                       {msg.isGroupe && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginBottom: 4 }}>
-                          <Text style={{ fontSize: 10, color: isMine ? 'rgba(255,255,255,0.6)' : '#9A8C80' }}>{msg.groupeType === 'chantier' ? 'Diffusion chantier' : 'Diffusion équipe'}</Text>
+                          <Text style={{ fontSize: 10, color: isMine ? 'rgba(255,255,255,0.6)' : '#959593' }}>{msg.groupeType === 'chantier' ? 'Diffusion chantier' : 'Diffusion équipe'}</Text>
                         </View>
                       )}
                       {/* Audio (message vocal) */}
                       {msg.audioUri && (
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
                           <Ico e="🎤" size={22} />
-                          <View style={{ flex: 1, height: 4, backgroundColor: isMine ? 'rgba(255,255,255,0.3)' : '#EDE2D6', borderRadius: 2 }} />
-                          <Text style={{ fontSize: 11, color: isMine ? 'rgba(255,255,255,0.7)' : '#6E5F54' }}>{msg.audioDuration ? `${Math.floor(msg.audioDuration / 60)}:${String(msg.audioDuration % 60).padStart(2, '0')}` : '0:00'}</Text>
+                          <View style={{ flex: 1, height: 4, backgroundColor: isMine ? 'rgba(255,255,255,0.3)' : '#E2E2DF', borderRadius: 2 }} />
+                          <Text style={{ fontSize: 11, color: isMine ? 'rgba(255,255,255,0.7)' : '#6A6A68' }}>{msg.audioDuration ? `${Math.floor(msg.audioDuration / 60)}:${String(msg.audioDuration % 60).padStart(2, '0')}` : '0:00'}</Text>
                         </View>
                       )}
                       {msg.chantierId && (() => {
                         const ch = data.chantiers.find(c => c.id === msg.chantierId);
                         return ch ? (
-                          <View style={[styles.msgChantierTag, { backgroundColor: (ch.couleur || '#5C1F2E') + '20', borderColor: ch.couleur || '#5C1F2E' }]}>
-                            <Text style={[styles.msgChantierTagText, { color: ch.couleur || '#5C1F2E' }]}>{ch.nom}</Text>
+                          <View style={[styles.msgChantierTag, { backgroundColor: (ch.couleur || '#141414') + '20', borderColor: ch.couleur || '#141414' }]}>
+                            <Text style={[styles.msgChantierTagText, { color: ch.couleur || '#141414' }]}>{ch.nom}</Text>
                           </View>
                         ) : null;
                       })()}
@@ -1045,8 +1045,8 @@ export default function MessagerieScreen() {
 
         {/* Bouton désarchiver */}
         {showArchive && selectedChantierId && messages.length > 0 && (
-          <Pressable style={[styles.archiveDiscussionBtn, { backgroundColor: '#F2E4E1' }]} onPress={handleUnarchiveDiscussion}>
-            <Text style={[styles.archiveDiscussionBtnText, { color: '#5C1F2E' }]}>{t.ui.restaurerDiscussion}</Text>
+          <Pressable style={[styles.archiveDiscussionBtn, { backgroundColor: '#EBEBE8' }]} onPress={handleUnarchiveDiscussion}>
+            <Text style={[styles.archiveDiscussionBtnText, { color: '#141414' }]}>{t.ui.restaurerDiscussion}</Text>
           </Pressable>
         )}
 
@@ -1071,13 +1071,13 @@ export default function MessagerieScreen() {
           return (
           <View style={styles.scheduleBar}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontSize: 12, fontWeight: '600', color: '#5C1F2E' }}>Programmer l'envoi</Text>
+              <Text style={{ fontSize: 12, fontWeight: '600', color: '#141414' }}>Programmer l'envoi</Text>
               <Pressable onPress={() => { setShowSchedule(false); setScheduleDate(''); setScheduleTime(''); }} style={{ padding: 4 }}>
                 <Text style={{ color: '#E74C3C', fontSize: 14, fontWeight: '600' }}>✕</Text>
               </Pressable>
             </View>
             {/* Date rapide */}
-            <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 6, marginBottom: 4 }}>{t.common.date} :</Text>
+            <Text style={{ fontSize: 12.5, color: '#6A6A68', marginTop: 6, marginBottom: 4 }}>{t.common.date} :</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
               {[
                 { label: `${t.common.today} (${formatFr(todayYmd)})`, value: todayYmd },
@@ -1093,7 +1093,7 @@ export default function MessagerieScreen() {
               ))}
             </ScrollView>
             {/* Heure */}
-            <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 8, marginBottom: 4 }}>{t.ui.heureLabel}</Text>
+            <Text style={{ fontSize: 12.5, color: '#6A6A68', marginTop: 8, marginBottom: 4 }}>{t.ui.heureLabel}</Text>
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
               {heures.map(h => (
                 <Pressable key={h}
@@ -1114,13 +1114,13 @@ export default function MessagerieScreen() {
 
         {/* Barre réponse (citation) */}
         {replyTo && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F2E4E1', paddingHorizontal: 12, paddingVertical: 8, borderLeftWidth: 3, borderLeftColor: '#5C1F2E' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#EBEBE8', paddingHorizontal: 12, paddingVertical: 8, borderLeftWidth: 3, borderLeftColor: '#141414' }}>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E' }}>↩️ {replyTo.expediteurNom}</Text>
-              <Text style={{ fontSize: 12, color: '#6E5F54' }} numberOfLines={1}>{replyTo.contenu}</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: '#141414' }}>↩️ {replyTo.expediteurNom}</Text>
+              <Text style={{ fontSize: 12, color: '#6A6A68' }} numberOfLines={1}>{replyTo.contenu}</Text>
             </View>
             <Pressable onPress={() => setReplyTo(null)} style={{ padding: 6 }}>
-              <Text style={{ fontSize: 16, color: '#6E5F54' }}>✕</Text>
+              <Text style={{ fontSize: 16, color: '#6A6A68' }}>✕</Text>
             </Pressable>
           </View>
         )}
@@ -1167,7 +1167,7 @@ export default function MessagerieScreen() {
                   </Pressable>
                 )}
                 {isAdmin && (
-                  <Pressable style={[styles.photoBtn, showSchedule && { backgroundColor: '#F2E4E1' }]} onPress={() => setShowSchedule(v => !v)}>
+                  <Pressable style={[styles.photoBtn, showSchedule && { backgroundColor: '#EBEBE8' }]} onPress={() => setShowSchedule(v => !v)}>
                     <Ico e="⏰" size={16} />
                   </Pressable>
                 )}
@@ -1222,7 +1222,7 @@ export default function MessagerieScreen() {
                 <Text style={[styles.contextBtnText, { color: '#EF4444' }]}>{t.common.delete}</Text>
               </Pressable>
               <Pressable style={styles.contextBtn} onPress={() => setContextMsg(null)}>
-                <Text style={[styles.contextBtnText, { color: '#6E5F54' }]}>{t.common.cancel}</Text>
+                <Text style={[styles.contextBtnText, { color: '#6A6A68' }]}>{t.common.cancel}</Text>
               </Pressable>
             </View>
           </Pressable>
@@ -1234,101 +1234,101 @@ export default function MessagerieScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
-  headerTitle: { flex: 1, fontFamily: 'Fraunces_600SemiBold', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: '#2B1D14' },
-  headerBadge: { backgroundColor: '#F2E4E1', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  headerBadgeText: { color: '#5C1F2E', fontSize: 12, fontWeight: '700' },
+  headerTitle: { flex: 1, fontFamily: 'Manrope_500Medium', fontSize: 24, lineHeight: 30, letterSpacing: -0.3, color: '#141414' },
+  headerBadge: { backgroundColor: '#EBEBE8', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  headerBadgeText: { color: '#141414', fontSize: 12, fontWeight: '700' },
   backBtn: { paddingRight: 4 },
-  backBtnText: { color: '#5C1F2E', fontWeight: '600', fontSize: 14 },
-  archiveToggle: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
-  archiveToggleActive: { backgroundColor: '#F2E4E1', borderColor: '#5C1F2E' },
-  archiveToggleText: { fontSize: 11, color: '#6E5F54', fontWeight: '600' },
-  archiveToggleTextActive: { color: '#5C1F2E' },
+  backBtnText: { color: '#141414', fontWeight: '600', fontSize: 14 },
+  archiveToggle: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: '#E2E2DF', backgroundColor: '#EBEBE8' },
+  archiveToggleActive: { backgroundColor: '#EBEBE8', borderColor: '#141414' },
+  archiveToggleText: { fontSize: 11, color: '#6A6A68', fontWeight: '600' },
+  archiveToggleTextActive: { color: '#141414' },
   scroll: { flex: 1 },
   scrollContent: { paddingHorizontal: 16, paddingTop: 0, paddingBottom: 110 },
   // Liste conversations
-  convGroup: { backgroundColor: '#fff', borderRadius: 24, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  convGroup: { backgroundColor: '#fff', borderRadius: 24, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   convCard: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingLeft: 14, minHeight: 68 },
-  convSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
-  groupLabel: { flex: 1, fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
-  filtersBtn: { height: 36, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#fff', justifyContent: 'center', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
-  filtersBtnOn: { backgroundColor: '#F2E4E1' },
-  filtersBtnText: { fontSize: 13, fontWeight: '600', color: '#2B1D14' },
-  filterCard: { backgroundColor: '#fff', borderRadius: 20, marginHorizontal: 16, marginBottom: 8, padding: 14, gap: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
-  convCardUnread: { borderLeftWidth: 3, borderLeftColor: '#5C1F2E' },
+  convSeparator: { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2DF' },
+  groupLabel: { flex: 1, fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6A6A68' },
+  filtersBtn: { height: 36, paddingHorizontal: 16, borderRadius: 999, backgroundColor: '#fff', justifyContent: 'center', shadowColor: '#141414', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  filtersBtnOn: { backgroundColor: '#EBEBE8' },
+  filtersBtnText: { fontSize: 13, fontWeight: '600', color: '#141414' },
+  filterCard: { backgroundColor: '#fff', borderRadius: 20, marginHorizontal: 16, marginBottom: 8, padding: 14, gap: 12, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  convCardUnread: { borderLeftWidth: 3, borderLeftColor: '#141414' },
   convAvatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  convAvatarText: { color: '#5C1F2E', fontWeight: '700', fontSize: 17 },
+  convAvatarText: { color: '#141414', fontWeight: '700', fontSize: 17 },
   convInfo: { flex: 1, alignSelf: 'stretch', justifyContent: 'center', paddingRight: 14, paddingVertical: 12, gap: 2 },
   convRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  convNom: { fontSize: 16, fontWeight: '600', color: '#2B1D14', flex: 1 },
-  convHeure: { fontSize: 12, color: '#6E5F54', marginLeft: 8 },
-  convDernier: { fontSize: 13, color: '#6E5F54', flex: 1 },
-  convType: { fontSize: 11, color: '#9A8C80', marginTop: 2 },
-  unreadBadge: { backgroundColor: '#5C1F2E', borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
+  convNom: { fontSize: 16, fontWeight: '600', color: '#141414', flex: 1 },
+  convHeure: { fontSize: 12, color: '#6A6A68', marginLeft: 8 },
+  convDernier: { fontSize: 13, color: '#6A6A68', flex: 1 },
+  convType: { fontSize: 11, color: '#959593', marginTop: 2 },
+  unreadBadge: { backgroundColor: '#141414', borderRadius: 10, minWidth: 20, height: 20, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5 },
   unreadBadgeText: { color: '#fff', fontSize: 10, fontWeight: '800' },
-  emptyText: { textAlign: 'center', color: '#6E5F54', fontSize: 14, marginTop: 48 },
+  emptyText: { textAlign: 'center', color: '#6A6A68', fontSize: 14, marginTop: 48 },
   // Messages
-  msgScroll: { flex: 1, backgroundColor: '#FAF5EF' },
+  msgScroll: { flex: 1, backgroundColor: '#F4F4F2' },
   msgScrollContent: { padding: 12, paddingBottom: 8 },
   dateSeparator: { alignItems: 'center', marginVertical: 12 },
-  dateSeparatorText: { fontSize: 12, color: '#6E5F54', backgroundColor: '#EDE2D6', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
+  dateSeparatorText: { fontSize: 12, color: '#6A6A68', backgroundColor: '#E2E2DF', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 12 },
   msgBubbleWrap: { alignItems: 'flex-start', marginBottom: 6 },
   msgBubbleWrapMine: { alignItems: 'flex-end' },
   msgBubble: { maxWidth: '78%', borderRadius: 16, padding: 10, paddingHorizontal: 14 },
-  msgBubbleMine: { backgroundColor: '#5C1F2E', borderBottomRightRadius: 4 },
+  msgBubbleMine: { backgroundColor: '#141414', borderBottomRightRadius: 4 },
   msgBubbleOther: { backgroundColor: '#fff', borderBottomLeftRadius: 4, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1 },
-  msgExpéditeur: { fontSize: 11, fontWeight: '700', color: '#5C1F2E', marginBottom: 3 },
-  msgText: { fontSize: 15, color: '#2B1D14', lineHeight: 21 },
+  msgExpéditeur: { fontSize: 11, fontWeight: '700', color: '#141414', marginBottom: 3 },
+  msgText: { fontSize: 15, color: '#141414', lineHeight: 21 },
   msgTextMine: { color: '#fff' },
   msgMedia: { backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, padding: 10, alignItems: 'center' },
   msgMediaText: { fontSize: 24, marginBottom: 4 },
   msgMediaHint: { fontSize: 11, color: 'rgba(255,255,255,0.7)' },
   msgMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4, justifyContent: 'flex-end' },
-  msgHeure: { fontSize: 10, color: '#6E5F54' },
+  msgHeure: { fontSize: 10, color: '#6A6A68' },
   msgHeureMine: { color: 'rgba(255,255,255,0.6)' },
   msgLu: { fontSize: 10, color: 'rgba(255,255,255,0.6)' },
   msgArchiveBadge: { fontSize: 10 },
   msgQuickActions: { flexDirection: 'row' as const, gap: 2, marginTop: 2 },
   msgQuickBtn: { padding: 4, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.04)' },
   // Zone saisie
-  inputZone: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#EDE2D6', gap: 8 },
-  photoBtn: { padding: 10, backgroundColor: '#F1E7DC', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  inputZone: { flexDirection: 'row', alignItems: 'flex-end', padding: 10, backgroundColor: '#fff', borderTopWidth: 1, borderTopColor: '#E2E2DF', gap: 8 },
+  photoBtn: { padding: 10, backgroundColor: '#EBEBE8', borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
   photoBtnText: { fontSize: 20 },
-  msgInput: { flex: 1, backgroundColor: '#FAF5EF', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#2B1D14', maxHeight: 120, borderWidth: 1, borderColor: '#EDE2D6' },
-  sendBtn: { padding: 10, backgroundColor: '#5C1F2E', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
-  sendBtnDisabled: { backgroundColor: '#9A8C80' },
+  msgInput: { flex: 1, backgroundColor: '#F4F4F2', borderRadius: 22, paddingHorizontal: 16, paddingVertical: 10, fontSize: 15, color: '#141414', maxHeight: 120, borderWidth: 1, borderColor: '#E2E2DF' },
+  sendBtn: { padding: 10, backgroundColor: '#141414', borderRadius: 22, alignItems: 'center', justifyContent: 'center', width: 44, height: 44 },
+  sendBtnDisabled: { backgroundColor: '#959593' },
   sendBtnText: { color: '#fff', fontSize: 18, fontWeight: '700' },
   // Programmation message
-  scheduleBar: { backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#EDE2D6', padding: 10 },
-  scheduleChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' },
-  scheduleChipActive: { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' },
-  scheduleChipText: { fontSize: 12, fontWeight: '600', color: '#6E5F54' },
+  scheduleBar: { backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E2E2DF', padding: 10 },
+  scheduleChip: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 12, backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#E2E2DF' },
+  scheduleChipActive: { backgroundColor: '#141414', borderColor: '#141414' },
+  scheduleChipText: { fontSize: 12, fontWeight: '600', color: '#6A6A68' },
   // Barre et panneau de filtres
   filterBar: { backgroundColor: 'transparent', paddingBottom: 10 },
-  filterPanel: { backgroundColor: '#FFFFFF', borderRadius: 20, marginHorizontal: 16, marginBottom: 10, padding: 14, gap: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  filterPanel: { backgroundColor: '#FFFFFF', borderRadius: 20, marginHorizontal: 16, marginBottom: 10, padding: 14, gap: 12, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   filterRow: { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 6, flexWrap: 'wrap' as const },
   filterGrid: { flexDirection: 'row' as const, gap: 10 },
   filterCell: { flex: 1, gap: 4 },
-  filterLabel: { fontSize: 13, fontWeight: '600', color: '#6E5F54', minWidth: 28 },
-  filterInput: { backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, fontSize: 13, color: '#2B1D14', width: 105 },
-  filterChip: { paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 999, backgroundColor: '#F1E7DC' },
-  filterChipActive: { backgroundColor: '#5C1F2E' },
-  filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
+  filterLabel: { fontSize: 13, fontWeight: '600', color: '#6A6A68', minWidth: 28 },
+  filterInput: { backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#E2E2DF', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 8, fontSize: 13, color: '#141414', width: 105 },
+  filterChip: { paddingHorizontal: 12, height: 30, justifyContent: 'center', borderRadius: 999, backgroundColor: '#EBEBE8' },
+  filterChipActive: { backgroundColor: '#141414' },
+  filterChipText: { fontSize: 13, fontWeight: '500', color: '#141414' },
   filterChipTextActive: { color: '#fff' },
   // Sélecteur de chantier
-  chantierBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', maxHeight: 44 },
+  chantierBar: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E2DF', maxHeight: 44 },
   chantierBarContent: { paddingHorizontal: 12, paddingVertical: 6, gap: 6, alignItems: 'center' as const },
-  chantierChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
-  chantierChipText: { fontSize: 12, fontWeight: '600', color: '#6E5F54', maxWidth: 120 },
+  chantierChip: { paddingHorizontal: 12, paddingVertical: 5, borderRadius: 14, borderWidth: 1, borderColor: '#E2E2DF', backgroundColor: '#EBEBE8' },
+  chantierChipText: { fontSize: 12, fontWeight: '600', color: '#6A6A68', maxWidth: 120 },
   // Bouton archiver discussion
   archiveDiscussionBtn: { marginHorizontal: 12, marginVertical: 6, paddingVertical: 10, borderRadius: 10, backgroundColor: '#FFF3E0', alignItems: 'center' as const, borderWidth: 1, borderColor: '#FFE0B2' },
   archiveDiscussionBtnText: { fontSize: 13, fontWeight: '600', color: '#E65100' },
   // Menu contextuel
   contextOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center' as const, alignItems: 'center' as const, padding: 24 },
   contextMenu: { backgroundColor: '#fff', borderRadius: 24, padding: 8, width: '100%', maxWidth: 320 },
-  contextTitle: { fontSize: 13, color: '#6E5F54', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' },
+  contextTitle: { fontSize: 13, color: '#6A6A68', paddingHorizontal: 16, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: '#EBEBE8' },
   contextBtn: { paddingHorizontal: 16, paddingVertical: 14, borderRadius: 8 },
   contextBtnDanger: {},
-  contextBtnText: { fontSize: 15, fontWeight: '600', color: '#2B1D14' },
+  contextBtnText: { fontSize: 15, fontWeight: '600', color: '#141414' },
   // Tag chantier sur les messages
   msgChantierTag: { borderRadius: 6, paddingHorizontal: 8, paddingVertical: 2, marginBottom: 4, borderWidth: 1, alignSelf: 'flex-start' as const },
   msgChantierTagText: { fontSize: 10, fontWeight: '700' },

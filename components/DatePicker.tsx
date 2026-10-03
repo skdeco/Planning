@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
     marginBottom: 6,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
@@ -193,21 +193,21 @@ const styles = StyleSheet.create({
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   inputText: {
     flex: 1,
     fontSize: 15,
-    color: '#2B1D14',
+    color: '#141414',
     fontWeight: '500',
   },
   placeholder: {
-    color: '#9A8C80',
+    color: '#959593',
     fontWeight: '400',
   },
   calIcon: {
@@ -242,20 +242,20 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     alignItems: 'center',
     justifyContent: 'center',
   },
   navArrow: {
     fontSize: 20,
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '700',
     lineHeight: 22,
   },
   calTitle: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
   },
   weekRow: {
     flexDirection: 'row',
@@ -266,7 +266,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     fontWeight: '700',
-    color: '#6E5F54',
+    color: '#6A6A68',
     textTransform: 'uppercase',
   },
   daysGrid: {
@@ -283,21 +283,21 @@ const styles = StyleSheet.create({
   },
   dayCellToday: {
     borderWidth: 1.5,
-    borderColor: '#5C1F2E',
+    borderColor: '#141414',
   },
   dayCellSelected: {
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
   },
   dayCellDisabled: {
     opacity: 0.3,
   },
   dayText: {
     fontSize: 14,
-    color: '#2B1D14',
+    color: '#141414',
     fontWeight: '500',
   },
   dayTextToday: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '700',
   },
   dayTextSelected: {
@@ -305,18 +305,18 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   dayTextDisabled: {
-    color: '#9A8C80',
+    color: '#959593',
   },
   todayBtn: {
     marginTop: 12,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     alignItems: 'center',
   },
   todayBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#5C1F2E',
+    color: '#141414',
   },
 });

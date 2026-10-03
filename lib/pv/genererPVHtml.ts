@@ -34,7 +34,7 @@ const SK_DECO_INFO = {
  * via expo-print.
  *
  * Design "Studio architecture chic" — palette bordeaux/aubergine SK DECO :
- *  - Primary  #5C1F2E (bordeaux profond)
+ *  - Primary  #141414 (bordeaux profond)
  *  - Cream    #FBF7F2 (fond doux)
  *  - Ink      #1A1A1A (texte principal)
  *  - Muted    #6B7280 (texte secondaire)
@@ -675,7 +675,7 @@ h2, h3 {
 }
 .cover-band {
   height: 12mm;
-  background: #5C1F2E;
+  background: #141414;
   flex: 0 0 auto;
 }
 .cover-content {
@@ -700,14 +700,14 @@ h2, h3 {
   font-family: Georgia, serif;
   font-size: 24pt;
   font-weight: 700;
-  color: #5C1F2E;
+  color: #141414;
   letter-spacing: 4pt;
 }
 .cover-eyebrow {
   text-align: center;
   font-size: 9pt;
   letter-spacing: 4pt;
-  color: #5C1F2E;
+  color: #141414;
   text-transform: uppercase;
   font-weight: 600;
   margin-bottom: 6mm;
@@ -725,7 +725,7 @@ h2, h3 {
 .cover-divider {
   width: 18mm;
   height: 1.5pt;
-  background: #5C1F2E;
+  background: #141414;
   margin: 10mm auto;
 }
 .cover-chantier {
@@ -775,14 +775,14 @@ h2, h3 {
 }
 .cover-parties .partie {
   padding: 4mm 5mm;
-  border-left: 2pt solid #5C1F2E;
+  border-left: 2pt solid #141414;
   background: #FBF7F2;
 }
 .cover-parties .partie-role {
   font-size: 7pt;
   letter-spacing: 1.5pt;
   text-transform: uppercase;
-  color: #5C1F2E;
+  color: #141414;
   font-weight: 600;
   margin-bottom: 2mm;
 }
@@ -871,7 +871,7 @@ h2, h3 {
 }
 .content-band-left {
   font-weight: 700;
-  color: #5C1F2E;
+  color: #141414;
   letter-spacing: 2pt;
 }
 
@@ -921,7 +921,7 @@ h2, h3 {
 .section-num {
   font-family: Georgia, serif;
   font-size: 14pt;
-  color: #5C1F2E;
+  color: #141414;
   font-weight: 400;
   font-style: italic;
   letter-spacing: 0.5pt;
@@ -956,14 +956,14 @@ h2, h3 {
 }
 .partie {
   padding: 5mm 6mm;
-  border-left: 2pt solid #5C1F2E;
+  border-left: 2pt solid #141414;
   background: #FBF7F2;
 }
 .partie-role {
   font-size: 9pt;
   letter-spacing: 2pt;
   text-transform: uppercase;
-  color: #5C1F2E;
+  color: #141414;
   font-weight: 600;
   margin-bottom: 3mm;
 }
@@ -999,15 +999,15 @@ h2, h3 {
 .synthese-tag {
   font-size: 10pt;
   padding: 2.5mm 5mm;
-  border: 0.5pt solid #5C1F2E;
-  color: #5C1F2E;
+  border: 0.5pt solid #141414;
+  color: #141414;
   letter-spacing: 0.5pt;
   font-weight: 600;
 }
 .synthese-tag.tag-success {
-  background: #5C1F2E;
+  background: #141414;
   color: #FBF7F2;
-  border-color: #5C1F2E;
+  border-color: #141414;
 }
 .synthese-tag.tag-pending {
   border-color: #B91C1C;
@@ -1042,7 +1042,7 @@ h2, h3 {
   letter-spacing: 0.3pt;
 }
 .piece-status.status-clean {
-  color: #5C1F2E;
+  color: #141414;
 }
 
 /* Réserves */
@@ -1068,7 +1068,7 @@ h2, h3 {
   break-inside: avoid;
 }
 .reserve-levee {
-  border-left-color: #5C1F2E;
+  border-left-color: #141414;
   background: #FBF7F2;
 }
 .reserve-desc {
@@ -1088,7 +1088,7 @@ h2, h3 {
 }
 .reserve-levee-meta {
   font-size: 9pt;
-  color: #5C1F2E;
+  color: #141414;
   margin-top: 2mm;
   letter-spacing: 0.3pt;
   font-weight: 600;
@@ -1143,7 +1143,7 @@ h2, h3 {
 .modalite {
   padding: 6mm;
   background: #FBF7F2;
-  border-left: 2pt solid #5C1F2E;
+  border-left: 2pt solid #141414;
   margin-bottom: 6mm;
   page-break-inside: avoid;
 }
@@ -1151,7 +1151,7 @@ h2, h3 {
   font-size: 9pt;
   letter-spacing: 2pt;
   text-transform: uppercase;
-  color: #5C1F2E;
+  color: #141414;
   font-weight: 600;
   margin-bottom: 2mm;
 }
@@ -1179,17 +1179,17 @@ h2, h3 {
   white-space: nowrap;
 }
 .recap-table tr.total td {
-  border-top: 1pt solid #5C1F2E;
-  border-bottom: 0.3pt solid #5C1F2E;
+  border-top: 1pt solid #141414;
+  border-bottom: 0.3pt solid #141414;
   padding-top: 4mm;
   font-weight: 700;
   font-size: 12pt;
 }
 .recap-table tr.reste td {
-  border-top: 1pt solid #5C1F2E;
-  border-bottom: 1pt solid #5C1F2E;
+  border-top: 1pt solid #141414;
+  border-bottom: 1pt solid #141414;
   padding: 4mm;
-  background: #5C1F2E;
+  background: #141414;
   color: #FBF7F2;
   font-weight: 700;
   font-size: 13pt;
@@ -1243,7 +1243,7 @@ h2, h3 {
   font-size: 9pt;
   letter-spacing: 2pt;
   text-transform: uppercase;
-  color: #5C1F2E;
+  color: #141414;
   font-weight: 600;
   margin-bottom: 4mm;
 }

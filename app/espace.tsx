@@ -51,7 +51,7 @@ export default function ChoixEspaceScreen() {
   );
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right', 'bottom']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right', 'bottom']}>
       <ScrollView contentContainerStyle={{ padding: 20, gap: 16, flexGrow: 1 }}>
         <View style={{ marginTop: 16, gap: 4 }}>
           <Text style={{ fontSize: 13, fontWeight: '800', letterSpacing: 0.8, color: DS.textSecondary }}>SK DECO{currentUser.nom ? ` · ${currentUser.nom}` : ''}</Text>

@@ -111,7 +111,7 @@ export default function MesChantiersExterne() {
   };
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
+    <ScrollView style={{ flex: 1, backgroundColor: '#F4F4F2' }} contentContainerStyle={{ padding: 16, paddingBottom: 80 }}>
       <RdvDuJour marge={0} />
       {recapApporteur && recapApporteur.totalCom > 0 && (
         <View style={styles.recapBox}>
@@ -121,7 +121,7 @@ export default function MesChantiersExterne() {
           </View>
           <View style={styles.recapSep} />
           <View style={styles.recapItem}>
-            <Text style={[styles.recapVal, { color: '#5C1F2E' }]}>{fmt(recapApporteur.dueCom)} €</Text>
+            <Text style={[styles.recapVal, { color: '#141414' }]}>{fmt(recapApporteur.dueCom)} €</Text>
             <Text style={styles.recapLbl}>Commission à percevoir</Text>
           </View>
         </View>
@@ -151,32 +151,32 @@ export default function MesChantiersExterne() {
           return (
             <>
               {/* Deux sections en haut */}
-              <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#F1E7DC', marginBottom: 10 }}>
+              <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#EBEBE8', marginBottom: 10 }}>
                 {([['menuiserie', 'Menuiserie', nbMenuiserie], ['travaux', 'Travaux', nbTravaux]] as const).map(([val, lib, nb]) => {
                   const actif = sectionCom === val;
                   return (
                     <Pressable
                       key={val}
-                      style={[{ flex: 1, height: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }, actif && { backgroundColor: '#5C1F2E' }]}
+                      style={[{ flex: 1, height: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }, actif && { backgroundColor: '#141414' }]}
                       onPress={() => setSectionCom(val)}
                     >
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: actif ? '#FFFFFF' : '#2B1D14' }}>{lib} ({nb})</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: actif ? '#FFFFFF' : '#141414' }}>{lib} ({nb})</Text>
                     </Pressable>
                   );
                 })}
               </View>
               {/* Filtres : recherche + statut */}
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'center' }}>
-                <View style={{ flex: 1.3, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 999, borderWidth: 1, borderColor: '#EDE2D6', paddingHorizontal: 14 }}>
+                <View style={{ flex: 1.3, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 999, borderWidth: 1, borderColor: '#E2E2DF', paddingHorizontal: 14 }}>
                   <TextInput
-                    style={{ flex: 1, paddingVertical: 9, fontSize: 14, color: '#2B1D14' }}
+                    style={{ flex: 1, paddingVertical: 9, fontSize: 14, color: '#141414' }}
                     placeholder="Rechercher…"
                     placeholderTextColor="#B0A99F"
                     value={rechercheCom}
                     onChangeText={setRechercheCom}
                   />
                   {rechercheCom.length > 0 && (
-                    <Pressable onPress={() => setRechercheCom('')} hitSlop={8}><Text style={{ color: '#9A8C80', fontSize: 15 }}>✕</Text></Pressable>
+                    <Pressable onPress={() => setRechercheCom('')} hitSlop={8}><Text style={{ color: '#959593', fontSize: 15 }}>✕</Text></Pressable>
                   )}
                 </View>
                 <View style={{ flex: 1 }}>
@@ -194,7 +194,7 @@ export default function MesChantiersExterne() {
                 </View>
               </View>
               {liste.length === 0 ? (
-                <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier." />
+                <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#959593" strokeWidth={1.6} /></View>} title="Aucun chantier." />
               ) : (
                 liste.map(renderCard)
               )}
@@ -205,7 +205,7 @@ export default function MesChantiersExterne() {
         <>
           <Text style={styles.sectionTitle}>Chantiers en cours ({actifs.length})</Text>
           {actifs.length === 0 ? (
-            <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
+            <EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}><Building2 size={34} color="#959593" strokeWidth={1.6} /></View>} title="Aucun chantier actif." />
           ) : (
             actifs.map(renderCard)
           )}
@@ -256,12 +256,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 10,
   },
-  creerBtn: { backgroundColor: '#5C1F2E', borderRadius: 999, paddingVertical: 15, alignItems: 'center', marginBottom: 16 },
+  creerBtn: { backgroundColor: '#141414', borderRadius: 999, paddingVertical: 15, alignItems: 'center', marginBottom: 16 },
   creerBtnText: { color: '#fff', fontSize: 16, fontWeight: '600' },
   card: {
     flexDirection: 'row',
@@ -271,18 +271,18 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 12,
     gap: 10,
-    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
-  cardTitle: { fontSize: 16.5, fontWeight: '600', color: '#2B1D14' },
-  cardAddress: { fontSize: 13.5, color: '#6E5F54', marginTop: 2 },
-  cardMeta: { fontSize: 13, color: '#5C1F2E', fontWeight: '600', marginTop: 4 },
-  cardArrow: { fontSize: 24, color: '#5C1F2E', fontWeight: '300' },
-  recapBox: { flexDirection: 'row', backgroundColor: '#5C1F2E', borderRadius: 24, padding: 18, marginBottom: 16, alignItems: 'center' },
+  cardTitle: { fontSize: 16.5, fontWeight: '600', color: '#141414' },
+  cardAddress: { fontSize: 13.5, color: '#6A6A68', marginTop: 2 },
+  cardMeta: { fontSize: 13, color: '#141414', fontWeight: '600', marginTop: 4 },
+  cardArrow: { fontSize: 24, color: '#141414', fontWeight: '300' },
+  recapBox: { flexDirection: 'row', backgroundColor: '#141414', borderRadius: 24, padding: 18, marginBottom: 16, alignItems: 'center' },
   recapItem: { flex: 1, alignItems: 'center' },
   recapSep: { width: 1, alignSelf: 'stretch', backgroundColor: 'rgba(255,255,255,0.15)' },
-  recapVal: { fontFamily: 'Fraunces_600SemiBold', fontSize: 24, color: '#fff' },
+  recapVal: { fontFamily: 'Manrope_500Medium', fontSize: 24, color: '#fff' },
   recapLbl: { fontSize: 12.5, color: 'rgba(255,255,255,0.75)', marginTop: 4, textAlign: 'center' },
-  empty: { fontSize: 14, color: '#6E5F54', textAlign: 'center', paddingVertical: 24 },
+  empty: { fontSize: 14, color: '#6A6A68', textAlign: 'center', paddingVertical: 24 },
   toggleClos: {
     backgroundColor: '#fff',
     borderRadius: 999,
@@ -290,15 +290,15 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
-  toggleClosText: { fontSize: 14, fontWeight: '600', color: '#5C1F2E', textAlign: 'center' },
+  toggleClosText: { fontSize: 14, fontWeight: '600', color: '#141414', textAlign: 'center' },
   infoBox: {
     marginTop: 24,
     padding: 16,
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderRadius: 18,
   },
-  infoLabel: { fontSize: 12, color: '#6E5F54', fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase' },
-  infoValue: { fontSize: 14.5, color: '#2B1D14', fontWeight: '500', marginTop: 3 },
+  infoLabel: { fontSize: 12, color: '#6A6A68', fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase' },
+  infoValue: { fontSize: 14.5, color: '#141414', fontWeight: '500', marginTop: 3 },
 });

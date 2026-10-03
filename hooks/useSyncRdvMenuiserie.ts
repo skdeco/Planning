@@ -23,7 +23,7 @@ export function useSyncRdvMenuiserie() {
         ajouter.current({
           id: `mnrdv_${r.id}`, titre: `${r.titre}${ch ? ` · ${ch.nom}` : ''}`, description: 'RDV Menuiserie confirmé par le client',
           date: r.date_rdv, heureDebut: r.heure_debut, heureFin: r.heure_fin || undefined, lieu: r.lieu || undefined,
-          couleur: '#5C1F2E', createdBy: cleUtilisateur(utilisateur.current), createdByNom: r.propose_par_nom || 'Menuiserie',
+          couleur: '#141414', createdBy: cleUtilisateur(utilisateur.current), createdByNom: r.propose_par_nom || 'Menuiserie',
           invites: [], visiblePar: [], acceptes: [], refuses: [], createdAt: new Date().toISOString(),
         });
       });

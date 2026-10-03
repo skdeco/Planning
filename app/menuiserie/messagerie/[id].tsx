@@ -57,7 +57,7 @@ export default function MessagerieMn() {
     && ((admin && r.statut === 'validation_admins') || (!admin && r.statut === 'chez_client'));
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right', 'bottom']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right', 'bottom']}>
       <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
         <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 24, gap: 10 }} keyboardShouldPersistTaps="handled">
           <EnTete titre={tm("Messagerie & RDV")} retour={() => router.back()} />

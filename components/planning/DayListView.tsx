@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
   weekNumTextOn: { color: DS.textInverse, fontWeight: font.semibold },
   weekDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: DS.primary },
   dayHeader: { flexDirection: 'row', alignItems: 'baseline', justifyContent: 'space-between', paddingHorizontal: 6, marginTop: 4 },
-  dayTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 22, letterSpacing: -0.3, color: DS.text },
+  dayTitle: { fontFamily: 'Manrope_500Medium', fontSize: 22, letterSpacing: -0.3, color: DS.text },
   dayMeta: { fontSize: 14, color: DS.textSecondary },
   empty: { fontSize: 13, color: DS.textSecondary, textAlign: 'center' },
   emptyCard: { backgroundColor: DS.surface, borderRadius: radius.xl, paddingVertical: 22, paddingHorizontal: 18, alignItems: 'center', gap: 8, ...shadows.sm },

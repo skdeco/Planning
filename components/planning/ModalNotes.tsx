@@ -158,22 +158,22 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                   <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 4, marginBottom: 8 }}>
                     <Text style={styles.sectionLabel}>{t.ui.sectionDirection} ({notesDirection.length})</Text>
                     <Pressable onPress={() => setSaisieDirection(v => !v)} hitSlop={8}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{saisieDirection ? t.common.cancel : `+ ${t.ui.noteDirection}`}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414' }}>{saisieDirection ? t.common.cancel : `+ ${t.ui.noteDirection}`}</Text>
                     </Pressable>
                   </View>
                   {saisieDirection && (
-                    <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 8, gap: 8 }}>
+                    <View style={{ backgroundColor: '#fff', borderRadius: 16, padding: 12, borderWidth: 1, borderColor: '#E2E2DF', marginBottom: 8, gap: 8 }}>
                       <TextInput
-                        style={{ minHeight: 64, fontSize: 15, color: '#2B1D14', textAlignVertical: 'top' }}
+                        style={{ minHeight: 64, fontSize: 15, color: '#141414', textAlignVertical: 'top' }}
                         placeholder={t.ui.noteDirectionAide}
-                        placeholderTextColor="#9A8C80"
+                        placeholderTextColor="#959593"
                         value={texteDirection}
                         onChangeText={setTexteDirection}
                         multiline
                         autoFocus
                       />
                       <Pressable
-                        style={{ alignSelf: 'flex-end', backgroundColor: '#5C1F2E', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, opacity: texteDirection.trim() ? 1 : 0.4 }}
+                        style={{ alignSelf: 'flex-end', backgroundColor: '#141414', borderRadius: 999, paddingHorizontal: 16, paddingVertical: 9, opacity: texteDirection.trim() ? 1 : 0.4 }}
                         disabled={!texteDirection.trim()}
                         onPress={ajouterNoteDirection}
                       >
@@ -182,7 +182,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     </View>
                   )}
                   {notesDirection.length === 0 && !saisieDirection && (
-                    <Text style={{ fontSize: 13, color: '#6E5F54', paddingHorizontal: 4 }}>{t.ui.aucuneNoteDirection}</Text>
+                    <Text style={{ fontSize: 13, color: '#6A6A68', paddingHorizontal: 4 }}>{t.ui.aucuneNoteDirection}</Text>
                   )}
                   {notesDirection.map(n => (
                     <View key={n.id} style={[styles.noteCard, { borderLeftWidth: 0 }]}>
@@ -198,10 +198,10 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                       )}
                       <View style={{ flexDirection: 'row', gap: 14, marginTop: 8 }}>
                         <Pressable onPress={() => { setNoteDirectionEnCours(n.id); setConsigneAEnvoyer({ chantierId: n.chantierId, texte: n.texte, photos: n.photos }); }}>
-                          <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{t.ui.envoyerAuxEmployes} →</Text>
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414' }}>{t.ui.envoyerAuxEmployes} →</Text>
                         </Pressable>
                         <Pressable onPress={() => updateNoteChantier({ ...n, archivedBy: [...(n.archivedBy || []), 'admin'] })}>
-                          <Text style={{ fontSize: 13, fontWeight: '600', color: '#6E5F54' }}>{t.common.archive}</Text>
+                          <Text style={{ fontSize: 13, fontWeight: '600', color: '#6A6A68' }}>{t.common.archive}</Text>
                         </Pressable>
                         <Pressable onPress={() => deleteNoteChantier(n.id)}>
                           <Text style={{ fontSize: 13, fontWeight: '600', color: '#E74C3C' }}>{t.common.delete}</Text>
@@ -375,18 +375,18 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                     if (savTickets.length === 0) return null;
                     return (
                       <View style={{ marginBottom: 8 }}>
-                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#6E5F54', marginBottom: 4 }}>Lier à un SAV :</Text>
+                        <Text style={{ fontSize: 11, fontWeight: '600', color: '#6A6A68', marginBottom: 4 }}>Lier à un SAV :</Text>
                         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-                          <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' }, !draft.savTicketId && { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' }]}
+                          <Pressable style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#E2E2DF' }, !draft.savTicketId && { backgroundColor: '#141414', borderColor: '#141414' }]}
                             onPress={() => setDraft({ savTicketId: null })}>
-                            <Text style={{ fontSize: 10, fontWeight: '600', color: !draft.savTicketId ? '#fff' : '#6E5F54' }}>Aucun</Text>
+                            <Text style={{ fontSize: 10, fontWeight: '600', color: !draft.savTicketId ? '#fff' : '#6A6A68' }}>Aucun</Text>
                           </Pressable>
                           {savTickets.map(t => (
-                            <Pressable key={t.id} style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' }, draft.savTicketId === t.id && { backgroundColor: '#E74C3C', borderColor: '#E74C3C' }]}
+                            <Pressable key={t.id} style={[{ paddingHorizontal: 10, paddingVertical: 5, borderRadius: 14, backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#E2E2DF' }, draft.savTicketId === t.id && { backgroundColor: '#E74C3C', borderColor: '#E74C3C' }]}
                               onPress={() => {
                                 setDraft({ savTicketId: t.id, ...(draft.texte.trim() ? {} : { texte: `SAV: ${t.objet}` }) });
                               }}>
-                              <Text style={{ fontSize: 10, fontWeight: '600', color: draft.savTicketId === t.id ? '#fff' : '#6E5F54' }} numberOfLines={1}>{t.objet}</Text>
+                              <Text style={{ fontSize: 10, fontWeight: '600', color: draft.savTicketId === t.id ? '#fff' : '#6A6A68' }} numberOfLines={1}>{t.objet}</Text>
                             </Pressable>
                           ))}
                         </ScrollView>
@@ -478,7 +478,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                                 </View>
                                 <Text style={[styles.taskText, task.fait && styles.taskTextDone, { flex: 1 }]}>{task.texte}</Text>
                                 <Pressable onPress={handleAddPhoto} style={{ paddingHorizontal: 6, paddingVertical: 4 }} accessibilityRole="button" accessibilityLabel="Ajouter une photo à la tâche">
-                                  <Ico e="➕" size={18} color="#5C1F2E" />
+                                  <Ico e="➕" size={18} color="#141414" />
                                 </Pressable>
                                 <Pressable
                                   onPress={() => {
@@ -541,7 +541,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                         value={ui.newTaskText}
                         onChangeText={(text) => setUi({ newTaskText: text })}
                         placeholder="Décrire la tâche..."
-                        placeholderTextColor="#9A8C80"
+                        placeholderTextColor="#959593"
                         autoFocus
                         returnKeyType="done"
                         onSubmitEditing={() => {
@@ -573,7 +573,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                         }}
                       />
                       <Pressable style={styles.taskInputCancel} onPress={() => setUi({ showTaskInput: false, newTaskText: '' })}>
-                        <Text style={{ color: '#6E5F54' }}>✕</Text>
+                        <Text style={{ color: '#6A6A68' }}>✕</Text>
                       </Pressable>
                     </View>
                   ) : (
@@ -621,7 +621,7 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
                         if (acteurs.length === 0) return null;
                         return (
                           <View style={{ marginTop: 4 }}>
-                            <Text style={[styles.noteLabel, { fontSize: 12, color: '#6E5F54' }]}>
+                            <Text style={[styles.noteLabel, { fontSize: 12, color: '#6A6A68' }]}>
                               Sélectionner des acteurs spécifiques (optionnel)
                             </Text>
                             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
@@ -705,12 +705,12 @@ export function ModalNotes({ noteModal, setNoteModal }: ModalNotesProps): React.
 // dans une passe de cleanup global.
 
 const styles = StyleSheet.create({
-  sectionLabel: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
+  sectionLabel: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6A6A68' },
   // — Modal layout shared —
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#EDE2D6',
+    backgroundColor: '#E2E2DF',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
@@ -723,31 +723,31 @@ const styles = StyleSheet.create({
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Fraunces_600SemiBold',
-    color: '#2B1D14',
+    fontFamily: 'Manrope_500Medium',
+    color: '#141414',
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 13,
-    color: '#6E5F54',
+    color: '#6A6A68',
     marginBottom: 16,
   },
   modalXBtn: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     alignItems: 'center',
     justifyContent: 'center',
   },
   modalXText: {
     fontSize: 14,
-    color: '#6E5F54',
+    color: '#6A6A68',
     fontWeight: '700',
   },
   modalCloseBtn: {
     marginTop: 16,
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -764,11 +764,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   noteCard: {
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     borderRadius: 14,
     padding: 14,
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   noteCardHeader: {
     flexDirection: 'row',
@@ -779,15 +779,15 @@ const styles = StyleSheet.create({
   noteAuthor: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#5C1F2E',
+    color: '#141414',
   },
   noteDate: {
     fontSize: 11,
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   noteCardText: {
     fontSize: 14,
-    color: '#2B1D14',
+    color: '#141414',
     lineHeight: 20,
   },
   noteCardPhoto: {
@@ -805,7 +805,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 8,
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
   },
   noteActionBtnDanger: {
     backgroundColor: '#FEE2E2',
@@ -813,21 +813,21 @@ const styles = StyleSheet.create({
   noteActionBtnText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#5C1F2E',
+    color: '#141414',
   },
   addNoteBtn: {
     marginTop: 12,
     marginBottom: 4,
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     paddingVertical: 12,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#5C1F2E',
+    borderColor: '#141414',
     borderStyle: 'dashed',
   },
   addNoteBtnText: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '700',
     fontSize: 14,
   },
@@ -839,7 +839,7 @@ const styles = StyleSheet.create({
   noteLabel: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
     marginBottom: 8,
   },
   noteInputRow: {
@@ -849,18 +849,18 @@ const styles = StyleSheet.create({
   },
   noteInput: {
     flex: 1,
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderRadius: 10,
     padding: 12,
     fontSize: 14,
-    color: '#2B1D14',
+    color: '#141414',
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
     minHeight: 100,
     textAlignVertical: 'top',
   },
   keyboardDismissBtn: {
-    backgroundColor: '#EDE2D6',
+    backgroundColor: '#E2E2DF',
     borderRadius: 8,
     width: 36,
     height: 36,
@@ -870,7 +870,7 @@ const styles = StyleSheet.create({
   },
   keyboardDismissText: {
     fontSize: 18,
-    color: '#2B1D14',
+    color: '#141414',
     fontWeight: '700',
   },
   photosRow: {
@@ -910,21 +910,21 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     marginRight: 8,
   },
   addPhotoBtnText: {
     fontSize: 24,
-    color: '#6E5F54',
+    color: '#6A6A68',
     fontWeight: '300',
   },
   addPhotoBtnLabel: {
     fontSize: 10,
-    color: '#6E5F54',
+    color: '#6A6A68',
     marginTop: 2,
   },
   editorActions: {
@@ -937,18 +937,18 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   cancelBtnText: {
-    color: '#6E5F54',
+    color: '#6A6A68',
     fontWeight: '600',
     fontSize: 15,
   },
   saveNoteBtn: {
     flex: 2,
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -1000,16 +1000,16 @@ const styles = StyleSheet.create({
   // — Checklist de tâches —
   taskList: {
     marginTop: 12,
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     borderRadius: 10,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   taskListTitle: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#6E5F54',
+    color: '#6A6A68',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 10,
@@ -1027,7 +1027,7 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: '#9A8C80',
+    borderColor: '#959593',
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#fff',
@@ -1043,12 +1043,12 @@ const styles = StyleSheet.create({
   },
   taskText: {
     fontSize: 14,
-    color: '#2B1D14',
+    color: '#141414',
     flex: 1,
   },
   taskTextDone: {
     textDecorationLine: 'line-through',
-    color: '#9A8C80',
+    color: '#959593',
   },
   taskDoneBy: {
     fontSize: 11,
@@ -1058,7 +1058,7 @@ const styles = StyleSheet.create({
   },
   taskProgress: {
     height: 4,
-    backgroundColor: '#EDE2D6',
+    backgroundColor: '#E2E2DF',
     borderRadius: 2,
     marginTop: 10,
     overflow: 'hidden',
@@ -1070,7 +1070,7 @@ const styles = StyleSheet.create({
   },
   taskProgressText: {
     fontSize: 11,
-    color: '#6E5F54',
+    color: '#6A6A68',
     textAlign: 'right',
     marginTop: 4,
     fontStyle: 'italic',
@@ -1088,7 +1088,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   addTaskBtnText: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '600',
     fontSize: 14,
   },
@@ -1097,17 +1097,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 8,
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderRadius: 10,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: '#5C1F2E',
+    borderColor: '#141414',
   },
   taskInput: {
     flex: 1,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#2B1D14',
+    color: '#141414',
   },
   taskInputCancel: {
     padding: 8,

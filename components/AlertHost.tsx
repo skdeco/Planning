@@ -40,8 +40,8 @@ export function AlertHost() {
     <Modal visible transparent animationType="fade" onRequestClose={() => close(cancel)}>
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
         <View style={{ backgroundColor: '#FFFFFF', borderRadius: 24, padding: 20, gap: 8, width: '100%', maxWidth: 440 }}>
-          <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{current.title}</Text>
-          {!!current.message && <Text style={{ fontSize: 14, color: '#6E5F54', marginBottom: 6 }}>{current.message}</Text>}
+          <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>{current.title}</Text>
+          {!!current.message && <Text style={{ fontSize: 14, color: '#6A6A68', marginBottom: 6 }}>{current.message}</Text>}
           {actions.map((b, i) => {
             const danger = b.style === 'destructive';
             const primary = !danger && i === actions.length - 1;
@@ -50,15 +50,15 @@ export function AlertHost() {
                 key={i}
                 accessibilityRole="button"
                 onPress={() => close(b)}
-                style={{ minHeight: 46, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: danger ? '#FEE2E2' : primary ? '#5C1F2E' : '#F2E4E1' }}
+                style={{ minHeight: 46, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: danger ? '#FEE2E2' : primary ? '#141414' : '#EBEBE8' }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '600', color: danger ? '#B91C1C' : primary ? '#FFFFFF' : '#5C1F2E' }}>{b.text ?? 'OK'}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: danger ? '#B91C1C' : primary ? '#FFFFFF' : '#141414' }}>{b.text ?? 'OK'}</Text>
               </Pressable>
             );
           })}
           {cancel && (
             <Pressable accessibilityRole="button" onPress={() => close(cancel)} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#6E5F54' }}>{cancel.text ?? 'Annuler'}</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#6A6A68' }}>{cancel.text ?? 'Annuler'}</Text>
             </Pressable>
           )}
         </View>

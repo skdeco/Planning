@@ -687,6 +687,9 @@ const d: Record<string, string> = {
   "Arrivée pointée à": "تم تسجيل الوصول في",
   "Pointé hors chantier": "تسجيل خارج المشروع",
   "Changement": "تغيير",
+  "Sur place depuis": "في الموقع منذ",
+  "Journée terminée": "انتهى اليوم",
+  "Pas de chantier prévu.": "لا يوجد مشروع مخطط.",
 };
 
 export default d;

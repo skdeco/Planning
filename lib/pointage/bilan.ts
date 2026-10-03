@@ -46,4 +46,4 @@ export function formatEcartHeures(m: number): string {
   return `${s}${Math.floor(a / 60)}h${String(a % 60).padStart(2, '0')}`;
 }
 
-export const couleurEcart = (m: number) => (m > 0 ? '#2E7D32' : m < 0 ? '#C0392B' : '#6E5F54');
+export const couleurEcart = (m: number) => (m > 0 ? '#2E7D32' : m < 0 ? '#C0392B' : '#6A6A68');

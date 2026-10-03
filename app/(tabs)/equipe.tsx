@@ -82,7 +82,7 @@ function genId(): string {
 }
 
 function getAvatarColor(prenom: string): string {
-  const colors = ['#5C1F2E', '#9B59B6', '#27AE60', '#E74C3C', '#0088FF', '#FF6B35', '#FFB800'];
+  const colors = ['#141414', '#9B59B6', '#27AE60', '#E74C3C', '#0088FF', '#FF6B35', '#FFB800'];
   return colors[(prenom?.charCodeAt(0) || 65) % colors.length];
 }
 
@@ -1072,16 +1072,16 @@ export default function EquipeScreen() {
           <View style={{ flex: 1 }} />
           {isAdmin && (
             <Pressable style={styles.actionBtnRound} onPress={() => setHistoriqueEmployeId(item.id)}>
-              <HardHat size={15} color="#5C1F2E" strokeWidth={2} />
+              <HardHat size={15} color="#141414" strokeWidth={2} />
             </Pressable>
           )}
           {(isAdmin || isRH) && (
             <Pressable style={styles.actionBtnRound} onPress={() => openDocsModal(item.id)}>
-              <FolderOpen size={15} color="#5C1F2E" strokeWidth={2} />
+              <FolderOpen size={15} color="#141414" strokeWidth={2} />
             </Pressable>
           )}
           <Pressable style={styles.actionBtnRound} onPress={() => openEdit(item)}>
-            <Pencil size={15} color="#5C1F2E" strokeWidth={2} />
+            <Pencil size={15} color="#141414" strokeWidth={2} />
           </Pressable>
           <Pressable style={[styles.actionBtnRound, { backgroundColor: '#FEF2F2' }]} onPress={() => handleDelete(item.id, `${item.prenom} ${item.nom}`)}>
             <Trash2 size={15} color="#E74C3C" strokeWidth={2} />
@@ -1124,15 +1124,15 @@ export default function EquipeScreen() {
         {/* Boutons 3-actions (Infos / Finances / Docs) */}
         <View style={stStyles.actionButtonsRow}>
           <Pressable style={[stStyles.actionButton, stStyles.actionButtonEdit]} onPress={() => openEditST(item)}>
-            <Pencil size={15} color="#5C1F2E" strokeWidth={2} />
+            <Pencil size={15} color="#141414" strokeWidth={2} />
             <Text style={stStyles.actionButtonLabel}>{t.equipe.infos}</Text>
           </Pressable>
           <Pressable style={[stStyles.actionButton, stStyles.actionButtonMoney]} onPress={() => openFinancesFor(item)}>
-            <Coins size={15} color="#5C1F2E" strokeWidth={2} />
+            <Coins size={15} color="#141414" strokeWidth={2} />
             <Text style={stStyles.actionButtonLabel}>{t.equipe.finances}</Text>
           </Pressable>
           <Pressable style={[stStyles.actionButton, stStyles.actionButtonDocs, docsComplet && stStyles.actionButtonDocsOk]} onPress={() => openDocsFor(item)}>
-            <FileText size={15} color="#5C1F2E" strokeWidth={2} />
+            <FileText size={15} color="#141414" strokeWidth={2} />
             <Text style={stStyles.actionButtonLabel}>Docs {docsFournis}/{docsTotal}</Text>
           </Pressable>
         </View>
@@ -1145,7 +1145,7 @@ export default function EquipeScreen() {
               </Text>
             </Pressable>
             <View style={{ flex: 1 }} />
-            <Text style={{ fontSize: 13, color: '#9A8C80' }}>{stMarchesCount} devis</Text>
+            <Text style={{ fontSize: 13, color: '#959593' }}>{stMarchesCount} devis</Text>
           </View>
         )}
       </View>
@@ -1154,7 +1154,7 @@ export default function EquipeScreen() {
   };
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]">
+    <ScreenContainer containerClassName="bg-[#F4F4F2]">
       <BackToPlus />
       {/* En-tête */}
       <View style={styles.header}>
@@ -1206,7 +1206,7 @@ export default function EquipeScreen() {
           <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#EBF5FB', borderRadius: 10, padding: 10, marginBottom: 8, marginHorizontal: 16 }}
             onPress={() => setShowDispo(true)}>
             <Ico e="📅" size={18} />
-            <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>{t.equipe.dispoTitle}</Text>
+            <Text style={{ fontSize: 13, fontWeight: '700', color: '#141414' }}>{t.equipe.dispoTitle}</Text>
             <Text style={{ fontSize: 13, color: '#2E7D32', fontWeight: '600', marginLeft: 'auto' }}>{disponibilite.libres.length} libre{disponibilite.libres.length > 1 ? 's' : ''}</Text>
           </Pressable>
 
@@ -1227,7 +1227,7 @@ export default function EquipeScreen() {
             })}
             {isAdmin && (
               <Pressable style={[styles.filterChip, { borderStyle: 'dashed' }]} onPress={() => setShowNewMetier(true)}>
-                <Text style={[styles.filterChipText, { color: '#6E5F54' }]}>+ Métier</Text>
+                <Text style={[styles.filterChipText, { color: '#6A6A68' }]}>+ Métier</Text>
               </Pressable>
             )}
           </ScrollView>
@@ -1238,7 +1238,7 @@ export default function EquipeScreen() {
             contentContainerStyle={styles.list}
             refreshing={refreshing}
             onRefresh={onRefresh}
-            ListEmptyComponent={<EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Users size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title={t.equipe.noEmployee} />}
+            ListEmptyComponent={<EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}><Users size={34} color="#959593" strokeWidth={1.6} /></View>} title={t.equipe.noEmployee} />}
           />
         </>
       )}
@@ -1254,7 +1254,7 @@ export default function EquipeScreen() {
           contentContainerStyle={styles.list}
           refreshing={refreshing}
           onRefresh={onRefresh}
-          ListEmptyComponent={<EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}><Truck size={34} color="#9A8C80" strokeWidth={1.6} /></View>} title={t.equipe.noSubcontractor} />}
+          ListEmptyComponent={<EmptyState icon={<View style={{ width: 72, height: 72, borderRadius: 24, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}><Truck size={34} color="#959593" strokeWidth={1.6} /></View>} title={t.equipe.noSubcontractor} />}
         />
       )}
 
@@ -1304,7 +1304,7 @@ export default function EquipeScreen() {
           {apporteurs.length === 0 ? (
             <View style={styles.emptyState}>
               <Text style={styles.emptyText}>{t.equipe.noArchiApporteur}</Text>
-              <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 6, textAlign: 'center' }}>
+              <Text style={{ fontSize: 12, color: '#6A6A68', marginTop: 6, textAlign: 'center' }}>
                 Ajoutez-en un pour gérer les commissions sur les marchés
               </Text>
             </View>
@@ -1328,11 +1328,11 @@ export default function EquipeScreen() {
                 return (
                   <Pressable
                     key={a.id}
-                    style={[styles.card, { borderLeftWidth: 4, borderLeftColor: APPORTEUR_TYPE_LABELS[a.type]?.couleur || '#5C1F2E' }]}
+                    style={[styles.card, { borderLeftWidth: 4, borderLeftColor: APPORTEUR_TYPE_LABELS[a.type]?.couleur || '#141414' }]}
                     onPress={() => openEditApporteur(a)}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                      <View style={[styles.avatar, { backgroundColor: APPORTEUR_TYPE_LABELS[a.type]?.couleur || '#5C1F2E' }]}>
+                      <View style={[styles.avatar, { backgroundColor: APPORTEUR_TYPE_LABELS[a.type]?.couleur || '#141414' }]}>
                         <Text style={styles.avatarText}>
                           {(a.prenom[0] || '?').toUpperCase()}{(a.nom[0] || '').toUpperCase()}
                         </Text>
@@ -1340,7 +1340,7 @@ export default function EquipeScreen() {
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                           <Text style={styles.cardName} numberOfLines={1}>{a.prenom} {a.nom}</Text>
-                          <View style={[styles.apporteurBadge, { backgroundColor: APPORTEUR_TYPE_LABELS[a.type]?.couleur || '#5C1F2E' }]}>
+                          <View style={[styles.apporteurBadge, { backgroundColor: APPORTEUR_TYPE_LABELS[a.type]?.couleur || '#141414' }]}>
                             <Text style={styles.apporteurBadgeText}>
                               {APPORTEUR_TYPE_LABELS[a.type]?.label || a.type}
                             </Text>
@@ -1359,8 +1359,8 @@ export default function EquipeScreen() {
                       </View>
                     </View>
                     {calc.total > 0 && (
-                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#F1E7DC', paddingTop: 8 }}>
-                        <Text style={{ fontSize: 13, color: '#6E5F54' }}>Total : {fmtEur(calc.total)}</Text>
+                      <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#EBEBE8', paddingTop: 8 }}>
+                        <Text style={{ fontSize: 13, color: '#6A6A68' }}>Total : {fmtEur(calc.total)}</Text>
                         <Text style={{ fontSize: 13, fontWeight: '700', color: calc.duDu > 0 ? '#E74C3C' : '#27AE60' }}>
                           {calc.duDu > 0 ? `À payer : ${fmtEur(calc.duDu)}` : 'Tout payé ✓'}
                         </Text>
@@ -1369,7 +1369,7 @@ export default function EquipeScreen() {
                     <View style={styles.cardBottomRow}>
                       <View style={{ flex: 1 }} />
                       <Pressable style={styles.actionBtnRound} onPress={() => openEditApporteur(a)}>
-                        <Pencil size={15} color="#5C1F2E" strokeWidth={2} />
+                        <Pencil size={15} color="#141414" strokeWidth={2} />
                       </Pressable>
                       <Pressable style={[styles.actionBtnRound, { backgroundColor: '#FEF2F2' }]} onPress={() => handleDeleteApporteur(a)}>
                         <Trash2 size={15} color="#E74C3C" strokeWidth={2} />
@@ -1414,34 +1414,34 @@ export default function EquipeScreen() {
               <View style={styles.nameRow}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.fieldLabel}>{t.common.firstName} *</Text>
-                  <TextInput style={styles.input} value={apporteurForm.prenom} onChangeText={v => setApporteurForm(f => ({ ...f, prenom: v }))} placeholder={t.common.firstName} placeholderTextColor="#9A8C80" />
+                  <TextInput style={styles.input} value={apporteurForm.prenom} onChangeText={v => setApporteurForm(f => ({ ...f, prenom: v }))} placeholder={t.common.firstName} placeholderTextColor="#959593" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>{t.equipe.lastName} *</Text>
-                  <TextInput style={styles.input} value={apporteurForm.nom} onChangeText={v => setApporteurForm(f => ({ ...f, nom: v }))} placeholder={t.common.name} placeholderTextColor="#9A8C80" />
+                  <TextInput style={styles.input} value={apporteurForm.nom} onChangeText={v => setApporteurForm(f => ({ ...f, nom: v }))} placeholder={t.common.name} placeholderTextColor="#959593" />
                 </View>
               </View>
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.equipe.company}</Text>
-              <TextInput style={styles.input} value={apporteurForm.societe} onChangeText={v => setApporteurForm(f => ({ ...f, societe: v }))} placeholder={t.equipe.companyPh} placeholderTextColor="#9A8C80" />
+              <TextInput style={styles.input} value={apporteurForm.societe} onChangeText={v => setApporteurForm(f => ({ ...f, societe: v }))} placeholder={t.equipe.companyPh} placeholderTextColor="#959593" />
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.common.phone}</Text>
-              <TextInput style={styles.input} value={apporteurForm.telephone} onChangeText={v => setApporteurForm(f => ({ ...f, telephone: v }))} placeholder="06 12 34 56 78" placeholderTextColor="#9A8C80" keyboardType="phone-pad" />
+              <TextInput style={styles.input} value={apporteurForm.telephone} onChangeText={v => setApporteurForm(f => ({ ...f, telephone: v }))} placeholder="06 12 34 56 78" placeholderTextColor="#959593" keyboardType="phone-pad" />
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.common.email}</Text>
-              <TextInput style={styles.input} value={apporteurForm.email} onChangeText={v => setApporteurForm(f => ({ ...f, email: v }))} placeholder={t.equipe.emailPh} placeholderTextColor="#9A8C80" keyboardType="email-address" autoCapitalize="none" />
+              <TextInput style={styles.input} value={apporteurForm.email} onChangeText={v => setApporteurForm(f => ({ ...f, email: v }))} placeholder={t.equipe.emailPh} placeholderTextColor="#959593" keyboardType="email-address" autoCapitalize="none" />
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.common.address}</Text>
-              <TextInput style={styles.input} value={apporteurForm.adresse} onChangeText={v => setApporteurForm(f => ({ ...f, adresse: v }))} placeholder={t.equipe.addressPh} placeholderTextColor="#9A8C80" />
+              <TextInput style={styles.input} value={apporteurForm.adresse} onChangeText={v => setApporteurForm(f => ({ ...f, adresse: v }))} placeholder={t.equipe.addressPh} placeholderTextColor="#959593" />
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>SIRET</Text>
-              <TextInput style={styles.input} value={apporteurForm.siret} onChangeText={v => setApporteurForm(f => ({ ...f, siret: v }))} placeholder={t.equipe.siretPh} placeholderTextColor="#9A8C80" />
+              <TextInput style={styles.input} value={apporteurForm.siret} onChangeText={v => setApporteurForm(f => ({ ...f, siret: v }))} placeholder={t.equipe.siretPh} placeholderTextColor="#959593" />
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.planning.notes}</Text>
-              <TextInput style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]} value={apporteurForm.notes} onChangeText={v => setApporteurForm(f => ({ ...f, notes: v }))} placeholder={t.equipe.notesPh} placeholderTextColor="#9A8C80" multiline />
+              <TextInput style={[styles.input, { minHeight: 60, textAlignVertical: 'top' }]} value={apporteurForm.notes} onChangeText={v => setApporteurForm(f => ({ ...f, notes: v }))} placeholder={t.equipe.notesPh} placeholderTextColor="#959593" multiline />
 
               {/* ═══ Accès externe à l'application (optionnel) ═══ */}
-              <View style={{ marginTop: 18, padding: 12, backgroundColor: '#FAF5EF', borderRadius: 12, borderWidth: 1, borderColor: '#EDE2D6' }}>
+              <View style={{ marginTop: 18, padding: 12, backgroundColor: '#F4F4F2', borderRadius: 12, borderWidth: 1, borderColor: '#E2E2DF' }}>
                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.fieldLabel}>{t.equipe.accesAppTitle}</Text>
@@ -1450,7 +1450,7 @@ export default function EquipeScreen() {
                   <Switch
                     value={!!apporteurForm.accesApp}
                     onValueChange={v => setApporteurForm(f => ({ ...f, accesApp: v }))}
-                    trackColor={{ false: '#EDE2D6', true: '#5C1F2E' }}
+                    trackColor={{ false: '#E2E2DF', true: '#141414' }}
                     thumbColor="#fff"
                   />
                 </View>
@@ -1462,7 +1462,7 @@ export default function EquipeScreen() {
                       value={apporteurForm.identifiant || ''}
                       onChangeText={v => setApporteurForm(f => ({ ...f, identifiant: v }))}
                       placeholder={t.equipe.identifierPh}
-                      placeholderTextColor="#9A8C80"
+                      placeholderTextColor="#959593"
                       autoCapitalize="none"
                       autoCorrect={false}
                     />
@@ -1473,7 +1473,7 @@ export default function EquipeScreen() {
                         value={apporteurForm.motDePasse || ''}
                         onChangeText={v => setApporteurForm(f => ({ ...f, motDePasse: v }))}
                         placeholder={t.common.password}
-                        placeholderTextColor="#9A8C80"
+                        placeholderTextColor="#959593"
                         secureTextEntry={!showApporteurMdp}
                         autoCapitalize="none"
                         autoCorrect={false}
@@ -1484,14 +1484,14 @@ export default function EquipeScreen() {
                     </View>
                     <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                       <Pressable
-                        style={{ flex: 1, backgroundColor: '#FAF5EF', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
+                        style={{ flex: 1, backgroundColor: '#F4F4F2', borderWidth: 1, borderColor: '#141414', borderRadius: 10, paddingVertical: 10, alignItems: 'center' }}
                         onPress={genererMdpPourForm}
                       >
-                        <Text style={{ color: '#5C1F2E', fontWeight: '700', fontSize: 12 }}>{t.equipe.generatePassword}</Text>
+                        <Text style={{ color: '#141414', fontWeight: '700', fontSize: 12 }}>{t.equipe.generatePassword}</Text>
                       </Pressable>
                       {apporteurForm.motDePasse && Platform.OS === 'web' && (
                         <Pressable
-                          style={{ backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'center' }}
+                          style={{ backgroundColor: '#141414', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, alignItems: 'center' }}
                           onPress={() => {
                             try {
                               // @ts-ignore
@@ -1499,11 +1499,11 @@ export default function EquipeScreen() {
                             } catch {}
                           }}
                         >
-                          <Text style={{ color: '#5C1F2E', fontWeight: '700', fontSize: 12 }}>{t.equipe.copy}</Text>
+                          <Text style={{ color: '#141414', fontWeight: '700', fontSize: 12 }}>{t.equipe.copy}</Text>
                         </Pressable>
                       )}
                     </View>
-                    <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 6, lineHeight: 14 }}>
+                    <Text style={{ fontSize: 12.5, color: '#6A6A68', marginTop: 6, lineHeight: 14 }}>
                       Ce mot de passe est affiché uniquement pour l'admin. Le contact se connectera avec son identifiant + ce mot de passe. Stocké de manière sécurisée (SHA-256 + salt) en plus de la copie visible.
                     </Text>
                   </>
@@ -1529,7 +1529,7 @@ export default function EquipeScreen() {
                 );
                 const currentApporteurType = apporteurForm.type || 'apporteur';
                 return (
-                  <View style={{ marginTop: 18, padding: 12, backgroundColor: '#FAF5EF', borderRadius: 12, borderWidth: 1, borderColor: '#EDE2D6' }}>
+                  <View style={{ marginTop: 18, padding: 12, backgroundColor: '#F4F4F2', borderRadius: 12, borderWidth: 1, borderColor: '#E2E2DF' }}>
                     <Text style={styles.fieldLabel}>Chantiers liés ({linkedChantiers.length})</Text>
                     {linkedChantiers.length === 0 ? (
                       <Text style={styles.fieldHint}>Aucun chantier lié à ce contact pour le moment.</Text>
@@ -1545,11 +1545,11 @@ export default function EquipeScreen() {
                           return (
                             <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: '#fff', borderRadius: 8, padding: 8, borderLeftWidth: 3, borderLeftColor: c.couleur }}>
                               <View style={{ flex: 1 }}>
-                                <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>{c.nom}</Text>
-                                <Text style={{ fontSize: 13, color: '#6E5F54', marginTop: 2 }}>
+                                <Text style={{ fontSize: 13, fontWeight: '700', color: '#141414' }}>{c.nom}</Text>
+                                <Text style={{ fontSize: 13, color: '#6A6A68', marginTop: 2 }}>
                                   {[c.rue, c.ville].filter(Boolean).join(', ') || c.adresse || '—'}
                                 </Text>
-                                <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 2 }}>{roles.join(' · ')}</Text>
+                                <Text style={{ fontSize: 12.5, color: '#6A6A68', marginTop: 2 }}>{roles.join(' · ')}</Text>
                               </View>
                             </View>
                           );
@@ -1560,9 +1560,9 @@ export default function EquipeScreen() {
                     <Pressable
                       style={{
                         marginTop: 10,
-                        backgroundColor: '#F2E4E1',
+                        backgroundColor: '#EBEBE8',
                         borderWidth: 1,
-                        borderColor: '#5C1F2E',
+                        borderColor: '#141414',
                         borderStyle: 'dashed',
                         borderRadius: 10,
                         paddingVertical: 10,
@@ -1576,7 +1576,7 @@ export default function EquipeScreen() {
                         });
                       }}
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E' }}>Nouveau chantier lié
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414' }}>Nouveau chantier lié
                       </Text>
                     </Pressable>
                   </View>
@@ -1610,20 +1610,20 @@ export default function EquipeScreen() {
                   <TextInput style={styles.input} value={form.prenom} onChangeText={v => setForm(f => ({
                     ...f, prenom: v,
                     identifiant: editId ? f.identifiant : buildIdentifiant(v, f.nom),
-                  }))} placeholder="Ex: Sacha" placeholderTextColor="#9A8C80" />
+                  }))} placeholder="Ex: Sacha" placeholderTextColor="#959593" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>{t.equipe.lastName}</Text>
                   <TextInput style={styles.input} value={form.nom} onChangeText={v => setForm(f => ({
                     ...f, nom: v,
                     identifiant: editId ? f.identifiant : buildIdentifiant(f.prenom, v),
-                  }))} placeholder="Ex: Martin" placeholderTextColor="#9A8C80" />
+                  }))} placeholder="Ex: Martin" placeholderTextColor="#959593" />
                 </View>
               </View>
 
               {/* Photo de profil */}
               <View style={{ marginTop: 12, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: form.couleur || '#5C1F2E', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: form.couleur || '#141414', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                   {form.photoProfil ? (
                     <Image source={{ uri: form.photoProfil }} style={{ width: 56, height: 56 }} />
                   ) : (
@@ -1632,7 +1632,7 @@ export default function EquipeScreen() {
                 </View>
                 <View style={{ flex: 1, gap: 6 }}>
                   <Pressable
-                    style={{ backgroundColor: '#5C1F2E', borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
+                    style={{ backgroundColor: '#141414', borderRadius: 8, paddingVertical: 8, alignItems: 'center' }}
                     onPress={() => {
                       if (Platform.OS !== 'web') return;
                       const input = document.createElement('input');
@@ -1668,22 +1668,22 @@ export default function EquipeScreen() {
               <View style={[styles.nameRow, { marginTop: 12 }]}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.fieldLabel}>{t.common.phone}</Text>
-                  <TextInput style={styles.input} value={form.telephone} onChangeText={v => setForm(f => ({ ...f, telephone: v }))} placeholder="06 00 00 00 00" placeholderTextColor="#9A8C80" keyboardType="phone-pad" />
+                  <TextInput style={styles.input} value={form.telephone} onChangeText={v => setForm(f => ({ ...f, telephone: v }))} placeholder="06 00 00 00 00" placeholderTextColor="#959593" keyboardType="phone-pad" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>{t.common.email}</Text>
-                  <TextInput style={styles.input} value={form.email} onChangeText={v => setForm(f => ({ ...f, email: v }))} placeholder={t.equipe.emailPh} placeholderTextColor="#9A8C80" keyboardType="email-address" autoCapitalize="none" />
+                  <TextInput style={styles.input} value={form.email} onChangeText={v => setForm(f => ({ ...f, email: v }))} placeholder={t.equipe.emailPh} placeholderTextColor="#959593" keyboardType="email-address" autoCapitalize="none" />
                 </View>
               </View>
 
               {/* Identifiant */}
               <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.loginId} *</Text>
-              <TextInput style={styles.input} value={form.identifiant} onChangeText={v => setForm(f => ({ ...f, identifiant: v }))} placeholder="Ex: sacha.martin" placeholderTextColor="#9A8C80" autoCapitalize="none" autoCorrect={false} />
+              <TextInput style={styles.input} value={form.identifiant} onChangeText={v => setForm(f => ({ ...f, identifiant: v }))} placeholder="Ex: sacha.martin" placeholderTextColor="#959593" autoCapitalize="none" autoCorrect={false} />
 
               {/* Mot de passe */}
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.common.password} *</Text>
               <View style={styles.mdpRow}>
-                <TextInput style={[styles.input, { flex: 1 }]} value={form.motDePasse} onChangeText={v => setForm(f => ({ ...f, motDePasse: v }))} placeholder="Ex: 1234" placeholderTextColor="#9A8C80" secureTextEntry={!showMdp} autoCapitalize="none" autoCorrect={false} />
+                <TextInput style={[styles.input, { flex: 1 }]} value={form.motDePasse} onChangeText={v => setForm(f => ({ ...f, motDePasse: v }))} placeholder="Ex: 1234" placeholderTextColor="#959593" secureTextEntry={!showMdp} autoCapitalize="none" autoCorrect={false} />
                 <Pressable style={styles.mdpToggle} onPress={() => setShowMdp(v => !v)}>
                   <Ico e={showMdp ? '🙈' : '👁'} size={18} />
                 </Pressable>
@@ -1704,19 +1704,19 @@ export default function EquipeScreen() {
               {form.modeSalaire === 'mensuel' ? (
                 <>
                   <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.equipe.monthlySalary}</Text>
-                  <TextInput style={styles.input} value={form.salaireNet} onChangeText={v => setForm(f => ({ ...f, salaireNet: v }))} placeholder="Ex: 1800" placeholderTextColor="#9A8C80" keyboardType="numeric" />
+                  <TextInput style={styles.input} value={form.salaireNet} onChangeText={v => setForm(f => ({ ...f, salaireNet: v }))} placeholder="Ex: 1800" placeholderTextColor="#959593" keyboardType="numeric" />
                   <Text style={styles.fieldHint}>{t.equipe.salaryHint}</Text>
                 </>
               ) : (
                 <>
                   <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.equipe.dailyRate}</Text>
-                  <TextInput style={styles.input} value={form.tarifJournalier} onChangeText={v => setForm(f => ({ ...f, tarifJournalier: v }))} placeholder="Ex: 150" placeholderTextColor="#9A8C80" keyboardType="numeric" />
+                  <TextInput style={styles.input} value={form.tarifJournalier} onChangeText={v => setForm(f => ({ ...f, tarifJournalier: v }))} placeholder="Ex: 150" placeholderTextColor="#959593" keyboardType="numeric" />
                   <Text style={styles.fieldHint}>{t.equipe.dailyRateHint}</Text>
                 </>
               )}
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.equipe.congesPerYear}</Text>
-              <TextInput style={styles.input} value={form.joursCongesAnnuels} onChangeText={v => setForm(f => ({ ...f, joursCongesAnnuels: v.replace(/[^0-9]/g, '') }))} placeholder={t.equipe.congesPh} placeholderTextColor="#9A8C80" keyboardType="numeric" />
+              <TextInput style={styles.input} value={form.joursCongesAnnuels} onChangeText={v => setForm(f => ({ ...f, joursCongesAnnuels: v.replace(/[^0-9]/g, '') }))} placeholder={t.equipe.congesPh} placeholderTextColor="#959593" keyboardType="numeric" />
               <Text style={styles.fieldHint}>Laisser vide = 25 jours par défaut.</Text>
 
               {/* Couleur */}
@@ -1741,7 +1741,7 @@ export default function EquipeScreen() {
                   );
                 })}
                 <Pressable style={[styles.metierOption, { borderStyle: 'dashed' }]} onPress={() => setShowNewMetier(true)}>
-                  <Text style={[styles.metierOptionText, { color: '#6E5F54' }]}>+ Nouveau métier</Text>
+                  <Text style={[styles.metierOptionText, { color: '#6A6A68' }]}>+ Nouveau métier</Text>
                 </Pressable>
               </View>
 
@@ -1761,7 +1761,7 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldLabel}>{t.equipe.timesheetRequired}</Text>
                   <Text style={styles.fieldHint}>{t.equipe.timesheetHint}</Text>
                 </View>
-                <Switch value={form.doitPointer} onValueChange={v => setForm(f => ({ ...f, doitPointer: v }))} trackColor={{ false: '#EDE2D6', true: '#5C1F2E' }} thumbColor="#fff" />
+                <Switch value={form.doitPointer} onValueChange={v => setForm(f => ({ ...f, doitPointer: v }))} trackColor={{ false: '#E2E2DF', true: '#141414' }} thumbColor="#fff" />
               </View>
 
               {/* Accréditation Acheteur */}
@@ -1770,7 +1770,7 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldLabel}>{t.equipe.buyerRole}</Text>
                   <Text style={styles.fieldHint}>{t.equipe.buyerHint}</Text>
                 </View>
-                <Switch value={form.isAcheteur} onValueChange={v => confirmAccreditation('isAcheteur', v, 'Acheteur')} trackColor={{ false: '#EDE2D6', true: '#5C1F2E' }} thumbColor="#fff" />
+                <Switch value={form.isAcheteur} onValueChange={v => confirmAccreditation('isAcheteur', v, 'Acheteur')} trackColor={{ false: '#E2E2DF', true: '#141414' }} thumbColor="#fff" />
               </View>
 
               {/* Accréditation RH */}
@@ -1779,7 +1779,7 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldLabel}>{t.equipe.hrRole}</Text>
                   <Text style={styles.fieldHint}>{t.equipe.hrHint}</Text>
                 </View>
-                <Switch value={form.isRH} onValueChange={v => confirmAccreditation('isRH', v, 'Ressources Humaines')} trackColor={{ false: '#EDE2D6', true: '#27AE60' }} thumbColor="#fff" />
+                <Switch value={form.isRH} onValueChange={v => confirmAccreditation('isRH', v, 'Ressources Humaines')} trackColor={{ false: '#E2E2DF', true: '#27AE60' }} thumbColor="#fff" />
               </View>
 
               {/* Accréditation Commercial */}
@@ -1788,7 +1788,7 @@ export default function EquipeScreen() {
                   <Text style={styles.fieldLabel}>{t.equipe.commercialRole}</Text>
                   <Text style={styles.fieldHint}>{t.equipe.commercialHint}</Text>
                 </View>
-                <Switch value={form.isCommercial} onValueChange={v => confirmAccreditation('isCommercial', v, 'Commercial')} trackColor={{ false: '#EDE2D6', true: '#F39C12' }} thumbColor="#fff" />
+                <Switch value={form.isCommercial} onValueChange={v => confirmAccreditation('isCommercial', v, 'Commercial')} trackColor={{ false: '#E2E2DF', true: '#F39C12' }} thumbColor="#fff" />
               </View>
 
               {/* Accès aux espaces Travaux / Menuiserie / Planning direction */}
@@ -1812,14 +1812,14 @@ export default function EquipeScreen() {
                     return (
                       <View key={jour} style={styles.horaireRow}>
                         <View style={styles.horaireJourWrap}>
-                          <Switch value={h.actif} onValueChange={v => updateHoraire(jour, 'actif', v)} trackColor={{ false: '#EDE2D6', true: '#5C1F2E' }} thumbColor="#fff" />
+                          <Switch value={h.actif} onValueChange={v => updateHoraire(jour, 'actif', v)} trackColor={{ false: '#E2E2DF', true: '#141414' }} thumbColor="#fff" />
                           <Text style={[styles.horaireJour, !h.actif && styles.horaireJourOff]}>{JOURS_SEMAINE[jour]}</Text>
                         </View>
                         {h.actif ? (
                           <View style={styles.horaireHeures}>
-                            <TextInput style={styles.horaireInput} value={h.debut} onChangeText={v => updateHoraire(jour, 'debut', v)} placeholder="08:00" placeholderTextColor="#9A8C80" keyboardType="numbers-and-punctuation" maxLength={5} />
+                            <TextInput style={styles.horaireInput} value={h.debut} onChangeText={v => updateHoraire(jour, 'debut', v)} placeholder="08:00" placeholderTextColor="#959593" keyboardType="numbers-and-punctuation" maxLength={5} />
                             <Text style={styles.horaireArrow}>→</Text>
-                            <TextInput style={styles.horaireInput} value={h.fin} onChangeText={v => updateHoraire(jour, 'fin', v)} placeholder="17:00" placeholderTextColor="#9A8C80" keyboardType="numbers-and-punctuation" maxLength={5} />
+                            <TextInput style={styles.horaireInput} value={h.fin} onChangeText={v => updateHoraire(jour, 'fin', v)} placeholder="17:00" placeholderTextColor="#959593" keyboardType="numbers-and-punctuation" maxLength={5} />
                           </View>
                         ) : (
                           <Text style={styles.horaireRepos}>{t.equipe.dayOff}</Text>
@@ -1929,7 +1929,7 @@ export default function EquipeScreen() {
             </View>
             <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
               <Text style={styles.fieldLabel}>{t.equipe.company}</Text>
-              <TextInput style={styles.input} value={stForm.societe} onChangeText={v => setSTForm(f => ({ ...f, societe: v }))} placeholder="Ex: Plomberie Dupont" placeholderTextColor="#9A8C80" />
+              <TextInput style={styles.input} value={stForm.societe} onChangeText={v => setSTForm(f => ({ ...f, societe: v }))} placeholder="Ex: Plomberie Dupont" placeholderTextColor="#959593" />
 
               <View style={[styles.nameRow, { marginTop: 12 }]}>
                 <View style={{ flex: 1, marginRight: 8 }}>
@@ -1937,34 +1937,34 @@ export default function EquipeScreen() {
                   <TextInput style={styles.input} value={stForm.prenom} onChangeText={v => setSTForm(f => ({
                     ...f, prenom: v,
                     identifiant: editSTId ? f.identifiant : buildIdentifiant(v, f.nom),
-                  }))} placeholder="Jean" placeholderTextColor="#9A8C80" />
+                  }))} placeholder="Jean" placeholderTextColor="#959593" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>{t.equipe.lastName}</Text>
                   <TextInput style={styles.input} value={stForm.nom} onChangeText={v => setSTForm(f => ({
                     ...f, nom: v,
                     identifiant: editSTId ? f.identifiant : buildIdentifiant(f.prenom, v),
-                  }))} placeholder="Dupont" placeholderTextColor="#9A8C80" />
+                  }))} placeholder="Dupont" placeholderTextColor="#959593" />
                 </View>
               </View>
 
               <View style={[styles.nameRow, { marginTop: 12 }]}>
                 <View style={{ flex: 1, marginRight: 8 }}>
                   <Text style={styles.fieldLabel}>{t.common.phone}</Text>
-                  <TextInput style={styles.input} value={stForm.telephone} onChangeText={v => setSTForm(f => ({ ...f, telephone: v }))} placeholder="06 00 00 00 00" placeholderTextColor="#9A8C80" keyboardType="phone-pad" />
+                  <TextInput style={styles.input} value={stForm.telephone} onChangeText={v => setSTForm(f => ({ ...f, telephone: v }))} placeholder="06 00 00 00 00" placeholderTextColor="#959593" keyboardType="phone-pad" />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text style={styles.fieldLabel}>{t.common.email}</Text>
-                  <TextInput style={styles.input} value={stForm.email} onChangeText={v => setSTForm(f => ({ ...f, email: v }))} placeholder={t.equipe.emailPh} placeholderTextColor="#9A8C80" keyboardType="email-address" autoCapitalize="none" />
+                  <TextInput style={styles.input} value={stForm.email} onChangeText={v => setSTForm(f => ({ ...f, email: v }))} placeholder={t.equipe.emailPh} placeholderTextColor="#959593" keyboardType="email-address" autoCapitalize="none" />
                 </View>
               </View>
 
               <Text style={[styles.fieldLabel, { marginTop: 16 }]}>{t.equipe.loginId} *</Text>
-              <TextInput style={styles.input} value={stForm.identifiant} onChangeText={v => setSTForm(f => ({ ...f, identifiant: v }))} placeholder="Ex: plomberie.dupont" placeholderTextColor="#9A8C80" autoCapitalize="none" autoCorrect={false} />
+              <TextInput style={styles.input} value={stForm.identifiant} onChangeText={v => setSTForm(f => ({ ...f, identifiant: v }))} placeholder="Ex: plomberie.dupont" placeholderTextColor="#959593" autoCapitalize="none" autoCorrect={false} />
 
               <Text style={[styles.fieldLabel, { marginTop: 12 }]}>{t.common.password} * ({t.equipe.visibleByAdmin})</Text>
               <View style={styles.mdpRow}>
-                <TextInput style={[styles.input, { flex: 1 }]} value={stForm.motDePasse} onChangeText={v => setSTForm(f => ({ ...f, motDePasse: v }))} placeholder={t.equipe.st1234Ph} placeholderTextColor="#9A8C80" secureTextEntry={!showSTMdp} autoCapitalize="none" autoCorrect={false} />
+                <TextInput style={[styles.input, { flex: 1 }]} value={stForm.motDePasse} onChangeText={v => setSTForm(f => ({ ...f, motDePasse: v }))} placeholder={t.equipe.st1234Ph} placeholderTextColor="#959593" secureTextEntry={!showSTMdp} autoCapitalize="none" autoCorrect={false} />
                 <Pressable style={styles.mdpToggle} onPress={() => setShowSTMdp(v => !v)}>
                   <Ico e={showSTMdp ? '🙈' : '👁'} size={18} />
                 </Pressable>
@@ -2040,7 +2040,7 @@ export default function EquipeScreen() {
                             <View style={stStyles.financeRow}>
                               <View style={stStyles.financeCell}>
                                 <Text style={stStyles.financeCellLabel}>{t.equipe.agreedPrice}</Text>
-                                <Text style={[stStyles.financeCellValue, { color: '#5C1F2E' }]}>{fmtST(devis.prixConvenu)}</Text>
+                                <Text style={[stStyles.financeCellValue, { color: '#141414' }]}>{fmtST(devis.prixConvenu)}</Text>
                               </View>
                               <View style={stStyles.financeCell}>
                                 <Text style={stStyles.financeCellLabel}>{t.equipe.acomptesLabel}</Text>
@@ -2251,9 +2251,9 @@ export default function EquipeScreen() {
                 </View>
               </ScrollView>
               <Text style={[stStyles.fieldLabel, { marginTop: 14 }]}>{t.equipe.devisObject}</Text>
-              <TextInput style={stStyles.input} value={devisForm.objet} onChangeText={v => setDevisForm(f => ({ ...f, objet: v }))} placeholder={t.equipe.devisObjectPh} placeholderTextColor="#9A8C80" />
+              <TextInput style={stStyles.input} value={devisForm.objet} onChangeText={v => setDevisForm(f => ({ ...f, objet: v }))} placeholder={t.equipe.devisObjectPh} placeholderTextColor="#959593" />
               <Text style={[stStyles.fieldLabel, { marginTop: 14 }]}>{t.equipe.agreedPriceReq}</Text>
-              <TextInput style={stStyles.input} value={devisForm.prixConvenu} onChangeText={v => setDevisForm(f => ({ ...f, prixConvenu: v }))} placeholder={t.equipe.agreedPricePh} placeholderTextColor="#9A8C80" keyboardType="decimal-pad" />
+              <TextInput style={stStyles.input} value={devisForm.prixConvenu} onChangeText={v => setDevisForm(f => ({ ...f, prixConvenu: v }))} placeholder={t.equipe.agreedPricePh} placeholderTextColor="#959593" keyboardType="decimal-pad" />
             </ScrollView>
             <Pressable style={[stStyles.saveBtn, (!devisForm.chantierId || !devisForm.prixConvenu) && stStyles.saveBtnDisabled]} onPress={handleSaveDevis} disabled={!devisForm.chantierId || !devisForm.prixConvenu}>
               <Text style={stStyles.saveBtnText}>{editDevisId ? t.common.save : 'Créer le devis'}</Text>
@@ -2273,9 +2273,9 @@ export default function EquipeScreen() {
             </View>
             <DatePicker label="Date" value={acompteForm.date} onChange={v => setAcompteForm(f => ({ ...f, date: v }))} />
             <Text style={[stStyles.fieldLabel, { marginTop: 12 }]}>{t.equipe.amountReq}</Text>
-            <TextInput style={stStyles.input} value={acompteForm.montant} onChangeText={v => setAcompteForm(f => ({ ...f, montant: v }))} placeholder={t.equipe.amountPh} placeholderTextColor="#9A8C80" keyboardType="decimal-pad" />
+            <TextInput style={stStyles.input} value={acompteForm.montant} onChangeText={v => setAcompteForm(f => ({ ...f, montant: v }))} placeholder={t.equipe.amountPh} placeholderTextColor="#959593" keyboardType="decimal-pad" />
             <Text style={[stStyles.fieldLabel, { marginTop: 12 }]}>{t.common.comment}</Text>
-            <TextInput style={stStyles.input} value={acompteForm.commentaire} onChangeText={v => setAcompteForm(f => ({ ...f, commentaire: v }))} placeholder={t.equipe.acompteCommentPh} placeholderTextColor="#9A8C80" />
+            <TextInput style={stStyles.input} value={acompteForm.commentaire} onChangeText={v => setAcompteForm(f => ({ ...f, commentaire: v }))} placeholder={t.equipe.acompteCommentPh} placeholderTextColor="#959593" />
             <Pressable style={[stStyles.saveBtn, !acompteForm.montant && stStyles.saveBtnDisabled]} onPress={handleSaveAcompte} disabled={!acompteForm.montant}>
               <Text style={stStyles.saveBtnText}>{t.common.save}</Text>
             </Pressable>
@@ -2293,7 +2293,7 @@ export default function EquipeScreen() {
               <Pressable onPress={() => setShowDocLibreModal(false)}><Text style={stStyles.closeX}>✕</Text></Pressable>
             </View>
             <Text style={stStyles.fieldLabel}>{t.equipe.labelReq}</Text>
-            <TextInput style={stStyles.input} value={docLibelle} onChangeText={setDocLibelle} placeholder={t.equipe.labelPh} placeholderTextColor="#9A8C80" />
+            <TextInput style={stStyles.input} value={docLibelle} onChangeText={setDocLibelle} placeholder={t.equipe.labelPh} placeholderTextColor="#959593" />
             <Pressable style={stStyles.uploadBtn} onPress={handlePickDocLibre}>
               <Text style={stStyles.uploadBtnText}>{docFichier ? '✅ Fichier sélectionné' : 'Choisir un fichier'}</Text>
             </Pressable>
@@ -2358,7 +2358,7 @@ export default function EquipeScreen() {
               return (
                 <ScrollView showsVerticalScrollIndicator={false}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 16 }}>
-                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: emp.couleur || '#5C1F2E', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
+                    <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: emp.couleur || '#141414', overflow: 'hidden', alignItems: 'center', justifyContent: 'center' }}>
                       {emp.photoProfil ? (
                         <Image source={{ uri: emp.photoProfil }} style={{ width: 44, height: 44 }} />
                       ) : (
@@ -2366,8 +2366,8 @@ export default function EquipeScreen() {
                       )}
                     </View>
                     <View>
-                      <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14' }}>{emp.prenom} {emp.nom}</Text>
-                      <Text style={{ fontSize: 12, color: '#6E5F54' }}>{chantiersAvecDates.length} chantier{chantiersAvecDates.length > 1 ? 's' : ''}</Text>
+                      <Text style={{ fontSize: 16, fontWeight: '700', color: '#141414' }}>{emp.prenom} {emp.nom}</Text>
+                      <Text style={{ fontSize: 12, color: '#6A6A68' }}>{chantiersAvecDates.length} chantier{chantiersAvecDates.length > 1 ? 's' : ''}</Text>
                     </View>
                   </View>
 
@@ -2376,9 +2376,9 @@ export default function EquipeScreen() {
                     const totalH = Math.floor(totalMin / 60);
                     const totalM = totalMin % 60;
                     return (
-                      <View key={chantier?.id || dateDebut} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderLeftWidth: 4, borderLeftColor: chantier?.couleur || '#9A8C80' }}>
+                      <View key={chantier?.id || dateDebut} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderLeftWidth: 4, borderLeftColor: chantier?.couleur || '#959593' }}>
                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14', flex: 1 }} numberOfLines={1}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#141414', flex: 1 }} numberOfLines={1}>
                             {chantier?.nom || 'Chantier supprimé'}
                           </Text>
                           {isActif && (
@@ -2392,13 +2392,13 @@ export default function EquipeScreen() {
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 13, color: '#6E5F54', marginTop: 4 }}>
+                        <Text style={{ fontSize: 13, color: '#6A6A68', marginTop: 4 }}>
                           Du {new Date(dateDebut + 'T12:00:00').toLocaleDateString('fr-FR')} au {new Date(dateFin + 'T12:00:00').toLocaleDateString('fr-FR')}
                         </Text>
                         <View style={{ flexDirection: 'row', gap: 16, marginTop: 6 }}>
-                          <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{nbJours} affectation{nbJours > 1 ? 's' : ''}</Text>
+                          <Text style={{ fontSize: 13, color: '#141414', fontWeight: '600' }}>{nbJours} affectation{nbJours > 1 ? 's' : ''}</Text>
                           {totalMin > 0 && (
-                            <Text style={{ fontSize: 13, color: '#5C1F2E', fontWeight: '600' }}>{totalH}h{String(totalM).padStart(2, '0')} pointées</Text>
+                            <Text style={{ fontSize: 13, color: '#141414', fontWeight: '600' }}>{totalH}h{String(totalM).padStart(2, '0')} pointées</Text>
                           )}
                         </View>
                       </View>
@@ -2406,7 +2406,7 @@ export default function EquipeScreen() {
                   })}
 
                   {chantiersAvecDates.length === 0 && (
-                    <Text style={{ textAlign: 'center', color: '#6E5F54', marginTop: 20 }}>{t.equipe.noChantierHistory}</Text>
+                    <Text style={{ textAlign: 'center', color: '#6A6A68', marginTop: 20 }}>{t.equipe.noChantierHistory}</Text>
                   )}
                 </ScrollView>
               );
@@ -2419,33 +2419,33 @@ export default function EquipeScreen() {
       <ModalKeyboard visible={showNewMetier} transparent animationType="fade" onRequestClose={() => setShowNewMetier(false)}>
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', alignItems: 'center', padding: 20 }}>
           <View style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, width: '100%', maxWidth: 400 }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#2B1D14', marginBottom: 16 }}>{t.equipe.newMetier}</Text>
+            <Text style={{ fontSize: 16, fontWeight: '800', color: '#141414', marginBottom: 16 }}>{t.equipe.newMetier}</Text>
             <TextInput
-              style={{ borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 10, padding: 12, fontSize: 14, marginBottom: 12 }}
+              style={{ borderWidth: 1, borderColor: '#E2E2DF', borderRadius: 10, padding: 12, fontSize: 14, marginBottom: 12 }}
               placeholder={t.equipe.newMetierPh}
-              placeholderTextColor="#9A8C80"
+              placeholderTextColor="#959593"
               value={newMetierLabel}
               onChangeText={setNewMetierLabel}
               autoFocus
             />
-            <Text style={{ fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 8 }}>{t.common.color}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '600', color: '#6A6A68', marginBottom: 8 }}>{t.common.color}</Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
               {METIER_PERSO_COLORS.map(c => (
                 <Pressable key={c}
-                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c, borderWidth: newMetierColor === c ? 3 : 0, borderColor: '#2B1D14' }}
+                  style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: c, borderWidth: newMetierColor === c ? 3 : 0, borderColor: '#141414' }}
                   onPress={() => setNewMetierColor(c)}
                 />
               ))}
             </View>
             <View style={{ flexDirection: 'row', gap: 10 }}>
-              <Pressable style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: '#FAF5EF', alignItems: 'center' }} onPress={() => setShowNewMetier(false)}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: '#6E5F54' }}>{t.common.cancel}</Text>
+              <Pressable style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: '#F4F4F2', alignItems: 'center' }} onPress={() => setShowNewMetier(false)}>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: '#6A6A68' }}>{t.common.cancel}</Text>
               </Pressable>
               <Pressable
-                style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: newMetierLabel.trim() ? '#5C1F2E' : '#EDE2D6', alignItems: 'center' }}
+                style={{ flex: 1, padding: 12, borderRadius: 10, backgroundColor: newMetierLabel.trim() ? '#141414' : '#E2E2DF', alignItems: 'center' }}
                 onPress={handleAddMetier}
                 disabled={!newMetierLabel.trim()}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: newMetierLabel.trim() ? '#fff' : '#9A8C80' }}>{t.common.create}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: newMetierLabel.trim() ? '#fff' : '#959593' }}>{t.common.create}</Text>
               </Pressable>
             </View>
           </View>
@@ -2457,9 +2457,9 @@ export default function EquipeScreen() {
         <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '80%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{t.equipe.dispo}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>{t.equipe.dispo}</Text>
               <Pressable onPress={() => setShowDispo(false)}>
-                <Text style={{ fontSize: 20, color: '#6E5F54' }}>✕</Text>
+                <Text style={{ fontSize: 20, color: '#6A6A68' }}>✕</Text>
               </Pressable>
             </View>
 
@@ -2468,18 +2468,18 @@ export default function EquipeScreen() {
               <Pressable onPress={() => {
                 const d = new Date(dispoDate); d.setDate(d.getDate() - 1);
                 setDispoDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-              }} style={{ padding: 8, backgroundColor: '#F1E7DC', borderRadius: 8 }}>
+              }} style={{ padding: 8, backgroundColor: '#EBEBE8', borderRadius: 8 }}>
                 <Text style={{ fontSize: 16 }}>◀</Text>
               </Pressable>
               <View style={{ flex: 1, alignItems: 'center' }}>
-                <Text style={{ fontSize: 15, fontWeight: '700', color: '#2B1D14' }}>
+                <Text style={{ fontSize: 15, fontWeight: '700', color: '#141414' }}>
                   {new Date(dispoDate + 'T12:00:00').toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' })}
                 </Text>
               </View>
               <Pressable onPress={() => {
                 const d = new Date(dispoDate); d.setDate(d.getDate() + 1);
                 setDispoDate(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`);
-              }} style={{ padding: 8, backgroundColor: '#F1E7DC', borderRadius: 8 }}>
+              }} style={{ padding: 8, backgroundColor: '#EBEBE8', borderRadius: 8 }}>
                 <Text style={{ fontSize: 16 }}>▶</Text>
               </Pressable>
             </View>
@@ -2505,7 +2505,7 @@ export default function EquipeScreen() {
               <Text style={{ fontSize: 14, fontWeight: '700', color: '#2E7D32', marginBottom: 8 }}>Libres ({disponibilite.libres.length})
               </Text>
               {disponibilite.libres.length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 16 }}>{t.equipe.noFreeToday}</Text>
+                <Text style={{ fontSize: 12, color: '#6A6A68', marginBottom: 16 }}>{t.equipe.noFreeToday}</Text>
               ) : (
                 <View style={{ gap: 4, marginBottom: 16 }}>
                   {disponibilite.libres.map(emp => {
@@ -2513,9 +2513,9 @@ export default function EquipeScreen() {
                     return (
                       <View key={emp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: '#F0FFF4', borderRadius: 8 }}>
                         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: mc.color }} />
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', flex: 1 }}>{emp.prenom} {(emp.nom || '').toUpperCase()}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414', flex: 1 }}>{emp.prenom} {(emp.nom || '').toUpperCase()}</Text>
                         <Text style={{ fontSize: 13, color: mc.color, fontWeight: '600' }}>{metierLabel(emp.metier)}</Text>
-                        {emp.telephone ? <Text style={{ fontSize: 12.5, color: '#6E5F54' }}>{emp.telephone}</Text> : null}
+                        {emp.telephone ? <Text style={{ fontSize: 12.5, color: '#6A6A68' }}>{emp.telephone}</Text> : null}
                       </View>
                     );
                   })}
@@ -2526,7 +2526,7 @@ export default function EquipeScreen() {
               <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C', marginBottom: 8 }}>Occupés ({disponibilite.occupes.length})
               </Text>
               {disponibilite.occupes.length === 0 ? (
-                <Text style={{ fontSize: 12, color: '#6E5F54' }}>{t.equipe.noBusyToday}</Text>
+                <Text style={{ fontSize: 12, color: '#6A6A68' }}>{t.equipe.noBusyToday}</Text>
               ) : (
                 <View style={{ gap: 4 }}>
                   {disponibilite.occupes.map(emp => {
@@ -2536,7 +2536,7 @@ export default function EquipeScreen() {
                     return (
                       <View key={emp.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 10, backgroundColor: '#FFF5F5', borderRadius: 8 }}>
                         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: mc.color }} />
-                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14', flex: 1 }}>{emp.prenom} {(emp.nom || '').toUpperCase()}</Text>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414', flex: 1 }}>{emp.prenom} {(emp.nom || '').toUpperCase()}</Text>
                         {chantier && <Text style={{ fontSize: 13, color: chantier.couleur, fontWeight: '600' }}>{chantier.nom}</Text>}
                       </View>
                     );
@@ -2553,111 +2553,111 @@ export default function EquipeScreen() {
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-  headerTitle: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
-  addBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 },
+  headerTitle: { fontFamily: 'Manrope_500Medium', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#141414' },
+  addBtn: { backgroundColor: '#141414', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 999 },
   addBtnText: { color: '#fff', fontWeight: '600', fontSize: 14.5 },
   tabRow: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, gap: 8 },
-  tabBtn: { flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F1E7DC' },
-  tabBtnActive: { backgroundColor: '#5C1F2E' },
-  tabBtnText: { fontSize: 13.5, fontWeight: '500', color: '#2B1D14' },
+  tabBtn: { flex: 1, height: 36, borderRadius: 999, alignItems: 'center', justifyContent: 'center', backgroundColor: '#EBEBE8' },
+  tabBtnActive: { backgroundColor: '#141414' },
+  tabBtnText: { fontSize: 13.5, fontWeight: '500', color: '#141414' },
   tabBtnTextActive: { color: '#fff' },
-  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
-  searchInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#2B1D14' },
+  searchBar: { flexDirection: 'row', alignItems: 'center', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#141414', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  searchInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#141414' },
   searchClear: { paddingHorizontal: 12, paddingVertical: 10 },
   filterScroll: { height: 44, minHeight: 44, flexShrink: 0, marginBottom: 8 },
   filterContent: { paddingHorizontal: 16, gap: 6, alignItems: 'center', height: 44 },
-  filterChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 32, borderRadius: 999, backgroundColor: '#FFFFFF', gap: 6, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1 },
-  filterChipActive: { backgroundColor: '#5C1F2E' },
-  filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14' },
+  filterChip: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, height: 32, borderRadius: 999, backgroundColor: '#FFFFFF', gap: 6, shadowColor: '#141414', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3, elevation: 1 },
+  filterChipActive: { backgroundColor: '#141414' },
+  filterChipText: { fontSize: 13, fontWeight: '500', color: '#141414' },
   filterChipTextActive: { color: '#fff' },
   filterDot: { width: 7, height: 7, borderRadius: 4 },
   list: { paddingHorizontal: 16, paddingBottom: 110, gap: 12 },
-  card: { backgroundColor: '#fff', borderRadius: 24, padding: 16, gap: 10, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  card: { backgroundColor: '#fff', borderRadius: 24, padding: 16, gap: 10, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   avatar: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
   avatarText: { color: '#fff', fontWeight: '700', fontSize: 17 },
-  cardName: { fontSize: 16.5, fontWeight: '600', color: '#2B1D14', flexShrink: 1 },
+  cardName: { fontSize: 16.5, fontWeight: '600', color: '#141414', flexShrink: 1 },
   metierBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 999 },
   metierDot: { width: 6, height: 6, borderRadius: 3 },
   metierText: { fontSize: 12.5, fontWeight: '600' },
-  chantierCount: { fontSize: 13, color: '#6E5F54' },
-  contactInfo: { fontSize: 13, color: '#6E5F54' },
+  chantierCount: { fontSize: 13, color: '#6A6A68' },
+  contactInfo: { fontSize: 13, color: '#6A6A68' },
   salaireInfo: { fontSize: 13, color: '#2E7D32', fontWeight: '600' },
   badgesRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 4 },
-  badge: { backgroundColor: '#F2E4E1', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
-  badgeText: { fontSize: 12, fontWeight: '600', color: '#5C1F2E' },
-  cardBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6', paddingTop: 10 },
-  credentialBtn: { backgroundColor: '#F1E7DC', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
-  credentialBtnText: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
-  actionBtnRound: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' },
+  badge: { backgroundColor: '#EBEBE8', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3 },
+  badgeText: { fontSize: 12, fontWeight: '600', color: '#141414' },
+  cardBottomRow: { flexDirection: 'row', alignItems: 'center', gap: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E2E2DF', paddingTop: 10 },
+  credentialBtn: { backgroundColor: '#EBEBE8', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  credentialBtnText: { fontSize: 13, fontWeight: '600', color: '#141414' },
+  actionBtnRound: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' },
   emptyState: { padding: 40, alignItems: 'center' },
-  emptyText: { fontSize: 15, color: '#6E5F54' },
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
+  emptyText: { fontSize: 15, color: '#6A6A68' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(20,20,20,0.45)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
-  modalHandle: { width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  modalHandle: { width: 40, height: 4, backgroundColor: '#E2E2DF', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
-  modalTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' },
-  modalClose: { fontSize: 18, color: '#6E5F54', padding: 4 },
+  modalTitle: { fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' },
+  modalClose: { fontSize: 18, color: '#6A6A68', padding: 4 },
   nameRow: { flexDirection: 'row' },
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
-  fieldHint: { fontSize: 12.5, color: '#9A8C80', marginTop: 4 },
-  input: { backgroundColor: '#FAF5EF', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15.5, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6A6A68', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
+  fieldHint: { fontSize: 12.5, color: '#959593', marginTop: 4 },
+  input: { backgroundColor: '#F4F4F2', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15.5, color: '#141414', borderWidth: 1, borderColor: '#E2E2DF' },
   mdpRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  mdpToggle: { backgroundColor: '#F1E7DC', borderRadius: 14, padding: 13 },
+  mdpToggle: { backgroundColor: '#EBEBE8', borderRadius: 14, padding: 13 },
   mdpToggleText: { fontSize: 18 },
   metierGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  metierOption: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC', gap: 7 },
+  metierOption: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 14, paddingVertical: 10, borderRadius: 999, borderWidth: 1.5, borderColor: '#E2E2DF', backgroundColor: '#EBEBE8', gap: 7 },
   metierOptionDot: { width: 8, height: 8, borderRadius: 4 },
-  metierOptionText: { fontSize: 13.5, fontWeight: '500', color: '#2B1D14' },
+  metierOptionText: { fontSize: 13.5, fontWeight: '500', color: '#141414' },
   colorRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 4 },
   colorSwatch: { width: 30, height: 30, borderRadius: 15, borderWidth: 2, borderColor: 'transparent' },
-  colorSwatchActive: { borderColor: '#2B1D14', transform: [{ scale: 1.2 }] },
+  colorSwatchActive: { borderColor: '#141414', transform: [{ scale: 1.2 }] },
   roleRow: { flexDirection: 'row', gap: 10 },
-  roleChip: { flex: 1, paddingVertical: 13, borderRadius: 999, borderWidth: 1.5, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' },
-  roleChipActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
-  roleChipText: { fontSize: 14, fontWeight: '600', color: '#6E5F54' },
+  roleChip: { flex: 1, paddingVertical: 13, borderRadius: 999, borderWidth: 1.5, borderColor: '#E2E2DF', alignItems: 'center', backgroundColor: '#F4F4F2' },
+  roleChipActive: { borderColor: '#141414', backgroundColor: '#141414' },
+  roleChipText: { fontSize: 14, fontWeight: '600', color: '#6A6A68' },
   roleChipTextActive: { color: '#fff' },
-  acheteurRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#F2E4E1', borderRadius: 16, gap: 12 },
-  horairesToggle: { marginTop: 20, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#F2E4E1', borderRadius: 16 },
-  horairesToggleText: { fontSize: 14, fontWeight: '700', color: '#5C1F2E' },
-  horairesToggleHint: { fontSize: 12.5, color: '#6E5F54', marginTop: 2 },
+  acheteurRow: { flexDirection: 'row', alignItems: 'center', marginTop: 16, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#EBEBE8', borderRadius: 16, gap: 12 },
+  horairesToggle: { marginTop: 20, paddingVertical: 14, paddingHorizontal: 16, backgroundColor: '#EBEBE8', borderRadius: 16 },
+  horairesToggleText: { fontSize: 14, fontWeight: '700', color: '#141414' },
+  horairesToggleHint: { fontSize: 12.5, color: '#6A6A68', marginTop: 2 },
   horairesGrid: { marginTop: 10, gap: 8 },
-  horaireRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 9, gap: 10 },
+  horaireRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F4F4F2', borderRadius: 14, paddingHorizontal: 12, paddingVertical: 9, gap: 10 },
   horaireJourWrap: { flexDirection: 'row', alignItems: 'center', gap: 6, width: 72 },
-  horaireJour: { fontSize: 13, fontWeight: '700', color: '#2B1D14', width: 30 },
-  horaireJourOff: { color: '#9A8C80' },
+  horaireJour: { fontSize: 13, fontWeight: '700', color: '#141414', width: 30 },
+  horaireJourOff: { color: '#959593' },
   horaireHeures: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6 },
-  horaireInput: { flex: 1, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6', textAlign: 'center' },
-  horaireArrow: { fontSize: 14, color: '#6E5F54' },
-  horaireRepos: { flex: 1, fontSize: 13, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center' },
-  saveBtn: { marginTop: 20, backgroundColor: '#5C1F2E', paddingVertical: 15, borderRadius: 999, alignItems: 'center' },
-  saveBtnDisabled: { backgroundColor: '#9A8C80' },
+  horaireInput: { flex: 1, backgroundColor: '#fff', borderRadius: 12, paddingHorizontal: 10, paddingVertical: 8, fontSize: 14, color: '#141414', borderWidth: 1, borderColor: '#E2E2DF', textAlign: 'center' },
+  horaireArrow: { fontSize: 14, color: '#6A6A68' },
+  horaireRepos: { flex: 1, fontSize: 13, color: '#959593', fontStyle: 'italic', textAlign: 'center' },
+  saveBtn: { marginTop: 20, backgroundColor: '#141414', paddingVertical: 15, borderRadius: 999, alignItems: 'center' },
+  saveBtnDisabled: { backgroundColor: '#959593' },
   saveBtnText: { color: '#fff', fontWeight: '600', fontSize: 16 },
   // Apporteurs
   apporteurBadge: { paddingHorizontal: 10, paddingVertical: 3, borderRadius: 999 },
   apporteurBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff', textTransform: 'uppercase', letterSpacing: 0.3 },
-  apporteurChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
-  apporteurChipActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
-  apporteurChipText: { fontSize: 13, fontWeight: '500', color: '#6E5F54' },
+  apporteurChip: { paddingHorizontal: 14, paddingVertical: 9, borderRadius: 999, borderWidth: 1.5, borderColor: '#E2E2DF', backgroundColor: '#EBEBE8' },
+  apporteurChipActive: { borderColor: '#141414', backgroundColor: '#141414' },
+  apporteurChipText: { fontSize: 13, fontWeight: '500', color: '#6A6A68' },
   apporteurChipTextActive: { color: '#fff' },
-  commissionRecap: { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 12, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
-  commissionRecapTitle: { fontSize: 13, fontWeight: '600', color: '#6E5F54', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
-  commissionRecapRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6' },
-  commissionRecapName: { fontSize: 14, color: '#2B1D14', fontWeight: '500' },
-  commissionRecapAmount: { fontSize: 14.5, fontWeight: '700', color: '#5C1F2E' },
+  commissionRecap: { backgroundColor: '#fff', borderRadius: 20, padding: 16, marginBottom: 12, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  commissionRecapTitle: { fontSize: 13, fontWeight: '600', color: '#6A6A68', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.4 },
+  commissionRecapRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 8, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E2E2DF' },
+  commissionRecapName: { fontSize: 14, color: '#141414', fontWeight: '500' },
+  commissionRecapAmount: { fontSize: 14.5, fontWeight: '700', color: '#141414' },
   commissionRecapEmpty: { fontSize: 13.5, color: '#2E7D32', fontWeight: '600', paddingVertical: 4 },
 });
 
 const docStyles = StyleSheet.create({
-  typeSection: { marginBottom: 16, backgroundColor: '#FAF5EF', borderRadius: 18, padding: 14 },
+  typeSection: { marginBottom: 16, backgroundColor: '#F4F4F2', borderRadius: 18, padding: 14 },
   typeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  typeLabel: { fontSize: 14, fontWeight: '700', color: '#5C1F2E', flex: 1 },
-  uploadBtn: { backgroundColor: '#5C1F2E', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
+  typeLabel: { fontSize: 14, fontWeight: '700', color: '#141414', flex: 1 },
+  uploadBtn: { backgroundColor: '#141414', borderRadius: 999, paddingHorizontal: 14, paddingVertical: 7 },
   uploadBtnText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  emptyDoc: { fontSize: 13, color: '#9A8C80', paddingLeft: 4 },
-  docRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#EDE2D6' },
+  emptyDoc: { fontSize: 13, color: '#959593', paddingLeft: 4 },
+  docRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 14, padding: 12, marginTop: 8, borderWidth: 1, borderColor: '#E2E2DF' },
   docName: { flex: 1 },
-  docNameText: { fontSize: 14.5, fontWeight: '500', color: '#2B1D14' },
-  docDate: { fontSize: 12.5, color: '#6E5F54', marginTop: 2 },
+  docNameText: { fontSize: 14.5, fontWeight: '500', color: '#141414' },
+  docDate: { fontSize: 12.5, color: '#6A6A68', marginTop: 2 },
   docDelete: { padding: 6 },
   docDeleteText: { fontSize: 16 },
 });
@@ -2667,78 +2667,78 @@ const stStyles = StyleSheet.create({
   // Boutons 3-actions carte ST
   actionButtonsRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
   actionButton: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, paddingVertical: 10, paddingHorizontal: 8, borderRadius: 999 },
-  actionButtonEdit: { backgroundColor: '#F1E7DC' },
+  actionButtonEdit: { backgroundColor: '#EBEBE8' },
   actionButtonMoney: { backgroundColor: '#FEF3C7' },
   actionButtonDocs: { backgroundColor: '#FEE2E2' },
   actionButtonDocsOk: { backgroundColor: '#E6F0E7' },
   actionButtonIcon: { fontSize: 14 },
-  actionButtonLabel: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
+  actionButtonLabel: { fontSize: 13, fontWeight: '600', color: '#141414' },
   // Modals communs
-  overlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
+  overlay: { flex: 1, backgroundColor: 'rgba(20,20,20,0.45)', justifyContent: 'flex-end' },
   sheet: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '92%' },
   sheetSmall: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: Platform.OS === 'ios' ? 36 : 20, maxHeight: '70%' },
-  handle: { width: 40, height: 4, backgroundColor: '#EDE2D6', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
+  handle: { width: 40, height: 4, backgroundColor: '#E2E2DF', borderRadius: 2, alignSelf: 'center', marginBottom: 16 },
   sheetHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  sheetTitle: { fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', flex: 1, marginRight: 8 },
-  closeX: { fontSize: 18, color: '#6E5F54', padding: 4 },
-  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
-  input: { backgroundColor: '#FAF5EF', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15.5, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' },
+  sheetTitle: { fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414', flex: 1, marginRight: 8 },
+  closeX: { fontSize: 18, color: '#6A6A68', padding: 4 },
+  fieldLabel: { fontSize: 12, fontWeight: '600', color: '#6A6A68', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.4 },
+  input: { backgroundColor: '#F4F4F2', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15.5, color: '#141414', borderWidth: 1, borderColor: '#E2E2DF' },
   // Documents légaux — checklist
-  docsHelper: { fontSize: 12, fontWeight: '600', color: '#6E5F54', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.3 },
-  docTypeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#F1E7DC' },
-  docTypeLabel: { fontSize: 14, fontWeight: '600', color: '#2B1D14' },
+  docsHelper: { fontSize: 12, fontWeight: '600', color: '#6A6A68', marginBottom: 10, textTransform: 'uppercase', letterSpacing: 0.3 },
+  docTypeRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 10, borderTopWidth: 1, borderTopColor: '#EBEBE8' },
+  docTypeLabel: { fontSize: 14, fontWeight: '600', color: '#141414' },
   docTypeStatus: { fontSize: 12, fontWeight: '600', marginTop: 2 },
-  docMiniBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#F1E7DC' },
-  docMiniBtnUpload: { backgroundColor: '#5C1F2E' },
+  docMiniBtn: { paddingHorizontal: 12, paddingVertical: 7, borderRadius: 999, backgroundColor: '#EBEBE8' },
+  docMiniBtnUpload: { backgroundColor: '#141414' },
   docMiniBtnDanger: { backgroundColor: '#FEE2E2' },
-  docMiniBtnText: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
-  addOtherDocBtn: { marginTop: 16, backgroundColor: '#5C1F2E', paddingVertical: 14, borderRadius: 999, alignItems: 'center' },
+  docMiniBtnText: { fontSize: 13, fontWeight: '600', color: '#141414' },
+  addOtherDocBtn: { marginTop: 16, backgroundColor: '#141414', paddingVertical: 14, borderRadius: 999, alignItems: 'center' },
   addOtherDocBtnText: { color: '#fff', fontWeight: '700', fontSize: 14 },
   // Finances
-  newBtn: { backgroundColor: '#5C1F2E', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
+  newBtn: { backgroundColor: '#141414', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 999 },
   newBtnText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   financeHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  financeTitle: { fontSize: 16, fontWeight: '700', color: '#2B1D14' },
+  financeTitle: { fontSize: 16, fontWeight: '700', color: '#141414' },
   emptyState: { padding: 24, alignItems: 'center' },
-  emptyText: { fontSize: 14, color: '#6E5F54', fontWeight: '500' },
-  emptyHint: { fontSize: 12, color: '#9A8C80', marginTop: 4 },
-  emptySmall: { fontSize: 13, color: '#9A8C80', paddingVertical: 8 },
-  marcheCard: { backgroundColor: '#fff', borderRadius: 24, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#EDE2D6' },
+  emptyText: { fontSize: 14, color: '#6A6A68', fontWeight: '500' },
+  emptyHint: { fontSize: 12, color: '#959593', marginTop: 4 },
+  emptySmall: { fontSize: 13, color: '#959593', paddingVertical: 8 },
+  marcheCard: { backgroundColor: '#fff', borderRadius: 24, padding: 16, marginBottom: 12, borderWidth: 1, borderColor: '#E2E2DF' },
   marcheCardHeader: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 },
-  marcheChantier: { fontSize: 15, fontWeight: '700', color: '#2B1D14' },
-  devisObjet: { fontSize: 13, fontWeight: '600', color: '#5C1F2E', marginTop: 2 },
+  marcheChantier: { fontSize: 15, fontWeight: '700', color: '#141414' },
+  devisObjet: { fontSize: 13, fontWeight: '600', color: '#141414', marginTop: 2 },
   cardActions: { flexDirection: 'row', gap: 4 },
   actionBtn: { padding: 6 },
-  actionEdit: { fontSize: 16, color: '#6E5F54' },
+  actionEdit: { fontSize: 16, color: '#6A6A68' },
   actionDelete: { fontSize: 16, color: '#E74C3C' },
   financeRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  financeCell: { flex: 1, backgroundColor: '#FAF5EF', borderRadius: 10, padding: 10, alignItems: 'center' },
-  financeCellLabel: { fontSize: 10, fontWeight: '600', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 4, textAlign: 'center' },
+  financeCell: { flex: 1, backgroundColor: '#F4F4F2', borderRadius: 10, padding: 10, alignItems: 'center' },
+  financeCellLabel: { fontSize: 10, fontWeight: '600', color: '#6A6A68', textTransform: 'uppercase', letterSpacing: 0.3, marginBottom: 4, textAlign: 'center' },
   financeCellValue: { fontSize: 14, fontWeight: '800' },
   devisRow: { flexDirection: 'row', gap: 8, marginBottom: 10 },
-  devisBtn: { flex: 1, backgroundColor: '#F2E4E1', paddingVertical: 8, borderRadius: 8, alignItems: 'center' },
+  devisBtn: { flex: 1, backgroundColor: '#EBEBE8', paddingVertical: 8, borderRadius: 8, alignItems: 'center' },
   devisBtnSigne: { backgroundColor: '#D4EDDA' },
   devisBtnUpload: { backgroundColor: '#FFF3CD' },
-  devisBtnText: { fontSize: 12, fontWeight: '600', color: '#5C1F2E' },
-  acomptesSection: { borderTopWidth: 1, borderTopColor: '#F1E7DC', paddingTop: 10 },
+  devisBtnText: { fontSize: 12, fontWeight: '600', color: '#141414' },
+  acomptesSection: { borderTopWidth: 1, borderTopColor: '#EBEBE8', paddingTop: 10 },
   acomptesSectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
-  acomptesSectionTitle: { fontSize: 13, fontWeight: '700', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.3 },
-  addAcompteBtn: { backgroundColor: '#F2E4E1', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
-  addAcompteBtnText: { fontSize: 12, fontWeight: '600', color: '#5C1F2E' },
-  acompteRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1E7DC' },
-  acompteMontant: { fontSize: 15, fontWeight: '700', color: '#2B1D14' },
-  acompteDate: { fontSize: 12, color: '#6E5F54', marginTop: 2 },
-  factureLink: { fontSize: 12, color: '#5C1F2E', fontWeight: '600', marginTop: 4 },
+  acomptesSectionTitle: { fontSize: 13, fontWeight: '700', color: '#6A6A68', textTransform: 'uppercase', letterSpacing: 0.3 },
+  addAcompteBtn: { backgroundColor: '#EBEBE8', paddingHorizontal: 10, paddingVertical: 5, borderRadius: 8 },
+  addAcompteBtnText: { fontSize: 12, fontWeight: '600', color: '#141414' },
+  acompteRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#EBEBE8' },
+  acompteMontant: { fontSize: 15, fontWeight: '700', color: '#141414' },
+  acompteDate: { fontSize: 12, color: '#6A6A68', marginTop: 2 },
+  factureLink: { fontSize: 12, color: '#141414', fontWeight: '600', marginTop: 4 },
   factureUpload: { fontSize: 12, color: '#E67E22', fontWeight: '600', marginTop: 4 },
   // Chips & buttons
   chipRow: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' },
-  chipActive: { borderColor: '#5C1F2E', backgroundColor: '#5C1F2E' },
-  chipText: { fontSize: 13, fontWeight: '500', color: '#6E5F54' },
+  chip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: '#E2E2DF', backgroundColor: '#EBEBE8' },
+  chipActive: { borderColor: '#141414', backgroundColor: '#141414' },
+  chipText: { fontSize: 13, fontWeight: '500', color: '#6A6A68' },
   chipTextActive: { color: '#fff' },
-  saveBtn: { marginTop: 16, backgroundColor: '#5C1F2E', paddingVertical: 15, borderRadius: 999, alignItems: 'center' },
-  saveBtnDisabled: { backgroundColor: '#9A8C80' },
+  saveBtn: { marginTop: 16, backgroundColor: '#141414', paddingVertical: 15, borderRadius: 999, alignItems: 'center' },
+  saveBtnDisabled: { backgroundColor: '#959593' },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  uploadBtn: { backgroundColor: '#F2E4E1', paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, borderColor: '#5C1F2E', borderStyle: 'dashed', marginTop: 10 },
-  uploadBtnText: { color: '#5C1F2E', fontWeight: '600', fontSize: 14 },
+  uploadBtn: { backgroundColor: '#EBEBE8', paddingVertical: 14, borderRadius: 12, alignItems: 'center', borderWidth: 1.5, borderColor: '#141414', borderStyle: 'dashed', marginTop: 10 },
+  uploadBtnText: { color: '#141414', fontWeight: '600', fontSize: 14 },
 });

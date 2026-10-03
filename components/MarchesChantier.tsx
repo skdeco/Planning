@@ -668,67 +668,67 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
         <Pressable style={{ height: '10%' }} onPress={onClose} />
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, height: '90%' }}>
           {/* Header */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E2DF' }}>
             <View>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>Marchés</Text>
-              <Text style={{ fontSize: 12, color: '#6E5F54' }}>{chantier?.nom}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>Marchés</Text>
+              <Text style={{ fontSize: 12, color: '#6A6A68' }}>{chantier?.nom}</Text>
             </View>
-            <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '700' }}>✕</Text>
+            <Pressable onPress={onClose} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 14, color: '#6A6A68', fontWeight: '700' }}>✕</Text>
             </Pressable>
           </View>
 
           <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40 }}>
             {/* Récap */}
-            <View style={{ flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#FAF5EF' }}>
-              <View style={{ flex: 1, backgroundColor: '#F2E4E1', borderRadius: 8, padding: 10 }}>
-                <Text style={{ fontSize: 10, color: '#6E5F54', fontWeight: '600' }}>TOTAL DÛ TTC</Text>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: '#5C1F2E' }}>{fmt(totalDu)} €</Text>
+            <View style={{ flexDirection: 'row', padding: 12, gap: 8, backgroundColor: '#F4F4F2' }}>
+              <View style={{ flex: 1, backgroundColor: '#EBEBE8', borderRadius: 8, padding: 10 }}>
+                <Text style={{ fontSize: 10, color: '#6A6A68', fontWeight: '600' }}>TOTAL DÛ TTC</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: '#141414' }}>{fmt(totalDu)} €</Text>
               </View>
               <View style={{ flex: 1, backgroundColor: '#D4EDDA', borderRadius: 8, padding: 10 }}>
                 <Text style={{ fontSize: 10, color: '#155724', fontWeight: '600' }}>REÇU</Text>
                 <Text style={{ fontSize: 16, fontWeight: '800', color: '#155724' }}>{fmt(totalRecu)} €</Text>
               </View>
-              <View style={{ flex: 1, backgroundColor: reste > 0 ? '#FEF2F2' : reste === 0 ? '#D4EDDA' : '#F2E4E1', borderRadius: 8, padding: 10 }}>
-                <Text style={{ fontSize: 10, color: '#6E5F54', fontWeight: '600' }}>{reste < 0 ? 'TROP-PERÇU' : 'RESTE'}</Text>
-                <Text style={{ fontSize: 16, fontWeight: '800', color: reste > 0 ? '#DC2626' : reste === 0 ? '#155724' : '#5C1F2E' }}>{reste === 0 ? 'Soldé ✓' : `${fmt(Math.abs(reste))} €`}</Text>
+              <View style={{ flex: 1, backgroundColor: reste > 0 ? '#FEF2F2' : reste === 0 ? '#D4EDDA' : '#EBEBE8', borderRadius: 8, padding: 10 }}>
+                <Text style={{ fontSize: 10, color: '#6A6A68', fontWeight: '600' }}>{reste < 0 ? 'TROP-PERÇU' : 'RESTE'}</Text>
+                <Text style={{ fontSize: 16, fontWeight: '800', color: reste > 0 ? '#DC2626' : reste === 0 ? '#155724' : '#141414' }}>{reste === 0 ? 'Soldé ✓' : `${fmt(Math.abs(reste))} €`}</Text>
               </View>
             </View>
 
             {/* ── MARCHÉS ── */}
             <View style={{ padding: 12 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E' }}>Marchés ({marches.length})</Text>
-              <Pressable style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }} onPress={openNewMarche}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#141414' }}>Marchés ({marches.length})</Text>
+              <Pressable style={{ backgroundColor: '#141414', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }} onPress={openNewMarche}>
                 <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ Marché</Text>
               </Pressable>
             </View>
             {marches.length === 0 && (
-              <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 12 }}>Aucun marché</Text>
+              <Text style={{ fontSize: 12, color: '#959593', fontStyle: 'italic', textAlign: 'center', paddingVertical: 12 }}>Aucun marché</Text>
             )}
             {marches.map(m => {
               const totalRecuM = m.paiements.reduce((s, p) => s + p.montant, 0);
               const resteM = m.montantTTC - totalRecuM;
               const isOpen = openMarcheId === m.id;
               return (
-                <View key={m.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#EDE2D6' }}>
+                <View key={m.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E2E2DF' }}>
                   <Pressable onPress={() => setOpenMarcheId(isOpen ? null : m.id)}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14' }}>{m.libelle}</Text>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#141414' }}>{m.libelle}</Text>
                           {m.devisInitialUri && !m.devisSigneUri && (
                             <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }}>
                               <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900', lineHeight: 14 }}>!</Text>
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 2 }}>{fmt(m.montantHT)} € HT · {fmt(m.montantTTC)} € TTC</Text>
+                        <Text style={{ fontSize: 11, color: '#6A6A68', marginTop: 2 }}>{fmt(m.montantHT)} € HT · {fmt(m.montantTTC)} € TTC</Text>
                         <Text style={{ fontSize: 11, color: resteM > 0 ? '#DC2626' : '#27AE60', fontWeight: '600', marginTop: 2 }}>
                           Reçu : {fmt(totalRecuM)} € · Reste : {fmt(resteM)} €
                         </Text>
                         {m.dateSignature && <Text style={{ fontSize: 10, color: '#27AE60', marginTop: 2 }}>Signé le {formatDateFR(m.dateSignature)}</Text>}
-                        {m.dateDebutTravaux && <Text style={{ fontSize: 10, color: '#6E5F54', marginTop: 2 }}>Démarrage des travaux : {formatDateFR(m.dateDebutTravaux)}</Text>}
+                        {m.dateDebutTravaux && <Text style={{ fontSize: 10, color: '#6A6A68', marginTop: 2 }}>Démarrage des travaux : {formatDateFR(m.dateDebutTravaux)}</Text>}
                         {m.commission && (() => {
                           const app = apporteurs.find(a => a.id === m.commission!.apporteurId);
                           const montantC = getCommissionAmount(m);
@@ -736,26 +736,26 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                             ? ` (${m.commission!.valeur}% ${m.commission!.baseCalcul || 'HT'})`
                             : '';
                           return (
-                            <View style={{ backgroundColor: '#F2E4E1', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginTop: 6, borderLeftWidth: 3, borderLeftColor: '#5C1F2E', alignSelf: 'flex-start' }}>
-                              <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '700' }}>{app ? `${app.prenom} ${app.nom}` : 'Apporteur'} — {fmt(montantC)} €{suffixe} — {m.commission!.statut === 'paye' ? 'Payé' : 'À payer'}
+                            <View style={{ backgroundColor: '#EBEBE8', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 4, marginTop: 6, borderLeftWidth: 3, borderLeftColor: '#141414', alignSelf: 'flex-start' }}>
+                              <Text style={{ fontSize: 10, color: '#141414', fontWeight: '700' }}>{app ? `${app.prenom} ${app.nom}` : 'Apporteur'} — {fmt(montantC)} €{suffixe} — {m.commission!.statut === 'paye' ? 'Payé' : 'À payer'}
                               </Text>
                             </View>
                           );
                         })()}
                       </View>
-                      <Text style={{ fontSize: 14, color: '#6E5F54' }}>{isOpen ? '▾' : '▸'}</Text>
+                      <Text style={{ fontSize: 14, color: '#6A6A68' }}>{isOpen ? '▾' : '▸'}</Text>
                     </View>
                   </Pressable>
 
                   {isOpen && (
-                    <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1E7DC' }}>
+                    <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#EBEBE8' }}>
                       {/* Documents */}
                       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8 }}>
                         {m.devisInitialUri ? (
-                          <View style={{ flex: 1, backgroundColor: '#F2E4E1', borderRadius: 6, position: 'relative' }}>
+                          <View style={{ flex: 1, backgroundColor: '#EBEBE8', borderRadius: 6, position: 'relative' }}>
                             <Pressable style={{ padding: 8, alignItems: 'center' }} onPress={() => openDoc(m.devisInitialUri)}>
-                              <FileText size={17} color="#5C1F2E" strokeWidth={2} />
-                              <Text style={{ fontSize: 9, color: '#5C1F2E', fontWeight: '600' }} numberOfLines={1}>Devis initial</Text>
+                              <FileText size={17} color="#141414" strokeWidth={2} />
+                              <Text style={{ fontSize: 9, color: '#141414', fontWeight: '600' }} numberOfLines={1}>Devis initial</Text>
                             </Pressable>
                             <Pressable
                               style={{ position: 'absolute', top: -4, right: -4, width: 22, height: 22, borderRadius: 11, backgroundColor: '#D94F4F', alignItems: 'center', justifyContent: 'center' }}
@@ -797,11 +797,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           <>
                             {/* V10 — Signer le devis dans l'app (apposer signature/date/mention sur PDF) */}
                             <Pressable
-                              style={{ flex: 1, backgroundColor: '#5C1F2E', borderRadius: 6, padding: 8, alignItems: 'center' }}
+                              style={{ flex: 1, backgroundColor: '#141414', borderRadius: 6, padding: 8, alignItems: 'center' }}
                               onPress={() => setSignerTarget({ type: 'marche', id: m.id, devisUri: m.devisInitialUri!, devisNom: m.devisInitialNom })}
                             >
-                              <PenLine size={17} color="#FAF5EF" strokeWidth={2} />
-                              <Text style={{ fontSize: 9, color: '#FAF5EF', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
+                              <PenLine size={17} color="#F4F4F2" strokeWidth={2} />
+                              <Text style={{ fontSize: 9, color: '#F4F4F2', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
                             </Pressable>
                             {/* Toujours laisser la possibilité d'uploader un devis signé externe (client chez lui) */}
                             <Pressable
@@ -862,7 +862,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
                       {/* Paiements */}
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54' }}>Acomptes ({m.paiements.length})</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '700', color: '#6A6A68' }}>Acomptes ({m.paiements.length})</Text>
                         <Pressable style={{ backgroundColor: '#27AE60', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => openPaiementForm('marche', m.id)}>
                           <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>+ Acompte</Text>
                         </Pressable>
@@ -871,21 +871,21 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         const modeLabel = MODES_PAIEMENT.find(x => x.value === p.mode)?.label || p.mode;
                         const hasCommission = !!m.commission && p.commissionMontant && p.commissionMontant > 0;
                         return (
-                          <View key={p.id} style={{ backgroundColor: '#FAF5EF', borderRadius: 6, padding: 8, marginBottom: 4 }}>
+                          <View key={p.id} style={{ backgroundColor: '#F4F4F2', borderRadius: 6, padding: 8, marginBottom: 4 }}>
                             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                               <View style={{ flex: 1 }}>
                                 <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>{fmt(p.montant)} €</Text>
-                                <Text style={{ fontSize: 10, color: '#6E5F54' }}>{formatDateFR(p.date)} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
-                                {p.note && <Text style={{ fontSize: 10, color: '#6E5F54', fontStyle: 'italic' }}>{p.note}</Text>}
+                                <Text style={{ fontSize: 10, color: '#6A6A68' }}>{formatDateFR(p.date)} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
+                                {p.note && <Text style={{ fontSize: 10, color: '#6A6A68', fontStyle: 'italic' }}>{p.note}</Text>}
                               </View>
                               {p.factureUri && (
-                                <Pressable onPress={() => openDoc(p.factureUri)} style={{ backgroundColor: '#F2E4E1', borderRadius: 6, padding: 6 }}>
-                                  <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '700' }}>Acompte</Text>
+                                <Pressable onPress={() => openDoc(p.factureUri)} style={{ backgroundColor: '#EBEBE8', borderRadius: 6, padding: 6 }}>
+                                  <Text style={{ fontSize: 10, color: '#141414', fontWeight: '700' }}>Acompte</Text>
                                 </Pressable>
                               )}
                               {p.commissionFactureUri && (
-                                <Pressable onPress={() => openDoc(p.commissionFactureUri)} style={{ backgroundColor: '#F2E4E1', borderRadius: 6, padding: 6 }}>
-                                  <Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '700' }}>Commission</Text>
+                                <Pressable onPress={() => openDoc(p.commissionFactureUri)} style={{ backgroundColor: '#EBEBE8', borderRadius: 6, padding: 6 }}>
+                                  <Text style={{ fontSize: 10, color: '#141414', fontWeight: '700' }}>Commission</Text>
                                 </Pressable>
                               )}
                               <Pressable onPress={() => handleDeletePaiement('marche', m.id, p.id)}>
@@ -922,8 +922,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
                       {/* Actions marché */}
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-                        <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditMarche(m)}>
-                          <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>Modifier</Text>
+                        <Pressable style={{ flex: 1, backgroundColor: '#F4F4F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditMarche(m)}>
+                          <Text style={{ fontSize: 11, color: '#141414', fontWeight: '600' }}>Modifier</Text>
                         </Pressable>
                         <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => handleDeleteMarche(m)}>
                           <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>Supprimer</Text>
@@ -937,13 +937,13 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
             {/* ── SUPPLÉMENTS ── */}
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 16, marginBottom: 8 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: '#5C1F2E' }}>Suppléments ({supplements.length})</Text>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#141414' }}>Suppléments ({supplements.length})</Text>
               <Pressable style={{ backgroundColor: '#F59E0B', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 }} onPress={openNewSupp}>
                 <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+ Supplément</Text>
               </Pressable>
             </View>
             {supplements.length === 0 && (
-              <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 12 }}>Aucun supplément</Text>
+              <Text style={{ fontSize: 12, color: '#959593', fontStyle: 'italic', textAlign: 'center', paddingVertical: 12 }}>Aucun supplément</Text>
             )}
             {supplements.map(s => {
               const totalRecuS = s.paiements.reduce((sum, p) => sum + p.montant, 0);
@@ -952,19 +952,19 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               const statutColor = s.statut === 'accepte' ? '#27AE60' : s.statut === 'refuse' ? '#E74C3C' : '#F59E0B';
               const statutLabel = s.statut === 'accepte' ? 'Accepté' : s.statut === 'refuse' ? 'Refusé' : 'En attente';
               return (
-                <View key={s.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#EDE2D6', borderLeftWidth: 4, borderLeftColor: statutColor }}>
+                <View key={s.id} style={{ backgroundColor: '#fff', borderRadius: 10, padding: 12, marginBottom: 8, borderWidth: 1, borderColor: '#E2E2DF', borderLeftWidth: 4, borderLeftColor: statutColor }}>
                   <Pressable onPress={() => setOpenSuppId(isOpen ? null : s.id)}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                       <View style={{ flex: 1 }}>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14' }}>{s.libelle}</Text>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: '#141414' }}>{s.libelle}</Text>
                           {s.devisUri && !s.devisSigneUri && (
                             <View style={{ width: 18, height: 18, borderRadius: 9, backgroundColor: '#DC2626', alignItems: 'center', justifyContent: 'center' }}>
                               <Text style={{ color: '#fff', fontSize: 12, fontWeight: '900', lineHeight: 14 }}>!</Text>
                             </View>
                           )}
                         </View>
-                        <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 2 }}>{fmt(s.montantHT)} € HT · {fmt(s.montantTTC)} € TTC</Text>
+                        <Text style={{ fontSize: 11, color: '#6A6A68', marginTop: 2 }}>{fmt(s.montantHT)} € HT · {fmt(s.montantTTC)} € TTC</Text>
                         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 2 }}>
                           <View style={{ backgroundColor: statutColor + '22', paddingHorizontal: 6, paddingVertical: 1, borderRadius: 4 }}>
                             <Text style={{ fontSize: 10, color: statutColor, fontWeight: '700' }}>{statutLabel}</Text>
@@ -974,21 +974,21 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           )}
                         </View>
                       </View>
-                      <Text style={{ fontSize: 14, color: '#6E5F54' }}>{isOpen ? '▾' : '▸'}</Text>
+                      <Text style={{ fontSize: 14, color: '#6A6A68' }}>{isOpen ? '▾' : '▸'}</Text>
                     </View>
                   </Pressable>
 
                   {isOpen && (
-                    <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#F1E7DC' }}>
+                    <View style={{ marginTop: 10, paddingTop: 10, borderTopWidth: 1, borderTopColor: '#EBEBE8' }}>
                       {s.description && (
-                        <Text style={{ fontSize: 12, color: '#2B1D14', marginBottom: 8 }}>{s.description}</Text>
+                        <Text style={{ fontSize: 12, color: '#141414', marginBottom: 8 }}>{s.description}</Text>
                       )}
                       {/* Documents */}
                       <View style={{ flexDirection: 'row', gap: 8, marginBottom: 8, flexWrap: 'wrap' }}>
                         {s.devisUri ? (
-                          <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#F2E4E1', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.devisUri)}>
-                            <FileText size={17} color="#5C1F2E" strokeWidth={2} />
-                            <Text style={{ fontSize: 9, color: '#5C1F2E', fontWeight: '600' }} numberOfLines={1}>Devis</Text>
+                          <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#EBEBE8', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.devisUri)}>
+                            <FileText size={17} color="#141414" strokeWidth={2} />
+                            <Text style={{ fontSize: 9, color: '#141414', fontWeight: '600' }} numberOfLines={1}>Devis</Text>
                           </Pressable>
                         ) : null}
                         {s.devisSigneUri ? (
@@ -999,11 +999,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         ) : s.devisUri ? (
                           <>
                             <Pressable
-                              style={{ flex: 1, minWidth: 70, backgroundColor: '#5C1F2E', borderRadius: 6, padding: 8, alignItems: 'center' }}
+                              style={{ flex: 1, minWidth: 70, backgroundColor: '#141414', borderRadius: 6, padding: 8, alignItems: 'center' }}
                               onPress={() => setSignerTarget({ type: 'supplement', id: s.id, devisUri: s.devisUri!, devisNom: s.devisNom })}
                             >
-                              <PenLine size={17} color="#FAF5EF" strokeWidth={2} />
-                              <Text style={{ fontSize: 9, color: '#FAF5EF', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
+                              <PenLine size={17} color="#F4F4F2" strokeWidth={2} />
+                              <Text style={{ fontSize: 9, color: '#F4F4F2', fontWeight: '700' }} numberOfLines={1}>Signer ici</Text>
                             </Pressable>
                             <Pressable
                               style={{ flex: 1, minWidth: 70, backgroundColor: 'transparent', borderRadius: 6, padding: 8, alignItems: 'center', borderWidth: 1, borderColor: '#DC2626', borderStyle: 'dashed' }}
@@ -1029,7 +1029,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         ) : null}
                         {s.factureUri ? (
                           <Pressable style={{ flex: 1, minWidth: 70, backgroundColor: '#FFF3CD', borderRadius: 6, padding: 8, alignItems: 'center' }} onPress={() => openDoc(s.factureUri)}>
-                            <Receipt size={17} color="#5C1F2E" strokeWidth={2} />
+                            <Receipt size={17} color="#141414" strokeWidth={2} />
                             <Text style={{ fontSize: 9, color: '#856404', fontWeight: '600' }} numberOfLines={1}>Facture</Text>
                           </Pressable>
                         ) : null}
@@ -1060,7 +1060,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                       {s.statut === 'accepte' && (
                         <>
                           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54' }}>Règlements ({s.paiements.length})</Text>
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: '#6A6A68' }}>Règlements ({s.paiements.length})</Text>
                             <Pressable style={{ backgroundColor: '#27AE60', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => openPaiementForm('supplement', s.id)}>
                               <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>+ Règlement</Text>
                             </Pressable>
@@ -1068,14 +1068,14 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           {s.paiements.map(p => {
                             const modeLabel = MODES_PAIEMENT.find(x => x.value === p.mode)?.label || p.mode;
                             return (
-                              <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#FAF5EF', borderRadius: 6, padding: 8, marginBottom: 4, gap: 6 }}>
+                              <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#F4F4F2', borderRadius: 6, padding: 8, marginBottom: 4, gap: 6 }}>
                                 <View style={{ flex: 1 }}>
                                   <Text style={{ fontSize: 12, fontWeight: '700', color: '#27AE60' }}>{fmt(p.montant)} €</Text>
-                                  <Text style={{ fontSize: 10, color: '#6E5F54' }}>{formatDateFR(p.date)} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
+                                  <Text style={{ fontSize: 10, color: '#6A6A68' }}>{formatDateFR(p.date)} · {modeLabel}{p.reference ? ` · ${p.reference}` : ''}</Text>
                                 </View>
                                 {p.factureUri && (
                                   <Pressable onPress={() => openDoc(p.factureUri)}>
-                                    <Paperclip size={15} color="#5C1F2E" strokeWidth={2} />
+                                    <Paperclip size={15} color="#141414" strokeWidth={2} />
                                   </Pressable>
                                 )}
                                 <Pressable onPress={() => handleDeletePaiement('supplement', s.id, p.id)}>
@@ -1089,8 +1089,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
                       {/* Actions */}
                       <View style={{ flexDirection: 'row', gap: 6, marginTop: 8 }}>
-                        <Pressable style={{ flex: 1, backgroundColor: '#FAF5EF', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditSupp(s)}>
-                          <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>Modifier</Text>
+                        <Pressable style={{ flex: 1, backgroundColor: '#F4F4F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => openEditSupp(s)}>
+                          <Text style={{ fontSize: 11, color: '#141414', fontWeight: '600' }}>Modifier</Text>
                         </Pressable>
                         <Pressable style={{ flex: 1, backgroundColor: '#FEF2F2', paddingVertical: 8, borderRadius: 6, alignItems: 'center' }} onPress={() => handleDeleteSupp(s)}>
                           <Text style={{ fontSize: 11, color: '#DC2626', fontWeight: '600' }}>Supprimer</Text>
@@ -1163,7 +1163,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           <Pressable style={{ flex: 1 }} onPress={() => setShowMarcheForm(false)} />
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '90%' }}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>{editMarche ? 'Modifier le marché' : 'Nouveau marché'}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414', marginBottom: 12 }}>{editMarche ? 'Modifier le marché' : 'Nouveau marché'}</Text>
               <Text style={lbl}>Libellé *</Text>
               <TextInput style={inp} value={marcheForm.libelle} onChangeText={v => setMarcheForm(f => ({ ...f, libelle: v }))} placeholder="Marché initial" />
               <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -1196,10 +1196,10 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 setMarcheDevisInitial(f);
                 await analyserDevisMarche(f, 'initial');
               }}>
-                <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{marcheDevisInitial ? `${marcheDevisInitial.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>{marcheDevisInitial ? `${marcheDevisInitial.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
               {devisAutoExtractLoading && (
-                <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis en cours…
+                <Text style={{ fontSize: 11, color: '#6A6A68', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis en cours…
                 </Text>
               )}
               {devisAutoExtractMsg && (
@@ -1210,31 +1210,31 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
               <Text style={lbl}>Devis signé</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis-signe'); if (!f) return; setMarcheDevisSigne(f); await analyserDevisMarche(f, 'signe'); }}>
-                <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{marcheDevisSigne ? `${marcheDevisSigne.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>{marcheDevisSigne ? `${marcheDevisSigne.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
               {/* ── Commission apporteur ── */}
-              <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#EDE2D6', paddingTop: 12 }}>
+              <View style={{ marginTop: 16, borderTopWidth: 1, borderTopColor: '#E2E2DF', paddingTop: 12 }}>
                 <Pressable
                   onPress={() => setCommissionEnabled(v => !v)}
-                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: commissionEnabled ? '#F2E4E1' : '#F1E7DC', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: commissionEnabled ? '#5C1F2E' : '#EDE2D6' }}
+                  style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: commissionEnabled ? '#EBEBE8' : '#EBEBE8', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: commissionEnabled ? '#141414' : '#E2E2DF' }}
                 >
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>Commission apporteur / architecte
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#141414' }}>Commission apporteur / architecte
                   </Text>
-                  <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: commissionEnabled ? '#5C1F2E' : '#9A8C80', justifyContent: 'center', paddingHorizontal: 2 }}>
+                  <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: commissionEnabled ? '#141414' : '#959593', justifyContent: 'center', paddingHorizontal: 2 }}>
                     <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignSelf: commissionEnabled ? 'flex-end' : 'flex-start' }} />
                   </View>
                 </Pressable>
 
                 {commissionEnabled && (
-                  <View style={{ marginTop: 10, backgroundColor: '#FFFEFB', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#EDE2D6' }}>
+                  <View style={{ marginTop: 10, backgroundColor: '#FFFEFB', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#E2E2DF' }}>
                     <Text style={lbl}>Apporteur *</Text>
                     {apporteurs.length === 0 ? (
                       <Pressable
                         onPress={allerAjouterApporteur}
-                        style={{ backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#5C1F2E', borderStyle: 'dashed', borderRadius: 8, padding: 10, alignItems: 'center', marginBottom: 8 }}
+                        style={{ backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#141414', borderStyle: 'dashed', borderRadius: 8, padding: 10, alignItems: 'center', marginBottom: 8 }}
                       >
-                        <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>
+                        <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>
                           + Ajouter un apporteur (aucun enregistré)
                         </Text>
                       </Pressable>
@@ -1262,11 +1262,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           onPress={() => setCommissionForm(f => ({ ...f, modeCommission: mode }))}
                           style={{
                             flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, alignItems: 'center',
-                            backgroundColor: commissionForm.modeCommission === mode ? '#5C1F2E' : '#F1E7DC',
-                            borderColor: commissionForm.modeCommission === mode ? '#5C1F2E' : '#EDE2D6',
+                            backgroundColor: commissionForm.modeCommission === mode ? '#141414' : '#EBEBE8',
+                            borderColor: commissionForm.modeCommission === mode ? '#141414' : '#E2E2DF',
                           }}
                         >
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: commissionForm.modeCommission === mode ? '#fff' : '#6E5F54' }}>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: commissionForm.modeCommission === mode ? '#fff' : '#6A6A68' }}>
                             {mode === 'montant' ? '€ Montant fixe' : '% Pourcentage'}
                           </Text>
                         </Pressable>
@@ -1292,11 +1292,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                               onPress={() => setCommissionForm(f => ({ ...f, baseCalcul: b }))}
                               style={{
                                 flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, alignItems: 'center',
-                                backgroundColor: commissionForm.baseCalcul === b ? '#5C1F2E' : '#F1E7DC',
-                                borderColor: commissionForm.baseCalcul === b ? '#5C1F2E' : '#EDE2D6',
+                                backgroundColor: commissionForm.baseCalcul === b ? '#141414' : '#EBEBE8',
+                                borderColor: commissionForm.baseCalcul === b ? '#141414' : '#E2E2DF',
                               }}
                             >
-                              <Text style={{ fontSize: 12, fontWeight: '700', color: commissionForm.baseCalcul === b ? '#fff' : '#6E5F54' }}>
+                              <Text style={{ fontSize: 12, fontWeight: '700', color: commissionForm.baseCalcul === b ? '#fff' : '#6A6A68' }}>
                                 {b}
                               </Text>
                             </Pressable>
@@ -1313,11 +1313,11 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                           onPress={() => setCommissionForm(f => ({ ...f, statut: st }))}
                           style={{
                             flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, alignItems: 'center',
-                            backgroundColor: commissionForm.statut === st ? (st === 'paye' ? '#D4EDDA' : '#FFF3CD') : '#F1E7DC',
-                            borderColor: commissionForm.statut === st ? (st === 'paye' ? '#27AE60' : '#F59E0B') : '#EDE2D6',
+                            backgroundColor: commissionForm.statut === st ? (st === 'paye' ? '#D4EDDA' : '#FFF3CD') : '#EBEBE8',
+                            borderColor: commissionForm.statut === st ? (st === 'paye' ? '#27AE60' : '#F59E0B') : '#E2E2DF',
                           }}
                         >
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: commissionForm.statut === st ? (st === 'paye' ? '#155724' : '#856404') : '#6E5F54' }}>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: commissionForm.statut === st ? (st === 'paye' ? '#155724' : '#856404') : '#6A6A68' }}>
                             {st === 'a_payer' ? 'À payer' : 'Payé'}
                           </Text>
                         </Pressable>
@@ -1360,7 +1360,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           <Pressable style={{ flex: 1 }} onPress={() => setShowSuppForm(false)} />
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '90%' }}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>{editSupp ? 'Modifier le supplément' : 'Nouveau supplément'}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414', marginBottom: 12 }}>{editSupp ? 'Modifier le supplément' : 'Nouveau supplément'}</Text>
               <Text style={lbl}>Libellé *</Text>
               <TextInput style={inp} value={suppForm.libelle} onChangeText={v => setSuppForm(f => ({ ...f, libelle: v }))} placeholder="Ex: Pose carrelage SDB" />
               <Text style={lbl}>Description</Text>
@@ -1382,12 +1382,12 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                   <Pressable
                     key={st}
                     style={[
-                      { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#EDE2D6', alignItems: 'center', backgroundColor: '#FAF5EF' },
+                      { flex: 1, paddingVertical: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E2DF', alignItems: 'center', backgroundColor: '#F4F4F2' },
                       suppForm.statut === st && { backgroundColor: st === 'accepte' ? '#D4EDDA' : st === 'refuse' ? '#FEF2F2' : '#FFF3CD', borderColor: st === 'accepte' ? '#27AE60' : st === 'refuse' ? '#E74C3C' : '#F59E0B' },
                     ]}
                     onPress={() => setSuppForm(f => ({ ...f, statut: st }))}
                   >
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: suppForm.statut === st ? (st === 'accepte' ? '#155724' : st === 'refuse' ? '#DC2626' : '#856404') : '#6E5F54' }}>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: suppForm.statut === st ? (st === 'accepte' ? '#155724' : st === 'refuse' ? '#DC2626' : '#856404') : '#6A6A68' }}>
                       {st === 'en_attente' ? 'En attente' : st === 'accepte' ? 'Accepté' : 'Refusé'}
                     </Text>
                   </Pressable>
@@ -1409,14 +1409,14 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
 
               <Text style={lbl}>Devis</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('devis'); if (!f) return; setSuppDevis(f); await analyserDevisSupp(f); }}>
-                <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{suppDevis ? `${suppDevis.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>{suppDevis ? `${suppDevis.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
-              {suppAutoExtractLoading && <Text style={{ fontSize: 11, color: '#6E5F54', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis en cours…</Text>}
+              {suppAutoExtractLoading && <Text style={{ fontSize: 11, color: '#6A6A68', fontStyle: 'italic', marginTop: 4 }}>Analyse du devis en cours…</Text>}
               {suppAutoExtractMsg && <Text style={{ fontSize: 11, color: '#27AE60', fontWeight: '600', marginTop: 4 }}>{suppAutoExtractMsg}</Text>}
 
               <Text style={lbl}>Facture</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture'); if (f) setSuppFacture(f); }}>
-                <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{suppFacture ? `${suppFacture.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>{suppFacture ? `${suppFacture.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
               <Pressable style={[saveBtn, !suppForm.libelle.trim() && { opacity: 0.5 }]} onPress={handleSaveSupp} disabled={!suppForm.libelle.trim()}>
@@ -1433,7 +1433,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
           <Pressable style={{ flex: 1 }} onPress={() => setShowPaiementForm(false)} />
           <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, maxHeight: '85%' }}>
             <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingBottom: 30 }}>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 12 }}>Nouveau paiement</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414', marginBottom: 12 }}>Nouveau paiement</Text>
               <Text style={lbl}>Date</Text>
               <DateInput style={inp} value={paiementForm.date} onChangeDate={v => setPaiementForm(f => ({ ...f, date: v }))} />
               <Text style={lbl}>Montant (€) *</Text>
@@ -1441,8 +1441,8 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               <Text style={lbl}>Mode de paiement</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                 {MODES_PAIEMENT.map(m => (
-                  <Pressable key={m.value} style={[{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: '#EDE2D6', backgroundColor: '#F1E7DC' }, paiementForm.mode === m.value && { backgroundColor: '#5C1F2E', borderColor: '#5C1F2E' }]} onPress={() => setPaiementForm(f => ({ ...f, mode: m.value }))}>
-                    <Text style={{ fontSize: 11, fontWeight: '600', color: paiementForm.mode === m.value ? '#fff' : '#6E5F54' }}>{m.label}</Text>
+                  <Pressable key={m.value} style={[{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: '#E2E2DF', backgroundColor: '#EBEBE8' }, paiementForm.mode === m.value && { backgroundColor: '#141414', borderColor: '#141414' }]} onPress={() => setPaiementForm(f => ({ ...f, mode: m.value }))}>
+                    <Text style={{ fontSize: 11, fontWeight: '600', color: paiementForm.mode === m.value ? '#fff' : '#6A6A68' }}>{m.label}</Text>
                   </Pressable>
                 ))}
               </View>
@@ -1452,7 +1452,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
               <TextInput style={inp} value={paiementForm.note} onChangeText={v => setPaiementForm(f => ({ ...f, note: v }))} placeholder="Note libre" />
               <Text style={lbl}>Facture d'acompte</Text>
               <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture'); if (f) setPaiementFacture(f); }}>
-                <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{paiementFacture ? `${paiementFacture.nom}` : '+ Choisir un fichier'}</Text>
+                <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>{paiementFacture ? `${paiementFacture.nom}` : '+ Choisir un fichier'}</Text>
               </Pressable>
 
               {/* Commission due sur cet acompte (si marché parent avec commission) */}
@@ -1464,15 +1464,15 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                 const app = apporteurs.find(a => a.id === m.commission!.apporteurId);
                 const apporteurNom = app ? `${app.prenom} ${app.nom}` : 'Apporteur';
                 return (
-                  <View style={{ marginTop: 14, backgroundColor: '#F2E4E1', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#5C1F2E', borderLeftWidth: 4, borderLeftColor: '#5C1F2E' }}>
-                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#5C1F2E' }}>Commission due sur cet acompte : {fmt(commissionDue)} €
+                  <View style={{ marginTop: 14, backgroundColor: '#EBEBE8', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#141414', borderLeftWidth: 4, borderLeftColor: '#141414' }}>
+                    <Text style={{ fontSize: 12, fontWeight: '800', color: '#141414' }}>Commission due sur cet acompte : {fmt(commissionDue)} €
                     </Text>
-                    <Text style={{ fontSize: 11, color: '#5C1F2E', marginTop: 2 }}>
+                    <Text style={{ fontSize: 11, color: '#141414', marginTop: 2 }}>
                       ({apporteurNom}{m.commission.modeCommission === 'pourcentage' ? ` — ${m.commission.valeur}%` : ''})
                     </Text>
                     <Text style={lbl}>Facture commission (optionnel)</Text>
                     <Pressable style={fileBtn} onPress={async () => { const f = await pickFile('facture-commission'); if (f) setPaiementCommissionFacture(f); }}>
-                      <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>{paiementCommissionFacture ? `${paiementCommissionFacture.nom}` : '+ Choisir un fichier'}</Text>
+                      <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>{paiementCommissionFacture ? `${paiementCommissionFacture.nom}` : '+ Choisir un fichier'}</Text>
                     </Pressable>
                     <Pressable
                       onPress={() => setPaiementCommissionPaye(v => !v)}
@@ -1485,13 +1485,13 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
                         borderRadius: 8,
                         padding: 10,
                         borderWidth: 1,
-                        borderColor: paiementCommissionPaye ? '#27AE60' : '#EDE2D6',
+                        borderColor: paiementCommissionPaye ? '#27AE60' : '#E2E2DF',
                       }}
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: paiementCommissionPaye ? '#155724' : '#6E5F54' }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: paiementCommissionPaye ? '#155724' : '#6A6A68' }}>
                         {paiementCommissionPaye ? 'Commission payée à l\'apporteur' : 'Commission à payer'}
                       </Text>
-                      <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: paiementCommissionPaye ? '#27AE60' : '#9A8C80', justifyContent: 'center', paddingHorizontal: 2 }}>
+                      <View style={{ width: 36, height: 20, borderRadius: 10, backgroundColor: paiementCommissionPaye ? '#27AE60' : '#959593', justifyContent: 'center', paddingHorizontal: 2 }}>
                         <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: '#fff', alignSelf: paiementCommissionPaye ? 'flex-end' : 'flex-start' }} />
                       </View>
                     </Pressable>
@@ -1510,20 +1510,20 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
       <ModalKeyboard visible={chooser !== null} transparent animationType="fade" onRequestClose={() => setChooser(null)}>
         <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 }} onPress={() => setChooser(null)}>
           <Pressable style={{ backgroundColor: '#fff', borderRadius: 24, padding: 20, gap: 8, maxWidth: 440, width: '100%', alignSelf: 'center' }} onPress={() => {}}>
-            <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{chooser?.title}</Text>
-            {!!chooser?.message && <Text style={{ fontSize: 13, color: '#6E5F54', marginBottom: 6 }}>{chooser.message}</Text>}
+            <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>{chooser?.title}</Text>
+            {!!chooser?.message && <Text style={{ fontSize: 13, color: '#6A6A68', marginBottom: 6 }}>{chooser.message}</Text>}
             {chooser?.options.map((o, i) => (
               <Pressable
                 key={i}
                 accessibilityRole="button"
                 onPress={() => { const fn = o.onPress; setChooser(null); fn(); }}
-                style={{ minHeight: 46, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: o.primary ? '#5C1F2E' : '#F2E4E1' }}
+                style={{ minHeight: 46, borderRadius: 999, paddingHorizontal: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: o.primary ? '#141414' : '#EBEBE8' }}
               >
-                <Text style={{ fontSize: 14, fontWeight: '600', color: o.primary ? '#fff' : '#5C1F2E' }} numberOfLines={1}>{o.text}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: o.primary ? '#fff' : '#141414' }} numberOfLines={1}>{o.text}</Text>
               </Pressable>
             ))}
             <Pressable onPress={() => setChooser(null)} style={{ minHeight: 44, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 14, fontWeight: '600', color: '#6E5F54' }}>Annuler</Text>
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#6A6A68' }}>Annuler</Text>
             </Pressable>
           </Pressable>
         </Pressable>
@@ -1532,7 +1532,7 @@ export function MarchesChantier({ visible, onClose, chantierId }: Props) {
   );
 }
 
-const lbl ={ fontSize: 12, fontWeight: '600' as const, color: '#6E5F54', marginBottom: 4, marginTop: 8 };
-const inp = { backgroundColor: '#F1E7DC', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#EDE2D6', marginBottom: 4, color: '#2B1D14' };
-const fileBtn = { backgroundColor: '#F2E4E1', borderWidth: 1, borderColor: '#D0D8E8', borderRadius: 8, padding: 12, alignItems: 'center' as const, marginBottom: 4 };
-const saveBtn = { backgroundColor: '#5C1F2E', borderRadius: 10, paddingVertical: 14, alignItems: 'center' as const, marginTop: 16 };
+const lbl ={ fontSize: 12, fontWeight: '600' as const, color: '#6A6A68', marginBottom: 4, marginTop: 8 };
+const inp = { backgroundColor: '#EBEBE8', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, borderWidth: 1, borderColor: '#E2E2DF', marginBottom: 4, color: '#141414' };
+const fileBtn = { backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#D0D8E8', borderRadius: 8, padding: 12, alignItems: 'center' as const, marginBottom: 4 };
+const saveBtn = { backgroundColor: '#141414', borderRadius: 10, paddingVertical: 14, alignItems: 'center' as const, marginTop: 16 };

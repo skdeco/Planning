@@ -11,7 +11,7 @@ import { Bouton, Champ, Puce } from './ui';
 import { tm, traduit } from '@/lib/menuiserie/i18n';
 type Etat = 'ok' | 'nok' | 'na';
 const ETATS: { cle: Etat; label: string; fond: string }[] = traduit([
-  { cle: 'ok', label: 'OK', fond: '#2F6B4F' }, { cle: 'nok', label: 'Non conf.', fond: '#A3261F' }, { cle: 'na', label: 'N/A', fond: '#6E5F54' },
+  { cle: 'ok', label: 'OK', fond: '#2F6B4F' }, { cle: 'nok', label: 'Non conf.', fond: '#A3261F' }, { cle: 'na', label: 'N/A', fond: '#6A6A68' },
 ]);
 
 export function VerificationMeubles({ moi, chantierId, modifiable }: { moi: CompteMn; chantierId: string; modifiable: boolean }) {

@@ -22,12 +22,12 @@ function html(ch: ChantierMn, reserves: ReserveMn[], version: 'client' | 'usine'
     ? `<p><b>Client :</b> ${esc(ch.client_nom)}${ch.client_societe ? ` — ${esc(ch.client_societe)}` : ''}</p>` : '';
   const adresse = version === 'client' ? [ch.rue, ch.code_postal, ch.ville].filter(Boolean).join(' ') : '';
   return `<html><head><meta charset="utf-8"><style>
-    body{font-family:Helvetica,Arial,sans-serif;color:#2B1D14;padding:36px}
-    h1{color:#5C1F2E;font-size:22px;margin:0 0 4px}
+    body{font-family:Helvetica,Arial,sans-serif;color:#141414;padding:36px}
+    h1{color:#141414;font-size:22px;margin:0 0 4px}
     table{width:100%;border-collapse:collapse;margin-top:16px;font-size:12px}
     th,td{border:1px solid #D9CEC1;padding:8px;text-align:left;vertical-align:top}
-    th{background:#F2E4E1}
-    .sig{display:flex;gap:24px;margin-top:40px}.sig div{flex:1;border-top:1px solid #2B1D14;padding-top:6px;font-size:12px;height:80px}
+    th{background:#EBEBE8}
+    .sig{display:flex;gap:24px;margin-top:40px}.sig div{flex:1;border-top:1px solid #141414;padding-top:6px;font-size:12px;height:80px}
   </style></head><body>
     <h1>${version === 'client' ? 'Procès-verbal de réception' : 'Éléments à reprendre ou terminer'}</h1>
     <p><b>Chantier :</b> ${esc(ch.nom.toUpperCase())}${adresse ? ` — ${esc(adresse)}` : ''}</p>

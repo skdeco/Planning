@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 4 },
   date: { fontSize: font.compact, fontWeight: font.semibold, color: DS.primary },
   emp: { fontSize: font.compact, color: DS.textSecondary },
-  by: { fontSize: 11, color: '#9A8C80' },
+  by: { fontSize: 11, color: '#959593' },
   texte: { fontSize: 14, color: DS.text, lineHeight: 20 },
   task: { fontSize: 13.5, color: DS.text },
   taskDone: { color: DS.textSecondary, textDecorationLine: 'line-through' },

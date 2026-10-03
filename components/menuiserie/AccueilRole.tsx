@@ -53,7 +53,7 @@ export function AccueilRole() {
   const enCours = chantiers.filter(c => c.statut !== 'cloture' && c.statut !== 'archive');
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 12 }}
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={async () => { setRafraichit(true); await charger(); setRafraichit(false); }} tintColor={DS.primary} />}

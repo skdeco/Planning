@@ -48,7 +48,7 @@ export default function PhotosScreen() {
   const vignette = Math.floor((width - 32 - 24 - 18) / 4);
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 120, gap: 12 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
         <Text style={screenTitle}>{tm('Photos')}</Text>
 

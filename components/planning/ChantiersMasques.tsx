@@ -19,14 +19,14 @@ export function ChantiersMasques() {
     .sort((a, b) => a.nom.localeCompare(b.nom));
   if (!masques.length) return null;
   return (
-    <View style={{ borderTopWidth: 1, borderTopColor: '#EDE2D6' }}>
+    <View style={{ borderTopWidth: 1, borderTopColor: '#E2E2DF' }}>
       <Pressable onPress={() => setOuvert(o => !o)} accessibilityRole="button" accessibilityState={{ expanded: ouvert }}
         style={{ minHeight: 44, flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12 }}>
         <Text style={{ fontSize: 13, color: DS.textSecondary }}>{ouvert ? '▾' : '▸'}</Text>
         <Text style={{ fontSize: 14, fontWeight: '700', color: DS.textSecondary }}>{tm('{0} chantier(s) masqué(s)', masques.length)}</Text>
       </Pressable>
       {ouvert && masques.map(c => (
-        <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, paddingHorizontal: 12, borderTopWidth: 0.5, borderTopColor: '#EDE2D6', backgroundColor: '#FAF7F3' }}>
+        <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, paddingHorizontal: 12, borderTopWidth: 0.5, borderTopColor: '#E2E2DF', backgroundColor: '#FAF7F3' }}>
           <View style={{ width: 4, height: 22, borderRadius: 2, backgroundColor: c.couleur || DS.border, opacity: 0.5 }} />
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 14, fontWeight: '600', color: DS.textSecondary }} numberOfLines={1}>{c.nom}</Text>

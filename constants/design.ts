@@ -1,41 +1,41 @@
 import { Platform } from 'react-native';
 
 /**
- * Système de design SK DECO — Refonte sept. 2026 : sable & bordeaux.
- * Fond sable #FAF5EF, cartes blanches très arrondies, accent unique bordeaux #5C1F2E,
+ * Système de design SK DECO — Refonte oct. 2026 : graphite & noir (titres Manrope).
+ * Fond sable #F4F4F2, cartes blanches très arrondies, accent unique bordeaux #141414,
  * titres en Fraunces. Les anciens noms de tokens sont conservés (valeurs mises à jour).
  */
 
 // ── Couleurs principales ────────────────────────────────────────────────────
 export const DS = {
   // Palette principale
-  primary: '#5C1F2E',          // noir doux (boutons, onglets actifs)
-  primaryLight: '#74303F',     // noir léger (hover)
-  primarySoft: '#F2E4E1',      // beige clair (fond bouton secondaire)
-  accent: '#5C1F2E',           // or doux (badges, prix, liens, touches premium)
-  accentLight: '#74303F',      // or clair
+  primary: '#141414',          // noir doux (boutons, onglets actifs)
+  primaryLight: '#2F2F2F',     // noir léger (hover)
+  primarySoft: '#EBEBE8',      // beige clair (fond bouton secondaire)
+  accent: '#141414',           // or doux (badges, prix, liens, touches premium)
+  accentLight: '#2F2F2F',      // or clair
 
   // Fond & surfaces
-  background: '#FAF5EF',       // beige chaud (fond principal)
+  background: '#F4F4F2',       // beige chaud (fond principal)
   surface: '#FFFFFF',          // blanc (cartes)
-  surfaceHover: '#FAF5EF',     // blanc cassé
-  surfaceAlt: '#FAF5EF',       // fond secondaire neutre (listes, alternance)
-  surfaceInfo: '#F2E4E1',      // fond bleuté léger (sélection, sections info)
+  surfaceHover: '#F4F4F2',     // blanc cassé
+  surfaceAlt: '#F4F4F2',       // fond secondaire neutre (listes, alternance)
+  surfaceInfo: '#EBEBE8',      // fond bleuté léger (sélection, sections info)
 
   // Textes
-  text: '#2B1D14',             // noir profond
-  textStrong: '#2B1D14',       // noir fort (titres principaux, valeurs importantes)
-  textSecondary: '#6E5F54',    // taupe (sous-titres)
-  textAlt: '#6E5F54',          // gris moyen (labels, metadata, placeholders)
-  textMuted: '#9A8C80',        // taupe clair
-  textDisabled: '#B5A99E',     // gris clair (désactivé, placeholder inactif)
+  text: '#141414',             // noir profond
+  textStrong: '#141414',       // noir fort (titres principaux, valeurs importantes)
+  textSecondary: '#6A6A68',    // taupe (sous-titres)
+  textAlt: '#6A6A68',          // gris moyen (labels, metadata, placeholders)
+  textMuted: '#959593',        // taupe clair
+  textDisabled: '#B8B8B5',     // gris clair (désactivé, placeholder inactif)
   textInverse: '#FFFFFF',      // blanc sur fond sombre
 
   // Bordures
-  border: '#EDE2D6',           // beige moyen (cartes, modales)
-  borderLight: '#F1E7DC',      // beige clair
-  borderAlt: '#EDE2D6',        // gris neutre (grilles, tableaux, séparateurs)
-  divider: '#EDE2D6',          // beige diviseur
+  border: '#E2E2DF',           // beige moyen (cartes, modales)
+  borderLight: '#EBEBE8',      // beige clair
+  borderAlt: '#E2E2DF',        // gris neutre (grilles, tableaux, séparateurs)
+  divider: '#E2E2DF',          // beige diviseur
 
   // Accents sémantiques
   success: '#10B981',
@@ -48,24 +48,24 @@ export const DS = {
   infoSoft: '#E0EAF5',
 
   // Header
-  headerStart: '#5C1F2E',
-  headerEnd: '#74303F',
+  headerStart: '#141414',
+  headerEnd: '#2F2F2F',
 
   // ────── PALETTE V10 (refonte mai 2026, additive) ──────
   // Coexiste avec la palette beige/noir actuelle pour migration progressive.
   // À utiliser dans les nouveaux composants UI et écrans refondus.
   // Cf. memory/design-system-sk-deco-planning.md
-  soft:      '#F2E4E1',   // fond des pastilles, icônes et pistes de progression
-  segment:   '#F1E7DC',   // piste des sélecteurs à segments
-  bordeaux:  '#5C1F2E',   // accent principal v10 (CTA, FAB, statut actif, icônes gestion)
-  marron:    '#5C1F2E',   // accent secondaire v10 (statut attente, sous-titres, icônes terrain)
-  sombre:    '#2B1D14',   // texte principal v10 + bordures épaisses
-  cremeFond: '#FAF5EF',   // fond app v10
-  cremeNude: '#F2E4E1',   // fond icônes bordeaux + search bar + filter chips
-  nudeMoyen: '#F2E4E1',   // fond icônes marron
+  soft:      '#EBEBE8',   // fond des pastilles, icônes et pistes de progression
+  segment:   '#EBEBE8',   // piste des sélecteurs à segments
+  bordeaux:  '#141414',   // accent principal v10 (CTA, FAB, statut actif, icônes gestion)
+  marron:    '#141414',   // accent secondaire v10 (statut attente, sous-titres, icônes terrain)
+  sombre:    '#141414',   // texte principal v10 + bordures épaisses
+  cremeFond: '#F4F4F2',   // fond app v10
+  cremeNude: '#EBEBE8',   // fond icônes bordeaux + search bar + filter chips
+  nudeMoyen: '#EBEBE8',   // fond icônes marron
   // Pour blanc → utiliser DS.surface (existant)
-  // Pour taupe → utiliser DS.textSecondary (existant, #8C8077, équivalent)
-  // Pour bordures → utiliser DS.border (existant, #E8DDD0, équivalent)
+  // Pour taupe → utiliser DS.textSecondary (existant, #7A7A78, équivalent)
+  // Pour bordures → utiliser DS.border (existant, #E2E2DF, équivalent)
 };
 
 // ── Overlays ────────────────────────────────────────────────────────────────
@@ -97,19 +97,19 @@ export const duration = {
 // ── Ombres ──────────────────────────────────────────────────────────────────
 export const shadows = {
   sm: Platform.select({
-    ios:     { shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
+    ios:     { shadowColor: '#141414', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
     android: { elevation: 1 },
-    default: { shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
+    default: { shadowColor: '#141414', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.06, shadowRadius: 3 },
   }),
   md: Platform.select({
-    ios:     { shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.07, shadowRadius: 20 },
+    ios:     { shadowColor: '#141414', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.07, shadowRadius: 20 },
     android: { elevation: 3 },
-    default: { shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.07, shadowRadius: 20 },
+    default: { shadowColor: '#141414', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.07, shadowRadius: 20 },
   }),
   lg: Platform.select({
-    ios:     { shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 16 },
+    ios:     { shadowColor: '#141414', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 16 },
     android: { elevation: 6 },
-    default: { shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 16 },
+    default: { shadowColor: '#141414', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 16 },
   }),
 } as const;
 
@@ -140,11 +140,11 @@ export const font = {
   heavy:    '800' as const,
 
   // Police de titre (chargée dans app/_layout.tsx). Repli sur la police système tant qu'elle n'est pas prête.
-  display:  'Fraunces_600SemiBold',
+  display:  'Manrope_500Medium',
 };
 
 /** Style des grands titres d'écran. */
-export const screenTitle = { fontFamily: 'Fraunces_600SemiBold', fontSize: 32, lineHeight: 38, letterSpacing: -0.5, color: '#2B1D14' } as const;
+export const screenTitle = { fontFamily: 'Manrope_500Medium', fontSize: 32, lineHeight: 38, letterSpacing: -0.5, color: '#141414' } as const;
 
 // ── Hauteurs de ligne ───────────────────────────────────────────────────────
 export const lineHeight = {

@@ -30,6 +30,7 @@ import { Ico } from '@/components/ui/Ico';
 import { RdvDuJour } from '@/components/espaces/RdvDuJour';
 import { AlertePointagesSansChantier } from '@/components/pointage/AlertePointagesSansChantier';
 import { PhotosRapides } from '@/components/photos/PhotosRapides';
+import { HeroEmploye } from '@/components/espaces/HeroEmploye';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 function toYMD(d: Date): string {
@@ -327,52 +328,19 @@ export default function DashboardScreen() {
     const nbMsgsNonLus = 0;
     const mesSavTickets = (data.ticketsSAV || []).filter(t => t.assigneA === myId && t.statut !== 'clos');
     return (
-      <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
-        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />}>
-          {/* En-tête : date + salutation (langue et déconnexion sont dans l'écran Plus) */}
-          <View style={{ marginTop: 8, marginBottom: 14 }}>
-            <Text style={{ fontSize: 14, color: DS.textSecondary, textTransform: 'capitalize' }}>
-              {new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
-            </Text>
-            <Text style={screenTitle}>{t.home.hello} {emp?.prenom || ''}</Text>
-          </View>
+      <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
+        <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#141414']} tintColor="#141414" />}>
+          {/* En-tête graphite : salutation, chantier du jour, tuiles Pointage et Photos */}
+          <HeroEmploye
+            prenom={emp?.prenom || ''}
+            dateLabel={new Date().toLocaleDateString(dateLocale, { weekday: 'long', day: 'numeric', month: 'long' })}
+            montrerPointage={emp.doitPointer !== false}
+          />
 
           {/* RDV du jour (Planning direction) */}
           <RdvDuJour marge={0} />
           {/* RH : pointages sans chantier à renseigner */}
           {emp?.isRH && <AlertePointagesSansChantier />}
-
-          {/* Pointage du jour : arrivée + départ du chantier (l'écran Horaires complet est dans Plus).
-              Masqué pour un employé dispensé de pointage (doitPointer === false). */}
-          {data.employes.find(e => e.id === myId)?.doitPointer !== false && (
-          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-            {([
-              { cle: 'debut', label: t.pointage.arrival, heure: myPointagesDuJour.debut, actif: !myPointagesDuJour.debut },
-              { cle: 'fin', label: t.pointage.departure, heure: myPointagesDuJour.fin, actif: !!myPointagesDuJour.debut && !myPointagesDuJour.fin },
-            ] as const).map(p => (
-              <Pressable
-                key={p.cle}
-                accessibilityRole="button"
-                accessibilityLabel={`${p.label} : ${p.heure || t.home.tapToClock}`}
-                onPress={() => router.push('/(tabs)/pointage' as any)}
-                style={{ flex: 1, borderRadius: 24, padding: 16, gap: 6, backgroundColor: p.heure ? '#D4EDDA' : p.actif ? DS.primary : DS.surface, ...(p.heure || p.actif ? {} : shadows.sm) }}
-              >
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                  {p.heure
-                    ? <CircleCheck size={18} color="#155724" strokeWidth={2} />
-                    : <Clock size={18} color={p.actif ? '#fff' : DS.textSecondary} strokeWidth={2} />}
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: p.heure ? '#155724' : p.actif ? 'rgba(255,255,255,0.85)' : DS.textSecondary }}>{p.label}</Text>
-                </View>
-                <Text style={{ fontFamily: 'Fraunces_600SemiBold', fontSize: 26, color: p.heure ? '#155724' : p.actif ? '#fff' : DS.textMuted }}>
-                  {p.heure || '—:—'}
-                </Text>
-                <Text style={{ fontSize: 12, color: p.heure ? '#1E7A3C' : p.actif ? 'rgba(255,255,255,0.8)' : DS.textSecondary }}>
-                  {p.heure ? t.home.clockOk : p.actif ? t.home.tapToClock : ' '}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-          )}
 
           {/* Photos du chantier du jour : accès direct */}
           <PhotosRapides onVoir={id => { setGalerieChantierId(id); setGalerieVisible(true); }} />
@@ -414,10 +382,10 @@ export default function DashboardScreen() {
                 <View key={i} style={[styles.statCard, {}]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
                     {note.savTicketId && <Ico e="🔧" size={14} />}
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E' }}>{note.chantierNom}</Text>
-                    <Text style={{ fontSize: 10, color: '#9A8C80' }}>par {note.auteurNom}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#141414' }}>{note.chantierNom}</Text>
+                    <Text style={{ fontSize: 10, color: '#959593' }}>par {note.auteurNom}</Text>
                   </View>
-                  {note.texte ? <Text style={{ fontSize: 13, color: '#2B1D14', lineHeight: 18 }}>{note.texte}</Text> : null}
+                  {note.texte ? <Text style={{ fontSize: 13, color: '#141414', lineHeight: 18 }}>{note.texte}</Text> : null}
 
                   {/* Tâches cochables avec bouton photo */}
                   {note.tasks && note.tasks.length > 0 && (
@@ -426,10 +394,10 @@ export default function DashboardScreen() {
                         <View key={task.id}>
                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 4 }}>
                             <Pressable onPress={() => toggleTask(note.affectationId, note.noteId, task.id, empName)}
-                              style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: task.fait ? '#27AE60' : '#5C1F2E', backgroundColor: task.fait ? '#D4EDDA' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
+                              style={{ width: 20, height: 20, borderRadius: 4, borderWidth: 2, borderColor: task.fait ? '#27AE60' : '#141414', backgroundColor: task.fait ? '#D4EDDA' : '#fff', alignItems: 'center', justifyContent: 'center' }}>
                               {task.fait && <Text style={{ color: '#27AE60', fontSize: 12, fontWeight: '700' }}>✓</Text>}
                             </Pressable>
-                            <Text style={{ fontSize: 13, color: task.fait ? '#9A8C80' : '#2B1D14', textDecorationLine: task.fait ? 'line-through' : 'none', flex: 1 }}>{task.texte}</Text>
+                            <Text style={{ fontSize: 13, color: task.fait ? '#959593' : '#141414', textDecorationLine: task.fait ? 'line-through' : 'none', flex: 1 }}>{task.texte}</Text>
                             {task.fait && task.faitPar && <Text style={{ fontSize: 9, color: '#27AE60', marginRight: 4 }}>{task.faitPar}</Text>}
                             <Pressable style={{ padding: 2 }} onPress={async () => {
                               const files = await pickNativeFile({ acceptImages: true, acceptPdf: true, acceptCamera: true, multiple: true, compressImages: true });
@@ -464,7 +432,7 @@ export default function DashboardScreen() {
                                       accessibilityLabel={isPdf ? t.home.openPdf : t.home.openPhoto}
                                     >
                                       {isPdf ? (
-                                        <View style={{ width: 44, height: 44, borderRadius: 4, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
+                                        <View style={{ width: 44, height: 44, borderRadius: 4, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}>
                                           <Ico e="📄" size={18} />
                                         </View>
                                       ) : (
@@ -509,7 +477,7 @@ export default function DashboardScreen() {
                   )}
 
                   {/* Bouton ajouter photo */}
-                  <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, backgroundColor: '#F2E4E1', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start' }}
+                  <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6, backgroundColor: '#EBEBE8', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 8, alignSelf: 'flex-start' }}
                     onPress={async () => {
                       const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
                       if (!files || files.length === 0) return;
@@ -527,7 +495,7 @@ export default function DashboardScreen() {
                       }
                     }}>
                     <Ico e="📷" size={14} />
-                    <Text style={{ fontSize: 12.5, fontWeight: '600', color: '#5C1F2E' }}>{t.home.addPhoto}</Text>
+                    <Text style={{ fontSize: 12.5, fontWeight: '600', color: '#141414' }}>{t.home.addPhoto}</Text>
                   </Pressable>
 
                   {/* Ranger la consigne : elle part aux archives, jamais à la poubelle */}
@@ -559,15 +527,15 @@ export default function DashboardScreen() {
                   {notesArchiveesOuvertes && notesJourArchivees.map((note, i) => (
                     <View key={`arch_${i}`} style={[styles.statCard, { marginTop: 8, opacity: 0.85 }]}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: '#5C1F2E' }}>{note.chantierNom}</Text>
-                        <Text style={{ fontSize: 12, color: '#9A8C80' }}>{t.ui.parAuteur} {note.auteurNom}</Text>
+                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: '#141414' }}>{note.chantierNom}</Text>
+                        <Text style={{ fontSize: 12, color: '#959593' }}>{t.ui.parAuteur} {note.auteurNom}</Text>
                       </View>
                       {note.texte ? <Text style={{ fontSize: 13.5, color: DS.text, lineHeight: 19 }}>{note.texte}</Text> : null}
                       {note.tasks && note.tasks.length > 0 && (
                         <View style={{ marginTop: 6, gap: 3 }}>
                           {note.tasks.map((task: any) => (
                             <View key={task.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                              <Check size={14} color={task.fait ? '#2E7D32' : '#B5A99E'} strokeWidth={2.4} />
+                              <Check size={14} color={task.fait ? '#2E7D32' : '#B8B8B5'} strokeWidth={2.4} />
                               <Text style={{ flex: 1, fontSize: 13, color: DS.textSecondary, textDecorationLine: task.fait ? 'line-through' : 'none' }}>
                                 {task.texte}
                               </Text>
@@ -640,23 +608,23 @@ export default function DashboardScreen() {
                   {mesSavTickets.map(ticket => {
                     const ch = data.chantiers.find(c => c.id === ticket.chantierId);
                     const isOpen = savDetailId === ticket.id;
-                    const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#5C1F2E', haute: '#F59E0B', urgente: '#E74C3C' };
+                    const prioColors: Record<string, string> = { basse: '#27AE60', normale: '#141414', haute: '#F59E0B', urgente: '#E74C3C' };
                     const statutLabel = ticket.statut === 'ouvert' ? '🔴' : ticket.statut === 'en_cours' ? '🟡' : '🟢';
                     return (
-                      <View key={ticket.id} style={{ borderBottomWidth: ticket.id !== mesSavTickets[mesSavTickets.length - 1].id ? 0.5 : 0, borderBottomColor: '#F1E7DC' }}>
+                      <View key={ticket.id} style={{ borderBottomWidth: ticket.id !== mesSavTickets[mesSavTickets.length - 1].id ? 0.5 : 0, borderBottomColor: '#EBEBE8' }}>
                         <Pressable style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, paddingHorizontal: 4, gap: 8 }}
                           onPress={() => setSavDetailId(isOpen ? null : ticket.id)}>
                           <Ico e={statutLabel} size={12} />
                           <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14' }} numberOfLines={1}>{ticket.objet}</Text>
-                            <Text style={{ fontSize: 10, color: '#6E5F54' }}>{ch?.nom} · {ticket.priorite}</Text>
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414' }} numberOfLines={1}>{ticket.objet}</Text>
+                            <Text style={{ fontSize: 10, color: '#6A6A68' }}>{ch?.nom} · {ticket.priorite}</Text>
                           </View>
-                          <Text style={{ fontSize: 12, color: '#9A8C80' }}>{isOpen ? '▾' : '▸'}</Text>
+                          <Text style={{ fontSize: 12, color: '#959593' }}>{isOpen ? '▾' : '▸'}</Text>
                         </Pressable>
 
                         {isOpen && (
                           <View style={{ paddingHorizontal: 4, paddingBottom: 10, gap: 6 }}>
-                            {ticket.description && <Text style={{ fontSize: 12, color: '#2B1D14', lineHeight: 17 }}>{ticket.description}</Text>}
+                            {ticket.description && <Text style={{ fontSize: 12, color: '#141414', lineHeight: 17 }}>{ticket.description}</Text>}
                             {ticket.photos && ticket.photos.length > 0 && (
                               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
                                 {ticket.photos.map((uri, i) => <Image key={i} source={{ uri }} style={{ width: 60, height: 60, borderRadius: 6 }} resizeMode="cover" />)}
@@ -664,7 +632,7 @@ export default function DashboardScreen() {
                             )}
                             {ticket.fichiers && ticket.fichiers.length > 0 && (
                               <View style={{ flexDirection: 'row', gap: 4, flexWrap: 'wrap' }}>
-                                {ticket.fichiers.map((f, i) => <View key={i} style={{ backgroundColor: '#F2E4E1', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}><Text style={{ fontSize: 10, color: '#5C1F2E' }}>{f.nom}</Text></View>)}
+                                {ticket.fichiers.map((f, i) => <View key={i} style={{ backgroundColor: '#EBEBE8', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 }}><Text style={{ fontSize: 10, color: '#141414' }}>{f.nom}</Text></View>)}
                               </View>
                             )}
                             {/* Photos resolution */}
@@ -677,7 +645,7 @@ export default function DashboardScreen() {
                               </View>
                             )}
                             {ticket.resoluPar && <Text style={{ fontSize: 10, color: '#27AE60', fontWeight: '600' }}>Résolu par {ticket.resoluPar} le {formatDateFR(ticket.dateResolution)}</Text>}
-                            <Text style={{ fontSize: 9, color: '#9A8C80' }}>Ouvert le {formatDateFR(ticket.dateOuverture)}</Text>
+                            <Text style={{ fontSize: 9, color: '#959593' }}>Ouvert le {formatDateFR(ticket.dateOuverture)}</Text>
 
                             {/* Actions employe */}
                             {ticket.statut !== 'resolu' && ticket.statut !== 'clos' && (
@@ -708,7 +676,7 @@ export default function DashboardScreen() {
                                     <Text style={{ fontSize: 12, fontWeight: '700', color: '#155724' }}>{t.home.markResolved}</Text>
                                   </View>
                                 </Pressable>
-                                <Pressable style={{ backgroundColor: '#F2E4E1', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, alignItems: 'center' }}
+                                <Pressable style={{ backgroundColor: '#EBEBE8', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, alignItems: 'center' }}
                                   onPress={async () => {
                                     const files = await pickNativeFile({ acceptImages: true, acceptCamera: true, multiple: false, compressImages: true });
                                     if (!files || files.length === 0) return;
@@ -716,8 +684,8 @@ export default function DashboardScreen() {
                                     if (url) updateTicketSAV({ ...ticket, photosResolution: [...(ticket.photosResolution || []), url], updatedAt: new Date().toISOString() });
                                   }}>
                                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
-                                    <Camera size={13} color="#5C1F2E" strokeWidth={2} />
-                                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#5C1F2E' }}>{t.home.photo}</Text>
+                                    <Camera size={13} color="#141414" strokeWidth={2} />
+                                    <Text style={{ fontSize: 11, fontWeight: '600', color: '#141414' }}>{t.home.photo}</Text>
                                   </View>
                                 </Pressable>
                               </View>
@@ -736,32 +704,32 @@ export default function DashboardScreen() {
           {/* Chantiers du jour */}
           <Text style={styles.sectionTitle}>{t.home.myChantiersToday}</Text>
           {myChantiers.length === 0 && (
-            <View style={styles.statCard}><Text style={{ color: '#6E5F54', textAlign: 'center' }}>{t.home.noChantierToday}</Text></View>
+            <View style={styles.statCard}><Text style={{ color: '#6A6A68', textAlign: 'center' }}>{t.home.noChantierToday}</Text></View>
           )}
           {myChantiers.map(c => (
             <Pressable key={c.id} style={[styles.statCard, {}]}
               onPress={() => router.push('/(tabs)/planning' as any)}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14' }}>{c.nom}</Text>
-              {c.adresse ? <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>{c.adresse}</Text> : null}
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#141414' }}>{c.nom}</Text>
+              {c.adresse ? <Text style={{ fontSize: 12, color: '#6A6A68', marginTop: 2 }}>{c.adresse}</Text> : null}
               {c.fiche && (
                 <View style={{ marginTop: 8, gap: 4 }}>
-                  {c.fiche.codeAcces ? <Text style={{ fontSize: 12, color: '#5C1F2E' }}>Code : {c.fiche.codeAcces}</Text> : null}
-                  {c.fiche.emplacementCle ? <Text style={{ fontSize: 12, color: '#5C1F2E' }}>Clé : {c.fiche.emplacementCle}</Text> : null}
-                  {c.fiche.codeAlarme ? <Text style={{ fontSize: 12, color: '#5C1F2E' }}>Alarme : {c.fiche.codeAlarme}</Text> : null}
+                  {c.fiche.codeAcces ? <Text style={{ fontSize: 12, color: '#141414' }}>Code : {c.fiche.codeAcces}</Text> : null}
+                  {c.fiche.emplacementCle ? <Text style={{ fontSize: 12, color: '#141414' }}>Clé : {c.fiche.emplacementCle}</Text> : null}
+                  {c.fiche.codeAlarme ? <Text style={{ fontSize: 12, color: '#141414' }}>Alarme : {c.fiche.codeAlarme}</Text> : null}
                 </View>
               )}
               {/* Boutons actions */}
               <View style={{ flexDirection: 'row', gap: 6, marginTop: 10, flexWrap: 'wrap' }}>
                 <Pressable
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F2E4E1', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8 }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EBEBE8', paddingHorizontal: 10, paddingVertical: 7, borderRadius: 8 }}
                   onPress={() => { setGalerieChantierId(c.id); setGalerieVisible(true); }}
                 >
                   <Ico e="📸" size={14} />
-                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#5C1F2E' }}>Photos ({(data.photosChantier || []).filter(p => p.chantierId === c.id).length})</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: '#141414' }}>Photos ({(data.photosChantier || []).filter(p => p.chantierId === c.id).length})</Text>
                 </Pressable>
                 {c.adresse && (
                   <Pressable
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#5C1F2E', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#141414', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 }}
                     onPress={() => setItineraireAdresse(c.adresse || '')}
                   >
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
@@ -782,12 +750,12 @@ export default function DashboardScreen() {
                 {myTasks.map(({ task, affectationId, noteId }) => {
                   const empName = data.employes.find(e => e.id === myId)?.prenom || '';
                   return (
-                    <Pressable key={task.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}
+                    <Pressable key={task.id} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, gap: 8, borderBottomWidth: 0.5, borderBottomColor: '#EBEBE8' }}
                       onPress={() => toggleTask(affectationId, noteId, task.id, empName)}>
-                      <View style={{ width: 22, height: 22, borderRadius: 4, borderWidth: 2, borderColor: '#5C1F2E', alignItems: 'center', justifyContent: 'center' }}>
-                        {task.fait && <Text style={{ color: '#5C1F2E', fontSize: 14, fontWeight: '700' }}>✓</Text>}
+                      <View style={{ width: 22, height: 22, borderRadius: 4, borderWidth: 2, borderColor: '#141414', alignItems: 'center', justifyContent: 'center' }}>
+                        {task.fait && <Text style={{ color: '#141414', fontSize: 14, fontWeight: '700' }}>✓</Text>}
                       </View>
-                      <Text style={{ fontSize: 14, color: '#2B1D14', flex: 1 }}>{task.texte}</Text>
+                      <Text style={{ fontSize: 14, color: '#141414', flex: 1 }}>{task.texte}</Text>
                     </Pressable>
                   );
                 })}
@@ -818,19 +786,19 @@ export default function DashboardScreen() {
                 });
               }
               return days.map(d => (
-                <View key={d.dateStr} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC', gap: 8 }}>
+                <View key={d.dateStr} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#EBEBE8', gap: 8 }}>
                   <View style={{ width: 32, alignItems: 'center' }}>
-                    <Text style={{ fontSize: 11, fontWeight: d.isToday ? '800' : '600', color: d.isToday ? '#5C1F2E' : '#6E5F54' }}>{d.label}</Text>
-                    <Text style={{ fontSize: 9, color: d.isToday ? '#5C1F2E' : '#9A8C80' }}>{d.dateStr.slice(8)}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: d.isToday ? '800' : '600', color: d.isToday ? '#141414' : '#6A6A68' }}>{d.label}</Text>
+                    <Text style={{ fontSize: 9, color: d.isToday ? '#141414' : '#959593' }}>{d.dateStr.slice(8)}</Text>
                   </View>
                   <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
                     {d.chantiers.length === 0 ? (
-                      <Text style={{ fontSize: 11, color: '#9A8C80', fontStyle: 'italic' }}>—</Text>
+                      <Text style={{ fontSize: 11, color: '#959593', fontStyle: 'italic' }}>—</Text>
                     ) : d.chantiers.map((name, i) => {
                       const ch = data.chantiers.find(c => c.nom === name);
                       return (
-                        <View key={i} style={{ backgroundColor: (ch?.couleur || '#5C1F2E') + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: ch?.couleur || '#5C1F2E' }}>
-                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#2B1D14' }}>{name}</Text>
+                        <View key={i} style={{ backgroundColor: (ch?.couleur || '#141414') + '22', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6, borderLeftWidth: 3, borderLeftColor: ch?.couleur || '#141414' }}>
+                          <Text style={{ fontSize: 11, fontWeight: '600', color: '#141414' }}>{name}</Text>
                         </View>
                       );
                     })}
@@ -852,19 +820,19 @@ export default function DashboardScreen() {
                 <Text style={styles.sectionTitle}>{t.home.myPendingRequests} ({total})</Text>
                 <View style={styles.statCard}>
                   {mesConges.map(d => (
-                    <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}>
+                    <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#EBEBE8' }}>
                       <Ico e="🏖" size={16} />
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Congé {formatDateFR(d.dateDebut)} → {formatDateFR(d.dateFin)}</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#141414' }}>Congé {formatDateFR(d.dateDebut)} → {formatDateFR(d.dateFin)}</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>
                   ))}
                   {mesAvances.map(d => (
-                    <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}>
+                    <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#EBEBE8' }}>
                       <Ico e="💰" size={16} />
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Avance de {d.montant} €</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#141414' }}>Avance de {d.montant} €</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>
@@ -873,7 +841,7 @@ export default function DashboardScreen() {
                     <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 6 }}>
                       <Ico e="🏥" size={16} />
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#2B1D14' }}>Arrêt maladie {formatDateFR(d.dateDebut)}</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: '#141414' }}>Arrêt maladie {formatDateFR(d.dateDebut)}</Text>
                         <Text style={{ fontSize: 10, color: '#F59E0B', fontWeight: '600' }}>{t.home.pending}</Text>
                       </View>
                     </View>
@@ -890,10 +858,10 @@ export default function DashboardScreen() {
             {(emp?.penseBetes || []).map(pb => {
               const ch = pb.chantierId ? data.chantiers.find(c => c.id === pb.chantierId) : null;
               return (
-                <View key={pb.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}>
-                  {ch && <View style={{ backgroundColor: (ch.couleur || '#5C1F2E') + '22', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2 }}><Text style={{ fontSize: 9, fontWeight: '700', color: ch.couleur || '#5C1F2E' }}>{ch.nom}</Text></View>}
-                  {!ch && <Text style={{ fontSize: 9, color: '#9A8C80', marginTop: 2 }}>{t.home.general}</Text>}
-                  <Text style={{ fontSize: 13, color: '#2B1D14', flex: 1 }}>{pb.texte}</Text>
+                <View key={pb.id} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, paddingVertical: 6, borderBottomWidth: 0.5, borderBottomColor: '#EBEBE8' }}>
+                  {ch && <View style={{ backgroundColor: (ch.couleur || '#141414') + '22', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginTop: 2 }}><Text style={{ fontSize: 9, fontWeight: '700', color: ch.couleur || '#141414' }}>{ch.nom}</Text></View>}
+                  {!ch && <Text style={{ fontSize: 9, color: '#959593', marginTop: 2 }}>{t.home.general}</Text>}
+                  <Text style={{ fontSize: 13, color: '#141414', flex: 1 }}>{pb.texte}</Text>
                   <Pressable onPress={() => {
                     if (!emp) return;
                     updateEmploye({ ...emp, penseBetes: (emp.penseBetes || []).filter(p => p.id !== pb.id) });
@@ -901,31 +869,31 @@ export default function DashboardScreen() {
                 </View>
               );
             })}
-            {(emp?.penseBetes || []).length === 0 && <Text style={{ fontSize: 12, color: '#9A8C80', fontStyle: 'italic', marginBottom: 6 }}>{t.home.noNote}</Text>}
+            {(emp?.penseBetes || []).length === 0 && <Text style={{ fontSize: 12, color: '#959593', fontStyle: 'italic', marginBottom: 6 }}>{t.home.noNote}</Text>}
 
             {/* Formulaire ajout */}
-            <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: '#F1E7DC', paddingTop: 8 }}>
+            <View style={{ marginTop: 8, borderTopWidth: 1, borderTopColor: '#EBEBE8', paddingTop: 8 }}>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 6 }} contentContainerStyle={{ gap: 4 }}>
-                <Pressable style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: !penseBeteChantierId ? '#5C1F2E' : '#F1E7DC' }}
+                <Pressable style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: !penseBeteChantierId ? '#141414' : '#EBEBE8' }}
                   onPress={() => setPenseBeteChantierId(null)}>
-                  <Text style={{ fontSize: 10, fontWeight: '600', color: !penseBeteChantierId ? '#fff' : '#6E5F54' }}>{t.home.general}</Text>
+                  <Text style={{ fontSize: 10, fontWeight: '600', color: !penseBeteChantierId ? '#fff' : '#6A6A68' }}>{t.home.general}</Text>
                 </Pressable>
                 {myTousChantiers.map(c => (
-                  <Pressable key={c.id} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: penseBeteChantierId === c.id ? (c.couleur || '#5C1F2E') : '#F1E7DC' }}
+                  <Pressable key={c.id} style={{ paddingHorizontal: 8, paddingVertical: 4, borderRadius: 10, backgroundColor: penseBeteChantierId === c.id ? (c.couleur || '#141414') : '#EBEBE8' }}
                     onPress={() => setPenseBeteChantierId(c.id)}>
-                    <Text style={{ fontSize: 10, fontWeight: '600', color: penseBeteChantierId === c.id ? '#fff' : '#6E5F54' }}>{c.nom}</Text>
+                    <Text style={{ fontSize: 10, fontWeight: '600', color: penseBeteChantierId === c.id ? '#fff' : '#6A6A68' }}>{c.nom}</Text>
                   </Pressable>
                 ))}
               </ScrollView>
               <View style={{ flexDirection: 'row', gap: 6 }}>
                 <TextInput
-                  style={{ flex: 1, backgroundColor: '#FAF5EF', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: '#2B1D14', borderWidth: 1, borderColor: '#EDE2D6' }}
+                  style={{ flex: 1, backgroundColor: '#F4F4F2', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 8, fontSize: 13, color: '#141414', borderWidth: 1, borderColor: '#E2E2DF' }}
                   value={penseBeteText}
                   onChangeText={setPenseBeteText}
                   placeholder={t.home.reminderPlaceholder}
-                  placeholderTextColor="#9A8C80"
+                  placeholderTextColor="#959593"
                 />
-                <Pressable style={{ backgroundColor: '#5C1F2E', borderRadius: 8, paddingHorizontal: 12, justifyContent: 'center', opacity: penseBeteText.trim() ? 1 : 0.5 }}
+                <Pressable style={{ backgroundColor: '#141414', borderRadius: 8, paddingHorizontal: 12, justifyContent: 'center', opacity: penseBeteText.trim() ? 1 : 0.5 }}
                   disabled={!penseBeteText.trim()}
                   onPress={() => {
                     if (!emp || !penseBeteText.trim()) return;
@@ -956,7 +924,7 @@ export default function DashboardScreen() {
   if (!isAdmin) return null;
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView style={styles.scroll} contentContainerStyle={styles.scrollContent}>
         {/* En-tête : date + salutation (langue et déconnexion sont dans l'écran Plus) */}
         <FadeInView duration={400}>
@@ -1209,27 +1177,27 @@ export default function DashboardScreen() {
                   <FadeInView key={item.chantier.id} delay={idx * 80}>
                     <View style={[styles.statCard, { marginBottom: 6 }]}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: item.chantier.couleur || '#5C1F2E' }} />
-                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#2B1D14', flex: 1 }} numberOfLines={1}>{item.chantier.nom}</Text>
+                        <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: item.chantier.couleur || '#141414' }} />
+                        <Text style={{ fontSize: 14, fontWeight: '700', color: '#141414', flex: 1 }} numberOfLines={1}>{item.chantier.nom}</Text>
                       </View>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
                         <View style={{ flex: 1 }}>
-                          <Text style={{ fontSize: 10, color: '#6E5F54' }}>{t.dash.revenue}</Text>
+                          <Text style={{ fontSize: 10, color: '#6A6A68' }}>{t.dash.revenue}</Text>
                           <Text style={{ fontSize: 14, fontWeight: '700', color: '#27AE60' }}>{fmt(item.recettes)}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'center' }}>
-                          <Text style={{ fontSize: 10, color: '#6E5F54' }}>{t.dash.expenses}</Text>
+                          <Text style={{ fontSize: 10, color: '#6A6A68' }}>{t.dash.expenses}</Text>
                           <Text style={{ fontSize: 14, fontWeight: '700', color: '#E74C3C' }}>{fmt(item.depenses)}</Text>
                         </View>
                         <View style={{ flex: 1, alignItems: 'flex-end' }}>
-                          <Text style={{ fontSize: 10, color: '#6E5F54' }}>{t.dash.margin}</Text>
+                          <Text style={{ fontSize: 10, color: '#6A6A68' }}>{t.dash.margin}</Text>
                           <Text style={{ fontSize: 14, fontWeight: '800', color: margeColor }}>{fmt(item.marge)}</Text>
                         </View>
                       </View>
                       {item.pctConsomme !== null && (
                         <View style={{ marginTop: 4 }}>
                           <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
-                            <Text style={{ fontSize: 10, color: '#6E5F54' }}>{t.dash.budgetUsed}</Text>
+                            <Text style={{ fontSize: 10, color: '#6A6A68' }}>{t.dash.budgetUsed}</Text>
                             <Text style={{ fontSize: 10, fontWeight: '700', color: item.pctConsomme > 90 ? '#E74C3C' : item.pctConsomme > 70 ? '#F59E0B' : '#27AE60' }}>{item.pctConsomme.toFixed(0)}%</Text>
                           </View>
                           <ProgressBar progress={item.pctConsomme / 100} color={item.pctConsomme > 90 ? '#E74C3C' : item.pctConsomme > 70 ? '#F59E0B' : '#27AE60'} />
@@ -1267,9 +1235,9 @@ export default function DashboardScreen() {
           return (
             <FadeInView delay={100}>
               <Text style={styles.sectionTitle}>{t.dash.turnover}</Text>
-              <View style={[styles.statCard, { borderWidth: 1.5, borderColor: '#5C1F2E', marginBottom: 8 }]}>
-                <Text style={{ fontSize: 22, fontWeight: '800', color: '#2B1D14' }}>{fmtCA(caMonth)} <Text style={{ fontSize: 13, fontWeight: '500', color: '#6E5F54' }}>{t.dash.thisMonth}</Text></Text>
-                <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>vs {fmtCA(caPrev)} le mois dernier</Text>
+              <View style={[styles.statCard, { borderWidth: 1.5, borderColor: '#141414', marginBottom: 8 }]}>
+                <Text style={{ fontSize: 22, fontWeight: '800', color: '#141414' }}>{fmtCA(caMonth)} <Text style={{ fontSize: 13, fontWeight: '500', color: '#6A6A68' }}>{t.dash.thisMonth}</Text></Text>
+                <Text style={{ fontSize: 12, color: '#6A6A68', marginTop: 2 }}>vs {fmtCA(caPrev)} le mois dernier</Text>
                 {(caMonth > 0 || caPrev > 0) && (
                   <View style={{ marginTop: 8, height: 8, backgroundColor: '#F0EBE3', borderRadius: 4, overflow: 'hidden' }}>
                     <View style={{ height: '100%', width: `${caPrev > 0 ? Math.min((caMonth / caPrev) * 100, 100) : (caMonth > 0 ? 100 : 0)}%`, backgroundColor: isUp ? '#27AE60' : '#E74C3C', borderRadius: 4 }} />
@@ -1293,7 +1261,7 @@ export default function DashboardScreen() {
             onPress={() => router.push('/(tabs)/reporting' as any)}
           >
             <Ico e="📄" size={18} />
-            <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E' }}>{t.dash.exportReport}</Text>
+            <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414' }}>{t.dash.exportReport}</Text>
           </Pressable>
           <Pressable
             style={[styles.statCard, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }]}
@@ -1338,13 +1306,13 @@ export default function DashboardScreen() {
               {allNotesJour.map(n => (
                 <View key={n.id} style={[styles.statCard, {}]}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#5C1F2E' }}>{n.chantierNom}</Text>
-                    <Text style={{ fontSize: 10, color: '#6E5F54' }}>→ {n.employeNom}</Text>
-                    <Text style={{ fontSize: 10, color: '#9A8C80' }}>par {n.auteurNom}</Text>
+                    <Text style={{ fontSize: 11, fontWeight: '700', color: '#141414' }}>{n.chantierNom}</Text>
+                    <Text style={{ fontSize: 10, color: '#6A6A68' }}>→ {n.employeNom}</Text>
+                    <Text style={{ fontSize: 10, color: '#959593' }}>par {n.auteurNom}</Text>
                   </View>
-                  {n.texte ? <Text style={{ fontSize: 12, color: '#2B1D14' }} numberOfLines={2}>{n.texte}</Text> : null}
+                  {n.texte ? <Text style={{ fontSize: 12, color: '#141414' }} numberOfLines={2}>{n.texte}</Text> : null}
                   {n.tasks && n.tasks.length > 0 && (
-                    <Text style={{ fontSize: 12.5, color: '#6E5F54', marginTop: 3 }}>
+                    <Text style={{ fontSize: 12.5, color: '#6A6A68', marginTop: 3 }}>
                       {n.tasks.filter((t: any) => t.fait).length}/{n.tasks.length} {t.ui.taches}
                     </Text>
                   )}
@@ -1368,8 +1336,8 @@ export default function DashboardScreen() {
                   {notesRangeesOuvertes && notesRangees.map(n => (
                     <View key={`r_${n.id}`} style={[styles.statCard, { marginTop: 8, opacity: 0.85 }]}>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
-                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: '#5C1F2E' }}>{n.chantierNom}</Text>
-                        <Text style={{ fontSize: 12, color: '#6E5F54' }}>→ {n.employeNom}</Text>
+                        <Text style={{ fontSize: 12.5, fontWeight: '700', color: '#141414' }}>{n.chantierNom}</Text>
+                        <Text style={{ fontSize: 12, color: '#6A6A68' }}>→ {n.employeNom}</Text>
                       </View>
                       {n.texte ? <Text style={{ fontSize: 13, color: DS.text }} numberOfLines={2}>{n.texte}</Text> : null}
                       {n.tasks && n.tasks.length > 0 && (
@@ -1579,7 +1547,7 @@ export default function DashboardScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
                 <Pressable onPress={() => setDismissedAlertes(new Set())}
                   style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                  <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.ui.alertesMasquees} ({hiddenCount})</Text>
+                  <Text style={{ fontSize: 11, color: '#6A6A68' }}>{t.ui.alertesMasquees} ({hiddenCount})</Text>
                 </Pressable>
               </View>
             );
@@ -1596,13 +1564,13 @@ export default function DashboardScreen() {
                     {hiddenCount > 0 && (
                       <Pressable onPress={() => setDismissedAlertes(new Set())}
                         style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 11, color: '#6E5F54' }}>Afficher masquées ({hiddenCount})</Text>
+                        <Text style={{ fontSize: 11, color: '#6A6A68' }}>Afficher masquées ({hiddenCount})</Text>
                       </Pressable>
                     )}
                     {visibleAlertes.length > 1 && (
                       <Pressable onPress={() => setDismissedAlertes(new Set([...dismissedAlertes, ...visibleAlertes.map(a => a.id)]))}
                         style={{ paddingHorizontal: 8, paddingVertical: 4 }}>
-                        <Text style={{ fontSize: 11, color: '#6E5F54' }}>{t.dash.hideAll}</Text>
+                        <Text style={{ fontSize: 11, color: '#6A6A68' }}>{t.dash.hideAll}</Text>
                       </Pressable>
                     )}
                   </View>
@@ -1636,9 +1604,9 @@ export default function DashboardScreen() {
         {showOutils && activiteRecente.length > 0 && (
           <>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 10 }}>
-              <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14' }}>{t.dash.recentActivity}</Text>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: '#141414' }}>{t.dash.recentActivity}</Text>
               <Pressable onPress={() => setShowHistorique(true)}>
-                <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>{t.dash.seeAll}</Text>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414' }}>{t.dash.seeAll}</Text>
               </Pressable>
             </View>
             <View style={styles.activityContainer}>
@@ -1662,9 +1630,9 @@ export default function DashboardScreen() {
           <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
             <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '90%', padding: 16 }}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{t.dash.fullHistory}</Text>
-                <Pressable onPress={() => setShowHistorique(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '700' }}>✕</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>{t.dash.fullHistory}</Text>
+                <Pressable onPress={() => setShowHistorique(false)} style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 14, color: '#6A6A68', fontWeight: '700' }}>✕</Text>
                 </Pressable>
               </View>
               <ScrollView showsVerticalScrollIndicator={false}>
@@ -1676,17 +1644,17 @@ export default function DashboardScreen() {
                   const isMyEntry = isAdmin && log.userId === 'admin';
                   const lectures = log.lecturesPar || [];
                   return (
-                    <View key={log.id} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC', gap: 10 }}>
-                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#5C1F2E', marginTop: 5 }} />
+                    <View key={log.id} style={{ flexDirection: 'row', paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#EBEBE8', gap: 10 }}>
+                      <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#141414', marginTop: 5 }} />
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 13, color: '#2B1D14' }}>{log.description}</Text>
-                        <Text style={{ fontSize: 11, color: '#6E5F54', marginTop: 2 }}>
+                        <Text style={{ fontSize: 13, color: '#141414' }}>{log.description}</Text>
+                        <Text style={{ fontSize: 11, color: '#6A6A68', marginTop: 2 }}>
                           {log.userName} — {dateStr} {heureStr}
                         </Text>
                         {isMyEntry && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {lectures.length === 0 ? (
-                              <Text style={{ fontSize: 10, color: '#9A8C80', fontStyle: 'italic' }}>{t.dash.notReadYet}</Text>
+                              <Text style={{ fontSize: 10, color: '#959593', fontStyle: 'italic' }}>{t.dash.notReadYet}</Text>
                             ) : (
                               lectures.map(l => {
                                 const emp = data.employes.find(e => e.id === l.userId);
@@ -1706,7 +1674,7 @@ export default function DashboardScreen() {
                   );
                 })}
                 {(data.activityLog || []).length === 0 && (
-                  <Text style={{ textAlign: 'center', color: '#6E5F54', paddingVertical: 32 }}>{t.dash.noActivity}</Text>
+                  <Text style={{ textAlign: 'center', color: '#6A6A68', paddingVertical: 32 }}>{t.dash.noActivity}</Text>
                 )}
               </ScrollView>
             </View>
@@ -1732,9 +1700,9 @@ const styles = StyleSheet.create({
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 40 },
   header: { marginBottom: 24 },
-  greeting: { fontSize: 28, fontWeight: '800', color: '#2B1D14', letterSpacing: -0.5 },
-  date: { fontSize: 14, color: '#6E5F54', marginTop: 4, textTransform: 'capitalize', fontWeight: '400' },
-  sectionTitle: { fontSize: 13, fontWeight: '600', color: '#6E5F54', marginTop: 20, marginBottom: 8, paddingHorizontal: 6, letterSpacing: 0.4, textTransform: 'uppercase' },
+  greeting: { fontSize: 28, fontWeight: '800', color: '#141414', letterSpacing: -0.5 },
+  date: { fontSize: 14, color: '#6A6A68', marginTop: 4, textTransform: 'capitalize', fontWeight: '400' },
+  sectionTitle: { fontSize: 13, fontWeight: '600', color: '#6A6A68', marginTop: 20, marginBottom: 8, paddingHorizontal: 6, letterSpacing: 0.4, textTransform: 'uppercase' },
   searchPill: { flexDirection: 'row', alignItems: 'center', gap: 10, height: 46, paddingHorizontal: 16, borderRadius: 23, backgroundColor: DS.surface, ...shadows.sm },
   listCard: { backgroundColor: DS.surface, borderRadius: radius.xl, ...shadows.md },
   listRow: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 52, paddingLeft: 14 },
@@ -1745,17 +1713,17 @@ const styles = StyleSheet.create({
   statCaption: { fontSize: 13, color: DS.textSecondary, marginTop: 2 },
   toggleChip: { width: 30, height: 30, borderRadius: 15, backgroundColor: DS.soft, alignItems: 'center', justifyContent: 'center' },
   listTitleInline: { fontSize: 15, color: DS.text },
-  bigNumber: { fontFamily: 'Fraunces_600SemiBold', fontSize: 26, color: DS.primary },
+  bigNumber: { fontFamily: 'Manrope_500Medium', fontSize: 26, color: DS.primary },
   countBadge: { minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 7, backgroundColor: DS.primary, alignItems: 'center', justifyContent: 'center' },
   countBadgeText: { fontSize: 12.5, fontWeight: '700', color: '#FFFFFF' },
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   statCard: {
     backgroundColor: '#fff', borderRadius: 20, padding: 16,
     marginBottom: 6,
-    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   statValue: { fontSize: 24, fontWeight: '800', letterSpacing: -0.5 },
-  statLabel: { fontSize: 12, color: '#6E5F54', marginTop: 4, fontWeight: '500' },
+  statLabel: { fontSize: 12, color: '#6A6A68', marginTop: 4, fontWeight: '500' },
   alertsContainer: { gap: 8 },
   alertCard: {
     flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFFBEB',
@@ -1767,19 +1735,19 @@ const styles = StyleSheet.create({
   alertArrow: { fontSize: 16, color: '#D97706' },
   activityContainer: {
     backgroundColor: '#fff', borderRadius: 14, padding: 14, gap: 10,
-    shadowColor: '#5C1F2E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
   activityRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10 },
-  activityDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#5C1F2E', marginTop: 5 },
+  activityDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#141414', marginTop: 5 },
   activityContent: { flex: 1 },
-  activityDesc: { fontSize: 13, color: '#2B1D14', lineHeight: 18, fontWeight: '400' },
-  activityMeta: { fontSize: 11, color: '#9A8C80', marginTop: 2, fontWeight: '400' },
+  activityDesc: { fontSize: 13, color: '#141414', lineHeight: 18, fontWeight: '400' },
+  activityMeta: { fontSize: 11, color: '#959593', marginTop: 2, fontWeight: '400' },
   shortcutsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   shortcut: {
     backgroundColor: '#fff', borderRadius: 14, padding: 16, width: '48%' as any,
     alignItems: 'center',
-    shadowColor: '#5C1F2E', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.08, shadowRadius: 8, elevation: 3,
   },
   shortcutIcon: { fontSize: 28, marginBottom: 6 },
-  shortcutLabel: { fontSize: 13, fontWeight: '600', color: '#5C1F2E' },
+  shortcutLabel: { fontSize: 13, fontWeight: '600', color: '#141414' },
 });

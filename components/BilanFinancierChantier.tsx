@@ -234,17 +234,17 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', flex: 1 }}>
           {/* Header */}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: '#E2E2DF' }}>
             <View>
-              <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>Bilan financier</Text>
-              <Text style={{ fontSize: 13, color: '#6E5F54' }}>{chantier.nom}</Text>
+              <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>Bilan financier</Text>
+              <Text style={{ fontSize: 13, color: '#6A6A68' }}>{chantier.nom}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <Pressable style={{ backgroundColor: '#2E7D32', borderRadius: 10, paddingHorizontal: 10, paddingVertical: 6, alignItems: 'center', justifyContent: 'center' }} onPress={exportExcel}>
                 <Text style={{ color: '#fff', fontWeight: '800', fontSize: 11 }}>Excel</Text>
               </Pressable>
-              <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
-                <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '700' }}>✕</Text>
+              <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }} onPress={onClose}>
+                <Text style={{ fontSize: 14, color: '#6A6A68', fontWeight: '700' }}>✕</Text>
               </Pressable>
             </View>
           </View>
@@ -253,12 +253,12 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             {/* Résumé */}
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               <View style={cardS}>
-                <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>{fmt(bilan.totalGeneral)}</Text>
-                <Text style={{ fontSize: 10, color: '#6E5F54' }}>Coût total</Text>
+                <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>{fmt(bilan.totalGeneral)}</Text>
+                <Text style={{ fontSize: 10, color: '#6A6A68' }}>Coût total</Text>
               </View>
               <View style={cardS}>
                 <Text style={{ fontSize: 18, fontWeight: '800', color: '#27AE60' }}>{fmt(bilan.totalSupplements)}</Text>
-                <Text style={{ fontSize: 10, color: '#6E5F54' }}>Suppléments</Text>
+                <Text style={{ fontSize: 10, color: '#6A6A68' }}>Suppléments</Text>
               </View>
             </View>
 
@@ -267,12 +267,12 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             <View style={tableS}>
               {bilan.mainOeuvre.map((m, i) => (
                 <View key={i} style={rowS}>
-                  <Text style={{ flex: 1, fontSize: 12, color: '#2B1D14' }}>{m.empNom}</Text>
-                  <Text style={{ fontSize: 11, color: '#6E5F54', width: 50, textAlign: 'right' }}>{m.jours}j / {m.heures}h</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', width: 65, textAlign: 'right' }}>{fmt(m.cout)}</Text>
+                  <Text style={{ flex: 1, fontSize: 12, color: '#141414' }}>{m.empNom}</Text>
+                  <Text style={{ fontSize: 11, color: '#6A6A68', width: 50, textAlign: 'right' }}>{m.jours}j / {m.heures}h</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414', width: 65, textAlign: 'right' }}>{fmt(m.cout)}</Text>
                 </View>
               ))}
-              {bilan.mainOeuvre.length === 0 && <Text style={{ fontSize: 12, color: '#9A8C80', padding: 8 }}>Aucune donnée</Text>}
+              {bilan.mainOeuvre.length === 0 && <Text style={{ fontSize: 12, color: '#959593', padding: 8 }}>Aucune donnée</Text>}
             </View>
 
             {/* Matériel */}
@@ -280,13 +280,13 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
             <View style={tableS}>
               {bilan.materielDetail.filter(m => m.prix > 0).map((m, i) => (
                 <View key={i} style={rowS}>
-                  <Text style={{ flex: 1, fontSize: 12, color: '#2B1D14' }} numberOfLines={1}>{m.nom}</Text>
-                  <Text style={{ fontSize: 11, color: '#6E5F54', width: 30, textAlign: 'right' }}>×{m.qte}</Text>
-                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', width: 65, textAlign: 'right' }}>{fmt(m.prix)}</Text>
+                  <Text style={{ flex: 1, fontSize: 12, color: '#141414' }} numberOfLines={1}>{m.nom}</Text>
+                  <Text style={{ fontSize: 11, color: '#6A6A68', width: 30, textAlign: 'right' }}>×{m.qte}</Text>
+                  <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414', width: 65, textAlign: 'right' }}>{fmt(m.prix)}</Text>
                 </View>
               ))}
               {bilan.materielDetail.filter(m => m.prix > 0).length === 0 && (
-                <Text style={{ fontSize: 12, color: '#9A8C80', padding: 8 }}>
+                <Text style={{ fontSize: 12, color: '#959593', padding: 8 }}>
                   {bilan.nbArticles > 0 ? `${bilan.nbArticles} articles achetés (prix non renseigné dans le catalogue)` : 'Aucun achat'}
                 </Text>
               )}
@@ -300,13 +300,13 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                 const acomptes = data.acomptesst.filter(a => a.devisId === d.id).reduce((s, a) => s + a.montant, 0);
                 return (
                   <View key={i} style={rowS}>
-                    <Text style={{ flex: 1, fontSize: 12, color: '#2B1D14' }} numberOfLines={1}>{st?.nom || '?'} — {d.objet}</Text>
-                    <Text style={{ fontSize: 11, color: '#6E5F54', width: 55, textAlign: 'right' }}>{fmt(acomptes)}</Text>
-                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', width: 65, textAlign: 'right' }}>{fmt(d.prixConvenu)}</Text>
+                    <Text style={{ flex: 1, fontSize: 12, color: '#141414' }} numberOfLines={1}>{st?.nom || '?'} — {d.objet}</Text>
+                    <Text style={{ fontSize: 11, color: '#6A6A68', width: 55, textAlign: 'right' }}>{fmt(acomptes)}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414', width: 65, textAlign: 'right' }}>{fmt(d.prixConvenu)}</Text>
                   </View>
                 );
               })}
-              {bilan.devisChantier.length === 0 && <Text style={{ fontSize: 12, color: '#9A8C80', padding: 8 }}>Aucun devis</Text>}
+              {bilan.devisChantier.length === 0 && <Text style={{ fontSize: 12, color: '#959593', padding: 8 }}>Aucun devis</Text>}
             </View>
 
             {/* Dépenses directes */}
@@ -316,9 +316,9 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                 <View style={tableS}>
                   {bilan.depenses.map((d, i) => (
                     <View key={i} style={rowS}>
-                      <Text style={{ flex: 1, fontSize: 12, color: '#2B1D14' }} numberOfLines={1}>{d.libelle}</Text>
-                      <Text style={{ fontSize: 11, color: '#6E5F54', width: 60, textAlign: 'right' }}>{d.date.split('-').reverse().join('/')}</Text>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', width: 65, textAlign: 'right' }}>{fmt(d.montant)}</Text>
+                      <Text style={{ flex: 1, fontSize: 12, color: '#141414' }} numberOfLines={1}>{d.libelle}</Text>
+                      <Text style={{ fontSize: 11, color: '#6A6A68', width: 60, textAlign: 'right' }}>{d.date.split('-').reverse().join('/')}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414', width: 65, textAlign: 'right' }}>{fmt(d.montant)}</Text>
                     </View>
                   ))}
                 </View>
@@ -332,13 +332,13 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
                 <View style={tableS}>
                   {bilan.commissionsDetail.map((c, i) => (
                     <View key={i} style={rowS}>
-                      <Text style={{ flex: 1, fontSize: 12, color: '#2B1D14' }} numberOfLines={1}>
-                        {c.apporteurNom} <Text style={{ color: '#6E5F54' }}>— {c.marcheLib}</Text>
+                      <Text style={{ flex: 1, fontSize: 12, color: '#141414' }} numberOfLines={1}>
+                        {c.apporteurNom} <Text style={{ color: '#6A6A68' }}>— {c.marcheLib}</Text>
                       </Text>
                       <Text style={{ fontSize: 10, color: c.statut === 'paye' ? '#27AE60' : '#E74C3C', fontWeight: '700', width: 60, textAlign: 'right' }}>
                         {c.statut === 'paye' ? '✓ Payé' : 'À payer'}
                       </Text>
-                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E', width: 65, textAlign: 'right' }}>{fmt(c.montant)}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414', width: 65, textAlign: 'right' }}>{fmt(c.montant)}</Text>
                     </View>
                   ))}
                 </View>
@@ -351,7 +351,7 @@ export function BilanFinancierChantier({ visible, onClose, chantierId }: Props) 
   );
 }
 
-const cardS = { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 14, alignItems: 'center' as const, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1, borderWidth: 1, borderColor: '#EDE2D6' };
-const sectionS = { fontSize: 14, fontWeight: '700' as const, color: '#2B1D14', marginTop: 16, marginBottom: 6 };
-const tableS = { backgroundColor: '#FAFBFC', borderRadius: 8, borderWidth: 1, borderColor: '#EDE2D6', overflow: 'hidden' as const };
-const rowS = { flexDirection: 'row' as const, alignItems: 'center' as const, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#EDE2D6', gap: 6 };
+const cardS = { flex: 1, backgroundColor: '#fff', borderRadius: 12, padding: 14, alignItems: 'center' as const, shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 4, elevation: 1, borderWidth: 1, borderColor: '#E2E2DF' };
+const sectionS = { fontSize: 14, fontWeight: '700' as const, color: '#141414', marginTop: 16, marginBottom: 6 };
+const tableS = { backgroundColor: '#FAFBFC', borderRadius: 8, borderWidth: 1, borderColor: '#E2E2DF', overflow: 'hidden' as const };
+const rowS = { flexDirection: 'row' as const, alignItems: 'center' as const, paddingHorizontal: 10, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#E2E2DF', gap: 6 };

@@ -31,7 +31,7 @@ const PRIO_LABELS: Record<PrioriteSAV, string> = {
 };
 const PRIO_COLORS: Record<PrioriteSAV, { bg: string; text: string; border: string }> = {
   basse:   { bg: '#D4EDDA', text: '#155724', border: '#27AE60' },
-  normale: { bg: '#F2E4E1', text: '#5C1F2E', border: '#5C1F2E' },
+  normale: { bg: '#EBEBE8', text: '#141414', border: '#141414' },
   haute:   { bg: '#FFF3CD', text: '#856404', border: '#F59E0B' },
   urgente: { bg: '#FEF2F2', text: '#991B1B', border: '#E74C3C' },
 };
@@ -266,7 +266,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
         style={{ width: '100%', height: '100%' }}
       >
         {isPdf(uri) ? (
-          <View style={{ width: size, height: size, borderRadius: 6, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: size, height: size, borderRadius: 6, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }}>
             <Ico e="📄" size={16} />
           </View>
         ) : (
@@ -402,7 +402,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 6 }}>
                   <Pressable
                     onPress={() => setAssigne(undefined)}
-                    style={[styles.statutChip, !ticket.assigneA && { backgroundColor: '#5C1F2E' }]}
+                    style={[styles.statutChip, !ticket.assigneA && { backgroundColor: '#141414' }]}
                   >
                     <Text style={[styles.statutChipText, !ticket.assigneA && { color: '#fff', fontWeight: '700' }]}>Non assigné</Text>
                   </Pressable>
@@ -412,7 +412,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                       <Pressable
                         key={emp.id}
                         onPress={() => setAssigne(emp.id)}
-                        style={[styles.statutChip, active && { backgroundColor: '#5C1F2E' }]}
+                        style={[styles.statutChip, active && { backgroundColor: '#141414' }]}
                       >
                         <Text style={[styles.statutChipText, active && { color: '#fff', fontWeight: '700' }]}>{emp.prenom}</Text>
                       </Pressable>
@@ -541,7 +541,7 @@ export function ModalSAVDetail({ visible, ticketId, currentAuthorNom, mode, empl
                 {pendingCommentPhoto && (
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                     {renderThumb(pendingCommentPhoto, 60, () => setPendingCommentPhoto(null))}
-                    <Text style={{ fontSize: 11, color: '#6E5F54' }}>Photo prête</Text>
+                    <Text style={{ fontSize: 11, color: '#6A6A68' }}>Photo prête</Text>
                   </View>
                 )}
                 <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -610,63 +610,63 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center',
     paddingHorizontal: 16, paddingVertical: 14,
-    borderBottomWidth: 1, borderBottomColor: '#EDE2D6',
-    backgroundColor: '#5C1F2E',
+    borderBottomWidth: 1, borderBottomColor: '#E2E2DF',
+    backgroundColor: '#141414',
   },
   headerTitle: { color: '#fff', fontSize: 16, fontWeight: '800' },
   headerSub: { color: '#FFFFFF', fontSize: 11, fontWeight: '600', marginTop: 2, fontStyle: 'italic' },
   closeBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' },
-  closeBtnText: { color: '#5C1F2E', fontSize: 14, fontWeight: '800' },
-  card: { backgroundColor: '#fff', borderRadius: 20, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#EDE2D6' },
-  sectionTitle: { fontSize: 13, fontWeight: '800', color: '#5C1F2E', marginBottom: 8 },
-  objet: { flex: 1, fontSize: 16, fontWeight: '800', color: '#2B1D14' },
-  description: { fontSize: 13, color: '#5C1F2E', marginTop: 6, lineHeight: 19 },
-  meta: { fontSize: 11, color: '#6E5F54', marginTop: 6 },
-  empty: { fontSize: 12, color: '#9A8C80', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
+  closeBtnText: { color: '#141414', fontSize: 14, fontWeight: '800' },
+  card: { backgroundColor: '#fff', borderRadius: 20, padding: 12, marginBottom: 10, borderWidth: 1, borderColor: '#E2E2DF' },
+  sectionTitle: { fontSize: 13, fontWeight: '800', color: '#141414', marginBottom: 8 },
+  objet: { flex: 1, fontSize: 16, fontWeight: '800', color: '#141414' },
+  description: { fontSize: 13, color: '#141414', marginTop: 6, lineHeight: 19 },
+  meta: { fontSize: 11, color: '#6A6A68', marginTop: 6 },
+  empty: { fontSize: 12, color: '#959593', fontStyle: 'italic', textAlign: 'center', paddingVertical: 8 },
   badge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12, borderWidth: 1, borderColor: 'transparent' },
   badgeText: { fontSize: 11, fontWeight: '700' },
-  label: { fontSize: 12, fontWeight: '700', color: '#6E5F54', marginBottom: 4, marginTop: 6 },
+  label: { fontSize: 12, fontWeight: '700', color: '#6A6A68', marginBottom: 4, marginTop: 6 },
   input: {
-    backgroundColor: '#FAF5EF', borderRadius: 8,
+    backgroundColor: '#F4F4F2', borderRadius: 8,
     paddingHorizontal: 12, paddingVertical: 10,
-    fontSize: 14, color: '#2B1D14',
-    borderWidth: 1, borderColor: '#EDE2D6',
+    fontSize: 14, color: '#141414',
+    borderWidth: 1, borderColor: '#E2E2DF',
   },
   prioChip: {
     paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: 14, borderWidth: 1, borderColor: '#EDE2D6',
+    borderRadius: 14, borderWidth: 1, borderColor: '#E2E2DF',
     backgroundColor: '#fff',
   },
-  prioChipText: { fontSize: 11, color: '#6E5F54', fontWeight: '600' },
+  prioChipText: { fontSize: 11, color: '#6A6A68', fontWeight: '600' },
   statutChip: {
     paddingHorizontal: 10, paddingVertical: 6,
-    borderRadius: 14, backgroundColor: '#F1E7DC',
+    borderRadius: 14, backgroundColor: '#EBEBE8',
   },
-  statutChipText: { fontSize: 11, color: '#6E5F54', fontWeight: '600' },
-  commentRow: { backgroundColor: '#FAF5EF', borderRadius: 8, padding: 10 },
-  commentAuteur: { fontSize: 12, fontWeight: '700', color: '#5C1F2E' },
-  commentDate: { fontSize: 10, color: '#6E5F54' },
-  commentTexte: { fontSize: 13, color: '#5C1F2E', marginTop: 4, lineHeight: 18 },
+  statutChipText: { fontSize: 11, color: '#6A6A68', fontWeight: '600' },
+  commentRow: { backgroundColor: '#F4F4F2', borderRadius: 8, padding: 10 },
+  commentAuteur: { fontSize: 12, fontWeight: '700', color: '#141414' },
+  commentDate: { fontSize: 10, color: '#6A6A68' },
+  commentTexte: { fontSize: 13, color: '#141414', marginTop: 4, lineHeight: 18 },
   btn: { flex: 1, borderRadius: 10, paddingVertical: 12, alignItems: 'center' },
-  btnPrimary: { backgroundColor: '#5C1F2E' },
+  btnPrimary: { backgroundColor: '#141414' },
   btnPrimaryText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  btnSecondary: { backgroundColor: '#F1E7DC', borderWidth: 1, borderColor: '#EDE2D6' },
-  btnSecondaryText: { color: '#5C1F2E', fontSize: 13, fontWeight: '600' },
+  btnSecondary: { backgroundColor: '#EBEBE8', borderWidth: 1, borderColor: '#E2E2DF' },
+  btnSecondaryText: { color: '#141414', fontSize: 13, fontWeight: '600' },
   btnDanger: { backgroundColor: '#FEF2F2', borderWidth: 1, borderColor: '#E74C3C' },
   btnDangerText: { color: '#DC2626', fontSize: 13, fontWeight: '700' },
   fichierRow: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     paddingVertical: 10, paddingHorizontal: 12,
-    borderRadius: 8, backgroundColor: '#FAF5EF',
-    borderWidth: 1, borderColor: '#EDE2D6',
+    borderRadius: 8, backgroundColor: '#F4F4F2',
+    borderWidth: 1, borderColor: '#E2E2DF',
   },
-  fichierNom: { flex: 1, fontSize: 13, color: '#5C1F2E', fontWeight: '600' },
+  fichierNom: { flex: 1, fontSize: 13, color: '#141414', fontWeight: '600' },
   actionsRow: { flexDirection: 'row', gap: 6, marginTop: 8 },
   actionBtn: { flex: 1, paddingVertical: 10, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   actionResolu: { backgroundColor: '#E8F5E9' },
   actionResoluText: { color: '#2E7D32', fontSize: 11, fontWeight: '700' },
   actionEnCours: { backgroundColor: '#FFF9C4' },
   actionEnCoursText: { color: '#F57F17', fontSize: 11, fontWeight: '700' },
-  actionEdit: { backgroundColor: '#F1E7DC' },
+  actionEdit: { backgroundColor: '#EBEBE8' },
   actionDelete: { backgroundColor: '#FFEBEE' },
 });

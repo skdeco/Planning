@@ -152,7 +152,7 @@ export function ImportExcel({ visible, onClose }: Props) {
             statut: (row['Statut'] || row['statut'] || 'actif') as any,
             visibleSurPlanning: true,
             employeIds: [],
-            couleur: '#5C1F2E',
+            couleur: '#141414',
           });
           count++;
         });
@@ -172,9 +172,9 @@ export function ImportExcel({ visible, onClose }: Props) {
         <View style={{ backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, maxHeight: '92%', flex: 1, padding: 16 }}>
           {/* Header */}
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={{ fontSize: 20, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14' }}>Import Excel</Text>
-            <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#F1E7DC', alignItems: 'center', justifyContent: 'center' }} onPress={() => { onClose(); setPreview(null); setResult(null); }}>
-              <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '700' }}>✕</Text>
+            <Text style={{ fontSize: 20, fontFamily: 'Manrope_500Medium', color: '#141414' }}>Import Excel</Text>
+            <Pressable style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: '#EBEBE8', alignItems: 'center', justifyContent: 'center' }} onPress={() => { onClose(); setPreview(null); setResult(null); }}>
+              <Text style={{ fontSize: 14, color: '#6A6A68', fontWeight: '700' }}>✕</Text>
             </Pressable>
           </View>
 
@@ -182,26 +182,26 @@ export function ImportExcel({ visible, onClose }: Props) {
           <View style={{ flexDirection: 'row', gap: 6, marginBottom: 12 }}>
             {(['employes', 'articles', 'chantiers'] as ImportType[]).map(t => (
               <Pressable key={t}
-                style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: importType === t ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: importType === t ? '#5C1F2E' : '#EDE2D6' }}
+                style={{ flex: 1, paddingVertical: 8, borderRadius: 8, alignItems: 'center', backgroundColor: importType === t ? '#141414' : '#EBEBE8', borderWidth: 1, borderColor: importType === t ? '#141414' : '#E2E2DF' }}
                 onPress={() => { setImportType(t); setPreview(null); setResult(null); }}>
-                <Text style={{ fontSize: 12, fontWeight: '600', color: importType === t ? '#fff' : '#6E5F54' }}>{TEMPLATES[t].label}</Text>
+                <Text style={{ fontSize: 12, fontWeight: '600', color: importType === t ? '#fff' : '#6A6A68' }}>{TEMPLATES[t].label}</Text>
               </Pressable>
             ))}
           </View>
 
-          <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 8 }}>{tpl.description}</Text>
+          <Text style={{ fontSize: 12, color: '#6A6A68', marginBottom: 8 }}>{tpl.description}</Text>
 
           {/* Colonnes attendues */}
-          <Text style={{ fontSize: 11, fontWeight: '600', color: '#5C1F2E', marginBottom: 4 }}>Colonnes attendues :</Text>
-          <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 10 }}>{tpl.colonnes.join(' | ')}</Text>
+          <Text style={{ fontSize: 11, fontWeight: '600', color: '#141414', marginBottom: 4 }}>Colonnes attendues :</Text>
+          <Text style={{ fontSize: 11, color: '#6A6A68', marginBottom: 10 }}>{tpl.colonnes.join(' | ')}</Text>
 
           {/* Actions */}
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12 }}>
-            <Pressable style={{ flex: 1, backgroundColor: '#F2E4E1', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
+            <Pressable style={{ flex: 1, backgroundColor: '#EBEBE8', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
               onPress={handleDownloadTemplate}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>Télécharger modèle</Text>
+              <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414' }}>Télécharger modèle</Text>
             </Pressable>
-            <Pressable style={{ flex: 1, backgroundColor: '#5C1F2E', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
+            <Pressable style={{ flex: 1, backgroundColor: '#141414', paddingVertical: 10, borderRadius: 8, alignItems: 'center' }}
               onPress={handlePickFile}>
               <Text style={{ fontSize: 13, fontWeight: '600', color: '#fff' }}>Charger un fichier</Text>
             </Pressable>
@@ -217,26 +217,26 @@ export function ImportExcel({ visible, onClose }: Props) {
           {/* Preview */}
           {preview && preview.length > 0 && (
             <>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: '#2B1D14', marginBottom: 6 }}>Aperçu ({preview.length} lignes)</Text>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: '#141414', marginBottom: 6 }}>Aperçu ({preview.length} lignes)</Text>
               <ScrollView style={{ maxHeight: 200, marginBottom: 10 }}>
                 <ScrollView horizontal>
                   <View>
                     {/* Header */}
-                    <View style={{ flexDirection: 'row', backgroundColor: '#5C1F2E', borderRadius: 4 }}>
+                    <View style={{ flexDirection: 'row', backgroundColor: '#141414', borderRadius: 4 }}>
                       {Object.keys(preview[0]).map(key => (
                         <Text key={key} style={{ width: 100, paddingHorizontal: 6, paddingVertical: 4, fontSize: 10, fontWeight: '700', color: '#fff' }} numberOfLines={1}>{key}</Text>
                       ))}
                     </View>
                     {/* Rows */}
                     {preview.slice(0, 10).map((row, i) => (
-                      <View key={i} style={{ flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#EDE2D6', backgroundColor: i % 2 === 0 ? '#FAFBFC' : '#fff' }}>
+                      <View key={i} style={{ flexDirection: 'row', borderBottomWidth: 0.5, borderBottomColor: '#E2E2DF', backgroundColor: i % 2 === 0 ? '#FAFBFC' : '#fff' }}>
                         {Object.values(row).map((val, j) => (
-                          <Text key={j} style={{ width: 100, paddingHorizontal: 6, paddingVertical: 4, fontSize: 10, color: '#2B1D14' }} numberOfLines={1}>{String(val)}</Text>
+                          <Text key={j} style={{ width: 100, paddingHorizontal: 6, paddingVertical: 4, fontSize: 10, color: '#141414' }} numberOfLines={1}>{String(val)}</Text>
                         ))}
                       </View>
                     ))}
                     {preview.length > 10 && (
-                      <Text style={{ fontSize: 10, color: '#6E5F54', padding: 6 }}>... et {preview.length - 10} autres lignes</Text>
+                      <Text style={{ fontSize: 10, color: '#6A6A68', padding: 6 }}>... et {preview.length - 10} autres lignes</Text>
                     )}
                   </View>
                 </ScrollView>

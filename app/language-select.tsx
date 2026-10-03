@@ -21,7 +21,7 @@ export default function LanguageSelectScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FAF5EF" />
+      <StatusBar barStyle="dark-content" backgroundColor="#F4F4F2" />
 
       <View style={styles.header}>
         <Text style={styles.logo}>SK DECO</Text>
@@ -65,7 +65,7 @@ export default function LanguageSelectScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     paddingHorizontal: 24,
   },
   header: {
@@ -76,20 +76,20 @@ const styles = StyleSheet.create({
   logo: {
     fontSize: 28,
     fontWeight: '800',
-    color: '#5C1F2E',
+    color: '#141414',
     letterSpacing: 2,
     marginBottom: 24,
   },
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
     textAlign: 'center',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#6E5F54',
+    color: '#6A6A68',
     textAlign: 'center',
   },
   languageList: {
@@ -112,7 +112,7 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   langItemSelected: {
-    borderColor: '#5C1F2E',
+    borderColor: '#141414',
     backgroundColor: '#EEF2FF',
   },
   flag: {
@@ -123,16 +123,16 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 17,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
   },
   langLabelSelected: {
-    color: '#5C1F2E',
+    color: '#141414',
   },
   checkmark: {
     width: 26,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,12 +142,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   continueBtn: {
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: 'center',
     marginBottom: 32,
-    shadowColor: '#5C1F2E',
+    shadowColor: '#141414',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,

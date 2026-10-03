@@ -105,7 +105,7 @@ export function EmptyState({
       {IconComponent ? (
         <View style={styles.iconWrap}>
           <View style={styles.pill}>
-            <IconComponent size={34} color="#9A8C80" strokeWidth={1.6} />
+            <IconComponent size={34} color="#959593" strokeWidth={1.6} />
           </View>
         </View>
       ) : icon !== undefined ? (

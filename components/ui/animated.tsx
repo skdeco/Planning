@@ -139,7 +139,7 @@ export function Skeleton({ width, height, borderRadius = 8, style }: SkeletonPro
   return (
     <Animated.View
       style={[
-        { width, height, borderRadius, backgroundColor: '#EDE2D6' },
+        { width, height, borderRadius, backgroundColor: '#E2E2DF' },
         animatedStyle,
         style,
       ]}
@@ -155,7 +155,7 @@ interface ProgressBarProps {
   height?: number;
 }
 
-export function ProgressBar({ progress, color = '#5C1F2E', backgroundColor = '#EDE2D6', height = 6 }: ProgressBarProps) {
+export function ProgressBar({ progress, color = '#141414', backgroundColor = '#E2E2DF', height = 6 }: ProgressBarProps) {
   const width = useSharedValue(0);
 
   useEffect(() => {

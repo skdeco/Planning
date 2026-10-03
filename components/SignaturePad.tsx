@@ -22,20 +22,20 @@ export function SignaturePad({ width = 300, height = 150, onCancel, onSave }: Si
           width, height,
           borderRadius: 8,
           borderWidth: 2,
-          borderColor: '#5C1F2E',
+          borderColor: '#141414',
           borderStyle: 'dashed',
-          backgroundColor: '#F1E7DC',
+          backgroundColor: '#EBEBE8',
           alignItems: 'center',
           justifyContent: 'center',
         }}>
-          <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }}>Signature uniquement disponible sur mobile
+          <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }}>Signature uniquement disponible sur mobile
           </Text>
         </View>
         <Pressable
           onPress={onCancel}
-          style={{ marginTop: 12, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#F1E7DC', borderRadius: 8 }}
+          style={{ marginTop: 12, paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#EBEBE8', borderRadius: 8 }}
         >
-          <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '600' }}>Fermer</Text>
+          <Text style={{ fontSize: 14, color: '#6A6A68', fontWeight: '600' }}>Fermer</Text>
         </Pressable>
       </View>
     );
@@ -103,9 +103,9 @@ export function SignaturePad({ width = 300, height = 150, onCancel, onSave }: Si
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 16 }}>
         <Pressable
           onPress={onCancel}
-          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#F1E7DC', borderRadius: 8 }}
+          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#EBEBE8', borderRadius: 8 }}
         >
-          <Text style={{ fontSize: 14, color: '#6E5F54', fontWeight: '600' }}>Annuler</Text>
+          <Text style={{ fontSize: 14, color: '#6A6A68', fontWeight: '600' }}>Annuler</Text>
         </Pressable>
         <Pressable
           onPress={handleClear}
@@ -115,7 +115,7 @@ export function SignaturePad({ width = 300, height = 150, onCancel, onSave }: Si
         </Pressable>
         <Pressable
           onPress={handleConfirm}
-          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#5C1F2E', borderRadius: 8 }}
+          style={{ paddingHorizontal: 20, paddingVertical: 10, backgroundColor: '#141414', borderRadius: 8 }}
         >
           <Text style={{ fontSize: 14, color: '#fff', fontWeight: '700' }}>Valider</Text>
         </Pressable>

@@ -78,7 +78,7 @@ export default function EmployesUsine() {
   const enAttente = conges.filter(c => c.statut === 'en_attente');
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
         <EnTete titre={tm("Employés{0}", usine ? ` · ${usine.nom}` : '')} retour={() => router.back()} />
         {!!message && <Carte><Text style={{ fontSize: 14, fontWeight: '600', color: DS.primary }} selectable>{message}</Text></Carte>}

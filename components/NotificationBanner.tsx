@@ -55,7 +55,7 @@ export function NotificationBanner() {
             <ScrollView style={styles.notifList}>
               {[...notifications].reverse().map(notif => {
                 const icon = ACTION_ICONS[notif.action] || '📌';
-                const color = ACTION_COLORS[notif.action] || '#6E5F54';
+                const color = ACTION_COLORS[notif.action] || '#6A6A68';
                 const date = new Date(notif.timestamp);
                 const timeStr = `${date.toLocaleDateString('fr-FR')} ${date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}`;
                 return (
@@ -84,7 +84,7 @@ const styles = StyleSheet.create({
   banner: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     paddingHorizontal: 16,
     paddingVertical: 10,
     gap: 8,
@@ -130,15 +130,15 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#EDE2D6',
+    borderBottomColor: '#E2E2DF',
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Fraunces_600SemiBold',
-    color: '#2B1D14',
+    fontFamily: 'Manrope_500Medium',
+    color: '#141414',
   },
   closeBtn: {
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 6,
@@ -171,11 +171,11 @@ const styles = StyleSheet.create({
   notifDesc: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
     marginBottom: 2,
   },
   notifMeta: {
     fontSize: 11,
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
 });

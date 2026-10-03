@@ -126,7 +126,7 @@ export function Onboarding({ visible, role, onComplete }: OnboardingProps) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -138,7 +138,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   skipText: {
-    color: '#F1E7DC',
+    color: '#EBEBE8',
     fontSize: 15,
     fontWeight: '500',
     opacity: 0.7,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     borderRadius: 4,
   },
   dotActive: {
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     width: 24,
   },
   dotInactive: {
@@ -192,7 +192,7 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   nextBtn: {
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
     borderRadius: 14,
     paddingVertical: 16,
     paddingHorizontal: 48,
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   nextText: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontSize: 16,
     fontWeight: '700',
   },

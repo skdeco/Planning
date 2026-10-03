@@ -540,7 +540,7 @@ export default function MaterielScreen() {
         <View style={styles.listeCardHeader}>
           {showEmploye && employe ? (
             <View style={styles.employeHeader}>
-              <View style={[styles.employeAvatar, { backgroundColor: employe.couleur || '#5C1F2E' }]}>
+              <View style={[styles.employeAvatar, { backgroundColor: employe.couleur || '#141414' }]}>
                 <Text style={styles.employeAvatarText}>
                   {employe.prenom?.[0] || '?'}{employe.nom?.[0] || '?'}
                 </Text>
@@ -586,17 +586,17 @@ export default function MaterielScreen() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                     {!dispo && !loading && (
                       <Pressable
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#F2E4E1', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, backgroundColor: '#EBEBE8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}
                         onPress={() => handleCheckDispo(item.id, item.texte)}
                       >
-                        <Text style={{ fontSize: 11, color: '#5C1F2E', fontWeight: '600' }}>{t.materiel.checkAvailability}</Text>
+                        <Text style={{ fontSize: 11, color: '#141414', fontWeight: '600' }}>{t.materiel.checkAvailability}</Text>
                       </Pressable>
                     )}
-                    {loading && <ActivityIndicator size="small" color="#5C1F2E" />}
+                    {loading && <ActivityIndicator size="small" color="#141414" />}
                     {dispo && !loading && (
                       <Pressable
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6,
-                          backgroundColor: dispo.status === 'en_stock' ? '#D4EDDA' : dispo.status === 'stock_limite' ? '#FFF3CD' : dispo.status === 'rupture' ? '#FDECEA' : '#F1E7DC'
+                          backgroundColor: dispo.status === 'en_stock' ? '#D4EDDA' : dispo.status === 'stock_limite' ? '#FFF3CD' : dispo.status === 'rupture' ? '#FDECEA' : '#EBEBE8'
                         }}
                         onPress={() => {
                           if (dispo.lien) {
@@ -607,7 +607,7 @@ export default function MaterielScreen() {
                         onLongPress={() => handleCheckDispo(item.id, item.texte)}
                       >
                         <Text style={{ fontSize: 11, fontWeight: '600',
-                          color: dispo.status === 'en_stock' ? '#155724' : dispo.status === 'stock_limite' ? '#856404' : dispo.status === 'rupture' ? '#B71C1C' : '#6E5F54'
+                          color: dispo.status === 'en_stock' ? '#155724' : dispo.status === 'stock_limite' ? '#856404' : dispo.status === 'rupture' ? '#B71C1C' : '#6A6A68'
                         }}>
                           {dispo.status === 'en_stock' ? '🟢' : dispo.status === 'stock_limite' ? '🟡' : dispo.status === 'rupture' ? '🔴' : '⚪'}{' '}
                           {dispo.status === 'en_stock' ? t.ui.enStock
@@ -723,7 +723,7 @@ export default function MaterielScreen() {
         return (
           <View key={chantier.id} style={styles.chantierSection}>
             <View style={styles.chantierHeader}>
-              <View style={[styles.chantierDot, { backgroundColor: chantier.couleur || '#5C1F2E' }]} />
+              <View style={[styles.chantierDot, { backgroundColor: chantier.couleur || '#141414' }]} />
               <Text style={styles.chantierNom} numberOfLines={1}>{chantier.nom}</Text>
             </View>
             <View style={styles.listeCard}>
@@ -752,8 +752,8 @@ export default function MaterielScreen() {
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                         {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
                         <Text style={styles.itemTexte} numberOfLines={1}>{item.texte}</Text>
-                        <Text style={{ fontSize: 12, color: '#9A8C80' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
-                        {(isMine || isAdmin || isAcheteur) && <Pencil size={13} color="#9A8C80" strokeWidth={2} />}
+                        <Text style={{ fontSize: 12, color: '#959593' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
+                        {(isMine || isAdmin || isAcheteur) && <Pencil size={13} color="#959593" strokeWidth={2} />}
                       </View>
                       {/* Fournisseur masqué dans la vue employé */}
                       {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
@@ -826,7 +826,7 @@ export default function MaterielScreen() {
             <View style={[styles.chantierHeader, { flexDirection: 'column', alignItems: 'stretch', gap: 4 }]}>
               <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
                 <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <View style={[styles.chantierDot, { backgroundColor: chantier.couleur || '#5C1F2E' }]} />
+                  <View style={[styles.chantierDot, { backgroundColor: chantier.couleur || '#141414' }]} />
                   <Text style={styles.chantierNom} numberOfLines={1}>{chantier.nom}</Text>
                 </View>
                 <View style={{ flexDirection: 'row', gap: 6 }}>
@@ -886,11 +886,11 @@ export default function MaterielScreen() {
                         >
                           {item.quantite ? <Text style={styles.itemQuantite}>{item.quantite}</Text> : null}
                           <Text style={styles.itemTexte} numberOfLines={1}>{item.texte}</Text>
-                          <Text style={{ fontSize: 12, color: '#9A8C80' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
-                          <Pencil size={13} color="#9A8C80" strokeWidth={2} />
+                          <Text style={{ fontSize: 12, color: '#959593' }}>({item.ajoutePar || emp?.prenom || 'Admin'})</Text>
+                          <Pencil size={13} color="#959593" strokeWidth={2} />
                         </Pressable>
                         <Pressable onPress={() => setFournisseurPickerModal({ listeId: item.listeId, itemId: item.id, nom: item.texte, currentFournisseur: item.fournisseur || '' })}>
-                          <Text style={{ fontSize: 12.5, color: '#5C1F2E', fontWeight: '600' }}>{item.fournisseur ? `${item.fournisseur}` : 'Assigner fournisseur'}</Text>
+                          <Text style={{ fontSize: 12.5, color: '#141414', fontWeight: '600' }}>{item.fournisseur ? `${item.fournisseur}` : 'Assigner fournisseur'}</Text>
                         </Pressable>
                         {item.commentaire ? <Text style={styles.itemCommentaire}>{item.commentaire}</Text> : null}
                       </View>
@@ -906,20 +906,20 @@ export default function MaterielScreen() {
                   <>
                     {fournisseurs.map(f => (
                       <View key={f} style={{ marginBottom: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F1E7DC', borderRadius: 6, marginBottom: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#EBEBE8', borderRadius: 6, marginBottom: 4 }}>
                           <Ico e="🏪" size={14} />
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#5C1F2E' }}>{f}</Text>
-                          <Text style={{ fontSize: 10, color: '#6E5F54' }}>({parFournisseur[f].length})</Text>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#141414' }}>{f}</Text>
+                          <Text style={{ fontSize: 10, color: '#6A6A68' }}>({parFournisseur[f].length})</Text>
                         </View>
                         {parFournisseur[f].map(renderItemAcheteur)}
                       </View>
                     ))}
                     {sansFournisseur.length > 0 && fournisseurs.length > 0 && (
                       <View style={{ marginBottom: 8 }}>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#F1E7DC', borderRadius: 6, marginBottom: 4 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6, paddingHorizontal: 4, backgroundColor: '#EBEBE8', borderRadius: 6, marginBottom: 4 }}>
                           <Ico e="📦" size={14} />
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#6E5F54' }}>{t.materiel.noFournisseur}</Text>
-                          <Text style={{ fontSize: 10, color: '#6E5F54' }}>({sansFournisseur.length})</Text>
+                          <Text style={{ fontSize: 12, fontWeight: '700', color: '#6A6A68' }}>{t.materiel.noFournisseur}</Text>
+                          <Text style={{ fontSize: 10, color: '#6A6A68' }}>({sansFournisseur.length})</Text>
                         </View>
                       </View>
                     )}
@@ -985,10 +985,10 @@ export default function MaterielScreen() {
 
       {/* Bouton catalogue — admin/acheteur */}
       {isAcheteur && (
-        <Pressable style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 12, marginBottom: 6, backgroundColor: '#F2E4E1', paddingVertical: 8, borderRadius: 8 }}
+        <Pressable style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginHorizontal: 12, marginBottom: 6, backgroundColor: '#EBEBE8', paddingVertical: 8, borderRadius: 8 }}
           onPress={() => setShowCatalogue(true)}>
           <Ico e="📦" size={16} />
-          <Text style={{ fontSize: 13, fontWeight: '600', color: '#5C1F2E' }}>Gérer le catalogue ({(data.catalogueArticles || []).length} articles)</Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414' }}>Gérer le catalogue ({(data.catalogueArticles || []).length} articles)</Text>
         </Pressable>
       )}
 
@@ -1016,8 +1016,8 @@ export default function MaterielScreen() {
       {/* Bouton gérer fournisseurs (admin) */}
       {viewMode === 'acheteur' && isAdmin && (
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
-          <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, backgroundColor: '#F1E7DC', borderRadius: 8, alignSelf: 'flex-start' }} onPress={() => setShowFournisseurModal(true)}>
-            <Text style={{ fontSize: 12, color: '#6E5F54' }}>{t.materiel.manageFournisseurs}</Text>
+          <Pressable style={{ flexDirection: 'row', alignItems: 'center', gap: 6, padding: 8, backgroundColor: '#EBEBE8', borderRadius: 8, alignSelf: 'flex-start' }} onPress={() => setShowFournisseurModal(true)}>
+            <Text style={{ fontSize: 12, color: '#6A6A68' }}>{t.materiel.manageFournisseurs}</Text>
           </Pressable>
         </View>
       )}
@@ -1026,7 +1026,7 @@ export default function MaterielScreen() {
       {filterChantier ? (
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
           <Pressable
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: '#5C1F2E', borderRadius: 999, alignSelf: 'flex-start' }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, paddingHorizontal: 14, backgroundColor: '#141414', borderRadius: 999, alignSelf: 'flex-start' }}
             onPress={() => setFilterChantier('')}
           >
             <Text style={{ fontSize: 13, fontWeight: '600', color: '#FFFFFF' }}>
@@ -1042,13 +1042,13 @@ export default function MaterielScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder={t.materiel.searchPlaceholder}
-          placeholderTextColor="#9A8C80"
+          placeholderTextColor="#959593"
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
         {searchQuery.length > 0 && (
           <Pressable onPress={() => setSearchQuery('')} style={styles.searchClear}>
-            <Text style={{ color: '#9A8C80', fontSize: 16 }}>&#10005;</Text>
+            <Text style={{ color: '#959593', fontSize: 16 }}>&#10005;</Text>
           </Pressable>
         )}
       </View>
@@ -1111,7 +1111,7 @@ export default function MaterielScreen() {
             <TextInput
               style={styles.input}
               placeholder={t.materiel.quantityPlaceholder}
-              placeholderTextColor="#9A8C80"
+              placeholderTextColor="#959593"
               value={editQuantite}
               onChangeText={setEditQuantite}
               returnKeyType="next"
@@ -1121,7 +1121,7 @@ export default function MaterielScreen() {
             <TextInput
               style={[styles.input, styles.inputMultiline]}
               placeholder={t.materiel.commentExample}
-              placeholderTextColor="#9A8C80"
+              placeholderTextColor="#959593"
               value={editCommentaire}
               onChangeText={setEditCommentaire}
               multiline
@@ -1171,14 +1171,14 @@ export default function MaterielScreen() {
               ).slice(0, 5);
               if (suggestions.length === 0) return null;
               return (
-                <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 8, marginBottom: 6 }}>
+                <View style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E2DF', borderRadius: 8, marginBottom: 6 }}>
                   {suggestions.map(a => (
-                    <Pressable key={a.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#F1E7DC' }}
+                    <Pressable key={a.id} style={{ paddingHorizontal: 12, paddingVertical: 8, borderBottomWidth: 0.5, borderBottomColor: '#EBEBE8' }}
                       onPress={() => { setNewArticle(a.nom + (a.reference ? ` (${a.reference})` : '')); if (a.fournisseur) setNewFournisseur(a.fournisseur); }}>
-                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#2B1D14' }}>{a.nom}</Text>
+                      <Text style={{ fontSize: 13, fontWeight: '600', color: '#141414' }}>{a.nom}</Text>
                       <View style={{ flexDirection: 'row', gap: 8 }}>
-                        {a.reference && <Text style={{ fontSize: 10, color: '#6E5F54' }}>Réf: {a.reference}</Text>}
-                        {a.description && <Text style={{ fontSize: 10, color: '#9A8C80' }}>{a.description}</Text>}
+                        {a.reference && <Text style={{ fontSize: 10, color: '#6A6A68' }}>Réf: {a.reference}</Text>}
+                        {a.description && <Text style={{ fontSize: 10, color: '#959593' }}>{a.description}</Text>}
                       </View>
                     </Pressable>
                   ))}
@@ -1212,22 +1212,22 @@ export default function MaterielScreen() {
                 <Text style={styles.inputLabel}>Fournisseur ({t.common.optional})</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }} contentContainerStyle={{ gap: 6 }}>
                   <Pressable
-                    style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: !newFournisseur ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: !newFournisseur ? '#5C1F2E' : '#EDE2D6' }}
+                    style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: !newFournisseur ? '#141414' : '#EBEBE8', borderWidth: 1, borderColor: !newFournisseur ? '#141414' : '#E2E2DF' }}
                     onPress={() => setNewFournisseur('')}>
-                    <Text style={{ fontSize: 12, fontWeight: '600', color: !newFournisseur ? '#fff' : '#6E5F54' }}>{t.common.none}</Text>
+                    <Text style={{ fontSize: 12, fontWeight: '600', color: !newFournisseur ? '#fff' : '#6A6A68' }}>{t.common.none}</Text>
                   </Pressable>
                   {fournisseursList.map(f => (
                     <Pressable key={f}
-                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: newFournisseur === f ? '#5C1F2E' : '#F1E7DC', borderWidth: 1, borderColor: newFournisseur === f ? '#5C1F2E' : '#EDE2D6' }}
+                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, backgroundColor: newFournisseur === f ? '#141414' : '#EBEBE8', borderWidth: 1, borderColor: newFournisseur === f ? '#141414' : '#E2E2DF' }}
                       onPress={() => setNewFournisseur(f)}>
-                      <Text style={{ fontSize: 12, fontWeight: '600', color: newFournisseur === f ? '#fff' : '#2B1D14' }}>{f}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '600', color: newFournisseur === f ? '#fff' : '#141414' }}>{f}</Text>
                     </Pressable>
                   ))}
                   {isAdmin && (
                     <Pressable
-                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#EDE2D6', borderStyle: 'dashed' }}
+                      style={{ paddingHorizontal: 10, paddingVertical: 6, borderRadius: 16, borderWidth: 1, borderColor: '#E2E2DF', borderStyle: 'dashed' }}
                       onPress={() => setShowFournisseurModal(true)}>
-                      <Text style={{ fontSize: 12, color: '#6E5F54' }}>{t.common.addBtn}</Text>
+                      <Text style={{ fontSize: 12, color: '#6A6A68' }}>{t.common.addBtn}</Text>
                     </Pressable>
                   )}
                 </ScrollView>
@@ -1266,23 +1266,23 @@ export default function MaterielScreen() {
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <Text style={styles.modalTitle}>{t.materiel.fournisseur}</Text>
               <Pressable onPress={() => setFournisseurPickerModal(null)}>
-                <Text style={{ fontSize: 18, color: '#6E5F54' }}>✕</Text>
+                <Text style={{ fontSize: 18, color: '#6A6A68' }}>✕</Text>
               </Pressable>
             </View>
-            <Text style={{ fontSize: 12, color: '#6E5F54', marginBottom: 16 }}>
-              Article : <Text style={{ fontWeight: '700', color: '#2B1D14' }}>{fournisseurPickerModal?.nom}</Text>
+            <Text style={{ fontSize: 12, color: '#6A6A68', marginBottom: 16 }}>
+              Article : <Text style={{ fontWeight: '700', color: '#141414' }}>{fournisseurPickerModal?.nom}</Text>
             </Text>
             <ScrollView style={{ maxHeight: 300 }}>
               <Pressable
-                style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: !fournisseurPickerModal?.currentFournisseur ? '#5C1F2E' : '#F1E7DC' }}
+                style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: !fournisseurPickerModal?.currentFournisseur ? '#141414' : '#EBEBE8' }}
                 onPress={() => fournisseurPickerModal && handleChangeFournisseur(fournisseurPickerModal.listeId, fournisseurPickerModal.itemId, '')}>
-                <Text style={{ fontSize: 14, fontWeight: '600', color: !fournisseurPickerModal?.currentFournisseur ? '#fff' : '#6E5F54' }}>{t.common.none}</Text>
+                <Text style={{ fontSize: 14, fontWeight: '600', color: !fournisseurPickerModal?.currentFournisseur ? '#fff' : '#6A6A68' }}>{t.common.none}</Text>
               </Pressable>
               {fournisseursList.map(f => (
                 <Pressable key={f}
-                  style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: fournisseurPickerModal?.currentFournisseur === f ? '#5C1F2E' : '#F1E7DC' }}
+                  style={{ paddingVertical: 12, paddingHorizontal: 14, borderRadius: 8, marginBottom: 6, backgroundColor: fournisseurPickerModal?.currentFournisseur === f ? '#141414' : '#EBEBE8' }}
                   onPress={() => fournisseurPickerModal && handleChangeFournisseur(fournisseurPickerModal.listeId, fournisseurPickerModal.itemId, f)}>
-                  <Text style={{ fontSize: 14, fontWeight: '600', color: fournisseurPickerModal?.currentFournisseur === f ? '#fff' : '#2B1D14' }}>{f}</Text>
+                  <Text style={{ fontSize: 14, fontWeight: '600', color: fournisseurPickerModal?.currentFournisseur === f ? '#fff' : '#141414' }}>{f}</Text>
                 </Pressable>
               ))}
             </ScrollView>
@@ -1296,8 +1296,8 @@ export default function MaterielScreen() {
           <Pressable style={styles.modalContent} onPress={e => e.stopPropagation()}>
             <Text style={styles.modalTitle}>{t.materiel.partialBuy}</Text>
             <Text style={styles.modalSubtitle}>{partielModal?.nom}</Text>
-            <Text style={{ fontSize: 14, color: '#6E5F54', marginBottom: 12 }}>
-              Quantité demandée : <Text style={{ fontWeight: '700', color: '#5C1F2E' }}>{partielModal?.quantiteTotale}{partielModal?.quantiteUnite ? ` ${partielModal.quantiteUnite}` : ''}</Text>
+            <Text style={{ fontSize: 14, color: '#6A6A68', marginBottom: 12 }}>
+              Quantité demandée : <Text style={{ fontWeight: '700', color: '#141414' }}>{partielModal?.quantiteTotale}{partielModal?.quantiteUnite ? ` ${partielModal.quantiteUnite}` : ''}</Text>
             </Text>
 
             <Text style={styles.inputLabel}>{t.materiel.qtyBoughtLabel}</Text>
@@ -1310,7 +1310,7 @@ export default function MaterielScreen() {
               autoFocus
               onSubmitEditing={handleConfirmPartiel}
             />
-            <Text style={{ fontSize: 11, color: '#6E5F54', marginBottom: 12, fontStyle: 'italic' }}>
+            <Text style={{ fontSize: 11, color: '#6A6A68', marginBottom: 12, fontStyle: 'italic' }}>
               L'article restera à acheter avec la quantité restante, et un nouvel article "acheté" sera créé.
             </Text>
 
@@ -1336,77 +1336,77 @@ export default function MaterielScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 8 },
-  title: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14', flex: 1 },
-  badge: { backgroundColor: '#F2E4E1', borderRadius: 999, minWidth: 28, height: 26, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 9 },
-  badgeText: { color: '#5C1F2E', fontSize: 13, fontWeight: '700' },
-  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 10, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
-  searchInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#2B1D14' },
+  title: { fontFamily: 'Manrope_500Medium', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#141414', flex: 1 },
+  badge: { backgroundColor: '#EBEBE8', borderRadius: 999, minWidth: 28, height: 26, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 9 },
+  badgeText: { color: '#141414', fontSize: 13, fontWeight: '700' },
+  searchBar: { flexDirection: 'row' as const, alignItems: 'center' as const, marginHorizontal: 16, marginBottom: 10, backgroundColor: '#FFFFFF', borderRadius: 23, minHeight: 46, shadowColor: '#141414', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 6, elevation: 1 },
+  searchInput: { flex: 1, paddingHorizontal: 16, paddingVertical: 11, fontSize: 15, color: '#141414' },
   searchClear: { paddingHorizontal: 14, paddingVertical: 10 },
-  tabBar: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#F1E7DC', borderRadius: 999, padding: 3, gap: 2 },
+  tabBar: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#EBEBE8', borderRadius: 999, padding: 3, gap: 2 },
   tab: { flex: 1, height: 36, alignItems: 'center', justifyContent: 'center', borderRadius: 999 },
-  tabActive: { backgroundColor: '#fff', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
-  tabText: { fontSize: 13.5, color: '#2B1D14', fontWeight: '500' },
-  tabTextActive: { color: '#2B1D14', fontWeight: '600' },
+  tabActive: { backgroundColor: '#fff', shadowColor: '#141414', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
+  tabText: { fontSize: 13.5, color: '#141414', fontWeight: '500' },
+  tabTextActive: { color: '#141414', fontWeight: '600' },
   scroll: { flex: 1 },
   scrollContent: { padding: 16, paddingBottom: 110 },
   emptyState: { alignItems: 'center', paddingTop: 60 },
-  emptyStateText: { color: '#6E5F54', fontSize: 15 },
+  emptyStateText: { color: '#6A6A68', fontSize: 15 },
   chantierSection: { marginBottom: 18 },
   chantierHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 6, marginBottom: 8 },
-  chantierNom: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6E5F54' },
-  chantierAdresse: { fontSize: 12.5, color: '#9A8C80' },
+  chantierNom: { fontSize: 13, fontWeight: '600', letterSpacing: 0.4, textTransform: 'uppercase', color: '#6A6A68' },
+  chantierAdresse: { fontSize: 12.5, color: '#959593' },
   chantierDot: { width: 8, height: 8, borderRadius: 4 },
   chantierStats: { marginTop: 2, flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingHorizontal: 6, marginBottom: 8 },
-  chantierStatsText: { fontSize: 12.5, color: '#6E5F54' },
-  listeCard: { backgroundColor: '#fff', borderRadius: 24, padding: 14, marginBottom: 10, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  chantierStatsText: { fontSize: 12.5, color: '#6A6A68' },
+  listeCard: { backgroundColor: '#fff', borderRadius: 24, padding: 14, marginBottom: 10, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
   listeCardHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   employeHeader: { flexDirection: 'row', alignItems: 'center', flex: 1 },
   employeAvatar: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center', marginRight: 10 },
   employeAvatarText: { color: '#fff', fontSize: 13, fontWeight: '700' },
-  employeNom: { fontSize: 15.5, fontWeight: '600', color: '#2B1D14' },
+  employeNom: { fontSize: 15.5, fontWeight: '600', color: '#141414' },
   deleteListeBtn: { paddingHorizontal: 12, paddingVertical: 6, backgroundColor: '#FEE2E2', borderRadius: 999 },
   deleteListeBtnText: { color: '#C0392B', fontSize: 12.5, fontWeight: '600' },
-  emptyText: { color: '#9A8C80', fontSize: 13.5, textAlign: 'center', paddingVertical: 12 },
-  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
+  emptyText: { color: '#959593', fontSize: 13.5, textAlign: 'center', paddingVertical: 12 },
+  itemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2DF' },
   itemAchete: { opacity: 0.55 },
-  checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1.8, borderColor: '#EDE2D6', alignItems: 'center', justifyContent: 'center', marginRight: 10, flexShrink: 0 },
-  checkboxAcheteur: { borderColor: '#5C1F2E' },
+  checkbox: { width: 24, height: 24, borderRadius: 8, borderWidth: 1.8, borderColor: '#E2E2DF', alignItems: 'center', justifyContent: 'center', marginRight: 10, flexShrink: 0 },
+  checkboxAcheteur: { borderColor: '#141414' },
   checkboxInner: { fontSize: 14 },
   checkboxChecked: { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
   checkboxCheckedInner: { color: '#fff', fontSize: 13, fontWeight: '700' },
   itemContent: { flex: 1, flexDirection: 'column', gap: 2 },
-  itemTexte: { fontSize: 15, color: '#2B1D14' },
-  itemTexteBarre: { textDecorationLine: 'line-through', color: '#9A8C80' },
-  itemQuantite: { fontSize: 12.5, color: '#5C1F2E', backgroundColor: '#F2E4E1', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, fontWeight: '700', minWidth: 28, textAlign: 'center' },
-  itemCommentaire: { fontSize: 12.5, color: '#6E5F54', marginLeft: 34, marginTop: 1 },
+  itemTexte: { fontSize: 15, color: '#141414' },
+  itemTexteBarre: { textDecorationLine: 'line-through', color: '#959593' },
+  itemQuantite: { fontSize: 12.5, color: '#141414', backgroundColor: '#EBEBE8', paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, fontWeight: '700', minWidth: 28, textAlign: 'center' },
+  itemCommentaire: { fontSize: 12.5, color: '#6A6A68', marginLeft: 34, marginTop: 1 },
   achetePar: { fontSize: 12, color: '#2E7D32', marginTop: 2 },
   deleteBtn: { padding: 8, marginLeft: 4, flexShrink: 0 },
   deleteBtnText: { color: '#E74C3C', fontSize: 14, fontWeight: '700' },
-  archiveSection: { marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6' },
+  archiveSection: { marginTop: 12, paddingTop: 10, borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E2E2DF' },
   archiveTitle: { fontSize: 12.5, color: '#2E7D32', fontWeight: '600', marginBottom: 8 },
   archiveToggleBtn: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingVertical: 10, paddingHorizontal: 14,
-    backgroundColor: '#F1E7DC', borderRadius: 999,
+    backgroundColor: '#EBEBE8', borderRadius: 999,
   },
   archiveToggleLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  archiveToggleIcon: { fontSize: 13, color: '#6E5F54', fontWeight: '700', width: 14 },
-  archiveToggleText: { fontSize: 13.5, color: '#2B1D14', fontWeight: '500' },
+  archiveToggleIcon: { fontSize: 13, color: '#6A6A68', fontWeight: '700', width: 14 },
+  archiveToggleText: { fontSize: 13.5, color: '#141414', fontWeight: '500' },
   archiveBadge: {
     backgroundColor: '#FFFFFF', borderRadius: 999,
     paddingHorizontal: 10, paddingVertical: 3,
   },
-  archiveBadgeText: { fontSize: 12, color: '#6E5F54', fontWeight: '700' },
+  archiveBadgeText: { fontSize: 12, color: '#6A6A68', fontWeight: '700' },
   archiveContent: {
     marginTop: 8, paddingTop: 8,
-    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#EDE2D6',
+    borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: '#E2E2DF',
   },
   // Vue acheteur
-  acheteurCard: { backgroundColor: '#fff', borderRadius: 24, padding: 14, marginBottom: 10, shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
-  acheteurCardTitle: { fontSize: 15.5, fontWeight: '600', color: '#2B1D14', marginBottom: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
-  acheteurItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
-  archiveCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#EDE2D6' },
-  archiveCardTitle: { fontSize: 15, fontWeight: '600', color: '#2E7D32', marginBottom: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#EDE2D6' },
+  acheteurCard: { backgroundColor: '#fff', borderRadius: 24, padding: 14, marginBottom: 10, shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2 },
+  acheteurCardTitle: { fontSize: 15.5, fontWeight: '600', color: '#141414', marginBottom: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2DF' },
+  acheteurItemRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2DF' },
+  archiveCard: { backgroundColor: '#FFFFFF', borderRadius: 24, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: '#E2E2DF' },
+  archiveCardTitle: { fontSize: 15, fontWeight: '600', color: '#2E7D32', marginBottom: 10, paddingBottom: 8, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#E2E2DF' },
   employeTag: { width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center', marginLeft: 6 },
   employeTagText: { color: '#fff', fontSize: 10.5, fontWeight: '700' },
   statsBadgeRed: { backgroundColor: '#FEE2E2', borderRadius: 999, paddingHorizontal: 10, paddingVertical: 3, marginRight: 6 },
@@ -1415,20 +1415,20 @@ const styles = StyleSheet.create({
   statsBadgeGreenText: { color: '#2E7D32', fontSize: 12, fontWeight: '700' },
   allDoneRow: { backgroundColor: '#E6F0E7', borderRadius: 16, padding: 14, marginBottom: 10, alignItems: 'center' },
   allDoneText: { color: '#2E7D32', fontSize: 14, fontWeight: '600' },
-  addItemBtn: { marginTop: 12, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: '#5C1F2E', borderRadius: 999, borderStyle: 'dashed' },
-  addItemBtnText: { color: '#5C1F2E', fontSize: 14, fontWeight: '600' },
+  addItemBtn: { marginTop: 12, paddingVertical: 11, alignItems: 'center', borderWidth: 1, borderColor: '#141414', borderRadius: 999, borderStyle: 'dashed' },
+  addItemBtnText: { color: '#141414', fontSize: 14, fontWeight: '600' },
   // Modal
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(43,29,20,0.45)', justifyContent: 'flex-end' },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(20,20,20,0.45)', justifyContent: 'flex-end' },
   modalContent: { backgroundColor: '#fff', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 20, paddingBottom: 40 },
-  modalTitle: { fontSize: 22, fontFamily: 'Fraunces_600SemiBold', color: '#2B1D14', marginBottom: 4 },
-  modalSubtitle: { fontSize: 13.5, color: '#6E5F54', marginBottom: 16 },
-  inputLabel: { fontSize: 13.5, fontWeight: '600', color: '#6E5F54', marginBottom: 6 },
-  input: { borderWidth: 1, borderColor: '#EDE2D6', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15.5, marginBottom: 14, backgroundColor: '#FAF5EF', color: '#2B1D14' },
+  modalTitle: { fontSize: 22, fontFamily: 'Manrope_500Medium', color: '#141414', marginBottom: 4 },
+  modalSubtitle: { fontSize: 13.5, color: '#6A6A68', marginBottom: 16 },
+  inputLabel: { fontSize: 13.5, fontWeight: '600', color: '#6A6A68', marginBottom: 6 },
+  input: { borderWidth: 1, borderColor: '#E2E2DF', borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15.5, marginBottom: 14, backgroundColor: '#F4F4F2', color: '#141414' },
   inputMultiline: { height: 72, textAlignVertical: 'top' },
   modalActions: { flexDirection: 'row', gap: 10, marginTop: 8 },
-  btnCancel: { flex: 1, paddingVertical: 14, alignItems: 'center', backgroundColor: '#F1E7DC', borderRadius: 999 },
-  btnCancelText: { color: '#2B1D14', fontSize: 15.5, fontWeight: '500' },
-  btnSave: { flex: 2, paddingVertical: 14, alignItems: 'center', backgroundColor: '#5C1F2E', borderRadius: 999 },
+  btnCancel: { flex: 1, paddingVertical: 14, alignItems: 'center', backgroundColor: '#EBEBE8', borderRadius: 999 },
+  btnCancelText: { color: '#141414', fontSize: 15.5, fontWeight: '500' },
+  btnSave: { flex: 2, paddingVertical: 14, alignItems: 'center', backgroundColor: '#141414', borderRadius: 999 },
   btnSaveText: { color: '#fff', fontSize: 15.5, fontWeight: '600' },
   btnDisabled: { opacity: 0.4 },
 });

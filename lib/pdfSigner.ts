@@ -13,7 +13,7 @@ import { PDFDocument, rgb, StandardFonts, PDFPage, PDFFont } from 'pdf-lib';
 
 // ─── Constantes design ────────────────────────────────────────────────────
 
-const COLOR_BORDEAUX = rgb(0.36, 0.12, 0.18);  // #5C1F2E
+const COLOR_BORDEAUX = rgb(0.36, 0.12, 0.18);  // #141414
 const COLOR_SOMBRE = rgb(0.11, 0.11, 0.11);
 const COLOR_GRIS = rgb(0.45, 0.45, 0.45);
 const COLOR_LIGNE = rgb(0.7, 0.7, 0.7);

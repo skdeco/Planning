@@ -583,7 +583,7 @@ export default function ReportingScreen() {
 
   if (!isAdmin) {
     return (
-      <ScreenContainer containerClassName="bg-[#FAF5EF]">
+      <ScreenContainer containerClassName="bg-[#F4F4F2]">
         <View style={styles.center}>
           <Text style={styles.noAccess}>{t.common.adminOnly}</Text>
         </View>
@@ -592,7 +592,7 @@ export default function ReportingScreen() {
   }
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <BackToPlus />
       {/* En-tête */}
       <View style={styles.header}>
@@ -602,11 +602,11 @@ export default function ReportingScreen() {
         {Platform.OS === 'web' && (
           <View style={styles.exportBtns}>
             <Pressable style={[styles.exportBtn, { flexDirection: 'row', alignItems: 'center', gap: 5 }]} onPress={handleExportCSV}>
-              <FileSpreadsheet size={14} color="#5C1F2E" strokeWidth={2} />
+              <FileSpreadsheet size={14} color="#141414" strokeWidth={2} />
               <Text style={styles.exportBtnText}>Excel</Text>
             </Pressable>
             <Pressable style={[styles.exportBtn, styles.exportBtnPDF, { flexDirection: 'row', alignItems: 'center', gap: 5 }]} onPress={handleExportPDF}>
-              <FileText size={14} color="#5C1F2E" strokeWidth={2} />
+              <FileText size={14} color="#141414" strokeWidth={2} />
               <Text style={styles.exportBtnText}>PDF</Text>
             </Pressable>
           </View>
@@ -614,19 +614,19 @@ export default function ReportingScreen() {
       </View>
 
       {/* Filtres */}
-      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#F1E7DC', borderRadius: 999, padding: 3, gap: 2 }}>
+      <View style={{ flexDirection: 'row', marginHorizontal: 16, marginBottom: 10, backgroundColor: '#EBEBE8', borderRadius: 999, padding: 3, gap: 2 }}>
         <Pressable
           style={[styles.filterChip, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }, vue === 'journalier' && styles.filterChipActive]}
           onPress={() => setVue('journalier')}
         >
-          <CalendarDays size={14} color={vue === 'journalier' ? '#5C1F2E' : '#6E5F54'} strokeWidth={2} />
+          <CalendarDays size={14} color={vue === 'journalier' ? '#141414' : '#6A6A68'} strokeWidth={2} />
           <Text style={[styles.filterChipText, vue === 'journalier' && styles.filterChipTextActive]}>{t.reporting.byDay}</Text>
         </Pressable>
         <Pressable
           style={[styles.filterChip, { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5 }, vue === 'employe' && styles.filterChipActive]}
           onPress={() => setVue('employe')}
         >
-          <HardHat size={14} color={vue === 'employe' ? '#5C1F2E' : '#6E5F54'} strokeWidth={2} />
+          <HardHat size={14} color={vue === 'employe' ? '#141414' : '#6A6A68'} strokeWidth={2} />
           <Text style={[styles.filterChipText, vue === 'employe' && styles.filterChipTextActive]}>{t.reporting.byEmployee}</Text>
         </Pressable>
       </View>
@@ -655,7 +655,7 @@ export default function ReportingScreen() {
               placeholder={t.ui.tousChantiers}
               options={[
                 { value: 'all', label: t.ui.tousChantiers },
-                ...data.chantiers.filter(c => c.statut === 'actif').map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#5C1F2E' })),
+                ...data.chantiers.filter(c => c.statut === 'actif').map(c => ({ value: c.id, label: c.nom, color: c.couleur || '#141414' })),
               ]}
               onSelect={v => setFilterChantierId(v)}
             />
@@ -678,7 +678,7 @@ export default function ReportingScreen() {
               <LigneReportingJour
                 key={emp.id}
                 emp={emp} date={selectedDate} pointages={ptsJour} chantiers={chs}
-                metier={{ label: metierLabel(emp.metier), couleur: mc?.color || '#5C1F2E' }}
+                metier={{ label: metierLabel(emp.metier), couleur: mc?.color || '#141414' }}
                 presenceForcee={isForcedPresent} voitBilan={voitBilan} peutModifier={isAdmin || voitBilan}
                 acomptes={acomptesJour.filter(a => a.employeId === emp.id)}
                 onModifier={() => openEditPointage(emp.id, selectedDate)}
@@ -752,10 +752,10 @@ export default function ReportingScreen() {
                 </View>
 
                 {/* Heures en plus / en moins sur le mois (info, n'entre pas dans la paie) */}
-                {voitBilan && <View style={[styles.resumeMensuelRow, { backgroundColor: '#FAF5EF', borderRadius: 6, paddingHorizontal: 8 }]}>
+                {voitBilan && <View style={[styles.resumeMensuelRow, { backgroundColor: '#F4F4F2', borderRadius: 6, paddingHorizontal: 8 }]}>
                   <Text style={styles.resumeMensuelLabel}>{tm('Heures en plus / en moins')}</Text>
                   <Text style={[styles.resumeMensuelValue, { color: couleurEcart(rapportEmploye.totalBilanMinutes), fontWeight: '800' }]}>
-                    {formatEcartHeures(rapportEmploye.totalBilanMinutes)} <Text style={{ fontSize: 11, fontWeight: '500', color: '#6E5F54' }}>{tm('(info, hors paie)')}</Text>
+                    {formatEcartHeures(rapportEmploye.totalBilanMinutes)} <Text style={{ fontSize: 11, fontWeight: '500', color: '#6A6A68' }}>{tm('(info, hors paie)')}</Text>
                   </Text>
                 </View>}
 
@@ -770,7 +770,7 @@ export default function ReportingScreen() {
                 {/* Mode journalier */}
                 {rapportEmploye.modeSalaire === 'journalier' && rapportEmploye.tarifJournalier != null && (
                   <>
-                    <View style={[styles.resumeMensuelRow, { backgroundColor: '#F2E4E1', borderRadius: 6, paddingHorizontal: 8, marginTop: 4 }]}>
+                    <View style={[styles.resumeMensuelRow, { backgroundColor: '#EBEBE8', borderRadius: 6, paddingHorizontal: 8, marginTop: 4 }]}>
                       <Text style={styles.resumeMensuelLabel}>{t.reporting.workingDays}</Text>
                       <Text style={styles.resumeMensuelValue}>{rapportEmploye.joursOuvrablesMois} j</Text>
                     </View>
@@ -800,7 +800,7 @@ export default function ReportingScreen() {
                         <Text style={[styles.resumeMensuelValue, { color: '#E74C3C' }]}>- {rapportEmploye.joursAbsents} j (- {(rapportEmploye.joursAbsents * (rapportEmploye.tarifJournalier ?? 0)).toLocaleString('fr-FR')} €)</Text>
                       </View>
                     )}
-                    <View style={[styles.resumeMensuelRow, { borderTopWidth: 1, borderTopColor: '#EDE2D6', marginTop: 4, paddingTop: 4 }]}>
+                    <View style={[styles.resumeMensuelRow, { borderTopWidth: 1, borderTopColor: '#E2E2DF', marginTop: 4, paddingTop: 4 }]}>
                       <Text style={styles.resumeMensuelLabel}>{t.reporting.salaryBeforeDeposit}</Text>
                       <Text style={[styles.resumeMensuelValue, { fontWeight: '700' }]}>{(rapportEmploye.salaireAvantAcompte ?? 0).toLocaleString('fr-FR')} €</Text>
                     </View>
@@ -829,7 +829,7 @@ export default function ReportingScreen() {
                 {rapportEmploye.resteAPayer != null && (
                   <View style={[styles.resumeMensuelRow, styles.resumeMensuelTotal]}>
                     <Text style={styles.resumeMensuelTotalLabel}>{t.reporting.remaining}</Text>
-                    <Text style={[styles.resumeMensuelTotalValue, { color: rapportEmploye.resteAPayer >= 0 ? '#5C1F2E' : '#E74C3C' }]}>
+                    <Text style={[styles.resumeMensuelTotalValue, { color: rapportEmploye.resteAPayer >= 0 ? '#141414' : '#E74C3C' }]}>
                       {rapportEmploye.resteAPayer.toLocaleString('fr-FR')} €
                     </Text>
                   </View>
@@ -842,7 +842,7 @@ export default function ReportingScreen() {
 
               {/* Export fiche de paie */}
               {isAdmin && rapportEmploye.salaireBase != null && (
-                <Pressable style={{ backgroundColor: '#F2E4E1', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}
+                <Pressable style={{ backgroundColor: '#EBEBE8', borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginBottom: 12, borderWidth: 1, borderColor: '#D0D8E8' }}
                   onPress={async () => {
                     const r = rapportEmploye;
                     const mois = `${MOIS_LONG[selectedMonth]} ${selectedYear}`;
@@ -891,7 +891,7 @@ export default function ReportingScreen() {
                       }
                     }
                   }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#5C1F2E' }}>{t.reporting.exportPayslip}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: '#141414' }}>{t.reporting.exportPayslip}</Text>
                 </Pressable>
               )}
 
@@ -960,13 +960,13 @@ export default function ReportingScreen() {
                           const chId = debut?.chantierId || fin?.chantierId;
                           if (chId) {
                             const ch = data.chantiers.find(c => c.id === chId);
-                            return <Text style={{ fontSize: 12, color: '#5C1F2E', fontWeight: '600' }} numberOfLines={2}>{ch?.nom || '—'}</Text>;
+                            return <Text style={{ fontSize: 12, color: '#141414', fontWeight: '600' }} numberOfLines={2}>{ch?.nom || '—'}</Text>;
                           }
                           const affs = data.affectations
                             .filter(a => a.employeId === empSelectionne.id && a.dateDebut <= dateStr && a.dateFin >= dateStr)
                             .map(a => data.chantiers.find(c => c.id === a.chantierId)?.nom || '')
                             .filter(Boolean);
-                          return <Text style={{ fontSize: 12, color: '#6E5F54' }} numberOfLines={2}>{affs.length > 0 ? affs.join(', ') : '—'}</Text>;
+                          return <Text style={{ fontSize: 12, color: '#6A6A68' }} numberOfLines={2}>{affs.length > 0 ? affs.join(', ') : '—'}</Text>;
                         })()}
                       </View>
                       <View style={[styles.tableauCell, styles.tableauCellHeure]}>
@@ -1069,7 +1069,7 @@ export default function ReportingScreen() {
               <Text style={styles.navArrow}>›</Text>
             </Pressable>
           </View>
-          <Text style={{ marginHorizontal: 16, marginBottom: 8, fontSize: 12, color: '#6E5F54' }}>
+          <Text style={{ marginHorizontal: 16, marginBottom: 8, fontSize: 12, color: '#6A6A68' }}>
             {t.reporting.tapToEdit}
           </Text>
           {data.employes.map(emp => {
@@ -1110,7 +1110,7 @@ export default function ReportingScreen() {
                           key={dateStr}
                           style={[
                             styles.saisieTableRow,
-                            isWeekend && { backgroundColor: '#FAF5EF' },
+                            isWeekend && { backgroundColor: '#F4F4F2' },
                             isAbsent && { backgroundColor: '#FFF5F5' },
                             isForcedPres && !hasPointage && { backgroundColor: '#F0FFF4' },
                           ]}
@@ -1122,17 +1122,17 @@ export default function ReportingScreen() {
                             }
                           }}
                         >
-                          <Text style={[styles.saisieCellDate, styles.saisieDateText, isWeekend && { color: '#9A8C80' }]}>
+                          <Text style={[styles.saisieCellDate, styles.saisieDateText, isWeekend && { color: '#959593' }]}>
                             {formatDateFr(dateStr)}
                           </Text>
                           <View style={[styles.saisieCellHeure, debut?.saisieManuelle && styles.saisieCellManuelle]}>
-                            <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : isForcedPres ? '#2E7D32' : '#9A8C80', fontWeight: (isAbsent || isForcedPres) ? '700' : '400' }]}>
+                            <Text style={[styles.saisieCellText, !debut && { color: isAbsent ? '#E74C3C' : isForcedPres ? '#2E7D32' : '#959593', fontWeight: (isAbsent || isForcedPres) ? '700' : '400' }]}>
                               {debut ? debut.heure : isAbsent ? t.reporting.absent : isForcedPres ? t.reporting.present : '—'}
                             </Text>
                             {debut?.saisieManuelle && <Ico e="✏️" size={16} />}
                           </View>
                           <View style={[styles.saisieCellHeure, fin?.saisieManuelle && styles.saisieCellManuelle]}>
-                            <Text style={[styles.saisieCellText, !fin && { color: '#9A8C80' }]}>
+                            <Text style={[styles.saisieCellText, !fin && { color: '#959593' }]}>
                               {fin ? fin.heure : '—'}
                             </Text>
                             {fin?.saisieManuelle && <Ico e="✏️" size={16} />}
@@ -1142,7 +1142,7 @@ export default function ReportingScreen() {
                               const isManuDebut = debut?.saisieManuelle;
                               const isManuFin = fin?.saisieManuelle;
                               const isManu = isManuDebut || isManuFin;
-                              if (!debut && !fin && !isForcedPres) return <Text style={[styles.saisieCellText, { color: '#9A8C80' }]}>—</Text>;
+                              if (!debut && !fin && !isForcedPres) return <Text style={[styles.saisieCellText, { color: '#959593' }]}>—</Text>;
                               if (isForcedPres && !debut && !fin) return <Text style={[styles.saisieCellText, { color: '#2E7D32', fontWeight: '700', fontSize: 12 }]}>Admin</Text>;
                               if (!isManu) {
                                 return <Text style={[styles.saisieCellText, { color: '#2E7D32', fontWeight: '700', fontSize: 12 }]} numberOfLines={1}>{emp.prenom}</Text>;
@@ -1202,7 +1202,7 @@ export default function ReportingScreen() {
               value={acompteMontant}
               onChangeText={setAcompteMontant}
               placeholder="Ex: 300"
-              placeholderTextColor="#9A8C80"
+              placeholderTextColor="#959593"
               keyboardType="numeric"
               autoFocus
             />
@@ -1213,7 +1213,7 @@ export default function ReportingScreen() {
               value={acompteCommentaire}
               onChangeText={setAcompteCommentaire}
               placeholder="Ex: Acompte semaine 12"
-              placeholderTextColor="#9A8C80"
+              placeholderTextColor="#959593"
               multiline
             />
 
@@ -1237,12 +1237,12 @@ export default function ReportingScreen() {
 }
 
 const styles = StyleSheet.create({
-  gpsAdresse: { fontSize: 11, color: '#6E5F54', marginTop: 4, textAlign: 'center' },
-  gpsAdresseMini: { fontSize: 9, color: '#6E5F54', marginTop: 1, maxWidth: 70 },
+  gpsAdresse: { fontSize: 11, color: '#6A6A68', marginTop: 4, textAlign: 'center' },
+  gpsAdresseMini: { fontSize: 9, color: '#6A6A68', marginTop: 1, maxWidth: 70 },
   filterChip: { paddingHorizontal: 12, height: 34, justifyContent: 'center', borderRadius: 999, backgroundColor: 'transparent' },
-  filterChipActive: { backgroundColor: '#FFFFFF', shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
-  filterChipText: { fontSize: 13, fontWeight: '500', color: '#2B1D14', maxWidth: 120 },
-  filterChipTextActive: { color: '#5C1F2E', fontWeight: '600' },
+  filterChipActive: { backgroundColor: '#FFFFFF', shadowColor: '#141414', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.12, shadowRadius: 3, elevation: 1 },
+  filterChipText: { fontSize: 13, fontWeight: '500', color: '#141414', maxWidth: 120 },
+  filterChipTextActive: { color: '#141414', fontWeight: '600' },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -1260,7 +1260,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
   },
-  headerSub: { fontFamily: 'Fraunces_600SemiBold', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#2B1D14' },
+  headerSub: { fontFamily: 'Manrope_500Medium', fontSize: 28, lineHeight: 34, letterSpacing: -0.4, color: '#141414' },
   exportBtns: {
     flexDirection: 'row',
     gap: 8,
@@ -1270,17 +1270,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 9,
     borderRadius: 999,
-    shadowColor: '#2B1D14',
+    shadowColor: '#141414',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.06,
     shadowRadius: 6,
     elevation: 1,
   },
   exportBtnPDF: {
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
   },
   exportBtnText: {
-    color: '#5C1F2E',
+    color: '#141414',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -1291,13 +1291,13 @@ const styles = StyleSheet.create({
   },
   noAccess: {
     fontSize: 15,
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   vueSelector: {
     flexDirection: 'row',
     marginHorizontal: 16,
     marginVertical: 8,
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderRadius: 999,
     padding: 3,
   },
@@ -1309,7 +1309,7 @@ const styles = StyleSheet.create({
   },
   vueBtnActive: {
     backgroundColor: '#fff',
-    shadowColor: '#2B1D14',
+    shadowColor: '#141414',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
@@ -1318,10 +1318,10 @@ const styles = StyleSheet.create({
   vueBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   vueBtnTextActive: {
-    color: '#5C1F2E',
+    color: '#141414',
   },
   scroll: {
     flex: 1,
@@ -1341,7 +1341,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#2B1D14',
+    shadowColor: '#141414',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 4,
@@ -1349,13 +1349,13 @@ const styles = StyleSheet.create({
   },
   navArrow: {
     fontSize: 22,
-    color: '#5C1F2E',
+    color: '#141414',
     fontWeight: '700',
   },
   navLabel: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
     minWidth: 160,
     textAlign: 'center',
   },
@@ -1368,7 +1368,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   empCard: {
     backgroundColor: '#fff',
@@ -1376,7 +1376,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 12,
     padding: 14,
-    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   empCardHeader: {
     flexDirection: 'row',
@@ -1398,7 +1398,7 @@ const styles = StyleSheet.create({
   empName: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
   },
   empMetier: {
     fontSize: 12,
@@ -1411,11 +1411,11 @@ const styles = StyleSheet.create({
   },
   horairesTheo: {
     fontSize: 12.5,
-    color: '#6E5F54',
+    color: '#6A6A68',
     marginTop: 1,
   },
   dureeBadge: {
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -1426,11 +1426,11 @@ const styles = StyleSheet.create({
   dureeBadgeText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#5C1F2E',
+    color: '#141414',
   },
   pointageRow: {
     flexDirection: 'row',
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 10,
@@ -1442,22 +1442,22 @@ const styles = StyleSheet.create({
   },
   pointageSep: {
     width: 1,
-    backgroundColor: '#EDE2D6',
+    backgroundColor: '#E2E2DF',
   },
   pointageLabel: {
     fontSize: 12.5,
-    color: '#6E5F54',
+    color: '#6A6A68',
     fontWeight: '600',
     marginBottom: 4,
   },
   pointageHeure: {
     fontSize: 18,
     fontWeight: '800',
-    color: '#2B1D14',
+    color: '#141414',
   },
   pointageAbsent: {
     fontSize: 18,
-    color: '#9A8C80',
+    color: '#959593',
   },
   ecartText: {
     fontSize: 12.5,
@@ -1491,7 +1491,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     borderRadius: 14,
     paddingHorizontal: 10,
     paddingVertical: 7,
@@ -1501,7 +1501,7 @@ const styles = StyleSheet.create({
   },
   acompteDate: {
     fontSize: 12,
-    color: '#6E5F54',
+    color: '#6A6A68',
     minWidth: 60,
   },
   acompteMontant: {
@@ -1512,7 +1512,7 @@ const styles = StyleSheet.create({
   acompteComment: {
     flex: 1,
     fontSize: 12,
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   acompteDelete: {
     padding: 4,
@@ -1525,7 +1525,7 @@ const styles = StyleSheet.create({
   addAcompteBtn: {
     paddingVertical: 8,
     borderRadius: 14,
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#FFD54F',
@@ -1540,7 +1540,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingVertical: 12,
     borderRadius: 16,
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     alignItems: 'center',
     borderWidth: 1.5,
     borderColor: '#FFD54F',
@@ -1554,7 +1554,7 @@ const styles = StyleSheet.create({
   resumeCard: {
     marginHorizontal: 16,
     marginBottom: 12,
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
@@ -1564,7 +1564,7 @@ const styles = StyleSheet.create({
   resumeTitle: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   resumeAmount: {
     fontSize: 18,
@@ -1588,7 +1588,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1.5,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
     backgroundColor: '#fff',
     gap: 5,
   },
@@ -1600,7 +1600,7 @@ const styles = StyleSheet.create({
   empChipText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   resumeMensuel: {
     marginHorizontal: 16,
@@ -1608,7 +1608,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     padding: 16,
-    shadowColor: '#2B1D14',
+    shadowColor: '#141414',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07,
     shadowRadius: 6,
@@ -1620,28 +1620,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 6,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1E7DC',
+    borderBottomColor: '#EBEBE8',
   },
   resumeMensuelLabel: {
     fontSize: 14,
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
   resumeMensuelValue: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
   },
   resumeMensuelTotal: {
     borderBottomWidth: 0,
     marginTop: 4,
     paddingTop: 10,
     borderTopWidth: 2,
-    borderTopColor: '#EDE2D6',
+    borderTopColor: '#E2E2DF',
   },
   resumeMensuelTotalLabel: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
   },
   resumeMensuelTotalValue: {
     fontSize: 20,
@@ -1650,7 +1650,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#6E5F54',
+    color: '#6A6A68',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginHorizontal: 16,
@@ -1668,16 +1668,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1E7DC',
+    borderBottomColor: '#EBEBE8',
     paddingVertical: 8,
     paddingHorizontal: 10,
   },
   tableauHeader: {
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     paddingVertical: 10,
   },
   tableauRowWeekend: {
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
   },
   tableauRowAnomalie: {
     backgroundColor: '#FFF5F5',
@@ -1685,7 +1685,7 @@ const styles = StyleSheet.create({
   tableauHeaderText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#6E5F54',
+    color: '#6A6A68',
     textTransform: 'uppercase',
   },
   tableauCell: {
@@ -1705,20 +1705,20 @@ const styles = StyleSheet.create({
   tableauDateText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
   },
   tableauDateWeekend: {
-    color: '#9A8C80',
+    color: '#959593',
   },
   tableauTheoText: {
     fontSize: 12,
-    color: '#9A8C80',
+    color: '#959593',
     marginTop: 1,
   },
   tableauHeureText: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
   },
   tableauEcartText: {
     fontSize: 12,
@@ -1727,12 +1727,12 @@ const styles = StyleSheet.create({
   },
   tableauAbsent: {
     fontSize: 14,
-    color: '#9A8C80',
+    color: '#959593',
   },
   tableauDureeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#5C1F2E',
+    color: '#141414',
     textAlign: 'right',
   },
   // Modal acompte
@@ -1751,40 +1751,40 @@ const styles = StyleSheet.create({
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#EDE2D6',
+    backgroundColor: '#E2E2DF',
     borderRadius: 2,
     alignSelf: 'center',
     marginBottom: 16,
   },
   modalTitle: {
     fontSize: 20,
-    fontFamily: 'Fraunces_600SemiBold',
-    color: '#2B1D14',
+    fontFamily: 'Manrope_500Medium',
+    color: '#141414',
     marginBottom: 4,
   },
   modalSubtitle: {
     fontSize: 14,
-    color: '#6E5F54',
+    color: '#6A6A68',
     marginBottom: 16,
   },
   modalFieldLabel: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
     marginBottom: 6,
     marginTop: 12,
   },
   modalInput: {
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderRadius: 16,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#2B1D14',
+    color: '#141414',
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   modalActions: {
     flexDirection: 'row',
@@ -1796,12 +1796,12 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 18,
     alignItems: 'center',
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderWidth: 1,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   modalCancelBtnText: {
-    color: '#6E5F54',
+    color: '#6A6A68',
     fontWeight: '600',
     fontSize: 15,
   },
@@ -1810,10 +1810,10 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 18,
     alignItems: 'center',
-    backgroundColor: '#5C1F2E',
+    backgroundColor: '#141414',
   },
   modalSaveBtnDisabled: {
-    backgroundColor: '#9A8C80',
+    backgroundColor: '#959593',
   },
   modalSaveBtnText: {
     color: '#fff',
@@ -1827,7 +1827,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 14,
     overflow: 'hidden',
-    shadowColor: '#2B1D14',
+    shadowColor: '#141414',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.07,
     shadowRadius: 6,
@@ -1838,7 +1838,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 12,
     borderLeftWidth: 4,
-    backgroundColor: '#FAF5EF',
+    backgroundColor: '#F4F4F2',
     gap: 8,
   },
   saisieEmpAvatar: {
@@ -1851,7 +1851,7 @@ const styles = StyleSheet.create({
   saisieEmpName: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
     flex: 1,
   },
   saisieEmpMetier: {
@@ -1860,14 +1860,14 @@ const styles = StyleSheet.create({
   },
   saisieTableHeader: {
     flexDirection: 'row',
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
   saisieHeaderText: {
     fontSize: 12.5,
     fontWeight: '700',
-    color: '#6E5F54',
+    color: '#6A6A68',
     textTransform: 'uppercase',
     letterSpacing: 0.4,
   },
@@ -1875,7 +1875,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     borderBottomWidth: 1,
-    borderBottomColor: '#F1E7DC',
+    borderBottomColor: '#EBEBE8',
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
@@ -1901,16 +1901,16 @@ const styles = StyleSheet.create({
   saisieDateText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#2B1D14',
+    color: '#141414',
   },
   saisieCellText: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#2B1D14',
+    color: '#141414',
     textAlign: 'center',
   },
   saisieCellManuelle: {
-    backgroundColor: '#F2E4E1',
+    backgroundColor: '#EBEBE8',
     borderRadius: 6,
   },
   saisieManuelleIcon: {
@@ -1922,9 +1922,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 16,
     alignItems: 'center',
-    backgroundColor: '#F1E7DC',
+    backgroundColor: '#EBEBE8',
     borderWidth: 1.5,
-    borderColor: '#EDE2D6',
+    borderColor: '#E2E2DF',
   },
   editAbsentBtnActive: {
     backgroundColor: '#E74C3C',
@@ -1933,6 +1933,6 @@ const styles = StyleSheet.create({
   editAbsentBtnText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#6E5F54',
+    color: '#6A6A68',
   },
 });

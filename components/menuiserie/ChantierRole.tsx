@@ -50,7 +50,7 @@ export function ChantierRole() {
 
   if (!d) {
     return (
-      <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+      <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
         <View style={{ padding: 16 }}><EnTete titre={tm("Chantier")} retour={() => router.back()} /></View>
         {erreur ? <Text style={{ color: DS.error, padding: 16 }}>{erreur}</Text> : <ActivityIndicator color={DS.primary} style={{ marginTop: 40 }} />}
       </ScreenContainer>
@@ -60,7 +60,7 @@ export function ChantierRole() {
   const etapes = ETAPES_MN.filter(e => etapeVisible(groupe, e.cle) && !e.aVenir);
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }}
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={async () => { setRafraichit(true); await charger(); setRafraichit(false); }} tintColor={DS.primary} />}

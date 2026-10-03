@@ -107,16 +107,16 @@ export function DashboardKPI() {
     <View style={styles.container}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10, paddingHorizontal: 6 }}>
         <Text style={styles.title}>Tableau de bord</Text>
-        <Pressable onPress={() => setShowGantt(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#F2E4E1', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
-          <CalendarDays size={14} color="#5C1F2E" strokeWidth={2} />
-          <Text style={{ color: '#5C1F2E', fontSize: 13, fontWeight: '600' }}>Gantt</Text>
+        <Pressable onPress={() => setShowGantt(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#EBEBE8', borderRadius: 999, paddingHorizontal: 12, paddingVertical: 7 }}>
+          <CalendarDays size={14} color="#141414" strokeWidth={2} />
+          <Text style={{ color: '#141414', fontSize: 13, fontWeight: '600' }}>Gantt</Text>
         </Pressable>
       </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-        <KpiCard label="CA signé HT" value={`${fmt(stats.caTotalHT)} €`} color="#5C1F2E" icon={PenLine} />
-        <KpiCard label="En cours TTC" value={`${fmt(stats.caEnCoursTTC)} €`} color="#5C1F2E" icon={HardHat} />
+        <KpiCard label="CA signé HT" value={`${fmt(stats.caTotalHT)} €`} color="#141414" icon={PenLine} />
+        <KpiCard label="En cours TTC" value={`${fmt(stats.caEnCoursTTC)} €`} color="#141414" icon={HardHat} />
         <KpiCard label="Encaissé" value={`${fmt(stats.caEncaisse)} €`} color="#2E7D32" icon={Wallet} />
-        <KpiCard label="À encaisser" value={`${fmt(stats.caARecevoir)} €`} color="#5C1F2E" icon={Hourglass} />
+        <KpiCard label="À encaisser" value={`${fmt(stats.caARecevoir)} €`} color="#141414" icon={Hourglass} />
       </View>
 
       <GanttGlobal visible={showGantt} onClose={() => setShowGantt(false)} />
@@ -142,18 +142,18 @@ export function DashboardKPI() {
 
 const styles = StyleSheet.create({
   container: { marginBottom: 16 },
-  title: { fontSize: 13, fontWeight: '600', color: '#6E5F54', textTransform: 'uppercase', letterSpacing: 0.4 },
+  title: { fontSize: 13, fontWeight: '600', color: '#6A6A68', textTransform: 'uppercase', letterSpacing: 0.4 },
   kpiCard: {
     backgroundColor: '#fff',
     borderRadius: 20,
     padding: 14,
     flexBasis: '47%',
     flexGrow: 1,
-    shadowColor: '#2B1D14', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
+    shadowColor: '#141414', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.06, shadowRadius: 16, elevation: 2
   },
   kpiIconWrap: { width: 28, height: 28, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
-  kpiLabel: { flex: 1, fontSize: 13, color: '#6E5F54', fontWeight: '500' },
-  kpiValue: { fontFamily: 'Fraunces_600SemiBold', fontSize: 22 },
+  kpiLabel: { flex: 1, fontSize: 13, color: '#6A6A68', fontWeight: '500' },
+  kpiValue: { fontFamily: 'Manrope_500Medium', fontSize: 22 },
   retardsBox: {
     backgroundColor: '#FBEFEC',
     borderRadius: 16,
@@ -165,7 +165,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row', justifyContent: 'space-between',
     paddingVertical: 3,
   },
-  retardChantier: { flex: 1, fontSize: 11, color: '#5C1F2E', fontWeight: '600' },
+  retardChantier: { flex: 1, fontSize: 11, color: '#141414', fontWeight: '600' },
   retardMontant: { fontSize: 11, color: '#B83A2E', fontWeight: '800' },
-  retardMore: { fontSize: 10, color: '#6E5F54', fontStyle: 'italic', marginTop: 4 },
+  retardMore: { fontSize: 10, color: '#6A6A68', fontStyle: 'italic', marginTop: 4 },
 });

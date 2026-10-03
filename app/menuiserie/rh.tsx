@@ -50,7 +50,7 @@ export default function RhMn() {
   }, {});
 
   return (
-    <ScreenContainer containerClassName="bg-[#FAF5EF]" edges={['top', 'left', 'right']}>
+    <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }} keyboardShouldPersistTaps="handled">
         <EnTete titre={tm("Mon administratif")} retour={() => router.back()} />
         {!!message && <Text style={{ fontSize: 14, fontWeight: '600', color: DS.primary }}>{message}</Text>}

@@ -177,22 +177,22 @@ export function PlanningDirection() {
       {/* Invitations reçues et contre-propositions à traiter */}
       <InvitationsRdv />
       {/* Toggle semaine/jour + navigation */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#EDE2D6', gap: 4 }}>
-        <Pressable style={{ backgroundColor: directionVue === 'semaine' ? '#5C1F2E' : '#F1E7DC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('semaine')}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'semaine' ? '#fff' : '#6E5F54' }}>{tm("7j")}</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', paddingHorizontal: 8, paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#E2E2DF', gap: 4 }}>
+        <Pressable style={{ backgroundColor: directionVue === 'semaine' ? '#141414' : '#EBEBE8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('semaine')}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'semaine' ? '#fff' : '#6A6A68' }}>{tm("7j")}</Text>
         </Pressable>
-        <Pressable style={{ backgroundColor: directionVue === 'jour' ? '#5C1F2E' : '#F1E7DC', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('jour')}>
-          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'jour' ? '#fff' : '#6E5F54' }}>{tm("Jour")}</Text>
+        <Pressable style={{ backgroundColor: directionVue === 'jour' ? '#141414' : '#EBEBE8', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }} onPress={() => setDirectionVue('jour')}>
+          <Text style={{ fontSize: 10, fontWeight: '700', color: directionVue === 'jour' ? '#fff' : '#6A6A68' }}>{tm("Jour")}</Text>
         </Pressable>
         <Pressable onPress={() => directionVue === 'semaine' ? setWeekOffset(w => w - 1) : setDayOffset(d => d - 1)} style={{ padding: 4 }}><Text style={{ fontSize: 16 }}>‹</Text></Pressable>
-        <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#2B1D14', textAlign: 'center' }}>
+        <Text style={{ flex: 1, fontSize: 12, fontWeight: '700', color: '#141414', textAlign: 'center' }}>
           {directionVue === 'semaine' ? weekLabel : (() => { const d = new Date(); d.setDate(d.getDate() + dayOffset); return d.toLocaleDateString(localeMn(), { weekday: 'long', day: 'numeric', month: 'long' }); })()}
         </Text>
         <Pressable onPress={() => directionVue === 'semaine' ? setWeekOffset(w => w + 1) : setDayOffset(d => d + 1)} style={{ padding: 4 }}><Text style={{ fontSize: 16 }}>›</Text></Pressable>
-        <Pressable onPress={() => { setWeekOffset(0); setDayOffset(0); }} style={{ backgroundColor: '#F1E7DC', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 }}>
-          <Text style={{ fontSize: 10, fontWeight: '600', color: '#5C1F2E' }}>{tm("Auj.")}</Text>
+        <Pressable onPress={() => { setWeekOffset(0); setDayOffset(0); }} style={{ backgroundColor: '#EBEBE8', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 }}>
+          <Text style={{ fontSize: 10, fontWeight: '600', color: '#141414' }}>{tm("Auj.")}</Text>
         </Pressable>
-        <Pressable style={{ backgroundColor: '#5C1F2E', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8 }} onPress={() => openNew()}>
+        <Pressable style={{ backgroundColor: '#141414', paddingHorizontal: 8, paddingVertical: 5, borderRadius: 8 }} onPress={() => openNew()}>
           <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>{tm("+ RDV")}</Text>
         </Pressable>
       </View>
@@ -203,12 +203,12 @@ export function PlanningDirection() {
         const dateStr = toYMD(d);
         const evtsJour = (data.agendaEvents || []).filter(e => e.date === dateStr).sort((a, b) => a.heureDebut.localeCompare(b.heureDebut));
         return (
-          <ScrollView style={{ flex: 1, backgroundColor: '#FAF5EF' }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
+          <ScrollView style={{ flex: 1, backgroundColor: '#F4F4F2' }} contentContainerStyle={{ padding: 12, paddingBottom: 40 }}>
             {evtsJour.length === 0 ? (
               <View style={{ alignItems: 'center', paddingVertical: 40 }}>
                 <Ico e="📭" size={28} />
-                <Text style={{ fontSize: 14, color: '#6E5F54' }}>{tm("Aucun rendez-vous")}</Text>
-                <Pressable style={{ marginTop: 12, backgroundColor: '#5C1F2E', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }} onPress={() => openNew(dateStr)}>
+                <Text style={{ fontSize: 14, color: '#6A6A68' }}>{tm("Aucun rendez-vous")}</Text>
+                <Pressable style={{ marginTop: 12, backgroundColor: '#141414', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10 }} onPress={() => openNew(dateStr)}>
                   <Text style={{ color: '#fff', fontSize: 13, fontWeight: '700' }}>{tm("+ Ajouter un RDV")}</Text>
                 </Pressable>
               </View>
@@ -237,15 +237,15 @@ export function PlanningDirection() {
                         {evt.heureFin && <Text style={{ fontSize: 10, color: evt.couleur }}>{evt.heureFin}</Text>}
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#2B1D14' }}>{evt.titre}</Text>
-                        {evt.description ? <Text style={{ fontSize: 13, color: '#6E5F54', marginTop: 2 }}>{evt.description}</Text> : null}
-                        {evt.lieu ? <Text style={{ fontSize: 12, color: '#6E5F54', marginTop: 2 }}>{evt.lieu}</Text> : null}
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#141414' }}>{evt.titre}</Text>
+                        {evt.description ? <Text style={{ fontSize: 13, color: '#6A6A68', marginTop: 2 }}>{evt.description}</Text> : null}
+                        {evt.lieu ? <Text style={{ fontSize: 12, color: '#6A6A68', marginTop: 2 }}>{evt.lieu}</Text> : null}
                         {ch ? <Text style={{ fontSize: 12, color: ch.couleur, fontWeight: '600', marginTop: 2 }}>{ch.nom}</Text> : null}
                         {evt.invites.length > 0 && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {evt.invites.map(id => {
                               const etat = (evt.acceptes || []).includes(id) ? ' ✓' : (evt.refuses || []).includes(id) ? ' ✗' : ' …';
-                              return <View key={id} style={{ backgroundColor: '#F2E4E1', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}><Text style={{ fontSize: 10, color: '#5C1F2E', fontWeight: '600' }}>{nomParticipant(id, data).split(' ')[0]}{etat}</Text></View>;
+                              return <View key={id} style={{ backgroundColor: '#EBEBE8', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}><Text style={{ fontSize: 10, color: '#141414', fontWeight: '600' }}>{nomParticipant(id, data).split(' ')[0]}{etat}</Text></View>;
                             })}
                           </View>
                         )}
@@ -267,15 +267,15 @@ export function PlanningDirection() {
       {/* ── VUE SEMAINE : lundi → vendredi à l'écran, samedi et dimanche par glissement ── */}
       {directionVue === 'semaine' && <View style={{ flex: 1 }} onLayout={e => setLargeur(e.nativeEvent.layout.width)}>
       {/* En-tête des jours, synchronisé avec le défilement horizontal de la grille */}
-      <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#EDE2D6', backgroundColor: '#FAF5EF' }}>
+      <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#E2E2DF', backgroundColor: '#F4F4F2' }}>
         <View style={{ width: TIME_COL, height: HEADER_HEIGHT }} />
         <ScrollView ref={enteteRef} horizontal scrollEnabled={false} showsHorizontalScrollIndicator={false}>
           {days.map((day, i) => {
             const isToday = toYMD(day) === toYMD(new Date());
             return (
-              <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#F2E4E1' : undefined }}>
-                <Text style={{ fontSize: 10, fontWeight: '500', color: isToday ? '#5C1F2E' : '#6E5F54' }}>{JOURS_COURT[i]}</Text>
-                <Text style={{ fontSize: 13, fontWeight: isToday ? '800' : '600', color: isToday ? '#5C1F2E' : '#2B1D14' }}>{day.getDate()}</Text>
+              <View key={i} style={{ width: dayColWidth, height: HEADER_HEIGHT, justifyContent: 'center', alignItems: 'center', backgroundColor: isToday ? '#EBEBE8' : undefined }}>
+                <Text style={{ fontSize: 10, fontWeight: '500', color: isToday ? '#141414' : '#6A6A68' }}>{JOURS_COURT[i]}</Text>
+                <Text style={{ fontSize: 13, fontWeight: isToday ? '800' : '600', color: isToday ? '#141414' : '#141414' }}>{day.getDate()}</Text>
               </View>
             );
           })}
@@ -283,13 +283,13 @@ export function PlanningDirection() {
       </View>
 
       {/* Grille horaire — défile verticalement ; les jours défilent horizontalement */}
-      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#5C1F2E']} tintColor="#5C1F2E" />}>
+      <ScrollView style={{ flex: 1 }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={['#141414']} tintColor="#141414" />}>
         <View style={{ flexDirection: 'row' }}>
           {/* Colonne heures (fixe) */}
           <View style={{ width: TIME_COL }}>
             {Array.from({ length: totalHours }, (_, i) => (
-              <View key={i} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 2, paddingRight: 4, alignItems: 'flex-end', borderTopWidth: 0.5, borderTopColor: '#EDE2D6' }}>
-                <Text style={{ fontSize: 10, color: '#6E5F54', fontWeight: '500' }}>{String(startHour + i).padStart(2, '0')}:00</Text>
+              <View key={i} style={{ height: HOUR_HEIGHT, justifyContent: 'flex-start', paddingTop: 2, paddingRight: 4, alignItems: 'flex-end', borderTopWidth: 0.5, borderTopColor: '#E2E2DF' }}>
+                <Text style={{ fontSize: 10, color: '#6A6A68', fontWeight: '500' }}>{String(startHour + i).padStart(2, '0')}:00</Text>
               </View>
             ))}
           </View>
@@ -314,7 +314,7 @@ export function PlanningDirection() {
                   {/* Lignes horizontales (ne captent pas le tap : la position est mesurée sur la colonne) */}
                   <View pointerEvents="none">
                     {Array.from({ length: totalHours }, (_, i) => (
-                      <View key={i} style={{ height: HOUR_HEIGHT, borderTopWidth: 0.5, borderTopColor: '#EDE2D6', borderRightWidth: 0.5, borderRightColor: '#EDE2D6' }} />
+                      <View key={i} style={{ height: HOUR_HEIGHT, borderTopWidth: 0.5, borderTopColor: '#E2E2DF', borderRightWidth: 0.5, borderRightColor: '#E2E2DF' }} />
                     ))}
                   </View>
                   {dayEvents.map(evt => {
