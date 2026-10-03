@@ -358,6 +358,9 @@ export default function PlanningScreen() {
       nom:        p.nom,
       fichier:    p.fichier,
       uploadedAt: p.uploadedAt,
+      visiblePar: p.visiblePar,
+      visibleIds: p.visibleIds,
+      partageExterne: p.partageExterne,
     }));
   }, [plansPlanningChantierId, data.chantiers, currentUser]);
 

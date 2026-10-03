@@ -700,6 +700,9 @@ const d: Record<string, string> = {
   "Admin seulement": "Только админ",
   "Choisissez les personnes": "Выберите людей",
   "Visible aussi par le client et l’architecte": "Также видно клиенту и архитектору",
+  "Hors chantier": "Вне объекта",
+  "Position": "Местоположение",
+  "Sans position": "Без местоположения",
 };
 
 export default d;

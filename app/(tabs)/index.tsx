@@ -31,6 +31,7 @@ import { RdvDuJour } from '@/components/espaces/RdvDuJour';
 import { AlertePointagesSansChantier } from '@/components/pointage/AlertePointagesSansChantier';
 import { PhotosRapides } from '@/components/photos/PhotosRapides';
 import { HeroEmploye } from '@/components/espaces/HeroEmploye';
+import { PointagesDuJourAdmin } from '@/components/pointage/PointagesDuJourAdmin';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 function toYMD(d: Date): string {
@@ -341,6 +342,7 @@ export default function DashboardScreen() {
           <RdvDuJour marge={0} />
           {/* RH : pointages sans chantier à renseigner */}
           {emp?.isRH && <AlertePointagesSansChantier />}
+          {emp?.isRH && <PointagesDuJourAdmin />}
 
           {/* Photos du chantier du jour : accès direct */}
           <PhotosRapides onVoir={id => { setGalerieChantierId(id); setGalerieVisible(true); }} />
@@ -940,6 +942,8 @@ export default function DashboardScreen() {
         <RdvDuJour marge={0} />
         {/* Pointages sans chantier à renseigner */}
         <AlertePointagesSansChantier />
+        {/* Qui a pointé, où, et sa position en un tap */}
+        <PointagesDuJourAdmin />
 
         {/* À traiter — ce qui attend une action de l'admin */}
         {(stats.demandesRH > 0 || stats.materielNonAchete > 0) && (

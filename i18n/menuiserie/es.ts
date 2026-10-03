@@ -692,6 +692,9 @@ const d: Record<string, string> = {
   "Admin seulement": "Solo admin",
   "Choisissez les personnes": "Elija las personas",
   "Visible aussi par le client et l’architecte": "Visible también para el cliente y el arquitecto",
+  "Hors chantier": "Fuera de obra",
+  "Position": "Ubicación",
+  "Sans position": "Sin ubicación",
 };
 
 export default d;
