@@ -1,4 +1,5 @@
 import React from 'react';
+import { HORS_CHANTIER_ID, COULEUR_HORS_CHANTIER } from '@/lib/planningAffichage';
 import {
   View,
   Text,
@@ -138,6 +139,7 @@ export function WeekGridCell({
   const dateStr = toYMD(day);
   const today   = isToday(day);
   const inRange = dateInRange(day, chantier.dateDebut, chantier.dateFin);
+  const horsChantier = chantier.id === HORS_CHANTIER_ID;
 
   return (
     <Pressable
@@ -148,11 +150,11 @@ export function WeekGridCell({
         !inRange && styles.cellOutOfRange,
         hasNotes && !today && { backgroundColor: '#FFF9E6' },
       ]}
-      onPress={isAdmin ? () => openers.ajout(chantier.id, dateStr) : undefined}
+      onPress={isAdmin && !horsChantier ? () => openers.ajout(chantier.id, dateStr) : undefined}
     >
       {/* Badges employés : couleur personnalisée, masqués pour le sous-traitant connecté */}
       {!isST && employes.map(emp => {
-        const empColor = getEmployeColor(emp);
+        const empColor = horsChantier ? COULEUR_HORS_CHANTIER : getEmployeColor(emp);
         const empAff = data.affectations.find(a =>
           a.chantierId === chantier.id && a.employeId === emp.id &&
           a.dateDebut <= dateStr && a.dateFin >= dateStr
@@ -165,7 +167,7 @@ export function WeekGridCell({
             <Pressable
               style={[styles.empBadge, { backgroundColor: empColor }, isAtelier && { borderWidth: 2, borderColor: '#F59E0B', borderStyle: 'dashed' }]}
               onPress={() => (onFiche ? onFiche(chantier.id, dateStr, emp.id) : openers.empNote(chantier.id, dateStr, emp.id))}
-              onLongPress={isAdmin ? () => {
+              onLongPress={isAdmin && !horsChantier ? () => {
                 if (Platform.OS === 'web') {
                   const choice = window.prompt(`${emp.prenom} — Choisir :\n1 = Déplacer\n2 = ${isAtelier ? 'Remettre sur chantier' : 'Mettre en atelier '}`);
                   if (choice === '2') toggleLieuTravail(chantier.id, emp.id, dateStr);
@@ -251,7 +253,7 @@ export function WeekGridCell({
       ))}
 
       {/* Bouton + pour admin (ajout/suppression employés + externe) */}
-      {isAdmin && (
+      {isAdmin && !horsChantier && (
         <Pressable
           style={styles.addBtn}
           onPress={() => openers.ajout(chantier.id, dateStr)}

@@ -685,6 +685,8 @@ const d: Record<string, string> = {
   "Sur le chantier": "في المشروع",
   "depuis": "منذ",
   "Arrivée pointée à": "تم تسجيل الوصول في",
+  "Pointé hors chantier": "تسجيل خارج المشروع",
+  "Changement": "تغيير",
 };
 
 export default d;

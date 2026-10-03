@@ -47,3 +47,22 @@ export function dansFiltreStatut(c: Chantier, f: FiltreStatutPlanning): boolean 
 export function avecCouleurSav(c: Chantier): Chantier {
   return c.statut === 'sav' ? { ...c, couleur: COULEUR_SAV } : c;
 }
+
+// ── Ligne « Pointé hors chantier » ──────────────────────────────────────────
+// Un employé qui pointe loin de tout chantier connu apparaît quand même dans le
+// planning, sur une ligne virtuelle de couleur dédiée, en attendant que
+// l'admin ou les RH renseignent le chantier.
+export const HORS_CHANTIER_ID = '__hors_chantier__';
+export const COULEUR_HORS_CHANTIER = '#B42318';
+
+export function chantierHorsChantier(nom: string): Chantier {
+  return {
+    id: HORS_CHANTIER_ID, nom, statut: 'actif', couleur: COULEUR_HORS_CHANTIER,
+    dateDebut: '2000-01-01', dateFin: '2100-12-31', visibleSurPlanning: true, employeIds: [],
+  } as unknown as Chantier;
+}
+
+/** Employés ayant pointé une arrivée sans chantier ce jour-là. */
+export function idsPointesHorsChantier(pointages: { employeId: string; date: string; type: string; chantierId?: string }[], date: string): string[] {
+  return [...new Set(pointages.filter(p => p.date === date && p.type === 'debut' && !p.chantierId).map(p => p.employeId))];
+}

@@ -33,6 +33,23 @@ function confirmer(titre: string, message: string, ok: () => void, cancel: strin
   Alert.alert(titre, message, [{ text: cancel, style: 'cancel' }, { text: valider, onPress: ok }]);
 }
 
+/** Lignes affichées à l'employé : un départ suivi d'une arrivée dans les 5 s = un changement de chantier. */
+type LigneJour = { id: string; heure: string; chantierId?: string; genre: 'arrivee' | 'depart' | 'changement' };
+function lignesDuJour(tries: Pointage[]): LigneJour[] {
+  const res: LigneJour[] = [];
+  for (let i = 0; i < tries.length; i++) {
+    const p = tries[i];
+    const suivant = tries[i + 1];
+    if (p.type === 'fin' && suivant?.type === 'debut' && Math.abs(Date.parse(suivant.timestamp) - Date.parse(p.timestamp)) <= 5000) {
+      res.push({ id: suivant.id, heure: suivant.heure, chantierId: suivant.chantierId, genre: 'changement' });
+      i++;
+      continue;
+    }
+    res.push({ id: p.id, heure: p.heure, chantierId: p.chantierId, genre: p.type === 'debut' ? 'arrivee' : 'depart' });
+  }
+  return res;
+}
+
 type PropsBouton = { action: Action; libelle: string; onPress: () => void; plein: boolean; enCours: Action | null };
 function Bouton({ action, libelle, onPress, plein, enCours }: PropsBouton) {
   const occupe = enCours !== null;
@@ -160,14 +177,17 @@ export function PointageLibre({ onDepart }: { onDepart?: (chantierId?: string) =
       {tries.length > 0 && (
         <View style={{ backgroundColor: DS.surface, borderRadius: radius.lg, borderWidth: 1, borderColor: DS.border, padding: 12, gap: 8 }}>
           <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary }}>{tm("Aujourd'hui")}</Text>
-          {tries.map(p => {
-            const ch = data.chantiers.find(c => c.id === p.chantierId);
+          {lignesDuJour(tries).map(l => {
+            const ch = data.chantiers.find(c => c.id === l.chantierId);
+            const icone = l.genre === 'arrivee' ? '↘ ' : l.genre === 'depart' ? '↗ ' : '⇄ ';
             return (
-              <View key={p.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 }}>
-                <Text style={{ width: 86, fontSize: 14, fontWeight: '700', color: DS.text }}>{p.type === 'debut' ? '↘ ' : '↗ '}{p.heure}</Text>
+              <View key={l.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 }}>
+                <Text style={{ width: 86, fontSize: 14, fontWeight: '700', color: DS.text }}>{icone}{l.heure}</Text>
                 <View style={{ flex: 1, minHeight: 32, borderRadius: radius.full, paddingHorizontal: 12, justifyContent: 'center',
                     backgroundColor: DS.surfaceAlt, borderWidth: 1, borderColor: ch ? (ch.couleur || DS.border) : DS.border }}>
-                  <Text style={{ fontSize: 13, fontWeight: '700', color: ch ? DS.text : DS.textSecondary }} numberOfLines={1}>{ch ? ch.nom : tm('Chantier à préciser par SK DECO')}</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: ch ? DS.text : DS.textSecondary }} numberOfLines={1}>
+                    {l.genre === 'changement' ? `${tm('Changement')} → ` : ''}{ch ? ch.nom : tm('Chantier à préciser par SK DECO')}
+                  </Text>
                 </View>
               </View>
             );

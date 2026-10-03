@@ -8,6 +8,7 @@
  * réutilise exactement les mêmes modales que la vue Semaine.
  */
 import React, { useMemo, useState } from 'react';
+import { HORS_CHANTIER_ID } from '@/lib/planningAffichage';
 import { View, Text, Pressable, ScrollView, StyleSheet, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { ChevronRight, ChevronDown, Plus, StickyNote, CalendarOff } from 'lucide-react-native';
@@ -115,7 +116,7 @@ export function DayListView({
 
       {actifs.map(({ ch, employes, sts, interventions }) => (
         <View key={ch.id} style={styles.card}>
-          <Pressable style={styles.cardHead} onPress={tap(() => onOpenChantierActions(ch.id))} accessibilityRole="button">
+          <Pressable style={styles.cardHead} onPress={tap(() => { if (ch.id !== HORS_CHANTIER_ID) onOpenChantierActions(ch.id); })} accessibilityRole="button">
             <View style={[styles.colorDot, { backgroundColor: ch.couleur || DS.primary }]} />
             <Text style={styles.cardTitle} numberOfLines={1}>{ch.nom}</Text>
             {ch.statut === 'sav' && <BadgeSav />}
@@ -125,7 +126,7 @@ export function DayListView({
           {!!ch.adresse && <Text style={styles.cardSub} numberOfLines={1}>{ch.adresse}</Text>}
           <View style={styles.chips}>
             {employes.map(e => (
-              <Pressable key={e.id} style={styles.chip} onPress={tap(() => onOpenEmpNote(ch.id, dateStr, e.id))}>
+              <Pressable key={e.id} style={styles.chip} onPress={tap(() => { if (ch.id !== HORS_CHANTIER_ID) onOpenEmpNote(ch.id, dateStr, e.id); })}>
                 <View style={[styles.chipDot, { backgroundColor: metiers[e.metier]?.color ?? DS.textSecondary }]} />
                 <Text style={styles.chipText} numberOfLines={1}>{e.prenom}</Text>
               </Pressable>
@@ -146,7 +147,7 @@ export function DayListView({
               <Pressable
                 style={[styles.chip, styles.chipAdd]}
                 accessibilityLabel="Ajouter une affectation"
-                onPress={tap(() => onOpenAjoutModal(ch.id, dateStr))}
+                onPress={tap(() => { if (ch.id !== HORS_CHANTIER_ID) onOpenAjoutModal(ch.id, dateStr); })}
               >
                 <Plus size={15} color={DS.primary} strokeWidth={2.2} />
               </Pressable>
@@ -164,7 +165,7 @@ export function DayListView({
           {(showVides || actifs.length === 0) && (
           <View style={styles.listCard}>
             {vides.map(({ ch }, i) => (
-              <Pressable key={ch.id} style={styles.listRow} onPress={tap(() => onOpenAjoutModal(ch.id, dateStr))}>
+              <Pressable key={ch.id} style={styles.listRow} onPress={tap(() => { if (ch.id !== HORS_CHANTIER_ID) onOpenAjoutModal(ch.id, dateStr); })}>
                 <View style={[styles.colorDot, { backgroundColor: ch.couleur || DS.primary }]} />
                 <View style={[styles.listInner, i < vides.length - 1 && styles.listSeparator]}>
                   <Text style={styles.listTitle} numberOfLines={1}>{ch.nom}</Text>

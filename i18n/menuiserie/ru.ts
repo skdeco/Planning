@@ -685,6 +685,8 @@ const d: Record<string, string> = {
   "Sur le chantier": "На объекте",
   "depuis": "с",
   "Arrivée pointée à": "Приход отмечен в",
+  "Pointé hors chantier": "Отметка вне объекта",
+  "Changement": "Смена",
 };
 
 export default d;

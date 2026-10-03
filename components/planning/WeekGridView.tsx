@@ -18,6 +18,8 @@ import { WeekGridCell, type CellModalOpeners } from './WeekGridCell';
 import { BadgeSav } from './OeilChantier';
 import { ChantiersMasques } from './ChantiersMasques';
 import { FicheAffectationJour, type CibleAffectation } from './FicheAffectationJour';
+import { EditionPointagesJour } from '@/components/pointage/EditionPointagesJour';
+import { HORS_CHANTIER_ID } from '@/lib/planningAffichage';
 
 // ─── Helpers de date locaux ───────────────────────────────────────────────────
 
@@ -128,6 +130,7 @@ export function WeekGridView({
   const [hauteursNoms, setHauteursNoms] = useState<Record<string, number>>({});
   const [hauteurEntete, setHauteurEntete] = useState(0);
   const [fiche, setFiche] = useState<CibleAffectation | null>(null);
+  const [edition, setEdition] = useState<{ employeId: string; date: string } | null>(null);
 
   // Groupe les 6 modal openers en un seul objet stable (référence préservée
   // tant que les callbacks parent ne changent pas) pour passage à WeekGridCell.
@@ -160,8 +163,8 @@ export function WeekGridView({
               <Pressable
                 key={chantier.id}
                 style={[styles.nameCell, { width: NAME_COL, height: h || undefined, borderBottomWidth: 1, borderBottomColor: '#EDE2D6' }]}
-                onPress={() => onOpenChantierActions(chantier.id)}
-                onLongPress={isAdmin ? () => onLongPressChantier(chantier.id) : undefined}
+                onPress={chantier.id === HORS_CHANTIER_ID ? undefined : () => onOpenChantierActions(chantier.id)}
+                onLongPress={isAdmin && chantier.id !== HORS_CHANTIER_ID ? () => onLongPressChantier(chantier.id) : undefined}
                 delayLongPress={400}
               >
                 <View style={[styles.colorBar, { backgroundColor: chantier.couleur }]} />
@@ -212,7 +215,11 @@ export function WeekGridView({
                       getOrdreNum={getOrdreNum}
                       getOrdreChantiers={getOrdreChantiers}
                       openers={cellOpeners}
-                      onFiche={(chantierId, d, empId) => setFiche({ chantierId, employeId: empId, date: d })}
+                      onFiche={(chantierId, d, empId) => {
+                        // Pointé hors chantier : l'admin / les RH renseignent le chantier
+                        if (chantierId === HORS_CHANTIER_ID) { if (peutMasquer) setEdition({ employeId: empId, date: d }); return; }
+                        setFiche({ chantierId, employeId: empId, date: d });
+                      }}
                     />
                   );
                 })}
@@ -224,6 +231,8 @@ export function WeekGridView({
 
       {/* Chantiers masqués : réaffichables en un tap */}
       {peutMasquer && <ChantiersMasques />}
+
+      <EditionPointagesJour visible={!!edition} employeId={edition?.employeId || null} date={edition?.date || ''} onFermer={() => setEdition(null)} />
 
       <FicheAffectationJour
         cible={fiche}

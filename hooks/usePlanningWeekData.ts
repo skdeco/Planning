@@ -4,7 +4,8 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { trierChantiers } from '@/lib/chantierOrder';
 import { estLieAuContact } from '@/lib/portail/chantiersDuContact';
 import { usePlanningFiltre, chantierDansPlanning } from '@/lib/planningFiltre';
-import { useFiltreStatutPlanning, dansFiltreStatut, avecCouleurSav } from '@/lib/planningAffichage';
+import { useFiltreStatutPlanning, dansFiltreStatut, avecCouleurSav, HORS_CHANTIER_ID, chantierHorsChantier, idsPointesHorsChantier } from '@/lib/planningAffichage';
+import { tm } from '@/lib/menuiserie/i18n';
 import type {
   Chantier,
   Employe,
@@ -143,8 +144,20 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
     return `${first.getDate()} ${MOIS[first.getMonth()]} – ${last.getDate()} ${MOIS[last.getMonth()]}`;
   }, [days, MOIS]);
 
+  // Employés pointés hors chantier, par jour de la semaine affichée
+  const horsChantierParJour = useMemo(() => {
+    const res: Record<string, string[]> = {};
+    for (const d of days) {
+      const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      let ids = idsPointesHorsChantier(data.pointages, k);
+      if (!isAdmin && !isRH) ids = ids.filter(id => id === currentUser?.employeId);
+      if (ids.length) res[k] = ids;
+    }
+    return res;
+  }, [days, data.pointages, isAdmin, isRH, currentUser?.employeId]);
+
   // Chantiers visibles sur le planning
-  const visibleChantiers = useMemo(() => {
+  const visibleChantiersReels = useMemo(() => {
     const sortByOrdre = (arr: typeof data.chantiers) =>
       trierChantiers(arr, data.chantierOrderPlanning, data.chantierTri).map(avecCouleurSav);
     if (isAdmin || isRH) {
@@ -175,8 +188,19 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
     ));
   }, [data, isAdmin, isRH, isST, currentUser, planningFiltre, filtreStatut]);
 
+  // Ligne « Pointé hors chantier » en tête quand un pointage sans chantier existe cette semaine
+  const visibleChantiers = useMemo(() => (
+    !isST && Object.keys(horsChantierParJour).length > 0
+      ? [chantierHorsChantier(tm('Pointé hors chantier')), ...visibleChantiersReels]
+      : visibleChantiersReels
+  ), [visibleChantiersReels, horsChantierParJour, isST]);
+
   // Employés affectés à un chantier pour un jour donné (excluant les affectations ST)
   const getEmployesForCell = useCallback((chantierId: string, day: Date): Employe[] => {
+    if (chantierId === HORS_CHANTIER_ID) {
+      const k = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, '0')}-${String(day.getDate()).padStart(2, '0')}`;
+      return (horsChantierParJour[k] || []).map(id => data.employes.find(e => e.id === id)).filter((e): e is Employe => !!e);
+    }
     const affectations = data.affectations.filter(a =>
       a.chantierId === chantierId &&
       !a.soustraitantId &&   // exclure les affectations sous-traitants
@@ -193,7 +217,7 @@ export function usePlanningWeekData(weekOffset: number): PlanningWeekData {
     return affectations
       .map(a => data.employes.find(e => e.id === a.employeId))
       .filter((e): e is Employe => !!e && !seen.has(e.id) && (seen.add(e.id), true));
-  }, [data, isAdmin, isST, currentUser]);
+  }, [data, isAdmin, isST, currentUser, horsChantierParJour]);
 
   /** Interventions externes pour un chantier et un jour donné */
   const getInterventionsForCell = useCallback((chantierId: string, day: Date): Intervention[] => {

@@ -682,6 +682,8 @@ const d: Record<string, string> = {
   "Sur le chantier": "Na obra",
   "depuis": "desde",
   "Arrivée pointée à": "Chegada registada às",
+  "Pointé hors chantier": "Ponto fora de obra",
+  "Changement": "Mudança",
 };
 
 export default d;
