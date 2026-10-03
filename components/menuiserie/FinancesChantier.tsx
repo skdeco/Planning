@@ -1,5 +1,5 @@
 /**
- * Onglet Général — argent du chantier :
+ * Onglet Finances — argent du chantier :
  *  - Prix : libellé optionnel + montant HT (admin seul)
  *  - Règlements du client (visibles client & architecte)
  *  - Commission (architecte / apporteur) : prévue et payée — jamais visible par le client.

@@ -192,6 +192,10 @@ export async function listerComptesMn(): Promise<CompteMn[]> {
   return verifier(await mn().from('mn_comptes').select('*').order('nom')) || [];
 }
 
+/** Droits d'un employé d'usine (montants, étapes visibles) — réglés par l'admin. */
+export async function majDroitsCompteMn(id: string, droits: import('./types').DroitsCompteMn): Promise<void> {
+  verifier(await mn().from('mn_comptes').update({ droits }).eq('id', id));
+}
 export async function activerCompteMn(id: string, actif: boolean): Promise<void> {
   verifier(await mn().from('mn_comptes').update({ actif }).eq('id', id));
 }

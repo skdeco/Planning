@@ -51,7 +51,7 @@ function ChantierAdmin() {
   const erreur = erreurAction || erreurCharge;
   const [ouverte, setOuverte] = useState<DefEtape | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
-  const [onglet, setOnglet] = useState<'general' | 'deroulement'>('general');
+  const [onglet, setOnglet] = useState<'general' | 'finances' | 'deroulement'>('general');
 
   if (!d) {
     return (
@@ -85,14 +85,14 @@ function ChantierAdmin() {
       >
         <EnTete titre={c.nom} retour={() => router.back()} />
 
-        {/* Deux onglets : Général (infos, intervenants, argent) / Déroulement (étapes 1 à 15) */}
+        {/* Trois onglets : Général (infos, intervenants) / Finances (prix, règlements, commission) / Déroulement (étapes) */}
         <View style={{ flexDirection: 'row', backgroundColor: DS.segment, borderRadius: 12, padding: 3 }}>
-          {(['general', 'deroulement'] as const).map(o => {
+          {(['general', 'finances', 'deroulement'] as const).map(o => {
             const on = onglet === o;
             return (
               <Pressable key={o} onPress={() => setOnglet(o)} accessibilityRole="tab" accessibilityState={{ selected: on }}
                 style={{ flex: 1, minHeight: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center', backgroundColor: on ? DS.surface : 'transparent' }}>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: on ? DS.primary : DS.textSecondary }}>{o === 'general' ? tm("Général") : tm("Déroulement")}</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: on ? DS.primary : DS.textSecondary }}>{o === 'general' ? tm("Général") : o === 'finances' ? tm("Finances") : tm("Déroulement")}</Text>
               </Pressable>
             );
           })}
@@ -124,8 +124,6 @@ function ChantierAdmin() {
               )}
             </Carte>
 
-            <FinancesChantier moi={moi} chantierId={c.id} intervenants={d.intervenants} montants={d.montants} onChange={charger} />
-
             <Bouton label={tm("Messagerie & RDV avec le client")} variante="contour" onPress={() => router.push(`/menuiserie/messagerie/${c.id}` as any)} />
             {c.statut !== 'archive' && (
               <Bouton label={tm("Archiver ce chantier")} variante="contour" onPress={() => changerStatut('archive')} />
@@ -134,6 +132,8 @@ function ChantierAdmin() {
               <Text style={{ fontSize: 15, fontWeight: '800', color: DS.error }}>{tm("Supprimer définitivement ce chantier")}</Text>
             </Pressable>
           </>
+        ) : onglet === 'finances' ? (
+          <FinancesChantier moi={moi} chantierId={c.id} intervenants={d.intervenants} montants={d.montants} onChange={charger} />
         ) : (
           <>
             {ETAPES_MN.map((def, idx) => {

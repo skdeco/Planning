@@ -701,6 +701,16 @@ const d: Record<string, string> = {
   "Aucun chantier trouvé.": "No site found.",
   "Choisir les chantiers affichés": "Choose displayed sites",
   "Choisir": "Choose",
+  "Finances": "Finances",
+  "Ajout…": "Adding…",
+  "Choisis son compte s'il existe déjà :": "Pick their account if it already exists:",
+  "Créer un compte {0}": "Create a {0} account",
+  "ou identifiant (sans e-mail)": "or username (no e-mail)",
+  "Créer et donner l'accès": "Create and give access",
+  "Ce que {0} peut voir": "What {0} can see",
+  "Montants de l'usine (achat usine, matériaux, emballage, transport)": "Factory amounts (purchase, materials, packaging, transport)",
+  "Étapes visibles": "Visible steps",
+  "Le prix de vente client n'est jamais visible par l'usine : il reste réservé aux administrateurs.": "The client sale price is never visible to the factory: admins only.",
 };
 
 export default d;

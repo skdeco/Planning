@@ -33,6 +33,14 @@ export interface UsineMn {
   created_at: string;
 }
 
+/** Droits réglables d'un compte employé d'usine (ex. responsable d'usine). Absent = règles par défaut. */
+export interface DroitsCompteMn {
+  /** Voir les montants de l'usine (achat usine, matériaux, emballage, transport) */
+  voir_montants_usine?: boolean;
+  /** Étapes visibles ; absent = toutes celles de l'usine */
+  etapes?: string[];
+}
+
 export interface CompteMn {
   id: string;
   user_id: string | null;
@@ -47,6 +55,7 @@ export interface CompteMn {
   actif: boolean;
   conges_annuels: number;
   created_at: string;
+  droits?: DroitsCompteMn | null;
 }
 
 export interface ChantierMn {
@@ -133,11 +142,11 @@ export interface JournalMn {
 
 export const ROLE_COMPTE_MN_LABELS: Record<RoleCompteMn, string> = traduit({
   admin: 'Administrateur',
-  usine: 'Usine',
-  employe_usine: "Employé d'usine",
+  usine: 'Usine (associé, accès complet)',
+  employe_usine: "Employé / responsable d'usine",
   client: 'Client',
   architecte: 'Architecte',
-  apporteur: "Apporteur d'affaires",
+  apporteur: "Apporteur / commercial",
   poseur: 'Poseur',
 });
 

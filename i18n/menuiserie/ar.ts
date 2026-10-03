@@ -726,6 +726,16 @@ const d: Record<string, string> = {
   "Aucun chantier trouvé.": "لم يتم العثور على مشروع.",
   "Choisir les chantiers affichés": "اختر المشاريع المعروضة",
   "Choisir": "اختر",
+  "Finances": "المالية",
+  "Ajout…": "جارٍ الإضافة…",
+  "Choisis son compte s'il existe déjà :": "اختر حسابه إن كان موجوداً:",
+  "Créer un compte {0}": "إنشاء حساب {0}",
+  "ou identifiant (sans e-mail)": "أو اسم مستخدم (بدون بريد)",
+  "Créer et donner l'accès": "إنشاء ومنح الوصول",
+  "Ce que {0} peut voir": "ما يمكن لـ {0} رؤيته",
+  "Montants de l'usine (achat usine, matériaux, emballage, transport)": "مبالغ المصنع (شراء، مواد، تغليف، نقل)",
+  "Étapes visibles": "المراحل المرئية",
+  "Le prix de vente client n'est jamais visible par l'usine : il reste réservé aux administrateurs.": "سعر البيع للعميل لا يظهر للمصنع أبداً: للمسؤولين فقط.",
 };
 
 export default d;

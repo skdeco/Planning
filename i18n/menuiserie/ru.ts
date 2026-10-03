@@ -726,6 +726,16 @@ const d: Record<string, string> = {
   "Aucun chantier trouvé.": "Объекты не найдены.",
   "Choisir les chantiers affichés": "Выбрать показанные объекты",
   "Choisir": "Выбрать",
+  "Finances": "Финансы",
+  "Ajout…": "Добавление…",
+  "Choisis son compte s'il existe déjà :": "Выберите аккаунт, если он уже есть:",
+  "Créer un compte {0}": "Создать аккаунт ({0})",
+  "ou identifiant (sans e-mail)": "или логин (без e-mail)",
+  "Créer et donner l'accès": "Создать и дать доступ",
+  "Ce que {0} peut voir": "Что видит {0}",
+  "Montants de l'usine (achat usine, matériaux, emballage, transport)": "Суммы фабрики (закупка, материалы, упаковка, транспорт)",
+  "Étapes visibles": "Видимые этапы",
+  "Le prix de vente client n'est jamais visible par l'usine : il reste réservé aux administrateurs.": "Цена продажи клиенту никогда не видна фабрике: только администраторам.",
 };
 
 export default d;

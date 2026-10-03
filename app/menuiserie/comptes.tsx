@@ -4,6 +4,7 @@
  * désactivation et suppression définitive.
  */
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { DroitsEmployeUsine } from '@/components/menuiserie/DroitsEmployeUsine';
 import { View, Text, ScrollView, Pressable, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
@@ -143,6 +144,10 @@ export default function ComptesMn() {
                 </View>
               </>
             )}
+            {editId && role === 'employe_usine' && (() => {
+              const compte = comptes.find(x => x.id === editId);
+              return compte ? <DroitsEmployeUsine key={compte.id} compte={compte} onChange={charger} /> : null;
+            })()}
             {champ('email', 'E-mail de connexion (permet « mot de passe oublié »)', { autoCapitalize: 'none', keyboardType: 'email-address' })}
             {champ('identifiant', 'Identifiant (si pas d’e-mail, ou en plus)', { autoCapitalize: 'none' })}
             {champ('telephone', 'Téléphone', { keyboardType: 'phone-pad' })}

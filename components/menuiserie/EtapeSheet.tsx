@@ -6,9 +6,8 @@ import { DS, radius } from '@/constants/design';
 import { DateInput } from '@/components/ui/DateInput';
 import { formatDateHeureFR } from '@/lib/date/format';
 import { majEtapeMn } from '@/lib/menuiserie/api';
-import { etapeModifiable, TYPES_MONTANT_USINE, type DefEtape } from '@/lib/menuiserie/etapes';
+import { etapeModifiablePour, voitMontantsUsine, TYPES_MONTANT_USINE, type DefEtape } from '@/lib/menuiserie/etapes';
 import type { ChantierMn, CompteMn, DocumentMn, EtapeMn, MontantMn, StatutEtapeMn } from '@/lib/menuiserie/types';
-import { groupeMn } from '@/lib/menuiserie/types';
 import { VerificationMeubles } from './VerificationMeubles';
 import { ReservesPanel } from './ReservesPanel';
 import { Bouton, Champ, Section } from './ui';
@@ -56,10 +55,10 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
     setCharge(false); onChange();
   };
   const statut = etape?.statut || 'a_faire';
-  const groupe = groupeMn(moi.role);
-  const modifiable = etapeModifiable(groupe, def.cle);
+  const modifiable = etapeModifiablePour(moi, def.cle);
   const typesMontants = moi.role === 'admin' ? def.montants : moi.role === 'usine' ? def.montants.filter(t => TYPES_MONTANT_USINE.includes(t)) : [];
-  const voitMontants = moi.role !== 'employe_usine';
+  // Employé d'usine : seulement si l'admin le lui a ouvert (réglage du compte)
+  const voitMontants = moi.role !== 'employe_usine' || voitMontantsUsine(moi);
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose} presentationStyle="pageSheet">

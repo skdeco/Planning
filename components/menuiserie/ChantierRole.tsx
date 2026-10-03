@@ -13,7 +13,7 @@ import { formatDateFR } from '@/lib/date/format';
 import { useCompteMn } from '@/lib/menuiserie/SessionMn';
 import { chantierPourRoleMn, type ChantierRoleMn } from '@/lib/menuiserie/api2';
 import { lireCacheMn, ecrireCacheMn } from '@/lib/menuiserie/cache';
-import { ETAPES_MN, etapeVisible, type DefEtape } from '@/lib/menuiserie/etapes';
+import { ETAPES_MN, etapeVisiblePour, type DefEtape } from '@/lib/menuiserie/etapes';
 import { groupeMn, STATUT_CHANTIER_MN_LABELS } from '@/lib/menuiserie/types';
 import { Carte, EnTete, Section } from './ui';
 import { EtapeSheet } from './EtapeSheet';
@@ -57,7 +57,7 @@ export function ChantierRole() {
     );
   }
   const c = d.chantier;
-  const etapes = ETAPES_MN.filter(e => etapeVisible(groupe, e.cle) && !e.aVenir);
+  const etapes = ETAPES_MN.filter(e => etapeVisiblePour(moi, e.cle) && !e.aVenir);
 
   return (
     <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>

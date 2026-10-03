@@ -54,15 +54,16 @@ export async function chantierPourRoleMn(moi: CompteMn, id: string): Promise<Cha
 // ── Intervenants (lien avec les comptes) ───────────────────────────────────
 export async function ajouterIntervenantMn(moi: CompteMn, chantierId: string, role: RoleIntervenantMn, nom: string, compteId: string | null) {
   ok(await mn().from('mn_intervenants').insert({ chantier_id: chantierId, role, nom: nom.trim(), compte_id: compteId }));
-  await journaliser(moi, chantierId, 'Intervenant ajouté', `${role} : ${nom}`);
+  // Journal en arrière-plan : l'ajout s'affiche sans attendre
+  journaliser(moi, chantierId, 'Intervenant ajouté', `${role} : ${nom}`).catch(() => {});
 }
 export async function lierCompteIntervenantMn(moi: CompteMn, it: IntervenantMn, compteId: string | null) {
   ok(await mn().from('mn_intervenants').update({ compte_id: compteId }).eq('id', it.id));
-  await journaliser(moi, it.chantier_id, compteId ? 'Accès donné' : 'Accès retiré', `${it.role} : ${it.nom}`);
+  journaliser(moi, it.chantier_id, compteId ? 'Accès donné' : 'Accès retiré', `${it.role} : ${it.nom}`).catch(() => {});
 }
 export async function retirerIntervenantMn(moi: CompteMn, it: IntervenantMn) {
   ok(await mn().from('mn_intervenants').delete().eq('id', it.id));
-  await journaliser(moi, it.chantier_id, 'Intervenant retiré', `${it.role} : ${it.nom}`);
+  journaliser(moi, it.chantier_id, 'Intervenant retiré', `${it.role} : ${it.nom}`).catch(() => {});
 }
 
 // ── Vérification des meubles ───────────────────────────────────────────────

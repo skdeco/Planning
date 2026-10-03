@@ -718,6 +718,16 @@ const d: Record<string, string> = {
   "Aucun chantier trouvé.": "Ninguna obra encontrada.",
   "Choisir les chantiers affichés": "Elegir obras mostradas",
   "Choisir": "Elegir",
+  "Finances": "Finanzas",
+  "Ajout…": "Añadiendo…",
+  "Choisis son compte s'il existe déjà :": "Elige su cuenta si ya existe:",
+  "Créer un compte {0}": "Crear una cuenta {0}",
+  "ou identifiant (sans e-mail)": "o identificador (sin e-mail)",
+  "Créer et donner l'accès": "Crear y dar acceso",
+  "Ce que {0} peut voir": "Lo que {0} puede ver",
+  "Montants de l'usine (achat usine, matériaux, emballage, transport)": "Importes de fábrica (compra, materiales, embalaje, transporte)",
+  "Étapes visibles": "Etapas visibles",
+  "Le prix de vente client n'est jamais visible par l'usine : il reste réservé aux administrateurs.": "El precio de venta al cliente nunca es visible para la fábrica: solo administradores.",
 };
 
 export default d;

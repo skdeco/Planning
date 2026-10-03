@@ -2,7 +2,8 @@
  * Les étapes d'un chantier menuiserie : qui remplit, et ce que l'usine voit.
  * Sert à l'affichage de la fiche chantier et, plus tard, aux droits par rôle.
  */
-import type { GroupeMn, TypeMontantMn } from './types';
+import type { CompteMn, GroupeMn, TypeMontantMn } from './types';
+import { groupeMn } from './types';
 import { traduit } from '@/lib/menuiserie/i18n';
 
 export type RempliPar = 'admin' | 'usine' | 'tous';
@@ -110,5 +111,31 @@ export function etapeVisible(groupe: GroupeMn, etape: string): boolean {
   if (groupe === 'admin') return true;
   if (groupe === 'usine') return !['reception', 'pose', 'pv', 'sav'].includes(etape);
   if (groupe === 'poseur') return ['plan_exe', 'montage', 'verification', 'livraison', 'pose'].includes(etape);
+  return false;
+}
+
+/**
+ * Règles par compte (même logique que les fonctions serveur mn_etape_visible /
+ * mn_etape_modifiable, script menuiserie_2e.sql) :
+ *  - « Plan pour devis » : déposable par l'admin, l'usine et l'apporteur / commercial ;
+ *  - employé d'usine (ex. responsable) : limité aux étapes que l'admin lui ouvre.
+ */
+export function etapeVisiblePour(moi: Pick<CompteMn, 'role' | 'droits'>, etape: string): boolean {
+  const groupe = groupeMn(moi.role);
+  if (groupe === 'apporteur') return etape === 'plan_devis';
+  if (!etapeVisible(groupe, etape)) return false;
+  if (moi.role === 'employe_usine' && moi.droits?.etapes) return moi.droits.etapes.includes(etape);
+  return true;
+}
+export function etapeModifiablePour(moi: Pick<CompteMn, 'role' | 'droits'>, etape: string): boolean {
+  const groupe = groupeMn(moi.role);
+  if (etape === 'plan_devis' && (groupe === 'usine' || groupe === 'apporteur')) return etapeVisiblePour(moi, etape);
+  if (!etapeModifiable(groupe, etape)) return false;
+  return etapeVisiblePour(moi, etape);
+}
+/** L'employé d'usine voit-il les montants de l'usine ? (l'usine elle-même : oui) */
+export function voitMontantsUsine(moi: Pick<CompteMn, 'role' | 'droits'>): boolean {
+  if (moi.role === 'admin' || moi.role === 'usine') return true;
+  if (moi.role === 'employe_usine') return moi.droits?.voir_montants_usine === true;
   return false;
 }
