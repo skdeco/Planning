@@ -694,6 +694,12 @@ const d: Record<string, string> = {
   "Vous êtes sur {0} depuis {1}.": "Вы на объекте {0} с {1}.",
   "Arrivée pointée à {0}.": "Приход отмечен в {0}.",
   "Journée terminée à {0}.": "День завершён в {0}.",
+  "Qui peut voir ce plan ?": "Кто видит этот план?",
+  "Sous-traitants": "Субподрядчики",
+  "Par personne": "По людям",
+  "Admin seulement": "Только админ",
+  "Choisissez les personnes": "Выберите людей",
+  "Visible aussi par le client et l’architecte": "Также видно клиенту и архитектору",
 };
 
 export default d;

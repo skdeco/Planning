@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { AccesPlan, libelleAcces, type AccesPlanValeurs } from '@/components/chantier/AccesPlan';
 import {
   Modal,
   View,
@@ -55,6 +56,9 @@ export interface PlanChantierEntry {
   fichier: string;
   /** ISO timestamp de l'upload. */
   uploadedAt: string;
+  visiblePar?: 'tous' | 'employes' | 'soustraitants' | 'admin' | 'specifique';
+  visibleIds?: string[];
+  partageExterne?: boolean;
 }
 
 /**
@@ -95,6 +99,8 @@ export interface ModalPlansChantierProps {
   chantierNom: string;
   /** Plans déjà filtrés par le parent selon la visibilité + rôle. */
   plans: PlanChantierEntry[];
+  /** Modifier qui peut voir un plan existant (admin). */
+  onUpdatePlan?: (planId: string, v: AccesPlanValeurs) => void;
   /** Participants (employés + sous-traitants) pour le selector "spécifique". */
   participants: PlanParticipant[];
   /** Gate la section "ajouter un plan" + bouton 🗑 suppression. */
@@ -225,6 +231,7 @@ export function ModalPlansChantier({
   onPickFromInbox,
   onAddPlan,
   onDeletePlan,
+  onUpdatePlan,
 }: ModalPlansChantierProps): React.ReactElement {
   const { t } = useLanguage();
 
@@ -232,6 +239,7 @@ export function ModalPlansChantier({
   const [fichier, setFichier]     = useState<string | null>(null);
   const [visiblePar, setVisiblePar] = useState<PlanChantierValues['visiblePar']>('tous');
   const [visibleIds, setVisibleIds] = useState<string[]>([]);
+  const [accesPlanId, setAccesPlanId] = useState<string | null>(null);
 
   // Reset à chaque ouverture (UX : champs vierges)
   useEffect(() => {
@@ -327,13 +335,23 @@ export function ModalPlansChantier({
                   <View style={styles.listItemInfo}>
                     <Text style={styles.listItemName}>{plan.nom}</Text>
                     <Text style={styles.listItemDate}>
-                      {formatUploadDate(plan.uploadedAt)}
+                      {formatUploadDate(plan.uploadedAt)} · {libelleAcces(plan)}
                     </Text>
                   </View>
                   <Text style={styles.listItemAction}>
                     {t.chantiers.viewPlan} →
                   </Text>
                 </Pressable>
+                {isAdmin && onUpdatePlan && (
+                  <Pressable
+                    style={styles.deleteBtn}
+                    onPress={() => setAccesPlanId(plan.id)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Qui peut voir ${plan.nom}`}
+                  >
+                    <Text style={styles.deleteBtnText}>👁</Text>
+                  </Pressable>
+                )}
                 {isAdmin && (
                   <Pressable
                     style={styles.deleteBtn}
@@ -467,6 +485,12 @@ export function ModalPlansChantier({
             )}
           </ScrollView>
         </View>
+        <AccesPlan
+          plan={plans.find(p => p.id === accesPlanId) || null}
+          participants={participants}
+          onFermer={() => setAccesPlanId(null)}
+          onEnregistrer={v => { if (accesPlanId) onUpdatePlan?.(accesPlanId, v); setAccesPlanId(null); }}
+        />
       </View>
     </ModalKeyboard>
   );

@@ -691,6 +691,12 @@ const d: Record<string, string> = {
   "Vous êtes sur {0} depuis {1}.": "Está em {0} desde as {1}.",
   "Arrivée pointée à {0}.": "Chegada registada às {0}.",
   "Journée terminée à {0}.": "Dia terminado às {0}.",
+  "Qui peut voir ce plan ?": "Quem pode ver esta planta?",
+  "Sous-traitants": "Subempreiteiros",
+  "Par personne": "Por pessoa",
+  "Admin seulement": "Só admin",
+  "Choisissez les personnes": "Escolha as pessoas",
+  "Visible aussi par le client et l’architecte": "Visível também para o cliente e o arquiteto",
 };
 
 export default d;

@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { AccesPlan, libelleAcces } from '@/components/chantier/AccesPlan';
 import { useRouter, useLocalSearchParams, useFocusEffect } from 'expo-router';
 import {
   View, Text, StyleSheet, FlatList, Pressable, Modal,
@@ -167,7 +168,7 @@ const DEFAULT_FORM: ChantierForm = {
 };
 
 export default function ChantiersScreen() {
-  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, archivePlanChantier, unarchivePlanChantier, addDepense, updateDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
+  const { data, currentUser, isHydrated, addChantier, updateChantier, deleteChantier, upsertFicheChantier, addNoteChantier, archiveNoteChantier, deleteNoteChantier, deleteNoteChantierArchivee, addPlanChantier, deletePlanChantier, updatePlanChantier, archivePlanChantier, unarchivePlanChantier, addDepense, updateDepense, deleteDepense, addTicketSAV, updateTicketSAV, deleteTicketSAV, upsertNote, deleteNote, toggleTask, addTaskPhoto, removeTaskPhoto, updateBudgetChantier, addApporteur } = useApp();
   const { t } = useLanguage();
   const statutLabel = (k: string) => (t.statutChantier as Record<string, string>)[k] || STATUT_LABELS[k as keyof typeof STATUT_LABELS] || k;
   const metierLabel = (k: string) => (t.cats.metier as Record<string, string>)[k] || METIER_COLORS[k]?.label || k;
@@ -486,6 +487,10 @@ export default function ChantiersScreen() {
     const planId = `inbox_${item.id}`;
     return await uploadFileToStorage(fileURI, `chantiers/${plansChantierId}/plans`, planId);
   };
+
+  // Modifier qui peut voir un plan existant
+  const [accesPlanId, setAccesPlanId] = useState<string | null>(null);
+  const planAcces = accesPlanId ? (data.chantiers.find(c => c.id === plansChantierId)?.fiche?.plans || []).find(p => p.id === accesPlanId) || null : null;
 
   const handleAddPlan = () => {
     if (!newPlanNom.trim() || !newPlanFichier || !plansChantierId) return;
@@ -3441,11 +3446,21 @@ export default function ChantiersScreen() {
                               <Text style={styles.planNom}>{plan.nom}</Text>
                               <Text style={styles.planMeta}>
                                 {new Date(plan.uploadedAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-                                {plan.visiblePar !== 'tous' && ` • ${plan.visiblePar === 'employes' ? ' Employés' : plan.visiblePar === 'soustraitants' ? ' ST' : ' Sélection'}`}
+                                {` • ${libelleAcces(plan)}`}
                               </Text>
                             </View>
                             <Text style={styles.planViewBtn}>{t.chantiers.viewPlan} →</Text>
                           </Pressable>
+                          {isAdmin && (
+                            <Pressable
+                              style={styles.planArchiveBtn}
+                              onPress={() => setAccesPlanId(plan.id)}
+                              accessibilityRole="button"
+                              accessibilityLabel={`Qui peut voir ${plan.nom}`}
+                            >
+                              <Ico e="👁" size={16} />
+                            </Pressable>
+                          )}
                           {isAdmin && (
                             <Pressable
                               style={styles.planArchiveBtn}
@@ -3695,6 +3710,16 @@ export default function ChantiersScreen() {
               )}
             </ScrollView>
           </View>
+          {/* Qui peut voir ce plan (modifiable sans supprimer le plan) */}
+          <AccesPlan
+            plan={planAcces}
+            participants={[
+              ...data.employes.map(e => ({ id: e.id, label: e.prenom, kind: 'employe' as const })),
+              ...(data.sousTraitants || []).map(st => ({ id: st.id, label: st.nom, kind: 'soustraitant' as const })),
+            ]}
+            onFermer={() => setAccesPlanId(null)}
+            onEnregistrer={v => { if (plansChantierId && accesPlanId) updatePlanChantier(plansChantierId, accesPlanId, v); setAccesPlanId(null); }}
+          />
           {/* ── Overlay sélecteur de lot (V10) — inline dans la modal Plans
                pour contourner le bug Modal-on-Modal iOS ── */}
           {showLotPicker && (

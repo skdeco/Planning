@@ -202,6 +202,8 @@ interface AppContextType {
   // Plans chantier
   addPlanChantier: (chantierId: string, plan: PlanChantier) => void;
   deletePlanChantier: (chantierId: string, planId: string) => void;
+  /** Modifie un plan existant (ex. qui peut le voir) sans le réimporter. */
+  updatePlanChantier: (chantierId: string, planId: string, changes: Partial<PlanChantier>) => void;
   // Archivage manuel d'un plan (réversible) — V11
   archivePlanChantier: (chantierId: string, planId: string) => void;
   unarchivePlanChantier: (chantierId: string, planId: string) => void;
@@ -1751,6 +1753,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }),
     }));
 
+  const updatePlanChantier = (chantierId: string, planId: string, changes: Partial<PlanChantier>) =>
+    setData(p => ({
+      ...p,
+      chantiers: p.chantiers.map(c =>
+        c.id === chantierId && c.fiche
+          ? { ...c, fiche: { ...c.fiche, plans: (c.fiche.plans || []).map(pl => (pl.id === planId ? { ...pl, ...changes } : pl)) } }
+          : c
+      ),
+    }));
+
   const deletePlanChantier = (chantierId: string, planId: string) => {
     const chantier = data.chantiers.find(c => c.id === chantierId);
     const plans = chantier?.fiche?.plans || [];
@@ -2225,7 +2237,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       importAllData,
       addMessagePrive, updateMessagePrive, deleteMessagePrive, marquerMessagesLus,
       addNoteChantier, updateNoteChantier, deleteNoteChantier, archiveNoteChantier, deleteNoteChantierArchivee,
-      addPlanChantier, deletePlanChantier, archivePlanChantier, unarchivePlanChantier,
+      addPlanChantier, deletePlanChantier, updatePlanChantier, archivePlanChantier, unarchivePlanChantier,
       upsertPVReception,
       deletePVReception,
       updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateRayonPointage,

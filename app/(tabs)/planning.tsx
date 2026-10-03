@@ -194,7 +194,7 @@ function genId(): string {
 }
 
 export default function PlanningScreen() {
-  const { data, currentUser, isHydrated, addAffectation, addIntervention, updateIntervention, deleteIntervention, logout, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
+  const { data, currentUser, isHydrated, addAffectation, addIntervention, updateIntervention, deleteIntervention, logout, addRetardPlanifie, deleteRetardPlanifie, addNoteChantier, archiveNoteChantier, deleteNoteChantier, addPlanChantier, deletePlanChantier, updatePlanChantier, updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateOrdreAffectation, addAgendaEvent, updateAgendaEvent, deleteAgendaEvent, deleteChantier } = useApp();
   const { t } = useLanguage();
   const { refreshing, onRefresh } = useRefresh();
   const { width: windowWidth } = useWindowDimensions();
@@ -1321,6 +1321,7 @@ export default function PlanningScreen() {
         onPickFromInbox={handlePlanFromInbox}
         onAddPlan={handleAddPlan}
         onDeletePlan={handleDeletePlan}
+        onUpdatePlan={(planId, v) => { if (plansPlanningChantierId) updatePlanChantier(plansPlanningChantierId, planId, v); }}
       />
 
       {/* Modal paramètres compte admin */}

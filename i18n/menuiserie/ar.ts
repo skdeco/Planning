@@ -694,6 +694,12 @@ const d: Record<string, string> = {
   "Vous êtes sur {0} depuis {1}.": "أنت في {0} منذ {1}.",
   "Arrivée pointée à {0}.": "تم تسجيل الوصول في {0}.",
   "Journée terminée à {0}.": "انتهى اليوم في {0}.",
+  "Qui peut voir ce plan ?": "من يمكنه رؤية هذا المخطط؟",
+  "Sous-traitants": "المقاولون من الباطن",
+  "Par personne": "حسب الشخص",
+  "Admin seulement": "المسؤول فقط",
+  "Choisissez les personnes": "اختر الأشخاص",
+  "Visible aussi par le client et l’architecte": "مرئي أيضاً للعميل والمهندس المعماري",
 };
 
 export default d;
