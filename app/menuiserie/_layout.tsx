@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Stack, Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -25,6 +26,13 @@ export default function MenuiserieLayout() {
 
 function Contenu() {
   const { compte, chargement } = useSessionMn();
+  const { currentUser, setCurrentUser } = useApp();
+  // Session ouverte avant la mise à jour : on mémorise l'identifiant du compte Menuiserie
+  useEffect(() => {
+    if (compte && currentUser?.role === 'menuiserie' && currentUser.compteMnId !== compte.id) {
+      setCurrentUser({ ...currentUser, compteMnId: compte.id, roleMenuiserie: compte.role });
+    }
+  }, [compte?.id, currentUser?.compteMnId]);
   if (chargement) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.background }}>

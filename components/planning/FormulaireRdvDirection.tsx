@@ -43,7 +43,9 @@ type Liste = 'date' | 'debut' | 'fin' | 'finRecurrence' | 'chantier' | 'recurren
 type Option = { v: string; l: string; couleur?: string };
 
 export function FormulaireRdvDirection({ visible, editId, form, setForm, invitables, onSave, onDelete, onClose }: Props) {
-  const { data } = useApp();
+  const { data, currentUser } = useApp();
+  // Compte propre à la Menuiserie : aucun chantier de l'espace Travaux n'est proposé
+  const sansTravaux = currentUser?.role === 'menuiserie';
   const [plus, setPlus] = useState(false);
   const [liste, setListe] = useState<Liste>(null);
   const [recherche, setRecherche] = useState('');
@@ -57,7 +59,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
     return out;
   }, [form.date]);
 
-  const chantiers: Option[] = [{ v: '', l: tm('Aucun') }, ...data.chantiers
+  const chantiers: Option[] = [{ v: '', l: tm('Aucun') }, ...(sansTravaux ? [] : data.chantiers)
     .filter(c => c.statut === 'actif' || c.statut === 'sav' || c.id === form.chantierId)
     .sort((a, b) => a.nom.localeCompare(b.nom))
     .map(c => ({ v: c.id, l: c.nom, couleur: c.couleur }))];

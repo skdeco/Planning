@@ -116,7 +116,7 @@ export default function LoginScreen() {
     if (mnRes.ok) {
       const compteMn = await monCompteMn();
       if (compteMn) {
-        setCurrentUser({ role: 'menuiserie', nom: compteMn.nom, espace: 'menuiserie', roleMenuiserie: compteMn.role });
+        setCurrentUser({ role: 'menuiserie', nom: compteMn.nom, espace: 'menuiserie', roleMenuiserie: compteMn.role, compteMnId: compteMn.id });
         router.replace('/menuiserie' as any);
         return;
       }

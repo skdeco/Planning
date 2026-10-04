@@ -1593,6 +1593,8 @@ export interface AppData {
   adminEmployeId?: string;         // ID de l'employé lié au compte admin (visible par les autres)
   /** Rayon (m) au-delà duquel un pointage est « hors zone » (défaut 300) */
   rayonPointageM?: number;
+  /** Comptes Menuiserie (administrateurs) invitables dans le Planning direction */
+  contactsDirection?: { cle: string; nom: string }[];
   magasinPrefere?: string;         // Magasin préféré pour vérifier la dispo (ex: "Leroy Merlin Ivry-sur-Seine")
   metiersPerso?: MetierPerso[];    // Métiers personnalisés ajoutés par l'admin
   budgetsChantier?: Record<string, number>; // Budget prévisionnel par chantierId
@@ -1660,6 +1662,8 @@ export interface CurrentUser {
   espace?: EspaceId;
   /** Rôle Menuiserie d'un compte « menuiserie » (connexion sécurisée) */
   roleMenuiserie?: RoleMenuiserie;
+  /** Identifiant du compte Menuiserie (compte « menuiserie ») */
+  compteMnId?: string;
 }
 
 /** Couleurs disponibles pour les sous-traitants dans le planning */

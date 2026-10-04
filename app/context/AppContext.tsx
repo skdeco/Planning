@@ -216,6 +216,8 @@ interface AppContextType {
   updateAdminEmployeId: (employeId: string | undefined) => void;
   updateMagasinPrefere: (magasin: string | undefined) => void;
   updateRayonPointage: (m: number) => void;
+  /** Rend un compte (ex. administrateur Menuiserie) invitable dans le Planning direction */
+  enregistrerContactDirection: (cle: string, nom: string) => void;
   // Métiers personnalisés
   addMetierPerso: (m: import('@/app/types').MetierPerso) => void;
   deleteMetierPerso: (id: string) => void;
@@ -1871,6 +1873,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, magasinPrefere: magasin }));
   const updateRayonPointage = (m: number) =>
     setData(p => ({ ...p, rayonPointageM: m }));
+  const enregistrerContactDirection = (cle: string, nom: string) =>
+    setData(p => {
+      const liste = p.contactsDirection || [];
+      const ex = liste.find(c => c.cle === cle);
+      if (ex && ex.nom === nom) return p;
+      return { ...p, contactsDirection: [...liste.filter(c => c.cle !== cle), { cle, nom }] };
+    });
 
   // Métiers personnalisés
   const addMetierPerso = (m: import('@/app/types').MetierPerso) =>
@@ -2240,7 +2249,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPlanChantier, deletePlanChantier, updatePlanChantier, archivePlanChantier, unarchivePlanChantier,
       upsertPVReception,
       deletePVReception,
-      updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateRayonPointage,
+      updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateRayonPointage, enregistrerContactDirection,
       addMetierPerso, deleteMetierPerso, updateBudgetChantier,
       addFournisseur, deleteFournisseur,
       addFournisseurFiche, updateFournisseurFiche, deleteFournisseurFiche,

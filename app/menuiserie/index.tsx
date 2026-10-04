@@ -2,7 +2,8 @@
  * Accueil de l'espace Menuiserie (administrateur) : invitations RDV, ordre du jour,
  * CA par usine, chantiers filtrables. Les autres rôles arrivent aux étapes suivantes.
  */
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useApp } from '@/app/context/AppContext';
 import { View, Text, Pressable, ScrollView, RefreshControl } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
@@ -39,7 +40,18 @@ export default function MenuiserieAccueil() {
 function AccueilAdmin() {
   const router = useRouter();
   const { compte, deconnecter } = useSessionMn();
+  const { currentUser, logout, enregistrerContactDirection } = useApp();
+  const estAdminTravaux = currentUser?.role === 'admin';
   const synchroniserRdv = useSyncRdvMenuiserie();
+  // Les administrateurs Menuiserie (comptes propres à la Menuiserie) deviennent invitables
+  // dans le Planning direction — enregistré depuis la session de l'administrateur principal.
+  useEffect(() => {
+    if (!estAdminTravaux) return;
+    listerComptesMn().then(liste => liste
+      .filter(c => c.actif && c.role === 'admin' && !c.app_ref)
+      .forEach(c => enregistrerContactDirection(`mn:${c.id}`, c.nom))).catch(() => {});
+  }, [estAdminTravaux]);
+  const seDeconnecter = async () => { await deconnecter(); if (!estAdminTravaux) logout(); };
   const [rafraichit, setRafraichit] = useState(false);
   const [filtres, setFiltres] = useState<FiltresMn>(FILTRES_MN_DEFAUT);
   const estAdmin = compte?.role === 'admin';
@@ -125,7 +137,8 @@ function AccueilAdmin() {
               </Carte>
             )}
 
-            <TransfertTravaux onFini={charger} />
+            {/* Transfert depuis Travaux : réservé à l'administrateur principal (données Travaux) */}
+            {estAdminTravaux && <TransfertTravaux onFini={charger} />}
 
             <CaParUsine montants={d.montants} chantiers={d.chantiers} usines={d.usines} />
 
@@ -157,6 +170,7 @@ function AccueilAdmin() {
         )}
 
         {!estAdmin && <Bouton label={tm("Se déconnecter de la Menuiserie")} variante="discret" onPress={deconnecter} />}
+        {estAdmin && !estAdminTravaux && <Bouton label={tm("Se déconnecter")} variante="discret" onPress={seDeconnecter} />}
       </ScrollView>
     </ScreenContainer>
   );

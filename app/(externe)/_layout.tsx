@@ -32,7 +32,7 @@ function ExterneContenu() {
           onPress={() => setCurrentUser(null)}
           style={{ backgroundColor: '#3A3A3A', paddingHorizontal: 14, paddingVertical: 8, borderRadius: 8 }}
         >
-          <Text style={{ color: '#141414', fontSize: 12, fontWeight: '700' }}>Déconnexion</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 12, fontWeight: '700' }}>Déconnexion</Text>
         </Pressable>
       </View>
       <Tabs

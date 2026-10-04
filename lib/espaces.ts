@@ -41,7 +41,8 @@ function estAdminPrincipal(cu: CurrentUser, data: AppData): boolean {
 export function droitsEspaces(cu: CurrentUser | null, data: AppData): DroitsEspaces {
   if (!cu) return { travaux: false, planningDirection: false, espaces: [] };
   if (cu.role === 'menuiserie') {
-    return { travaux: false, menuiserie: cu.roleMenuiserie || 'client', planningDirection: false, espaces: ['menuiserie'] };
+    // Les administrateurs Menuiserie voient le Planning direction ; jamais l'espace Travaux
+    return { travaux: false, menuiserie: cu.roleMenuiserie || 'client', planningDirection: cu.roleMenuiserie === 'admin', espaces: ['menuiserie'] };
   }
   if (estAdminPrincipal(cu, data)) {
     return { travaux: true, menuiserie: 'admin', planningDirection: true, espaces: ['travaux', 'menuiserie'] };
@@ -66,6 +67,7 @@ export function cleUtilisateur(cu: CurrentUser | null): string {
   if (!cu) return '';
   if (cu.role === 'apporteur' && cu.apporteurId) return `app:${cu.apporteurId}`;
   if (cu.role === 'soustraitant' && cu.soustraitantId) return `st:${cu.soustraitantId}`;
+  if (cu.role === 'menuiserie') return `mn:${cu.compteMnId || cu.nom || 'compte'}`;
   if (cu.employeId) return cu.employeId;
   return 'admin';
 }
@@ -90,12 +92,14 @@ export function participantsDirection(data: AppData): ParticipantDirection[] {
   data.sousTraitants.forEach(s => {
     if (s.acces?.planningDirection) out.push({ cle: `st:${s.id}`, nom: `${s.prenom} ${s.nom}`.trim() || s.societe });
   });
+  (data.contactsDirection || []).forEach(c => { if (!out.some(o => o.cle === c.cle)) out.push(c); });
   return out;
 }
 
 /** Nom affichable d'une clé utilisateur (invités, créateur…) */
 export function nomParticipant(cle: string, data: AppData): string {
   if (cle === 'admin') return 'Admin';
+  if (cle.startsWith('mn:')) return (data.contactsDirection || []).find(c => c.cle === cle)?.nom || 'Menuiserie';
   if (cle.startsWith('app:')) {
     const a = (data.apporteurs || []).find(x => x.id === cle.slice(4));
     return a ? `${a.prenom} ${a.nom}`.trim() : 'Contact';
