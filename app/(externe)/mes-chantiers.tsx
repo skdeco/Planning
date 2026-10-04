@@ -23,7 +23,6 @@ export default function MesChantiersExterne() {
   const isArchitecte = apporteur?.type === 'architecte';
   const isCommercial = apporteur?.type === 'commercial';
   // Espace commercial : deux sections (Menuiserie / Travaux) + filtres comme l'admin.
-  const [sectionCom, setSectionCom] = useState<'menuiserie' | 'travaux'>('menuiserie');
   const [filtreStatutCom, setFiltreStatutCom] = useState<'en_cours' | 'termine' | 'tous'>('en_cours');
   const [rechercheCom, setRechercheCom] = useState('');
 
@@ -133,11 +132,8 @@ export default function MesChantiersExterne() {
       )}
       {isCommercial ? (
         (() => {
-          const estMenuiserie = (c: any) => (c.categorie || 'chantier') === 'chantier' && c.nature === 'menuiserie';
-          const estTravaux = (c: any) => !estMenuiserie(c) && c.categorie !== 'lieuFixe';
-          const dansSection = (c: any) => sectionCom === 'menuiserie' ? estMenuiserie(c) : estTravaux(c);
-          const nbMenuiserie = mesChantiers.filter(estMenuiserie).length;
-          const nbTravaux = mesChantiers.filter(estTravaux).length;
+          // La Menuiserie a son propre espace (onglet du haut) : ici, tous les chantiers Travaux
+          const dansSection = (c: any) => (c.categorie || 'chantier') !== 'lieuFixe';
           const q = rechercheCom.trim().toLowerCase();
           const liste = mesChantiers
             .filter(dansSection)
@@ -150,21 +146,6 @@ export default function MesChantiersExterne() {
             .filter(c => !q || c.nom.toLowerCase().includes(q) || (c.adresse || '').toLowerCase().includes(q) || ((c as any).ville || '').toLowerCase().includes(q));
           return (
             <>
-              {/* Deux sections en haut */}
-              <View style={{ flexDirection: 'row', gap: 2, padding: 3, borderRadius: 999, backgroundColor: '#EBEBE8', marginBottom: 10 }}>
-                {([['menuiserie', 'Menuiserie', nbMenuiserie], ['travaux', 'Travaux', nbTravaux]] as const).map(([val, lib, nb]) => {
-                  const actif = sectionCom === val;
-                  return (
-                    <Pressable
-                      key={val}
-                      style={[{ flex: 1, height: 38, borderRadius: 999, alignItems: 'center', justifyContent: 'center' }, actif && { backgroundColor: '#141414' }]}
-                      onPress={() => setSectionCom(val)}
-                    >
-                      <Text style={{ fontSize: 14, fontWeight: '600', color: actif ? '#FFFFFF' : '#141414' }}>{lib} ({nb})</Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
               {/* Filtres : recherche + statut */}
               <View style={{ flexDirection: 'row', gap: 8, marginBottom: 12, alignItems: 'center' }}>
                 <View style={{ flex: 1.3, flexDirection: 'row', alignItems: 'center', backgroundColor: '#fff', borderRadius: 999, borderWidth: 1, borderColor: '#E2E2DF', paddingHorizontal: 14 }}>
