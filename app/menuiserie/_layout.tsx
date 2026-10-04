@@ -4,7 +4,7 @@ import { View, ActivityIndicator } from 'react-native';
 import { SafeAreaInsetsContext, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarreBasMn } from '@/components/menuiserie/BarreBasMn';
 import { useApp } from '@/app/context/AppContext';
-import { droitsEspaces } from '@/lib/espaces';
+import { droitsEspaces, identiteTravauxPourCompteMn } from '@/lib/espaces';
 import { SessionMnProvider, useSessionMn } from '@/lib/menuiserie/SessionMn';
 import { ConnexionMn } from '@/components/menuiserie/ConnexionMn';
 import { DS } from '@/constants/design';
@@ -28,11 +28,14 @@ function Contenu() {
   const { compte, chargement } = useSessionMn();
   const { currentUser, setCurrentUser } = useApp();
   // Session ouverte avant la mise à jour : on mémorise l'identifiant du compte Menuiserie
+  const { data } = useApp();
   useEffect(() => {
-    if (compte && currentUser?.role === 'menuiserie' && currentUser.compteMnId !== compte.id) {
-      setCurrentUser({ ...currentUser, compteMnId: compte.id, roleMenuiserie: compte.role });
-    }
-  }, [compte?.id, currentUser?.compteMnId]);
+    if (!compte || currentUser?.role !== 'menuiserie') return;
+    // Aussi présent dans Travaux : on bascule sur son identité Travaux (barre Travaux | Menuiserie | Planning)
+    const travaux = identiteTravauxPourCompteMn(data, compte, '');
+    if (travaux) { setCurrentUser({ ...travaux, espace: 'menuiserie' }); return; }
+    if (currentUser.compteMnId !== compte.id) setCurrentUser({ ...currentUser, compteMnId: compte.id, roleMenuiserie: compte.role });
+  }, [compte?.id, currentUser?.role, currentUser?.compteMnId]);
   if (chargement) {
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.background }}>

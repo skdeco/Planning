@@ -10,7 +10,7 @@ import { useLanguage } from '@/app/context/LanguageContext';
 import { verifierMotDePasse, preparerChangementMotDePasse } from '@/lib/externAuth';
 import { Ico } from '@/components/ui/Ico';
 import type { CurrentUser } from '@/app/types';
-import { droitsEspaces, routeEspace } from '@/lib/espaces';
+import { identiteTravauxPourCompteMn, droitsEspaces, routeEspace } from '@/lib/espaces';
 import { connexionMn, monCompteMn } from '@/lib/menuiserie/auth';
 import { ouvrirMenuiserieAvecApp } from '@/lib/menuiserie/liaison';
 
@@ -116,6 +116,13 @@ export default function LoginScreen() {
     if (mnRes.ok) {
       const compteMn = await monCompteMn();
       if (compteMn) {
+        // Aussi présent dans Travaux (contact ou employé avec l'accès Menuiserie) :
+        // même session que s'il s'était connecté avec ses identifiants Travaux
+        const travaux = identiteTravauxPourCompteMn(data, compteMn, id);
+        if (travaux) {
+          connecter(travaux, travaux.role === 'apporteur' ? '/(externe)/mes-chantiers' : '/(tabs)');
+          return;
+        }
         setCurrentUser({ role: 'menuiserie', nom: compteMn.nom, espace: 'menuiserie', roleMenuiserie: compteMn.role, compteMnId: compteMn.id });
         router.replace('/menuiserie' as any);
         return;
