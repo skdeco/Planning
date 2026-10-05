@@ -770,6 +770,12 @@ const d: Record<string, string> = {
   "Allègement de « {0} » : page {1} / {2}…": "ضغط «{0}»: صفحة {1} / {2}…",
   "« {0} » n'a pas pu être allégé sous 50 Mo.": "تعذر ضغط «{0}» إلى أقل من 50 ميغابايت.",
   "« {0} » allégé à {1} Mo, envoi en cours…": "تم ضغط «{0}» إلى {1} ميغابايت، جارٍ الإرسال…",
+  "Partager…": "مشاركة…",
+  "Coche les documents à partager au client ({0} choisi(s))": "حدد المستندات للمشاركة مع العميل ({0})",
+  "Tout sélectionner": "تحديد الكل",
+  "Tout décocher": "إلغاء التحديد",
+  "Partager ({0})": "مشاركة ({0})",
+  "Le client et son architecte verront ces {0} documents dans la rubrique choisie.": "سيرى العميل والمهندس هذه المستندات ({0}) في القسم المختار.",
 };
 
 export default d;

@@ -762,6 +762,12 @@ const d: Record<string, string> = {
   "Allègement de « {0} » : page {1} / {2}…": "Reduciendo «{0}»: página {1} / {2}…",
   "« {0} » n'a pas pu être allégé sous 50 Mo.": "«{0}» no se pudo reducir por debajo de 50 MB.",
   "« {0} » allégé à {1} Mo, envoi en cours…": "«{0}» reducido a {1} MB, enviando…",
+  "Partager…": "Compartir…",
+  "Coche les documents à partager au client ({0} choisi(s))": "Marca los documentos a compartir ({0} elegidos)",
+  "Tout sélectionner": "Seleccionar todo",
+  "Tout décocher": "Desmarcar todo",
+  "Partager ({0})": "Compartir ({0})",
+  "Le client et son architecte verront ces {0} documents dans la rubrique choisie.": "El cliente y su arquitecto verán estos {0} documentos en la sección elegida.",
 };
 
 export default d;

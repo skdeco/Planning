@@ -38,7 +38,10 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
   const [piece, setPiece] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState('');
-  const [aPartager, setAPartager] = useState<DocumentMn | null>(null);
+  const [aPartager, setAPartager] = useState<DocumentMn[] | null>(null);
+  // Partage au client en sélection multiple
+  const [selection, setSelection] = useState<string[] | null>(null);
+  const basculerSelection = (id: string) => setSelection(sel => (sel ? (sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]) : sel));
   const [info, setInfo] = useState('');
   const [lecture, setLecture] = useState<string | null>(null);
   const dejaTentes = useRef(new Set<string>());
@@ -125,8 +128,8 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
 
   const partager = async (categorie: string | null) => {
     if (!aPartager) return;
-    await partagerClientMn(moi, aPartager, categorie);
-    setAPartager(null); onChange();
+    for (const d of aPartager) await partagerClientMn(moi, d, categorie);
+    setAPartager(null); setSelection(null); onChange();
   };
 
   const groupes = def.parPiece
@@ -134,7 +137,33 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
     : [{ titre: '', docs: documents }];
 
   return (
-    <Bloc titre={titre || tm("Documents et photos")} droite={!lectureSeule ? <ActionPilule label={tm("+ Ajouter")} onPress={ajouter} charge={envoi} /> : undefined}>
+    <Bloc titre={titre || tm("Documents et photos")} droite={
+      <View style={{ flexDirection: 'row', gap: 6 }}>
+        {admin && documents.length > 0 && !selection && (
+          <Pressable onPress={() => setSelection([])} accessibilityRole="button" hitSlop={6}
+            style={{ minHeight: 34, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: DS.primary, justifyContent: 'center' }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: DS.primary }}>{tm("Partager…")}</Text>
+          </Pressable>
+        )}
+        {!lectureSeule && !selection && <ActionPilule label={tm("+ Ajouter")} onPress={ajouter} charge={envoi} />}
+      </View>
+    }>
+      {selection && (
+        <View style={{ backgroundColor: DS.surfaceAlt, borderRadius: 12, padding: 10, gap: 8 }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: DS.text }}>{tm("Coche les documents à partager au client ({0} choisi(s))", selection.length)}</Text>
+          <View style={{ flexDirection: 'row', gap: 6, flexWrap: 'wrap' }}>
+            <Pressable onPress={() => setSelection(selection.length === documents.length ? [] : documents.map(d => d.id))} style={puceAction}>
+              <Text style={texteAction}>{selection.length === documents.length ? tm("Tout décocher") : tm("Tout sélectionner")}</Text>
+            </Pressable>
+            <Pressable onPress={() => setSelection(null)} style={puceAction}><Text style={texteAction}>{tm("Annuler")}</Text></Pressable>
+            <View style={{ flex: 1 }} />
+            <Pressable disabled={!selection.length} onPress={() => setAPartager(documents.filter(d => selection.includes(d.id)))}
+              style={{ minHeight: 32, paddingHorizontal: 14, borderRadius: 999, backgroundColor: DS.primary, justifyContent: 'center', opacity: selection.length ? 1 : 0.4 }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: DS.textInverse }}>{tm("Partager ({0})", selection.length)}</Text>
+            </Pressable>
+          </View>
+        </View>
+      )}
       {def.parPiece && !lectureSeule && (
         <View style={{ gap: 6 }}>
           <Champ label={tm("Nom de la pièce")} value={piece} onChangeText={setPiece} placeholder={tm("Ex. Chambre 2, Cuisine…")} />
@@ -153,10 +182,17 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
           {!!g.titre && <Text style={{ fontSize: 13, fontWeight: '800', color: DS.textSecondary, marginTop: 4, marginBottom: 2 }}>{g.titre}</Text>}
           {g.docs.map((d, i) => (
             <View key={d.id} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: DS.border, gap: 6 }}>
-              <Pressable onPress={() => ouvrir(d)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: DS.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 9.5, fontWeight: '800', color: DS.text }}>{estPdf(d) ? 'PDF' : 'IMG'}</Text>
-                </View>
+              <Pressable onPress={() => (selection ? basculerSelection(d.id) : ouvrir(d))} accessibilityRole={selection ? 'checkbox' : 'link'}
+                accessibilityState={selection ? { checked: selection.includes(d.id) } : undefined} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                {selection ? (
+                  <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: DS.primary, backgroundColor: selection.includes(d.id) ? DS.primary : 'transparent', alignItems: 'center', justifyContent: 'center', marginHorizontal: 3 }}>
+                    {selection.includes(d.id) && <Text style={{ color: DS.textInverse, fontSize: 14, fontWeight: '800' }}>✓</Text>}
+                  </View>
+                ) : (
+                  <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: DS.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+                    <Text style={{ fontSize: 9.5, fontWeight: '800', color: DS.text }}>{estPdf(d) ? 'PDF' : 'IMG'}</Text>
+                  </View>
+                )}
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontSize: 13, fontWeight: '600', color: DS.text }} numberOfLines={1}>{d.nom}</Text>
                   <Text style={{ fontSize: 11.5, color: DS.textSecondary }}>
@@ -165,7 +201,7 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
                   </Text>
                 </View>
               </Pressable>
-              {(admin || (peutSupprimer(d) && !lectureSeule) || (peutImporter && estPdf(d))) && (
+              {!selection && (admin || (peutSupprimer(d) && !lectureSeule) || (peutImporter && estPdf(d))) && (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginLeft: 42 }}>
                   {peutImporter && estPdf(d) && (
                     <Pressable onPress={() => importer(d)} disabled={lecture === d.chemin} accessibilityRole="button" style={puceAction}>
@@ -173,7 +209,7 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
                     </Pressable>
                   )}
                   {admin && (
-                    <Pressable onPress={() => setAPartager(d)} accessibilityRole="button" accessibilityLabel={tm("Partager {0} au client", d.nom)} style={puceAction}>
+                    <Pressable onPress={() => setAPartager([d])} accessibilityRole="button" accessibilityLabel={tm("Partager {0} au client", d.nom)} style={puceAction}>
                       <Text style={texteAction}>{d.categorie_client ? tm("Partagé au client ✓") : tm("Partager au client")}</Text>
                     </Pressable>
                   )}
@@ -193,11 +229,13 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
         <Pressable onPress={() => setAPartager(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'center', padding: 24 }}>
           <View style={{ backgroundColor: DS.surface, borderRadius: radius.xxl, padding: 16, gap: 8 }}>
             <Text style={{ fontSize: 17, fontWeight: '800', color: DS.text }}>{tm("Partager dans l'espace client")}</Text>
-            <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Le client et son architecte verront ce document dans la rubrique choisie.")}</Text>
+            <Text style={{ fontSize: 13, color: DS.textSecondary }}>
+              {(aPartager?.length || 0) > 1 ? tm("Le client et son architecte verront ces {0} documents dans la rubrique choisie.", aPartager?.length) : tm("Le client et son architecte verront ce document dans la rubrique choisie.")}
+            </Text>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-              {CATEGORIES_CLIENT.map(c => <Puce key={c.cle} label={c.label} actif={aPartager?.categorie_client === c.cle} onPress={() => partager(c.cle)} />)}
+              {CATEGORIES_CLIENT.map(c => <Puce key={c.cle} label={c.label} actif={!!aPartager?.length && aPartager.every(d => d.categorie_client === c.cle)} onPress={() => partager(c.cle)} />)}
             </View>
-            {!!aPartager?.categorie_client && <Bouton label={tm("Ne plus partager")} variante="discret" onPress={() => partager(null)} />}
+            {!!aPartager?.some(d => d.categorie_client) && <Bouton label={tm("Ne plus partager")} variante="discret" onPress={() => partager(null)} />}
           </View>
         </Pressable>
       </Modal>

@@ -770,6 +770,12 @@ const d: Record<string, string> = {
   "Allègement de « {0} » : page {1} / {2}…": "Сжатие «{0}»: страница {1} / {2}…",
   "« {0} » n'a pas pu être allégé sous 50 Mo.": "«{0}» не удалось сжать до 50 МБ.",
   "« {0} » allégé à {1} Mo, envoi en cours…": "«{0}» сжат до {1} МБ, загрузка…",
+  "Partager…": "Поделиться…",
+  "Coche les documents à partager au client ({0} choisi(s))": "Отметьте документы для клиента (выбрано: {0})",
+  "Tout sélectionner": "Выбрать все",
+  "Tout décocher": "Снять все",
+  "Partager ({0})": "Поделиться ({0})",
+  "Le client et son architecte verront ces {0} documents dans la rubrique choisie.": "Клиент и архитектор увидят эти {0} документов в выбранном разделе.",
 };
 
 export default d;
