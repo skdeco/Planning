@@ -755,6 +755,8 @@ const d: Record<string, string> = {
   "Détail du montant": "Detalle del importe",
   "Saisi à la main": "Introducido a mano",
   "Relire le montant": "Releer el importe",
+  "« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : allège le PDF puis réessaie.": "«{0}» es demasiado pesado ({1} MB, máx. 50 MB): reduce el PDF y vuelve a intentarlo.",
+  "Envoi refusé par le serveur (fichier trop lourd ou connexion coupée).": "Envío rechazado por el servidor (archivo demasiado pesado o conexión cortada).",
 };
 
 export default d;

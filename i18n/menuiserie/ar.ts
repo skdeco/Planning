@@ -763,6 +763,8 @@ const d: Record<string, string> = {
   "Détail du montant": "تفاصيل المبلغ",
   "Saisi à la main": "أُدخل يدوياً",
   "Relire le montant": "إعادة قراءة المبلغ",
+  "« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : allège le PDF puis réessaie.": "«{0}» كبير جداً ({1} ميغابايت، الحد 50): قلّل حجم الملف وأعد المحاولة.",
+  "Envoi refusé par le serveur (fichier trop lourd ou connexion coupée).": "رفض الخادم الإرسال (ملف كبير أو انقطاع الاتصال).",
 };
 
 export default d;

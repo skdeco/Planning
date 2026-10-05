@@ -17,6 +17,9 @@ import { ActionPilule, Bloc, Bouton, Champ, Puce } from './ui';
 import { estPdf, importerMontantDevisMn, libelleDevis } from '@/lib/menuiserie/importDevis';
 
 import { tm } from '@/lib/menuiserie/i18n';
+/** Limite d'envoi d'un fichier (serveur) */
+const TAILLE_MAX = 50 * 1024 * 1024;
+
 export async function ouvrirDocumentMn(d: { chemin: string }): Promise<boolean> {
   const url = await lienDocumentMn(d);
   if (!url) return false;
@@ -59,25 +62,31 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
     if (!fichiers.length) return;
     setEnvoi(true);
     const vis = Array.from(new Set([...visibiliteDocs(def), groupeMn(moi.role)]));
-    try {
-      const deposes: { chemin: string; nom: string }[] = [];
-      for (const f of fichiers) {
-        const nomFichier = f.filename || (f.mimeType === 'application/pdf' ? 'document.pdf' : 'photo.jpg');
+    // Chaque fichier est envoyé à part : un fichier refusé n'empêche pas les autres
+    const deposes: { chemin: string; nom: string }[] = [];
+    const erreurs: string[] = [];
+    for (const f of fichiers) {
+      const nomFichier = f.filename || (f.mimeType === 'application/pdf' ? 'document.pdf' : 'photo.jpg');
+      const taille = f.size ?? (f.uri.startsWith('data:') ? Math.round((f.uri.length - f.uri.indexOf(',') - 1) * 0.75) : undefined);
+      if (taille && taille > TAILLE_MAX) {
+        erreurs.push(tm("« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : allège le PDF puis réessaie.", nomFichier, Math.round(taille / 1048576)));
+        continue;
+      }
+      try {
         const chemin = await deposerDocumentMn(moi, {
-          chantierId, etape: def.cle, uri: f.uri, mime: f.mimeType, visibilite: vis,
-          nom: f.filename || (f.mimeType === 'application/pdf' ? 'document.pdf' : 'photo.jpg'),
+          chantierId, etape: def.cle, uri: f.uri, mime: f.mimeType, visibilite: vis, nom: nomFichier,
           piece: def.parPiece ? piece.trim() : (importDevis?.cote || null),
         });
         deposes.push({ chemin, nom: nomFichier });
+      } catch (e) {
+        erreurs.push(`« ${nomFichier} » : ${(e as Error).message}`);
       }
-      onChange();
-      // Devis PDF : le montant HT est lu et reporté tout seul
-      if (peutImporter) for (const d of deposes.filter(x => estPdf(x))) { dejaTentes.current.add(d.chemin); await importer(d); }
-    } catch (e) {
-      setErreur((e as Error).message);
-    } finally {
-      setEnvoi(false);
     }
+    setErreur(erreurs.join('\n'));
+    setEnvoi(false);
+    if (deposes.length) onChange();
+    // Devis PDF : le montant HT est lu et reporté tout seul
+    if (peutImporter) for (const d of deposes.filter(x => estPdf(x))) { dejaTentes.current.add(d.chemin); await importer(d); }
   };
 
   // Devis déjà déposés (ex. par l'agent) et jamais lus : lecture automatique, une seule fois

@@ -136,7 +136,7 @@ export async function envoyerFichierMn(chemin: string, uri: string, mime: string
     const r = await fetch(url, { method: 'POST', headers, body: blob });
     ok = r.ok;
   }
-  if (!ok) throw new Error(tm("Envoi du fichier refusé par le serveur."));
+  if (!ok) throw new Error(tm("Envoi refusé par le serveur (fichier trop lourd ou connexion coupée)."));
 }
 
 export function cheminFichierMn(prefixe: string, nom: string, mime?: string | null): string {
