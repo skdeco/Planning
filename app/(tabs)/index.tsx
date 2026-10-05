@@ -236,6 +236,29 @@ export default function DashboardScreen() {
           });
         });
       });
+    // Notes partagées nommément avec moi (« visible par » cet employé) mais
+    // rattachées à l'affectation d'un autre intervenant le même jour.
+    data.affectations
+      .filter(a => a.employeId !== myId && a.dateDebut <= today && a.dateFin >= today)
+      .forEach(a => {
+        const ch = data.chantiers.find(c => c.id === a.chantierId);
+        (a.notes || []).filter(n => {
+          if (!(n.date === today || !n.date)) return false;
+          if (!Array.isArray(n.visiblePar) || !n.visiblePar.includes(myId)) return false;
+          if (result.some(r => r.noteId === n.id)) return false;
+          return !!n.texte?.trim() || !!(n.tasks && n.tasks.length > 0);
+        }).forEach(n => {
+          const tachesToutesFaites = !!(n.tasks && n.tasks.length > 0) && (n.tasks || []).every(t => t.fait);
+          result.push({
+            texte: n.texte, chantierNom: ch?.nom || '', auteurNom: n.auteurNom,
+            savTicketId: n.savTicketId, photos: n.photos, tasks: n.tasks,
+            affectationId: a.id, noteId: n.id,
+            chantierId: a.chantierId,
+            archivee: !!n.archiveeAt || tachesToutesFaites,
+            note: n,
+          });
+        });
+      });
     return result;
   }, [data.affectations, data.chantiers, myId, today]);
 

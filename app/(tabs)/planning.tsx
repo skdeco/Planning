@@ -725,14 +725,34 @@ export default function PlanningScreen() {
     setInterventionModal(null);
   };
 
+  /**
+   * Une note de cellule est visible dans la fiche d'un employé / sous-traitant si :
+   *  - elle est rattachée à SA propre affectation ;
+   *  - ou elle lui est partagée nommément (visiblePar = liste d'ids qui le contient) ;
+   *  - ou c'est une note générale du chantier (affectation « admin ») ouverte
+   *    à tous / aux employés / aux sous-traitants selon son profil.
+   * Les notes des AUTRES intervenants n'apparaissent plus chez lui.
+   */
+  const noteVisiblePour = (
+    n: { affectationEmployeId?: string; visiblePar?: unknown },
+    cibleId: string,
+    profil: 'employe' | 'soustraitant',
+  ): boolean => {
+    if (n.affectationEmployeId === cibleId) return true;
+    const vp = n.visiblePar;
+    if (Array.isArray(vp)) return vp.includes(cibleId);
+    if (n.affectationEmployeId === 'admin') {
+      if (!vp || vp === 'tous') return true;
+      if (vp === 'employes') return profil === 'employe';
+      if (vp === 'soustraitants') return profil === 'soustraitant';
+    }
+    return false;
+  };
+
   /** Ouvre le modal de notes pour une cellule, associé à un employé spécifique */
   const openNoteModal = (chantierId: string, dateStr: string, targetEmployeId: string) => {
     // On affiche les notes de l'employé ciblé + les notes de l'admin
-    const allNotes = getAllNotesForCell(chantierId, dateStr).filter(
-      n => n.affectationEmployeId === targetEmployeId ||
-           n.affectationEmployeId === 'admin' ||
-           n.auteurId === 'admin'
-    );
+    const allNotes = getAllNotesForCell(chantierId, dateStr).filter(n => noteVisiblePour(n, targetEmployeId, 'employe'));
     setNoteModal({ chantierId, date: dateStr, targetEmployeId, allNotes, editingNote: null });
   };
 
@@ -741,10 +761,7 @@ export default function PlanningScreen() {
     const stPseudoId = `st:${stId}`;
     // Notes de cet ST + notes de l'admin sur cette cellule
     const allNotes = getAllNotesForCell(chantierId, dateStr).filter(
-      n => n.affectationEmployeId === stPseudoId ||
-           n.affectationEmployeId === 'admin' ||
-           n.auteurId === 'admin' ||
-           n.auteurId === stPseudoId
+      n => noteVisiblePour(n, stPseudoId, 'soustraitant') || n.auteurId === stPseudoId
     );
     setNoteModal({ chantierId, date: dateStr, targetEmployeId: stPseudoId, allNotes, editingNote: null });
   };
