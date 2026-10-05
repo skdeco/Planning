@@ -13,13 +13,13 @@ import type { CompteMn, DocumentMn } from '@/lib/menuiserie/types';
 import { ajouterSupplementMn, joindrePdfSupplementMn, repondreSupplementMn, supprimerSupplementMn, totalAccepte, type SupplementMn } from '@/lib/menuiserie/supplements';
 import { choisirEtDeposerMn, lireMontantsPdfMn, lireNombre, type CoteMn } from '@/lib/menuiserie/pieces';
 import { ouvrirDocumentMn } from './DocumentsEtape';
-import { Bloc, Bouton, Champ, Pastille, euros } from './ui';
+import { BORDEAUX, BORDEAUX_DOUX, Bloc, Bouton, Champ, Pastille, euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
 
 export function StatutSupplement({ s }: { s: SupplementMn }) {
   if (s.statut === 'accepte') return <Pastille label={tm("Accepté")} fond={DS.successSoft} texte="#065F46" />;
   if (s.statut === 'refuse') return <Pastille label={tm("Refusé")} fond="#FDE2E1" texte={DS.error} />;
-  return <Pastille label={s.cote === 'usine' ? tm("À valider") : tm("En attente du client")} fond={DS.warningSoft} texte="#92400E" />;
+  return <Pastille label={s.cote === 'usine' ? tm("À valider") : tm("En attente du client")} fond={BORDEAUX_DOUX} texte={BORDEAUX} />;
 }
 
 /** Envoie un PDF de supplément (visible du côté concerné) et lit ses montants. */

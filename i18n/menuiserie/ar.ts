@@ -869,6 +869,8 @@ const d: Record<string, string> = {
   "Réglée": "مدفوعة",
   "Réglée en partie · reste {0}": "مدفوعة جزئيًا · المتبقي {0}",
   "Saisir une facture": "إدخال فاتورة",
+  "{0} suppléments attendent votre réponse ↓": "{0} إضافات بانتظار ردك ↓",
+  "1 supplément attend votre réponse ↓": "إضافة واحدة بانتظار ردك ↓",
 };
 
 export default d;

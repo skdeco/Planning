@@ -9,7 +9,7 @@ import type { CompteMn, DocumentMn } from '@/lib/menuiserie/types';
 import { ouvrirDocumentMn } from './DocumentsEtape';
 import { repondreSupplementMn, type SupplementMn } from '@/lib/menuiserie/supplements';
 import { StatutSupplement } from './SupplementsDevis';
-import { euros } from './ui';
+import { BORDEAUX, BORDEAUX_DOUX, euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
 
 function Supplement({ s, doc, peutRepondre, onRepondu }: { s: SupplementMn; doc?: DocumentMn; peutRepondre: boolean; onRepondu: () => void }) {
@@ -25,7 +25,7 @@ function Supplement({ s, doc, peutRepondre, onRepondu }: { s: SupplementMn; doc?
   };
 
   return (
-    <View style={{ borderRadius: 14, padding: 12, gap: 8, backgroundColor: attente ? DS.warningSoft : DS.background, borderWidth: attente ? 1 : 0, borderColor: DS.warning }}>
+    <View style={{ borderRadius: 14, padding: 12, gap: 8, backgroundColor: attente ? BORDEAUX_DOUX : DS.background, borderWidth: attente ? 1 : 0, borderColor: BORDEAUX }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: DS.text }}>{s.libelle}</Text>
         <View style={{ alignItems: 'flex-end' }}>
@@ -58,7 +58,7 @@ function Supplement({ s, doc, peutRepondre, onRepondu }: { s: SupplementMn; doc?
             <Pressable onPress={() => setRefus(true)} accessibilityRole="button" style={{ flex: 1, minHeight: 42, borderRadius: 999, borderWidth: 1, borderColor: DS.border, backgroundColor: DS.surface, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ fontSize: 14, fontWeight: '700', color: DS.text }}>{tm("Refuser")}</Text>
             </Pressable>
-            <Pressable onPress={() => repondre(true)} accessibilityRole="button" style={{ flex: 1, minHeight: 42, borderRadius: 999, backgroundColor: DS.primary, alignItems: 'center', justifyContent: 'center' }}>
+            <Pressable onPress={() => repondre(true)} accessibilityRole="button" style={{ flex: 1, minHeight: 42, borderRadius: 999, backgroundColor: BORDEAUX, alignItems: 'center', justifyContent: 'center' }}>
               <Text style={{ fontSize: 14, fontWeight: '800', color: DS.textInverse }}>{tm("Accepter")}</Text>
             </Pressable>
           </View>
@@ -72,8 +72,7 @@ function Supplement({ s, doc, peutRepondre, onRepondu }: { s: SupplementMn; doc?
 export function SupplementsClient({ moi, liste, documents, onChange }: { moi: CompteMn; liste: SupplementMn[]; documents: DocumentMn[]; onChange: () => void }) {
   if (!liste.length) return null;
   return (
-    <View style={{ gap: 6 }}>
-      <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Suppléments")}</Text>
+    <View style={{ gap: 8 }}>
       {liste.map(s => <Supplement key={s.id} s={s} doc={documents.find(d => d.id === s.document_id)} peutRepondre={moi.role === 'client'} onRepondu={onChange} />)}
     </View>
   );

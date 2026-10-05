@@ -4,7 +4,7 @@
  *  - client / architecte : espace client (documents partagés, règlements, messagerie) ;
  *  - apporteur : statut + commission.
  */
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, RefreshControl, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ScreenContainer } from '@/components/screen-container';
@@ -42,6 +42,8 @@ export function ChantierRole() {
   const [erreur, setErreur] = useState('');
   const [ouverte, setOuverte] = useState<DefEtape | null>(null);
   const [rafraichit, setRafraichit] = useState(false);
+  const defilement = useRef<ScrollView>(null);
+  const yEspace = useRef(0);
 
   const charger = useCallback(async () => {
     try { const v = await chantierPourRoleMn(moi, String(id)); ecrireCacheMn(`role:chantier:${id}`, v); setD(v); setErreur(''); } catch (e) { setErreur((e as Error).message); }
@@ -62,6 +64,7 @@ export function ChantierRole() {
   return (
     <ScreenContainer containerClassName="bg-[#F4F4F2]" edges={['top', 'left', 'right']}>
       <ScrollView
+        ref={defilement}
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }}
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={async () => { setRafraichit(true); await charger(); setRafraichit(false); }} tintColor={DS.primary} />}
       >
@@ -82,7 +85,10 @@ export function ChantierRole() {
         )}
 
         {(groupe === 'client' || groupe === 'apporteur') && (
-          <EspaceClient moi={moi} chantier={c} documents={d.documents} montants={d.montants} onMessagerie={() => router.push(`/menuiserie/messagerie/${c.id}` as any)} />
+          <View onLayout={e => { yEspace.current = e.nativeEvent.layout.y; }}>
+            <EspaceClient moi={moi} chantier={c} documents={d.documents} montants={d.montants} onMessagerie={() => router.push(`/menuiserie/messagerie/${c.id}` as any)}
+              defiler={y => defilement.current?.scrollTo({ y: Math.max(0, yEspace.current + y - 8), animated: true })} />
+          </View>
         )}
 
         {groupe === 'poseur' && <SignalerPoseur moi={moi} chantierId={c.id} />}

@@ -4,6 +4,10 @@ import { View, Text, Pressable, TextInput, type TextInputProps, ActivityIndicato
 import { DS, radius, shadows } from '@/constants/design';
 
 import { tm } from '@/lib/menuiserie/i18n';
+/** Suppléments en attente de réponse du client */
+export const BORDEAUX = '#7A1F2B';
+export const BORDEAUX_DOUX = '#F6ECEE';
+
 export function Carte({ children, style }: { children: React.ReactNode; style?: object }) {
   return <View style={[{ backgroundColor: DS.surface, borderRadius: 20, padding: 16, gap: 10, borderWidth: 1, borderColor: DS.border }, style]}>{children}</View>;
 }

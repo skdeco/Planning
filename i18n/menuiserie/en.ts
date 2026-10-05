@@ -846,6 +846,8 @@ const d: Record<string, string> = {
   "Réglée": "Paid",
   "Réglée en partie · reste {0}": "Partly paid · {0} left",
   "Saisir une facture": "Enter an invoice",
+  "{0} suppléments attendent votre réponse ↓": "{0} extras await your reply ↓",
+  "1 supplément attend votre réponse ↓": "1 extra awaits your reply ↓",
 };
 
 export default d;
