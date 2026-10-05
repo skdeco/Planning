@@ -3,18 +3,18 @@
  * ouverture par lien temporaire, suppression tracée, classement par pièce,
  * et (administrateur) partage d'un document dans une rubrique de l'espace client.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, Alert, Platform, Modal } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { DS, radius } from '@/constants/design';
 import { formatDateHeureFR } from '@/lib/date/format';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { deposerDocumentMn, lienDocumentMn, partagerClientMn, supprimerDocumentMn } from '@/lib/menuiserie/api';
-import type { CompteMn, DocumentMn, MontantMn } from '@/lib/menuiserie/types';
+import type { CompteMn, DocumentMn, MontantMn, TypeMontantMn } from '@/lib/menuiserie/types';
 import { CATEGORIES_CLIENT, groupeMn } from '@/lib/menuiserie/types';
 import { visibiliteDocs, type DefEtape } from '@/lib/menuiserie/etapes';
 import { ActionPilule, Bloc, Bouton, Champ, Puce } from './ui';
-import { estPdf, importerMontantDevisMn } from '@/lib/menuiserie/importDevis';
+import { estPdf, importerMontantDevisMn, libelleDevis } from '@/lib/menuiserie/importDevis';
 
 import { tm } from '@/lib/menuiserie/i18n';
 export async function ouvrirDocumentMn(d: { chemin: string }): Promise<boolean> {
@@ -25,10 +25,11 @@ export async function ouvrirDocumentMn(d: { chemin: string }): Promise<boolean> 
   return true;
 }
 
-export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lectureSeule, importDevis }: {
+export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lectureSeule, importDevis, titre }: {
   moi: CompteMn; chantierId: string; def: DefEtape; documents: DocumentMn[]; onChange: () => void; lectureSeule?: boolean;
   /** Étape « Devis » : lecture automatique du montant HT des PDF déposés */
-  importDevis?: { usineId: string | null; montants: MontantMn[] };
+  importDevis?: { usineId: string | null; montants: MontantMn[]; type?: TypeMontantMn; cote?: 'client' | 'usine' };
+  titre?: string;
 }) {
   const [piece, setPiece] = useState('');
   const [envoi, setEnvoi] = useState(false);
@@ -36,12 +37,13 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
   const [aPartager, setAPartager] = useState<DocumentMn | null>(null);
   const [info, setInfo] = useState('');
   const [lecture, setLecture] = useState<string | null>(null);
+  const dejaTentes = useRef(new Set<string>());
   const peutImporter = !!importDevis && (moi.role === 'admin' || moi.role === 'usine');
   const importer = async (d: { chemin: string; nom: string }) => {
     if (!importDevis) return;
     setLecture(d.chemin); setInfo('');
     try {
-      const msg = await importerMontantDevisMn(moi, { chantierId, usineId: importDevis.usineId, chemin: d.chemin, nom: d.nom, montants: importDevis.montants });
+      const msg = await importerMontantDevisMn(moi, { chantierId, usineId: importDevis.usineId, chemin: d.chemin, nom: d.nom, montants: importDevis.montants, typeForce: importDevis.type });
       if (msg) setInfo(msg);
       onChange();
     } catch (e) { setInfo((e as Error).message); } finally { setLecture(null); }
@@ -64,19 +66,29 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
         const chemin = await deposerDocumentMn(moi, {
           chantierId, etape: def.cle, uri: f.uri, mime: f.mimeType, visibilite: vis,
           nom: f.filename || (f.mimeType === 'application/pdf' ? 'document.pdf' : 'photo.jpg'),
-          piece: def.parPiece ? piece.trim() : null,
+          piece: def.parPiece ? piece.trim() : (importDevis?.cote || null),
         });
         deposes.push({ chemin, nom: nomFichier });
       }
       onChange();
       // Devis PDF : le montant HT est lu et reporté tout seul
-      if (peutImporter) for (const d of deposes.filter(x => estPdf(x))) await importer(d);
+      if (peutImporter) for (const d of deposes.filter(x => estPdf(x))) { dejaTentes.current.add(d.chemin); await importer(d); }
     } catch (e) {
       setErreur((e as Error).message);
     } finally {
       setEnvoi(false);
     }
   };
+
+  // Devis déjà déposés (ex. par l'agent) et jamais lus : lecture automatique, une seule fois
+  useEffect(() => {
+    if (!peutImporter || !importDevis) return;
+    const aLire = documents.filter(d => estPdf(d) && !dejaTentes.current.has(d.chemin)
+      && !importDevis.montants.some(m => m.libelle === libelleDevis(d.nom)));
+    if (!aLire.length) return;
+    aLire.forEach(d => dejaTentes.current.add(d.chemin));
+    (async () => { for (const d of aLire) await importer(d); })();
+  }, [documents.map(d => d.chemin).join('|'), importDevis?.montants.length]);
 
   const ouvrir = async (d: DocumentMn) => { if (!(await ouvrirDocumentMn(d))) setErreur(tm("Impossible d'ouvrir ce document.")); };
 
@@ -97,7 +109,7 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
     : [{ titre: '', docs: documents }];
 
   return (
-    <Bloc titre={tm("Documents et photos")} droite={!lectureSeule ? <ActionPilule label={tm("+ Ajouter")} onPress={ajouter} charge={envoi} /> : undefined}>
+    <Bloc titre={titre || tm("Documents et photos")} droite={!lectureSeule ? <ActionPilule label={tm("+ Ajouter")} onPress={ajouter} charge={envoi} /> : undefined}>
       {def.parPiece && !lectureSeule && (
         <View style={{ gap: 6 }}>
           <Champ label={tm("Nom de la pièce")} value={piece} onChangeText={setPiece} placeholder={tm("Ex. Chambre 2, Cuisine…")} />
@@ -117,22 +129,22 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
           {g.docs.map((d, i) => (
             <View key={d.id} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: DS.border, gap: 6 }}>
               <Pressable onPress={() => ouvrir(d)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: DS.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 11, fontWeight: '800', color: DS.text }}>{estPdf(d) ? 'PDF' : 'IMG'}</Text>
+                <View style={{ width: 32, height: 32, borderRadius: 8, backgroundColor: DS.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 9.5, fontWeight: '800', color: DS.text }}>{estPdf(d) ? 'PDF' : 'IMG'}</Text>
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 15, fontWeight: '700', color: DS.text }} numberOfLines={2}>{d.nom}</Text>
-                  <Text style={{ fontSize: 12, color: DS.textSecondary }}>
+                  <Text style={{ fontSize: 13, fontWeight: '600', color: DS.text }} numberOfLines={1}>{d.nom}</Text>
+                  <Text style={{ fontSize: 11.5, color: DS.textSecondary }}>
                     {d.depose_par_nom || '—'} · {formatDateHeureFR(d.created_at)}
                     {admin && d.categorie_client ? tm(" · client : {0}", CATEGORIES_CLIENT.find(c => c.cle === d.categorie_client)?.label) : ''}
                   </Text>
                 </View>
               </Pressable>
               {(admin || (peutSupprimer(d) && !lectureSeule) || (peutImporter && estPdf(d))) && (
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginLeft: 48 }}>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginLeft: 42 }}>
                   {peutImporter && estPdf(d) && (
                     <Pressable onPress={() => importer(d)} disabled={lecture === d.chemin} accessibilityRole="button" style={puceAction}>
-                      <Text style={texteAction}>{lecture === d.chemin ? tm("Lecture…") : tm("Lire le montant HT")}</Text>
+                      <Text style={texteAction}>{lecture === d.chemin ? tm("Lecture…") : tm("Relire le montant")}</Text>
                     </Pressable>
                   )}
                   {admin && (
@@ -168,5 +180,5 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
   );
 }
 
-const puceAction = { minHeight: 32, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: DS.border, justifyContent: 'center' as const };
-const texteAction = { fontSize: 13, fontWeight: '700' as const, color: DS.text };
+const puceAction = { minHeight: 28, paddingHorizontal: 10, borderRadius: 999, borderWidth: 1, borderColor: DS.border, justifyContent: 'center' as const };
+const texteAction = { fontSize: 12, fontWeight: '600' as const, color: DS.text };

@@ -105,9 +105,11 @@ export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants
       )}
       {!lectureSeule && types.length > 0 && formOuvert && (
         <>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-            {types.map(t => <Puce key={t} label={TYPE_MONTANT_MN_LABELS[t]} actif={type === t} onPress={() => setType(t)} />)}
-          </View>
+          {types.length > 1 && (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+              {types.map(t => <Puce key={t} label={TYPE_MONTANT_MN_LABELS[t]} actif={type === t} onPress={() => setType(t)} />)}
+            </View>
+          )}
           <View style={{ flexDirection: 'row', gap: 8 }}>
             <Champ label={tm("Montant HT (€)")} value={valeur} onChangeText={setValeur} keyboardType="decimal-pad" />
             <Champ label={tm("Libellé (facultatif)")} value={libelle} onChangeText={setLibelle} />

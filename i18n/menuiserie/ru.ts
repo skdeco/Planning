@@ -758,6 +758,11 @@ const d: Record<string, string> = {
   "Lecture du devis impossible : {0}": "Не удалось прочитать смету: {0}",
   "Vente client importée : {0} HT. Vérifie le montant.": "Продажа клиенту импортирована: {0}. Проверьте.",
   "Achat usine importé : {0} HT. Vérifie le montant.": "Закупка импортирована: {0}. Проверьте.",
+  "Devis SK DECO": "Смета SK DECO",
+  "Devis de l'usine": "Смета фабрики",
+  "Détail du montant": "Детали суммы",
+  "Saisi à la main": "Введено вручную",
+  "Relire le montant": "Перечитать сумму",
 };
 
 export default d;

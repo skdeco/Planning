@@ -750,6 +750,11 @@ const d: Record<string, string> = {
   "Lecture du devis impossible : {0}": "No se pudo leer el presupuesto: {0}",
   "Vente client importée : {0} HT. Vérifie le montant.": "Venta cliente importada: {0} sin IVA. Verifica.",
   "Achat usine importé : {0} HT. Vérifie le montant.": "Compra fábrica importada: {0} sin IVA. Verifica.",
+  "Devis SK DECO": "Presupuesto SK DECO",
+  "Devis de l'usine": "Presupuesto de la fábrica",
+  "Détail du montant": "Detalle del importe",
+  "Saisi à la main": "Introducido a mano",
+  "Relire le montant": "Releer el importe",
 };
 
 export default d;

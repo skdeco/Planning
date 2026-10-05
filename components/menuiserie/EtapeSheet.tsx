@@ -13,6 +13,7 @@ import { ReservesPanel } from './ReservesPanel';
 import { Bloc, Bouton, Champ, Chiffre, euros } from './ui';
 import { DocumentsEtape } from './DocumentsEtape';
 import { MontantsEtape } from './MontantsEtape';
+import { DevisEtape } from './DevisEtape';
 import { BadgeRempliPar } from './BadgeRempliPar';
 
 import { tm, traduit } from '@/lib/menuiserie/i18n';
@@ -64,7 +65,23 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
   const total = (t: string) => montants.filter(m => m.type === t).reduce((x, m) => x + Number(m.montant_ht), 0);
   const achat = total('achat_usine');
   const vente = total('vente_client');
-  const montrerChiffres = voitMontants && def.montants.length > 0 && montants.length > 0;
+  const estDevis = def.cle === 'devis';
+  const blocAvancement = (
+    <Bloc titre={tm("Avancement")}>
+                <View style={{ flexDirection: 'row', backgroundColor: DS.segment, borderRadius: radius.full, padding: 4 }}>
+                  {STATUTS.map(s => (
+                    <Pressable key={s.cle} disabled={!modifiable} onPress={() => changerStatut(s.cle)} accessibilityRole="button" accessibilityState={{ selected: statut === s.cle }}
+                      style={{ flex: 1, minHeight: 42, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: statut === s.cle ? DS.primary : 'transparent' }}>
+                      <Text style={{ fontSize: 14, fontWeight: '800', color: statut === s.cle ? DS.textInverse : DS.textSecondary }}>{s.label}</Text>
+                    </Pressable>
+                  ))}
+                </View>
+                {!!etape?.updated_by_nom && (
+                  <Text style={{ fontSize: 12, color: DS.textSecondary }}>{tm("Modifié par")}{' '}{etape.updated_by_nom} · {formatDateHeureFR(etape.updated_at)}</Text>
+                )}
+              </Bloc>
+  );
+  const montrerChiffres = !estDevis && voitMontants && def.montants.length > 0 && montants.length > 0;
 
   return (
     <Modal visible animationType="slide" onRequestClose={onClose} presentationStyle="pageSheet">
@@ -103,19 +120,7 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
                 </View>
               )}
 
-              <Bloc titre={tm("Avancement")}>
-                <View style={{ flexDirection: 'row', backgroundColor: DS.segment, borderRadius: radius.full, padding: 4 }}>
-                  {STATUTS.map(s => (
-                    <Pressable key={s.cle} disabled={!modifiable} onPress={() => changerStatut(s.cle)} accessibilityRole="button" accessibilityState={{ selected: statut === s.cle }}
-                      style={{ flex: 1, minHeight: 42, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', backgroundColor: statut === s.cle ? DS.primary : 'transparent' }}>
-                      <Text style={{ fontSize: 14, fontWeight: '800', color: statut === s.cle ? DS.textInverse : DS.textSecondary }}>{s.label}</Text>
-                    </Pressable>
-                  ))}
-                </View>
-                {!!etape?.updated_by_nom && (
-                  <Text style={{ fontSize: 12, color: DS.textSecondary }}>{tm("Modifié par")}{' '}{etape.updated_by_nom} · {formatDateHeureFR(etape.updated_at)}</Text>
-                )}
-              </Bloc>
+              {!estDevis && blocAvancement}
 
               {!!def.champs?.length && (
                 <Bloc titre={tm("Informations")}>
@@ -143,10 +148,19 @@ export function EtapeSheet({ moi, chantierId, usineId, def, etape, documents, mo
                 </Bloc>
               )}
 
-              <DocumentsEtape moi={moi} chantierId={chantierId} def={def} documents={documents} onChange={onChange} lectureSeule={!modifiable}
-                importDevis={def.cle === 'devis' ? { usineId, montants } : undefined} />
+              {estDevis && voitMontants ? (
+                <>
+                <DevisEtape moi={moi} chantierId={chantierId} usineId={usineId} def={def} documents={documents} montants={montants} onChange={onChange} modifiable={modifiable} />
+                {blocAvancement}
+                </>
+              ) : (
+                <>
+                  {estDevis && blocAvancement}
+                  <DocumentsEtape moi={moi} chantierId={chantierId} def={def} documents={documents} onChange={onChange} lectureSeule={!modifiable} />
+                </>
+              )}
 
-              {voitMontants && (typesMontants.length > 0 || montants.length > 0) && (
+              {!estDevis && voitMontants && (typesMontants.length > 0 || montants.length > 0) && (
                 <Bloc titre={tm("Montants")}>
                   <MontantsEtape moi={moi} chantierId={chantierId} usineId={usineId} etape={def.cle} types={typesMontants}
                     montants={montants} onChange={onChange} compteCible={def.cle === 'pose' ? poseur : null} lectureSeule={!typesMontants.length} />
