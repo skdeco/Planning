@@ -17,9 +17,9 @@ import { tm } from '@/lib/menuiserie/i18n';
 export const docDeLigne = (m: MontantMn, docs: DocumentMn[]) =>
   docs.find(d => d.id === m.document_id) || (m.libelle ? docs.find(d => libelleDevis(d.nom) === m.libelle || nomSansExtension(d.nom) === m.libelle) : undefined);
 
-type Options = { pdf: boolean; ttc: boolean; date: boolean; partageClient?: string };
+export type Options = { pdf: boolean; ttc: boolean; date: boolean; partageClient?: string; labelMontant?: string };
 
-function Formulaire({ initial, options, onValider, onAnnuler, autres }: {
+export function Formulaire({ initial, options, onValider, onAnnuler, autres }: {
   initial: { libelle: string; ht: string; ttc: string; date: string }; options: Options;
   onValider: (v: { libelle: string; ht: number; ttc: number | null; date: string | null }) => Promise<void>; onAnnuler: () => void;
   autres?: React.ReactNode;
@@ -39,7 +39,7 @@ function Formulaire({ initial, options, onValider, onAnnuler, autres }: {
     <View style={{ gap: 8, backgroundColor: DS.background, borderRadius: 14, padding: 12 }}>
       <Champ label={tm("Libellé")} value={v.libelle} onChangeText={t => setV({ ...v, libelle: t })} />
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <Champ label={tm("Montant HT (€)")} value={v.ht} onChangeText={t => setV({ ...v, ht: t })} keyboardType="decimal-pad" />
+        <Champ label={options.labelMontant || tm("Montant HT (€)")} value={v.ht} onChangeText={t => setV({ ...v, ht: t })} keyboardType="decimal-pad" />
         {options.ttc && <Champ label={tm("Montant TTC (€)")} value={v.ttc} onChangeText={t => setV({ ...v, ttc: t })} keyboardType="decimal-pad" placeholder={tm("facultatif")} />}
       </View>
       {options.date && <Champ label={tm("Date (JJ/MM/AAAA)")} value={v.date} onChangeText={t => setV({ ...v, date: t })} keyboardType="numbers-and-punctuation" />}
@@ -70,7 +70,7 @@ export function LignesPieces({ moi, chantierId, usineId, cote, type, titre, lign
 
   const deposer = async () => {
     setOccupe(true); setMessages([]);
-    try { setMessages(await deposerPiecesMn(moi, { chantierId, usineId, cote, type, onInfo: setInfo })); onChange(); }
+    try { setMessages((await deposerPiecesMn(moi, { chantierId, usineId, cote, type, onInfo: setInfo })).messages); onChange(); }
     catch (e) { setMessages([(e as Error).message]); }
     setOccupe(false); setInfo('');
   };

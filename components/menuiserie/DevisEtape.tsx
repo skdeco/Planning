@@ -1,7 +1,7 @@
 /**
  * Étape « Devis / Facture » : tout l'argent du chantier, saisi à un seul endroit,
  * en deux onglets bien séparés (le client ne voit jamais l'usine, et inversement) :
- *  - Client : devis SK DECO, suppléments (acceptés par le client), factures, règlements ;
+ *  - Client : devis SK DECO, suppléments (acceptés par le client), factures ↔ règlements liés ;
  *  - Usine  : devis usine, suppléments usine, factures usine, règlements versés à l'usine.
  * Les PDF déposés sont lus automatiquement (HT et TTC). L'usine ne voit que son onglet.
  */
@@ -16,6 +16,7 @@ import { listerSupplementsMn, totalAccepte, type SupplementMn } from '@/lib/menu
 import { TYPES_COTE, type CoteMn } from '@/lib/menuiserie/pieces';
 import { LignesPieces, docDeLigne } from './LignesPieces';
 import { SupplementsDevis } from './SupplementsDevis';
+import { FacturesReglements } from './FacturesReglements';
 import { euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
 
@@ -57,8 +58,6 @@ export function DevisEtape({ moi, chantierId, usineId, documents, montants, onCh
 
   const b = bilanCote(cote, montants, supplements);
   const lignesDevis = montants.filter(m => m.type === t.devis);
-  const lignesFactures = montants.filter(m => m.type === t.facture);
-  const lignesReglements = montants.filter(m => m.type === t.reglement);
   // Anciens PDF de devis sans ligne : proposés à la lecture
   const lies = new Set(montants.map(m => docDeLigne(m, documents)?.id).filter(Boolean) as string[]);
   const orphelins = documents.filter(d => !lies.has(d.id) && !(d.piece || '').startsWith('supp_') && coteDevis(d, montants) === cote);
@@ -118,16 +117,8 @@ export function DevisEtape({ moi, chantierId, usineId, documents, montants, onCh
       <SupplementsDevis key={`s${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} documents={documents}
         liste={supplements.filter(s => s.cote === cote)} onChange={toutRecharger} />
 
-      <LignesPieces key={`f${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} type={t.facture} titre={tm("Factures")}
-        lignes={lignesFactures} documents={documents} onChange={onChange} peutSaisir={peutSaisir}
-        options={{ pdf: true, ttc: true, date: true, partageClient: cote === 'client' ? 'factures' : undefined }}
-        vide={tm("Aucune facture.")} />
-
-      <LignesPieces key={`r${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} type={t.reglement}
-        titre={cote === 'client' ? tm("Règlements du client") : tm("Règlements à l'usine")}
-        lignes={lignesReglements} documents={documents} onChange={onChange} peutSaisir={modifiable && admin}
-        options={{ pdf: false, ttc: false, date: true }}
-        vide={cote === 'client' ? tm("Aucun règlement reçu.") : tm("Aucun règlement versé.")} />
+      <FacturesReglements key={`fr${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} montants={montants} documents={documents}
+        onChange={onChange} peutFactures={peutSaisir} peutReglements={modifiable && admin} />
     </>
   );
 }

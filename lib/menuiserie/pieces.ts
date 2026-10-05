@@ -84,12 +84,13 @@ export async function ajouterLigneMn(moi: CompteMn, l: {
   ht: number; ttc: number | null; date: string | null; documentId?: string | null;
 }) {
   const visibilite = visibiliteLigne(l.type, l.usineId);
-  ok(await mn().from('mn_montants').insert({
+  const r = ok(await mn().from('mn_montants').insert({
     chantier_id: l.chantierId, etape: 'devis', type: l.type, libelle: l.libelle, montant_ht: l.ht, montant_ttc: l.ttc,
     visibilite, usine_id: visibilite === 'usine' ? l.usineId : null, compte_id: null,
     date_montant: l.date || new Date().toISOString().slice(0, 10), document_id: l.documentId || null, created_by_nom: moi.nom,
-  }));
+  }).select('id').single()) as { id: string };
   journaliser(moi, l.chantierId, 'Montant ajouté', `${l.libelle || l.type} : ${l.ht} € HT`).catch(() => {});
+  return r.id;
 }
 
 export async function modifierLigneMn(moi: CompteMn, m: MontantMn, patch: { libelle?: string | null; montant_ht?: number; montant_ttc?: number | null; date_montant?: string | null; document_id?: string | null }) {
@@ -100,10 +101,11 @@ export async function modifierLigneMn(moi: CompteMn, m: MontantMn, patch: { libe
 /** Dépose des PDF et crée une ligne par fichier, montants lus automatiquement. */
 export async function deposerPiecesMn(moi: CompteMn, p: {
   chantierId: string; usineId: string | null; cote: CoteMn; type: TypeMontantMn; onInfo?: (t: string) => void;
-}): Promise<string[]> {
+}): Promise<{ messages: string[]; ids: string[] }> {
   const vis = p.cote === 'usine' ? ['admin', 'usine'] : ['admin'];
   const { deposes, erreurs } = await choisirEtDeposerMn(moi, { chantierId: p.chantierId, etape: 'devis', piece: p.cote, visibilite: vis, onInfo: p.onInfo });
   const messages = [...erreurs];
+  const ids: string[] = [];
   for (const d of deposes) {
     let ht: number | null = null, ttc: number | null = null;
     if (d.pdf) {
@@ -112,10 +114,23 @@ export async function deposerPiecesMn(moi: CompteMn, p: {
       ht = r.ht; ttc = r.ttc;
       if (r.message) messages.push(`« ${d.nom} » : ${r.message} ${tm("Saisis-le à la main.")}`);
     }
-    await ajouterLigneMn(moi, { chantierId: p.chantierId, usineId: p.usineId, type: p.type, libelle: nomSansExtension(d.nom), ht: ht ?? 0, ttc, date: null, documentId: d.id });
+    ids.push(await ajouterLigneMn(moi, { chantierId: p.chantierId, usineId: p.usineId, type: p.type, libelle: nomSansExtension(d.nom), ht: ht ?? 0, ttc, date: null, documentId: d.id }));
   }
   p.onInfo?.('');
-  return messages;
+  return { messages, ids };
+}
+
+// ── Lettrage : factures ↔ règlements (plusieurs à plusieurs) ───────────────
+export interface LettrageMn { id: string; chantier_id: string; facture_id: string; reglement_id: string }
+export async function listerLettragesMn(chantierId: string): Promise<LettrageMn[]> {
+  return ok(await mn().from('mn_lettrages').select('*').eq('chantier_id', chantierId)) || [];
+}
+export async function lierMn(chantierId: string, factureId: string, reglementId: string) {
+  const r = await mn().from('mn_lettrages').insert({ chantier_id: chantierId, facture_id: factureId, reglement_id: reglementId });
+  if (r.error && !/duplicate/i.test(r.error.message)) throw new Error(r.error.message);
+}
+export async function delierMn(l: LettrageMn) {
+  ok(await mn().from('mn_lettrages').delete().eq('id', l.id));
 }
 
 /** Saisie « 12 500,50 » → nombre ; vide → null. */

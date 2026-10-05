@@ -8,3 +8,7 @@
 -- mn_supplements : colonnes cote ('client'|'usine'), usine_id, montant_ttc, document_id ;
 --   politiques usine_lecture / usine_proposer / usine_retirer ; client_lecture limitée à cote = 'client'.
 -- mn_supplement_repondre : le client ne répond qu'aux suppléments côté client.
+
+-- 05/10/2026 Lettrage factures ↔ règlements (appliqué en prod) :
+-- table mn_lettrages (chantier_id, facture_id → mn_montants, reglement_id → mn_montants, on delete cascade, unique),
+-- RLS : admin tout ; lecture pour usine / client qui voient le chantier.
