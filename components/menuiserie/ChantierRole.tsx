@@ -121,7 +121,7 @@ export function ChantierRole() {
           moi={moi} chantierId={c.id} usineId={c.usine_id} def={ouverte}
           etape={d.etapes.find(x => x.etape === ouverte.cle)}
           documents={d.documents.filter(x => x.etape === ouverte.cle)}
-          montants={d.montants.filter(x => x.etape === ouverte.cle)}
+          montants={ouverte.cle === 'devis' ? d.montants : d.montants.filter(x => x.etape === ouverte.cle)}
           onClose={() => setOuverte(null)} onChange={charger}
         />
       )}

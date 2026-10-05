@@ -54,8 +54,8 @@ export const CRITERES_VERIF: { cle: string; label: string; aide?: string }[] = t
 
 export const ETAPES_MN: DefEtape[] = traduit([
   { cle: 'plan_devis', titre: 'Plan pour devis', rempliPar: 'admin', visibleUsine: true, montants: [] },
-  { cle: 'devis', titre: 'Devis', rempliPar: 'usine', visibleUsine: true, montants: ['achat_usine', 'vente_client'],
-    aide: "Le devis de l'usine (achat) et ton prix de vente client. Le prix de vente n'est jamais visible par l'usine." },
+  { cle: 'devis', titre: 'Devis / Facture', rempliPar: 'usine', visibleUsine: true, montants: ['achat_usine', 'vente_client'],
+    aide: "Tout l'argent du chantier : devis, suppléments, factures et règlements, côté client et côté usine. L'usine ne voit jamais l'onglet client." },
   { cle: 'mesures', titre: 'Prise de mesure', rempliPar: 'tous', visibleUsine: true, montants: [], parPiece: true, suppressionAdminSeul: true,
     aide: 'Photos classées par pièce. Seul un administrateur peut supprimer.' },
   { cle: 'plan_exe', titre: "Plan d'exécution", rempliPar: 'usine', visibleUsine: true, montants: [],

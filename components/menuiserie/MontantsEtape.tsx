@@ -16,6 +16,7 @@ export const VISIBILITE_DEFAUT: Record<TypeMontantMn, VisibiliteMontantMn> = {
   achat_usine: 'usine', materiaux: 'usine', emballage: 'usine', transport: 'usine',
   vente_client: 'admin', pose: 'poseur', monte_charge: 'admin', demenageur: 'admin', reserve: 'admin',
   reglement_client: 'client', commission: 'personnel', reglement_commission: 'personnel', autre: 'admin',
+  facture_client: 'admin', facture_usine: 'usine', reglement_usine: 'usine',
 };
 
 const VIS_LABEL: Record<VisibiliteMontantMn, { label: string; fond: string; texte: string }> = traduit({

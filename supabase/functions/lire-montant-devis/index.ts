@@ -1,4 +1,4 @@
-// Lit un devis PDF déposé dans l'espace Menuiserie et renvoie son montant total HT.
+// Lit un devis ou une facture PDF déposé dans l'espace Menuiserie et renvoie ses montants HT et TTC.
 //  - devis émis par SK DECO (français, « SKDECO » / « SKDECO M ») → vente client ;
 //  - autre devis (usine, portugais ou autre format) → achat usine.
 // L'accès au document est vérifié avec la session de l'appelant (RLS de mn_documents).
@@ -32,6 +32,13 @@ const LIBELLES = [
   String.raw`total\s*(?:excl\.?|excluding|before)\s*(?:vat|tax)`, String.raw`net\s*total`,
 ];
 const SECOURS = [String.raw`sub\s*-?\s*total`, String.raw`subtotal`];
+const LIBELLES_TTC = [
+  String.raw`total\s*(?:g[ée]n[ée]ral\s*)?t\.?\s*t\.?\s*c\.?`, String.raw`montant\s*(?:total\s*)?t\.?\s*t\.?\s*c\.?`, String.raw`net\s*[àa]\s*payer(?!\s*h\.?\s*t)`,
+  String.raw`total\s*(?:c\s*\/\s*|com\s*)iva`, String.raw`total\s*a\s*pagar`, String.raw`valor\s*a\s*pagar`,
+  String.raw`total\s*(?:incl\.?|including)\s*(?:vat|tax)`,
+];
+const LIBELLES_TVA = [String.raw`(?:total\s*)?t\.?\s*v\.?\s*a\.?(?:\s*[àa]?\s*\d{1,2}(?:[.,]\d{1,2})?\s*%)?`, String.raw`(?:total\s*)?iva(?:\s*\d{1,2}(?:[.,]\d{1,2})?\s*%)?`];
+const dernier = (c) => { const e = c.filter(x => x.euro); const l = (e.length ? e : c).sort((a, b) => a.pos - b.pos); return l[l.length - 1] || null; };
 
 function chercher(texte, libelles) {
   const res = [];
@@ -57,10 +64,16 @@ function analyserDevis(texte) {
     || (!portugais && /sk\s*-?\s*deco/i.test(t) && /devis\b.{0,80}sk\s*-?\s*deco|sk\s*-?\s*deco\s*m?\b.{0,40}devis|skdeco\s*m\b/i.test(t));
   let c = chercher(t, LIBELLES);
   if (!c.length) c = chercher(t, SECOURS);
-  const avecEuro = c.filter(x => x.euro);
-  const liste = (avecEuro.length ? avecEuro : c).sort((a, b) => a.pos - b.pos);
-  const choix = liste[liste.length - 1] || null;
-  return { emetteur: skdeco ? 'skdeco' : 'autre', langue: portugais && !skdeco ? 'pt' : 'fr', montantHT: choix?.n ?? null, extrait: choix?.extrait ?? null };
+  const choix = dernier(c);
+  const ht = choix?.n ?? null;
+  // TTC : écrit sur le devis, sinon HT + montant de TVA s'il est indiqué
+  let ttc = dernier(chercher(t, LIBELLES_TTC))?.n ?? null;
+  if (ttc != null && ht != null && ttc < ht) ttc = null;
+  if (ttc == null && ht != null) {
+    const tva = dernier(chercher(t, LIBELLES_TVA).filter(x => x.n > 0 && x.n <= ht * 0.25))?.n;
+    if (tva) ttc = Math.round((ht + tva) * 100) / 100;
+  }
+  return { emetteur: skdeco ? 'skdeco' : 'autre', langue: portugais && !skdeco ? 'pt' : 'fr', montantHT: ht, montantTTC: ttc, extrait: choix?.extrait ?? null };
 }
 
 

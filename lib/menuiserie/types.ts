@@ -8,7 +8,8 @@ export type RoleIntervenantMn = 'client' | 'architecte' | 'apporteur' | 'respons
 export type TypeMontantMn =
   | 'achat_usine' | 'materiaux' | 'emballage' | 'transport' | 'vente_client'
   | 'pose' | 'monte_charge' | 'demenageur' | 'reserve'
-  | 'reglement_client' | 'commission' | 'reglement_commission' | 'autre';
+  | 'reglement_client' | 'commission' | 'reglement_commission' | 'autre'
+  | 'facture_client' | 'facture_usine' | 'reglement_usine';
 export type VisibiliteMontantMn = 'admin' | 'usine' | 'client' | 'poseur' | 'personnel';
 /** Groupe de visibilité des documents (employé d'usine = usine, architecte = client) */
 export type GroupeMn = 'admin' | 'usine' | 'client' | 'apporteur' | 'poseur';
@@ -123,6 +124,10 @@ export interface MontantMn {
   type: TypeMontantMn;
   libelle: string | null;
   montant_ht: number;
+  /** Montant TTC s'il est connu */
+  montant_ttc?: number | null;
+  /** Document PDF lié (devis, facture) */
+  document_id?: string | null;
   visibilite: VisibiliteMontantMn;
   usine_id: string | null;
   compte_id: string | null;
@@ -179,6 +184,9 @@ export const TYPE_MONTANT_MN_LABELS: Record<TypeMontantMn, string> = traduit({
   commission: 'Commission prévue',
   reglement_commission: 'Commission réglée',
   autre: 'Autre',
+  facture_client: 'Facture client',
+  facture_usine: 'Facture usine',
+  reglement_usine: 'Règlement usine',
 });
 
 export interface VerificationMn {
@@ -324,6 +332,7 @@ export const CATEGORIES_CLIENT: { cle: string; label: string }[] = traduit([
   { cle: 'plan_exe_signe', label: "Plan d'exécution signé" },
   { cle: 'supplements', label: 'Suppléments' },
   { cle: 'supplements_signes', label: 'Suppléments signés' },
+  { cle: 'factures', label: 'Factures' },
   { cle: 'photos', label: 'Photos' },
   { cle: 'pv', label: 'PV de réception' },
   { cle: 'sav', label: 'SAV' },

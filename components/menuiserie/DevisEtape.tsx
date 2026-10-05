@@ -1,39 +1,72 @@
 /**
- * Étape « Devis » en deux onglets, sans doublon :
- *  - Client : le devis SK DECO et le prix de vente (administrateurs seulement) ;
- *  - Usine  : le devis de l'usine et le prix d'achat.
- * Chaque onglet montre son montant en grand, ses documents et ses lignes.
- * Le montant HT d'un PDF est lu tout seul à l'envoi (et relisible à la main).
+ * Étape « Devis / Facture » : tout l'argent du chantier, saisi à un seul endroit,
+ * en deux onglets bien séparés (le client ne voit jamais l'usine, et inversement) :
+ *  - Client : devis SK DECO, suppléments (acceptés par le client), factures, règlements ;
+ *  - Usine  : devis usine, suppléments usine, factures usine, règlements versés à l'usine.
+ * Les PDF déposés sont lus automatiquement (HT et TTC). L'usine ne voit que son onglet.
  */
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { DS } from '@/constants/design';
 import type { CompteMn, DocumentMn, MontantMn } from '@/lib/menuiserie/types';
 import type { DefEtape } from '@/lib/menuiserie/etapes';
+import { majMontantMn } from '@/lib/menuiserie/api';
 import { coteDevis } from '@/lib/menuiserie/importDevis';
-import { majMontantMn, supprimerMontantMn } from '@/lib/menuiserie/api';
-import { DocumentsEtape } from './DocumentsEtape';
-import { MontantsEtape } from './MontantsEtape';
+import { listerSupplementsMn, totalAccepte, type SupplementMn } from '@/lib/menuiserie/supplements';
+import { TYPES_COTE, type CoteMn } from '@/lib/menuiserie/pieces';
+import { LignesPieces, docDeLigne } from './LignesPieces';
 import { SupplementsDevis } from './SupplementsDevis';
-import { Bloc, euros } from './ui';
+import { euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
 
-type Cote = 'client' | 'usine';
+const somme = (l: MontantMn[]) => l.reduce((x, m) => x + Number(m.montant_ht), 0);
 
-export function DevisEtape({ moi, chantierId, usineId, def, documents, montants, onChange, modifiable }: {
+/** Bilan d'un côté (utilisé aussi par l'onglet Finances). */
+export function bilanCote(cote: CoteMn, montants: MontantMn[], supplements: SupplementMn[]) {
+  const t = TYPES_COTE[cote];
+  const devis = somme(montants.filter(m => m.type === t.devis));
+  const supp = totalAccepte(supplements.filter(s => s.cote === cote));
+  const enAttente = supplements.filter(s => s.cote === cote && s.statut === 'propose').length;
+  const facture = somme(montants.filter(m => m.type === t.facture));
+  const regle = somme(montants.filter(m => m.type === t.reglement));
+  const total = devis + supp;
+  return { devis, supp, enAttente, total, facture, regle, reste: Math.max(0, total - regle) };
+}
+
+function Ligne({ label, valeur, clair, fort }: { label: string; valeur: string; clair: boolean; fort?: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 10 }}>
+      <Text style={{ fontSize: 13, color: clair ? DS.textSecondary : 'rgba(255,255,255,0.7)', fontWeight: fort ? '800' : '500' }}>{label}</Text>
+      <Text style={{ fontSize: fort ? 15 : 13, fontWeight: '800', color: clair ? DS.text : DS.textInverse }}>{valeur}</Text>
+    </View>
+  );
+}
+
+export function DevisEtape({ moi, chantierId, usineId, documents, montants, onChange, modifiable }: {
   moi: CompteMn; chantierId: string; usineId: string | null; def: DefEtape;
   documents: DocumentMn[]; montants: MontantMn[]; onChange: () => void; modifiable: boolean;
 }) {
   const admin = moi.role === 'admin';
-  const [onglet, setOnglet] = useState<Cote>(admin ? 'client' : 'usine');
-  const cote: Cote = admin ? onglet : 'usine';
-  const type = cote === 'client' ? 'vente_client' : 'achat_usine';
-  const docs = documents.filter(d => coteDevis(d, montants) === cote);
-  const lignes = montants.filter(m => m.type === type);
-  const total = lignes.reduce((x, m) => x + Number(m.montant_ht), 0);
-  const achat = montants.filter(m => m.type === 'achat_usine').reduce((x, m) => x + Number(m.montant_ht), 0);
-  const vente = montants.filter(m => m.type === 'vente_client').reduce((x, m) => x + Number(m.montant_ht), 0);
-  const peutSaisir = admin || (moi.role === 'usine' && cote === 'usine');
+  const [onglet, setOnglet] = useState<CoteMn>(admin ? 'client' : 'usine');
+  const cote: CoteMn = admin ? onglet : 'usine';
+  const t = TYPES_COTE[cote];
+  const [supplements, setSupplements] = useState<SupplementMn[]>([]);
+  const chargerSupp = useCallback(() => { listerSupplementsMn(chantierId).then(setSupplements).catch(() => {}); }, [chantierId]);
+  useEffect(() => { chargerSupp(); }, [chargerSupp]);
+  const toutRecharger = () => { chargerSupp(); onChange(); };
+
+  const b = bilanCote(cote, montants, supplements);
+  const lignesDevis = montants.filter(m => m.type === t.devis);
+  const lignesFactures = montants.filter(m => m.type === t.facture);
+  const lignesReglements = montants.filter(m => m.type === t.reglement);
+  // Anciens PDF de devis sans ligne : proposés à la lecture
+  const lies = new Set(montants.map(m => docDeLigne(m, documents)?.id).filter(Boolean) as string[]);
+  const orphelins = documents.filter(d => !lies.has(d.id) && !(d.piece || '').startsWith('supp_') && coteDevis(d, montants) === cote);
+  const peutSaisir = modifiable && (admin || (moi.role === 'usine' && cote === 'usine'));
+  const clair = cote === 'usine';
+  const ttcDevis = lignesDevis.length && lignesDevis.every(m => m.montant_ttc != null) ? lignesDevis.reduce((x, m) => x + Number(m.montant_ttc), 0) : null;
+  const venteVisible = lignesDevis.length > 0 && lignesDevis.every(m => m.visibilite === 'client');
+  const achat = bilanCote('usine', montants, supplements).total, vente = bilanCote('client', montants, supplements).total;
 
   return (
     <>
@@ -51,58 +84,50 @@ export function DevisEtape({ moi, chantierId, usineId, def, documents, montants,
         </View>
       )}
 
-      {/* Le montant de l'onglet, en grand (et la marge quand les deux sont connus) */}
-      <View style={{ backgroundColor: cote === 'client' ? DS.primary : DS.surface, borderRadius: 20, borderWidth: cote === 'client' ? 0 : 1, borderColor: DS.border, padding: 18, gap: 4 }}>
-        <Text style={{ fontSize: 13, fontWeight: '700', color: cote === 'client' ? 'rgba(255,255,255,0.7)' : DS.textSecondary }}>
-          {cote === 'client' ? tm("Vente client") : tm("Achat usine")} · {tm("HT")}
+      {/* Bilan du côté affiché */}
+      <View style={{ backgroundColor: clair ? DS.surface : DS.primary, borderRadius: 20, borderWidth: clair ? 1 : 0, borderColor: DS.border, padding: 18, gap: 6 }}>
+        <Text style={{ fontSize: 13, fontWeight: '700', color: clair ? DS.textSecondary : 'rgba(255,255,255,0.7)' }}>
+          {cote === 'client' ? tm("Total client") : tm("Total usine")} · {tm("HT")}
         </Text>
-        <Text style={{ fontSize: 32, fontFamily: 'Manrope_700Bold', color: cote === 'client' ? DS.textInverse : DS.text }}>{total ? euros(total) : '—'}</Text>
-        {lignes.length === 1 && (
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Text style={{ flex: 1, fontSize: 12, color: cote === 'client' ? 'rgba(255,255,255,0.7)' : DS.textSecondary }} numberOfLines={1}>
-              {lignes[0].libelle || tm("Saisi à la main")}
-            </Text>
-            {peutSaisir && (
-              <Pressable onPress={async () => { await supprimerMontantMn(moi, lignes[0]); onChange(); }} hitSlop={8} accessibilityRole="button">
-                <Text style={{ fontSize: 12, fontWeight: '700', color: cote === 'client' ? '#FFFFFF' : DS.error, textDecorationLine: 'underline' }}>{tm("Retirer")}</Text>
-              </Pressable>
-            )}
-          </View>
+        <Text style={{ fontSize: 32, fontFamily: 'Manrope_700Bold', color: clair ? DS.text : DS.textInverse }}>{b.total ? euros(b.total) : '—'}</Text>
+        {ttcDevis != null && b.supp === 0 && <Text style={{ fontSize: 13, color: clair ? DS.textSecondary : 'rgba(255,255,255,0.7)' }}>{euros(ttcDevis)} {tm("TTC")}</Text>}
+        <View style={{ gap: 3, marginTop: 4 }}>
+          <Ligne clair={clair} label={tm("Devis")} valeur={euros(b.devis)} />
+          {(b.supp > 0 || b.enAttente > 0) && <Ligne clair={clair} label={b.enAttente ? tm("Suppléments acceptés ({0} en attente)", b.enAttente) : tm("Suppléments acceptés")} valeur={`+ ${euros(b.supp)}`} />}
+          <Ligne clair={clair} label={tm("Facturé")} valeur={euros(b.facture)} />
+          <Ligne clair={clair} label={cote === 'client' ? tm("Encaissé") : tm("Payé à l'usine")} valeur={euros(b.regle)} />
+          <Ligne clair={clair} fort label={cote === 'client' ? tm("Reste à encaisser") : tm("Reste à payer")} valeur={euros(b.reste)} />
+        </View>
+        {admin && cote === 'client' && lignesDevis.length > 0 && (
+          <Pressable onPress={async () => { for (const m of lignesDevis) await majMontantMn(moi, m, { visibilite: venteVisible ? 'admin' : 'client' }); onChange(); }}
+            accessibilityRole="switch" accessibilityState={{ checked: venteVisible }}
+            style={{ marginTop: 6, alignSelf: 'flex-start', minHeight: 32, paddingHorizontal: 12, borderRadius: 999, justifyContent: 'center', backgroundColor: venteVisible ? '#FFFFFF' : 'rgba(255,255,255,0.15)' }}>
+            <Text style={{ fontSize: 13, fontWeight: '800', color: venteVisible ? DS.primary : '#FFFFFF' }}>{venteVisible ? tm("Prix visible par le client ✓") : tm("Montrer le prix au client")}</Text>
+          </Pressable>
         )}
-        {/* Prix de vente : visible ou non dans l'espace client */}
-        {admin && cote === 'client' && lignes.length > 0 && (() => {
-          const visible = lignes.every(m => m.visibilite === 'client');
-          return (
-            <Pressable onPress={async () => { for (const m of lignes) await majMontantMn(moi, m, { visibilite: visible ? 'admin' : 'client' }); onChange(); }}
-              accessibilityRole="switch" accessibilityState={{ checked: visible }}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, alignSelf: 'flex-start', minHeight: 32, paddingHorizontal: 12, borderRadius: 999, backgroundColor: visible ? '#FFFFFF' : 'rgba(255,255,255,0.15)' }}>
-              <Text style={{ fontSize: 13, fontWeight: '800', color: visible ? DS.primary : '#FFFFFF' }}>{visible ? tm("Visible par le client ✓") : tm("Montrer le prix au client")}</Text>
-            </Pressable>
-          );
-        })()}
         {admin && achat > 0 && vente > 0 && (
-          <Text style={{ fontSize: 13, color: cote === 'client' ? 'rgba(255,255,255,0.8)' : DS.textSecondary }}>
-            {tm("Marge")} {euros(vente - achat)} · {Math.round(((vente - achat) / vente) * 100)} %
-          </Text>
+          <Text style={{ fontSize: 13, color: clair ? DS.textSecondary : 'rgba(255,255,255,0.8)' }}>{tm("Marge")} {euros(vente - achat)} · {Math.round(((vente - achat) / vente) * 100)} %</Text>
         )}
       </View>
 
-      <DocumentsEtape key={cote} moi={moi} chantierId={chantierId} def={def} documents={docs} onChange={onChange} lectureSeule={!modifiable}
-        titre={cote === 'client' ? tm("Devis SK DECO") : tm("Devis de l'usine")}
-        importDevis={{ usineId, montants, type, cote }} />
+      <LignesPieces key={`d${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} type={t.devis} titre={cote === 'client' ? tm("Devis SK DECO") : tm("Devis de l'usine")}
+        lignes={lignesDevis} documents={documents} orphelins={orphelins} onChange={onChange} peutSaisir={peutSaisir}
+        options={{ pdf: true, ttc: true, date: false, partageClient: cote === 'client' ? 'devis' : undefined }}
+        vide={tm("Dépose le devis (PDF) : les montants HT et TTC sont lus automatiquement.")} />
 
-      {admin && cote === 'client' && <SupplementsDevis moi={moi} chantierId={chantierId} venteBase={vente} />}
+      <SupplementsDevis key={`s${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} documents={documents}
+        liste={supplements.filter(s => s.cote === cote)} onChange={toutRecharger} />
 
-      {/* Plusieurs lignes : détail ; sinon simple bouton pour en ajouter une à la main */}
-      {lignes.length > 1 ? (
-        <Bloc titre={tm("Détail du montant")}>
-          <MontantsEtape key={type} moi={moi} chantierId={chantierId} usineId={usineId} etape={def.cle} types={peutSaisir ? [type] : []}
-            montants={lignes} onChange={onChange} lectureSeule={!peutSaisir} />
-        </Bloc>
-      ) : peutSaisir ? (
-        <MontantsEtape key={type} moi={moi} chantierId={chantierId} usineId={usineId} etape={def.cle} types={[type]}
-          montants={[]} onChange={onChange} />
-      ) : null}
+      <LignesPieces key={`f${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} type={t.facture} titre={tm("Factures")}
+        lignes={lignesFactures} documents={documents} onChange={onChange} peutSaisir={peutSaisir}
+        options={{ pdf: true, ttc: true, date: true, partageClient: cote === 'client' ? 'factures' : undefined }}
+        vide={tm("Aucune facture.")} />
+
+      <LignesPieces key={`r${cote}`} moi={moi} chantierId={chantierId} usineId={usineId} cote={cote} type={t.reglement}
+        titre={cote === 'client' ? tm("Règlements du client") : tm("Règlements à l'usine")}
+        lignes={lignesReglements} documents={documents} onChange={onChange} peutSaisir={modifiable && admin}
+        options={{ pdf: false, ttc: false, date: true }}
+        vide={cote === 'client' ? tm("Aucun règlement reçu.") : tm("Aucun règlement versé.")} />
     </>
   );
 }

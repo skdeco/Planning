@@ -194,7 +194,7 @@ function ChantierAdmin() {
           moi={moi} chantierId={c.id} usineId={c.usine_id} def={ouverte}
           etape={d.etapes.find(x => x.etape === ouverte.cle)}
           documents={d.documents.filter(x => x.etape === ouverte.cle)}
-          montants={d.montants.filter(x => x.etape === ouverte.cle)}
+          montants={ouverte.cle === 'devis' ? d.montants : d.montants.filter(x => x.etape === ouverte.cle)}
           onClose={() => setOuverte(null)} onChange={charger} chantier={c}
           dateReception={d.etapes.find(x => x.etape === 'livraison')?.infos?.date_reception || null}
           poseur={(() => { const p = d.intervenants.find(i => i.role === 'poseur' && i.compte_id); return p && p.compte_id ? { id: p.compte_id, nom: p.nom } : null; })()}

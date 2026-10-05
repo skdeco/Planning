@@ -82,7 +82,9 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
   const commissions = montants.filter(m => m.visibilite === 'personnel');
   const reglements = visibles.filter(m => m.type === 'reglement_client')
     .sort((a, b) => String(a.date_montant || '').localeCompare(String(b.date_montant || '')));
-  const prix = visibles.filter(m => m.type === 'vente_client').reduce((s, m) => s + Number(m.montant_ht), 0);
+  const lignesPrix = visibles.filter(m => m.type === 'vente_client');
+  const prix = lignesPrix.reduce((s, m) => s + Number(m.montant_ht), 0);
+  const prixTtc = lignesPrix.length && lignesPrix.every(m => m.montant_ttc != null) ? lignesPrix.reduce((s, m) => s + Number(m.montant_ttc), 0) : null;
   const regle = reglements.reduce((s, m) => s + Number(m.montant_ht), 0);
   const [supplements, setSupplements] = useState<SupplementMn[]>([]);
   const chargerSupp = useCallback(() => { listerSupplementsMn(chantier.id).then(setSupplements).catch(() => {}); }, [chantier.id]);
@@ -111,7 +113,8 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
             <Separateur />
             <View style={{ gap: 8 }}>
               {prix > 0 && <Ligne label={tm("Prix de vente")} valeur={`${euros(prix)} ${tm("HT")}`} fort grand />}
-              <SupplementsClient moi={moi} liste={supplements} onChange={chargerSupp} />
+              {prixTtc != null && <Text style={{ fontSize: 12, color: DS.textSecondary, textAlign: 'right', marginTop: -6 }}>{euros(prixTtc)} {tm("TTC")}</Text>}
+              <SupplementsClient moi={moi} liste={supplements} documents={documents} onChange={chargerSupp} />
               {suppAcceptes > 0 && prix > 0 && <Ligne label={tm("Total avec suppléments")} valeur={`${euros(total)} ${tm("HT")}`} fort />}
               {reglements.length > 0 && (
                 <View style={{ gap: 6 }}>

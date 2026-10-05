@@ -5,13 +5,14 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { DS } from '@/constants/design';
-import type { CompteMn } from '@/lib/menuiserie/types';
+import type { CompteMn, DocumentMn } from '@/lib/menuiserie/types';
+import { ouvrirDocumentMn } from './DocumentsEtape';
 import { repondreSupplementMn, type SupplementMn } from '@/lib/menuiserie/supplements';
 import { StatutSupplement } from './SupplementsDevis';
 import { euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
 
-function Supplement({ s, peutRepondre, onRepondu }: { s: SupplementMn; peutRepondre: boolean; onRepondu: () => void }) {
+function Supplement({ s, doc, peutRepondre, onRepondu }: { s: SupplementMn; doc?: DocumentMn; peutRepondre: boolean; onRepondu: () => void }) {
   const [refus, setRefus] = useState(false);
   const [commentaire, setCommentaire] = useState('');
   const [charge, setCharge] = useState(false);
@@ -27,8 +28,16 @@ function Supplement({ s, peutRepondre, onRepondu }: { s: SupplementMn; peutRepon
     <View style={{ borderRadius: 14, padding: 12, gap: 8, backgroundColor: attente ? DS.warningSoft : DS.background, borderWidth: attente ? 1 : 0, borderColor: DS.warning }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Text style={{ flex: 1, fontSize: 14, fontWeight: '700', color: DS.text }}>{s.libelle}</Text>
-        <Text style={{ fontSize: 15, fontWeight: '800', color: DS.text }}>+ {euros(Number(s.montant_ht))}</Text>
+        <View style={{ alignItems: 'flex-end' }}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: DS.text }}>+ {euros(Number(s.montant_ht))} {tm("HT")}</Text>
+          {s.montant_ttc != null && <Text style={{ fontSize: 11, color: DS.textSecondary }}>{euros(Number(s.montant_ttc))} {tm("TTC")}</Text>}
+        </View>
       </View>
+      {doc && (
+        <Pressable onPress={() => ouvrirDocumentMn(doc)} accessibilityRole="link" hitSlop={6} style={{ alignSelf: 'flex-start' }}>
+          <Text style={{ fontSize: 13, fontWeight: '700', color: DS.text, textDecorationLine: 'underline' }}>📄 {tm("Voir le devis du supplément")}</Text>
+        </Pressable>
+      )}
       {!!s.description && <Text style={{ fontSize: 12, color: DS.textSecondary }}>{s.description}</Text>}
       {attente && peutRepondre ? (
         charge ? <ActivityIndicator color={DS.primary} /> : refus ? (
@@ -60,12 +69,12 @@ function Supplement({ s, peutRepondre, onRepondu }: { s: SupplementMn; peutRepon
   );
 }
 
-export function SupplementsClient({ moi, liste, onChange }: { moi: CompteMn; liste: SupplementMn[]; onChange: () => void }) {
+export function SupplementsClient({ moi, liste, documents, onChange }: { moi: CompteMn; liste: SupplementMn[]; documents: DocumentMn[]; onChange: () => void }) {
   if (!liste.length) return null;
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Suppléments")}</Text>
-      {liste.map(s => <Supplement key={s.id} s={s} peutRepondre={moi.role === 'client'} onRepondu={onChange} />)}
+      {liste.map(s => <Supplement key={s.id} s={s} doc={documents.find(d => d.id === s.document_id)} peutRepondre={moi.role === 'client'} onRepondu={onChange} />)}
     </View>
   );
 }

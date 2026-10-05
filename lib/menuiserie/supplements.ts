@@ -7,6 +7,10 @@ export type StatutSupplementMn = 'propose' | 'accepte' | 'refuse';
 export interface SupplementMn {
   id: string;
   chantier_id: string;
+  cote: 'client' | 'usine';
+  usine_id: string | null;
+  montant_ttc: number | null;
+  document_id: string | null;
   libelle: string;
   description: string | null;
   montant_ht: number;
@@ -26,9 +30,23 @@ function ok<T>(res: { data: T | null; error: { message: string } | null }): T {
 export async function listerSupplementsMn(chantierId: string): Promise<SupplementMn[]> {
   return ok(await mn().from('mn_supplements').select('*').eq('chantier_id', chantierId).order('created_at')) || [];
 }
-export async function ajouterSupplementMn(moi: CompteMn, chantierId: string, s: { libelle: string; montant_ht: number; description?: string }) {
-  ok(await mn().from('mn_supplements').insert({ chantier_id: chantierId, libelle: s.libelle.trim(), montant_ht: s.montant_ht, description: s.description?.trim() || null, created_by_nom: moi.nom }));
-  journaliser(moi, chantierId, 'Supplément proposé', `${s.libelle} : ${s.montant_ht} € HT`).catch(() => {});
+export async function ajouterSupplementMn(moi: CompteMn, chantierId: string, s: {
+  cote: 'client' | 'usine'; usineId: string | null; libelle: string; montant_ht: number; montant_ttc?: number | null; documentId?: string | null; description?: string;
+}) {
+  // Côté usine : un supplément saisi par l'admin est accepté d'office ; proposé par l'usine, il attend l'admin
+  const statut = s.cote === 'usine' && moi.role === 'admin' ? 'accepte' : 'propose';
+  ok(await mn().from('mn_supplements').insert({
+    chantier_id: chantierId, cote: s.cote, usine_id: s.cote === 'usine' ? s.usineId : null, libelle: s.libelle.trim(),
+    montant_ht: s.montant_ht, montant_ttc: s.montant_ttc ?? null, document_id: s.documentId || null,
+    description: s.description?.trim() || null, created_by_nom: moi.nom, statut,
+  }));
+  journaliser(moi, chantierId, s.cote === 'client' ? 'Supplément proposé au client' : 'Supplément usine', `${s.libelle} : ${s.montant_ht} € HT`).catch(() => {});
+}
+export async function joindrePdfSupplementMn(id: string, documentId: string, ht?: number | null, ttc?: number | null) {
+  const patch: Record<string, unknown> = { document_id: documentId };
+  if (ht != null) patch.montant_ht = ht;
+  if (ttc != null) patch.montant_ttc = ttc;
+  ok(await mn().from('mn_supplements').update(patch).eq('id', id));
 }
 export async function supprimerSupplementMn(moi: CompteMn, s: SupplementMn) {
   ok(await mn().from('mn_supplements').delete().eq('id', s.id));
