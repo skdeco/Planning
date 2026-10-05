@@ -786,6 +786,18 @@ const d: Record<string, string> = {
   "Documents": "Документы",
   "Aucun document partagé pour l'instant.": "Пока нет общих документов.",
   "Ouvrir": "Открыть",
+  "Accepté": "Принято",
+  "Indiquez un libellé et un montant.": "Укажите название и сумму.",
+  "+ Supplément": "+ Дополнение",
+  "Aucun supplément. Ceux que vous ajoutez sont envoyés au client pour acceptation.": "Нет дополнений. Добавленные отправляются клиенту на согласование.",
+  "Libellé du supplément": "Название дополнения",
+  "Ex. : niche supplémentaire cuisine": "Напр.: доп. ниша на кухне",
+  "Envoyer au client": "Отправить клиенту",
+  "Suppléments acceptés :": "Принятые дополнения:",
+  "Total vente :": "Итого продажа:",
+  "Motif (facultatif)": "Причина (необязательно)",
+  "Confirmer le refus": "Подтвердить отказ",
+  "Total avec suppléments": "Итого с дополнениями",
 };
 
 export default d;

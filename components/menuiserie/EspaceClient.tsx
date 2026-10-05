@@ -2,11 +2,12 @@
  * Espace client / architecte d'un chantier, en une seule fiche lisible :
  *  1. nom du projet, statut, livraison prévue ;
  *  2. prix de vente, règlements numérotés, reste à payer ;
- *  3. rubriques en liste déroulante (seules celles qui contiennent des documents) ;
+ *  3. toutes les rubriques en liste déroulante (le nombre de documents de chacune) ;
+ *  + les suppléments au devis, que le client accepte ou refuse.
  *  4. messagerie.
  * L'architecte (et l'apporteur) voit aussi sa commission — jamais visible par le client.
  */
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { DS } from '@/constants/design';
 import { formatDateFR } from '@/lib/date/format';
@@ -14,6 +15,8 @@ import type { ChantierMn, CompteMn, DocumentMn, MontantMn } from '@/lib/menuiser
 import { CATEGORIES_CLIENT, STATUT_CHANTIER_MN_LABELS, TYPE_MONTANT_MN_LABELS } from '@/lib/menuiserie/types';
 import { ouvrirDocumentMn } from './DocumentsEtape';
 import { Bouton, euros } from './ui';
+import { SupplementsClient } from './SupplementsClient';
+import { listerSupplementsMn, totalAccepte, type SupplementMn } from '@/lib/menuiserie/supplements';
 import { tm } from '@/lib/menuiserie/i18n';
 
 const MANROPE = 'Manrope_700Bold';
@@ -46,14 +49,15 @@ function Rubrique({ titre, docs, premiere }: { titre: string; docs: DocumentMn[]
     <View style={{ borderTopWidth: premiere ? 0 : 1, borderTopColor: DS.border }}>
       <Pressable onPress={() => setOuvert(o => !o)} accessibilityRole="button" accessibilityState={{ expanded: ouvert }}
         style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 52, paddingVertical: 10 }}>
-        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: DS.text }}>{titre}</Text>
-        <View style={{ minWidth: 24, paddingHorizontal: 7, height: 22, borderRadius: 11, backgroundColor: DS.background, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 12, fontWeight: '800', color: DS.textSecondary }}>{docs.length}</Text>
+        <Text style={{ flex: 1, fontSize: 15, fontWeight: '700', color: docs.length ? DS.text : DS.textMuted }}>{titre}</Text>
+        <View style={{ minWidth: 24, paddingHorizontal: 7, height: 22, borderRadius: 11, backgroundColor: docs.length ? DS.primary : DS.background, alignItems: 'center', justifyContent: 'center' }}>
+          <Text style={{ fontSize: 12, fontWeight: '800', color: docs.length ? DS.textInverse : DS.textMuted }}>{docs.length}</Text>
         </View>
         <Text style={{ fontSize: 16, color: DS.textSecondary, width: 16, textAlign: 'center' }}>{ouvert ? '⌃' : '⌄'}</Text>
       </Pressable>
       {ouvert && (
         <View style={{ gap: 6, paddingBottom: 12 }}>
+          {docs.length === 0 && <Text style={{ fontSize: 13, color: DS.textMuted }}>{tm("Pas encore disponible")}</Text>}
           {docs.map(d => (
             <Pressable key={d.id} onPress={() => ouvrirDocumentMn(d)} accessibilityRole="link"
               style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, paddingHorizontal: 12, borderRadius: 12, backgroundColor: DS.background }}>
@@ -80,10 +84,14 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
     .sort((a, b) => String(a.date_montant || '').localeCompare(String(b.date_montant || '')));
   const prix = visibles.filter(m => m.type === 'vente_client').reduce((s, m) => s + Number(m.montant_ht), 0);
   const regle = reglements.reduce((s, m) => s + Number(m.montant_ht), 0);
-  const reste = Math.max(0, prix - regle);
+  const [supplements, setSupplements] = useState<SupplementMn[]>([]);
+  const chargerSupp = useCallback(() => { listerSupplementsMn(chantier.id).then(setSupplements).catch(() => {}); }, [chantier.id]);
+  useEffect(() => { if (moi.role !== 'apporteur') chargerSupp(); }, [chargerSupp, moi.role]);
+  const suppAcceptes = totalAccepte(supplements);
+  const total = prix + suppAcceptes;
+  const reste = Math.max(0, total - regle);
   const rubriques = CATEGORIES_CLIENT
-    .map(cat => ({ ...cat, docs: documents.filter(d => d.categorie_client === cat.cle) }))
-    .filter(r => r.docs.length > 0);
+    .map(cat => ({ ...cat, docs: documents.filter(d => d.categorie_client === cat.cle) }));
   const estClient = moi.role !== 'apporteur';
 
   return (
@@ -98,11 +106,13 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
           <Ligne label={tm("Livraison prévue")} valeur={chantier.date_livraison_prevue ? formatDateFR(chantier.date_livraison_prevue) : tm("À définir")} />
         </View>
 
-        {estClient && (prix > 0 || reglements.length > 0) && (
+        {estClient && (prix > 0 || reglements.length > 0 || supplements.length > 0) && (
           <>
             <Separateur />
             <View style={{ gap: 8 }}>
               {prix > 0 && <Ligne label={tm("Prix de vente")} valeur={`${euros(prix)} ${tm("HT")}`} fort grand />}
+              <SupplementsClient moi={moi} liste={supplements} onChange={chargerSupp} />
+              {suppAcceptes > 0 && prix > 0 && <Ligne label={tm("Total avec suppléments")} valeur={`${euros(total)} ${tm("HT")}`} fort />}
               {reglements.length > 0 && (
                 <View style={{ gap: 6 }}>
                   <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Règlements")}</Text>
@@ -118,7 +128,7 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
                   ))}
                 </View>
               )}
-              {prix > 0 && (
+              {total > 0 && (
                 <View style={{ marginTop: 4, borderRadius: 16, backgroundColor: DS.primary, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                   <Text style={{ fontSize: 14, fontWeight: '700', color: 'rgba(255,255,255,0.75)' }}>{tm("Reste à payer")}</Text>
                   <Text style={{ fontSize: 20, fontFamily: MANROPE, color: DS.textInverse }}>{reste > 0 ? `${euros(reste)} ${tm("HT")}` : tm("Soldé")}</Text>
@@ -133,9 +143,7 @@ export function EspaceClient({ moi, chantier, documents, montants, onMessagerie 
             <Separateur />
             <View>
               <Text style={{ fontSize: 13, fontWeight: '700', color: DS.textSecondary, textTransform: 'uppercase', letterSpacing: 0.6, marginBottom: 2 }}>{tm("Documents")}</Text>
-              {rubriques.length === 0
-                ? <Text style={{ fontSize: 14, color: DS.textMuted, paddingVertical: 10 }}>{tm("Aucun document partagé pour l'instant.")}</Text>
-                : rubriques.map((r, i) => <Rubrique key={r.cle} titre={r.label} docs={r.docs} premiere={i === 0} />)}
+              {rubriques.map((r, i) => <Rubrique key={r.cle} titre={r.label} docs={r.docs} premiere={i === 0} />)}
             </View>
           </>
         )}

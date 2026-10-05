@@ -786,6 +786,18 @@ const d: Record<string, string> = {
   "Documents": "المستندات",
   "Aucun document partagé pour l'instant.": "لا توجد مستندات مشتركة بعد.",
   "Ouvrir": "فتح",
+  "Accepté": "مقبول",
+  "Indiquez un libellé et un montant.": "أدخل الوصف والمبلغ.",
+  "+ Supplément": "+ إضافة",
+  "Aucun supplément. Ceux que vous ajoutez sont envoyés au client pour acceptation.": "لا توجد إضافات. ما تضيفه يُرسل إلى العميل للموافقة.",
+  "Libellé du supplément": "وصف الإضافة",
+  "Ex. : niche supplémentaire cuisine": "مثال: كوة إضافية في المطبخ",
+  "Envoyer au client": "إرسال إلى العميل",
+  "Suppléments acceptés :": "الإضافات المقبولة:",
+  "Total vente :": "إجمالي البيع:",
+  "Motif (facultatif)": "السبب (اختياري)",
+  "Confirmer le refus": "تأكيد الرفض",
+  "Total avec suppléments": "الإجمالي مع الإضافات",
 };
 
 export default d;

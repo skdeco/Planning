@@ -762,6 +762,18 @@ const d: Record<string, string> = {
   "Documents": "Documents",
   "Aucun document partagé pour l'instant.": "No documents shared yet.",
   "Ouvrir": "Open",
+  "Accepté": "Accepted",
+  "Indiquez un libellé et un montant.": "Enter a label and an amount.",
+  "+ Supplément": "+ Extra",
+  "Aucun supplément. Ceux que vous ajoutez sont envoyés au client pour acceptation.": "No extras. Any you add are sent to the client for approval.",
+  "Libellé du supplément": "Extra description",
+  "Ex. : niche supplémentaire cuisine": "E.g. extra kitchen niche",
+  "Envoyer au client": "Send to client",
+  "Suppléments acceptés :": "Accepted extras:",
+  "Total vente :": "Total sale:",
+  "Motif (facultatif)": "Reason (optional)",
+  "Confirmer le refus": "Confirm decline",
+  "Total avec suppléments": "Total incl. extras",
 };
 
 export default d;

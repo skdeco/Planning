@@ -1,0 +1,3 @@
+-- Suppléments de devis Menuiserie (appliqué en prod le 05/10/2026, migration « mn_supplements »)
+-- Table mn_supplements : admin tout ; client lecture sur ses chantiers.
+-- RPC mn_supplement_repondre(p_id, p_ok, p_commentaire) : le client accepte ou refuse un supplément proposé.

@@ -14,6 +14,7 @@ import { coteDevis } from '@/lib/menuiserie/importDevis';
 import { majMontantMn, supprimerMontantMn } from '@/lib/menuiserie/api';
 import { DocumentsEtape } from './DocumentsEtape';
 import { MontantsEtape } from './MontantsEtape';
+import { SupplementsDevis } from './SupplementsDevis';
 import { Bloc, euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
 
@@ -89,6 +90,8 @@ export function DevisEtape({ moi, chantierId, usineId, def, documents, montants,
       <DocumentsEtape key={cote} moi={moi} chantierId={chantierId} def={def} documents={docs} onChange={onChange} lectureSeule={!modifiable}
         titre={cote === 'client' ? tm("Devis SK DECO") : tm("Devis de l'usine")}
         importDevis={{ usineId, montants, type, cote }} />
+
+      {admin && cote === 'client' && <SupplementsDevis moi={moi} chantierId={chantierId} venteBase={vente} />}
 
       {/* Plusieurs lignes : détail ; sinon simple bouton pour en ajouter une à la main */}
       {lignes.length > 1 ? (
