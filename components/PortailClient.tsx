@@ -113,7 +113,7 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
   const chantierForPlanning = data.chantiers.find(c => c.id === chantierId);
   const peutVoirPlanning = isAdmin || !isClient || chantierForPlanning?.afficherPlanningAuClient === true;
   // Gestion des plans (upload + partage) : admin (entreprise) et architecte.
-  const canManagePlans = isAdmin || externAp?.type === 'architecte';
+  const canManagePlans = isAdmin || externAp?.type === 'architecte' || isCommercial;
 
   const chantier = chantierForPlanning;
   const apporteurs = data.apporteurs || [];

@@ -125,7 +125,7 @@ export default function MesChantiersExterne() {
           </View>
         </View>
       )}
-      {isArchitecte && (
+      {(isArchitecte || isCommercial) && (
         <Pressable style={styles.creerBtn} onPress={() => setShowCreer(true)}>
           <Text style={styles.creerBtnText}>＋ Créer un chantier</Text>
         </Pressable>
@@ -221,8 +221,9 @@ export default function MesChantiersExterne() {
         />
       )}
 
-      {isArchitecte && apporteurId && (
+      {(isArchitecte || isCommercial) && apporteurId && (
         <CreerChantierArchi
+          role={isCommercial ? 'commercial' : 'architecte'}
           visible={showCreer}
           onClose={() => setShowCreer(false)}
           architecteId={apporteurId}

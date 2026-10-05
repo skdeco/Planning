@@ -20,12 +20,14 @@ export interface CreerChantierArchiProps {
   architecteId: string;
   /** Appelé avec l'id du chantier créé (pour l'ouvrir). */
   onCreated: (chantierId: string) => void;
+  /** Créateur : architecte (par défaut) ou commercial SK DECO (relation client d'origine). */
+  role?: 'architecte' | 'commercial';
 }
 
 const rid = (p: string) => `${p}_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
 const normalize = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9.]/g, '');
 
-export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }: CreerChantierArchiProps) {
+export function CreerChantierArchi({ visible, onClose, architecteId, onCreated, role = 'architecte' }: CreerChantierArchiProps) {
   const { data, addChantier, addApporteur } = useApp();
 
   const [nom, setNom] = useState('');
@@ -94,11 +96,12 @@ export function CreerChantierArchi({ visible, onClose, architecteId, onCreated }
         couleur: CHANTIER_COLORS[Math.abs(chantierId.length) % CHANTIER_COLORS.length],
         employeIds: [],
         visibleSurPlanning: true,
-        architecteId,
+        // Le créateur suit son chantier : architecte, ou commercial rattaché
+        ...(role === 'commercial' ? { commerciauxIds: [architecteId] } : { architecteId }),
         clientApporteurId: finalClientId,
         afficherPlanningAuClient: true,
         createdAt: now,
-      } as Chantier);
+      } as unknown as Chantier);
 
       if (newCreds) {
         setCreds({ ...newCreds, chantierId });   // affiche les identifiants à communiquer
