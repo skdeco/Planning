@@ -752,6 +752,11 @@ const d: Record<string, string> = {
   "Tout décocher": "Deselect all",
   "Partager ({0})": "Share ({0})",
   "Le client et son architecte verront ces {0} documents dans la rubrique choisie.": "The client and architect will see these {0} documents in the chosen section.",
+  "Renommer": "Rename",
+  "Visible par le client ✓": "Visible to client ✓",
+  "Montrer le prix au client": "Show price to client",
+  "Cacher au client": "Hide from client",
+  "Montrer au client": "Show to client",
 };
 
 export default d;

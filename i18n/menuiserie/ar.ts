@@ -776,6 +776,11 @@ const d: Record<string, string> = {
   "Tout décocher": "إلغاء التحديد",
   "Partager ({0})": "مشاركة ({0})",
   "Le client et son architecte verront ces {0} documents dans la rubrique choisie.": "سيرى العميل والمهندس هذه المستندات ({0}) في القسم المختار.",
+  "Renommer": "إعادة التسمية",
+  "Visible par le client ✓": "مرئي للعميل ✓",
+  "Montrer le prix au client": "إظهار السعر للعميل",
+  "Cacher au client": "إخفاء عن العميل",
+  "Montrer au client": "إظهار للعميل",
 };
 
 export default d;

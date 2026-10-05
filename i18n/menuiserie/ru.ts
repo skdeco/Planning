@@ -776,6 +776,11 @@ const d: Record<string, string> = {
   "Tout décocher": "Снять все",
   "Partager ({0})": "Поделиться ({0})",
   "Le client et son architecte verront ces {0} documents dans la rubrique choisie.": "Клиент и архитектор увидят эти {0} документов в выбранном разделе.",
+  "Renommer": "Переименовать",
+  "Visible par le client ✓": "Видно клиенту ✓",
+  "Montrer le prix au client": "Показать цену клиенту",
+  "Cacher au client": "Скрыть от клиента",
+  "Montrer au client": "Показать клиенту",
 };
 
 export default d;

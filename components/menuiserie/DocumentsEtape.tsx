@@ -4,12 +4,12 @@
  * et (administrateur) partage d'un document dans une rubrique de l'espace client.
  */
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, Alert, Platform, Modal } from 'react-native';
+import { View, Text, Pressable, Alert, Platform, Modal, TextInput } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { DS, radius } from '@/constants/design';
 import { formatDateHeureFR } from '@/lib/date/format';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
-import { deposerDocumentMn, lienDocumentMn, partagerClientMn, supprimerDocumentMn } from '@/lib/menuiserie/api';
+import { deposerDocumentMn, lienDocumentMn, majMontantMn, partagerClientMn, renommerDocumentMn, supprimerDocumentMn } from '@/lib/menuiserie/api';
 import type { CompteMn, DocumentMn, MontantMn, TypeMontantMn } from '@/lib/menuiserie/types';
 import { CATEGORIES_CLIENT, groupeMn } from '@/lib/menuiserie/types';
 import { visibiliteDocs, type DefEtape } from '@/lib/menuiserie/etapes';
@@ -41,6 +41,23 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
   const [aPartager, setAPartager] = useState<DocumentMn[] | null>(null);
   // Partage au client en sélection multiple
   const [selection, setSelection] = useState<string[] | null>(null);
+  // Renommer un document
+  const [edition, setEdition] = useState<{ id: string; nom: string } | null>(null);
+  const peutRenommer = (d: DocumentMn) => !lectureSeule && (admin || d.depose_par === moi.id);
+  const renommer = async (d: DocumentMn) => {
+    if (!edition) return;
+    let nom = edition.nom.trim();
+    if (!nom || nom === d.nom) { setEdition(null); return; }
+    // Garder l'extension d'origine (.pdf, .jpg…)
+    const ext = d.nom.match(/\.[a-z0-9]{2,5}$/i)?.[0];
+    if (ext && !nom.toLowerCase().endsWith(ext.toLowerCase())) nom += ext;
+    try {
+      await renommerDocumentMn(moi, d, nom);
+      // Devis déjà lu : son montant suit le nouveau nom (évite une 2e lecture)
+      if (importDevis) for (const m of importDevis.montants.filter(x => x.libelle === libelleDevis(d.nom))) await majMontantMn(moi, m, { libelle: libelleDevis(nom) });
+      setEdition(null); onChange();
+    } catch (e) { setErreur((e as Error).message); }
+  };
   const basculerSelection = (id: string) => setSelection(sel => (sel ? (sel.includes(id) ? sel.filter(x => x !== id) : [...sel, id]) : sel));
   const [info, setInfo] = useState('');
   const [lecture, setLecture] = useState<string | null>(null);
@@ -194,15 +211,31 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
                   </View>
                 )}
                 <View style={{ flex: 1 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '600', color: DS.text }} numberOfLines={1}>{d.nom}</Text>
+                  {edition?.id === d.id ? (
+                    <TextInput value={edition.nom} onChangeText={v => setEdition({ id: d.id, nom: v })} autoFocus selectTextOnFocus
+                      onSubmitEditing={() => renommer(d)} returnKeyType="done"
+                      style={{ fontSize: 13, fontWeight: '600', color: DS.text, borderWidth: 1, borderColor: DS.primary, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 }} />
+                  ) : (
+                    <Text style={{ fontSize: 13, fontWeight: '600', color: DS.text }} numberOfLines={1}>{d.nom}</Text>
+                  )}
                   <Text style={{ fontSize: 11.5, color: DS.textSecondary }}>
                     {d.depose_par_nom || '—'} · {formatDateHeureFR(d.created_at)}
                     {admin && d.categorie_client ? tm(" · client : {0}", CATEGORIES_CLIENT.find(c => c.cle === d.categorie_client)?.label) : ''}
                   </Text>
                 </View>
               </Pressable>
-              {!selection && (admin || (peutSupprimer(d) && !lectureSeule) || (peutImporter && estPdf(d))) && (
+              {edition?.id === d.id ? (
+                <View style={{ flexDirection: 'row', gap: 6, marginLeft: 42 }}>
+                  <Pressable onPress={() => renommer(d)} style={[puceAction, { backgroundColor: DS.primary, borderColor: DS.primary }]}><Text style={[texteAction, { color: DS.textInverse }]}>{tm("Enregistrer")}</Text></Pressable>
+                  <Pressable onPress={() => setEdition(null)} style={puceAction}><Text style={texteAction}>{tm("Annuler")}</Text></Pressable>
+                </View>
+              ) : !selection && (admin || (peutSupprimer(d) && !lectureSeule) || (peutImporter && estPdf(d))) && (
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginLeft: 42 }}>
+                  {peutRenommer(d) && (
+                    <Pressable onPress={() => setEdition({ id: d.id, nom: d.nom.replace(/\.[a-z0-9]{2,5}$/i, '') })} accessibilityRole="button" style={puceAction}>
+                      <Text style={texteAction}>{tm("Renommer")}</Text>
+                    </Pressable>
+                  )}
                   {peutImporter && estPdf(d) && (
                     <Pressable onPress={() => importer(d)} disabled={lecture === d.chemin} accessibilityRole="button" style={puceAction}>
                       <Text style={texteAction}>{lecture === d.chemin ? tm("Lecture…") : tm("Relire le montant")}</Text>

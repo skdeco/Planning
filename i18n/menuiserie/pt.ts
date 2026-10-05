@@ -773,6 +773,11 @@ const d: Record<string, string> = {
   "Tout décocher": "Desmarcar tudo",
   "Partager ({0})": "Partilhar ({0})",
   "Le client et son architecte verront ces {0} documents dans la rubrique choisie.": "O cliente e o arquiteto verão estes {0} documentos na rubrica escolhida.",
+  "Renommer": "Renomear",
+  "Visible par le client ✓": "Visível para o cliente ✓",
+  "Montrer le prix au client": "Mostrar o preço ao cliente",
+  "Cacher au client": "Ocultar ao cliente",
+  "Montrer au client": "Mostrar ao cliente",
 };
 
 export default d;

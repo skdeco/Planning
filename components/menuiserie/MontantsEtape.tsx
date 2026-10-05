@@ -6,7 +6,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { DS, radius } from '@/constants/design';
-import { ajouterMontantMn, supprimerMontantMn } from '@/lib/menuiserie/api';
+import { ajouterMontantMn, majMontantMn, supprimerMontantMn } from '@/lib/menuiserie/api';
 import type { CompteMn, MontantMn, TypeMontantMn, VisibiliteMontantMn } from '@/lib/menuiserie/types';
 import { TYPE_MONTANT_MN_LABELS } from '@/lib/menuiserie/types';
 import { Bouton, Champ, Pastille, Puce, euros } from './ui';
@@ -83,7 +83,14 @@ export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants
                 <View style={{ flex: 1, gap: 4 }}>
                   <Text style={{ fontSize: 13, fontWeight: '700', color: DS.textSecondary }}>{TYPE_MONTANT_MN_LABELS[m.type]}</Text>
                   {!!m.libelle && <Text style={{ fontSize: 14, color: DS.text }} numberOfLines={2}>{m.libelle}</Text>}
-                  {moi.role === 'admin' && <View style={{ alignSelf: 'flex-start' }}><Pastille label={v.label} fond={v.fond} texte={v.texte} /></View>}
+                  {moi.role === 'admin' && (m.type === 'vente_client' ? (
+                    // Prix de vente : un appui le montre / le cache dans l'espace client
+                    <Pressable onPress={async () => { await majMontantMn(moi, m, { visibilite: m.visibilite === 'client' ? 'admin' : 'client' }); onChange(); }}
+                      accessibilityRole="switch" accessibilityState={{ checked: m.visibilite === 'client' }} style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                      <Pastille label={v.label} fond={v.fond} texte={v.texte} />
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: DS.text, textDecorationLine: 'underline' }}>{m.visibilite === 'client' ? tm("Cacher au client") : tm("Montrer au client")}</Text>
+                    </Pressable>
+                  ) : <View style={{ alignSelf: 'flex-start' }}><Pastille label={v.label} fond={v.fond} texte={v.texte} /></View>)}
                 </View>
                 <View style={{ alignItems: 'flex-end', gap: 4 }}>
                   <Text style={{ fontSize: 18, fontFamily: 'Manrope_700Bold', color: DS.text }}>{euros(Number(m.montant_ht))}</Text>

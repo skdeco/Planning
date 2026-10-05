@@ -104,6 +104,12 @@ export async function ajouterMontantMn(moi: CompteMn, m: Omit<MontantMn, 'id' | 
   await journaliser(moi, m.chantier_id, 'Montant ajouté', `${m.libelle || m.type} : ${m.montant_ht} € HT`);
 }
 
+/** Modifie un montant (ex. le rendre visible au client, changer son libellé). */
+export async function majMontantMn(moi: CompteMn, m: MontantMn, patch: Partial<Pick<MontantMn, 'visibilite' | 'libelle'>>): Promise<void> {
+  verifier(await mn().from('mn_montants').update(patch).eq('id', m.id));
+  if (patch.visibilite) await journaliser(moi, m.chantier_id, patch.visibilite === 'client' ? 'Prix partagé au client' : 'Prix retiré du client', `${m.libelle || m.type} : ${m.montant_ht} € HT`);
+}
+
 export async function supprimerMontantMn(moi: CompteMn, m: MontantMn): Promise<void> {
   verifier(await mn().from('mn_montants').delete().eq('id', m.id));
   await journaliser(moi, m.chantier_id, 'Montant supprimé', `${m.libelle || m.type} : ${m.montant_ht} € HT`);
@@ -157,6 +163,12 @@ export async function deposerDocumentMn(
   }));
   await journaliser(moi, p.chantierId, 'Document déposé', `${p.etape}${p.piece ? ` · ${p.piece}` : ''} : ${p.nom}`);
   return chemin;
+}
+
+/** Renomme un document (le fichier lui-même ne change pas). */
+export async function renommerDocumentMn(moi: CompteMn, doc: DocumentMn, nom: string): Promise<void> {
+  verifier(await mn().from('mn_documents').update({ nom }).eq('id', doc.id));
+  await journaliser(moi, doc.chantier_id, 'Document renommé', `${doc.nom} → ${nom}`);
 }
 
 /** Partage (ou retire) un document dans une rubrique de l'espace client. */

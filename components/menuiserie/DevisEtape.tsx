@@ -11,7 +11,7 @@ import { DS } from '@/constants/design';
 import type { CompteMn, DocumentMn, MontantMn } from '@/lib/menuiserie/types';
 import type { DefEtape } from '@/lib/menuiserie/etapes';
 import { coteDevis } from '@/lib/menuiserie/importDevis';
-import { supprimerMontantMn } from '@/lib/menuiserie/api';
+import { majMontantMn, supprimerMontantMn } from '@/lib/menuiserie/api';
 import { DocumentsEtape } from './DocumentsEtape';
 import { MontantsEtape } from './MontantsEtape';
 import { Bloc, euros } from './ui';
@@ -68,6 +68,17 @@ export function DevisEtape({ moi, chantierId, usineId, def, documents, montants,
             )}
           </View>
         )}
+        {/* Prix de vente : visible ou non dans l'espace client */}
+        {admin && cote === 'client' && lignes.length > 0 && (() => {
+          const visible = lignes.every(m => m.visibilite === 'client');
+          return (
+            <Pressable onPress={async () => { for (const m of lignes) await majMontantMn(moi, m, { visibilite: visible ? 'admin' : 'client' }); onChange(); }}
+              accessibilityRole="switch" accessibilityState={{ checked: visible }}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 6, alignSelf: 'flex-start', minHeight: 32, paddingHorizontal: 12, borderRadius: 999, backgroundColor: visible ? '#FFFFFF' : 'rgba(255,255,255,0.15)' }}>
+              <Text style={{ fontSize: 13, fontWeight: '800', color: visible ? DS.primary : '#FFFFFF' }}>{visible ? tm("Visible par le client ✓") : tm("Montrer le prix au client")}</Text>
+            </Pressable>
+          );
+        })()}
         {admin && achat > 0 && vente > 0 && (
           <Text style={{ fontSize: 13, color: cote === 'client' ? 'rgba(255,255,255,0.8)' : DS.textSecondary }}>
             {tm("Marge")} {euros(vente - achat)} · {Math.round(((vente - achat) / vente) * 100)} %
