@@ -778,6 +778,11 @@ const d: Record<string, string> = {
   "Montrer le prix au client": "Mostrar o preço ao cliente",
   "Cacher au client": "Ocultar ao cliente",
   "Montrer au client": "Mostrar ao cliente",
+  "Reste à payer": "Por pagar",
+  "Soldé": "Liquidado",
+  "Documents": "Documentos",
+  "Aucun document partagé pour l'instant.": "Ainda não há documentos partilhados.",
+  "Ouvrir": "Abrir",
 };
 
 export default d;

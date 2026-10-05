@@ -65,19 +65,21 @@ export function ChantierRole() {
         contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 48, gap: 10 }}
         refreshControl={<RefreshControl refreshing={rafraichit} onRefresh={async () => { setRafraichit(true); await charger(); setRafraichit(false); }} tintColor={DS.primary} />}
       >
-        <EnTete titre={c.nom.toUpperCase()} retour={() => router.back()} />
-        <Carte>
-          <Ligne label={tm("Statut")} valeur={STATUT_CHANTIER_MN_LABELS[c.statut]} />
-          <Ligne label={tm("Adresse")} valeur={[c.rue, c.code_postal, c.ville].filter(Boolean).join(' ')} />
-          {groupe !== 'client' && groupe !== 'apporteur' && (
-            <>
+        {groupe === 'client' || groupe === 'apporteur' ? (
+          <EnTete titre="" retour={() => router.back()} />
+        ) : (
+          <>
+            <EnTete titre={c.nom.toUpperCase()} retour={() => router.back()} />
+            <Carte>
+              <Ligne label={tm("Statut")} valeur={STATUT_CHANTIER_MN_LABELS[c.statut]} />
+              <Ligne label={tm("Adresse")} valeur={[c.rue, c.code_postal, c.ville].filter(Boolean).join(' ')} />
               <Ligne label={tm("Code")} valeur={c.code_acces} />
               <Ligne label={tm("Étage")} valeur={c.etage} />
               <Ligne label={tm("Clé")} valeur={c.cle} />
-            </>
-          )}
-          <Ligne label={tm("Livraison prévue")} valeur={formatDateFR(c.date_livraison_prevue)} />
-        </Carte>
+              <Ligne label={tm("Livraison prévue")} valeur={formatDateFR(c.date_livraison_prevue)} />
+            </Carte>
+          </>
+        )}
 
         {(groupe === 'client' || groupe === 'apporteur') && (
           <EspaceClient moi={moi} chantier={c} documents={d.documents} montants={d.montants} onMessagerie={() => router.push(`/menuiserie/messagerie/${c.id}` as any)} />

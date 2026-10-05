@@ -757,6 +757,11 @@ const d: Record<string, string> = {
   "Montrer le prix au client": "Show price to client",
   "Cacher au client": "Hide from client",
   "Montrer au client": "Show to client",
+  "Reste à payer": "Balance due",
+  "Soldé": "Paid in full",
+  "Documents": "Documents",
+  "Aucun document partagé pour l'instant.": "No documents shared yet.",
+  "Ouvrir": "Open",
 };
 
 export default d;

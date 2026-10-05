@@ -781,6 +781,11 @@ const d: Record<string, string> = {
   "Montrer le prix au client": "إظهار السعر للعميل",
   "Cacher au client": "إخفاء عن العميل",
   "Montrer au client": "إظهار للعميل",
+  "Reste à payer": "المبلغ المتبقي",
+  "Soldé": "مسدد بالكامل",
+  "Documents": "المستندات",
+  "Aucun document partagé pour l'instant.": "لا توجد مستندات مشتركة بعد.",
+  "Ouvrir": "فتح",
 };
 
 export default d;

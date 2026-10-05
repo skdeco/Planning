@@ -781,6 +781,11 @@ const d: Record<string, string> = {
   "Montrer le prix au client": "Показать цену клиенту",
   "Cacher au client": "Скрыть от клиента",
   "Montrer au client": "Показать клиенту",
+  "Reste à payer": "Остаток к оплате",
+  "Soldé": "Оплачено",
+  "Documents": "Документы",
+  "Aucun document partagé pour l'instant.": "Пока нет общих документов.",
+  "Ouvrir": "Открыть",
 };
 
 export default d;
