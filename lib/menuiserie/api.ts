@@ -147,7 +147,7 @@ export function cheminFichierMn(prefixe: string, nom: string, mime?: string | nu
 export async function deposerDocumentMn(
   moi: CompteMn,
   p: { chantierId: string; etape: string; uri: string; nom: string; mime?: string | null; piece?: string | null; visibilite: string[]; categorieClient?: string | null },
-): Promise<void> {
+): Promise<string> {
   const mime = p.mime || (extension(p.nom) === 'pdf' ? 'application/pdf' : 'image/jpeg');
   const chemin = cheminFichierMn(`${p.chantierId}/${p.etape}`, p.nom, mime);
   await envoyerFichierMn(chemin, p.uri, mime);
@@ -156,6 +156,7 @@ export async function deposerDocumentMn(
     depose_par: moi.id, depose_par_nom: moi.nom, visibilite: p.visibilite, categorie_client: p.categorieClient || null,
   }));
   await journaliser(moi, p.chantierId, 'Document déposé', `${p.etape}${p.piece ? ` · ${p.piece}` : ''} : ${p.nom}`);
+  return chemin;
 }
 
 /** Partage (ou retire) un document dans une rubrique de l'espace client. */

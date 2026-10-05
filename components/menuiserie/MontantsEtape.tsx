@@ -48,6 +48,7 @@ export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants
   const [libelle, setLibelle] = useState('');
   const [erreur, setErreur] = useState('');
   const [charge, setCharge] = useState(false);
+  const [formOuvert, setFormOuvert] = useState(false);
   if (!types.length && !montants.length) return null;
 
   let vis = VISIBILITE_DEFAUT[type];
@@ -65,32 +66,44 @@ export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants
         compte_id: vis === 'poseur' || vis === 'personnel' ? compteCible?.id || null : null,
         date_montant: new Date().toISOString().slice(0, 10),
       });
-      setValeur(''); setLibelle(''); onChange();
+      setValeur(''); setLibelle(''); setFormOuvert(false); onChange();
     } catch (e) { setErreur((e as Error).message); } finally { setCharge(false); }
   };
 
   const peutSupprimer = (m: MontantMn) => !lectureSeule && (moi.role === 'admin' || (moi.role === 'usine' && m.visibilite === 'usine'));
 
   return (
-    <View style={{ gap: 8 }}>
-      {montants.map(m => {
-        const v = VIS_LABEL[m.visibilite];
-        return (
-          <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: DS.background, borderRadius: radius.sm, padding: 10 }}>
-            <View style={{ flex: 1, gap: 3 }}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: DS.text }}>{m.libelle || TYPE_MONTANT_MN_LABELS[m.type]}</Text>
-              {moi.role === 'admin' && <Pastille label={v.label} fond={v.fond} texte={v.texte} />}
-            </View>
-            <Text style={{ fontSize: 15, fontWeight: '800', color: DS.text }}>{euros(Number(m.montant_ht))}{' '}{tm("HT")}</Text>
-            {peutSupprimer(m) && (
-              <Pressable onPress={async () => { await supprimerMontantMn(moi, m); onChange(); }} accessibilityRole="button" accessibilityLabel={tm("Supprimer le montant")} style={{ padding: 8 }}>
-                <Text style={{ fontSize: 13, fontWeight: '800', color: DS.error }}>{tm("Suppr.")}</Text>
-              </Pressable>
-            )}
-          </View>
-        );
-      })}
-      {!lectureSeule && types.length > 0 && (
+    <View style={{ gap: 10 }}>
+      {montants.length > 0 && (
+        <View>
+          {montants.map((m, i) => {
+            const v = VIS_LABEL[m.visibilite];
+            return (
+              <View key={m.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: DS.border }}>
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={{ fontSize: 13, fontWeight: '700', color: DS.textSecondary }}>{TYPE_MONTANT_MN_LABELS[m.type]}</Text>
+                  {!!m.libelle && <Text style={{ fontSize: 14, color: DS.text }} numberOfLines={2}>{m.libelle}</Text>}
+                  {moi.role === 'admin' && <View style={{ alignSelf: 'flex-start' }}><Pastille label={v.label} fond={v.fond} texte={v.texte} /></View>}
+                </View>
+                <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                  <Text style={{ fontSize: 18, fontFamily: 'Manrope_700Bold', color: DS.text }}>{euros(Number(m.montant_ht))}</Text>
+                  <Text style={{ fontSize: 11, color: DS.textSecondary }}>{tm("HT")}</Text>
+                </View>
+                {peutSupprimer(m) && (
+                  <Pressable onPress={async () => { await supprimerMontantMn(moi, m); onChange(); }} accessibilityRole="button" accessibilityLabel={tm("Supprimer le montant")} hitSlop={6}
+                    style={{ width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: DS.surfaceAlt }}>
+                    <Text style={{ fontSize: 14, fontWeight: '800', color: DS.error }}>✕</Text>
+                  </Pressable>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      )}
+      {!lectureSeule && types.length > 0 && !formOuvert && (
+        <Bouton label={tm("+ Ajouter un montant")} variante="contour" onPress={() => setFormOuvert(true)} />
+      )}
+      {!lectureSeule && types.length > 0 && formOuvert && (
         <>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
             {types.map(t => <Puce key={t} label={TYPE_MONTANT_MN_LABELS[t]} actif={type === t} onPress={() => setType(t)} />)}
@@ -101,7 +114,8 @@ export function MontantsEtape({ moi, chantierId, usineId, etape, types, montants
           </View>
           <Text style={{ fontSize: 12, color: DS.textSecondary }}>{TEXTE_VIS[vis]}{compteCible && (vis === 'poseur' || vis === 'personnel') ? ` (${compteCible.nom})` : ''}</Text>
           {!!erreur && <Text style={{ color: DS.error, fontWeight: '600', fontSize: 13 }}>{erreur}</Text>}
-          <Bouton label={tm("Ajouter le montant")} variante="contour" onPress={ajouter} charge={charge} />
+          <Bouton label={tm("Enregistrer le montant")} onPress={ajouter} charge={charge} />
+          <Bouton label={tm("Annuler")} variante="discret" onPress={() => setFormOuvert(false)} />
         </>
       )}
     </View>

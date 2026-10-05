@@ -10,10 +10,11 @@ import { DS, radius } from '@/constants/design';
 import { formatDateHeureFR } from '@/lib/date/format';
 import { pickNativeFile } from '@/lib/share/pickNativeFile';
 import { deposerDocumentMn, lienDocumentMn, partagerClientMn, supprimerDocumentMn } from '@/lib/menuiserie/api';
-import type { CompteMn, DocumentMn } from '@/lib/menuiserie/types';
+import type { CompteMn, DocumentMn, MontantMn } from '@/lib/menuiserie/types';
 import { CATEGORIES_CLIENT, groupeMn } from '@/lib/menuiserie/types';
 import { visibiliteDocs, type DefEtape } from '@/lib/menuiserie/etapes';
-import { Bouton, Champ, Puce } from './ui';
+import { ActionPilule, Bloc, Bouton, Champ, Puce } from './ui';
+import { estPdf, importerMontantDevisMn } from '@/lib/menuiserie/importDevis';
 
 import { tm } from '@/lib/menuiserie/i18n';
 export async function ouvrirDocumentMn(d: { chemin: string }): Promise<boolean> {
@@ -24,13 +25,27 @@ export async function ouvrirDocumentMn(d: { chemin: string }): Promise<boolean> 
   return true;
 }
 
-export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lectureSeule }: {
+export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lectureSeule, importDevis }: {
   moi: CompteMn; chantierId: string; def: DefEtape; documents: DocumentMn[]; onChange: () => void; lectureSeule?: boolean;
+  /** Étape « Devis » : lecture automatique du montant HT des PDF déposés */
+  importDevis?: { usineId: string | null; montants: MontantMn[] };
 }) {
   const [piece, setPiece] = useState('');
   const [envoi, setEnvoi] = useState(false);
   const [erreur, setErreur] = useState('');
   const [aPartager, setAPartager] = useState<DocumentMn | null>(null);
+  const [info, setInfo] = useState('');
+  const [lecture, setLecture] = useState<string | null>(null);
+  const peutImporter = !!importDevis && (moi.role === 'admin' || moi.role === 'usine');
+  const importer = async (d: { chemin: string; nom: string }) => {
+    if (!importDevis) return;
+    setLecture(d.chemin); setInfo('');
+    try {
+      const msg = await importerMontantDevisMn(moi, { chantierId, usineId: importDevis.usineId, chemin: d.chemin, nom: d.nom, montants: importDevis.montants });
+      if (msg) setInfo(msg);
+      onChange();
+    } catch (e) { setInfo((e as Error).message); } finally { setLecture(null); }
+  };
   const pieces = useMemo(() => Array.from(new Set(documents.map(d => d.piece).filter(Boolean) as string[])).sort(), [documents]);
   const admin = moi.role === 'admin';
   const peutSupprimer = (d: DocumentMn) => admin || (d.depose_par === moi.id && !def.suppressionAdminSeul);
@@ -43,14 +58,19 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
     setEnvoi(true);
     const vis = Array.from(new Set([...visibiliteDocs(def), groupeMn(moi.role)]));
     try {
+      const deposes: { chemin: string; nom: string }[] = [];
       for (const f of fichiers) {
-        await deposerDocumentMn(moi, {
+        const nomFichier = f.filename || (f.mimeType === 'application/pdf' ? 'document.pdf' : 'photo.jpg');
+        const chemin = await deposerDocumentMn(moi, {
           chantierId, etape: def.cle, uri: f.uri, mime: f.mimeType, visibilite: vis,
           nom: f.filename || (f.mimeType === 'application/pdf' ? 'document.pdf' : 'photo.jpg'),
           piece: def.parPiece ? piece.trim() : null,
         });
+        deposes.push({ chemin, nom: nomFichier });
       }
       onChange();
+      // Devis PDF : le montant HT est lu et reporté tout seul
+      if (peutImporter) for (const d of deposes.filter(x => estPdf(x))) await importer(d);
     } catch (e) {
       setErreur((e as Error).message);
     } finally {
@@ -77,7 +97,7 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
     : [{ titre: '', docs: documents }];
 
   return (
-    <View style={{ gap: 8 }}>
+    <Bloc titre={tm("Documents et photos")} droite={!lectureSeule ? <ActionPilule label={tm("+ Ajouter")} onPress={ajouter} charge={envoi} /> : undefined}>
       {def.parPiece && !lectureSeule && (
         <View style={{ gap: 6 }}>
           <Champ label={tm("Nom de la pièce")} value={piece} onChangeText={setPiece} placeholder={tm("Ex. Chambre 2, Cuisine…")} />
@@ -88,30 +108,44 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
           )}
         </View>
       )}
-      {!lectureSeule && <Bouton label={tm("+ Ajouter photos / documents")} variante="contour" onPress={ajouter} charge={envoi} />}
       {!!erreur && <Text style={{ color: DS.error, fontWeight: '600', fontSize: 13 }}>{erreur}</Text>}
-      {documents.length === 0 && <Text style={{ fontSize: 13, color: DS.textSecondary }}>{tm("Aucun document pour cette étape.")}</Text>}
+      {!!info && <Text style={{ fontSize: 13, fontWeight: '700', color: DS.text, backgroundColor: DS.surfaceAlt, borderRadius: 10, padding: 10 }}>{info}</Text>}
+      {documents.length === 0 && <Text style={{ fontSize: 14, color: DS.textSecondary }}>{tm("Aucun document pour cette étape.")}</Text>}
       {groupes.map(g => (
-        <View key={g.titre || 'tous'} style={{ gap: 6 }}>
-          {!!g.titre && <Text style={{ fontSize: 13, fontWeight: '800', color: DS.text, marginTop: 4 }}>{g.titre}</Text>}
-          {g.docs.map(d => (
-            <View key={d.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: DS.background, borderRadius: radius.sm, padding: 10 }}>
-              <Pressable onPress={() => ouvrir(d)} accessibilityRole="link" style={{ flex: 1 }}>
-                <Text style={{ fontSize: 14, fontWeight: '700', color: DS.primary }} numberOfLines={1}>{d.nom}</Text>
-                <Text style={{ fontSize: 12, color: DS.textSecondary }}>
-                  {d.depose_par_nom || '—'} · {formatDateHeureFR(d.created_at)}
-                  {admin && d.categorie_client ? tm(" · client : {0}", CATEGORIES_CLIENT.find(c => c.cle === d.categorie_client)?.label) : ''}
-                </Text>
+        <View key={g.titre || 'tous'}>
+          {!!g.titre && <Text style={{ fontSize: 13, fontWeight: '800', color: DS.textSecondary, marginTop: 4, marginBottom: 2 }}>{g.titre}</Text>}
+          {g.docs.map((d, i) => (
+            <View key={d.id} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: DS.border, gap: 6 }}>
+              <Pressable onPress={() => ouvrir(d)} accessibilityRole="link" style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <View style={{ width: 38, height: 38, borderRadius: 10, backgroundColor: DS.surfaceAlt, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ fontSize: 11, fontWeight: '800', color: DS.text }}>{estPdf(d) ? 'PDF' : 'IMG'}</Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontSize: 15, fontWeight: '700', color: DS.text }} numberOfLines={2}>{d.nom}</Text>
+                  <Text style={{ fontSize: 12, color: DS.textSecondary }}>
+                    {d.depose_par_nom || '—'} · {formatDateHeureFR(d.created_at)}
+                    {admin && d.categorie_client ? tm(" · client : {0}", CATEGORIES_CLIENT.find(c => c.cle === d.categorie_client)?.label) : ''}
+                  </Text>
+                </View>
               </Pressable>
-              {admin && (
-                <Pressable onPress={() => setAPartager(d)} accessibilityRole="button" accessibilityLabel={tm("Partager {0} au client", d.nom)} style={{ padding: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: DS.primary }}>{d.categorie_client ? tm("Client ✓") : tm("Client")}</Text>
-                </Pressable>
-              )}
-              {peutSupprimer(d) && !lectureSeule && (
-                <Pressable onPress={() => supprimer(d)} accessibilityRole="button" accessibilityLabel={tm("Supprimer {0}", d.nom)} style={{ padding: 8 }}>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: DS.error }}>{tm("Suppr.")}</Text>
-                </Pressable>
+              {(admin || (peutSupprimer(d) && !lectureSeule) || (peutImporter && estPdf(d))) && (
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginLeft: 48 }}>
+                  {peutImporter && estPdf(d) && (
+                    <Pressable onPress={() => importer(d)} disabled={lecture === d.chemin} accessibilityRole="button" style={puceAction}>
+                      <Text style={texteAction}>{lecture === d.chemin ? tm("Lecture…") : tm("Lire le montant HT")}</Text>
+                    </Pressable>
+                  )}
+                  {admin && (
+                    <Pressable onPress={() => setAPartager(d)} accessibilityRole="button" accessibilityLabel={tm("Partager {0} au client", d.nom)} style={puceAction}>
+                      <Text style={texteAction}>{d.categorie_client ? tm("Partagé au client ✓") : tm("Partager au client")}</Text>
+                    </Pressable>
+                  )}
+                  {peutSupprimer(d) && !lectureSeule && (
+                    <Pressable onPress={() => supprimer(d)} accessibilityRole="button" accessibilityLabel={tm("Supprimer {0}", d.nom)} style={puceAction}>
+                      <Text style={[texteAction, { color: DS.error }]}>{tm("Supprimer")}</Text>
+                    </Pressable>
+                  )}
+                </View>
               )}
             </View>
           ))}
@@ -130,6 +164,9 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
           </View>
         </Pressable>
       </Modal>
-    </View>
+    </Bloc>
   );
 }
+
+const puceAction = { minHeight: 32, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: DS.border, justifyContent: 'center' as const };
+const texteAction = { fontSize: 13, fontWeight: '700' as const, color: DS.text };

@@ -5,11 +5,46 @@ import { DS, radius, shadows } from '@/constants/design';
 
 import { tm } from '@/lib/menuiserie/i18n';
 export function Carte({ children, style }: { children: React.ReactNode; style?: object }) {
-  return <View style={[{ backgroundColor: DS.surface, borderRadius: radius.xl, padding: 16, gap: 8, ...shadows.md }, style]}>{children}</View>;
+  return <View style={[{ backgroundColor: DS.surface, borderRadius: 20, padding: 16, gap: 10, borderWidth: 1, borderColor: DS.border }, style]}>{children}</View>;
 }
 
+/** Titre de rubrique (au-dessus d'une carte). */
 export function Section({ children }: { children: React.ReactNode }) {
-  return <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.6, textTransform: 'uppercase', color: DS.textSecondary, marginTop: 6 }}>{children}</Text>;
+  return <Text style={{ fontSize: 17, fontFamily: 'Manrope_500Medium', color: DS.text, marginTop: 10, marginLeft: 2 }}>{children}</Text>;
+}
+
+/** Carte avec son titre et une action à droite : regroupe une rubrique en un seul bloc lisible. */
+export function Bloc({ titre, droite, children, style }: { titre: string; droite?: React.ReactNode; children?: React.ReactNode; style?: object }) {
+  return (
+    <View style={[{ backgroundColor: DS.surface, borderRadius: 20, borderWidth: 1, borderColor: DS.border, padding: 16, gap: 12 }, style]}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={{ flex: 1, fontSize: 17, fontFamily: 'Manrope_500Medium', color: DS.text }}>{titre}</Text>
+        {droite}
+      </View>
+      {children}
+    </View>
+  );
+}
+
+/** Petit bouton d'action en pilule (dans l'en-tête d'un Bloc). */
+export function ActionPilule({ label, onPress, charge }: { label: string; onPress: () => void; charge?: boolean }) {
+  return (
+    <Pressable onPress={onPress} disabled={charge} accessibilityRole="button" hitSlop={6}
+      style={{ minHeight: 34, paddingHorizontal: 14, borderRadius: radius.full, backgroundColor: DS.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 }}>
+      {charge ? <ActivityIndicator size="small" color={DS.textInverse} /> : <Text style={{ fontSize: 13, fontWeight: '800', color: DS.textInverse }}>{label}</Text>}
+    </Pressable>
+  );
+}
+
+/** Chiffre clé mis en avant (montant, avancement…). */
+export function Chiffre({ label, valeur, sous, sombre }: { label: string; valeur: string; sous?: string; sombre?: boolean }) {
+  return (
+    <View style={{ flex: 1, minWidth: 140, borderRadius: 18, padding: 14, gap: 4, backgroundColor: sombre ? DS.primary : DS.surface, borderWidth: sombre ? 0 : 1, borderColor: DS.border }}>
+      <Text style={{ fontSize: 12, fontWeight: '700', color: sombre ? 'rgba(255,255,255,0.7)' : DS.textSecondary }}>{label}</Text>
+      <Text style={{ fontSize: 22, fontFamily: 'Manrope_700Bold', color: sombre ? DS.textInverse : DS.text }} numberOfLines={1} adjustsFontSizeToFit>{valeur}</Text>
+      {!!sous && <Text style={{ fontSize: 12, color: sombre ? 'rgba(255,255,255,0.7)' : DS.textSecondary }}>{sous}</Text>}
+    </View>
+  );
 }
 
 export function Bouton({ label, onPress, variante = 'plein', disabled, charge }: {
@@ -22,7 +57,7 @@ export function Bouton({ label, onPress, variante = 'plein', disabled, charge }:
       disabled={disabled || charge}
       accessibilityRole="button"
       style={{
-        minHeight: 46, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 14,
+        minHeight: 50, borderRadius: radius.full, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16,
         backgroundColor: plein ? DS.primary : 'transparent',
         borderWidth: variante === 'contour' ? 1.5 : 0, borderColor: DS.primary, opacity: disabled ? 0.5 : 1,
       }}
@@ -41,7 +76,7 @@ export function Champ({ label, ...props }: TextInputProps & { label: string }) {
         placeholderTextColor={DS.textMuted}
         accessibilityLabel={label}
         {...props}
-        style={[{ borderWidth: 1, borderColor: DS.border, borderRadius: radius.sm, paddingHorizontal: 12, paddingVertical: 10, fontSize: 15, color: DS.text, backgroundColor: DS.background }, props.style]}
+        style={[{ borderWidth: 1, borderColor: DS.border, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: DS.text, backgroundColor: DS.surface }, props.style]}
       />
     </View>
   );
@@ -80,7 +115,7 @@ export function EnTete({ titre, retour, droite }: { titre: string; retour?: () =
           <Text style={{ fontSize: 16, fontWeight: '700', color: DS.primary }}>{tm("‹ Retour")}</Text>
         </Pressable>
       )}
-      <Text style={{ fontSize: 20, fontWeight: '800', color: DS.text, flex: 1 }} numberOfLines={1}>{titre}</Text>
+      <Text style={{ fontSize: 26, fontFamily: 'Manrope_500Medium', letterSpacing: -0.4, color: DS.text, flex: 1 }} numberOfLines={1}>{titre}</Text>
       {droite}
     </View>
   );
