@@ -765,6 +765,11 @@ const d: Record<string, string> = {
   "Relire le montant": "إعادة قراءة المبلغ",
   "« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : allège le PDF puis réessaie.": "«{0}» كبير جداً ({1} ميغابايت، الحد 50): قلّل حجم الملف وأعد المحاولة.",
   "Envoi refusé par le serveur (fichier trop lourd ou connexion coupée).": "رفض الخادم الإرسال (ملف كبير أو انقطاع الاتصال).",
+  "« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : ajoute-le depuis l'ordinateur (version web), il sera allégé automatiquement.": "«{0}» كبير جداً ({1} ميغابايت): أضفه من الكمبيوتر (نسخة الويب) وسيتم ضغطه تلقائياً.",
+  "Allègement de « {0} » ({1} Mo)…": "جارٍ ضغط «{0}» ({1} ميغابايت)…",
+  "Allègement de « {0} » : page {1} / {2}…": "ضغط «{0}»: صفحة {1} / {2}…",
+  "« {0} » n'a pas pu être allégé sous 50 Mo.": "تعذر ضغط «{0}» إلى أقل من 50 ميغابايت.",
+  "« {0} » allégé à {1} Mo, envoi en cours…": "تم ضغط «{0}» إلى {1} ميغابايت، جارٍ الإرسال…",
 };
 
 export default d;

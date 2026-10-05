@@ -15,6 +15,7 @@ import { CATEGORIES_CLIENT, groupeMn } from '@/lib/menuiserie/types';
 import { visibiliteDocs, type DefEtape } from '@/lib/menuiserie/etapes';
 import { ActionPilule, Bloc, Bouton, Champ, Puce } from './ui';
 import { estPdf, importerMontantDevisMn, libelleDevis } from '@/lib/menuiserie/importDevis';
+import { compresserPdf, compressionPdfPossible } from '@/lib/menuiserie/compresserPdf';
 
 import { tm } from '@/lib/menuiserie/i18n';
 /** Limite d'envoi d'un fichier (serveur) */
@@ -68,13 +69,27 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
     for (const f of fichiers) {
       const nomFichier = f.filename || (f.mimeType === 'application/pdf' ? 'document.pdf' : 'photo.jpg');
       const taille = f.size ?? (f.uri.startsWith('data:') ? Math.round((f.uri.length - f.uri.indexOf(',') - 1) * 0.75) : undefined);
+      let uri = f.uri;
       if (taille && taille > TAILLE_MAX) {
-        erreurs.push(tm("« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : allège le PDF puis réessaie.", nomFichier, Math.round(taille / 1048576)));
-        continue;
+        // Trop lourd : on l'allège automatiquement (sur ordinateur) pour passer sous 50 Mo
+        const estUnPdf = f.mimeType === 'application/pdf' || nomFichier.toLowerCase().endsWith('.pdf');
+        if (!estUnPdf || !compressionPdfPossible()) {
+          erreurs.push(tm("« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : ajoute-le depuis l'ordinateur (version web), il sera allégé automatiquement.", nomFichier, Math.round(taille / 1048576)));
+          continue;
+        }
+        try {
+          setInfo(tm("Allègement de « {0} » ({1} Mo)…", nomFichier, Math.round(taille / 1048576)));
+          const allege = await compresserPdf(f.uri, TAILLE_MAX * 0.95, (p, n) => setInfo(tm("Allègement de « {0} » : page {1} / {2}…", nomFichier, p, n)));
+          if (!allege) { erreurs.push(tm("« {0} » n'a pas pu être allégé sous 50 Mo.", nomFichier)); setInfo(''); continue; }
+          uri = allege;
+          setInfo(tm("« {0} » allégé à {1} Mo, envoi en cours…", nomFichier, Math.round((allege.length * 0.75) / 1048576)));
+        } catch (e) {
+          erreurs.push(`« ${nomFichier} » : ${(e as Error).message}`); setInfo(''); continue;
+        }
       }
       try {
         const chemin = await deposerDocumentMn(moi, {
-          chantierId, etape: def.cle, uri: f.uri, mime: f.mimeType, visibilite: vis, nom: nomFichier,
+          chantierId, etape: def.cle, uri, mime: f.mimeType || 'application/pdf', visibilite: vis, nom: nomFichier,
           piece: def.parPiece ? piece.trim() : (importDevis?.cote || null),
         });
         deposes.push({ chemin, nom: nomFichier });
@@ -83,6 +98,7 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
       }
     }
     setErreur(erreurs.join('\n'));
+    if (deposes.length && !peutImporter) setInfo('');
     setEnvoi(false);
     if (deposes.length) onChange();
     // Devis PDF : le montant HT est lu et reporté tout seul

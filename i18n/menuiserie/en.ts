@@ -741,6 +741,11 @@ const d: Record<string, string> = {
   "Relire le montant": "Read amount again",
   "« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : allège le PDF puis réessaie.": "\"{0}\" is too large ({1} MB, max 50 MB): compress the PDF and try again.",
   "Envoi refusé par le serveur (fichier trop lourd ou connexion coupée).": "Upload refused by the server (file too large or connection lost).",
+  "« {0} » est trop lourd ({1} Mo, maximum 50 Mo) : ajoute-le depuis l'ordinateur (version web), il sera allégé automatiquement.": "\"{0}\" is too large ({1} MB, max 50 MB): add it from the computer (web version), it will be compressed automatically.",
+  "Allègement de « {0} » ({1} Mo)…": "Compressing \"{0}\" ({1} MB)…",
+  "Allègement de « {0} » : page {1} / {2}…": "Compressing \"{0}\": page {1} / {2}…",
+  "« {0} » n'a pas pu être allégé sous 50 Mo.": "\"{0}\" could not be compressed under 50 MB.",
+  "« {0} » allégé à {1} Mo, envoi en cours…": "\"{0}\" compressed to {1} MB, uploading…",
 };
 
 export default d;
