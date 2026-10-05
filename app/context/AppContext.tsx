@@ -218,6 +218,9 @@ interface AppContextType {
   updateRayonPointage: (m: number) => void;
   /** Rend un compte (ex. administrateur Menuiserie) invitable dans le Planning direction */
   enregistrerContactDirection: (cle: string, nom: string) => void;
+  /** Notes commerciaux → administrateur */
+  addNoteCommercial: (n: import('@/app/types').NoteCommercial) => void;
+  updateNoteCommercial: (n: import('@/app/types').NoteCommercial) => void;
   // Métiers personnalisés
   addMetierPerso: (m: import('@/app/types').MetierPerso) => void;
   deleteMetierPerso: (id: string) => void;
@@ -1873,6 +1876,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setData(p => ({ ...p, magasinPrefere: magasin }));
   const updateRayonPointage = (m: number) =>
     setData(p => ({ ...p, rayonPointageM: m }));
+  const addNoteCommercial = (n: import('@/app/types').NoteCommercial) =>
+    setData(p => ({ ...p, notesCommerciaux: [...(p.notesCommerciaux || []).filter(x => x.id !== n.id), n] }));
+  const updateNoteCommercial = (n: import('@/app/types').NoteCommercial) =>
+    setData(p => ({ ...p, notesCommerciaux: (p.notesCommerciaux || []).map(x => (x.id === n.id ? n : x)) }));
   const enregistrerContactDirection = (cle: string, nom: string) =>
     setData(p => {
       const liste = p.contactsDirection || [];
@@ -2249,7 +2256,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       addPlanChantier, deletePlanChantier, updatePlanChantier, archivePlanChantier, unarchivePlanChantier,
       upsertPVReception,
       deletePVReception,
-      updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateRayonPointage, enregistrerContactDirection,
+      updateAdminPassword, updateAdminIdentifiant, updateAdminEmployeId, updateMagasinPrefere, updateRayonPointage, enregistrerContactDirection, addNoteCommercial, updateNoteCommercial,
       addMetierPerso, deleteMetierPerso, updateBudgetChantier,
       addFournisseur, deleteFournisseur,
       addFournisseurFiche, updateFournisseurFiche, deleteFournisseurFiche,

@@ -33,6 +33,7 @@ import { PhotosRapides } from '@/components/photos/PhotosRapides';
 import { HeroEmploye } from '@/components/espaces/HeroEmploye';
 import { PointagesDuJourAdmin } from '@/components/pointage/PointagesDuJourAdmin';
 import { AFacturerAccueil } from '@/components/chantier/AFacturerAccueil';
+import { NotesCommerciauxAccueil } from '@/components/commercial/NotesCommerciauxAccueil';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 
 function toYMD(d: Date): string {
@@ -971,6 +972,8 @@ export default function DashboardScreen() {
         <PointagesDuJourAdmin />
         {/* Dépannages : travaux et prix pas encore facturés */}
         <AFacturerAccueil />
+        {/* Notes des commerciaux (chiffrage ou autre) */}
+        <NotesCommerciauxAccueil />
 
         {/* À traiter — ce qui attend une action de l'admin */}
         {(stats.demandesRH > 0 || stats.materielNonAchete > 0) && (

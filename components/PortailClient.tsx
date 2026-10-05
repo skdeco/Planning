@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { NoteAdmin } from '@/components/commercial/NoteAdmin';
 import {
   View, Text, ScrollView, Pressable, Modal, Image, Platform, Alert, TextInput,
   StyleSheet, Dimensions, ActivityIndicator,
@@ -1479,6 +1480,8 @@ export function PortailClient({ visible, onClose, chantierId }: PortailClientPro
                   ))}
                 </View>
               )}
+              {/* Commercial : note pour l'administrateur (chiffrage ou autre) */}
+              {isCommercial && <NoteAdmin chantierId={chantierId} />}
               <ChantierDetailDashboard
                 isAdmin={false}
                 counts={portalCounts}

@@ -297,6 +297,20 @@ export interface PlanChantier {
 
 export type CategorieChantier = 'chantier' | 'depannage' | 'lieuFixe';
 
+/** Note d'un commercial pour l'administrateur (chiffrage ou autre), liée à un chantier. */
+export interface NoteCommercial {
+  id: string;
+  chantierId: string;
+  auteurId: string;          // apporteur (commercial)
+  auteurNom: string;
+  categorie: 'chiffrage' | 'autre';
+  texte: string;
+  pieceJointe?: { uri: string; nom: string };
+  creeLe: string;
+  traitee?: boolean;
+  traiteeLe?: string;
+}
+
 /** Dépannage : ce qui a été fait et son prix, pour ne pas oublier de facturer. */
 export interface LigneFacturationDepannage {
   id: string;
@@ -1595,6 +1609,8 @@ export interface AppData {
   rayonPointageM?: number;
   /** Comptes Menuiserie (administrateurs) invitables dans le Planning direction */
   contactsDirection?: { cle: string; nom: string }[];
+  /** Notes des commerciaux destinées à l'administrateur */
+  notesCommerciaux?: NoteCommercial[];
   magasinPrefere?: string;         // Magasin préféré pour vérifier la dispo (ex: "Leroy Merlin Ivry-sur-Seine")
   metiersPerso?: MetierPerso[];    // Métiers personnalisés ajoutés par l'admin
   budgetsChantier?: Record<string, number>; // Budget prévisionnel par chantierId
