@@ -24,6 +24,7 @@ import { SelectField } from '@/components/ui/SelectField';
 import { EnvoiConsigneSheet, type ConsigneAEnvoyer } from '@/components/ui/EnvoiConsigneSheet';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { AnnotationProvider, useAnnoterPhoto } from '@/components/photos/AnnotationPhoto';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 
 export interface SuiviCRPanelProps {
   visible: boolean;
@@ -985,12 +986,16 @@ function CRItemRow({ item, ro, allowToggle, onChange, onRemove, onAttachPhoto, o
                 <Send size={12} color={DS.bordeaux} strokeWidth={2.2} />
               </Pressable>
             )}
+            <ZoneDepot onDepot={onAttachPhoto} types="images">
             <Pressable onPress={onAttachPhoto} style={styles.iconBtn}>
               <ImageIcon size={12} color={DS.textSecondary} strokeWidth={2.2} />
             </Pressable>
+            </ZoneDepot>
+            <ZoneDepot onDepot={onAttachPdf} types="pdf">
             <Pressable onPress={onAttachPdf} style={styles.iconBtn}>
               <Paperclip size={12} color={DS.textSecondary} strokeWidth={2.2} />
             </Pressable>
+            </ZoneDepot>
             <Pressable onPress={onRemove} style={styles.iconBtn}>
               <X size={12} color={DS.textSecondary} strokeWidth={2.2} />
             </Pressable>

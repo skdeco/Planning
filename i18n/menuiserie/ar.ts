@@ -872,6 +872,9 @@ const d: Record<string, string> = {
   "{0} suppléments attendent votre réponse ↓": "{0} إضافات بانتظار ردك ↓",
   "1 supplément attend votre réponse ↓": "إضافة واحدة بانتظار ردك ↓",
   "Chantier Menuiserie": "مشروع نجارة",
+  "Lâchez les fichiers près de l'endroit où les ajouter": "أفلت الملفات قرب المكان الذي تريد إضافتها فيه",
+  "{0} fichiers prêts": "{0} ملفات جاهزة",
+  "cliquez sur le bouton d'ajout voulu": "انقر على زر الإضافة المطلوب",
 };
 
 export default d;

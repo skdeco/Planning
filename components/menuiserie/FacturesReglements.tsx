@@ -17,6 +17,7 @@ import { ouvrirDocumentMn } from './DocumentsEtape';
 import { Formulaire, docDeLigne, type Options } from './LignesPieces';
 import { Bloc, euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 
 const OPT_FACTURE: Options = { pdf: true, ttc: true, date: true };
 const OPT_REGLEMENT: Options = { pdf: false, ttc: false, date: true, labelMontant: 'Montant (€)' };
@@ -150,7 +151,7 @@ export function FacturesReglements({ moi, chantierId, usineId, cote, montants, d
   return (
     <Bloc titre={cote === 'client' ? tm("Factures et règlements") : tm("Factures et règlements usine")} droite={(
       <View style={{ flexDirection: 'row', gap: 6 }}>
-        {peutFactures && <Pilule plein label={tm("+ Facture")} onPress={() => setForm({ quoi: 'facture' })} />}
+        {peutFactures && <ZoneDepot onDepot={() => deposerFacture()}><Pilule plein label={tm("+ Facture")} onPress={() => setForm({ quoi: 'facture' })} /></ZoneDepot>}
         {peutReglements && <Pilule label={tm("+ Règlement")} onPress={() => setForm({ quoi: 'reglement' })} />}
       </View>
     )}>

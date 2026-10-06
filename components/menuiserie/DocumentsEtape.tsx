@@ -18,6 +18,7 @@ import { estPdf, importerMontantDevisMn, libelleDevis } from '@/lib/menuiserie/i
 import { compresserPdf, compressionPdfPossible } from '@/lib/menuiserie/compresserPdf';
 
 import { tm } from '@/lib/menuiserie/i18n';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 /** Limite d'envoi d'un fichier (serveur) */
 const TAILLE_MAX = 50 * 1024 * 1024;
 
@@ -162,7 +163,7 @@ export function DocumentsEtape({ moi, chantierId, def, documents, onChange, lect
             <Text style={{ fontSize: 13, fontWeight: '800', color: DS.primary }}>{tm("Partager…")}</Text>
           </Pressable>
         )}
-        {!lectureSeule && !selection && <ActionPilule label={tm("+ Ajouter")} onPress={ajouter} charge={envoi} />}
+        {!lectureSeule && !selection && <ZoneDepot onDepot={ajouter} actif={!envoi}><ActionPilule label={tm("+ Ajouter")} onPress={ajouter} charge={envoi} /></ZoneDepot>}
       </View>
     }>
       {selection && (

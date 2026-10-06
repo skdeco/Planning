@@ -10,6 +10,7 @@ import { openDocPreview } from '@/lib/share/openDocPreview';
 import { useConfirm } from '@/hooks/useConfirm';
 import { CHANTIER_DOC_CATEGORIES, type ChantierDoc, type ChantierDocCategorie } from '@/app/types';
 import { Ico } from '@/components/ui/Ico';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 
 /**
  * DriveChantier — Drive documentaire par chantier (Tier 3 A2).
@@ -105,6 +106,7 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
                   <View style={styles.catHeader}>
                     <Text style={styles.catTitle}>{cat.label} ({docs.length})</Text>
                     {!readonly && (
+                      <ZoneDepot onDepot={() => handleAdd(cat.key)} actif={uploadingCat === null}>
                       <Pressable
                         onPress={() => handleAdd(cat.key)}
                         disabled={uploadingCat !== null}
@@ -114,6 +116,7 @@ export function DriveChantier({ visible, onClose, chantierId, readonly = false }
                           ? <ActivityIndicator size="small" color="#141414" />
                           : <Text style={styles.addBtnText}>+ Ajouter</Text>}
                       </Pressable>
+                      </ZoneDepot>
                     )}
                   </View>
                   {docs.length === 0 ? (

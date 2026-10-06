@@ -24,6 +24,7 @@ import { LanguageProvider } from "@/app/context/LanguageContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { InboxBanner } from "@/components/InboxBanner";
 import { AlertHost } from "@/components/AlertHost";
+import { BandeauDepot } from "@/components/share/BandeauDepot";
 import { useChantiersCacheSync } from "@/hooks/useChantiersCacheSync";
 import { Toaster } from "sonner-native";
 import { useFonts } from "expo-font";
@@ -118,6 +119,7 @@ export default function RootLayout() {
           <View style={{ flex: 1 }}>
             <InboxBanner />
             <AlertHost />
+            <BandeauDepot />
             <Toaster position="top-center" richColors offset={60} />
             <BarreEspacesRacine>
             {/*

@@ -13,6 +13,7 @@ import { ajouterLigneMn, dateFR, deposerPiecesMn, lireDateFR, lireMontantsPdfMn,
 import { ouvrirDocumentMn } from './DocumentsEtape';
 import { Bloc, Bouton, Champ, euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 
 export const docDeLigne = (m: MontantMn, docs: DocumentMn[]) =>
   docs.find(d => d.id === m.document_id) || (m.libelle ? docs.find(d => libelleDevis(d.nom) === m.libelle || nomSansExtension(d.nom) === m.libelle) : undefined);
@@ -86,9 +87,11 @@ export function LignesPieces({ moi, chantierId, usineId, cote, type, titre, lign
     <Bloc titre={titre} droite={peutSaisir && !ajout ? (
       <View style={{ flexDirection: 'row', gap: 6 }}>
         {options.pdf && (
+          <ZoneDepot onDepot={deposer} actif={!occupe}>
           <Pressable onPress={deposer} disabled={occupe} accessibilityRole="button" style={{ minHeight: 34, paddingHorizontal: 12, borderRadius: 999, backgroundColor: DS.primary, justifyContent: 'center' }}>
             <Text style={{ fontSize: 13, fontWeight: '800', color: DS.textInverse }}>{tm("+ PDF")}</Text>
           </Pressable>
+          </ZoneDepot>
         )}
         <Pressable onPress={() => setAjout(true)} accessibilityRole="button" style={{ minHeight: 34, paddingHorizontal: 12, borderRadius: 999, borderWidth: 1, borderColor: DS.border, justifyContent: 'center' }}>
           <Text style={{ fontSize: 13, fontWeight: '800', color: DS.text }}>{options.pdf ? tm("Saisir") : tm("+ Ajouter")}</Text>

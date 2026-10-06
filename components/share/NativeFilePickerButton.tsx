@@ -19,6 +19,7 @@ import {
   type PickedFile,
   type PickNativeFileOptions,
 } from '@/lib/share/pickNativeFile';
+import { useZoneDepot } from '@/lib/share/depotFichiers';
 
 export interface NativeFilePickerButtonProps {
   /**
@@ -101,10 +102,13 @@ export function NativeFilePickerButton({
   };
 
   const isDisabled = disabled || busy;
+  // Ordinateur : fichiers glissés près du bouton = même action qu'un clic
+  const zone = useZoneDepot(handlePress, !isDisabled, acceptImages && !acceptPdf ? 'images' : acceptPdf && !acceptImages ? 'pdf' : 'tout');
   const text = busy ? 'Importation…' : (label ?? defaultLabel({ acceptImages, acceptPdf, acceptCamera }));
 
   return (
     <Pressable
+      ref={zone}
       onPress={handlePress}
       disabled={isDisabled}
       accessibilityRole="button"

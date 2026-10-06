@@ -15,6 +15,7 @@ import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
 import { countUnreadChantierMessages } from '@/lib/notif/countUnreadChantierMessages';
 import { Ico } from '@/components/ui/Ico';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 
 function genId(prefix: string) { return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`; }
 
@@ -358,9 +359,11 @@ export function ChatChantier({ chantier, isAdmin, externAp, currentUserNom, full
         </View>
       )}
       <View style={styles.inputRow}>
+        <ZoneDepot onDepot={ajouterPieceJointe} actif={!pjUploading}>
         <Pressable onPress={ajouterPieceJointe} disabled={pjUploading} style={[styles.attachBtn, pjUploading && { opacity: 0.4 }]}>
           <Text style={styles.attachBtnText}>{pjUploading ? '…' : '📎'}</Text>
         </Pressable>
+        </ZoneDepot>
         <TextInput
           style={styles.input}
           value={texte}

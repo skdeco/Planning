@@ -869,6 +869,9 @@ const d: Record<string, string> = {
   "{0} suppléments attendent votre réponse ↓": "{0} suplementos aguardam a sua resposta ↓",
   "1 supplément attend votre réponse ↓": "1 suplemento aguarda a sua resposta ↓",
   "Chantier Menuiserie": "Obra de carpintaria",
+  "Lâchez les fichiers près de l'endroit où les ajouter": "Largue os ficheiros perto do sítio onde os quer adicionar",
+  "{0} fichiers prêts": "{0} ficheiros prontos",
+  "cliquez sur le bouton d'ajout voulu": "clique no botão de adicionar pretendido",
 };
 
 export default d;

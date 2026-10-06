@@ -15,6 +15,7 @@ import { choisirEtDeposerMn, lireMontantsPdfMn, lireNombre, type CoteMn } from '
 import { ouvrirDocumentMn } from './DocumentsEtape';
 import { BORDEAUX, BORDEAUX_DOUX, Bloc, Bouton, Champ, Pastille, euros } from './ui';
 import { tm } from '@/lib/menuiserie/i18n';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 
 export function StatutSupplement({ s }: { s: SupplementMn }) {
   if (s.statut === 'accepte') return <Pastille label={tm("Accepté")} fond={DS.successSoft} texte="#065F46" />;
@@ -80,10 +81,12 @@ export function SupplementsDevis({ moi, chantierId, usineId, cote, documents, li
 
   return (
     <Bloc titre={tm("Suppléments")} droite={peutAjouter && !ajout ? (
+      <ZoneDepot onDepot={async () => { setAjout(true); await joindre(); }}>
       <Pressable onPress={() => setAjout(true)} accessibilityRole="button" hitSlop={8}
         style={{ minHeight: 34, paddingHorizontal: 14, borderRadius: 999, backgroundColor: DS.primary, justifyContent: 'center' }}>
         <Text style={{ fontSize: 13, fontWeight: '800', color: DS.textInverse }}>{tm("+ Supplément")}</Text>
       </Pressable>
+      </ZoneDepot>
     ) : null}>
       {!!info && <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}><ActivityIndicator size="small" color={DS.primary} /><Text style={{ fontSize: 13, color: DS.textSecondary, flex: 1 }}>{info}</Text></View>}
       {liste.length === 0 && !ajout && (

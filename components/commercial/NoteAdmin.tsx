@@ -13,6 +13,7 @@ import { uploadFileToStorage } from '@/lib/supabase';
 import { openDocPreview } from '@/lib/share/openDocPreview';
 import { sendPushNotification } from '@/hooks/useNotifications';
 import { getAdminPushTokens } from '@/lib/notif/getAdminPushTokens';
+import { ZoneDepot } from '@/components/share/ZoneDepot';
 
 const CATS: { v: NoteCommercial['categorie']; l: string }[] = [{ v: 'chiffrage', l: 'Pour le chiffrage' }, { v: 'autre', l: 'Autre' }];
 
@@ -67,9 +68,11 @@ export function NoteAdmin({ chantierId }: { chantierId: string }) {
         placeholderTextColor={DS.textMuted}
         style={{ minHeight: 90, borderRadius: 12, borderWidth: 1, borderColor: DS.border, padding: 12, fontSize: 15, color: DS.text, textAlignVertical: 'top' }} />
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <ZoneDepot onDepot={joindre} actif={!envoi}>
         <Pressable onPress={joindre} disabled={envoi} style={chip(false)} accessibilityRole="button">
           <Text style={{ fontSize: 13, fontWeight: '700', color: DS.text }}>{envoi ? 'Envoi…' : piece ? `📎 ${piece.nom}` : '📎 Joindre un fichier'}</Text>
         </Pressable>
+        </ZoneDepot>
         <View style={{ flex: 1 }} />
         <Pressable onPress={envoyer} disabled={!texte.trim()} accessibilityRole="button"
           style={{ minHeight: 40, paddingHorizontal: 18, borderRadius: radius.full, backgroundColor: DS.primary, justifyContent: 'center', opacity: texte.trim() ? 1 : 0.4 }}>
