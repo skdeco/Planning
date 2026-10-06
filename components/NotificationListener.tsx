@@ -637,7 +637,9 @@ export function NotificationListener() {
   // ── Rappels de pointage (arrivée / départ à H+15 min de l'horaire théorique) ──
   const monEmploye = !isAdmin && currentUser?.employeId ? data.employes.find(e => e.id === currentUser.employeId) : undefined;
   useEffect(() => {
-    if (isAdmin || isST || !monEmploye) return;
+    // Pas (ou plus) employé sur ce téléphone (admin, sous-traitant, déconnexion) :
+    // on annule les rappels programmés lors d'une session employé précédente.
+    if (isAdmin || isST || !monEmploye) { scheduleRappelsPointage(undefined, [], [], false).catch(() => {}); return; }
     scheduleRappelsPointage(monEmploye, data.pointages, data.demandesConge || [], isNotifEnabled(data.notificationPrefs, monEmploye.id, 'pointageRetard')).catch(() => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data.pointages, data.demandesConge, monEmploye?.horaires, monEmploye?.doitPointer, data.notificationPrefs, isAdmin, isST]);
