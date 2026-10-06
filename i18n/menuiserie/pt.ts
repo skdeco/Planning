@@ -868,6 +868,7 @@ const d: Record<string, string> = {
   "Saisir une facture": "Introduzir uma fatura",
   "{0} suppléments attendent votre réponse ↓": "{0} suplementos aguardam a sua resposta ↓",
   "1 supplément attend votre réponse ↓": "1 suplemento aguarda a sua resposta ↓",
+  "Chantier Menuiserie": "Obra de carpintaria",
 };
 
 export default d;

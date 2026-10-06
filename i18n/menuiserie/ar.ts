@@ -871,6 +871,7 @@ const d: Record<string, string> = {
   "Saisir une facture": "إدخال فاتورة",
   "{0} suppléments attendent votre réponse ↓": "{0} إضافات بانتظار ردك ↓",
   "1 supplément attend votre réponse ↓": "إضافة واحدة بانتظار ردك ↓",
+  "Chantier Menuiserie": "مشروع نجارة",
 };
 
 export default d;

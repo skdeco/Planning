@@ -5,10 +5,11 @@
  * Tous les choix se font par listes déroulantes (simple ou multiple), pas par grilles de pastilles.
  * La feuille est une View (et non un Pressable) pour que le défilement au doigt marche partout.
  */
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { View, Text, ScrollView, Pressable, Modal, TextInput } from 'react-native';
 import { ModalKeyboard } from '@/components/ModalKeyboard';
 import { useApp } from '@/app/context/AppContext';
+import { mn } from '@/lib/menuiserie/client';
 import { tm, localeMn } from '@/lib/menuiserie/i18n';
 
 export const COULEURS_RDV = ['#2C2C2C', '#27AE60', '#E74C3C', '#F59E0B', '#9B59B6', '#00BCD4', '#FF6B35'];
@@ -17,6 +18,8 @@ export interface FormRdv {
   titre: string; description: string; date: string; heureDebut: string; heureFin: string;
   lieu: string; couleur: string; invites: string[]; visiblePar: string[];
   chantierId: string; recurrence: string; recurrenceFinDate: string;
+  /** Nom du chantier (sert d'étiquette pour un chantier Menuiserie, absent des données Travaux) */
+  chantierNom?: string;
 }
 
 const toYMD = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -59,10 +62,33 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
     return out;
   }, [form.date]);
 
-  const chantiers: Option[] = [{ v: '', l: tm('Aucun') }, ...(sansTravaux ? [] : data.chantiers)
-    .filter(c => c.statut === 'actif' || c.statut === 'sav' || c.id === form.chantierId)
-    .sort((a, b) => a.nom.localeCompare(b.nom))
-    .map(c => ({ v: c.id, l: c.nom, couleur: c.couleur }))];
+  // Chantiers Menuiserie visibles par ce compte (session Menuiserie), préfixés « mn: »
+  const [chantiersMn, setChantiersMn] = useState<{ id: string; nom: string; statut: string }[]>([]);
+  useEffect(() => {
+    if (!visible) return;
+    let vivant = true;
+    (async () => {
+      try {
+        const { data: s } = await mn().auth.getSession();
+        if (!s.session) return;
+        const { data: l } = await mn().from('mn_chantiers').select('id, nom, statut').order('nom');
+        if (vivant && l) setChantiersMn(l as { id: string; nom: string; statut: string }[]);
+      } catch { /* pas d'accès Menuiserie */ }
+    })();
+    return () => { vivant = false; };
+  }, [visible]);
+  const chantiers: Option[] = [{ v: '', l: tm('Aucun') },
+    ...(sansTravaux ? [] : data.chantiers)
+      .filter(c => c.statut === 'actif' || c.statut === 'sav' || c.id === form.chantierId)
+      .sort((a, b) => a.nom.localeCompare(b.nom))
+      .map(c => ({ v: c.id, l: sansTravaux || !chantiersMn.length ? c.nom : `${c.nom} · ${tm('Travaux')}`, couleur: c.couleur })),
+    ...chantiersMn
+      .filter(c => c.statut === 'en_cours' || c.statut === 'sav' || `mn:${c.id}` === form.chantierId)
+      .map(c => ({ v: `mn:${c.id}`, l: `${c.nom} · ${tm('Menuiserie')}` })),
+    // Chantier Menuiserie déjà choisi mais non chargé : garder son libellé
+    ...(form.chantierId.startsWith('mn:') && !chantiersMn.some(c => `mn:${c.id}` === form.chantierId)
+      ? [{ v: form.chantierId, l: form.chantierNom || tm('Chantier Menuiserie') }] : []),
+  ];
   const recurrences: Option[] = [{ v: 'aucune', l: tm('Aucune') }, { v: 'quotidien', l: tm('Quotidien') }, { v: 'hebdomadaire', l: tm('Hebdo') }, { v: 'mensuel', l: tm('Mensuel') }];
   const invitesOptions: Option[] = invitables.map(p => ({ v: p.cle, l: p.nom }));
   const visibleOptions: Option[] = data.employes.filter(e => !form.invites.includes(e.id)).map(e => ({ v: e.id, l: `${e.prenom} ${e.nom.charAt(0)}.` }));
@@ -111,7 +137,7 @@ export function FormulaireRdvDirection({ visible, editId, form, setForm, invitab
     switch (liste) {
       case 'date': setForm(f => ({ ...f, date: v })); break;
       case 'finRecurrence': setForm(f => ({ ...f, recurrenceFinDate: v })); break;
-      case 'chantier': setForm(f => ({ ...f, chantierId: v })); break;
+      case 'chantier': { const o = chantiers.find(c => c.v === v); setForm(f => ({ ...f, chantierId: v, chantierNom: v.startsWith('mn:') ? o?.l.replace(/ · .*$/, '') : undefined })); break; }
       case 'recurrence': setForm(f => ({ ...f, recurrence: v })); break;
       case 'invites': setForm(f => ({ ...f, invites: bascule(f.invites), visiblePar: f.visiblePar.filter(x => x !== v) })); return;
       case 'visible': setForm(f => ({ ...f, visiblePar: bascule(f.visiblePar) })); return;

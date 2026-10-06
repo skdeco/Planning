@@ -1504,7 +1504,8 @@ export interface AgendaEvent {
   heureFin?: string;       // HH:MM
   lieu?: string;
   couleur: string;
-  chantierId?: string;     // chantier associé au RDV
+  chantierId?: string;     // chantier associé au RDV (« mn:<id> » pour un chantier Menuiserie)
+  chantierNom?: string;    // libellé d'un chantier Menuiserie (hors données Travaux)
   createdBy: string;       // 'admin' ou identifiant admin
   createdByNom: string;
   invites: string[];       // liste des IDs invités (participants)

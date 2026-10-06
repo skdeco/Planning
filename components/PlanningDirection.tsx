@@ -44,7 +44,12 @@ export function PlanningDirection() {
     participantsDirection(data).forEach(p => {
       if (!liste.some(l => l.cle === p.cle)) liste.push({ cle: p.cle, nom: p.nom });
     });
-    return liste.filter(l => l.cle !== moi);
+    // Direction d'abord (admin, administrateurs, comptes Menuiserie), puis le reste
+    const rang = (cle: string) => cle === 'admin' || cle.startsWith('mn:') || data.employes.find(e => e.id === cle)?.role === 'admin' ? 0 : 1;
+    return liste
+      .map(l => (l.cle.startsWith('mn:') ? { ...l, nom: `${l.nom} · ${tm('Menuiserie')}` } : l))
+      .filter(l => l.cle !== moi)
+      .sort((a, b) => rang(a.cle) - rang(b.cle) || a.nom.localeCompare(b.nom));
   }, [data, moi]);
   const { refreshing, onRefresh } = useRefresh();
   const { width: screenW } = useWindowDimensions();
@@ -144,6 +149,7 @@ export function PlanningDirection() {
       lieu: form.lieu.trim() || undefined,
       couleur: form.couleur,
       chantierId: form.chantierId || undefined,
+      chantierNom: form.chantierId.startsWith('mn:') ? form.chantierNom : undefined,
       createdBy: existant?.createdBy || moi,
       createdByNom: existant?.createdByNom || currentUser?.nom || nomParticipant(moi, data),
       invites: form.invites, visiblePar: form.visiblePar,
@@ -168,7 +174,7 @@ export function PlanningDirection() {
 
   const openEdit = (evt: AgendaEvent) => {
     setEditId(evt.id.includes('_rec_') ? evt.id.split('_rec_')[0] : evt.id);
-    setForm({ titre: evt.titre, description: evt.description || '', date: evt.date, heureDebut: evt.heureDebut, heureFin: evt.heureFin || '', lieu: evt.lieu || '', couleur: evt.couleur, invites: evt.invites || [], visiblePar: evt.visiblePar || [], chantierId: evt.chantierId || '', recurrence: evt.recurrence || 'aucune', recurrenceFinDate: evt.recurrenceFinDate || '' });
+    setForm({ titre: evt.titre, description: evt.description || '', date: evt.date, heureDebut: evt.heureDebut, heureFin: evt.heureFin || '', lieu: evt.lieu || '', couleur: evt.couleur, invites: evt.invites || [], visiblePar: evt.visiblePar || [], chantierId: evt.chantierId || '', chantierNom: evt.chantierNom, recurrence: evt.recurrence || 'aucune', recurrenceFinDate: evt.recurrenceFinDate || '' });
     setShowForm(true);
   };
 
@@ -240,7 +246,7 @@ export function PlanningDirection() {
                         <Text style={{ fontSize: 16, fontWeight: '700', color: '#141414' }}>{evt.titre}</Text>
                         {evt.description ? <Text style={{ fontSize: 13, color: '#6A6A68', marginTop: 2 }}>{evt.description}</Text> : null}
                         {evt.lieu ? <Text style={{ fontSize: 12, color: '#6A6A68', marginTop: 2 }}>{evt.lieu}</Text> : null}
-                        {ch ? <Text style={{ fontSize: 12, color: ch.couleur, fontWeight: '600', marginTop: 2 }}>{ch.nom}</Text> : null}
+                        {ch ? <Text style={{ fontSize: 12, color: ch.couleur, fontWeight: '600', marginTop: 2 }}>{ch.nom}</Text> : evt.chantierNom ? <Text style={{ fontSize: 12, color: '#6A6A68', fontWeight: '600', marginTop: 2 }}>{evt.chantierNom} · {tm('Menuiserie')}</Text> : null}
                         {evt.invites.length > 0 && (
                           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
                             {evt.invites.map(id => {

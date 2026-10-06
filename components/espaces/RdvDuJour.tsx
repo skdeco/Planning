@@ -58,7 +58,7 @@ export function RdvDuJour({ marge = 16 }: { marge?: number }) {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[{ fontSize: 14, fontWeight: '700', color: DS.text }, barre]} numberOfLines={1}>{evt.titre}</Text>
-              {!!(ch || evt.lieu) && <Text style={[{ fontSize: 12, color: DS.textSecondary }, barre]} numberOfLines={1}>{[ch?.nom, evt.lieu].filter(Boolean).join(' · ')}</Text>}
+              {!!(ch || evt.chantierNom || evt.lieu) && <Text style={[{ fontSize: 12, color: DS.textSecondary }, barre]} numberOfLines={1}>{[ch?.nom || evt.chantierNom, evt.lieu].filter(Boolean).join(' · ')}</Text>}
             </View>
             {!!adresse && (
               <Pressable onPress={() => yAller(adresse)} hitSlop={8} accessibilityRole="button" accessibilityLabel={tm('Y aller')}

@@ -30,7 +30,7 @@ export async function scheduleAgendaReminders(events: AgendaEvent[], chantiers: 
     try {
       await Notifications.scheduleNotificationAsync({
         identifier: `${PREFIXE}${evt.id}_${date}`,
-        content: { title: tm('RDV dans 1 h'), body: `${evt.heureDebut} · ${evt.titre}${ch ? ` — ${ch.nom}` : evt.lieu ? ` — ${evt.lieu}` : ''}`, sound: 'default' },
+        content: { title: tm('RDV dans 1 h'), body: `${evt.heureDebut} · ${evt.titre}${ch ? ` — ${ch.nom}` : evt.chantierNom ? ` — ${evt.chantierNom}` : evt.lieu ? ` — ${evt.lieu}` : ''}`, sound: 'default' },
         trigger: { type: Notifications.SchedulableTriggerInputTypes.DATE, date: new Date(quand) },
       });
       n++;
