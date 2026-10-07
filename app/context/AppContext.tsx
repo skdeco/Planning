@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, LOCAL_DATA_KEY, subscribeToRealtimeUpdates, deleteFileFromStorage } from '@/lib/supabase';
+import { loadDataFromSupabase, saveDataToSupabase, createManualBackup, LOCAL_DATA_KEY, subscribeToRealtimeUpdates, deleteFileFromStorage, mergeDataSafely } from '@/lib/supabase';
 import { normalizePlanNom } from '@/lib/plans/normalizePlanNom';
 
 // Clés AsyncStorage pour persister les IDs supprimés entre rechargements
@@ -684,7 +684,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         // CAS NORMAL : Supabase est la SOURCE DE VÉRITÉ unique
         // On utilise directement les données Supabase, sans merge avec le cache local
         // Le cache local ne sert qu'au fallback offline
-        loadedData = migrateData(supabaseRaw);
+        // Des modifications locales n'ont pas pu être envoyées (serveur injoignable) :
+        // on les fusionne avec Supabase au lieu de les écraser (ex. pointages faits
+        // pendant une panne). La file de retry enverra ensuite le résultat fusionné.
+        const enAttente = await hasPendingSave().catch(() => false);
+        if (enAttente && localRaw && (localEmployes > 0 || localChantiers > 0)) {
+          loadedData = migrateData(mergeDataSafely(localRaw, supabaseRaw));
+          console.log('✅ Supabase + modifications locales non envoyées fusionnées');
+        } else {
+          loadedData = migrateData(supabaseRaw);
+        }
         console.log(`✅ Données chargées depuis Supabase (${supabaseEmployes} emp, ${supabaseChantiers} ch)`);
       } else if (localRaw && (localEmployes > 0 || localChantiers > 0)) {
         // CAS FALLBACK : Supabase vide ou inaccessible, mais cache local a des données
